@@ -1,0 +1,60 @@
+
+- chạy serve ảo: python manage.py runserver
+
+- mở khoá bảo mật môi trường ảo: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+
+- vào môi trường ảo: .\venv\Scripts\activate
+
+
+1. Tạo dự án Django
+Chúng ta sẽ sử dụng một công cụ dòng lệnh của Django để tự động tạo ra các file cấu hình cần thiết.
+
+Trong cửa sổ Terminal (vẫn đang ở trong môi trường venv), bạn gõ chính xác lệnh sau rồi nhấn Enter:
+
+Bash
+
+django-admin startproject dbpsports_core .
+
+2. Chạy máy chủ phát triển (Development Server)
+Giờ chúng ta sẽ khởi động một máy chủ web tạm thời ngay trên máy tính của bạn để xem thành quả đầu tiên.
+
+Vẫn trong Terminal đó, gõ lệnh sau rồi nhấn Enter:
+
+Bash
+
+python manage.py runserver
+
+
+2. Tạo App Mới
+Khi server đã dừng, hãy gõ lệnh sau để tạo app tournaments rồi nhấn Enter:
+
+Bash
+
+python manage.py startapp tournaments
+Sau khi lệnh chạy xong, bạn sẽ thấy một thư mục mới tên là tournaments xuất hiện trong VS Code, bên trong chứa nhiều file python khác nhau.
+
+3. "Đăng ký" App với Project
+Bước này rất quan trọng. Chúng ta phải báo cho "ngôi nhà" (dbpsports_core) biết về sự tồn tại của "căn phòng" (tournaments) mới này.
+
+Trong VS Code, ở cây thư mục bên trái, hãy vào dbpsports_core và mở file settings.py.
+
+Kéo xuống tìm một danh sách tên là INSTALLED_APPS.
+
+Thêm 'tournaments', vào đầu danh sách đó, ngay bên trên 'django.contrib.admin'.
+
+Nó sẽ trông như thế này:
+
+Python
+
+# settings.py
+
+INSTALLED_APPS = [
+    'tournaments',  # Thêm dòng này vào
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]

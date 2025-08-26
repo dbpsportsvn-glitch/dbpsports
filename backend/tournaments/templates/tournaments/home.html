@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang chủ - DBP Sports</title>
+</head>
+<body>
+    <h1>Danh sách các giải đấu</h1>
+
+    <ul>
+        {% for tournament in tournaments_list %}
+            <li>{{ tournament.name }} - Bắt đầu: {{ tournament.start_date }}</li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
