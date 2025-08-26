@@ -1,29 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Trang chủ - DBP Sports</title>
-</head>
-<body>
-    <nav>
-        {% if user.is_authenticated %}
-            <span>Chào, {{ user.username }}!</span>
-            <a href="{% url 'logout' %}">Đăng xuất</a>
-        {% else %}
-            <a href="{% url 'login' %}">Đăng nhập</a>
-            <a href="{% url 'register' %}">Đăng ký</a>
-        {% endif %}
-    </nav>
+{% extends 'base.html' %}
 
-    <hr>
+{% block title %}Trang chủ - DBP Sports{% endblock %}
 
+{% block content %}
     <h1>Danh sách các giải đấu</h1>
-
-    <ul>
+    <ul class="list-group">
         {% for tournament in tournaments_list %}
-            <li>{{ tournament.name }} - Bắt đầu: {{ tournament.start_date }}</li>
+            <li class="list-group-item">{{ tournament.name }} - Bắt đầu: {{ tournament.start_date }}</li>
         {% endfor %}
     </ul>
-
-</body>
-</html>
+{% endblock %}
