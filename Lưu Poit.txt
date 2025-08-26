@@ -1,0 +1,10 @@
+## Quy trình làm việc từ bây giờ
+Từ giờ, mỗi khi bạn hoàn thành một chức năng mới, bạn chỉ cần lặp lại 2 lệnh:
+
+git add . (Chọn tất cả các thay đổi)
+
+git commit -m "Mô tả ngắn gọn về chức năng mới" (Tạo Save Point)
+
+
+git config --global user.email "dbpsportsvn@gmail.com"
+git config --global user.name "Cong Nguyen"

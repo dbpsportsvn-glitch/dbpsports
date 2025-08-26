@@ -5,6 +5,18 @@
     <title>Trang chủ - DBP Sports</title>
 </head>
 <body>
+    <nav>
+        {% if user.is_authenticated %}
+            <span>Chào, {{ user.username }}!</span>
+            <a href="{% url 'logout' %}">Đăng xuất</a>
+        {% else %}
+            <a href="{% url 'login' %}">Đăng nhập</a>
+            <a href="{% url 'register' %}">Đăng ký</a>
+        {% endif %}
+    </nav>
+
+    <hr>
+
     <h1>Danh sách các giải đấu</h1>
 
     <ul>

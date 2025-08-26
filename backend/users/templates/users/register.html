@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký tài khoản</title>
+</head>
+<body>
+    <h2>Tạo tài khoản mới</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Đăng ký</button>
+    </form>
+</body>
+</html>
