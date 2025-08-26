@@ -1,0 +1,70 @@
+## Tổng hợp Dự án: DBP Sports (Giai đoạn 1)
+Đây là bản tóm tắt luồng công việc và các thành phần chính của dự án website quản lý giải đấu bóng đá dbpsports, được xây dựng từ đầu cho đến ngày 26/08/2025.
+
+1. Môi trường & Cài đặt ban đầu
+Công cụ: Đã cài đặt thành công các công cụ lập trình cần thiết: Python, Visual Studio Code, và Git.
+
+Cấu trúc dự án: Tạo cấu trúc thư mục gốc dbpsports chứa hai phần chính là backend (cho Django) và frontend (chuẩn bị cho tương lai).
+
+Môi trường ảo (venv): Đã tạo và kích hoạt môi trường ảo venv bên trong thư mục backend để quản lý các thư viện Python một cách độc lập, tránh xung đột.
+
+2. Xây dựng Lõi Backend với Django
+Django Project & Apps:
+
+Khởi tạo một Project Django tên là dbpsports_core để chứa các file cấu hình chung.
+
+Tạo ra hai App riêng biệt để quản lý các chức năng khác nhau:
+
+tournaments: Xử lý mọi thứ liên quan đến giải đấu.
+
+users: Xử lý mọi thứ liên quan đến người dùng.
+
+Luồng hoạt động (URL, View, Template):
+
+Thiết lập hệ thống định tuyến URL, trong đó file urls.py chính của project sẽ include các file urls.py của từng app.
+
+Nắm vững quy trình cơ bản: Một URL sẽ gọi đến một hàm View (trong views.py), hàm View này sẽ xử lý logic và trả về một file Template (file .html).
+
+3. Quản lý Cơ sở dữ liệu
+Models:
+
+Định nghĩa Model Tournament trong file tournaments/models.py như một "bản thiết kế" cho dữ liệu giải đấu (bao gồm các trường name, start_date, end_date).
+
+Migrations:
+
+Thực hiện thành công quy trình makemigrations (tạo bản vẽ thi công) và migrate (xây dựng database) để tạo ra bảng dữ liệu trong file db.sqlite3.
+
+Trang Quản trị (Admin):
+
+Tạo một tài khoản quản trị viên tối cao (superuser).
+
+Đăng ký Model Tournament vào trang Admin (tournaments/admin.py) để có thể dễ dàng thêm, sửa, xóa các giải đấu thông qua giao diện web có sẵn.
+
+4. Hệ thống Người dùng (Đăng ký / Đăng nhập)
+Chức năng: Đã xây dựng hoàn chỉnh luồng xác thực người dùng bao gồm Đăng ký, Đăng nhập, và Đăng xuất.
+
+Công cụ của Django:
+
+Sử dụng UserCreationForm và AuthenticationForm có sẵn để tạo form một cách nhanh chóng.
+
+Sử dụng các hàm login, logout, authenticate để xử lý logic.
+
+Hiển thị động: Trang chủ đã có thể tự động hiển thị lời chào và link "Đăng xuất" nếu người dùng đã đăng nhập, hoặc link "Đăng nhập/Đăng ký" nếu chưa, thông qua cú pháp {% if user.is_authenticated %}.
+
+5. Giao diện & Thiết kế (Frontend)
+Template kế thừa: Tạo ra một file base.html chung chứa toàn bộ khung sườn (menu, footer...). Các trang con (home.html, login.html...) đều {% extends 'base.html' %} để tái sử dụng code và đảm bảo giao diện đồng nhất.
+
+Bootstrap: Tích hợp thành công CSS Framework Bootstrap để có một giao diện cơ bản, gọn gàng và responsive (thích ứng trên nhiều thiết bị).
+
+Crispy Forms: Sử dụng thư viện django-crispy-forms để tự động làm đẹp các form đăng ký/đăng nhập theo chuẩn của Bootstrap với thẻ {{ form|crispy }}.
+
+Static Files: Thiết lập thư mục static để chứa file custom.css tùy chỉnh (định dạng cho form nằm giữa trang) và khai báo đường dẫn STATICFILES_DIRS trong settings.py để Django có thể tìm thấy.
+
+6. Quản lý Phiên bản (Backup)
+Git: Đã khởi tạo Git cho toàn bộ dự án để theo dõi các thay đổi.
+
+.gitignore: Tạo file .gitignore để yêu cầu Git bỏ qua các file/thư mục không cần thiết như venv/ và db.sqlite3.
+
+Quy trình: Đã thực hành quy trình làm việc chuẩn: git add . để chọn thay đổi và git commit -m "lời nhắn" để tạo các "Save Point", lưu lại các cột mốc quan trọng của dự án.
+
+Lần tới, bạn chỉ cần đưa lại bản tóm tắt này, tôi sẽ ngay lập tức hiểu được bối cảnh và chúng ta có thể tiếp tục từ đúng nơi đã dừng lại.
