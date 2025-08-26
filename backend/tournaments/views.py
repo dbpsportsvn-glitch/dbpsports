@@ -14,3 +14,9 @@ def home(request):
     
     # 4. Gửi dữ liệu qua biến 'context'
     return render(request, 'tournaments/home.html', context)
+
+def livestream_view(request):
+    return render(request, 'tournaments/livestream.html')
+
+def shop_view(request):
+    return render(request, 'tournaments/shop.html')    
