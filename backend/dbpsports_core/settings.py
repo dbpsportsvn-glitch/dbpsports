@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin', # Phải nằm ở dòng đầu tiên
     'users',
     'tournaments',
     'django.contrib.admin',
@@ -131,3 +132,43 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+JAZZMIN_SETTINGS = {
+    "site_title": "DBP Sports Admin",
+    "site_header": "DBP Sports",
+    "site_brand": "DBP Sports",
+    "welcome_sign": "Chào mừng bạn đến với trang quản trị DBP Sports",
+    "copyright": "DBP Sports Ltd.",
+    "order_with_respect_to": ["tournaments", "tournaments.Tournament", "tournaments.Team", "tournaments.Player", "tournaments.Match", "users"],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "users.user": "fas fa-user",
+        "tournaments.Tournament": "fas fa-trophy",
+        "tournaments.Team": "fas fa-users",
+        "tournaments.Player": "fas fa-user-shield",
+        "tournaments.Match": "fas fa-futbol",
+    },
+    "topmenu_links": [
+        {"name": "Trang chủ", "url": "index", "permissions": ["auth.view_user"]},
+        {"name": "Xem trang web", "url": "/", "new_window": True},
+    ],
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark",
+    "no_navbar_border": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+}

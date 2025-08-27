@@ -32,3 +32,16 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.full_name} (#{self.jersey_number})"
+
+
+class Match(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
+    team1 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team1')
+    team2 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team2')
+    match_time = models.DateTimeField()
+    location = models.CharField(max_length=200, blank=True)
+    team1_score = models.PositiveIntegerField(null=True, blank=True)
+    team2_score = models.PositiveIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.team1.name} vs {self.team2.name} at {self.tournament.name}"
