@@ -182,3 +182,34 @@ def match_detail(request, pk):
         'team2_lineup': team2_lineup,
     }
     return render(request, 'tournaments/match_detail.html', context)   
+
+@login_required
+def manage_lineup(request, match_pk, team_pk):
+    match = get_object_or_404(Match, pk=match_pk)
+    team = get_object_or_404(Team, pk=team_pk)
+
+    # Kiểm tra quyền: chỉ đội trưởng của đội này mới được vào
+    if request.user != team.captain:
+        return redirect('home')
+
+    if request.method == 'POST':
+        for player in team.players.all():
+            status = request.POST.get(f'player_{player.pk}')
+            if status:
+                Lineup.objects.update_or_create(
+                    match=match,
+                    player=player,
+                    defaults={'team': team, 'status': status}
+                )
+        # Sau khi lưu, quay lại trang chi tiết trận đấu
+        return redirect('match_detail', pk=match.pk)
+
+    # Lấy thông tin đội hình đã có để hiển thị trạng thái đã chọn
+    existing_lineup = {lineup.player.pk: lineup.status for lineup in Lineup.objects.filter(match=match, team=team)}
+
+    context = {
+        'match': match,
+        'team': team,
+        'existing_lineup': existing_lineup
+    }
+    return render(request, 'tournaments/manage_lineup.html', context)    
