@@ -3,10 +3,33 @@
 {% block title %}Trang chủ - DBP Sports{% endblock %}
 
 {% block content %}
-    <h1>Danh sách các giải đấu</h1>
-    <ul class="list-group">
-        {% for tournament in tournaments_list %}
-            <li class="list-group-item">{{ tournament.name }} - Bắt đầu: {{ tournament.start_date }}</li>
-        {% endfor %}
-    </ul>
+    <div class="hero-section">
+        <h1 class="display-4">Sân Chơi Bóng Đá Đỉnh Cao</h1>
+        <p class="lead">Tổ chức, tham gia và theo dõi các giải đấu một cách dễ dàng.</p>
+        <a href="#" class="btn btn-primary btn-lg">Tìm hiểu thêm</a>
+    </div>
+
+    <h2 class="mb-4">Các giải đấu nổi bật</h2>
+    <div class="row">
+        {% if tournaments_list %}
+            {% for tournament in tournaments_list %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ tournament.name }}</h5>
+                            <p class="card-text">
+                                <strong>Bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }} <br>
+                                <strong>Kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}
+                            </p>
+                            <a href="#" class="btn btn-primary">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col">
+                <p>Chưa có giải đấu nào được tổ chức.</p>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

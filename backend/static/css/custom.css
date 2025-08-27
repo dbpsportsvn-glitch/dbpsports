@@ -1,11 +1,39 @@
 /* backend/static/css/custom.css */
 
 .form-container {
+    /* ... code cũ của bạn vẫn ở đây, không thay đổi ... */
     max-width: 500px;
-    margin: 50px auto; /* Căn giữa form */
+    margin: 50px auto;
     padding: 2rem;
     border: 1px solid #ddd;
     border-radius: 10px;
     background-color: #f9f9f9;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* === THAY THẾ KHỐI CODE DƯỚI ĐÂY === */
+.hero-section {
+    /* Thêm một lớp phủ màu đen mờ (rgba) lên trên ảnh nền */
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/hero-bg.jpg') no-repeat center center;
+    background-size: cover;
+    color: white;
+    padding: 100px 0;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    position: relative; /* Cần cho lớp phủ */
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    font-weight: bold;
+    /* Tăng độ đậm và rõ nét của bóng chữ */
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    margin-bottom: 30px;
+    /* Tăng độ đậm và rõ nét của bóng chữ */
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
 }

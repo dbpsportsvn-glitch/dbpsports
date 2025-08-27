@@ -1,0 +1,56 @@
+Chắc chắn rồi. Cập nhật lại lộ trình tổng hợp là một ý tưởng hay để chúng ta luôn nắm được bức tranh toàn cảnh của dự án.
+
+Dưới đây là bản cập nhật đầy đủ, bao gồm cả các phần mới nhất mà chúng ta đã hoàn thành.
+
+---
+### ## Tổng hợp Dự án: DBP Sports (Cập nhật ngày 27/08/2025)
+
+Đây là bản tóm tắt luồng công việc và các thành phần chính của dự án website quản lý giải đấu bóng đá `dbpsports`.
+
+#### **1. Môi trường & Cài đặt ban đầu**
+* **Công cụ:** Đã cài đặt thành công **Python**, **Visual Studio Code**, và **Git**.
+* **Cấu trúc dự án:** Tạo cấu trúc thư mục gốc `dbpsports` chứa `backend` (cho Django) và `frontend`.
+* **Môi trường ảo (venv):** Đã tạo và sử dụng `venv` bên trong thư mục `backend` để quản lý các thư viện.
+
+---
+#### **2. Xây dựng Lõi Backend với Django**
+* **Django Project & Apps:**
+    * Khởi tạo Project `dbpsports_core` chứa các file cấu hình chung.
+    * Tạo ra hai App riêng biệt: `tournaments` (quản lý giải đấu) và `users` (quản lý người dùng).
+* **Luồng hoạt động (URL, View, Template):**
+    * Nắm vững quy trình cơ bản: Một **URL** gọi đến một hàm **View**, hàm View xử lý logic và trả về một **Template** (file `.html`).
+
+---
+#### **3. Quản lý Cơ sở dữ liệu**
+* **Models:**
+    * Định nghĩa Model `Tournament` trong `tournaments/models.py` như một "bản thiết kế" cho dữ liệu giải đấu.
+* **Migrations:**
+    * Thực hiện thành công quy trình `makemigrations` và `migrate` để tạo bảng dữ liệu trong file `db.sqlite3`.
+* **Trang Quản trị (Admin):**
+    * Tạo **superuser** và đăng ký Model `Tournament` vào trang Admin để quản lý dữ liệu.
+
+---
+#### **4. Hệ thống Người dùng (Đăng ký / Đăng nhập)**
+* **Chức năng:** Đã xây dựng hoàn chỉnh luồng xác thực người dùng bao gồm **Đăng ký**, **Đăng nhập**, và **Đăng xuất**.
+* **Hiển thị động:** Trang chủ có thể tự động hiển thị thông tin khác nhau tùy thuộc vào trạng thái đăng nhập của người dùng (`{% if user.is_authenticated %}`).
+
+---
+#### **5. Giao diện & Thiết kế (Frontend)**
+* **Template kế thừa:** Tạo ra một file `base.html` chung làm khung sườn cho toàn bộ trang web.
+* **Bootstrap:** Tích hợp thành công CSS Framework **Bootstrap** để có giao diện cơ bản, gọn gàng.
+* **Crispy Forms:** Sử dụng thư viện `django-crispy-forms` để tự động làm đẹp các form.
+* **Static Files:** Thiết lập thư mục `static` cho file `custom.css` và khai báo `STATICFILES_DIRS` trong `settings.py`.
+* **Việt hóa (Localization):** Chuyển ngôn ngữ và múi giờ mặc định của Django sang tiếng Việt (`LANGUAGE_CODE = 'vi'`, `TIME_ZONE = 'Asia/Ho_Chi_Minh'`).
+
+---
+#### **6. Quản lý Phiên bản (Backup)**
+* **Git:** Đã khởi tạo **Git** cho toàn bộ dự án để theo dõi các thay đổi.
+* **.gitignore:** Tạo file `.gitignore` để yêu cầu Git bỏ qua các file/thư mục không cần thiết.
+* **Quy trình:** Đã thực hành quy trình làm việc chuẩn: `git add .` -> `git commit -m "lời nhắn"` để tạo các "Save Point".
+
+---
+#### **7. Xây dựng Bộ khung Trang web**
+* **Nâng cấp `base.html`:** Cập nhật file `base.html` với một thanh điều hướng (Navbar) và chân trang (Footer) hoàn chỉnh.
+* **Trang "giữ chỗ":** Đã tạo các view, template, và URL trống cho các trang chức năng trong tương lai như "Livestream" và "Shop".
+
+Bây giờ chúng ta đã sẵn sàng để tiếp tục xây dựng các tính năng mới.

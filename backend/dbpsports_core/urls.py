@@ -2,10 +2,16 @@
 
 from django.contrib import admin
 from django.urls import path, include
+# Thêm 2 dòng import dưới đây
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
-    # Sửa dòng dưới đây
-    path('', include('tournaments.urls')), # Dòng này sẽ quản lý tất cả các URL của app tournaments
+    path('', include('tournaments.urls')),
 ]
+
+# Thêm đoạn này vào cuối file
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
