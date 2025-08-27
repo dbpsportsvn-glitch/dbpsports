@@ -1,7 +1,7 @@
 # tournaments/admin.py
 
 from django.contrib import admin
-from .models import Tournament, Team, Player, Match
+from .models import Tournament, Team, Player, Match, Lineup
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
@@ -25,3 +25,8 @@ class PlayerAdmin(admin.ModelAdmin):
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'tournament', 'match_time', 'location')
     list_filter = ('tournament',)
+
+@admin.register(Lineup)
+class LineupAdmin(admin.ModelAdmin):
+    list_display = ('player', 'team', 'match', 'status')
+    list_filter = ('match__tournament', 'team', 'status')

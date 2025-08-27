@@ -45,3 +45,21 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.team1.name} vs {self.team2.name} at {self.tournament.name}"
+
+class Lineup(models.Model):
+    STATUS_CHOICES = [
+        ('STARTER', 'Đá chính'),
+        ('SUBSTITUTE', 'Dự bị'),
+    ]
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='lineups')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='lineups')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='lineups')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    class Meta:
+        # Đảm bảo một cầu thủ không thể được đăng ký hai lần cho cùng một trận đấu
+        unique_together = ('match', 'player')
+
+    def __str__(self):
+        return f"{self.player.full_name} ({self.status}) for {self.match}"        
