@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
-
-{% block title %}{{ team.name }}{% endblock %}
+{% load crispy_forms_tags %} {% block title %}{{ team.name }}{% endblock %}
 
 {% block content %}
     <div class="mt-4">
@@ -10,6 +9,21 @@
             <p><strong>Huấn luyện viên:</strong> {{ team.coach_name }}</p>
         {% endif %}
         <hr>
+
+        {% if user == team.captain %}
+          <div class="card my-4">
+            <div class="card-header">
+              <h4>Thêm cầu thủ mới</h4>
+            </div>
+            <div class="card-body">
+              <form method="post">
+                {% csrf_token %}
+                {{ player_form|crispy }}
+                <button type="submit" class="btn btn-primary mt-3">Thêm vào đội hình</button>
+              </form>
+            </div>
+          </div>
+        {% endif %}
 
         <h3 class="mt-4">Danh sách cầu thủ</h3>
         <ul class="list-group">
