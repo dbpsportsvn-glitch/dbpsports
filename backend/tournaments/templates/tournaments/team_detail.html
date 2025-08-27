@@ -1,47 +1,70 @@
 {% extends 'base.html' %}
-{% load crispy_forms_tags %} {% block title %}{{ team.name }}{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ team.name }}{% endblock %}
 
 {% block content %}
-    <div class="mt-4">
-        <h1>Đội: {{ team.name }}</h1>
-        <p class="lead">Thuộc giải đấu: {{ team.tournament.name }}</p>
-        {% if team.coach_name %}
-            <p><strong>Huấn luyện viên:</strong> {{ team.coach_name }}</p>
-        {% endif %}
-        <hr>
-
-        {% if user == team.captain %}
-          <div class="card my-4">
-            <div class="card-header">
-              <h4>Thêm cầu thủ mới</h4>
-            </div>
-            <div class="card-body">
-              <form method="post">
-                {% csrf_token %}
-                {{ player_form|crispy }}
-                <button type="submit" class="btn btn-primary mt-3">Thêm vào đội hình</button>
-              </form>
-            </div>
-          </div>
-        {% endif %}
-
-        <h3 class="mt-4">Danh sách cầu thủ</h3>
-        <ul class="list-group">
-            {% for player in team.players.all %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>
-                        <strong>#{{ player.jersey_number }}</strong> - {{ player.full_name }} ({{ player.position }})
-                    </span>
+    <div class="row mt-4">
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Thông tin Đội bóng</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ team.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Thuộc giải đấu: {{ team.tournament.name }}</h6>
+                    <p class="card-text">
+                        {% if team.coach_name %}
+                            <strong>HLV:</strong> {{ team.coach_name }}
+                        {% endif %}
+                        <br>
+                        <strong>Đội trưởng:</strong> {{ team.captain.username }}
+                    </p>
                     {% if user == team.captain %}
-                        <div>
-                            <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
-                            <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
-                        </div>
+                        <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning">Sửa thông tin đội</a>
                     {% endif %}
-                </li>
-            {% empty %}
-                <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
-            {% endfor %}
-        </ul>
+                </div>
+            </div>
+
+            {% if user == team.captain %}
+              <div class="card my-4">
+                <div class="card-header">
+                  <h5>Thêm cầu thủ mới</h5>
+                </div>
+                <div class="card-body">
+                  <form method="post">
+                    {% csrf_token %}
+                    {{ player_form|crispy }}
+                    <button type="submit" class="btn btn-primary mt-3 w-100">Thêm vào đội hình</button>
+                  </form>
+                </div>
+              </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Đội hình hiện tại</h4>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for player in team.players.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>#{{ player.jersey_number }}</strong> - {{ player.full_name }} ({{ player.position }})
+                            </span>
+                            {% if user == team.captain %}
+                                <div>
+                                    <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                    <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
     </div>
 {% endblock %}

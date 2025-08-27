@@ -117,3 +117,27 @@ def update_player(request, pk):
         'player': player
     }
     return render(request, 'tournaments/update_player.html', context)    
+
+@login_required
+def update_team(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+
+    # Chỉ đội trưởng mới có quyền sửa
+    if request.user != team.captain:
+        return redirect('home')
+
+    if request.method == 'POST':
+        # Dùng lại TeamCreationForm, nhưng thêm 'instance' để cập nhật
+        form = TeamCreationForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            return redirect('team_detail', pk=team.pk)
+    else:
+        # Hiển thị form với thông tin có sẵn của đội
+        form = TeamCreationForm(instance=team)
+
+    context = {
+        'form': form,
+        'team': team
+    }
+    return render(request, 'tournaments/update_team.html', context)    
