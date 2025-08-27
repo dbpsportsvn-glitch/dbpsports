@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="form-container">
+    <h3 class="mb-4">Xác nhận Xóa</h3>
+    <p>Bạn có chắc chắn muốn xóa cầu thủ <strong>{{ player.full_name }}</strong> khỏi đội <strong>{{ team.name }}</strong> không?</p>
+    <p>Hành động này không thể hoàn tác.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary">Hủy</a>
+        <button type="submit" class="btn btn-danger">Vâng, tôi chắc chắn</button>
+    </form>
+</div>
+{% endblock %}

@@ -73,4 +73,24 @@ def create_team(request, tournament_pk):
         'form': form,
         'tournament': tournament
     }
-    return render(request, 'tournaments/create_team.html', context)    
+    return render(request, 'tournaments/create_team.html', context)   
+
+@login_required
+def delete_player(request, pk):
+    player = get_object_or_404(Player, pk=pk)
+    team = player.team
+
+    # Chỉ đội trưởng của đội mới có quyền xóa cầu thủ
+    if request.user != team.captain:
+        # (Trong tương lai, chúng ta sẽ hiển thị trang báo lỗi thay vì redirect)
+        return redirect('home')
+
+    if request.method == 'POST':
+        player.delete()
+        return redirect('team_detail', pk=team.pk) # Chuyển về trang chi tiết đội
+
+    context = {
+        'player': player,
+        'team': team,
+    }
+    return render(request, 'tournaments/player_confirm_delete.html', context)     

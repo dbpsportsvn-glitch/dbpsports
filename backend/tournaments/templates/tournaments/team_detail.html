@@ -28,8 +28,16 @@
         <h3 class="mt-4">Danh sách cầu thủ</h3>
         <ul class="list-group">
             {% for player in team.players.all %}
-                <li class="list-group-item">
-                    <strong>#{{ player.jersey_number }}</strong> - {{ player.full_name }} ({{ player.position }})
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong>#{{ player.jersey_number }}</strong> - {{ player.full_name }} ({{ player.position }})
+                    </span>
+                    {% if user == team.captain %}
+                        <div>
+                            <a href="#" class="btn btn-warning btn-sm">Sửa</a>
+                            <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+                        </div>
+                    {% endif %}
                 </li>
             {% empty %}
                 <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
