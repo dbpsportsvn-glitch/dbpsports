@@ -13,7 +13,30 @@
                 <p><strong>Ngày kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
 
                 <h3 class="mt-4">Các đội tham gia</h3>
-                <p><em>(Tính năng này sẽ sớm được cập nhật)</em></p>
+                <h3 class="mt-4">Các đội tham gia</h3>
+<div class="row">
+    {% if tournament.teams.all %}
+        {% for team in tournament.teams.all %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ team.name }}</h5>
+                        <p class="card-text">
+                            {% if team.coach_name %}
+                                <strong>HLV:</strong> {{ team.coach_name }}
+                            {% endif %}
+                        </p>
+                        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary btn-sm">Xem chi tiết đội</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col">
+            <p>Chưa có đội nào đăng ký cho giải đấu này.</p>
+        </div>
+    {% endif %}
+</div>
             </div>
         </div>
     </div>

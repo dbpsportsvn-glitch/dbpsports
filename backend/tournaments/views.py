@@ -1,7 +1,7 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404
-from .models import Tournament  # 1. Import "bản thiết kế" Tournament
+from .models import Tournament, Team, Player # Đảm bảo có Team và Player ở đây
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -27,3 +27,10 @@ def tournament_detail(request, pk):
         'tournament': tournament
     }
     return render(request, 'tournaments/tournament_detail.html', context)        
+
+def team_detail(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    context = {
+        'team': team
+    }
+    return render(request, 'tournaments/team_detail.html', context)    

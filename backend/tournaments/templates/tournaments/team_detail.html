@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ team.name }}{% endblock %}
+
+{% block content %}
+    <div class="mt-4">
+        <h1>Đội: {{ team.name }}</h1>
+        <p class="lead">Thuộc giải đấu: {{ team.tournament.name }}</p>
+        {% if team.coach_name %}
+            <p><strong>Huấn luyện viên:</strong> {{ team.coach_name }}</p>
+        {% endif %}
+        <hr>
+
+        <h3 class="mt-4">Danh sách cầu thủ</h3>
+        <ul class="list-group">
+            {% for player in team.players.all %}
+                <li class="list-group-item">
+                    <strong>#{{ player.jersey_number }}</strong> - {{ player.full_name }} ({{ player.position }})
+                </li>
+            {% empty %}
+                <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
