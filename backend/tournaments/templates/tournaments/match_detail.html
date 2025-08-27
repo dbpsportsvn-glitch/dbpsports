@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết Trận đấu{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header text-center">
+            <h3>{{ match.tournament.name }}</h3>
+            <p>{{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}</p>
+        </div>
+        <div class="card-body">
+            <div class="row text-center align-items-center">
+                <div class="col-5">
+                    <h2>{{ match.team1.name }}</h2>
+                    </div>
+
+                <div class="col-2">
+                    {% if match.team1_score is not None and match.team2_score is not None %}
+                        <h1 class="display-3">{{ match.team1_score }} - {{ match.team2_score }}</h1>
+                    {% else %}
+                        <h1 class="display-3">VS</h1>
+                    {% endif %}
+                </div>
+
+                <div class="col-5">
+                    <h2>{{ match.team2.name }}</h2>
+                    </div>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            Đây là nơi đội trưởng sẽ đăng ký đội hình thi đấu.
+        </div>
+    </div>
+</div>
+{% endblock %}

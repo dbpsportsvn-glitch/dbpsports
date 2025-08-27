@@ -1,7 +1,7 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Tournament, Team, Player # Đảm bảo có Team và Player ở đây
+from .models import Tournament, Team, Player, Match
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 
@@ -145,3 +145,10 @@ def update_team(request, pk):
         'team': team
     }
     return render(request, 'tournaments/update_team.html', context)    
+
+def match_detail(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    context = {
+        'match': match
+    }
+    return render(request, 'tournaments/match_detail.html', context)    

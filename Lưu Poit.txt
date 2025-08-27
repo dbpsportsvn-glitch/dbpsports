@@ -18,7 +18,7 @@ git commit -m "Mô tả ngắn gọn về chức năng mới" (Tạo Save Point)
 
 
 git add .
-git commit -m "Thêm chức năng xoá cầu thủ"
+git commit -m "Cập nhật trang ADmin"
 
 
 git config --global user.email "dbpsportsvn@gmail.com"

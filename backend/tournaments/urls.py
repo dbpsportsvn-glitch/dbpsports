@@ -20,4 +20,7 @@ urlpatterns = [
     # --- URL liên quan đến Cầu thủ (Player) ---
     path('player/<int:pk>/update/', views.update_player, name='update_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),
+
+    # --- URL liên quan đến Trận đấu (Match) ---
+    path('match/<int:pk>/', views.match_detail, name='match_detail'),
 ]
