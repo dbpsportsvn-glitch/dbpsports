@@ -25,8 +25,12 @@ def shop_view(request):
 
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
+    # Lấy tất cả các trận đấu thuộc giải đấu này, sắp xếp theo thời gian
+    matches = tournament.matches.all().order_by('match_time')
+
     context = {
-        'tournament': tournament
+        'tournament': tournament,
+        'matches': matches, # Thêm danh sách trận đấu vào context
     }
     return render(request, 'tournaments/tournament_detail.html', context)        
 
