@@ -173,3 +173,5 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_flat_style": False,
 }
 LOGIN_URL = 'login'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

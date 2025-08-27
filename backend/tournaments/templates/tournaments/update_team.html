@@ -6,7 +6,7 @@
     <h3 class="mb-4">Chỉnh sửa thông tin Đội</h3>
     <p><strong>Đội:</strong> {{ team.name }}</p>
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary mt-3">Lưu thay đổi</button>

@@ -5,6 +5,11 @@
 {% block content %}
 <div class="mt-4">
     <h1>{{ tournament.name }}</h1>
+
+    {% if tournament.image %}
+        <img src="{{ tournament.image.url }}" alt="{{ tournament.name }} banner" class="tournament-banner-img mb-4">
+    {% endif %}   
+     
     <p class="lead">Thông tin chi tiết về giải đấu</p>
     <p><strong>Bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }} | <strong>Kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
 

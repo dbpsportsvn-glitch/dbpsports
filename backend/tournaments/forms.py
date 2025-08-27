@@ -5,10 +5,11 @@ from .models import Team, Player # Thêm Player vào đây
 class TeamCreationForm(forms.ModelForm):
     class Meta:
         model = Team
-        fields = ['name', 'coach_name']
+        fields = ['name', 'coach_name', 'logo'] # Thêm 'logo' vào đây
         labels = {
             'name': 'Tên đội bóng',
             'coach_name': 'Tên huấn luyện viên (không bắt buộc)',
+            'logo': 'Logo đội bóng',
         }
 
 class PlayerCreationForm(forms.ModelForm):

@@ -37,3 +37,49 @@
     /* Tăng độ đậm và rõ nét của bóng chữ */
     text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
 }
+
+/* backend/static/css/custom.css */
+
+/* Định dạng cho bảng tỉ số */
+.scoreboard-card .card-header h3 {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.team-logo {
+    max-height: 100px;
+    max-width: 100px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Định dạng chung cho các tiêu đề khu vực */
+.section-title {
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Định dạng cho khu vực đội hình */
+.lineup-section .card-header {
+    position: relative; /* Cần cho việc định vị nút In */
+}
+
+/* Nút In được đặt ở góc trên bên phải */
+.print-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+}
+
+/* Định dạng cho ảnh banner giải đấu */
+.tournament-banner-img {
+    max-width: 100%; /* Đảm bảo ảnh không vượt quá chiều rộng của phần chứa nó */
+    height: auto;   /* Giữ nguyên tỉ lệ khung hình */
+    display: block; /* Loại bỏ khoảng trắng thừa dưới ảnh */
+    margin: 0 auto; /* Căn giữa ảnh */
+    border-radius: 8px; /* Bo tròn nhẹ góc ảnh */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Thêm đổ bóng nhẹ */
+}

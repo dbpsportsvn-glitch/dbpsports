@@ -125,21 +125,21 @@ def update_player(request, pk):
 @login_required
 def update_team(request, pk):
     team = get_object_or_404(Team, pk=pk)
-
-    # Chỉ đội trưởng mới có quyền sửa
+    
+    # Chỉ đội-trưởng mới có quyền sửa
     if request.user != team.captain:
         return redirect('home')
 
     if request.method == 'POST':
-        # Dùng lại TeamCreationForm, nhưng thêm 'instance' để cập nhật
-        form = TeamCreationForm(request.POST, instance=team)
+        # Thêm request.FILES vào đây
+        form = TeamCreationForm(request.POST, request.FILES, instance=team)
         if form.is_valid():
             form.save()
             return redirect('team_detail', pk=team.pk)
     else:
-        # Hiển thị form với thông tin có sẵn của đội
+        # Hiển-thị form với thông-tin có sẵn của đội
         form = TeamCreationForm(instance=team)
-
+        
     context = {
         'form': form,
         'team': team
@@ -213,3 +213,15 @@ def manage_lineup(request, match_pk, team_pk):
         'existing_lineup': existing_lineup
     }
     return render(request, 'tournaments/manage_lineup.html', context)    
+
+def match_print_view(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    team1_lineup = Lineup.objects.filter(match=match, team=match.team1)
+    team2_lineup = Lineup.objects.filter(match=match, team=match.team2)
+
+    context = {
+        'match': match,
+        'team1_lineup': team1_lineup,
+        'team2_lineup': team2_lineup,
+    }
+    return render(request, 'tournaments/match_print.html', context)    

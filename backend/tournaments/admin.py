@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from .models import Tournament, Team, Player, Match, Lineup
+from django.utils.html import format_html
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
@@ -10,10 +11,15 @@ class TournamentAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament', 'captain', 'coach_name')
+    list_display = ('name', 'tournament', 'captain', 'display_logo')
     list_filter = ('tournament',)
-    # Đưa trường tìm được (username) lên trước, sau đó thêm các trường khác
     search_fields = ('captain__username', 'name', 'coach_name',)
+
+    def display_logo(self, obj):
+        if obj.logo:
+            return format_html(f'<img src="{obj.logo.url}" width="40" height="40" />')
+        return "No Logo"
+    display_logo.short_description = 'Logo'
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):

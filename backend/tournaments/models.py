@@ -19,6 +19,7 @@ class Team(models.Model):
     coach_name = models.CharField(max_length=100, blank=True)
     # Thêm dòng dưới đây để lưu lại ai là đội trưởng
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
+    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
 
     def __str__(self):
         return self.name

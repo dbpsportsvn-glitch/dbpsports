@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông tin Trận đấu: {{ match.team1.name }} vs {{ match.team2.name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
+        .teams { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .team-column { width: 48%; }
+        h1, h2, h3 { margin: 0; padding: 0; }
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; margin-bottom: 10px; }
+        h3 { font-size: 16px; background-color: #eee; padding: 5px; margin-top: 15px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px 0; border-bottom: 1px dotted #ccc; }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="header">
+        <h1>{{ match.tournament.name }}</h1>
+        <p>{{ match.team1.name }} vs {{ match.team2.name }}</p>
+        <p>{{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}</p>
+    </div>
+
+    <div class="teams">
+        <div class="team-column">
+            <h2>{{ match.team1.name }}</h2>
+            <h3>Đá chính</h3>
+            <ul>
+                {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'STARTER' %}
+                    <li>#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                {% endif %}{% endfor %}
+            </ul>
+            <h3>Dự bị</h3>
+            <ul>
+                {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
+                    <li>#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                {% endif %}{% endfor %}
+            </ul>
+        </div>
+
+        <div class="team-column">
+            <h2>{{ match.team2.name }}</h2>
+            <h3>Đá chính</h3>
+            <ul>
+                {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'STARTER' %}
+                    <li>#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                {% endif %}{% endfor %}
+            </ul>
+            <h3>Dự bị</h3>
+            <ul>
+                {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
+                    <li>#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                {% endif %}{% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
