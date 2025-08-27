@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block content %}
+    <div class="mt-4">
+        <h1>{{ tournament.name }}</h1>
+        <p class="lead">Thông tin chi tiết về giải đấu</p>
+        <hr>
+        <div class="row">
+            <div class="col-md-8">
+                <p><strong>Ngày bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }}</p>
+                <p><strong>Ngày kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
+
+                <h3 class="mt-4">Các đội tham gia</h3>
+                <p><em>(Tính năng này sẽ sớm được cập nhật)</em></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

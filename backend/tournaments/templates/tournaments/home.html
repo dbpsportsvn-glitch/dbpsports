@@ -21,7 +21,7 @@
                                 <strong>Bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }} <br>
                                 <strong>Kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}
                             </p>
-                            <a href="#" class="btn btn-primary">Xem chi tiết</a>
+                            <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary">Xem chi tiết</a>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 # tournaments/views.py
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .models import Tournament  # 1. Import "bản thiết kế" Tournament
 
 def home(request):
@@ -19,4 +19,11 @@ def livestream_view(request):
     return render(request, 'tournaments/livestream.html')
 
 def shop_view(request):
-    return render(request, 'tournaments/shop.html')    
+    return render(request, 'tournaments/shop.html')
+
+def tournament_detail(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    context = {
+        'tournament': tournament
+    }
+    return render(request, 'tournaments/tournament_detail.html', context)        
