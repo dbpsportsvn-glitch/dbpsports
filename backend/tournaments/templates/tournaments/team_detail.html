@@ -34,7 +34,7 @@
                     </span>
                     {% if user == team.captain %}
                         <div>
-                            <a href="#" class="btn btn-warning btn-sm">Sửa</a>
+                            <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
                             <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
                         </div>
                     {% endif %}

@@ -94,3 +94,26 @@ def delete_player(request, pk):
         'team': team,
     }
     return render(request, 'tournaments/player_confirm_delete.html', context)     
+
+@login_required
+def update_player(request, pk):
+    player = get_object_or_404(Player, pk=pk)
+    team = player.team
+
+    # Chỉ đội trưởng của đội mới có quyền sửa
+    if request.user != team.captain:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = PlayerCreationForm(request.POST, instance=player)
+        if form.is_valid():
+            form.save()
+            return redirect('team_detail', pk=team.pk)
+    else:
+        form = PlayerCreationForm(instance=player)
+
+    context = {
+        'form': form,
+        'player': player
+    }
+    return render(request, 'tournaments/update_player.html', context)    
