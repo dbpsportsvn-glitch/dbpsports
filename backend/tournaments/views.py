@@ -1,7 +1,7 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Tournament, Team, Player, Match
+from .models import Tournament, Team, Player, Match, Lineup
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 
@@ -146,9 +146,39 @@ def update_team(request, pk):
     }
     return render(request, 'tournaments/update_team.html', context)    
 
+
 def match_detail(request, pk):
     match = get_object_or_404(Match, pk=pk)
+
+    # Xác định xem người dùng hiện tại có phải đội trưởng không
+    captain_team = None
+    if request.user.is_authenticated:
+        if match.team1.captain == request.user:
+            captain_team = match.team1
+        elif match.team2.captain == request.user:
+            captain_team = match.team2
+
+    # Xử lý khi đội trưởng gửi đội hình (submit form)
+    if request.method == 'POST' and captain_team:
+        for player in captain_team.players.all():
+            status = request.POST.get(f'player_{player.pk}')
+            if status:
+                # Dùng update_or_create để tạo mới hoặc cập nhật nếu đã tồn tại
+                Lineup.objects.update_or_create(
+                    match=match,
+                    player=player,
+                    defaults={'team': captain_team, 'status': status}
+                )
+        return redirect('match_detail', pk=match.pk)
+
+    # Lấy đội hình đã được đăng ký để hiển thị
+    team1_lineup = Lineup.objects.filter(match=match, team=match.team1)
+    team2_lineup = Lineup.objects.filter(match=match, team=match.team2)
+
     context = {
-        'match': match
+        'match': match,
+        'captain_team': captain_team,
+        'team1_lineup': team1_lineup,
+        'team2_lineup': team2_lineup,
     }
-    return render(request, 'tournaments/match_detail.html', context)    
+    return render(request, 'tournaments/match_detail.html', context)   
