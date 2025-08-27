@@ -2,6 +2,8 @@
 
 from django.shortcuts import render, get_object_or_404
 from .models import Tournament, Team, Player # Đảm bảo có Team và Player ở đây
+from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
+from .forms import TeamCreationForm # Import form vừa tạo
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -34,3 +36,25 @@ def team_detail(request, pk):
         'team': team
     }
     return render(request, 'tournaments/team_detail.html', context)    
+
+# tournaments/views.py
+@login_required # Yêu cầu người dùng phải đăng nhập để truy cập view này
+def create_team(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if request.method == 'POST':
+        form = TeamCreationForm(request.POST)
+        if form.is_valid():
+            team = form.save(commit=False)
+            team.tournament = tournament # Gán đội vào giải đấu này
+            team.captain = request.user   # Gán người dùng hiện tại làm đội trưởng
+            team.save()
+            # Sau khi tạo đội thành công, chuyển đến trang chi tiết của đội đó
+            return redirect('team_detail', pk=team.pk) 
+    else:
+        form = TeamCreationForm()
+
+    context = {
+        'form': form,
+        'tournament': tournament
+    }
+    return render(request, 'tournaments/create_team.html', context)    

@@ -7,6 +7,7 @@
         <h1>{{ tournament.name }}</h1>
         <p class="lead">Thông tin chi tiết về giải đấu</p>
         <hr>
+        <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg mb-4">Đăng ký tham gia giải đấu</a>
         <div class="row">
             <div class="col-md-8">
                 <p><strong>Ngày bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }}</p>

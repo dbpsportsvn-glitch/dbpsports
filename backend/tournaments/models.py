@@ -1,6 +1,7 @@
 # tournaments/models.py
 
 from django.db import models
+from django.contrib.auth.models import User # <-- Thêm dòng import này
 
 class Tournament(models.Model):
     name = models.CharField(max_length=200)
@@ -13,10 +14,11 @@ class Tournament(models.Model):
 # === THÊM HAI CLASS DƯỚI ĐÂY ===
 
 class Team(models.Model):
-    # Kết nối với giải đấu: một giải có nhiều đội
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True)
+    # Thêm dòng dưới đây để lưu lại ai là đội trưởng
+    captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
 
     def __str__(self):
         return self.name
