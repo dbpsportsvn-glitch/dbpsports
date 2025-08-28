@@ -20,22 +20,35 @@
     .chip{display:inline-block;padding:.15rem .5rem;border-radius:9999px;background:var(--bs-light);font-size:.75rem;margin-right:.4rem}
   </style>
 
-  <div class="sticky-tabs">
-    <ul class="nav nav-pills gap-2 tour-tabs" id="tournamentTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">🏁 Tổng quan</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">👥 Các đội</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">📅 Lịch thi đấu</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" type="button" role="tab">🏆 Bảng xếp hạng</button>
-      </li>
-    </ul>
-  </div>
+<div class="sticky-tabs d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <ul class="nav nav-pills gap-2 tour-tabs" id="tournamentTab" role="tablist">
+    <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
+    <li class="nav-item"><button class="nav-link" id="teams-tab"    data-bs-toggle="tab" data-bs-target="#teams"    type="button">👥 Các đội</button></li>
+    <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
+    <li class="nav-item"><button class="nav-link" id="standings-tab"data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
+  </ul>
+
+  <button id="print-all-btn"
+          class="btn btn-outline-secondary btn-sm no-print d-none"
+          onclick="printTab('schedule-all', '{{ tournament.name }} - Lịch thi đấu')">
+    🖨️ In
+  </button>
+
+</div>
+<script>
+(function () {
+  const btn = document.getElementById('print-all-btn');
+  function updatePrintBtn(e){
+    const target = e ? e.target.getAttribute('data-bs-target') : (document.querySelector('#tournamentTab .nav-link.active')?.getAttribute('data-bs-target') || '');
+    btn.classList.toggle('d-none', target !== '#schedule');
+  }
+  document.querySelectorAll('#tournamentTab [data-bs-toggle="tab"]').forEach(el=>{
+    el.addEventListener('shown.bs.tab', updatePrintBtn);
+  });
+  updatePrintBtn(); // chạy lúc tải trang
+})();
+</script>
+
 
   <div class="tab-content" id="tournamentTabContent">
     <!-- Tổng quan -->
@@ -77,14 +90,64 @@
 
     <!-- Lịch thi đấu -->
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
-    {% with all_matches=tournament.matches.all %}
+    <div id="schedule-all">
+        {% with all_matches=tournament.matches.all %}
 
         {# --- Vòng bảng theo từng Bảng --- #}
         {% for g in tournament.groups.all %}
-        <h5 class="section-title mt-3">{{ g.name }}</h5>
+            <h5 class="section-title mt-3">{{ g.name }}</h5>
+            <div class="row row-cols-1 g-3">
+            {% for m in all_matches %}
+                {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
+                <div class="col">
+                    <a href="{% url 'match_detail' pk=m.pk %}" class="text-decoration-none text-reset">
+                    <div class="card match-card">
+                        <div class="card-body mc">
+                        <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
+
+                        <div class="mc-center">
+                            <div class="d-flex align-items-center">
+                            {% if m.team1.logo %}
+                                <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
+                                <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                            {% endif %}
+                            <span class="mc-name">{{ m.team1.name }}</span>
+                            </div>
+
+                            <span class="fw-bold px-2">vs</span>
+
+                            <div class="d-flex align-items-center">
+                            <span class="mc-name">{{ m.team2.name }}</span>
+                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                            {% if m.team2.logo %}
+                                <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
+                            {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mc-right">
+                            <span class="mc-score">{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</span>
+                            <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
+                            {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
+                        </div>
+                        </div>
+                    </div>
+                    </a>
+                </div>
+                {% endif %}
+            {% empty %}
+                <div class="col"><p class="text-muted">Chưa có trận.</p></div>
+            {% endfor %}
+            </div>
+        {% empty %}
+            <p class="text-muted">Chưa có bảng đấu.</p>
+        {% endfor %}
+
+        {# --- Vòng loại trực tiếp --- #}
+        <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
         <div class="row row-cols-1 g-3">
             {% for m in all_matches %}
-            {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
+            {% if m.match_round == 'KNOCKOUT' %}
                 <div class="col">
                 <a href="{% url 'match_detail' pk=m.pk %}" class="text-decoration-none text-reset">
                     <div class="card match-card">
@@ -125,57 +188,9 @@
             <div class="col"><p class="text-muted">Chưa có trận.</p></div>
             {% endfor %}
         </div>
-        {% empty %}
-        <p class="text-muted">Chưa có bảng đấu.</p>
-        {% endfor %}
 
-        {# --- Vòng loại trực tiếp --- #}
-        <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
-        <div class="row row-cols-1 g-3">
-        {% for m in all_matches %}
-            {% if m.match_round == 'KNOCKOUT' %}
-            <div class="col">
-                <a href="{% url 'match_detail' pk=m.pk %}" class="text-decoration-none text-reset">
-                <div class="card match-card">
-                    <div class="card-body mc">
-                    <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
-
-                    <div class="mc-center">
-                    <div class="d-flex align-items-center">
-                        {% if m.team1.logo %}
-                        <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
-                        <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                        {% endif %}
-                        <span class="mc-name">{{ m.team1.name }}</span>
-                    </div>
-
-                    <span class="fw-bold px-2">vs</span>
-
-                    <div class="d-flex align-items-center">
-                        <span class="mc-name">{{ m.team2.name }}</span>
-                        <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                        {% if m.team2.logo %}
-                        <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
-                        {% endif %}
-                    </div>
-                    </div>
-
-                    <div class="mc-right">
-                        <span class="mc-score">{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</span>
-                        <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
-                        {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
-                    </div>
-                    </div>
-                </div>
-                </a>
-            </div>
-            {% endif %}
-        {% empty %}
-            <div class="col"><p class="text-muted">Chưa có trận.</p></div>
-        {% endfor %}
-        </div>
-
-    {% endwith %}
+        {% endwith %}
+    </div>
     </div>
 
     <!-- BXH -->
@@ -201,4 +216,44 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+
+<script>
+function printTab(contentId, title){
+  const node = document.getElementById(contentId);
+  if(!node) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position='fixed';
+  iframe.style.right='0';
+  iframe.style.bottom='0';
+  iframe.style.width='0';
+  iframe.style.height='0';
+  iframe.style.border='0';
+  document.body.appendChild(iframe);
+
+  const w = iframe.contentWindow;
+  const d = w.document;
+  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"],style'))
+                      .map(el => el.outerHTML).join('');
+
+  d.open();
+  d.write(`<!doctype html><html><head><meta charset="utf-8">
+    <title>${title}</title>${styles}
+    <style>@media print {.no-print{display:none!important}} body{padding:16px}</style>
+  </head><body>
+    <h3 style="margin-bottom:12px;">${title}</h3>
+    ${node.innerHTML}
+  </body></html>`);
+  d.close();
+
+  // chờ DOM trong iframe render rồi in
+  setTimeout(function(){
+    w.focus();
+    w.print();
+    document.body.removeChild(iframe);
+  }, 100);
+}
+</script>
+
+
 {% endblock %}
