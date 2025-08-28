@@ -7,7 +7,7 @@ from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 from django.http import HttpResponseForbidden
 from django.db import transaction
 from django.urls import reverse
-from django.db.models import Sum # Thêm import này
+from django.db.models import Sum, Count
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -41,6 +41,13 @@ def tournament_detail(request, pk):
     finished_matches = all_matches.filter(team1_score__isnull=False)
     total_goals = finished_matches.aggregate(total=Sum('team1_score') + Sum('team2_score'))['total'] or 0
 
+    # === TÍNH TOÁN VUA PHÁ LƯỚI ===
+    top_scorers = Player.objects.filter(
+        goals__match__tournament=tournament
+    ).annotate(
+        goal_count=Count('goals')
+    ).order_by('-goal_count')[:5] # Lấy 5 người dẫn đầu
+
     context = {
         'tournament': tournament,
         'group_matches': group_matches,
@@ -49,6 +56,7 @@ def tournament_detail(request, pk):
         'total_teams': total_teams,
         'total_players': total_players,
         'total_goals': total_goals,
+        'top_scorers': top_scorers,
         'finished_matches_count': finished_matches.count(),
     }
     return render(request, 'tournaments/tournament_detail.html', context)    

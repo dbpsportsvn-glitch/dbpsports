@@ -32,3 +32,28 @@
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="section-title mb-0">Vua phá lưới</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for player in top_scorers %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            {% if player.team.logo %}
+                                <img src="{{ player.team.logo.url }}" width="20" height="20" class="me-2" style="object-fit: contain;">
+                            {% endif %}
+                            {{ player.full_name }} ({{ player.team.name }})
+                        </span>
+                        <span class="badge bg-primary rounded-pill">{{ player.goal_count }} bàn</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">Chưa có bàn thắng nào được ghi.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
