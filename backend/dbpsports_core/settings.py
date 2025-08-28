@@ -175,3 +175,7 @@ JAZZMIN_UI_TWEAKS = {
 LOGIN_URL = 'login'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Cấu hình để in email ra console thay vì gửi thật
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ADMIN_EMAIL = 'admin@dbpsports.com' # Email của Admin để nhận thông báo

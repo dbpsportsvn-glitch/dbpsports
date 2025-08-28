@@ -9,6 +9,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.db.models import Sum, Count
 from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
+from .utils import send_notification_email
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -296,6 +297,14 @@ def team_payment(request, pk):
             team = form.save(commit=False)
             team.payment_status = 'PENDING' # Chuyển trạng thái sang "Chờ xác nhận"
             team.save()
+
+            # === GỌI HÀM GỬI EMAIL TẠI ĐÂY ===
+            send_notification_email(
+                subject=f"Xác nhận thanh toán mới từ đội {team.name}",
+                template_name='tournaments/emails/new_payment_proof.html',
+                context={'team': team}
+            )
+            
             return redirect('team_detail', pk=team.pk)
     else:
         form = PaymentProofForm(instance=team)
