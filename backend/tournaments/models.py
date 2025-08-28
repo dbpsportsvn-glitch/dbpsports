@@ -4,9 +4,16 @@ from django.db import models
 from django.contrib.auth.models import User # <-- Thêm dòng import này
 
 class Tournament(models.Model):
+    STATUS_CHOICES = [
+        ('REGISTRATION_OPEN', 'Đang mở đăng ký'),
+        ('IN_PROGRESS', 'Đang diễn ra'),
+        ('FINISHED', 'Đã kết thúc'),
+    ]
+
     name = models.CharField(max_length=200)
     start_date = models.DateField()
     end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN') # Thêm dòng này
 
     def __str__(self):
         return self.name

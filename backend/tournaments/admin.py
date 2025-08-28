@@ -6,8 +6,10 @@ from django.utils.html import format_html
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'start_date', 'end_date')
+    list_display = ('name', 'status', 'start_date', 'end_date')
+    list_filter = ('status',)
     search_fields = ('name',)
+    list_editable = ('status',) # <-- Thêm dòng này
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):

@@ -6,7 +6,6 @@
 <div class="container mt-4">
     <div class="pb-3 mb-4 border-bottom">
         <h1>{{ tournament.name }}</h1>
-        <p class="lead">Thông tin chi tiết về giải đấu</p>
     </div>
 
     <ul class="nav nav-tabs" id="tournamentTab" role="tablist">
@@ -25,22 +24,25 @@
     </ul>
 
     <div class="tab-content" id="tournamentTabContent">
-        <div class="tab-pane fade show active p-3" id="overview" role="tabpanel">
+        <div class="tab-pane fade show active p-3 border border-top-0 rounded-bottom" id="overview" role="tabpanel">
+            <p><strong>Trạng thái:</strong> {{ tournament.get_status_display }}</p>
             <p><strong>Ngày bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }}</p>
             <p><strong>Ngày kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
-            <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg my-4">Đăng ký tham gia giải đấu</a>
+            
+            {% if tournament.status == 'REGISTRATION_OPEN' %}
+                <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg my-4">Đăng ký tham gia giải đấu</a>
+            {% else %}
+                <p class="text-muted my-4">Giai đoạn đăng ký đã kết thúc.</p>
+            {% endif %}
         </div>
 
-        <div class="tab-pane fade p-3" id="teams" role="tabpanel">
+        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="teams" role="tabpanel">
             <div class="row">
                 {% for team in tournament.teams.all %}
                     <div class="col-md-4 mb-3">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">{{ team.name }}</h5>
-                                <p class="card-text">
-                                    {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}{% endif %}
-                                </p>
                                 <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary btn-sm">Xem chi tiết đội</a>
                             </div>
                         </div>
@@ -51,11 +53,13 @@
             </div>
         </div>
 
-        <div class="tab-pane fade p-3" id="schedule" role="tabpanel">
-            {% include 'tournaments/partials/match_schedule.html' %} </div>
+        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="schedule" role="tabpanel">
+            {% include 'tournaments/partials/match_schedule.html' %}
+        </div>
 
-        <div class="tab-pane fade p-3" id="standings" role="tabpanel">
-            {% include 'tournaments/partials/standings_table.html' %} </div>
+        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="standings" role="tabpanel">
+            {% include 'tournaments/partials/standings_table.html' %}
+        </div>
     </div>
 </div>
 {% endblock %}
