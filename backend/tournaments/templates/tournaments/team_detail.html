@@ -11,19 +11,29 @@
                 <div class="card-header">
                     <h4>Thông tin Đội bóng</h4>
                 </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ team.name }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Thuộc giải đấu: {{ team.tournament.name }}</h6>
-                    <p class="card-text">
-                        {% if team.coach_name %}
-                            <strong>HLV:</strong> {{ team.coach_name }}
-                        {% endif %}
-                        <br>
-                        <strong>Đội trưởng:</strong> {{ team.captain.username }}
+                <div class="card-body d-flex align-items-center gap-3">
+                <div>
+                    <h5 class="card-title mb-1">{{ team.name }}</h5>
+                    <div class="text-muted mb-2">Thuộc giải đấu: {{ team.tournament.name }}</div>
+                    <p class="mb-2">
+                    {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}<br>{% endif %}
+                    <strong>Đội trưởng:</strong> {{ team.captain.username }}
                     </p>
                     {% if user == team.captain %}
-                        <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning">Sửa thông tin đội</a>
+                    <div class="btn-group">
+                        <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning btn-sm">Sửa thông tin đội</a>
+                        <a href="{% url 'tournament_detail' pk=team.tournament.pk %}#schedule" class="btn btn-primary btn-sm">Lịch thi đấu</a>
+                    </div>
                     {% endif %}
+                </div>
+
+                <div class="ms-auto" style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:#f8f9fa;border:1px solid var(--bs-border-color);display:flex;align-items:center;justify-content:center">
+                    {% if team.logo %}
+                    <img src="{{ team.logo.url }}" alt="{{ team.name }}" style="width:100%;height:100%;object-fit:cover">
+                    {% else %}
+                    <span class="text-muted small">Chưa có logo</span>
+                    {% endif %}
+                </div>
                 </div>
             </div>
 
