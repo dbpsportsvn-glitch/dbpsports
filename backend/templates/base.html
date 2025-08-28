@@ -68,6 +68,7 @@
                                         Chào, {{ user.username }}!
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
                                         <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{% url 'logout' %}">Đăng xuất</a></li>

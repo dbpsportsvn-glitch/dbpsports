@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Bảng điều khiển{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1>Bảng điều khiển</h1>
+        <p class="lead">Chào mừng trở lại, {{ user.username }}!</p>
+    </div>
+
+    <h3 class="section-title">Các đội bạn đang quản lý</h3>
+    <div class="row mt-3">
+        {% for team in managed_teams %}
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ team.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Giải đấu: {{ team.tournament.name }}</h6>
+                        <p class="card-text">
+                            Nhấn vào để xem chi tiết, quản lý đội hình và xem lịch thi đấu của đội.
+                        </p>
+                        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-primary">Quản lý đội</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>Bạn chưa quản lý đội bóng nào. Hãy đăng ký tham gia một giải đấu!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

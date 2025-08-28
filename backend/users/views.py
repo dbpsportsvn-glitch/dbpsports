@@ -2,8 +2,10 @@
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required # Đảm bảo đã import
+from tournaments.models import Team # Import Team model
 from .forms import RegisterForm
+
 
 def register(request):
     if request.method == 'POST':
@@ -33,3 +35,13 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('home') # Chuyển về trang chủ sau khi đăng xuất
+
+@login_required
+def dashboard(request):
+    # Lấy tất cả các đội mà người dùng hiện tại là đội trưởng
+    managed_teams = Team.objects.filter(captain=request.user)
+
+    context = {
+        'managed_teams': managed_teams
+    }
+    return render(request, 'users/dashboard.html', context)    
