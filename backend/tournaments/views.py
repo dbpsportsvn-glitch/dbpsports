@@ -26,14 +26,12 @@ def shop_view(request):
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     matches = tournament.matches.all().order_by('match_time')
-    standings = tournament.get_standings() # <-- Gọi phương-thức tính-toán
-
+    
     context = {
         'tournament': tournament,
         'matches': matches,
-        'standings': standings, # <-- Gửi bảng-xếp-hạng ra template
     }
-    return render(request, 'tournaments/tournament_detail.html', context)        
+    return render(request, 'tournaments/tournament_detail.html', context)    
 
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)

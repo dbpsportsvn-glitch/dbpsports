@@ -3,10 +3,19 @@
 from django.contrib import admin
 from .models import Tournament, Team, Player, Match, Lineup, Group
 from django.utils.html import format_html
+from itertools import combinations
+from django.utils import timezone 
 
 # tournaments/admin.py
 import random
 from django.contrib import messages
+
+# tournaments/admin.py
+
+import random
+from itertools import combinations # <-- Thêm dòng import này
+from django.contrib import messages
+from .models import Tournament, Team, Player, Match, Lineup, Group
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
@@ -14,29 +23,43 @@ class TournamentAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('name',)
     list_editable = ('status',)
-    actions = ['draw_groups'] # Thêm action mới
+    actions = ['draw_groups', 'generate_group_stage_matches'] # <-- Thêm action mới vào đây
 
     @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
     def draw_groups(self, request, queryset):
         for tournament in queryset:
             teams = list(tournament.teams.all())
             groups = list(tournament.groups.all())
-
             if not groups:
-                self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu nào được tạo.", messages.ERROR)
+                self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu.", messages.ERROR)
                 continue
-
             random.shuffle(teams)
-
-            num_teams = len(teams)
-            num_groups = len(groups)
-
             for i, team in enumerate(teams):
-                group_index = i % num_groups
-                team.group = groups[group_index]
+                team.group = groups[i % len(groups)]
                 team.save()
+            self.message_user(request, f"Đã bốc thăm thành công cho giải '{tournament.name}'.", messages.SUCCESS)
 
-            self.message_user(request, f"Đã bốc thăm chia bảng thành công cho giải '{tournament.name}'.", messages.SUCCESS)
+    # === THÊM TOÀN BỘ PHƯƠNG THỨC MỚI NÀY VÀO ===
+    @admin.action(description='Tạo lịch thi đấu vòng bảng')
+    def generate_group_stage_matches(self, request, queryset):
+        for tournament in queryset:
+            if tournament.status != 'REGISTRATION_OPEN':
+                for group in tournament.groups.all():
+                    teams_in_group = list(group.teams.all())
+                    
+                    for team1, team2 in combinations(teams_in_group, 2):
+                        # Sửa lại đoạn code dưới đây
+                        match, created = Match.objects.get_or_create(
+                            tournament=tournament,
+                            team1=team1,
+                            team2=team2,
+                            # Gán giá trị mặc định cho các trường bắt buộc
+                            defaults={'match_time': timezone.now()}
+                        )
+                self.message_user(request, f"Đã tạo lịch thi đấu cho giải '{tournament.name}'.", messages.SUCCESS)
+            else:
+                self.message_user(request, f"Không thể tạo lịch cho giải '{tournament.name}' vì vẫn đang mở đăng ký.", messages.ERROR)
+
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -60,8 +83,8 @@ class PlayerAdmin(admin.ModelAdmin):
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'tournament', 'match_time', 'team1_score', 'team2_score', 'location')
     list_filter = ('tournament',)
-    # Thêm dòng này để cho phép sửa nhanh
     list_editable = ('team1_score', 'team2_score',)
+    list_display_links = ('__str__', 'match_time',) # <-- Thêm dòng này
 
 @admin.register(Lineup)
 class LineupAdmin(admin.ModelAdmin):
