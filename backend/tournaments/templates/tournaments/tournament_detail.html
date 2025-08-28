@@ -3,79 +3,59 @@
 {% block title %}{{ tournament.name }}{% endblock %}
 
 {% block content %}
-<div class="mt-4">
-    <h1>{{ tournament.name }}</h1>
-
-    {% if tournament.image %}
-        <img src="{{ tournament.image.url }}" alt="{{ tournament.name }} banner" class="tournament-banner-img mb-4">
-    {% endif %}   
-     
-    <p class="lead">Thông tin chi tiết về giải đấu</p>
-    <p><strong>Bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }} | <strong>Kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
-
-    <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg my-4">Đăng ký tham gia giải đấu</a>
-
-    <hr>
-
-    <h3 class="mt-4">Lịch thi đấu</h3>
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th scope="col">Thời gian</th>
-                    <th scope="col">Đội 1</th>
-                    <th scope="col">Tỉ số</th>
-                    <th scope="col">Đội 2</th>
-                    <th scope="col">Địa điểm</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for match in matches %}
-                    <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
-                        <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
-                        <td>{{ match.team1.name }}</td>
-                        <td>
-                            {% if match.team1_score is not None and match.team2_score is not None %}
-                                {{ match.team1_score }} - {{ match.team2_score }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ match.team2.name }}</td>
-                        <td>{{ match.location }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">Lịch thi đấu đang được cập nhật.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1>{{ tournament.name }}</h1>
+        <p class="lead">Thông tin chi tiết về giải đấu</p>
     </div>
 
-    <hr>
+    <ul class="nav nav-tabs" id="tournamentTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Tổng quan</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">Các đội tham gia</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">Lịch thi đấu</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" type="button" role="tab">Bảng xếp hạng</button>
+        </li>
+    </ul>
 
-    <h3 class="mt-4">Các đội đã đăng ký</h3>
-    <div class="row">
-        {% for team in tournament.teams.all %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ team.name }}</h5>
-                        <p class="card-text">
-                            {% if team.coach_name %}
-                                <strong>HLV:</strong> {{ team.coach_name }}
-                            {% endif %}
-                        </p>
-                        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary btn-sm">Xem chi tiết đội</a>
+    <div class="tab-content" id="tournamentTabContent">
+        <div class="tab-pane fade show active p-3" id="overview" role="tabpanel">
+            <p><strong>Ngày bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }}</p>
+            <p><strong>Ngày kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
+            <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg my-4">Đăng ký tham gia giải đấu</a>
+        </div>
+
+        <div class="tab-pane fade p-3" id="teams" role="tabpanel">
+            <div class="row">
+                {% for team in tournament.teams.all %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ team.name }}</h5>
+                                <p class="card-text">
+                                    {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}{% endif %}
+                                </p>
+                                <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary btn-sm">Xem chi tiết đội</a>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                {% empty %}
+                    <div class="col"><p>Chưa có đội nào đăng ký.</p></div>
+                {% endfor %}
             </div>
-        {% empty %}
-            <div class="col">
-                <p>Chưa có đội nào đăng ký cho giải đấu này.</p>
-            </div>
-        {% endfor %}
+        </div>
+
+        <div class="tab-pane fade p-3" id="schedule" role="tabpanel">
+            {% include 'tournaments/partials/match_schedule.html' %} </div>
+
+        <div class="tab-pane fade p-3" id="standings" role="tabpanel">
+            {% include 'tournaments/partials/standings_table.html' %} </div>
     </div>
 </div>
 {% endblock %}
