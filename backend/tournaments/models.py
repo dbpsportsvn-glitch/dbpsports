@@ -145,3 +145,12 @@ class Lineup(models.Model):
 
     def __str__(self):
         return f"{self.player.full_name} ({self.status}) for {self.match}"
+
+class Goal(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='goals')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='goals')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='goals')
+    minute = models.PositiveIntegerField(null=True, blank=True) # Thời điểm ghi bàn (tùy chọn)
+
+    def __str__(self):
+        return f"Goal by {self.player.full_name} in {self.match}"        

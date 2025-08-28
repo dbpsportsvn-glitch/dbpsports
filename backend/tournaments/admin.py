@@ -1,7 +1,7 @@
 # tournaments/admin.py
 
 from django.contrib import admin
-from .models import Tournament, Team, Player, Match, Lineup, Group
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal
 from django.utils.html import format_html
 from itertools import combinations
 from django.utils import timezone 
@@ -158,12 +158,18 @@ class PlayerAdmin(admin.ModelAdmin):
     list_filter = ('team__tournament', 'team')
     search_fields = ('full_name',)
 
+# === THÊM CLASS INLINE MỚI NÀY VÀO ===
+class GoalInline(admin.TabularInline):
+    model = Goal
+    extra = 1 # Hiển thị sẵn 1 dòng trống
+
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'tournament', 'match_time', 'team1_score', 'team2_score', 'location')
     list_filter = ('tournament',)
     list_editable = ('team1_score', 'team2_score',)
-    list_display_links = ('__str__', 'match_time',) # <-- Thêm dòng này
+    list_display_links = ('__str__', 'match_time',)
+    inlines = [GoalInline]
 
 @admin.register(Lineup)
 class LineupAdmin(admin.ModelAdmin):
