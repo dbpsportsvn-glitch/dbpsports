@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Thông tin tài khoản{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Thông tin tài khoản</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success mt-3" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h4>Cập nhật Thông tin</h4></div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ user_form|crispy }}
+                        <button type="submit" name="update_profile" class="btn btn-primary w-100 mt-3">Lưu thay đổi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><h4>Đổi Mật khẩu</h4></div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ password_form|crispy }}
+                        <button type="submit" name="change_password" class="btn btn-primary w-100 mt-3">Đổi mật khẩu</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
