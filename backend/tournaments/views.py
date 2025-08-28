@@ -146,33 +146,59 @@ def update_team(request, pk):
     return render(request, 'tournaments/update_team.html', context)    
 
 
-def match_detail(request, pk):
-    match = get_object_or_404(Match, pk=pk)
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import HttpResponseForbidden
+from django.db import transaction
 
-    # Xác định xem người dùng hiện tại có phải đội trưởng không
+def match_detail(request, pk):
+    match = get_object_or_404(
+        Match.objects.select_related('team1', 'team2')
+                     .prefetch_related('team1__players', 'team2__players'),
+        pk=pk
+    )
+
+    # Xác định đội mà user là đội trưởng
     captain_team = None
     if request.user.is_authenticated:
-        if match.team1.captain == request.user:
+        if match.team1 and getattr(match.team1, "captain_id", None) == request.user.id:
             captain_team = match.team1
-        elif match.team2.captain == request.user:
+        elif match.team2 and getattr(match.team2, "captain_id", None) == request.user.id:
             captain_team = match.team2
 
-    # Xử lý khi đội trưởng gửi đội hình (submit form)
-    if request.method == 'POST' and captain_team:
-        for player in captain_team.players.all():
-            status = request.POST.get(f'player_{player.pk}')
-            if status:
-                # Dùng update_or_create để tạo mới hoặc cập nhật nếu đã tồn tại
-                Lineup.objects.update_or_create(
-                    match=match,
-                    player=player,
-                    defaults={'team': captain_team, 'status': status}
-                )
-        return redirect('match_detail', pk=match.pk)
+    # Đội trưởng gửi đội hình
+    if request.method == 'POST':
+        if not captain_team:
+            return HttpResponseForbidden("Bạn không có quyền gửi đội hình cho trận này.")
 
-    # Lấy đội hình đã được đăng ký để hiển thị
-    team1_lineup = Lineup.objects.filter(match=match, team=match.team1)
-    team2_lineup = Lineup.objects.filter(match=match, team=match.team2)
+        # Tên input phải là: player_<player.pk>
+        with transaction.atomic():
+            for player in captain_team.players.all():
+                key = f'player_{player.pk}'
+                status = request.POST.get(key)
+
+                if status:
+                    Lineup.objects.update_or_create(
+                        match=match,
+                        player=player,
+                        defaults={'team': captain_team, 'status': status}
+                    )
+                else:
+                    # Nếu bỏ chọn thì xoá bản ghi lineup cũ của cầu thủ đó
+                    Lineup.objects.filter(
+                        match=match, player=player, team=captain_team
+                    ).delete()
+
+        return redirect(match.get_absolute_url())
+
+    # Hiển thị đội hình đã đăng ký
+    team1_lineup = (Lineup.objects
+                    .filter(match=match, team=match.team1)
+                    .select_related('player')
+                    .order_by('player__name'))
+    team2_lineup = (Lineup.objects
+                    .filter(match=match, team=match.team2)
+                    .select_related('player')
+                    .order_by('player__name'))
 
     context = {
         'match': match,
@@ -180,7 +206,8 @@ def match_detail(request, pk):
         'team1_lineup': team1_lineup,
         'team2_lineup': team2_lineup,
     }
-    return render(request, 'tournaments/match_detail.html', context)   
+    return render(request, 'tournaments/match_detail.html', context)
+   
 
 @login_required
 def manage_lineup(request, match_pk, team_pk):

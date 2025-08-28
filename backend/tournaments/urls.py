@@ -24,6 +24,7 @@ urlpatterns = [
     # --- URL liên quan đến Trận đấu (Match) ---
     path('match/<int:pk>/', views.match_detail, name='match_detail'),
     path('match/<int:pk>/print/', views.match_print_view, name='match_print'),
+    path("match/<int:pk>/", views.match_detail, name="match_detail"),
 
     # URL mới cho trang quản lý đội hình của một đội trong một trận đấu
     path('match/<int:match_pk>/team/<int:team_pk>/manage_lineup/', views.manage_lineup, name='manage_lineup'),
