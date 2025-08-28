@@ -3,7 +3,8 @@
 
 {% block content %}
 <div class="container mt-4">
-  <a href="{% url 'tournament_detail' pk=match.tournament.pk %}" class="btn btn-link p-0 mb-3">← Về giải đấu</a>
+  <a href="{% url 'tournament_detail' pk=match.tournament.pk %}{% if request.GET.tab %}?tab={{ request.GET.tab }}#{{ request.GET.tab }}{% endif %}"
+   class="btn btn-link p-0 mb-3">← Về giải đấu</a>
 
   <div class="card text-center shadow-sm mb-4 scoreboard-card">
     <div class="card-header">
@@ -33,7 +34,8 @@
 
   <div class="text-center mb-4">
     {% if captain_team %}
-      <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-lg d-block mx-auto" style="max-width:300px">Quản lý Đội hình</a>
+    <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}?tab={{ request.GET.tab|default:'schedule' }}"
+    class="btn btn-primary btn-lg d-block mx-auto" style="max-width:300px">Quản lý Đội hình</a>
     {% endif %}
   </div>
 

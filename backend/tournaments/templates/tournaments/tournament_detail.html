@@ -100,7 +100,7 @@
             {% for m in all_matches %}
                 {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
                 <div class="col">
-                    <a href="{% url 'match_detail' pk=m.pk %}" class="text-decoration-none text-reset">
+                    <a href="{% url 'match_detail' pk=m.pk %}?tab=schedule" class="text-decoration-none text-reset">
                     <div class="card match-card">
                         <div class="card-body mc">
                         <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
@@ -149,7 +149,7 @@
             {% for m in all_matches %}
             {% if m.match_round == 'KNOCKOUT' %}
                 <div class="col">
-                <a href="{% url 'match_detail' pk=m.pk %}" class="text-decoration-none text-reset">
+                <a href="{% url 'match_detail' pk=m.pk %}?tab=schedule" class="text-decoration-none text-reset">
                     <div class="card match-card">
                     <div class="card-body mc">
                         <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
@@ -202,18 +202,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const tabEls = document.querySelectorAll('#tournamentTab [data-bs-toggle="tab"]');
-  tabEls.forEach(function (el) {
-    el.addEventListener('shown.bs.tab', function (e) {
-      const target = e.target.getAttribute('data-bs-target');
-      history.replaceState(null, '', target);
-    });
-  });
-  const hash = window.location.hash;
-  if (hash) {
-    const trigger = document.querySelector('#tournamentTab [data-bs-target="' + hash + '"]');
-    if (trigger) new bootstrap.Tab(trigger).show();
+  const tabs = document.querySelectorAll('#tournamentTab [data-bs-toggle="tab"]');
+
+  function setUrl(target){
+    const id = target.replace('#','');
+    history.replaceState(null, '', `?tab=${id}${target}`);
   }
+
+  tabs.forEach(el => {
+    el.addEventListener('shown.bs.tab', e => setUrl(e.target.getAttribute('data-bs-target')));
+  });
+
+  const params = new URLSearchParams(location.search);
+  const from = params.get('tab');
+  const hash = location.hash;
+  const target = from ? `#${from}` : (hash || '#overview');
+  const trigger = document.querySelector(`#tournamentTab [data-bs-target="${target}"]`);
+  if (trigger) new bootstrap.Tab(trigger).show();
+  setUrl(target);
 });
 </script>
 

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required # Để yêu cầu đ�
 from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 from django.http import HttpResponseForbidden
 from django.db import transaction
-
+from django.urls import reverse
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -197,8 +197,11 @@ def match_detail(request, pk):
 
 @login_required
 def manage_lineup(request, match_pk, team_pk):
-    match = get_object_or_404(Match.objects.select_related('team1','team2'), pk=match_pk)
+    match = get_object_or_404(Match.objects.select_related('team1','team2','tournament'), pk=match_pk)
     team = get_object_or_404(Team, pk=team_pk)
+
+    tab = request.GET.get('tab', 'schedule')
+    back_url = f"{reverse('match_detail', kwargs={'pk': match.pk})}?tab={tab}#{tab}"
 
     # Chỉ đội trưởng của team này hoặc staff được sửa
     if request.user != team.captain and not request.user.is_staff:
@@ -215,13 +218,16 @@ def manage_lineup(request, match_pk, team_pk):
                     )
                 else:
                     Lineup.objects.filter(match=match, player=player, team=team).delete()
-        return redirect("match_detail", pk=match.pk)
+        tab = request.POST.get('tab') or request.GET.get('tab') or 'schedule'
+        url = reverse('match_detail', kwargs={'pk': match.pk})
+        return redirect(f'{url}?tab={tab}#{tab}')
 
-    existing_lineup = dict(
-        Lineup.objects.filter(match=match, team=team).values_list("player_id", "status")
-    )
+    existing_lineup = dict(Lineup.objects.filter(match=match, team=team)
+                           .values_list("player_id","status"))
     return render(request, "tournaments/manage_lineup.html", {
-        "match": match, "team": team, "existing_lineup": existing_lineup
+        "match": match, "team": team,
+        "existing_lineup": existing_lineup,
+        "back_url": back_url, "tab": tab,
     })
     
 

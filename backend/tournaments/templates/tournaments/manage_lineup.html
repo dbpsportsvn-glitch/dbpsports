@@ -9,8 +9,11 @@
     <p><strong>Trận đấu:</strong> {{ match.team1.name }} vs {{ match.team2.name }}</p>
     <p><strong>Đội của bạn:</strong> {{ team.name }}</p>
     <hr>
-    <form method="post">  {# POST về chính trang manage_lineup #}
-        {% csrf_token %}
+    <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ back_url }}">
+    <!-- giữ lại tab khi POST -->
+    <input type="hidden" name="tab" value="{{ request.GET.tab|default:'schedule' }}">
         <table class="table">
             <thead>
                 <tr>
@@ -34,10 +37,10 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div class="d-flex gap-2">
+    <div class="d-flex gap-2 mt-3">
+        <a href="{{ back_url }}" class="btn btn-outline-secondary">Quay lại</a>
         <button type="submit" class="btn btn-primary">Lưu Đội hình</button>
-        <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary">Quay lại</a>
-        </div>
+    </div>
     </form>
 </div>
 {% endblock %}
