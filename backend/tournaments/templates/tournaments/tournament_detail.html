@@ -93,13 +93,21 @@
 
                         <div class="mc-center">
                         <div class="d-flex align-items-center">
-                            {% if m.team1.logo %}<img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">{% endif %}
+                            {% if m.team1.logo %}
+                            <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
+                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                            {% endif %}
                             <span class="mc-name">{{ m.team1.name }}</span>
                         </div>
-                        <span class="fw-bold px-1">vs</span>
+
+                        <span class="fw-bold px-2">vs</span>
+
                         <div class="d-flex align-items-center">
-                            {% if m.team2.logo %}<img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">{% endif %}
                             <span class="mc-name">{{ m.team2.name }}</span>
+                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                            {% if m.team2.logo %}
+                            <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
+                            {% endif %}
                         </div>
                         </div>
 
@@ -133,15 +141,23 @@
                     <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
 
                     <div class="mc-center">
-                        <div class="d-flex align-items-center">
-                        {% if m.team1.logo %}<img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">{% endif %}
+                    <div class="d-flex align-items-center">
+                        {% if m.team1.logo %}
+                        <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
+                        <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                        {% endif %}
                         <span class="mc-name">{{ m.team1.name }}</span>
-                        </div>
-                        <span class="fw-bold px-1">vs</span>
-                        <div class="d-flex align-items-center">
-                        {% if m.team2.logo %}<img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">{% endif %}
+                    </div>
+
+                    <span class="fw-bold px-2">vs</span>
+
+                    <div class="d-flex align-items-center">
                         <span class="mc-name">{{ m.team2.name }}</span>
-                        </div>
+                        <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
+                        {% if m.team2.logo %}
+                        <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
+                        {% endif %}
+                    </div>
                     </div>
 
                     <div class="mc-right">
