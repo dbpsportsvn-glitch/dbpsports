@@ -4,139 +4,171 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>{{ tournament.name }}</h1>
-    </div>
+  <div class="pb-3 mb-4 border-bottom">
+    <h1>{{ tournament.name }}</h1>
+  </div>
 
-    <ul class="nav nav-tabs" id="tournamentTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Tổng quan</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">Các đội tham gia</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">Lịch thi đấu</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" type="button" role="tab">Bảng xếp hạng</button>
-        </li>
+  <style>
+    .sticky-tabs{position:sticky;top:56px;z-index:1020;background:var(--bs-body-bg);padding:.5rem 0 .25rem}
+    .tour-tabs .nav-link{border-radius:9999px;font-weight:600;padding:.5rem 1rem}
+    .tour-tabs .nav-link:hover{background:var(--bs-light)}
+    .tour-tabs .nav-link.active{color:#fff;background:linear-gradient(90deg,#0d6efd,#20c997);box-shadow:0 .25rem .75rem rgba(13,110,253,.25)}
+    .tab-pane.card-pane{border:1px solid var(--bs-border-color);border-top:0;border-radius:0 0 .5rem .5rem;padding:1rem}
+    .section-title{font-weight:700}
+    .table thead th{position:sticky;top:0;background:var(--bs-body-bg);z-index:1}
+    .table-hover tbody tr:hover{background:var(--bs-light)}
+    .chip{display:inline-block;padding:.15rem .5rem;border-radius:9999px;background:var(--bs-light);font-size:.75rem;margin-right:.4rem}
+  </style>
+
+  <div class="sticky-tabs">
+    <ul class="nav nav-pills gap-2 tour-tabs" id="tournamentTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">🏁 Tổng quan</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">👥 Các đội</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">📅 Lịch thi đấu</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings" type="button" role="tab">🏆 Bảng xếp hạng</button>
+      </li>
     </ul>
+  </div>
 
-    <div class="tab-content" id="tournamentTabContent">
-        <div class="tab-pane fade show active p-3 border border-top-0 rounded-bottom" id="overview" role="tabpanel">
-            <p><strong>Trạng thái:</strong> {{ tournament.get_status_display }}</p>
-            <p><strong>Ngày bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }}</p>
-            <p><strong>Ngày kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}</p>
-
-            {% if tournament.status == 'REGISTRATION_OPEN' %}
-                <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg my-4">Đăng ký tham gia giải đấu</a>
-            {% else %}
-                <p class="text-muted my-4">Giai đoạn đăng ký đã kết thúc.</p>
-            {% endif %}
-        </div>
-
-        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="teams" role="tabpanel">
-            {% for group in tournament.groups.all %}
-                <h4 class="mt-3">{{ group.name }}</h4>
-                <div class="row">
-                    {% for team in group.teams.all %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ team.name }}</h5>
-                                    <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary btn-sm">Xem chi tiết đội</a>
-                                </div>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="col"><p>Chưa có đội nào trong bảng này.</p></div>
-                    {% endfor %}
-                </div>
-            {% empty %}
-                <p>Chưa có bảng đấu nào được tạo cho giải này.</p>
-            {% endfor %}
-        </div>
-
-        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="schedule" role="tabpanel">
-            {% with all_matches=tournament.matches.all %}
-            {# --- Vòng Bảng: tách theo từng bảng --- #}
-            {% for g in tournament.groups.all %}
-                <h5 class="mt-3">{{ g.name }}</h5>
-                <div class="table-responsive">
-                <table class="table table-striped align-middle">
-                    <thead>
-                    <tr>
-                        <th style="width:16%">Thời gian</th>
-                        <th style="width:24%">Đội 1</th>
-                        <th style="width:24%">Đội 2</th>
-                        <th style="width:12%">Tỷ số</th>
-                        <th style="width:12%">Vòng</th>
-                        <th style="width:12%">Sân</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for m in all_matches %}
-                        {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
-                        <tr>
-                            <td><a href="{% url 'match_detail' pk=m.pk %}">{{ m.match_time|date:"H:i d/m/Y" }}</a></td>
-                            <td><a href="{% url 'team_detail' pk=m.team1.pk %}">{{ m.team1.name }}</a></td>
-                            <td><a href="{% url 'team_detail' pk=m.team2.pk %}">{{ m.team2.name }}</a></td>
-                            <td>{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</td>
-                            <td>{{ m.get_match_round_display|default:m.match_round }}</td>
-                            <td>{{ m.location|default:"-" }}</td>
-                        </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr><td colspan="6">Chưa có trận.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-            {% empty %}
-                <p>Chưa có bảng đấu nào.</p>
-            {% endfor %}
-
-            {# --- Vòng loại trực tiếp --- #}
-            <h5 class="mt-4">Vòng Loại trực tiếp</h5>
-            <div class="table-responsive">
-                <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                    <th style="width:16%">Thời gian</th>
-                    <th style="width:24%">Đội 1</th>
-                    <th style="width:24%">Đội 2</th>
-                    <th style="width:12%">Tỷ số</th>
-                    <th style="width:12%">Vòng</th>
-                    <th style="width:12%">Sân</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% with ko=all_matches|dictsort:"match_time" %}
-                    {% for m in all_matches %}
-                        {% if m.match_round == 'KNOCKOUT' %}
-                        <tr>
-                            <td><a href="{% url 'match_detail' pk=m.pk %}">{{ m.match_time|date:"H:i d/m/Y" }}</a></td>
-                            <td><a href="{% url 'team_detail' pk=m.team1.pk %}">{{ m.team1.name }}</a></td>
-                            <td><a href="{% url 'team_detail' pk=m.team2.pk %}">{{ m.team2.name }}</a></td>
-                            <td>{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</td>
-                            <td>{{ m.get_match_round_display|default:m.match_round }}</td>
-                            <td>{{ m.location|default:"-" }}</td>
-                        </tr>
-                        {% endif %}
-                    {% empty %}
-                        <tr><td colspan="6">Chưa có trận.</td></tr>
-                    {% endfor %}
-                    {% endwith %}
-                </tbody>
-                </table>
-            </div>
-            {% endwith %}
-        </div>
-
-        <div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="standings" role="tabpanel">
-            {% include 'tournaments/partials/standings_table.html' %}
-        </div>
+  <div class="tab-content" id="tournamentTabContent">
+    <!-- Tổng quan -->
+    <div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
+      <p>
+        <span class="chip">Trạng thái: {{ tournament.get_status_display }}</span>
+        <span class="chip">Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }}</span>
+        <span class="chip">Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}</span>
+      </p>
+      {% if tournament.status == 'REGISTRATION_OPEN' %}
+        <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg mt-2">Đăng ký tham gia giải đấu</a>
+      {% else %}
+        <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
+      {% endif %}
     </div>
+
+    <!-- Các đội -->
+    <div class="tab-pane fade card-pane" id="teams" role="tabpanel">
+      {% for group in tournament.groups.all %}
+        <h5 class="section-title mt-2">{{ group.name }}</h5>
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+          {% for team in group.teams.all %}
+            <div class="col">
+              <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <h6 class="card-title mb-1">{{ team.name }}</h6>
+                  <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline-primary btn-sm">Xem đội</a>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col"><p class="text-muted">Chưa có đội.</p></div>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <p class="text-muted">Chưa có bảng đấu nào được tạo cho giải này.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Lịch thi đấu -->
+    <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
+      {% with all_matches=tournament.matches.all %}
+        {% for g in tournament.groups.all %}
+          <h5 class="mt-3">{{ g.name }}</h5>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th style="width:16%">Thời gian</th>
+                  <th style="width:24%">Đội 1</th>
+                  <th style="width:24%">Đội 2</th>
+                  <th style="width:12%">Tỷ số</th>
+                  <th style="width:12%">Vòng</th>
+                  <th style="width:12%">Sân</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for m in all_matches %}
+                  {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
+                    <tr>
+                      <td><a href="{% url 'match_detail' pk=m.pk %}">{{ m.match_time|date:"H:i d/m/Y" }}</a></td>
+                      <td><a href="{% url 'team_detail' pk=m.team1.pk %}">{{ m.team1.name }}</a></td>
+                      <td><a href="{% url 'team_detail' pk=m.team2.pk %}">{{ m.team2.name }}</a></td>
+                      <td>{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</td>
+                      <td>{{ m.get_match_round_display|default:m.match_round }}</td>
+                      <td>{{ m.location|default:"-" }}</td>
+                    </tr>
+                  {% endif %}
+                {% empty %}
+                  <tr><td colspan="6">Chưa có trận.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% empty %}
+          <p>Chưa có bảng đấu nào.</p>
+        {% endfor %}
+
+        <h5 class="mt-4">Vòng Loại trực tiếp</h5>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th style="width:16%">Thời gian</th>
+                <th style="width:24%">Đội 1</th>
+                <th style="width:24%">Đội 2</th>
+                <th style="width:12%">Tỷ số</th>
+                <th style="width:12%">Vòng</th>
+                <th style="width:12%">Sân</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in all_matches %}
+                {% if m.match_round == 'KNOCKOUT' %}
+                  <tr>
+                    <td><a href="{% url 'match_detail' pk=m.pk %}">{{ m.match_time|date:"H:i d/m/Y" }}</a></td>
+                    <td><a href="{% url 'team_detail' pk=m.team1.pk %}">{{ m.team1.name }}</a></td>
+                    <td><a href="{% url 'team_detail' pk=m.team2.pk %}">{{ m.team2.name }}</a></td>
+                    <td>{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</td>
+                    <td>{{ m.get_match_round_display|default:m.match_round }}</td>
+                    <td>{{ m.location|default:"-" }}</td>
+                  </tr>
+                {% endif %}
+              {% empty %}
+                <tr><td colspan="6">Chưa có trận.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endwith %}
+    </div>
+
+    <!-- BXH -->
+    <div class="tab-pane fade card-pane" id="standings" role="tabpanel">
+      {% include 'tournaments/partials/standings_table.html' %}
+    </div>
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tabEls = document.querySelectorAll('#tournamentTab [data-bs-toggle="tab"]');
+  tabEls.forEach(function (el) {
+    el.addEventListener('shown.bs.tab', function (e) {
+      const target = e.target.getAttribute('data-bs-target');
+      history.replaceState(null, '', target);
+    });
+  });
+  const hash = window.location.hash;
+  if (hash) {
+    const trigger = document.querySelector('#tournamentTab [data-bs-target="' + hash + '"]');
+    if (trigger) new bootstrap.Tab(trigger).show();
+  }
+});
+</script>
 {% endblock %}
