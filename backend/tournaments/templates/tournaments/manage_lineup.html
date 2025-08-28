@@ -3,12 +3,13 @@
 {% load custom_filters %}
 
 {% block content %}
+<a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-link p-0 mb-3">← Về trận đấu</a>
 <div class="form-container">
     <h3>Đăng ký đội hình thi đấu</h3>
     <p><strong>Trận đấu:</strong> {{ match.team1.name }} vs {{ match.team2.name }}</p>
     <p><strong>Đội của bạn:</strong> {{ team.name }}</p>
     <hr>
-    <form method="post">
+    <form method="post">  {# POST về chính trang manage_lineup #}
         {% csrf_token %}
         <table class="table">
             <thead>
@@ -16,19 +17,27 @@
                     <th>Tên Cầu thủ</th>
                     <th>Đá chính</th>
                     <th>Dự bị</th>
+                    <th>Bỏ chọn</th>
                 </tr>
             </thead>
             <tbody>
                 {% for player in team.players.all %}
                 <tr>
                     <td>{{ player.full_name }}</td>
-                    <td><input type="radio" name="player_{{ player.pk }}" value="STARTER" {% if existing_lineup|get_item:player.pk == 'STARTER' %}checked{% endif %} required></td>
-                    <td><input type="radio" name="player_{{ player.pk }}" value="SUBSTITUTE" {% if existing_lineup|get_item:player.pk == 'SUBSTITUTE' %}checked{% endif %}></td>
+                    <td><input type="radio" name="player_{{ player.pk }}" value="STARTER"
+                            {% if existing_lineup|get_item:player.pk == 'STARTER' %}checked{% endif %}></td>
+                    <td><input type="radio" name="player_{{ player.pk }}" value="SUBSTITUTE"
+                            {% if existing_lineup|get_item:player.pk == 'SUBSTITUTE' %}checked{% endif %}></td>
+                    <td><input type="radio" name="player_{{ player.pk }}" value=""
+                            {% if not existing_lineup|get_item:player.pk %}checked{% endif %}></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <button type="submit" class="btn btn-primary w-100">Lưu Đội hình</button>
+        <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Lưu Đội hình</button>
+        <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary">Quay lại</a>
+        </div>
     </form>
 </div>
 {% endblock %}

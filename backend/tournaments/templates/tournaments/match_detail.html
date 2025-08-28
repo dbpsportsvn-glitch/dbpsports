@@ -51,13 +51,13 @@
           <ul class="list-group">
             <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
             {% for lu in team1_starters %}
-              <li class="list-group-item">#{{ lu.player.jersey_number|default:lu.player.shirt_number }} - {{ lu.player.full_name|default:lu.player.name }}</li>
+              <li class="list-group-item">#{{ lu.player.jersey_number }} - {{ lu.player.full_name }}
             {% empty %}
               <li class="list-group-item text-muted">Chưa có cầu thủ đá chính.</li>
             {% endfor %}
             <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
             {% for lu in team1_subs %}
-              <li class="list-group-item">#{{ lu.player.jersey_number|default:lu.player.shirt_number }} - {{ lu.player.full_name|default:lu.player.name }}</li>
+              <li class="list-group-item">#{{ lu.player.jersey_number }} - {{ lu.player.full_name }}
             {% empty %}
               <li class="list-group-item text-muted">Chưa có cầu thủ dự bị.</li>
             {% endfor %}
@@ -69,13 +69,13 @@
           <ul class="list-group">
             <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
             {% for lu in team2_starters %}
-              <li class="list-group-item">#{{ lu.player.jersey_number|default:lu.player.shirt_number }} - {{ lu.player.full_name|default:lu.player.name }}</li>
+              <li class="list-group-item">#{{ lu.player.jersey_number }} - {{ lu.player.full_name }}
             {% empty %}
               <li class="list-group-item text-muted">Chưa có cầu thủ đá chính.</li>
             {% endfor %}
             <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
             {% for lu in team2_subs %}
-              <li class="list-group-item">#{{ lu.player.jersey_number|default:lu.player.shirt_number }} - {{ lu.player.full_name|default:lu.player.name }}</li>
+              <li class="list-group-item">#{{ lu.player.jersey_number }} - {{ lu.player.full_name }}
             {% empty %}
               <li class="list-group-item text-muted">Chưa có cầu thủ dự bị.</li>
             {% endfor %}

@@ -4,6 +4,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team, Player, Match, Lineup
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
+from django.http import HttpResponseForbidden
+from django.db import transaction
+
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -146,18 +149,17 @@ def update_team(request, pk):
     return render(request, 'tournaments/update_team.html', context)    
 
 
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponseForbidden
-from django.db import transaction
+# tournaments/views.py
+from django.shortcuts import get_object_or_404, render
+from .models import Match, Lineup
 
 def match_detail(request, pk):
     match = get_object_or_404(
-        Match.objects.select_related('team1', 'team2')
-                     .prefetch_related('team1__players', 'team2__players'),
+        Match.objects.select_related('team1', 'team2'),
         pk=pk
     )
 
-    # Xác định đội mà user là đội trưởng
+    # đội mà user là đội trưởng (để hiện nút)
     captain_team = None
     if request.user.is_authenticated:
         if match.team1 and getattr(match.team1, "captain_id", None) == request.user.id:
@@ -165,80 +167,63 @@ def match_detail(request, pk):
         elif match.team2 and getattr(match.team2, "captain_id", None) == request.user.id:
             captain_team = match.team2
 
-    # Đội trưởng gửi đội hình
-    if request.method == 'POST':
-        if not captain_team:
-            return HttpResponseForbidden("Bạn không có quyền gửi đội hình cho trận này.")
-
-        # Tên input phải là: player_<player.pk>
-        with transaction.atomic():
-            for player in captain_team.players.all():
-                key = f'player_{player.pk}'
-                status = request.POST.get(key)
-
-                if status:
-                    Lineup.objects.update_or_create(
-                        match=match,
-                        player=player,
-                        defaults={'team': captain_team, 'status': status}
-                    )
-                else:
-                    # Nếu bỏ chọn thì xoá bản ghi lineup cũ của cầu thủ đó
-                    Lineup.objects.filter(
-                        match=match, player=player, team=captain_team
-                    ).delete()
-
-        return redirect(match.get_absolute_url())
-
-    # Hiển thị đội hình đã đăng ký
-    team1_lineup = (Lineup.objects
-                    .filter(match=match, team=match.team1)
-                    .select_related('player')
-                    .order_by('player__name'))
-    team2_lineup = (Lineup.objects
-                    .filter(match=match, team=match.team2)
-                    .select_related('player')
-                    .order_by('player__name'))
+    # lineup theo đội
+    team1_lineup = (
+        Lineup.objects
+        .filter(match=match, team=match.team1)
+        .select_related('player')
+        .order_by('player__full_name')
+    )
+    team2_lineup = (
+        Lineup.objects
+        .filter(match=match, team=match.team2)
+        .select_related('player')
+        .order_by('player__full_name')
+    )
 
     context = {
-        'match': match,
-        'captain_team': captain_team,
-        'team1_lineup': team1_lineup,
-        'team2_lineup': team2_lineup,
+        "match": match,
+        "captain_team": captain_team,
+        "team1_lineup": team1_lineup,
+        "team2_lineup": team2_lineup,
+        "team1_starters": team1_lineup.filter(status="STARTER"),
+        "team1_subs":     team1_lineup.filter(status="SUBSTITUTE"),
+        "team2_starters": team2_lineup.filter(status="STARTER"),
+        "team2_subs":     team2_lineup.filter(status="SUBSTITUTE"),
     }
-    return render(request, 'tournaments/match_detail.html', context)
-   
+    return render(request, "tournaments/match_detail.html", context)
+
+
 
 @login_required
 def manage_lineup(request, match_pk, team_pk):
-    match = get_object_or_404(Match, pk=match_pk)
+    match = get_object_or_404(Match.objects.select_related('team1','team2'), pk=match_pk)
     team = get_object_or_404(Team, pk=team_pk)
 
-    # Kiểm tra quyền: chỉ đội trưởng của đội này mới được vào
-    if request.user != team.captain:
-        return redirect('home')
+    # Chỉ đội trưởng của team này hoặc staff được sửa
+    if request.user != team.captain and not request.user.is_staff:
+        return HttpResponseForbidden("Không có quyền.")
 
-    if request.method == 'POST':
-        for player in team.players.all():
-            status = request.POST.get(f'player_{player.pk}')
-            if status:
-                Lineup.objects.update_or_create(
-                    match=match,
-                    player=player,
-                    defaults={'team': team, 'status': status}
-                )
-        # Sau khi lưu, quay lại trang chi tiết trận đấu
-        return redirect('match_detail', pk=match.pk)
+    if request.method == "POST":
+        with transaction.atomic():
+            for player in team.players.all():
+                status = request.POST.get(f"player_{player.pk}", "")
+                if status:
+                    Lineup.objects.update_or_create(
+                        match=match, player=player,
+                        defaults={"team": team, "status": status}
+                    )
+                else:
+                    Lineup.objects.filter(match=match, player=player, team=team).delete()
+        return redirect("match_detail", pk=match.pk)
 
-    # Lấy thông tin đội hình đã có để hiển thị trạng thái đã chọn
-    existing_lineup = {lineup.player.pk: lineup.status for lineup in Lineup.objects.filter(match=match, team=team)}
-
-    context = {
-        'match': match,
-        'team': team,
-        'existing_lineup': existing_lineup
-    }
-    return render(request, 'tournaments/manage_lineup.html', context)    
+    existing_lineup = dict(
+        Lineup.objects.filter(match=match, team=team).values_list("player_id", "status")
+    )
+    return render(request, "tournaments/manage_lineup.html", {
+        "match": match, "team": team, "existing_lineup": existing_lineup
+    })
+    
 
 def match_print_view(request, pk):
     match = get_object_or_404(Match, pk=pk)

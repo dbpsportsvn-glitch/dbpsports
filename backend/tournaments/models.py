@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 # --- Model Tournament ---
 class Tournament(models.Model):
@@ -122,7 +123,7 @@ class Match(models.Model):
     team2_score = models.PositiveIntegerField(null=True, blank=True)
 
     def get_absolute_url(self):
-        return reverse("match_detail", kwargs={"pk": self.pk})    
+        return reverse("match_detail", kwargs={"pk": self.pk})
 
     def __str__(self):
         return f"{self.team1.name} vs {self.team2.name} at {self.tournament.name}"
