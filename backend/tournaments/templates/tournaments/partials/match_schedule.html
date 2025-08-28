@@ -17,10 +17,11 @@
                         <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
                         <td>{{ match.team1.name }}</td>
                         <td>
-                            {% if match.team1_score is not None %}
-                                <strong>{{ match.team1_score }} - {{ match.team2_score }}</strong>
-                            {% else %}
+                            {# Hiện "-" chỉ khi cả hai đều None, còn lại hiển thị số với None -> 0 #}
+                            {% if match.team1_score is None and match.team2_score is None %}
                                 -
+                            {% else %}
+                                <strong>{{ match.team1_score|default_if_none:"0" }} - {{ match.team2_score|default_if_none:"0" }}</strong>
                             {% endif %}
                         </td>
                         <td>{{ match.team2.name }}</td>
@@ -32,7 +33,7 @@
     {% endif %}
 
     {% if knockout_matches %}
-    <h5 class="mt-4">Vòng Loại Trực tiếp</h5>
+        <h5 class="mt-4">Vòng Loại Trực tiếp</h5>
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -46,15 +47,15 @@
             </thead>
             <tbody>
                 {% for match in knockout_matches %}
-                     <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
+                    <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
                         <td><strong>{{ match.get_match_round_display }}</strong></td>
                         <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
                         <td>{{ match.team1.name }}</td>
-                         <td>
-                            {% if match.team1_score is not None %}
-                                <strong>{{ match.team1_score }} - {{ match.team2_score }}</strong>
-                            {% else %}
+                        <td>
+                            {% if match.team1_score is None and match.team2_score is None %}
                                 -
+                            {% else %}
+                                <strong>{{ match.team1_score|default_if_none:"0" }} - {{ match.team2_score|default_if_none:"0" }}</strong>
                             {% endif %}
                         </td>
                         <td>{{ match.team2.name }}</td>

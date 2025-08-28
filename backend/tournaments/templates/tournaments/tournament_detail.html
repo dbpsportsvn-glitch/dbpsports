@@ -45,7 +45,7 @@
   document.querySelectorAll('#tournamentTab [data-bs-toggle="tab"]').forEach(el=>{
     el.addEventListener('shown.bs.tab', updatePrintBtn);
   });
-  updatePrintBtn(); // chạy lúc tải trang
+  updatePrintBtn();
 })();
 </script>
 
@@ -126,7 +126,13 @@
                         </div>
 
                         <div class="mc-right">
-                            <span class="mc-score">{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</span>
+                            <span class="mc-score">
+                              {% if m.team1_score is None and m.team2_score is None %}
+                                - : -
+                              {% else %}
+                                {{ m.team1_score|default_if_none:"0" }} : {{ m.team2_score|default_if_none:"0" }}
+                              {% endif %}
+                            </span>
                             <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
                             {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
                         </div>
@@ -175,7 +181,13 @@
                         </div>
 
                         <div class="mc-right">
-                        <span class="mc-score">{{ m.team1_score|default:"-" }} : {{ m.team2_score|default:"-" }}</span>
+                        <span class="mc-score">
+                          {% if m.team1_score is None and m.team2_score is None %}
+                            - : -
+                          {% else %}
+                            {{ m.team1_score|default_if_none:"0" }} : {{ m.team2_score|default_if_none:"0" }}
+                          {% endif %}
+                        </span>
                         <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
                         {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
                         </div>
@@ -252,7 +264,6 @@ function printTab(contentId, title){
   </body></html>`);
   d.close();
 
-  // chờ DOM trong iframe render rồi in
   setTimeout(function(){
     w.focus();
     w.print();

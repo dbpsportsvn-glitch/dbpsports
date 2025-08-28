@@ -26,18 +26,15 @@ def livestream_view(request):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
+# tournaments/views.py
 
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
-
+    
     all_matches = tournament.matches.all().order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
-
-    # Chuyển QuerySet thành một List đơn giản
-    knockout_matches = list(all_matches.exclude(match_round='GROUP'))
-
-    # Xóa dòng print cũ đi
-
+    knockout_matches = all_matches.exclude(match_round='GROUP')
+    
     context = {
         'tournament': tournament,
         'group_matches': group_matches,
