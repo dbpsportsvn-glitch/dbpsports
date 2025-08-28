@@ -71,6 +71,13 @@ class Tournament(models.Model):
 
         return sorted_standings
 
+class Group(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='groups')
+    name = models.CharField(max_length=50) # Ví dụ: "Bảng A", "Bảng B"
+
+    def __str__(self):
+        return f"{self.name} - {self.tournament.name}"
+
 class Team(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     name = models.CharField(max_length=100)
@@ -78,7 +85,8 @@ class Team(models.Model):
     # Thêm dòng dưới đây để lưu lại ai là đội trưởng
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
-
+    # Thêm trường dưới đây để gán đội vào một bảng đấu
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     def __str__(self):
         return self.name
 
