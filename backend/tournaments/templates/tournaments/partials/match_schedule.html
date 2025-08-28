@@ -1,33 +1,25 @@
 <div class="table-responsive">
+    <h5>Vòng Bảng</h5>
     <table class="table table-hover">
-        <thead>
-            <tr>
-                <th scope="col">Thời gian</th>
-                <th scope="col">Đội 1</th>
-                <th scope="col">Tỉ số</th>
-                <th scope="col">Đội 2</th>
-                <th scope="col">Địa điểm</th>
-            </tr>
-        </thead>
+        <tbody>
+            {% for match in matches|dictsort:"match_round" %}
+                {% if match.match_round == 'GROUP' %}
+                    <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
+                        </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h5 class="mt-4">Vòng Loại Trực tiếp</h5>
+    <table class="table table-hover">
         <tbody>
             {% for match in matches %}
-                <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
-                    <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
-                    <td>{{ match.team1.name }}</td>
-                    <td>
-                        {% if match.team1_score is not None and match.team2_score is not None %}
-                            {{ match.team1_score }} - {{ match.team2_score }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>{{ match.team2.name }}</td>
-                    <td>{{ match.location }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center">Lịch thi đấu đang được cập nhật.</td>
-                </tr>
+                {% if match.match_round != 'GROUP' %}
+                     <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
+                        <td>{{ match.get_match_round_display }}</td>
+                        </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>

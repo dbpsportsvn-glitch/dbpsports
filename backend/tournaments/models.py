@@ -1,8 +1,9 @@
 # tournaments/models.py
 
 from django.db import models
-from django.contrib.auth.models import User # <-- Thêm dòng import này
+from django.contrib.auth.models import User
 
+# --- Model Tournament ---
 class Tournament(models.Model):
     STATUS_CHOICES = [
         ('REGISTRATION_OPEN', 'Đang mở đăng ký'),
@@ -13,21 +14,20 @@ class Tournament(models.Model):
     name = models.CharField(max_length=200)
     start_date = models.DateField()
     end_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN') # Thêm dòng này
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN')
+    image = models.ImageField(upload_to='tournament_banners/', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
-# tournaments/models.py
-
+# --- Model Group ---
 class Group(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='groups')
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50) # Ví dụ: "Bảng A", "Bảng B"
 
     def __str__(self):
         return f"{self.name} - {self.tournament.name}"
 
-    # === THÊM BỘ NÃO TÍNH TOÁN VÀO ĐÂY ===
     def get_standings(self):
         standings = {}
         teams_in_group = self.teams.all()
@@ -38,7 +38,6 @@ class Group(models.Model):
                 'gf': 0, 'ga': 0, 'gd': 0, 'points': 0, 'team_obj': team
             }
 
-        # Lấy các trận đấu mà cả 2 đội đều thuộc bảng này
         matches_in_group = self.tournament.matches.filter(
             team1__in=teams_in_group, 
             team2__in=teams_in_group,
@@ -47,66 +46,74 @@ class Group(models.Model):
         )
 
         for match in matches_in_group:
-            # ... (Phần logic tính điểm bên trong giống hệt như cũ) ...
             team1_id = match.team1.id
             team2_id = match.team2.id
             score1 = match.team1_score
             score2 = match.team2_score
 
-            standings[team1_id]['played'] += 1
-            standings[team2_id]['played'] += 1
-            standings[team1_id]['gf'] += score1
-            standings[team1_id]['ga'] += score2
-            standings[team2_id]['gf'] += score2
-            standings[team2_id]['ga'] += score1
-
-            if score1 > score2:
-                standings[team1_id]['wins'] += 1
-                standings[team1_id]['points'] += 3
-                standings[team2_id]['losses'] += 1
-            elif score2 > score1:
-                standings[team2_id]['wins'] += 1
-                standings[team2_id]['points'] += 3
-                standings[team1_id]['losses'] += 1
-            else:
-                standings[team1_id]['draws'] += 1
-                standings[team1_id]['points'] += 1
-                standings[team2_id]['draws'] += 1
-                standings[team2_id]['points'] += 1
+            if team1_id in standings and team2_id in standings:
+                standings[team1_id]['played'] += 1
+                standings[team2_id]['played'] += 1
+                standings[team1_id]['gf'] += score1
+                standings[team1_id]['ga'] += score2
+                standings[team2_id]['gf'] += score2
+                standings[team2_id]['ga'] += score1
+                
+                if score1 > score2:
+                    standings[team1_id]['wins'] += 1
+                    standings[team1_id]['points'] += 3
+                    standings[team2_id]['losses'] += 1
+                elif score2 > score1:
+                    standings[team2_id]['wins'] += 1
+                    standings[team2_id]['points'] += 3
+                    standings[team1_id]['losses'] += 1
+                else:
+                    standings[team1_id]['draws'] += 1
+                    standings[team1_id]['points'] += 1
+                    standings[team2_id]['draws'] += 1
+                    standings[team2_id]['points'] += 1
 
         sorted_standings = list(standings.values())
         for stats in sorted_standings:
             stats['gd'] = stats['gf'] - stats['ga']
-
+        
         sorted_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
-
+        
         return sorted_standings
 
+# --- Model Team ---
 class Team(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True)
-    # Thêm dòng dưới đây để lưu lại ai là đội trưởng
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
-    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
-    # Thêm trường dưới đây để gán đội vào một bảng đấu
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
+    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
+
     def __str__(self):
         return self.name
 
+# --- Model Player ---
 class Player(models.Model):
-    # Kết nối với đội bóng: một đội có nhiều cầu thủ
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     full_name = models.CharField(max_length=100)
     jersey_number = models.PositiveIntegerField()
-    position = models.CharField(max_length=50) # Ví dụ: Thủ môn, Hậu vệ...
+    position = models.CharField(max_length=50)
 
     def __str__(self):
         return f"{self.full_name} (#{self.jersey_number})"
 
-
+# --- Model Match ---
 class Match(models.Model):
+    ROUND_CHOICES = [
+        ('GROUP', 'Vòng bảng'),
+        ('QUARTER', 'Tứ kết'),
+        ('SEMI', 'Bán kết'),
+        ('FINAL', 'Chung kết'),
+    ]
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
+    match_round = models.CharField(max_length=10, choices=ROUND_CHOICES, default='GROUP')
     team1 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team1')
     team2 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team2')
     match_time = models.DateTimeField()
@@ -117,6 +124,7 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.team1.name} vs {self.team2.name} at {self.tournament.name}"
 
+# --- Model Lineup ---
 class Lineup(models.Model):
     STATUS_CHOICES = [
         ('STARTER', 'Đá chính'),
@@ -129,8 +137,7 @@ class Lineup(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
     class Meta:
-        # Đảm bảo một cầu thủ không thể được đăng ký hai lần cho cùng một trận đấu
         unique_together = ('match', 'player')
 
     def __str__(self):
-        return f"{self.player.full_name} ({self.status}) for {self.match}"        
+        return f"{self.player.full_name} ({self.status}) for {self.match}"

@@ -17,13 +17,19 @@ from itertools import combinations # <-- Thêm dòng import này
 from django.contrib import messages
 from .models import Tournament, Team, Player, Match, Lineup, Group
 
+# === THÊM CLASS MỚI NÀY VÀO ===
+class GroupInline(admin.TabularInline):
+    model = Group
+    extra = 1 # Hiển thị sẵn 1 dòng trống để thêm
+
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
     list_display = ('name', 'status', 'start_date', 'end_date')
     list_filter = ('status',)
     search_fields = ('name',)
     list_editable = ('status',)
-    actions = ['draw_groups', 'generate_group_stage_matches'] # <-- Thêm action mới vào đây
+    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches']
+    inlines = [GroupInline] # <-- Thêm dòng này
 
     @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
     def draw_groups(self, request, queryset):
@@ -60,6 +66,47 @@ class TournamentAdmin(admin.ModelAdmin):
             else:
                 self.message_user(request, f"Không thể tạo lịch cho giải '{tournament.name}' vì vẫn đang mở đăng ký.", messages.ERROR)
 
+    # === THÊM TOÀN BỘ PHƯƠNG THỨC MỚI NÀY VÀO ===
+    @admin.action(description='Tạo cặp đấu Tứ kết')
+    def generate_knockout_matches(self, request, queryset):
+        for tournament in queryset:
+            groups = list(tournament.groups.all().order_by('name'))
+            
+            # Giả định có 2 bảng đấu (A và B)
+            if len(groups) != 2:
+                self.message_user(request, f"Chức năng này hiện chỉ hỗ trợ 2 bảng đấu.", messages.ERROR)
+                continue
+
+            # Lấy bảng xếp hạng cho từng bảng
+            standings_A = groups[0].get_standings()
+            standings_B = groups[1].get_standings()
+
+            if len(standings_A) < 2 or len(standings_B) < 2:
+                self.message_user(request, f"Không đủ đội trong các bảng của giải '{tournament.name}' để tạo Tứ kết.", messages.ERROR)
+                continue
+
+            # Xác định các đội nhất nhì bảng
+            winner_A = standings_A[0]['team_obj']
+            runner_up_A = standings_A[1]['team_obj']
+            winner_B = standings_B[0]['team_obj']
+            runner_up_B = standings_B[1]['team_obj']
+
+            # Tạo các cặp đấu Tứ kết (ví dụ: Nhất A vs Nhì B, Nhất B vs Nhì A)
+            Match.objects.get_or_create(
+                tournament=tournament,
+                match_round='SEMI', # Giả sử có 2 bảng thì vào thẳng Bán kết
+                team1=winner_A,
+                team2=runner_up_B,
+                defaults={'match_time': timezone.now()}
+            )
+            Match.objects.get_or_create(
+                tournament=tournament,
+                match_round='SEMI', # Giả sử có 2 bảng thì vào thẳng Bán kết
+                team1=winner_B,
+                team2=runner_up_A,
+                defaults={'match_time': timezone.now()}
+            )
+            self.message_user(request, f"Đã tạo các cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -94,4 +141,6 @@ class LineupAdmin(admin.ModelAdmin):
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'tournament')
-    list_filter = ('tournament',)    
+    list_filter = ('tournament',)
+    # Thêm dòng này để tìm kiếm giải đấu
+    search_fields = ('tournament__name',)    
