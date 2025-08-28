@@ -84,12 +84,20 @@ class Group(models.Model):
 
 # --- Model Team ---
 class Team(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('UNPAID', 'Chưa thanh toán'),
+        ('PENDING', 'Chờ xác nhận'),
+        ('PAID', 'Đã thanh toán'),
+    ]
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True)
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='UNPAID')
+    payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True)
 
     def __str__(self):
         return self.name

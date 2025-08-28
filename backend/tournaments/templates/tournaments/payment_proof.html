@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="form-container">
+    <h3 class="mb-4">Xác nhận Thanh toán Lệ phí</h3>
+    <p><strong>Đội:</strong> {{ team.name }}</p>
+    <p><strong>Giải đấu:</strong> {{ team.tournament.name }}</p>
+    <hr>
+
+    <h4>Thông tin chuyển khoản</h4>
+    <p>Vui lòng chuyển khoản lệ phí đến tài khoản sau:</p>
+    <ul>
+        <li><strong>Ngân hàng:</strong> Vietcombank</li>
+        <li><strong>Số tài khoản:</strong> 0123456789</li>
+        <li><strong>Chủ tài khoản:</strong> BAN TO CHUC GIAI DAU</li>
+        <li><strong>Nội dung:</strong> {{ team.name }} nop le phi</li>
+    </ul>
+    <img src="https://www.investopedia.com/thmb/hJrIBjjMB5zv2ajpDe-x-QD-d_M=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/qr-code-bc94057f452f4806977e76e1d1e42b8d.png" alt="Sample QR Code" class="img-fluid mb-4" style="max-width: 200px;">
+
+    <hr>
+    <h4>Tải lên bằng chứng thanh toán</h4>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary w-100 mt-3">Gửi xác nhận</button>
+    </form>
+</div>
+{% endblock %}

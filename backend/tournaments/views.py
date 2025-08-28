@@ -8,6 +8,7 @@ from django.http import HttpResponseForbidden
 from django.db import transaction
 from django.urls import reverse
 from django.db.models import Sum, Count
+from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -279,4 +280,28 @@ def match_print_view(request, pk):
         'team1_lineup': team1_lineup,
         'team2_lineup': team2_lineup,
     }
-    return render(request, 'tournaments/match_print.html', context)    
+    return render(request, 'tournaments/match_print.html', context) 
+
+@login_required
+def team_payment(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+
+    # Chỉ đội trưởng mới có quyền
+    if request.user != team.captain:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = PaymentProofForm(request.POST, request.FILES, instance=team)
+        if form.is_valid():
+            team = form.save(commit=False)
+            team.payment_status = 'PENDING' # Chuyển trạng thái sang "Chờ xác nhận"
+            team.save()
+            return redirect('team_detail', pk=team.pk)
+    else:
+        form = PaymentProofForm(instance=team)
+
+    context = {
+        'form': form,
+        'team': team
+    }
+    return render(request, 'tournaments/payment_proof.html', context)

@@ -142,15 +142,23 @@ class TournamentAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament', 'captain', 'display_logo')
-    list_filter = ('tournament',)
-    search_fields = ('captain__username', 'name', 'coach_name',)
+    list_display = ('name', 'tournament', 'captain', 'payment_status', 'display_proof', 'display_logo') # Thêm display_proof
+    list_filter = ('tournament', 'payment_status',)
+    search_fields = ('captain__username', 'name',)
+    list_editable = ('payment_status',)
 
     def display_logo(self, obj):
         if obj.logo:
             return format_html(f'<img src="{obj.logo.url}" width="40" height="40" />')
         return "No Logo"
     display_logo.short_description = 'Logo'
+
+    # === THÊM PHƯƠNG THỨC MỚI NÀY VÀO ===
+    def display_proof(self, obj):
+        if obj.payment_proof:
+            return format_html(f'<a href="{obj.payment_proof.url}" target="_blank">Xem hóa đơn</a>')
+        return "Chưa có"
+    display_proof.short_description = 'Hóa đơn'
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):

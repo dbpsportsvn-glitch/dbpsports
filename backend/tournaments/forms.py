@@ -22,3 +22,11 @@ class PlayerCreationForm(forms.ModelForm):
             'jersey_number': 'Số áo',
             'position': 'Vị trí',
         }        
+
+class PaymentProofForm(forms.ModelForm):
+    class Meta:
+        model = Team
+        fields = ['payment_proof']
+        labels = {
+            'payment_proof': 'Tải lên ảnh chụp màn hình hóa đơn chuyển khoản',
+        }        
