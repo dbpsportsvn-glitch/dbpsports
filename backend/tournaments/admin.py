@@ -5,17 +5,13 @@ from .models import Tournament, Team, Player, Match, Lineup, Group, Goal
 from django.utils.html import format_html
 from itertools import combinations
 from django.utils import timezone 
-
-# tournaments/admin.py
 import random
 from django.contrib import messages
-
-# tournaments/admin.py
-
 import random
 from itertools import combinations # <-- Thêm dòng import này
 from django.contrib import messages
 from .models import Tournament, Team, Player, Match, Lineup, Group
+from .utils import send_notification_email
 
 # === THÊM CLASS MỚI NÀY VÀO ===
 class GroupInline(admin.TabularInline):
@@ -146,6 +142,26 @@ class TeamAdmin(admin.ModelAdmin):
     list_filter = ('tournament', 'payment_status',)
     search_fields = ('captain__username', 'name',)
     list_editable = ('payment_status',)
+
+    # === THÊM PHƯƠ-THỨC MỚI NÀY VÀO ===
+    def save_model(self, request, obj, form, change):
+        # Lưu lại trạng thái cũ trước khi lưu
+        old_obj = Team.objects.get(pk=obj.pk) if obj.pk else None
+
+        # Thực hiện việc lưu bình thường
+        super().save_model(request, obj, form, change)
+
+        # Kiểm tra xem trạng thái có thay đổi thành "Đã thanh toán" không
+        if old_obj and old_obj.payment_status != 'PAID' and obj.payment_status == 'PAID':
+            # Gửi email xác nhận cho đội trưởng
+            captain_email = obj.captain.email
+            if captain_email:
+                send_notification_email(
+                    subject=f"Xác nhận thanh toán thành công cho đội {obj.name}",
+                    template_name='tournaments/emails/payment_confirmed.html',
+                    context={'team': obj},
+                    recipient_list=[captain_email]
+                )
 
     def display_logo(self, obj):
         if obj.logo:

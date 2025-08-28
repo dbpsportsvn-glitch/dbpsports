@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.db.models import Sum, Count
 from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
 from .utils import send_notification_email
+from django.conf import settings
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -302,7 +303,8 @@ def team_payment(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team}
+                context={'team': team},
+                recipient_list=[settings.ADMIN_EMAIL] # <-- Gửi trong một danh sách
             )
             
             return redirect('team_detail', pk=team.pk)
