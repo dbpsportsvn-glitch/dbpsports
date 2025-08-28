@@ -28,7 +28,7 @@ class TournamentAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('name',)
     list_editable = ('status',)
-    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches']
+    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
     inlines = [GroupInline] # <-- Thêm dòng này
 
     @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
@@ -107,6 +107,38 @@ class TournamentAdmin(admin.ModelAdmin):
                 defaults={'match_time': timezone.now()}
             )
             self.message_user(request, f"Đã tạo các cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
+
+    # === THÊM TOÀN BỘ PHƯƠNG THỨC MỚI NÀY VÀO ===
+    @admin.action(description='Tạo trận Chung kết từ Bán kết')
+    def generate_final_match(self, request, queryset):
+        for tournament in queryset:
+            # Tìm các trận bán kết đã có tỉ số
+            semi_finals = tournament.matches.filter(match_round='SEMI', team1_score__isnull=False, team2_score__isnull=False)
+
+            if semi_finals.count() != 2:
+                self.message_user(request, f"Cần có đủ 2 trận Bán kết đã có tỉ số cho giải '{tournament.name}'.", messages.ERROR)
+                continue
+
+            # Xác định 2 đội chiến thắng
+            winners = []
+            for match in semi_finals:
+                if match.team1_score > match.team2_score:
+                    winners.append(match.team1)
+                else:
+                    winners.append(match.team2)
+            
+            # Tạo trận Chung kết
+            if len(winners) == 2:
+                Match.objects.get_or_create(
+                    tournament=tournament,
+                    match_round='FINAL',
+                    team1=winners[0],
+                    team2=winners[1],
+                    defaults={'match_time': timezone.now()}
+                )
+                self.message_user(request, f"Đã tạo trận Chung kết cho giải '{tournament.name}'.", messages.SUCCESS)
+            else:
+                 self.message_user(request, f"Không thể xác định 2 đội chiến thắng từ các trận Bán kết.", messages.ERROR)
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
