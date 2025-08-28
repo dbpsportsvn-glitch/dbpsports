@@ -83,3 +83,70 @@
     border-radius: 8px; /* Bo tròn nhẹ góc ảnh */
     box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Thêm đổ bóng nhẹ */
 }
+
+/* === KHỐI CODE CUỐI CÙNG CHO SƠ ĐỒ THI ĐẤU === */
+.bracket {
+    display: flex;
+    align-items: center; /* Căn giữa các cột theo chiều dọc */
+}
+
+.bracket-round {
+    flex: 1; /* Cho các cột tự động co giãn */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 30px; /* Thêm khoảng cách giữa các trận */
+}
+
+.bracket-match {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: .25rem;
+    padding: 0.75rem;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.bracket-connector {
+    flex: 0 0 50px; /* Đặt chiều rộng cố định cho cột nối */
+    position: relative;
+    height: 150px; /* Chiều cao của đường nối dọc */
+    display: flex;
+    align-items: center;
+}
+
+/* Vẽ đường nối ngang từ các trận bán kết */
+.bracket-round:first-child .bracket-match::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -25px; /* Chiều dài bằng nửa chiều rộng cột nối */
+    width: 25px;
+    height: 2px;
+    background-color: #ccc;
+}
+
+/* Vẽ đường nối dọc */
+.bracket-connector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background-color: #ccc;
+    transform: translateX(-50%);
+}
+
+/* Vẽ đường nối ngang đến trận chung kết */
+.bracket-connector::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 50%;
+    height: 2px;
+    background-color: #ccc;
+    transform: translateY(-50%);
+}

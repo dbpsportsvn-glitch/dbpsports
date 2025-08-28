@@ -7,6 +7,7 @@ from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 from django.http import HttpResponseForbidden
 from django.db import transaction
 from django.urls import reverse
+from django.db.models import Sum # Thêm import này
 
 def home(request):
     # 2. Lấy tất cả các đối tượng Tournament từ database
@@ -26,19 +27,42 @@ def livestream_view(request):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
-# tournaments/views.py
-
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
-    
+
+    # Lấy tất cả các trận
     all_matches = tournament.matches.all().order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
-    knockout_matches = all_matches.exclude(match_round='GROUP')
-    
+    knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL']) # Lấy cả bán kết và chung kết
+
+    # === TÍNH TOÁN CÁC THÔNG SỐ THỐNG KÊ ===
+    total_teams = tournament.teams.count()
+    total_players = Player.objects.filter(team__tournament=tournament).count()
+    finished_matches = all_matches.filter(team1_score__isnull=False)
+    total_goals = finished_matches.aggregate(total=Sum('team1_score') + Sum('team2_score'))['total'] or 0
+
     context = {
         'tournament': tournament,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
+        # Gửi các thông số ra template
+        'total_teams': total_teams,
+        'total_players': total_players,
+        'total_goals': total_goals,
+        'finished_matches_count': finished_matches.count(),
+    }
+    return render(request, 'tournaments/tournament_detail.html', context)    
+
+    # Chuẩn bị riêng các trận Knock-out
+    semi_final_matches = all_matches.filter(match_round='SEMI')
+    final_match = all_matches.filter(match_round='FINAL').first() # Chỉ có 1 trận chung kết
+
+    context = {
+        'tournament': tournament,
+        'group_matches': group_matches,
+        # Gửi riêng các trận knock-out ra ngoài
+        'semi_final_matches': semi_final_matches,
+        'final_match': final_match,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 

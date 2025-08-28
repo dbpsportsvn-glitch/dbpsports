@@ -26,6 +26,9 @@
     <li class="nav-item"><button class="nav-link" id="teams-tab"    data-bs-toggle="tab" data-bs-target="#teams"    type="button">👥 Các đội</button></li>
     <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
     <li class="nav-item"><button class="nav-link" id="standings-tab"data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">Thống kê</button>
+    </li>    
   </ul>
 
   <button id="print-all-btn"
@@ -210,6 +213,10 @@
       {% include 'tournaments/partials/standings_table.html' %}
     </div>
   </div>
+</div>
+
+<div class="tab-pane fade p-3 border border-top-0 rounded-bottom" id="stats" role="tabpanel">
+    {% include 'tournaments/partials/tournament_stats.html' %}
 </div>
 
 <script>
