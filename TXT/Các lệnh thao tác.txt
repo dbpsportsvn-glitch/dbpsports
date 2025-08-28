@@ -1,5 +1,5 @@
 
-- chạy serve ảo: python manage.py runserver
+python manage.py runserver
 
 - mở khoá bảo mật môi trường ảo: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 

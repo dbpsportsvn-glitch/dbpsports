@@ -29,8 +29,10 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'tournament', 'match_time', 'location')
+    list_display = ('__str__', 'tournament', 'match_time', 'team1_score', 'team2_score', 'location')
     list_filter = ('tournament',)
+    # Thêm dòng này để cho phép sửa nhanh
+    list_editable = ('team1_score', 'team2_score',)
 
 @admin.register(Lineup)
 class LineupAdmin(admin.ModelAdmin):
