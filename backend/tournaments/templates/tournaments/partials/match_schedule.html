@@ -1,26 +1,67 @@
 <div class="table-responsive">
-    <h5>Vòng Bảng</h5>
-    <table class="table table-hover">
-        <tbody>
-            {% for match in matches|dictsort:"match_round" %}
-                {% if match.match_round == 'GROUP' %}
+    {% if group_matches %}
+        <h5>Vòng Bảng</h5>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Thời gian</th>
+                    <th scope="col">Đội 1</th>
+                    <th scope="col">Tỉ số</th>
+                    <th scope="col">Đội 2</th>
+                    <th scope="col">Địa điểm</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in group_matches %}
                     <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
-                        </tr>
-                {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
+                        <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
+                        <td>{{ match.team1.name }}</td>
+                        <td>
+                            {% if match.team1_score is not None %}
+                                <strong>{{ match.team1_score }} - {{ match.team2_score }}</strong>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ match.team2.name }}</td>
+                        <td>{{ match.location|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 
+    {% if knockout_matches %}
     <h5 class="mt-4">Vòng Loại Trực tiếp</h5>
-    <table class="table table-hover">
-        <tbody>
-            {% for match in matches %}
-                {% if match.match_round != 'GROUP' %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Vòng</th>
+                    <th scope="col">Thời gian</th>
+                    <th scope="col">Đội 1</th>
+                    <th scope="col">Tỉ số</th>
+                    <th scope="col">Đội 2</th>
+                    <th scope="col">Địa điểm</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in knockout_matches %}
                      <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
-                        <td>{{ match.get_match_round_display }}</td>
-                        </tr>
-                {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
+                        <td><strong>{{ match.get_match_round_display }}</strong></td>
+                        <td>{{ match.match_time|date:"H:i, d/m/Y" }}</td>
+                        <td>{{ match.team1.name }}</td>
+                         <td>
+                            {% if match.team1_score is not None %}
+                                <strong>{{ match.team1_score }} - {{ match.team2_score }}</strong>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ match.team2.name }}</td>
+                        <td>{{ match.location|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 </div>

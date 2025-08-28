@@ -147,7 +147,7 @@
         <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
         <div class="row row-cols-1 g-3">
             {% for m in all_matches %}
-            {% if m.match_round == 'KNOCKOUT' %}
+            {% if m.match_round != 'GROUP' %}
                 <div class="col">
                 <a href="{% url 'match_detail' pk=m.pk %}?tab=schedule" class="text-decoration-none text-reset">
                     <div class="card match-card">
