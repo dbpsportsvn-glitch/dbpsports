@@ -108,6 +108,7 @@ class Player(models.Model):
     full_name = models.CharField(max_length=100)
     jersey_number = models.PositiveIntegerField()
     position = models.CharField(max_length=50)
+    avatar = models.ImageField(upload_to='player_avatars/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.full_name} (#{self.jersey_number})"

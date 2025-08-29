@@ -4,7 +4,7 @@
 {% block title %}{{ team.name }}{% endblock %}
 
 {% block content %}
-<div class.container mt-4">
+<div class="container mt-4">
     <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=teams#teams" class="btn btn-link p-0 mb-3">← Về giải đấu</a>
     <div class="row">
         <div class="col-md-5">
@@ -53,7 +53,7 @@
               <div class="card mb-4">
                 <div class="card-header"><h5>Thêm cầu thủ mới</h5></div>
                 <div class="card-body">
-                  <form method="post">
+                  <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ player_form|crispy }}
                     <button type="submit" class="btn btn-primary mt-3 w-100">Thêm vào đội hình</button>

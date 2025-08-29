@@ -94,28 +94,30 @@ def tournament_detail(request, pk):
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
+
+@login_required
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
-
+    
     # Xử lý form thêm cầu thủ
     if request.method == 'POST':
         # Chỉ đội trưởng mới có quyền thêm cầu thủ
         if request.user == team.captain:
-            player_form = PlayerCreationForm(request.POST)
+            player_form = PlayerCreationForm(request.POST, request.FILES) # Sửa lại đây
             if player_form.is_valid():
                 player = player_form.save(commit=False)
                 player.team = team # Gán cầu thủ vào đội này
                 player.save()
                 return redirect('team_detail', pk=team.pk) # Tải lại trang để xem cầu thủ mới
-
+    
     # Tạo một form trống cho lần truy cập đầu tiên (GET)
     player_form = PlayerCreationForm()
-
+        
     context = {
         'team': team,
         'player_form': player_form, # Gửi form vào template
     }
-    return render(request, 'tournaments/team_detail.html', context) 
+    return render(request, 'tournaments/team_detail.html', context)
 
 # tournaments/views.py
 @login_required # Yêu cầu người dùng phải đăng nhập để truy cập view này
@@ -169,7 +171,7 @@ def update_player(request, pk):
         return redirect('home')
 
     if request.method == 'POST':
-        form = PlayerCreationForm(request.POST, instance=player)
+        form = PlayerCreationForm(request.POST, request.FILES, instance=player) # Thêm request.FILES
         if form.is_valid():
             form.save()
             return redirect('team_detail', pk=team.pk)

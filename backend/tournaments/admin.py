@@ -157,9 +157,15 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'team', 'jersey_number', 'position')
+    list_display = ('full_name', 'team', 'jersey_number', 'position', 'display_avatar') # Thêm display_avatar
     list_filter = ('team__tournament', 'team')
     search_fields = ('full_name',)
+
+    def display_avatar(self, obj):
+        if obj.avatar:
+            return format_html(f'<img src="{obj.avatar.url}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />')
+        return "Chưa có ảnh"
+    display_avatar.short_description = 'Ảnh đại diện'
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):

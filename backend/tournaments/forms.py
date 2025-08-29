@@ -15,12 +15,12 @@ class TeamCreationForm(forms.ModelForm):
 class PlayerCreationForm(forms.ModelForm):
     class Meta:
         model = Player
-        # Chúng ta không cần trường 'team' vì nó sẽ được tự động gán
-        fields = ['full_name', 'jersey_number', 'position']
+        fields = ['full_name', 'jersey_number', 'position', 'avatar'] # Thêm 'avatar'
         labels = {
             'full_name': 'Họ và tên cầu thủ',
             'jersey_number': 'Số áo',
             'position': 'Vị trí',
+            'avatar': 'Ảnh đại diện / Giấy tờ',
         }        
 
 class PaymentProofForm(forms.ModelForm):
