@@ -36,6 +36,59 @@
         {% endif %}
     </div>
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h4 class="section-title mb-0">Diễn biến chính</h4>
+        </div>
+        <div class="card-body p-3">
+            <div class="row">
+                <div class="col-6 border-end text-end pe-3">
+                    {% for goal in match.goals.all %}
+                        {% if goal.team == match.team1 %}
+                            <p class="mb-1">
+                                {{ goal.player.full_name }} {% if goal.minute %}({{ goal.minute }}'){% endif %} ⚽
+                            </p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="col-6 ps-3">
+                    {% for goal in match.goals.all %}
+                        {% if goal.team == match.team2 %}
+                            <p class="mb-1">
+                                ⚽ {{ goal.player.full_name }} {% if goal.minute %}({{ goal.minute }}'){% endif %}
+                            </p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% if cards %}
+            <hr>
+            <div class="row">
+                <div class="col-6 border-end text-end pe-3">
+                    {% for card in cards %}
+                        {% if card.team == match.team1 %}
+                            <p class="mb-1">
+                                {{ card.player.full_name }} {% if card.minute %}({{ card.minute }}'){% endif %}
+                                {% if card.card_type == 'YELLOW' %}<span class="badge bg-warning text-dark"> </span>{% else %}<span class="badge bg-danger"> </span>{% endif %}
+                            </p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="col-6 ps-3">
+                     {% for card in cards %}
+                        {% if card.team == match.team2 %}
+                            <p class="mb-1">
+                                {% if card.card_type == 'YELLOW' %}<span class="badge bg-warning text-dark"> </span>{% else %}<span class="badge bg-danger"> </span>{% endif %}
+                                {{ card.player.full_name }} {% if card.minute %}({{ card.minute }}'){% endif %}
+                            </p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
     <div class="card shadow-sm lineup-section">
         <div class="card-header">
             <h4 class="section-title mb-0">Đội hình Thi đấu</h4>

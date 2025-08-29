@@ -6,18 +6,48 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card
 from .utils import send_notification_email
 from django.conf import settings
+from django.db.models import Q
 
 # --- Định nghĩa các Inlines ---
 class GroupInline(admin.TabularInline):
     model = Group
     extra = 1
 
+# --- Định nghĩa các Inlines ---
 class GoalInline(admin.TabularInline):
     model = Goal
     extra = 2
+    readonly_fields = ('team',)
+
+    # Đặt logic lọc vào đây
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        match_id = request.resolver_match.kwargs.get('object_id')
+        if db_field.name == "player" and match_id:
+            match = Match.objects.get(pk=match_id)
+            if match:
+                kwargs["queryset"] = Player.objects.filter(
+                    Q(team=match.team1) | Q(team=match.team2)
+                ).order_by('team__name', 'full_name')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+class CardInline(admin.TabularInline):
+    model = Card
+    extra = 1
+    readonly_fields = ('team',)
+
+    # Và đặt logic lọc vào đây nữa
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        match_id = request.resolver_match.kwargs.get('object_id')
+        if db_field.name == "player" and match_id:
+            match = Match.objects.get(pk=match_id)
+            if match:
+                kwargs["queryset"] = Player.objects.filter(
+                    Q(team=match.team1) | Q(team=match.team2)
+                ).order_by('team__name', 'full_name')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 # --- Đăng ký và Tùy chỉnh các ModelAdmin ---
 
@@ -133,12 +163,41 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'tournament', 'match_round', 'match_time', 'team1_score', 'team2_score', 'referee') # Thêm referee
+    list_display = ('__str__', 'tournament', 'colored_round', 'match_round', 'match_time', 'team1_score', 'team2_score', 'referee') # Thêm referee
     list_filter = ('tournament', 'match_round',)
     list_editable = ('team1_score', 'team2_score',)
     list_display_links = ('__str__', 'match_time',)
     search_fields = ('team1__name', 'team2__name', 'tournament__name',)
-    inlines = [GoalInline]
+    inlines = [GoalInline, CardInline]
+
+    # === THÊM PHƯƠNG THỨC MỚI NÀY VÀO ===
+    @admin.display(description='Vòng đấu', ordering='match_round')
+    def colored_round(self, obj):
+        if obj.match_round == 'GROUP':
+            color = 'grey'
+            text = 'Vòng bảng'
+        elif obj.match_round == 'SEMI':
+            color = 'orange'
+            text = 'Bán kết'
+        elif obj.match_round == 'FINAL':
+            color = 'green'
+            text = 'Chung kết'
+        else:
+            color = 'blue'
+            text = obj.get_match_round_display()
+            
+        return format_html(f'<span style="color: {color}; font-weight: bold;">{text}</span>')
+
+    # === THÊM PHƯƠNG THỨC NÀY VÀO ===
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            # Tự động gán team dựa trên player được chọn
+            if isinstance(instance, (Goal, Card)):
+                if instance.player:
+                    instance.team = instance.player.team
+            instance.save()
+        formset.save_m2m()
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):

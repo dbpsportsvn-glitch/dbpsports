@@ -238,12 +238,15 @@ def match_detail(request, pk):
         .select_related('player')
         .order_by('player__full_name')
     )
+    # Lấy thông tin thẻ phạt
+    cards = match.cards.all().order_by('minute')
 
     context = {
         "match": match,
         "captain_team": captain_team,
         "team1_lineup": team1_lineup,
         "team2_lineup": team2_lineup,
+        'cards': cards,
         "team1_starters": team1_lineup.filter(status="STARTER"),
         "team1_subs":     team1_lineup.filter(status="SUBSTITUTE"),
         "team2_starters": team2_lineup.filter(status="STARTER"),

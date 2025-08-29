@@ -137,7 +137,7 @@ class Match(models.Model):
         return reverse("match_detail", kwargs={"pk": self.pk})
 
     def __str__(self):
-        return f"{self.team1.name} vs {self.team2.name} at {self.tournament.name}"
+        return f"{self.team1.name} vs {self.team2.name}"
 
 # --- Model Lineup ---
 class Lineup(models.Model):
@@ -164,4 +164,19 @@ class Goal(models.Model):
     minute = models.PositiveIntegerField(null=True, blank=True) # Thời điểm ghi bàn (tùy chọn)
 
     def __str__(self):
-        return f"Goal by {self.player.full_name} in {self.match}"        
+        return f"Goal by {self.player.full_name} in {self.match}"       
+
+class Card(models.Model):
+    CARD_CHOICES = [
+        ('YELLOW', 'Thẻ vàng'),
+        ('RED', 'Thẻ đỏ'),
+    ]
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='cards')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='cards')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='cards')
+    card_type = models.CharField(max_length=10, choices=CARD_CHOICES)
+    minute = models.PositiveIntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.get_card_type_display()} for {self.player.full_name} in {self.match}"         
