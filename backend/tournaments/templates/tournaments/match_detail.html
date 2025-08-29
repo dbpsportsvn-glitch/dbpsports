@@ -18,11 +18,10 @@
           <h2 class="mt-2 h4">{{ match.team1.name }}</h2>
         </div>
         <div class="col-4">
-          {% if match.team1_score is not None %}
-            <h1 class="display-3 fw-bold">{{ match.team1_score }} - {{ match.team2_score }}</h1>
-          {% else %}
-            <h1 class="display-3 fw-bold">VS</h1>
-          {% endif %}
+            {% if match.team1_score is not None and match.team2_score is not None %}
+                <h1 class="display-3 fw-bold">{{ match.team1_score }} - {{ match.team2_score }}</h1>
+            {% else %}
+                <h1 class="display-3 fw-bold">VS</h1> {% endif %}
         </div>
         <div class="col-4">
           {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }} logo" class="team-logo">{% endif %}

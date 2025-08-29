@@ -161,3 +161,28 @@
     border-right: 0;
     border-left: 0;
 }
+
+/* backend/static/css/custom.css */
+
+.match-card-final {
+    transition: box-shadow .2s ease-in-out;
+}
+.match-card-final:hover {
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+.match-card-final .team-logo {
+    height: 32px; width: 32px; object-fit: contain;
+}
+.match-card-final .team-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+.match-card-final .match-score {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+.match-card-final .card-footer {
+    background-color: #f8f9fa;
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+}

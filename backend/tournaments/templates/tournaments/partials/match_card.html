@@ -1,0 +1,35 @@
+<a href="{% url 'match_detail' pk=match.pk %}" class="text-decoration-none text-reset">
+    <div class="card shadow-sm match-card-final">
+        <div class="card-body">
+            <div class="row align-items-center text-center">
+                <div class="col-5 d-flex align-items-center justify-content-end gap-2">
+                    {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo">{% endif %}
+                    <span class="team-name">{{ match.team1.name }}</span>
+                </div>
+                <div class="col-2">
+                    {% if match.team1_score is not None and match.team2_score is not None %}
+                        <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
+                    {% else %}
+                        <span class="match-score">VS</span>
+                    {% endif %}
+                </div>
+                <div class="col-5 d-flex align-items-center justify-content-start gap-2">
+                    <span class="team-name">{{ match.team2.name }}</span>
+                    {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo">{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="chip">📅 {{ match.match_time|date:"H:i, d/m/Y" }}</span>
+                {% if match.referee %}<span class="chip">🧑‍⚖️ TT: {{ match.referee }}</span>{% endif %}
+                {% if match.commentator %}<span class="chip">🎤 BLV: {{ match.commentator }}</span>{% endif %}
+                <span class="chip">📍 Sân Bóng {{ match.location|default:"-"}}</span>
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
+                {% if match.livestream_url %}<a href="{% url 'livestream' %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>{% endif %}
+            </div>
+        </div>
+    </div>
+</a>

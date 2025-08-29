@@ -130,6 +130,8 @@ class Match(models.Model):
     team1_score = models.PositiveIntegerField(null=True, blank=True)
     team2_score = models.PositiveIntegerField(null=True, blank=True)
     livestream_url = models.URLField(max_length=500, null=True, blank=True)
+    referee = models.CharField(max_length=100, null=True, blank=True)
+    commentator = models.CharField(max_length=100, null=True, blank=True)    
 
     def get_absolute_url(self):
         return reverse("match_detail", kwargs={"pk": self.pk})

@@ -133,7 +133,7 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'tournament', 'match_round', 'match_time', 'team1_score', 'team2_score', 'location')
+    list_display = ('__str__', 'tournament', 'match_round', 'match_time', 'team1_score', 'team2_score', 'referee') # Thêm referee
     list_filter = ('tournament', 'match_round',)
     list_editable = ('team1_score', 'team2_score',)
     list_display_links = ('__str__', 'match_time',)

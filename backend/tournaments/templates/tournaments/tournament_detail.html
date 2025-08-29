@@ -93,119 +93,31 @@
 
     <!-- Lịch thi đấu -->
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
-    <div id="schedule-all">
-        {% with all_matches=tournament.matches.all %}
-
-        {# --- Vòng bảng theo từng Bảng --- #}
-        {% for g in tournament.groups.all %}
-            <h5 class="section-title mt-3">{{ g.name }}</h5>
-            <div class="row row-cols-1 g-3">
-            {% for m in all_matches %}
-                {% if m.match_round == 'GROUP' and m.team1.group_id == g.id and m.team2.group_id == g.id %}
-                <div class="col">
-                    <a href="{% url 'match_detail' pk=m.pk %}?tab=schedule" class="text-decoration-none text-reset">
-                    <div class="card match-card">
-                        <div class="card-body mc">
-                        <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
-
-                        <div class="mc-center">
-                            <div class="d-flex align-items-center">
-                            {% if m.team1.logo %}
-                                <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
-                                <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                            {% endif %}
-                            <span class="mc-name">{{ m.team1.name }}</span>
+        <div id="schedule-all">
+            {% for g in tournament.groups.all %}
+                <h5 class="section-title mt-3">{{ g.name }}</h5>
+                <div class="row row-cols-1 g-2">
+                    {% for m in group_matches %}
+                        {% if m.team1.group_id == g.id %}
+                            <div class="col">
+                                {% include 'tournaments/partials/match_card.html' with match=m %}
                             </div>
-
-                            <span class="fw-bold px-2">vs</span>
-
-                            <div class="d-flex align-items-center">
-                            <span class="mc-name">{{ m.team2.name }}</span>
-                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                            {% if m.team2.logo %}
-                                <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
-                            {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mc-right">
-                            <span class="mc-score">
-                              {% if m.team1_score is None and m.team2_score is None %}
-                                - : -
-                              {% else %}
-                                {{ m.team1_score|default_if_none:"0" }} : {{ m.team2_score|default_if_none:"0" }}
-                              {% endif %}
-                            </span>
-                            <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
-                            {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
-                        </div>
-                        </div>
-                    </div>
-                    </a>
+                        {% endif %}
+                    {% endfor %}
                 </div>
-                {% endif %}
-            {% empty %}
-                <div class="col"><p class="text-muted">Chưa có trận.</p></div>
             {% endfor %}
-            </div>
-        {% empty %}
-            <p class="text-muted">Chưa có bảng đấu.</p>
-        {% endfor %}
 
-        {# --- Vòng loại trực tiếp --- #}
-        <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
-        <div class="row row-cols-1 g-3">
-            {% for m in all_matches %}
-            {% if m.match_round != 'GROUP' %}
-                <div class="col">
-                <a href="{% url 'match_detail' pk=m.pk %}?tab=schedule" class="text-decoration-none text-reset">
-                    <div class="card match-card">
-                    <div class="card-body mc">
-                        <div class="mc-left">{{ m.match_time|date:"H:i d/m" }}</div>
-
-                        <div class="mc-center">
-                        <div class="d-flex align-items-center">
-                            {% if m.team1.logo %}
-                            <img class="mc-logo" src="{{ m.team1.logo.url }}" alt="">
-                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                            {% endif %}
-                            <span class="mc-name">{{ m.team1.name }}</span>
+            {% if knockout_matches %}
+                <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
+                <div class="row row-cols-1 g-2">
+                    {% for m in knockout_matches %}
+                        <div class="col">
+                            {% include 'tournaments/partials/match_card.html' with match=m %}
                         </div>
-
-                        <span class="fw-bold px-2">vs</span>
-
-                        <div class="d-flex align-items-center">
-                            <span class="mc-name">{{ m.team2.name }}</span>
-                            <span style="display:inline-block;width:1px;height:18px;background:currentColor;opacity:.3;margin:0 .5rem;"></span>
-                            {% if m.team2.logo %}
-                            <img class="mc-logo" src="{{ m.team2.logo.url }}" alt="">
-                            {% endif %}
-                        </div>
-                        </div>
-
-                        <div class="mc-right">
-                        <span class="mc-score">
-                          {% if m.team1_score is None and m.team2_score is None %}
-                            - : -
-                          {% else %}
-                            {{ m.team1_score|default_if_none:"0" }} : {{ m.team2_score|default_if_none:"0" }}
-                          {% endif %}
-                        </span>
-                        <span class="chip">{{ m.get_match_round_display|default:m.match_round }}</span>
-                        {% if m.location %}<span class="chip">Sân {{ m.location }}</span>{% endif %}
-                        </div>
-                    </div>
-                    </div>
-                </a>
+                    {% endfor %}
                 </div>
             {% endif %}
-            {% empty %}
-            <div class="col"><p class="text-muted">Chưa có trận.</p></div>
-            {% endfor %}
         </div>
-
-        {% endwith %}
-    </div>
     </div>
 
     <!-- BXH -->
