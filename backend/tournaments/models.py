@@ -104,10 +104,17 @@ class Team(models.Model):
 
 # --- Model Player ---
 class Player(models.Model):
+    POSITION_CHOICES = [
+        ('GK', 'Thủ môn'),
+        ('DF', 'Hậu vệ'),
+        ('MF', 'Tiền vệ'),
+        ('FW', 'Tiền đạo'),
+    ]
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     full_name = models.CharField(max_length=100)
     jersey_number = models.PositiveIntegerField()
-    position = models.CharField(max_length=50)
+    position = models.CharField(max_length=10, choices=POSITION_CHOICES) # <-- Sửa dòng này
     avatar = models.ImageField(upload_to='player_avatars/', null=True, blank=True)
 
     def __str__(self):
