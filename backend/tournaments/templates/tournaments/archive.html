@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1>Lưu trữ Giải đấu</h1>
+        <p class="lead">Xem lại lịch sử các giải đấu đã diễn ra.</p>
+    </div>
+
+    <div class="row">
+        {% for tournament in tournaments_list %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ tournament.name }}</h5>
+                        <p class="card-text">
+                            Đã diễn ra từ {{ tournament.start_date|date:"d/m/Y" }}
+                            đến {{ tournament.end_date|date:"d/m/Y" }}.
+                        </p>
+                        <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary">Xem lại chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>Chưa có giải đấu nào được lưu trữ.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

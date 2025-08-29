@@ -11,17 +11,15 @@ from django.db.models import Sum, Count
 from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
 from .utils import send_notification_email
 from django.conf import settings
+from django.utils import timezone
 
+# tournaments/views.py
 def home(request):
-    # 2. Lấy tất cả các đối tượng Tournament từ database
-    all_tournaments = Tournament.objects.all()
-    
-    # 3. Đóng gói dữ liệu để gửi ra template
+    # Chỉ lấy các giải chưa kết thúc
+    active_tournaments = Tournament.objects.exclude(status='FINISHED').order_by('start_date')
     context = {
-        'tournaments_list': all_tournaments,
+        'tournaments_list': active_tournaments,
     }
-    
-    # 4. Gửi dữ liệu qua biến 'context'
     return render(request, 'tournaments/home.html', context)
 
 # tournaments/views.py
@@ -73,6 +71,7 @@ def tournament_detail(request, pk):
         'tournament': tournament,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
+        'now': timezone.now(),
         # Gửi các thông số ra template
         'total_teams': total_teams,
         'total_players': total_players,
@@ -334,3 +333,14 @@ def team_payment(request, pk):
         'team': team
     }
     return render(request, 'tournaments/payment_proof.html', context)
+
+
+    # tournaments/views.py
+def archive_view(request):
+    # Lấy tất cả các giải đấu đã kết thúc
+    finished_tournaments = Tournament.objects.filter(status='FINISHED').order_by('-start_date')
+
+    context = {
+        'tournaments_list': finished_tournaments
+    }
+    return render(request, 'tournaments/archive.html', context)

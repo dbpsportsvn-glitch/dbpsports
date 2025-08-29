@@ -24,11 +24,17 @@
                 <span class="chip">📅 {{ match.match_time|date:"H:i, d/m/Y" }}</span>
                 {% if match.referee %}<span class="chip">🧑‍⚖️ TT: {{ match.referee }}</span>{% endif %}
                 {% if match.commentator %}<span class="chip">🎤 BLV: {{ match.commentator }}</span>{% endif %}
-                <span class="chip">📍 Sân Bóng {{ match.location|default:"-"}}</span>
+                <span class="chip">📍 Sân {{ match.location|default:"-"}}</span>
             </div>
             <div class="d-flex align-items-center flex-wrap gap-2">
                 <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
-                {% if match.livestream_url %}<a href="{% url 'livestream' %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>{% endif %}
+                {% if match.livestream_url %}
+                    {% if match.match_time > now %}
+                        <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
+                    {% else %}
+                        <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-info text-dark text-decoration-none">📼 Xem lại</a>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
     </div>
