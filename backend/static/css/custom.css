@@ -150,3 +150,14 @@
     background-color: #ccc;
     transform: translateY(-50%);
 }
+
+/* LiveStream */
+.upcoming-matches-list {
+    max-height: 500px; /* Giới hạn chiều cao */
+    overflow-y: auto; /* Thêm thanh cuộn dọc khi cần */
+}
+
+.upcoming-matches-list .list-group-item {
+    border-right: 0;
+    border-left: 0;
+}
