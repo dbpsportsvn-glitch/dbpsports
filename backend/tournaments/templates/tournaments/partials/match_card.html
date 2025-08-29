@@ -28,9 +28,10 @@
             </div>
             <div class="d-flex align-items-center flex-wrap gap-2">
                 <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
+                
                 {% if match.livestream_url %}
                     {% if match.match_time > now %}
-                        <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
+                        <a href="{% url 'livestream' %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
                     {% else %}
                         <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-info text-dark text-decoration-none">📼 Xem lại</a>
                     {% endif %}
