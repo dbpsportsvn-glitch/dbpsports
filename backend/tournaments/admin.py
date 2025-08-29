@@ -10,6 +10,7 @@ from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card
 from .utils import send_notification_email
 from django.conf import settings
 from django.db.models import Q
+from django.urls import reverse
 
 # --- Định nghĩa các Inlines ---
 class GroupInline(admin.TabularInline):
@@ -53,12 +54,26 @@ class CardInline(admin.TabularInline):
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'status', 'start_date', 'end_date')
+    list_display = ('name', 'status', 'start_date', 'end_date', 'view_details_link')
     list_filter = ('status',)
     search_fields = ('name',)
     list_editable = ('status',)
     actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
     inlines = [GroupInline]
+
+    def view_details_link(self, obj):
+        # Link đến danh sách các đội của giải đấu này
+        teams_url = reverse('admin:tournaments_team_changelist') + f'?tournament__id__exact={obj.pk}'
+        # Link đến danh sách các trận đấu
+        matches_url = reverse('admin:tournaments_match_changelist') + f'?tournament__id__exact={obj.pk}'
+        # Link đến danh sách các bảng đấu
+        groups_url = reverse('admin:tournaments_group_changelist') + f'?tournament__id__exact={obj.pk}'
+
+        return format_html(
+            '<a href="{}">Xem Đội</a> | <a href="{}">Xem Bảng</a> | <a href="{}">Xem Trận</a>',
+            teams_url, groups_url, matches_url
+        )
+    view_details_link.short_description = 'Quản lý Giải'
 
     @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
     def draw_groups(self, request, queryset):
@@ -158,7 +173,7 @@ class TeamAdmin(admin.ModelAdmin):
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'team', 'jersey_number', 'position', 'display_avatar') # Thêm display_avatar
-    list_filter = ('team__tournament', 'team')
+    list_filter = ('team__tournament', 'team',)
     search_fields = ('full_name',)
 
     def display_avatar(self, obj):
