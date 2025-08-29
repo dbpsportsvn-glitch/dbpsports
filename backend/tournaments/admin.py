@@ -189,6 +189,7 @@ class GoalInline(admin.TabularInline):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'tournament', 'match_time', 'livestream_url')
     list_display = ('__str__', 'tournament', 'match_time', 'team1_score', 'team2_score', 'location')
     list_filter = ('tournament',)
     list_editable = ('team1_score', 'team2_score',)

@@ -1,5 +1,36 @@
 {% extends 'base.html' %}
+
 {% block content %}
-    <h1>Trang Livestream</h1>
-    <p>Nội dung đang được xây dựng. Vui lòng quay lại sau!</p>
+<div class="container mt-4">
+    {% if live_match %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5>Đang diễn ra: {{ live_match.team1.name }} vs {{ live_match.team2.name }}</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="ratio ratio-16x9">
+                    <iframe src="{{ live_match.livestream_url }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="section-title">Các trận đấu sắp tới</h4>
+        <div class="list-group">
+            {% for match in upcoming_matches %}
+                <a href="{% url 'match_detail' pk=match.pk %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ match.team1.name }} vs {{ match.team2.name }}</h5>
+                        <small>{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                    </div>
+                    <p class="mb-1">{{ match.tournament.name }} - {{ match.get_match_round_display }}</p>
+                </a>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <div class="alert alert-info">
+            Hiện tại không có trận đấu nào đang được phát trực tiếp. Vui lòng quay lại sau!
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

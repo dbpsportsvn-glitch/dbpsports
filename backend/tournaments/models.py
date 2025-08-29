@@ -129,6 +129,7 @@ class Match(models.Model):
     location = models.CharField(max_length=200, blank=True)
     team1_score = models.PositiveIntegerField(null=True, blank=True)
     team2_score = models.PositiveIntegerField(null=True, blank=True)
+    livestream_url = models.URLField(max_length=500, null=True, blank=True)
 
     def get_absolute_url(self):
         return reverse("match_detail", kwargs={"pk": self.pk})
