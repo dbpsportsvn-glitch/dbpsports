@@ -119,27 +119,26 @@ def team_detail(request, pk):
     }
     return render(request, 'tournaments/team_detail.html', context)
 
-# tournaments/views.py
-@login_required # Yêu cầu người dùng phải đăng nhập để truy cập view này
+@login_required
 def create_team(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     if request.method == 'POST':
-        form = TeamCreationForm(request.POST)
+        # Thêm request.FILES vào đây để xử lý file tải lên
+        form = TeamCreationForm(request.POST, request.FILES)
         if form.is_valid():
             team = form.save(commit=False)
-            team.tournament = tournament # Gán đội vào giải đấu này
-            team.captain = request.user   # Gán người dùng hiện tại làm đội trưởng
+            team.tournament = tournament
+            team.captain = request.user
             team.save()
-            # Sau khi tạo đội thành công, chuyển đến trang chi tiết của đội đó
-            return redirect('team_detail', pk=team.pk) 
+            return redirect('team_detail', pk=team.pk)
     else:
         form = TeamCreationForm()
-
+        
     context = {
         'form': form,
         'tournament': tournament
     }
-    return render(request, 'tournaments/create_team.html', context)   
+    return render(request, 'tournaments/create_team.html', context)
 
 @login_required
 def delete_player(request, pk):
