@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %}Trang chủ - DBP Sports{% endblock %}
-
 {% block content %}
     <div class="hero-section">
         <h1 class="display-4">Sân Chơi Bóng Đá Đỉnh Cao</h1>
@@ -9,27 +7,37 @@
         <a href="#" class="btn btn-primary btn-lg">Tìm hiểu thêm</a>
     </div>
 
-    <h2 class="mb-4">Các giải đấu nổi bật</h2>
+    <h2 class="mb-4 mt-5">Các giải đấu nổi bật</h2>
     <div class="row">
-        {% if tournaments_list %}
-            {% for tournament in tournaments_list %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100">
+        {% for tournament in tournaments_list %}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="tournament-card-bg" style="position: relative; color: white;">
+                        {% if tournament.image %}
+                            <img src="{{ tournament.image.url }}" class="card-img-bg" alt="{{ tournament.name }} banner">
+                            <div class="card-img-overlay"></div>
+                        {% endif %}
+
                         <div class="card-body">
-                            <h5 class="card-title">{{ tournament.name }}</h5>
-                            <p class="card-text">
-                                <strong>Bắt đầu:</strong> {{ tournament.start_date|date:"d/m/Y" }} <br>
-                                <strong>Kết thúc:</strong> {{ tournament.end_date|date:"d/m/Y" }}
+                            <h5 class="card-title h4 fw-bold">{{ tournament.name }}</h5>
+                            <p class="card-text mb-2">
+                                <small>
+                                    Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }} |
+                                    Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}
+                                </small>
                             </p>
-                            <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary">Xem chi tiết</a>
+                            <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto">Xem chi tiết</a>
                         </div>
                     </div>
+                    <div class="card-footer">
+                        <small class="text-muted">{{ tournament.get_status_display }}</small>
+                    </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="col">
-                <p>Chưa có giải đấu nào được tổ chức.</p>
             </div>
-        {% endif %}
+        {% empty %}
+            <div class="col">
+                <p>Chưa có giải đấu nào nổi bật.</p>
+            </div>
+        {% endfor %}
     </div>
 {% endblock %}

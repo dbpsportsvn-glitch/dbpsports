@@ -54,7 +54,7 @@ class CardInline(admin.TabularInline):
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'status', 'start_date', 'end_date', 'view_details_link')
+    list_display = ('name', 'status', 'start_date', 'end_date', 'image', 'view_details_link')
     list_filter = ('status',)
     search_fields = ('name',)
     list_editable = ('status',)
