@@ -50,3 +50,23 @@ body{ color:#0f172a; }
 .carousel-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; z-index:3;}
 .carousel-nav button{ pointer-events:auto; background:rgba(15,23,42,.5); color:#fff; border:0; width:42px; height:42px; border-radius:50%; margin:0 10px;}
 .carousel-nav button:hover{ background:
+
+/* bố cục 3 vùng */
+.navbar{ display:flex; align-items:center; gap:16px; }
+.nav-primary{ display:flex; gap:4px; flex:1; justify-content:center; }
+.nav-user{ margin-left:auto; display:flex; gap:8px; }
+
+/* QL Đội Bóng: gạch chân đỏ */
+.manage-link{
+  color:#ef4444; font-weight:800;
+  text-decoration:underline; text-decoration-color:#ef4444; text-underline-offset:4px;
+}
+.manage-link:hover{ color:#dc2626; }
+
+/* mobile */
+@media (max-width:960px){
+  .nav-primary{ order:3; }
+  .nav-user{ order:4; margin-left:0; }
+}
+
+
