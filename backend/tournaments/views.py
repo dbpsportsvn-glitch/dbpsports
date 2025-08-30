@@ -1,11 +1,12 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Tournament, Team, Player, Match, Lineup
+from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
 from django.http import HttpResponseForbidden
 from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.db.models import Sum, Count
 from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
@@ -106,13 +107,18 @@ def team_detail(request, pk):
             player_form = PlayerCreationForm(request.POST, request.FILES) # Sửa lại đây
             if player_form.is_valid():
                 player = player_form.save(commit=False)
-                player.team = team # Gán cầu thủ vào đội này
-                player.save()
-                return redirect('team_detail', pk=team.pk) # Tải lại trang để xem cầu thủ mới
+                player.team = team  # Gán cầu thủ vào đội này
+                try:
+                    player.full_clean()
+                    player.save()
+                    return redirect('team_detail', pk=team.pk)  # Tải lại trang để xem cầu thủ mới
+                except ValidationError as e:
+                    player_form.add_error('jersey_number', 'Số áo đã tồn tại trong đội.')
     
-    # Tạo một form trống cho lần truy cập đầu tiên (GET)
-    player_form = PlayerCreationForm()
-        
+    # Tạo form trống cho GET. Nếu POST lỗi, giữ nguyên form có lỗi.
+    if request.method != 'POST':
+        player_form = PlayerCreationForm()
+    
     context = {
         'team': team,
         'player_form': player_form, # Gửi form vào template
@@ -270,16 +276,54 @@ def manage_lineup(request, match_pk, team_pk):
         return HttpResponseForbidden("Không có quyền.")
 
     if request.method == "POST":
-        with transaction.atomic():
-            for player in team.players.all():
-                status = request.POST.get(f"player_{player.pk}", "")
-                if status:
-                    Lineup.objects.update_or_create(
-                        match=match, player=player,
-                        defaults={"team": team, "status": status}
-                    )
+        # Build selection from POST
+        selection = {}
+        starters = 0
+        for player in team.players.all():
+            status = request.POST.get(f"player_{player.pk}", "")
+            selection[player.pk] = status
+            if status == "STARTER":
+                starters += 1
+
+        error_message = None
+        if starters > MAX_STARTERS:
+            error_message = f"Tối đa {MAX_STARTERS} cầu thủ đá chính cho mỗi đội."
+
+        if error_message is None:
+            try:
+                with transaction.atomic():
+                    for player in team.players.all():
+                        status = selection.get(player.pk, "")
+                        if status:
+                            Lineup.objects.update_or_create(
+                                match=match, player=player,
+                                defaults={"team": team, "status": status}
+                            )
+                        else:
+                            Lineup.objects.filter(match=match, player=player, team=team).delete()
+            except ValidationError as e:
+                if hasattr(e, 'message_dict'):
+                    msgs = []
+                    for v in e.message_dict.values():
+                        if isinstance(v, (list, tuple)):
+                            msgs.extend(str(x) for x in v)
+                        else:
+                            msgs.append(str(v))
+                    error_message = "; ".join(msgs)
                 else:
-                    Lineup.objects.filter(match=match, player=player, team=team).delete()
+                    error_message = str(e)
+
+        if error_message:
+            existing_lineup = selection  # keep user's choices
+            context = {
+                "match": match,
+                "team": team,
+                "existing_lineup": existing_lineup,
+                "back_url": back_url,
+                "error_message": error_message,
+            }
+            return render(request, "tournaments/manage_lineup.html", context)
+
         tab = request.POST.get('tab') or request.GET.get('tab') or 'schedule'
         url = reverse('match_detail', kwargs={'pk': match.pk})
         return redirect(f'{url}?tab={tab}#{tab}')

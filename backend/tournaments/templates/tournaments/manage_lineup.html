@@ -9,6 +9,9 @@
     <p><strong>Trận đấu:</strong> {{ match.team1.name }} vs {{ match.team2.name }}</p>
     <p><strong>Đội của bạn:</strong> {{ team.name }}</p>
     <hr>
+    {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+    {% endif %}
     <form method="post">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ back_url }}">
