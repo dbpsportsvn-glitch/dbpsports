@@ -6,7 +6,7 @@ from .views import tournaments_active
 urlpatterns = [
     # --- URL Trang chủ & các trang tĩnh ---
     path('', views.home, name='home'),
-    path("", tournaments_active, name="tournaments_active"),
+    path('giai-dau/', tournaments_active, name='tournaments_active'),
     path('livestream/', views.livestream_view, name='livestream'),
     path('shop/', views.shop_view, name='shop'),
     path('archive/', views.archive_view, name='archive'),
