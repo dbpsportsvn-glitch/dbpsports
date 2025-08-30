@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-4" style="max-width:520px">
+  <h1 class="h4 mb-3">{% trans "Sign In Via" %} {{ provider.name }}</h1>
+  <p class="mb-3">
+    {% blocktrans with p=provider.name %}Bạn sắp đăng nhập bằng tài khoản bên thứ ba từ {{ p }}.{% endblocktrans %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Tiếp tục</button>
+  </form>
+</div>
+{% endblock %}

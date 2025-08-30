@@ -69,4 +69,11 @@ body{ color:#0f172a; }
   .nav-user{ order:4; margin-left:0; }
 }
 
+.user-menu{position:relative}
+.user-chip{display:flex;align-items:center;gap:.5rem;cursor:pointer;list-style:none}
+.user-chip .avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.user-menu[open]>.menu{display:block}
+.user-menu>.menu{display:none;position:absolute;right:0;top:calc(100% + .5rem);min-width:200px;background:#fff;border:1px solid var(--bs-border-color);border-radius:.5rem;box-shadow:0 .5rem 1rem rgba(0,0,0,.15);padding:.5rem}
+.user-menu .menu a{display:block;padding:.5rem .75rem}
+.user-menu .menu a:hover{background:var(--bs-light)}
 

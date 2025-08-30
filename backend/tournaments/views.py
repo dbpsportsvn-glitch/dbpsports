@@ -30,8 +30,13 @@ def home(request):
         {'tournaments_list': active_tournaments, 'banners': banners}
     )
 
-# tournaments/views.py
-from django.utils import timezone
+def tournaments_active(request):
+    today = timezone.localdate()
+    qs = Tournament.objects.filter(
+        Q(start_date__lte=today, end_date__gte=today) |
+        Q(status__in=["REGISTRATION_OPEN","ONGOING","IN_PROGRESS"])
+    ).order_by("-start_date")
+    return render(request, "tournaments/active_list.html", {"tournaments": qs})
 
 def livestream_view(request):
     # Tìm trận đấu đang live (có link và thời gian gần nhất)

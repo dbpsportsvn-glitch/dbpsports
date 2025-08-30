@@ -1,6 +1,7 @@
 # users/urls.py
 
-from django.urls import path
+from django.contrib import admin
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -9,4 +10,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'), 
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile_view, name='profile'),
+    path("admin/", admin.site.urls),
+    path("accounts/", include("allauth.urls")),
+    path("tournaments/", include("tournaments.urls")),
 ]

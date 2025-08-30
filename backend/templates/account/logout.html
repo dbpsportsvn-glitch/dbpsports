@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="container py-4" style="max-width:480px">
+  <h1 class="h4 mb-3">{% trans "Sign Out" %}</h1>
+  <p class="mb-3">{% trans "Are you sure you want to sign out?" %}</p>
+  <form method="post" action="{% url 'account_logout' %}">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">{% trans "Sign Out" %}</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Giải đấu đang diễn ra · DBP Sports{% endblock %}
+{% block content %}
+<div class="pb-3 mb-4 border-bottom">
+  <h1 class="h3 m-0">Giải đấu đang diễn ra</h1>
+</div>
+{% if tournaments %}
+  <div class="row row-cols-1 row-cols-md-3 g-3">
+    {% for t in tournaments %}
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-2 text-start">{{ t.name }}</h5>
+            <p class="mb-2 text-muted">
+              {{ t.start_date|date:"d/m/Y" }} – {{ t.end_date|date:"d/m/Y" }}
+              <span class="badge bg-success ms-2">{{ t.get_status_display }}</span>
+            </p>
+            <a class="btn btn-primary btn-sm" href="{% url 'tournament_detail' pk=t.pk %}">Xem chi tiết</a>
+            {% if t.status == "REGISTRATION_OPEN" %}
+              <a class="btn btn-outline-success btn-sm ms-2" href="{% url 'create_team' tournament_pk=t.pk %}">Đăng ký</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">Hiện chưa có giải đấu nào đang diễn ra.</p>
+{% endif %}
+{% endblock %}
