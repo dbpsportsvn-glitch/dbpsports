@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 text-center text-muted">
+  <!-- Cố tình không hiển thị gì -->
+  <p>Chức năng này tạm ẩn.</p>
+  <a class="btn btn-outline-secondary mt-3" href="{% url 'dashboard' %}">Quay lại</a>
+</div>
+
+{# Ngăn máy tìm kiếm index trang này #}
+<meta name="robots" content="noindex,nofollow">
+{% endblock %}
