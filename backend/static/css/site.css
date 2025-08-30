@@ -77,3 +77,6 @@ body{ color:#0f172a; }
 .user-menu .menu a{display:block;padding:.5rem .75rem}
 .user-menu .menu a:hover{background:var(--bs-light)}
 
+/* Tournament list cards */
+.tour-card .card-img-top { height: 180px; object-fit: cover; }
+
