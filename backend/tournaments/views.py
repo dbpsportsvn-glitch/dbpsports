@@ -13,15 +13,22 @@ from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đ�
 from .utils import send_notification_email
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Q
+from .models import HomeBanner
 
-# tournaments/views.py
+
 def home(request):
-    # Chỉ lấy các giải chưa kết thúc
+    # Giải chưa kết thúc
     active_tournaments = Tournament.objects.exclude(status='FINISHED').order_by('start_date')
-    context = {
-        'tournaments_list': active_tournaments,
-    }
-    return render(request, 'tournaments/home.html', context)
+
+    # Lấy mọi banner đang bật
+    banners = HomeBanner.objects.filter(is_active=True).order_by('order', 'id')
+
+    return render(
+        request,
+        'tournaments/home.html',
+        {'tournaments_list': active_tournaments, 'banners': banners}
+    )
 
 # tournaments/views.py
 from django.utils import timezone

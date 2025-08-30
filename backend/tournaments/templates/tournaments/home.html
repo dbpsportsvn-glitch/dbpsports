@@ -1,43 +1,90 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block hero %}
+<section class="carousel" id="heroCarousel">
+  <div class="carousel-track">
+    {% for b in banners %}
+      <div class="carousel-slide">
+        <img src="{{ b.image.url }}" alt="" onerror="this.style.display='none'">
+        <div class="carousel-caption">
+          <h2>{{ b.title }}</h2>
+          {% if b.subtitle %}<p>{{ b.subtitle }}</p>{% endif %}
+          {% if b.button_text and b.button_url %}
+            <div class="carousel-actions"><a href="{{ b.button_url }}">{{ b.button_text }}</a></div>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="carousel-slide">
+        <img src="{% static 'images/hero-1.png' %}" alt="">
+        <div class="carousel-caption">
+          <h2>Sân chơi bóng đá đỉnh cao</h2>
+          <p>Tổ chức, tham gia và theo dõi giải đấu dễ dàng.</p>
+          <div class="carousel-actions"><a href="{% url 'livestream' %}">Xem livestream</a></div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="carousel-nav">
+    <button type="button" aria-label="Prev" onclick="heroMove(-1)">&lt;</button>
+    <button type="button" aria-label="Next" onclick="heroMove(1)">&gt;</button>
+  </div>
+
+  <div class="carousel-dots">
+    {% for b in banners %}<button onclick="heroGo({{ forloop.counter0 }})"></button>{% endfor %}
+    {% if not banners %}<button class="active"></button>{% endif %}
+  </div>
+</section>
+
+<script>
+(function(){
+  const root = document.getElementById('heroCarousel');
+  if(!root) return;
+  const track = root.querySelector('.carousel-track');
+  const slides = Array.from(root.querySelectorAll('.carousel-slide'));
+  const dots = Array.from(root.querySelectorAll('.carousel-dots button'));
+  let i = 0, timer = null;
+  function render(){ track.style.transform = `translateX(-${i*100}%)`; dots.forEach((d,idx)=>d.classList.toggle('active', idx===i)); }
+  function tick(){ timer = setInterval(()=>{ i = (i+1)%slides.length; render(); }, 4500); }
+  window.heroMove = function(dir){ if(!slides.length) return; clearInterval(timer); i = (i+dir+slides.length)%slides.length; render(); tick(); }
+  window.heroGo = function(idx){ if(!slides.length) return; clearInterval(timer); i = idx; render(); tick(); }
+  if(slides.length){ render(); tick(); }
+})();
+</script>
+{% endblock %}
+
 
 {% block content %}
-    <div class="hero-section">
-        <h1 class="display-4">Sân Chơi Bóng Đá Đỉnh Cao</h1>
-        <p class="lead">Tổ chức, tham gia và theo dõi các giải đấu một cách dễ dàng.</p>
-        <a href="#" class="btn btn-primary btn-lg">Tìm hiểu thêm</a>
-    </div>
-
-    <h2 class="mb-4 mt-5">Các giải đấu nổi bật</h2>
-    <div class="row">
-        {% for tournament in tournaments_list %}
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="tournament-card-bg" style="position: relative; color: white;">
-                        {% if tournament.image %}
-                            <img src="{{ tournament.image.url }}" class="card-img-bg" alt="{{ tournament.name }} banner">
-                            <div class="card-img-overlay"></div>
-                        {% endif %}
-
-                        <div class="card-body">
-                            <h5 class="card-title h4 fw-bold">{{ tournament.name }}</h5>
-                            <p class="card-text mb-2">
-                                <small>
-                                    Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }} |
-                                    Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}
-                                </small>
-                            </p>
-                            <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto">Xem chi tiết</a>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <small class="text-muted">{{ tournament.get_status_display }}</small>
-                    </div>
-                </div>
+  <h2 class="mb-4 mt-4">Các giải đấu nổi bật</h2>
+  <div class="row">
+    {% for tournament in tournaments_list %}
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="tournament-card-bg" style="position: relative; color: white;">
+            {% if tournament.image %}
+              <img src="{{ tournament.image.url }}" class="card-img-bg" alt="{{ tournament.name }} banner">
+              <div class="card-img-overlay"></div>
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title h4 fw-bold">{{ tournament.name }}</h5>
+              <p class="card-text mb-2">
+                <small>
+                  Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }} |
+                  Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}
+                </small>
+              </p>
+              <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto">Xem chi tiết</a>
             </div>
-        {% empty %}
-            <div class="col">
-                <p>Chưa có giải đấu nào nổi bật.</p>
-            </div>
-        {% endfor %}
-    </div>
+          </div>
+          <div class="card-footer">
+            <small class="text-muted">{{ tournament.get_status_display }}</small>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col"><p>Chưa có giải đấu nào nổi bật.</p></div>
+    {% endfor %}
+  </div>
 {% endblock %}

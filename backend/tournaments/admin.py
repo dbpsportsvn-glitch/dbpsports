@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner
 from .utils import send_notification_email
 
 # ===== Inlines =====
@@ -296,3 +296,16 @@ class CardAdmin(admin.ModelAdmin):
     autocomplete_fields = ("match", "player", "team")
     list_select_related = ("match", "team", "player")
     list_per_page = 50
+
+@admin.register(HomeBanner)
+class HomeBannerAdmin(admin.ModelAdmin):
+    list_display = ("title", "order", "is_active", "preview")
+    list_editable = ("order", "is_active")
+    search_fields = ("title",)
+    list_per_page = 50
+
+    def preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="height:36px;border-radius:6px;object-fit:cover">', obj.image.url)
+        return "-"
+    preview.short_description = "Ảnh"

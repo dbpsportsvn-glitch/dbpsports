@@ -2,108 +2,66 @@
 <!doctype html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}DBP Sports{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DBP Sports{% endblock %}</title>
 
-    <style id="tournament-tabs-css">
-    .sticky-tabs{position:sticky;top:56px;z-index:1020;background:var(--bs-body-bg);padding:.5rem 0 .25rem}
-    .tour-tabs .nav-link{border-radius:9999px;font-weight:600;padding:.5rem 1rem}
-    .tour-tabs .nav-link:hover{background:var(--bs-light)}
-    .tour-tabs .nav-link.active{
-        color:#fff;background:linear-gradient(90deg,#0d6efd,#20c997);
-        box-shadow:0 .25rem .75rem rgba(13,110,253,.25)
-    }
-    .tab-pane.card-pane{border:1px solid var(--bs-border-color);border-top:0;border-radius:0 0 .5rem .5rem;padding:1rem}
-    .section-title{font-weight:700}
-    .table thead th{position:sticky;top:0;background:var(--bs-body-bg);z-index:1}
-    .table-hover tbody tr:hover{background:var(--bs-light)}
-    .chip{display:inline-block;padding:.15rem .5rem;border-radius:9999px;background:var(--bs-light);font-size:.75rem}
-    </style>
-    <style>
-    .match-card{border:1px solid var(--bs-border-color);border-radius:.75rem}
-    .match-card:hover{box-shadow:0 .5rem 1.25rem rgba(0,0,0,.08)}
-    .mc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
-    .mc-left{color:var(--bs-secondary-color);font-size:.875rem}
-    .mc-center{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-    .mc-right{display:flex;align-items:center;justify-content:flex-end;gap:8px}
-    .mc-logo{width:24px;height:24px;object-fit:cover;border-radius:50%}
-    .mc-name{font-weight:600}
-    .mc-score{font-weight:700;min-width:48px;text-align:center}
-    @media (max-width:576px){.mc{grid-template-columns:1fr}.mc-right{justify-content:flex-start}}
-    </style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+  <!-- CSS giao diện mới -->
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
 </head>
 <body>
-    <div class="container">
-        <header class="mb-4">
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="{% url 'home' %}">
-                        DBP Sports
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="main-nav">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link active" href="{% url 'home' %}">Trang chủ</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'home' %}">Giải đấu</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'livestream' %}">Livestream</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'archive' %}">Lưu trữ</a> </li>                            
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'shop' %}">Shop</a>
-                            </li>
-                        </ul>
-                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                            {% if user.is_authenticated %}
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="user-menu" role="button" data-bs-toggle="dropdown">
-                                        Chào, {{ user.username }}!
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
-                                        <li><a class="dropdown-item" href="{% url 'profile' %}">Thông tin tài khoản</a></li> <li><hr class="dropdown-divider"></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="{% url 'logout' %}">Đăng xuất</a></li>
-                                    </ul>
-                                </li>
-                            {% else %}
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'login' %}">Đăng nhập</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'register' %}">Đăng ký</a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-        </header>
 
-        <main>
-            {% block content %}
-            {% endblock %}
-        </main>
+  <!-- HEADER mới: sticky, có logo, hiệu ứng hover/active -->
+  <header class="site-header">
+    <div class="navbar">
+      <a class="brand" href="{% url 'home' %}">
+        <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+        DBP Sports
+      </a>
 
-        <footer class="pt-4 my-md-5 pt-md-5 border-top">
-            <div class="row">
-                <div class="col-12 col-md">
-                    <small class="d-block mb-3 text-muted">&copy; 2025 DBP Sports</small>
-                </div>
-            </div>
-        </footer>
+      <button class="menu-toggle" type="button"
+              onclick="document.querySelector('.nav').classList.toggle('open')">
+        Menu
+      </button>
+
+      <nav class="nav">
+        <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Trang chủ</a>
+        <a href="{% url 'home' %}">Giải đấu</a>
+        <a href="{% url 'livestream' %}" class="{% if request.resolver_match.url_name == 'livestream' %}active{% endif %}">Livestream</a>
+        <a href="{% url 'archive' %}" class="{% if request.resolver_match.url_name == 'archive' %}active{% endif %}">Lưu trữ</a>
+        <a href="{% url 'shop' %}" class="{% if request.resolver_match.url_name == 'shop' %}active{% endif %}">Shop</a>
+
+        <!-- khu vực tài khoản -->
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}">Bảng điều khiển</a>
+          <a href="{% url 'logout' %}">Đăng xuất</a>
+        {% else %}
+          <a href="{% url 'login' %}">Đăng nhập</a>
+          <a href="{% url 'register' %}">Đăng ký</a>
+        {% endif %}
+      </nav>
     </div>
+  </header>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Khe để chèn banner động ở trang chủ -->
+  {% block hero %}{% endblock %}
+
+  <div class="container mt-4">
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="pt-4 my-md-5 pt-md-5 border-top">
+      <div class="row">
+        <div class="col-12 col-md">
+          <small class="d-block mb-3 text-muted">&copy; 2025 DBP Sports</small>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

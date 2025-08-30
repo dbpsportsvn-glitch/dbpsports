@@ -303,3 +303,21 @@ class Card(models.Model):
 
     def __str__(self):
         return f"{self.get_card_type_display()} for {self.player.full_name} in {self.match}"
+
+# --- Home Banner ---
+class HomeBanner(models.Model):
+    title = models.CharField(max_length=120)
+    subtitle = models.CharField(max_length=200, blank=True)
+    button_text = models.CharField(max_length=40, blank=True)
+    button_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to='banners/')
+    order = models.PositiveIntegerField(default=0, help_text="Thứ tự hiển thị, nhỏ trước")
+    is_active = models.BooleanField(default=True)
+    start_at = models.DateTimeField(null=True, blank=True)
+    end_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("order", "id")
+
+    def __str__(self):
+        return f"{self.title} (#{self.order})"
