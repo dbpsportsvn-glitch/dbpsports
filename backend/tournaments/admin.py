@@ -6,73 +6,101 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card
-from .utils import send_notification_email
-from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.urls import reverse
+from django.conf import settings
 
-# --- Định nghĩa các Inlines ---
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card
+from .utils import send_notification_email
+
+# ===== Inlines =====
+
 class GroupInline(admin.TabularInline):
     model = Group
     extra = 1
 
-# --- Định nghĩa các Inlines ---
-class GoalInline(admin.TabularInline):
-    model = Goal
-    extra = 2
-    readonly_fields = ('team',)
+class PlayerInline(admin.TabularInline):
+    model = Player
+    extra = 0
+    fields = ("full_name", "jersey_number", "position")
+    ordering = ("jersey_number",)
+    show_change_link = True
 
-    # Đặt logic lọc vào đây
+class LineupInline(admin.TabularInline):
+    model = Lineup
+    extra = 0
+    fields = ("player", "team", "status")
+    raw_id_fields = ("player",)
+    readonly_fields = ("team",)
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         match_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "player" and match_id:
-            match = Match.objects.get(pk=match_id)
-            if match:
+            try:
+                match = Match.objects.get(pk=match_id)
                 kwargs["queryset"] = Player.objects.filter(
                     Q(team=match.team1) | Q(team=match.team2)
-                ).order_by('team__name', 'full_name')
+                ).order_by("team__name", "jersey_number", "full_name")
+            except Match.DoesNotExist:
+                pass
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+class GoalInline(admin.TabularInline):
+    model = Goal
+    extra = 0
+    readonly_fields = ("team",)
+    raw_id_fields = ("player",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        match_id = request.resolver_match.kwargs.get('object_id')
+        if db_field.name == "player" and match_id:
+            try:
+                match = Match.objects.get(pk=match_id)
+                kwargs["queryset"] = Player.objects.filter(
+                    Q(team=match.team1) | Q(team=match.team2)
+                ).order_by("team__name", "jersey_number", "full_name")
+            except Match.DoesNotExist:
+                pass
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class CardInline(admin.TabularInline):
     model = Card
-    extra = 1
-    readonly_fields = ('team',)
+    extra = 0
+    readonly_fields = ("team",)
+    raw_id_fields = ("player",)
 
-    # Và đặt logic lọc vào đây nữa
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         match_id = request.resolver_match.kwargs.get('object_id')
         if db_field.name == "player" and match_id:
-            match = Match.objects.get(pk=match_id)
-            if match:
+            try:
+                match = Match.objects.get(pk=match_id)
                 kwargs["queryset"] = Player.objects.filter(
                     Q(team=match.team1) | Q(team=match.team2)
-                ).order_by('team__name', 'full_name')
+                ).order_by("team__name", "jersey_number", "full_name")
+            except Match.DoesNotExist:
+                pass
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-# --- Đăng ký và Tùy chỉnh các ModelAdmin ---
+# ===== Admins =====
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'status', 'start_date', 'end_date', 'image', 'view_details_link')
-    list_filter = ('status',)
-    search_fields = ('name',)
-    list_editable = ('status',)
-    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
+    list_display = ("name", "status", "start_date", "end_date", "image", "view_details_link")
+    list_filter = ("status",)
+    search_fields = ("name",)
+    list_editable = ("status",)
+    date_hierarchy = "start_date"
     inlines = [GroupInline]
+    list_per_page = 50
+    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
 
     def view_details_link(self, obj):
-        # Link đến danh sách các đội của giải đấu này
         teams_url = reverse('admin:tournaments_team_changelist') + f'?tournament__id__exact={obj.pk}'
-        # Link đến danh sách các trận đấu
         matches_url = reverse('admin:tournaments_match_changelist') + f'?tournament__id__exact={obj.pk}'
-        # Link đến danh sách các bảng đấu
         groups_url = reverse('admin:tournaments_group_changelist') + f'?tournament__id__exact={obj.pk}'
-
-        return format_html(
-            '<a href="{}">Xem Đội</a> | <a href="{}">Xem Bảng</a> | <a href="{}">Xem Trận</a>',
-            teams_url, groups_url, matches_url
-        )
+        return format_html('<a href="{}">Xem Đội</a> | <a href="{}">Xem Bảng</a> | <a href="{}">Xem Trận</a>',
+                           teams_url, groups_url, matches_url)
     view_details_link.short_description = 'Quản lý Giải'
 
     @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
@@ -111,7 +139,7 @@ class TournamentAdmin(admin.ModelAdmin):
         for tournament in queryset:
             groups = list(tournament.groups.all().order_by('name'))
             if len(groups) != 2:
-                self.message_user(request, f"Chức năng này hiện chỉ hỗ trợ 2 bảng đấu.", messages.ERROR)
+                self.message_user(request, "Chức năng này hiện chỉ hỗ trợ 2 bảng đấu.", messages.ERROR)
                 continue
             standings_A = groups[0].get_standings()
             standings_B = groups[1].get_standings()
@@ -128,23 +156,34 @@ class TournamentAdmin(admin.ModelAdmin):
     def generate_final_match(self, request, queryset):
         for tournament in queryset:
             semi_finals = tournament.matches.filter(match_round='SEMI', team1_score__isnull=False, team2_score__isnull=False)
-            if semi_finals.count() != 2:
-                self.message_user(request, f"Cần có đủ 2 trận Bán kết đã có tỉ số cho giải '{tournament.name}'.", messages.ERROR)
+            if self._count_safe(semi_finals) != 2:
+                self.message_user(request, "Cần có đủ 2 trận Bán kết đã có tỉ số.", messages.ERROR)
                 continue
-            winners = [match.team1 if match.team1_score > match.team2_score else match.team2 for match in semi_finals]
+            winners = [m.team1 if m.team1_score > m.team2_score else m.team2 for m in semi_finals]
             if len(winners) == 2:
                 Match.objects.get_or_create(tournament=tournament, match_round='FINAL', team1=winners[0], team2=winners[1], defaults={'match_time': timezone.now()})
                 self.message_user(request, f"Đã tạo trận Chung kết cho giải '{tournament.name}'.", messages.SUCCESS)
             else:
-                self.message_user(request, f"Không thể xác định 2 đội thắng từ Bán kết.", messages.ERROR)
+                self.message_user(request, "Không thể xác định 2 đội thắng từ Bán kết.", messages.ERROR)
+
+    @staticmethod
+    def _count_safe(qs):
+        try:
+            return qs.count()
+        except Exception:
+            return len(list(qs))
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament', 'captain', 'payment_status', 'display_proof', 'display_logo')
-    list_filter = ('tournament', 'payment_status',)
-    search_fields = ('captain__username', 'name',)
-    list_editable = ('payment_status',)
-    
+    list_display = ("name", "tournament", "group", "payment_status", "captain", "display_proof", "display_logo")
+    list_filter = ("tournament", "group", "payment_status")
+    search_fields = ("name", "tournament__name", "captain__username")
+    list_editable = ("payment_status",)
+    inlines = [PlayerInline]
+    autocomplete_fields = ("group", "tournament", "captain")
+    list_select_related = ("tournament", "group", "captain")
+    list_per_page = 50
+
     def display_logo(self, obj):
         if obj.logo:
             return format_html(f'<img src="{obj.logo.url}" width="40" height="40" />')
@@ -172,61 +211,88 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'team', 'jersey_number', 'position', 'display_avatar') # Thêm display_avatar
-    list_filter = ('team__tournament', 'team',)
-    search_fields = ('full_name',)
+    list_display = ("full_name", "team", "jersey_number", "position", "display_avatar")
+    list_filter = ("team__tournament", "team", "position")
+    search_fields = ("full_name", "team__name")
+    ordering = ("team", "jersey_number")
+    autocomplete_fields = ("team",)
+    list_select_related = ("team",)
+    list_per_page = 50
 
     def display_avatar(self, obj):
         if obj.avatar:
-            return format_html(f'<img src="{obj.avatar.url}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />')
+            return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />', obj.avatar.url)
         return "Chưa có ảnh"
     display_avatar.short_description = 'Ảnh đại diện'
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'tournament', 'colored_round', 'match_round', 'match_time', 'team1_score', 'team2_score', 'referee') # Thêm referee
-    list_filter = ('tournament', 'match_round',)
-    list_editable = ('team1_score', 'team2_score',)
-    list_display_links = ('__str__', 'match_time',)
-    search_fields = ('team1__name', 'team2__name', 'tournament__name',)
-    inlines = [GoalInline, CardInline]
+    list_display = ("__str__", "tournament", "colored_round", "match_round", "match_time", "location", "team1_score", "team2_score", "referee")
+    list_filter = ("tournament", "match_round")
+    list_editable = ("team1_score", "team2_score")
+    list_display_links = ("__str__", "match_time")
+    search_fields = ("team1__name", "team2__name", "tournament__name")
+    date_hierarchy = "match_time"
+    inlines = [LineupInline, GoalInline, CardInline]
+    autocomplete_fields = ("team1", "team2", "tournament")
+    list_select_related = ("tournament", "team1", "team2")
+    list_per_page = 50
 
-    # === THÊM PHƯƠNG THỨC MỚI NÀY VÀO ===
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
         if obj.match_round == 'GROUP':
-            color = 'grey'
-            text = 'Vòng bảng'
+            color, text = 'grey', 'Vòng bảng'
         elif obj.match_round == 'SEMI':
-            color = 'orange'
-            text = 'Bán kết'
+            color, text = 'orange', 'Bán kết'
         elif obj.match_round == 'FINAL':
-            color = 'green'
-            text = 'Chung kết'
+            color, text = 'green', 'Chung kết'
         else:
-            color = 'blue'
-            text = obj.get_match_round_display()
-            
-        return format_html(f'<span style="color: {color}; font-weight: bold;">{text}</span>')
+            color, text = 'blue', obj.get_match_round_display()
+        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, text)
 
-    # === THÊM PHƯƠNG THỨC NÀY VÀO ===
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
-        for instance in instances:
-            # Tự động gán team dựa trên player được chọn
-            if isinstance(instance, (Goal, Card)):
-                if instance.player:
+        try:
+            for instance in instances:
+                # Tự động gán team theo player
+                if isinstance(instance, (Lineup, Goal, Card)) and getattr(instance, "player", None):
                     instance.team = instance.player.team
-            instance.save()
-        formset.save_m2m()
+                instance.save()
+            formset.save_m2m()
+        except ValidationError as e:
+            msg = "; ".join(getattr(e, "messages", [str(e)]))
+            self.message_user(request, msg, level=messages.ERROR)
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tournament')
-    list_filter = ('tournament',)
-    search_fields = ('tournament__name',)
+    list_display = ("name", "tournament")
+    list_filter = ("tournament",)
+    search_fields = ("name", "tournament__name")
+    list_per_page = 50
 
 @admin.register(Lineup)
 class LineupAdmin(admin.ModelAdmin):
-    list_display = ('player', 'team', 'match', 'status')
-    list_filter = ('match__tournament', 'team', 'status')
+    list_display = ("player", "team", "match", "status")
+    list_filter = ("match__tournament", "team", "status")
+    search_fields = ("player__full_name", "match__team1__name", "match__team2__name")
+    autocomplete_fields = ("match", "player", "team")
+    list_select_related = ("match", "team", "player")
+    list_per_page = 50
+
+@admin.register(Goal)
+class GoalAdmin(admin.ModelAdmin):
+    list_display = ("match", "team", "player", "minute")
+    list_filter = ("match__tournament", "team")
+    search_fields = ("player__full_name",)
+    autocomplete_fields = ("match", "player", "team")
+    list_select_related = ("match", "team", "player")
+    list_per_page = 50
+
+@admin.register(Card)
+class CardAdmin(admin.ModelAdmin):
+    list_display = ("match", "team", "player", "card_type", "minute")
+    list_filter = ("match__tournament", "team", "card_type")
+    search_fields = ("player__full_name",)
+    autocomplete_fields = ("match", "player", "team")
+    list_select_related = ("match", "team", "player")
+    list_per_page = 50
