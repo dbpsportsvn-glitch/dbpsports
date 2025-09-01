@@ -11,7 +11,7 @@
 <div class="container mt-4">
 
   {# ======= HEADER / SCOREBOARD ======= #}
-  <div class="live-hero d-flex justify-content-between align-items-center">
+  <div class="live-hero d-flex align-items-center">
     <div class="d-flex align-items-center gap-3">
       <div class="team">
         <div class="logo">{{ live_match.team1.name|slice:":2" }}</div>
@@ -23,6 +23,16 @@
         <strong class="h5 mb-0">{{ live_match.team2.name }}</strong>
       </div>  
     </div>
+
+    <div class="ticker-inline" aria-label="Thông báo">
+    <div class="track">
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+    </div>
+    </div>
+
     <div class="d-flex align-items-center gap-2">
       <span class="badge-live">LIVE</span>
         <button id="shareBtn" class="small-btn" type="button">

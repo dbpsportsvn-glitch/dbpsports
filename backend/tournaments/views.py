@@ -67,6 +67,7 @@ def livestream_view(request):
     return render(request, "tournaments/livestream.html", {
         "live_match": live_match,
         "upcoming_matches": upcoming_matches,
+        "ticker_text": "Đăng ký mùa giải mới • Quảng cáo: 09xx xxx xxx",
     })
 
 def shop_view(request):

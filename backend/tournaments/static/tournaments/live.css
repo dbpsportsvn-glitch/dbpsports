@@ -53,4 +53,19 @@ body { background: var(--bg); color: var(--text); }
 .live-page .tab-panel{ display:none; }
 .live-page .tab-panel.is-active{ display:block; }
 
+/* ticker chạy trong header */
+.live-page .live-hero{ gap:12px; }
+.live-page .live-hero .ticker-inline{
+  flex:1; margin:0 8px; height:24px; overflow:hidden;
+  display:flex; align-items:center; border-left:1px solid rgba(255,255,255,.06);
+  border-right:1px solid rgba(255,255,255,.06); padding:0 10px;
+}
+.live-page .live-hero .ticker-inline .track{
+  display:inline-flex; gap:36px; white-space:nowrap;
+  animation: livehdr 25s linear infinite;
+}
+.live-page .live-hero .ticker-inline:hover .track{ animation-play-state: paused; }
+.live-page .live-hero .ticker-inline .item{ color:var(--muted); font-size:14px; }
+@keyframes livehdr{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
 
