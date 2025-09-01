@@ -21,14 +21,13 @@
       <div class="team">
         <div class="logo">{{ live_match.team2.name|slice:":2" }}</div>
         <strong class="h5 mb-0">{{ live_match.team2.name }}</strong>
-      </div>
-      <span class="ms-3 small text-muted">
-        {{ live_match.get_match_round_display }} · {{ live_match.match_time|date:"H:i d/m/Y" }}
-      </span>
+      </div>  
     </div>
     <div class="d-flex align-items-center gap-2">
       <span class="badge-live">LIVE</span>
-      <button class="small-btn" type="button" onclick="navigator.clipboard.writeText(window.location.href)"><i class="bi bi-share"></i> Chia sẻ</button>
+        <button id="shareBtn" class="small-btn" type="button">
+        <i class="bi bi-share"></i> Chia sẻ
+        </button>
     </div>
   </div>
 
@@ -142,6 +141,8 @@
 (function(){
   const root = document.querySelector('.live-page');
   if(!root) return;
+
+  // Tabs
   const tabs = root.querySelectorAll('.tabbar .tab');
   const panels = {
     info: root.querySelector('#tab-info'),
@@ -156,6 +157,32 @@
   tabs.forEach(t=> t.addEventListener('click', ()=> activate(t.dataset.tab)));
   const init = location.hash.replace('#','');
   activate(panels[init] ? init : 'info');
+
+  // Share
+  const shareBtn = root.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      const url = location.href;
+      try {
+        if (navigator.share) {            // Web Share API (mobile / desktop hỗ trợ)
+          await navigator.share({ title: document.title, url });
+          return;
+        }
+        if (navigator.clipboard && window.isSecureContext) {  // HTTPS hoặc localhost
+          await navigator.clipboard.writeText(url);
+          shareBtn.innerHTML = '<i class="bi bi-check2"></i> Đã copy';
+          shareBtn.disabled = true;
+          setTimeout(()=>{ 
+            shareBtn.innerHTML = '<i class="bi bi-share"></i> Chia sẻ'; 
+            shareBtn.disabled = false; 
+          }, 1200);
+        } else {
+          prompt('Copy URL:', url);       // fallback cho môi trường không hỗ trợ
+        }
+      } catch(e) { /* bỏ qua */ }
+    });
+  }
 })();
 </script>
+
 {% endblock %}
