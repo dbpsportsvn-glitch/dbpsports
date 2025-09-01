@@ -49,4 +49,8 @@ body { background: var(--bg); color: var(--text); }
   font-weight:800; /* tùy chọn */
 }
 
+.live-page .tabbar .tab{ cursor:pointer; }
+.live-page .tab-panel{ display:none; }
+.live-page .tab-panel.is-active{ display:block; }
+
 

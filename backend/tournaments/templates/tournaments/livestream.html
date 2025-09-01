@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="live-page">  {# quan trọng: scope CSS #}
+<div class="live-page">
 <div class="container mt-4">
 
   {# ======= HEADER / SCOREBOARD ======= #}
@@ -55,13 +55,13 @@
 
       {# ======= TABS ======= #}
       <div class="tabbar">
-        <button class="tab active" type="button"><i class="bi bi-info-circle"></i> Thông tin</button>
-        <button class="tab" type="button"><i class="bi bi-chat-dots"></i> Bình luận</button>
-        <button class="tab" type="button"><i class="bi bi-calendar2-week"></i> Lịch</button>
+        <button class="tab active" data-tab="info" type="button"><i class="bi bi-info-circle"></i> Thông tin</button>
+        <button class="tab" data-tab="comments" type="button"><i class="bi bi-chat-dots"></i> Bình luận</button>
+        <button class="tab" data-tab="schedule" type="button"><i class="bi bi-calendar2-week"></i> Lịch</button>
       </div>
 
-      {# ======= MATCH INFO / STATS PLACEHOLDER ======= #}
-      <div class="mt-3">
+      {# ======= PANELS ======= #}
+      <div id="tab-info" class="tab-panel mt-3" style="display:block">
         <div class="stat-grid">
           <div class="stat">
             <div class="kv">Giải đấu</div>
@@ -78,14 +78,28 @@
         </div>
       </div>
 
-      {# ======= COMMENTS PLACEHOLDER ======= #}
-      <div class="card shadow-sm mt-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bình luận</h6>
-          <small class="text-muted">Sắp có</small>
+      <div id="tab-comments" class="tab-panel mt-3" style="display:none">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bình luận</h6>
+            <small class="text-muted">Sắp có</small>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-0">Khu vực bình luận sẽ được bật sau.</p>
+          </div>
         </div>
-        <div class="card-body">
-          <p class="text-muted mb-0">Khu vực bình luận sẽ được bật sau.</p>
+      </div>
+
+      <div id="tab-schedule" class="tab-panel mt-3" style="display:none">
+        <div class="list-group">
+          {% for m in upcoming_matches %}
+            <a class="list-group-item d-flex justify-content-between align-items-center" href="{% url 'match_detail' m.pk %}">
+              <span><strong>{{ m.team1.name }}</strong> <span class="text-muted">vs</span> <strong>{{ m.team2.name }}</strong></span>
+              <small class="text-muted">{{ m.match_time|date:"H:i, d/m/Y" }}</small>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted">Chưa có lịch.</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -117,9 +131,31 @@
             {% endfor %}
           </div>
         </div>
-
       </div>
     </div>
   </div>
+
 </div>
+</div>
+
+<script>
+(function(){
+  const root = document.querySelector('.live-page');
+  if(!root) return;
+  const tabs = root.querySelectorAll('.tabbar .tab');
+  const panels = {
+    info: root.querySelector('#tab-info'),
+    comments: root.querySelector('#tab-comments'),
+    schedule: root.querySelector('#tab-schedule'),
+  };
+  function activate(key){
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
+    Object.entries(panels).forEach(([k,p])=>{ if(p){ p.style.display = (k===key?'block':'none'); }});
+    try{ history.replaceState(null,'','#'+key); }catch(e){}
+  }
+  tabs.forEach(t=> t.addEventListener('click', ()=> activate(t.dataset.tab)));
+  const init = location.hash.replace('#','');
+  activate(panels[init] ? init : 'info');
+})();
+</script>
 {% endblock %}
