@@ -15,6 +15,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q
 from .models import HomeBanner
+from datetime import timedelta
 
 
 def home(request):
@@ -38,15 +39,30 @@ def tournaments_active(request):
     ).order_by("-start_date")
     return render(request, "tournaments/active_list.html", {"tournaments": qs})
 
+from datetime import timedelta
+from django.utils import timezone
+
 def livestream_view(request):
+    now = timezone.now()
+
+    # trận đang live (giữ nguyên cách bạn đang lấy)
     live_match = Match.objects.filter(
         livestream_url__isnull=False,
-        match_time__lte=timezone.now()
+        match_time__lte=now
     ).order_by('-match_time').first()
 
-    upcoming_matches = Match.objects.filter(
-        team1_score__isnull=True
-    ).order_by('match_time')
+    # ==== SẮP DIỄN RA ====
+    qs = Match.objects.filter(
+        team1_score__isnull=True,   # chưa có tỷ số
+        team2_score__isnull=True,
+        match_time__gte=now         # ở tương lai
+    )
+
+    # chỉ lấy cùng giải với trận live (nếu muốn)
+    if live_match:
+        qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
+
+    upcoming_matches = qs.order_by('match_time')[:12]
 
     return render(request, "tournaments/livestream.html", {
         "live_match": live_match,

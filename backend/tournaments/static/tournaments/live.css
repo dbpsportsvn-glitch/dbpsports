@@ -1,0 +1,52 @@
+:root{
+  --bg:#0b0f14; --panel:#121822; --card:#0f1520; --muted:#98a2b3; --text:#e5e7eb; --accent:#22c55e;
+}
+body { background: var(--bg); color: var(--text); }
+.card, .list-group-item { background: var(--panel); color: var(--text); border: 1px solid rgba(255,255,255,0.06); }
+.card-header { background: linear-gradient(90deg,#0f1520,transparent); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.text-muted{ color: var(--muted)!important; }
+.live-hero{ background: linear-gradient(90deg,#0c1320,#121822); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px 20px; margin-bottom:14px; box-shadow: 0 6px 24px rgba(0,0,0,.35);}
+.team{ display:flex; align-items:center; gap:10px; }
+.team .logo{ width:32px; height:32px; border-radius:8px; background:#1a2332; display:inline-flex; align-items:center; justify-content:center; font-weight:700; }
+.vsep{ opacity:.25; margin:0 10px; }
+.badge-live{ color:#09110f; background:var(--accent); font-weight:700; border-radius:999px; padding:4px 10px; display:inline-flex; align-items:center; gap:6px; }
+.badge-live::before{ content:""; width:8px; height:8px; border-radius:999px; background:#065f46; box-shadow:0 0 0 6px rgba(34,197,94,.18); animation: ping 1.5s infinite; }
+@keyframes ping{0%{transform:scale(.9);}50%{transform:scale(1.2);}100%{transform:scale(.9);}}
+.small-btn{ color:var(--muted); border:1px solid rgba(255,255,255,.08); padding:6px 10px; border-radius:10px; background:#0f1520; }
+.small-btn:hover{ color:var(--text); border-color: rgba(255,255,255,.18); }
+.video-wrap{ border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.06); background:#000; }
+.tabbar{ display:flex; gap:8px; margin-top:12px; }
+.tabbar .tab{ padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08); color:var(--muted); background:#0f1520; }
+.tabbar .tab.active{ color:var(--text); border-color:rgba(255,255,255,.18); }
+.sticky-col{ position: sticky; top:84px; }
+.match-item{ display:block; padding:12px; border-bottom:1px solid rgba(255,255,255,.06); }
+.match-item:hover{ background:#0f1520; text-decoration:none; }
+.kv{ font-size:12px; color:var(--muted); }
+.stat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.stat{ background:#0f1520; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:10px; text-align:center; }
+.live-page .team .logo{ display:none; }
+
+/* Màu link trong "Sắp diễn ra" */
+.live-page .list-group .match-item,
+.live-page .list-group .match-item:link,
+.live-page .list-group .match-item:visited{
+  color: var(--text);            /* đổi theo ý */
+  text-decoration: none;
+}
+
+.live-page .list-group .match-item:hover{
+  color: #fff;                   /* màu khi hover */
+  background:#0f1520;
+}
+
+.live-page .list-group .match-item,
+.live-page .list-group .match-item strong{ color: #ffe600; }
+
+/* Chỉ đổi màu "vs" ở header */
+.live-page .live-hero .vsep{
+  color:#ff0000;   /* đổi mã màu tùy ý */
+  opacity:1;       /* nếu muốn rõ hơn */
+  font-weight:800; /* tùy chọn */
+}
+
+
