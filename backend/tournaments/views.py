@@ -39,22 +39,19 @@ def tournaments_active(request):
     return render(request, "tournaments/active_list.html", {"tournaments": qs})
 
 def livestream_view(request):
-    # Tìm trận đấu đang live (có link và thời gian gần nhất)
     live_match = Match.objects.filter(
-        livestream_url__isnull=False, 
+        livestream_url__isnull=False,
         match_time__lte=timezone.now()
     ).order_by('-match_time').first()
 
-    # Lấy danh sách các trận sắp diễn ra (chưa có tỉ số)
     upcoming_matches = Match.objects.filter(
         team1_score__isnull=True
     ).order_by('match_time')
 
-    context = {
-        'live_match': live_match,
-        'upcoming_matches': upcoming_matches,
-    }
-    return render(request, 'tournaments/livestream.html', context)
+    return render(request, "tournaments/livestream.html", {
+        "live_match": live_match,
+        "upcoming_matches": upcoming_matches,
+    })
 
 def shop_view(request):
     return render(request, 'tournaments/shop.html')

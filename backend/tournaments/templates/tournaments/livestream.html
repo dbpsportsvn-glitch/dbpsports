@@ -1,48 +1,61 @@
 {% extends 'base.html' %}
+{% load video %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-8">
-            {% if live_match %}
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h5>Đang diễn ra: {{ live_match.team1.name }} vs {{ live_match.team2.name }}</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="ratio ratio-16x9">
-                            <iframe src="{{ live_match.livestream_url }}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="alert alert-info" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
-                    <h4 class="alert-heading">Hiện tại không có trận đấu nào đang được phát trực tiếp.</h4>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="mb-0">Các trận đấu sắp tới</h5>
-                </div>
-                <div class="list-group list-group-flush upcoming-matches-list">
-                    {% for match in upcoming_matches %}
-                        <a href="{% url 'match_detail' pk=match.pk %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1"><strong>{{ match.team1.name }}</strong> vs <strong>{{ match.team2.name }}</strong></h6>
-                            </div>
-                            <small class="text-muted">{{ match.match_time|date:"H:i, d/m/Y" }} - {{ match.get_match_round_display }}</small>
-                        </a>
-                    {% empty %}
-                        <div class="list-group-item">
-                            <p class="mb-0">Không có trận đấu nào sắp diễn ra.</p>
-                        </div>
-                    {% endfor %}
-                </div>
+  <div class="row gx-4 gy-4">
+    <div class="col-lg-8">
+      {% if live_match and live_match.livestream_url %}
+        <div class="card shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">Đang trực tiếp: {{ live_match.team1.name }} vs {{ live_match.team2.name }}</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="ratio ratio-16x9">
+              {% with src=live_match.livestream_url|yt_embed_clean %}
+                {% if src %}
+                  <iframe
+                    src="{{ src }}?playsinline=1"
+                    title="YouTube"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                    style="border:0"></iframe>
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center" style="min-height:320px">
+                    <p class="mb-0 text-muted">Link YouTube không hợp lệ. Cập nhật lại URL.</p>
+                  </div>
+                {% endif %}
+              {% endwith %}
             </div>
+          </div>
         </div>
+      {% else %}
+        <div class="alert alert-info d-flex align-items-center justify-content-center" style="min-height:320px">
+          <h5 class="mb-0">Hiện chưa có live.</h5>
+        </div>
+      {% endif %}
     </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header"><h6 class="mb-0">Sắp diễn ra</h6></div>
+        <div class="list-group list-group-flush">
+          {% for match in upcoming_matches %}
+            <a class="list-group-item list-group-item-action" href="{% url 'match_detail' match.pk %}">
+              <div class="d-flex justify-content-between">
+                <strong>{{ match.team1.name }}</strong>
+                <span class="text-muted">vs</span>
+                <strong>{{ match.team2.name }}</strong>
+              </div>
+              <small class="text-muted">{{ match.match_time|date:"H:i, d/m/Y" }} · {{ match.get_match_round_display }}</small>
+            </a>
+          {% empty %}
+            <div class="list-group-item"><small class="text-muted">Không có trận đấu nào sắp diễn ra.</small></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
