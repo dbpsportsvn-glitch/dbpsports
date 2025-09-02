@@ -62,7 +62,7 @@ body { background: var(--bg); color: var(--text); }
 }
 .live-page .live-hero .ticker-inline .track{
   display:inline-flex; gap:36px; white-space:nowrap;
-  animation: livehdr 25s linear infinite;
+  animation: livehdr 60s linear infinite;
 }
 .live-page .live-hero .ticker-inline:hover .track{ animation-play-state: paused; }
 .live-page .live-hero .ticker-inline .item{ color:var(--muted); font-size:14px; }

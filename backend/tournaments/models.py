@@ -186,6 +186,12 @@ class Match(models.Model):
     referee = models.CharField(max_length=100, null=True, blank=True)
     commentator = models.CharField(max_length=100, null=True, blank=True)
 
+    ticker_text = models.CharField(
+        max_length=255, 
+        blank=True, 
+        help_text="Dòng chữ chạy trên màn hình livestream. Nếu để trống, hệ thống sẽ dùng thông báo mặc định."
+    )    
+
     def get_absolute_url(self):
         return reverse("match_detail", kwargs={"pk": self.pk})
 

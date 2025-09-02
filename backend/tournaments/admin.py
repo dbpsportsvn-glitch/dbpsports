@@ -238,6 +238,21 @@ class MatchAdmin(admin.ModelAdmin):
     list_select_related = ("tournament", "team1", "team2")
     list_per_page = 50
 
+   # >>> THÊM KHỐI fieldsets NÀY VÀO <<<
+    fieldsets = (
+        (None, {
+            'fields': ('tournament', 'match_round', ('team1', 'team2'))
+        }),
+        ('Kết quả & Lịch thi đấu', {
+            'fields': (('team1_score', 'team2_score'), 'match_time', 'location', 'referee', 'commentator')
+        }),
+        ('Cài đặt Livestream', {
+            'classes': ('collapse',), # Giúp có thể thu gọn/mở rộng
+            'fields': ('livestream_url', 'ticker_text')
+        }),
+    )
+    # >>> KẾT THÚC KHỐI fieldsets <<<
+
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
         if obj.match_round == 'GROUP':

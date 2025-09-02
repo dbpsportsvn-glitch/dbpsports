@@ -159,7 +159,7 @@
   const root = document.querySelector('.live-page');
   if(!root) return;
 
-  // Tabs
+  // --- Logic xử lý Tabs ---
   const tabs = root.querySelectorAll('.tabbar .tab');
   const panels = {
     info: root.querySelector('#tab-info'),
@@ -167,38 +167,58 @@
     schedule: root.querySelector('#tab-schedule'),
   };
   function activate(key){
-    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
-    Object.entries(panels).forEach(([k,p])=>{ if(p){ p.style.display = (k===key?'block':'none'); }});
-    try{ history.replaceState(null,'','#'+key); }catch(e){}
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === key));
+    Object.entries(panels).forEach(([k, p]) => { if(p){ p.style.display = (k === key ? 'block' : 'none'); }});
+    try { history.replaceState(null, '', '#' + key); } catch(e) {}
   }
-  tabs.forEach(t=> t.addEventListener('click', ()=> activate(t.dataset.tab)));
-  const init = location.hash.replace('#','');
+  tabs.forEach(t => t.addEventListener('click', () => activate(t.dataset.tab)));
+  const init = location.hash.replace('#', '');
   activate(panels[init] ? init : 'info');
 
-  // Share
+  // --- Logic xử lý nút Share ---
   const shareBtn = root.querySelector('#shareBtn');
   if (shareBtn) {
     shareBtn.addEventListener('click', async () => {
       const url = location.href;
       try {
-        if (navigator.share) {            // Web Share API (mobile / desktop hỗ trợ)
+        if (navigator.share) {
           await navigator.share({ title: document.title, url });
           return;
         }
-        if (navigator.clipboard && window.isSecureContext) {  // HTTPS hoặc localhost
+        if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(url);
           shareBtn.innerHTML = '<i class="bi bi-check2"></i> Đã copy';
           shareBtn.disabled = true;
-          setTimeout(()=>{ 
-            shareBtn.innerHTML = '<i class="bi bi-share"></i> Chia sẻ'; 
-            shareBtn.disabled = false; 
+          setTimeout(() => {
+            shareBtn.innerHTML = '<i class="bi bi-share"></i> Chia sẻ';
+            shareBtn.disabled = false;
           }, 1200);
         } else {
-          prompt('Copy URL:', url);       // fallback cho môi trường không hỗ trợ
+          prompt('Copy URL:', url);
         }
       } catch(e) { /* bỏ qua */ }
     });
   }
+
+  // --- Logic tự động điều chỉnh tốc độ ticker ---
+  const tickerTrack = root.querySelector('.live-hero .ticker-inline .track');
+  if (tickerTrack) {
+    // Tốc độ mong muốn (pixel mỗi giây). Số càng lớn, chữ chạy càng nhanh.
+    const desiredSpeed = 60; 
+
+    const contentWidth = tickerTrack.scrollWidth;
+    // Animation di chuyển 50% chiều rộng của track, nên ta lấy khoảng cách là một nửa
+    const distanceToTravel = contentWidth / 2; 
+    
+    // Tính toán thời gian cần thiết: duration = distance / speed
+    const durationInSeconds = distanceToTravel / desiredSpeed;
+
+    // Áp dụng thời gian đã tính vào animation
+    if (durationInSeconds > 1) { // Đảm bảo thời gian hợp lệ
+      tickerTrack.style.animationDuration = `${durationInSeconds}s`;
+    }
+  }
+
 })();
 </script>
 

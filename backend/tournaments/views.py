@@ -42,21 +42,20 @@ def tournaments_active(request):
 from datetime import timedelta
 from django.utils import timezone
 
-def livestream_view(request, pk=None): # <<< Sửa ở đây, thêm pk=None
+# backend/tournaments/views.py
+
+def livestream_view(request, pk=None):
     now = timezone.now()
     live_match = None
 
     if pk:
-        # Nếu có ID, lấy đúng trận đấu đó
         live_match = get_object_or_404(Match, pk=pk)
     else:
-        # Nếu không có ID (truy cập từ header), giữ lại logic cũ
         live_match = Match.objects.filter(
             livestream_url__isnull=False,
             match_time__lte=now
         ).order_by('-match_time').first()
 
-    # ==== SẮP DIỄN RA (logic này không đổi) ====
     qs = Match.objects.filter(
         team1_score__isnull=True,
         team2_score__isnull=True,
@@ -65,19 +64,18 @@ def livestream_view(request, pk=None): # <<< Sửa ở đây, thêm pk=None
 
     if live_match:
         qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
-
+    
     upcoming_matches = qs.order_by('match_time')[:12]
 
-    # Kiểm tra nếu không tìm thấy trận nào để hiển thị
-    if not live_match:
-        # (Tùy chọn) Bạn có thể tạo một template riêng cho trường hợp này
-        # return render(request, "tournaments/livestream_empty.html")
-        pass # Hoặc cứ để template cũ tự xử lý
+    # >>> LOGIC MỚI ĐỂ LẤY DÒNG CHỮ CHẠY <<<
+    ticker_text_to_display = "Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" # Dòng chữ mặc định
+    if live_match and live_match.ticker_text:
+        ticker_text_to_display = live_match.ticker_text
 
     return render(request, "tournaments/livestream.html", {
         "live_match": live_match,
         "upcoming_matches": upcoming_matches,
-        "ticker_text": "Đăng ký mùa giải mới • Quảng cáo: 09xx xxx xxx",
+        "ticker_text": ticker_text_to_display, # Gửi dòng chữ đã được xử lý ra template
     })
 
 def shop_view(request):
