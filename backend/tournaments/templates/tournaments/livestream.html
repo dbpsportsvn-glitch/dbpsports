@@ -89,26 +89,43 @@
 
       <div id="tab-comments" class="tab-panel mt-3" style="display:none">
         <div class="card shadow-sm">
-          <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="card-header">
             <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bình luận</h6>
-            <small class="text-muted">Sắp có</small>
           </div>
           <div class="card-body">
-            <p class="text-muted mb-0">Khu vực bình luận sẽ được bật sau.</p>
-          </div>
-        </div>
-      </div>
+            <div class="comment-list mb-3" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+              {% for comment in comments %}
+                <div class="d-flex mb-3">
+                  <div class="flex-shrink-0">
+                    <span class="avatar-ph">{{ comment.user.username|first|upper }}</span>
+                  </div>
+                  <div class="flex-grow-1 ms-3">
+                    <strong class="d-block">{{ comment.user.username }}</strong>
+                    <div style="white-space: pre-wrap; word-wrap: break-word;">{{ comment.text }}</div>
+                    <small class="text-muted">{{ comment.created_at|timesince }} trước</small>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-muted text-center">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+              {% endfor %}
+            </div>
 
-      <div id="tab-schedule" class="tab-panel mt-3" style="display:none">
-        <div class="list-group">
-          {% for m in upcoming_matches %}
-            <a class="list-group-item d-flex justify-content-between align-items-center" href="{% url 'match_detail' m.pk %}">
-              <span><strong>{{ m.team1.name }}</strong> <span class="text-muted">vs</span> <strong>{{ m.team2.name }}</strong></span>
-              <small class="text-muted">{{ m.match_time|date:"H:i, d/m/Y" }}</small>
-            </a>
-          {% empty %}
-            <div class="list-group-item text-muted">Chưa có lịch.</div>
-          {% endfor %}
+            <hr>
+
+            {% if user.is_authenticated %}
+              <form method="post" action="">
+                {% csrf_token %}
+                {{ comment_form.text }}
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Gửi</button>
+                </div>
+              </form>
+            {% else %}
+              <p class="text-muted text-center">
+                Vui lòng <a href="{% url 'account_login' %}?next={{ request.path }}">đăng nhập</a> để bình luận.
+              </p>
+            {% endif %}
+          </div>
         </div>
       </div>
 

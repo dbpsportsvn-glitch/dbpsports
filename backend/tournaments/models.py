@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.db.models import Q
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 MAX_STARTERS = 11  # số cầu thủ đá chính tối đa cho mỗi đội trong một trận
 
@@ -327,3 +328,16 @@ class HomeBanner(models.Model):
 
     def __str__(self):
         return f"{self.title} (#{self.order})"
+
+# >>> THÊM MODEL MỚI NÀY VÀO CUỐI FILE <<<
+class Comment(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at'] # Sắp xếp bình luận từ cũ đến mới
+
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.match}'

@@ -9,7 +9,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.db.models import Sum, Count
-from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm # Đảm bảo có PaymentProofForm
+from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm, CommentForm
 from .utils import send_notification_email
 from django.conf import settings
 from django.utils import timezone
@@ -72,41 +72,60 @@ def livestream_view(request, pk=None):
     if live_match and live_match.ticker_text:
         ticker_text_to_display = live_match.ticker_text
 
-# Dán đoạn code này vào để thay thế cho hàm livestream_view cũ
-# Dán đoạn code này vào để thay thế cho hàm livestream_view cũ
+
 def livestream_view(request, pk=None):
     now = timezone.now()
     live_match = None
 
     if pk:
-        live_match = get_object_or_404(Match, pk=pk)
+        live_match = get_object_or_404(Match.objects.select_related('tournament'), pk=pk)
     else:
-        live_match = Match.objects.filter(
+        live_match = Match.objects.select_related('tournament').filter(
             livestream_url__isnull=False,
             match_time__lte=now
         ).order_by('-match_time').first()
 
+    # Xử lý logic bình luận
+    comments = []
+    comment_form = CommentForm()
+
+    if live_match:
+        # Xử lý khi người dùng gửi bình luận mới (POST request)
+        if request.method == 'POST' and request.user.is_authenticated:
+            form = CommentForm(request.POST)
+            if form.is_valid():
+                new_comment = form.save(commit=False)
+                new_comment.match = live_match
+                new_comment.user = request.user
+                new_comment.save()
+                # Chuyển hướng về chính trang này để tránh gửi lại form
+                return redirect('livestream_match', pk=live_match.pk)
+        
+        # Lấy danh sách bình luận để hiển thị
+        comments = live_match.comments.select_related('user').all()
+
+    # Logic lấy các trận sắp diễn ra và ticker text không đổi
     qs = Match.objects.filter(
         team1_score__isnull=True,
         team2_score__isnull=True,
         match_time__gte=now
     )
-
     if live_match:
         qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
-
     upcoming_matches = qs.order_by('match_time')[:12]
 
-    # Logic để lấy dòng chữ chạy
-    ticker_text_to_display = "Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" # Dòng chữ mặc định
+    ticker_text_to_display = "Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx"
     if live_match and live_match.ticker_text:
         ticker_text_to_display = live_match.ticker_text
 
-    return render(request, "tournaments/livestream.html", {
+    context = {
         "live_match": live_match,
         "upcoming_matches": upcoming_matches,
         "ticker_text": ticker_text_to_display,
-    })
+        "comments": comments, # Gửi comments ra template
+        "comment_form": comment_form, # Gửi form ra template
+    }
+    return render(request, "tournaments/livestream.html", context)
 
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
