@@ -1,61 +1,205 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load video %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'tournaments/live.css' %}">
+{% endblock %}
+
 {% block content %}
+<div class="live-page">
 <div class="container mt-4">
-  <div class="row gx-4 gy-4">
-    <div class="col-lg-8">
-      {% if live_match and live_match.livestream_url %}
-        <div class="card shadow-sm">
-          <div class="card-header">
-            <h5 class="mb-0">Đang trực tiếp: {{ live_match.team1.name }} vs {{ live_match.team2.name }}</h5>
-          </div>
-          <div class="card-body p-0">
-            <div class="ratio ratio-16x9">
-              {% with src=live_match.livestream_url|yt_embed_clean %}
-                {% if src %}
-                  <iframe
-                    src="{{ src }}?playsinline=1"
-                    title="YouTube"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    allowfullscreen
-                    style="border:0"></iframe>
-                {% else %}
-                  <div class="d-flex align-items-center justify-content-center" style="min-height:320px">
-                    <p class="mb-0 text-muted">Link YouTube không hợp lệ. Cập nhật lại URL.</p>
-                  </div>
-                {% endif %}
-              {% endwith %}
-            </div>
-          </div>
-        </div>
-      {% else %}
-        <div class="alert alert-info d-flex align-items-center justify-content-center" style="min-height:320px">
-          <h5 class="mb-0">Hiện chưa có live.</h5>
-        </div>
-      {% endif %}
+
+  {# ======= HEADER / SCOREBOARD ======= #}
+  <div class="live-hero d-flex align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <div class="team">
+        <div class="logo">{{ live_match.team1.name|slice:":2" }}</div>
+        <strong class="h5 mb-0">{{ live_match.team1.name }}</strong>
+      </div>
+      <span class="vsep">vs</span>
+      <div class="team">
+        <div class="logo">{{ live_match.team2.name|slice:":2" }}</div>
+        <strong class="h5 mb-0">{{ live_match.team2.name }}</strong>
+      </div>  
     </div>
 
-    <div class="col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-header"><h6 class="mb-0">Sắp diễn ra</h6></div>
-        <div class="list-group list-group-flush">
-          {% for match in upcoming_matches %}
-            <a class="list-group-item list-group-item-action" href="{% url 'match_detail' match.pk %}">
-              <div class="d-flex justify-content-between">
-                <strong>{{ match.team1.name }}</strong>
-                <span class="text-muted">vs</span>
-                <strong>{{ match.team2.name }}</strong>
-              </div>
-              <small class="text-muted">{{ match.match_time|date:"H:i, d/m/Y" }} · {{ match.get_match_round_display }}</small>
+    <div class="ticker-inline" aria-label="Thông báo">
+    <div class="track">
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+        <span class="item">{{ ticker_text|default:"Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" }}</span>
+    </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge-live">LIVE</span>
+        <button id="shareBtn" class="small-btn" type="button">
+        <i class="bi bi-share"></i> Chia sẻ
+        </button>
+    </div>
+  </div>
+
+  <div class="row gx-4 gy-4">
+    <div class="col-xl-8">
+
+      {# ======= PLAYER ======= #}
+      <div class="video-wrap">
+        {% with src=live_match.livestream_url|yt_embed_clean %}
+          {% if src %}
+            <div class="ratio ratio-16x9">
+              <iframe
+                src="{{ src }}?playsinline=1&rel=0&modestbranding=1"
+                title="YouTube"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+            </div>
+          {% else %}
+            <div class="p-5 text-center text-muted">Link YouTube không hợp lệ.</div>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      {# ======= TABS ======= #}
+      <div class="tabbar">
+        <button class="tab active" data-tab="info" type="button"><i class="bi bi-info-circle"></i> Thông tin</button>
+        <button class="tab" data-tab="comments" type="button"><i class="bi bi-chat-dots"></i> Bình luận</button>
+        <button class="tab" data-tab="schedule" type="button"><i class="bi bi-calendar2-week"></i> Lịch</button>
+      </div>
+
+      {# ======= PANELS ======= #}
+      <div id="tab-info" class="tab-panel mt-3" style="display:block">
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="kv">Giải đấu</div>
+            <div><strong>{{ live_match.tournament.name }}</strong></div>
+          </div>
+          <div class="stat">
+            <div class="kv">Vòng</div>
+            <div><strong>{{ live_match.get_match_round_display }}</strong></div>
+          </div>
+          <div class="stat">
+            <div class="kv">Thời gian</div>
+            <div><strong>{{ live_match.match_time|date:"H:i d/m/Y" }}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-comments" class="tab-panel mt-3" style="display:none">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bình luận</h6>
+            <small class="text-muted">Sắp có</small>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-0">Khu vực bình luận sẽ được bật sau.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-schedule" class="tab-panel mt-3" style="display:none">
+        <div class="list-group">
+          {% for m in upcoming_matches %}
+            <a class="list-group-item d-flex justify-content-between align-items-center" href="{% url 'match_detail' m.pk %}">
+              <span><strong>{{ m.team1.name }}</strong> <span class="text-muted">vs</span> <strong>{{ m.team2.name }}</strong></span>
+              <small class="text-muted">{{ m.match_time|date:"H:i, d/m/Y" }}</small>
             </a>
           {% empty %}
-            <div class="list-group-item"><small class="text-muted">Không có trận đấu nào sắp diễn ra.</small></div>
+            <div class="list-group-item text-muted">Chưa có lịch.</div>
           {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    {# ======= SIDEBAR ======= #}
+    <div class="col-xl-4">
+      <div class="sticky-col">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center">
+            <h6 class="mb-0"><i class="bi bi-hourglass-split"></i> Sắp diễn ra</h6>
+
+            {% if live_match %}
+              {# Thêm class ms-auto để tự động đẩy link này về bên phải #}
+              <a class="small text-muted ms-auto" href="{% url 'tournament_detail' pk=live_match.tournament.pk %}?tab=schedule#schedule">
+                Xem tất cả
+              </a>
+            {% endif %}
+          </div>
+          <div class="list-group list-group-flush">
+            {% for match in upcoming_matches %}
+              {# Sửa dòng href ở ngay dưới đây #}
+              <a class="match-item" href="{% url 'livestream_match' pk=match.pk %}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ match.team1.name }}</strong>
+                    <span class="text-muted"> vs </span>
+                    <strong>{{ match.team2.name }}</strong>
+                  </div>
+                  <span class="badge bg-dark border">{{ match.get_match_round_display }}</span>
+                </div>
+                <div class="kv mt-1"><i class="bi bi-clock"></i> {{ match.match_time|date:"H:i, d/m/Y" }}</div>
+              </a>
+            {% empty %}
+              <div class="list-group-item"><small class="text-muted">Không có trận đấu nào.</small></div>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
   </div>
+
 </div>
+</div>
+
+<script>
+(function(){
+  const root = document.querySelector('.live-page');
+  if(!root) return;
+
+  // Tabs
+  const tabs = root.querySelectorAll('.tabbar .tab');
+  const panels = {
+    info: root.querySelector('#tab-info'),
+    comments: root.querySelector('#tab-comments'),
+    schedule: root.querySelector('#tab-schedule'),
+  };
+  function activate(key){
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
+    Object.entries(panels).forEach(([k,p])=>{ if(p){ p.style.display = (k===key?'block':'none'); }});
+    try{ history.replaceState(null,'','#'+key); }catch(e){}
+  }
+  tabs.forEach(t=> t.addEventListener('click', ()=> activate(t.dataset.tab)));
+  const init = location.hash.replace('#','');
+  activate(panels[init] ? init : 'info');
+
+  // Share
+  const shareBtn = root.querySelector('#shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      const url = location.href;
+      try {
+        if (navigator.share) {            // Web Share API (mobile / desktop hỗ trợ)
+          await navigator.share({ title: document.title, url });
+          return;
+        }
+        if (navigator.clipboard && window.isSecureContext) {  // HTTPS hoặc localhost
+          await navigator.clipboard.writeText(url);
+          shareBtn.innerHTML = '<i class="bi bi-check2"></i> Đã copy';
+          shareBtn.disabled = true;
+          setTimeout(()=>{ 
+            shareBtn.innerHTML = '<i class="bi bi-share"></i> Chia sẻ'; 
+            shareBtn.disabled = false; 
+          }, 1200);
+        } else {
+          prompt('Copy URL:', url);       // fallback cho môi trường không hỗ trợ
+        }
+      } catch(e) { /* bỏ qua */ }
+    });
+  }
+})();
+</script>
+
 {% endblock %}

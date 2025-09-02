@@ -15,6 +15,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q
 from .models import HomeBanner
+from datetime import timedelta
 
 
 def home(request):
@@ -38,19 +39,45 @@ def tournaments_active(request):
     ).order_by("-start_date")
     return render(request, "tournaments/active_list.html", {"tournaments": qs})
 
-def livestream_view(request):
-    live_match = Match.objects.filter(
-        livestream_url__isnull=False,
-        match_time__lte=timezone.now()
-    ).order_by('-match_time').first()
+from datetime import timedelta
+from django.utils import timezone
 
-    upcoming_matches = Match.objects.filter(
-        team1_score__isnull=True
-    ).order_by('match_time')
+def livestream_view(request, pk=None): # <<< Sửa ở đây, thêm pk=None
+    now = timezone.now()
+    live_match = None
+
+    if pk:
+        # Nếu có ID, lấy đúng trận đấu đó
+        live_match = get_object_or_404(Match, pk=pk)
+    else:
+        # Nếu không có ID (truy cập từ header), giữ lại logic cũ
+        live_match = Match.objects.filter(
+            livestream_url__isnull=False,
+            match_time__lte=now
+        ).order_by('-match_time').first()
+
+    # ==== SẮP DIỄN RA (logic này không đổi) ====
+    qs = Match.objects.filter(
+        team1_score__isnull=True,
+        team2_score__isnull=True,
+        match_time__gte=now
+    )
+
+    if live_match:
+        qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
+
+    upcoming_matches = qs.order_by('match_time')[:12]
+
+    # Kiểm tra nếu không tìm thấy trận nào để hiển thị
+    if not live_match:
+        # (Tùy chọn) Bạn có thể tạo một template riêng cho trường hợp này
+        # return render(request, "tournaments/livestream_empty.html")
+        pass # Hoặc cứ để template cũ tự xử lý
 
     return render(request, "tournaments/livestream.html", {
         "live_match": live_match,
         "upcoming_matches": upcoming_matches,
+        "ticker_text": "Đăng ký mùa giải mới • Quảng cáo: 09xx xxx xxx",
     })
 
 def shop_view(request):

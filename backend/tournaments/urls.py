@@ -8,6 +8,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('giai-dau/', tournaments_active, name='tournaments_active'),
     path('livestream/', views.livestream_view, name='livestream'),
+    path('livestream/match/<int:pk>/', views.livestream_view, name='livestream_match'),
+
     path('shop/', views.shop_view, name='shop'),
     path('archive/', views.archive_view, name='archive'),
 

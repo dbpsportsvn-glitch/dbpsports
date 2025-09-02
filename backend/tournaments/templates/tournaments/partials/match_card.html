@@ -31,7 +31,7 @@
                 
                 {% if match.livestream_url %}
                     {% if match.match_time > now %}
-                        <a href="{% url 'livestream' %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
+                        <a href="{% url 'livestream_match' pk=match.pk %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
                     {% else %}
                         <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-info text-dark text-decoration-none">📼 Xem lại</a>
                     {% endif %}
