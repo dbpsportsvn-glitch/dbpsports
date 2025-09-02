@@ -72,10 +72,40 @@ def livestream_view(request, pk=None):
     if live_match and live_match.ticker_text:
         ticker_text_to_display = live_match.ticker_text
 
+# Dán đoạn code này vào để thay thế cho hàm livestream_view cũ
+# Dán đoạn code này vào để thay thế cho hàm livestream_view cũ
+def livestream_view(request, pk=None):
+    now = timezone.now()
+    live_match = None
+
+    if pk:
+        live_match = get_object_or_404(Match, pk=pk)
+    else:
+        live_match = Match.objects.filter(
+            livestream_url__isnull=False,
+            match_time__lte=now
+        ).order_by('-match_time').first()
+
+    qs = Match.objects.filter(
+        team1_score__isnull=True,
+        team2_score__isnull=True,
+        match_time__gte=now
+    )
+
+    if live_match:
+        qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
+
+    upcoming_matches = qs.order_by('match_time')[:12]
+
+    # Logic để lấy dòng chữ chạy
+    ticker_text_to_display = "Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" # Dòng chữ mặc định
+    if live_match and live_match.ticker_text:
+        ticker_text_to_display = live_match.ticker_text
+
     return render(request, "tournaments/livestream.html", {
         "live_match": live_match,
         "upcoming_matches": upcoming_matches,
-        "ticker_text": ticker_text_to_display, # Gửi dòng chữ đã được xử lý ra template
+        "ticker_text": ticker_text_to_display,
     })
 
 def shop_view(request):
