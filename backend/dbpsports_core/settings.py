@@ -96,6 +96,12 @@ TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
 USE_TZ = True
 
+# Cấu hình tùy chỉnh để Whitenoise bỏ qua các file sourcemap bị thiếu
+from whitenoise.storage import CompressedManifestStaticFilesStorage
+
+class WhiteNoiseStaticFilesStorage(CompressedManifestStaticFilesStorage):
+    manifest_strict = False
+
 # === Static / Media ===
 STATIC_URL = '/static/'          # ← có dấu "/" ở đầu và cuối
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -106,7 +112,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {"BACKEND": "dbpsports_core.settings.WhiteNoiseStaticFilesStorage"},
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

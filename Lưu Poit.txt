@@ -14,7 +14,7 @@ cd ..
 
 
 git add .
-git commit -m "Chau chuốt giao diện trang chi tiết trận đấu và sửa lỗi kích thước logo"
+git commit -m "Nang cap tinh nang binh luan"
 git push
 
 Sao lưu DB + media (PowerShell)
@@ -36,6 +36,12 @@ git commit -m "Nội dung cập nhật của tôi"
 
 # 3. Đẩy lên GitHub
 git push
+
+
+# Chạy Trên Host
+manage.py migrate (Để tạo các bảng trong database MySQL mới)
+
+manage.py collectstatic --noinput (Để sửa lỗi file tĩnh)
 
 
 Bước: Cập nhật Database
