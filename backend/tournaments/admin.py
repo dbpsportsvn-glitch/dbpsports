@@ -325,6 +325,7 @@ class HomeBannerAdmin(admin.ModelAdmin):
         return "-"
     preview.short_description = "Ảnh"
 
+# >> GỬI MAIL VÀ THÔNG BÁO <<
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
     list_display = ('title', 'tournament', 'is_published', 'created_at')
@@ -332,4 +333,36 @@ class AnnouncementAdmin(admin.ModelAdmin):
     search_fields = ('title', 'content')
     list_editable = ('is_published',)
     date_hierarchy = 'created_at'
+    
+    # Thêm dòng này để kích hoạt actions
+    actions = ['send_email_notification']
 
+    @admin.action(description='Gửi email thông báo cho các đội trưởng')
+    def send_email_notification(self, request, queryset):
+        sent_count = 0
+        for announcement in queryset:
+            if not announcement.is_published:
+                self.message_user(request, f"Thông báo '{announcement.title}' chưa được công khai nên không thể gửi.", messages.WARNING)
+                continue
+
+            tournament = announcement.tournament
+            # Lấy tất cả đội trưởng trong giải đấu và email của họ
+            captains = Team.objects.filter(tournament=tournament).select_related('captain')
+            recipient_list = {c.captain.email for c in captains if c.captain.email}
+
+            if recipient_list:
+                try:
+                    send_notification_email(
+                        subject=f"[Thông báo] {tournament.name}: {announcement.title}",
+                        template_name='tournaments/emails/announcement_notification.html',
+                        context={'announcement': announcement},
+                        recipient_list=list(recipient_list)
+                    )
+                    sent_count += 1
+                except Exception as e:
+                    self.message_user(request, f"Gặp lỗi khi gửi thông báo '{announcement.title}': {e}", messages.ERROR)
+            else:
+                self.message_user(request, f"Không tìm thấy email đội trưởng nào cho giải '{tournament.name}'.", messages.WARNING)
+
+        if sent_count > 0:
+            self.message_user(request, f"Đã gửi thành công {sent_count} thông báo qua email.", messages.SUCCESS)

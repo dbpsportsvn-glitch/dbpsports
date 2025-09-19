@@ -193,9 +193,8 @@ EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False) # Thêm dòng này
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="DBP Sports <no-reply@example.com>")
 
 # === Sites ===
-SITE_ID = 2  # chỉnh theo Admin > Sites cho đúng host
-
-# backend/dbpsports_core/settings.py
+# Đọc SITE_ID từ file .env, nếu không có thì mặc định là 1 (cho local)
+SITE_ID = env.int("SITE_ID", default=1)
 
 # === Auth / allauth ===
 AUTHENTICATION_BACKENDS = [
