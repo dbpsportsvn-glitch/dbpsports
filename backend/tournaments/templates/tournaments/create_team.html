@@ -4,7 +4,15 @@
 {% block content %}
 <div class="form-container">
     <h2>Đăng ký đội cho giải: {{ tournament.name }}</h2>
-    <form method="post" enctype="multipart/form-data"> {% csrf_token %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
         {{ form|crispy }}
         <button type="submit" class="btn btn-primary w-100 mt-3">Tạo đội</button>
     </form>

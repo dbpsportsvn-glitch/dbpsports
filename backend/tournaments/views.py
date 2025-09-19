@@ -5,8 +5,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from collections import defaultdict
 from django.db.models import Prefetch
 # --- KẾT THÚC ---
-from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS
+from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
+from django.views.decorators.cache import never_cache # Thêm dòng này
 from .forms import TeamCreationForm, PlayerCreationForm 
 from django.http import HttpResponseForbidden
 from django.db import transaction
@@ -46,6 +47,7 @@ def tournaments_active(request):
 from datetime import timedelta
 from django.utils import timezone
 
+@never_cache
 def livestream_view(request, pk=None):
     now = timezone.now()
     live_match = None
@@ -190,6 +192,7 @@ def tournament_detail(request, pk):
     return render(request, 'tournaments/tournament_detail.html', context)
 
 @login_required
+@never_cache
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
     
@@ -219,17 +222,21 @@ def team_detail(request, pk):
     return render(request, 'tournaments/team_detail.html', context)
 
 @login_required
+@never_cache
 def create_team(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     if request.method == 'POST':
-        # Thêm request.FILES vào đây để xử lý file tải lên
         form = TeamCreationForm(request.POST, request.FILES)
         if form.is_valid():
-            team = form.save(commit=False)
-            team.tournament = tournament
-            team.captain = request.user
-            team.save()
-            return redirect('team_detail', pk=team.pk)
+            try: # --- BẮT ĐẦU SỬA LỖI ---
+                team = form.save(commit=False)
+                team.tournament = tournament
+                team.captain = request.user
+                team.save()
+                return redirect('team_detail', pk=team.pk)
+            except IntegrityError:
+                form.add_error(None, "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
+            # --- KẾT THÚC SỬA LỖI ---
     else:
         form = TeamCreationForm()
         
@@ -240,6 +247,7 @@ def create_team(request, tournament_pk):
     return render(request, 'tournaments/create_team.html', context)
 
 @login_required
+@never_cache
 def delete_player(request, pk):
     player = get_object_or_404(Player, pk=pk)
     team = player.team
@@ -260,6 +268,7 @@ def delete_player(request, pk):
     return render(request, 'tournaments/player_confirm_delete.html', context)     
 
 @login_required
+@never_cache
 def update_player(request, pk):
     player = get_object_or_404(Player, pk=pk)
     team = player.team
@@ -283,6 +292,7 @@ def update_player(request, pk):
     return render(request, 'tournaments/update_player.html', context)    
 
 @login_required
+@never_cache
 def update_team(request, pk):
     team = get_object_or_404(Team, pk=pk)
     
@@ -357,6 +367,7 @@ def match_detail(request, pk):
 
 
 @login_required
+@never_cache
 def manage_lineup(request, match_pk, team_pk):
     match = get_object_or_404(Match.objects.select_related('team1','team2','tournament'), pk=match_pk)
     team = get_object_or_404(Team, pk=team_pk)
@@ -443,6 +454,7 @@ def match_print_view(request, pk):
     return render(request, 'tournaments/match_print.html', context) 
 
 @login_required
+@never_cache
 def team_payment(request, pk):
     team = get_object_or_404(Team, pk=pk)
 
