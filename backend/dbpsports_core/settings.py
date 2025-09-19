@@ -181,21 +181,27 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@example.com")
 # === Sites ===
 SITE_ID = 2  # chỉnh theo Admin > Sites cho đúng host
 
+# backend/dbpsports_core/settings.py
+
 # === Auth / allauth ===
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-LOGIN_URL = "login"
+# URL chuyển hướng
+LOGIN_URL = "account_login" # Sử dụng URL chuẩn của allauth
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 
-# allauth 0.63+ khuyến nghị mới
-ACCOUNT_LOGIN_METHODS = {"email"}  # đăng nhập bằng email
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "none"
+# Cấu hình allauth để sử dụng email làm username
+ACCOUNT_AUTHENTICATION_METHOD = "email" # Đăng nhập bằng email
+ACCOUNT_EMAIL_REQUIRED = True           # Bắt buộc phải có email
+ACCOUNT_USERNAME_REQUIRED = False       # Không yêu cầu username
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None # Không dùng trường username
+ACCOUNT_EMAIL_VERIFICATION = "none"     # Tạm thời không cần xác thực email
 SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Bắt buộc nhập mật khẩu 2 lần
 
 # yêu cầu quyền truy cập email
 SOCIALACCOUNT_PROVIDERS = {
@@ -209,3 +215,5 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
