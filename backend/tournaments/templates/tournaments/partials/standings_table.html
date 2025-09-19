@@ -19,9 +19,12 @@
                     <tr>
                         <th>{{ forloop.counter }}</th>
                         <td>
-                            <a href="{% url 'team_detail' pk=row.team_obj.pk %}">
-                                {{ row.team_obj.name }}
-                            </a>
+                        <a href="{% url 'team_detail' pk=row.team_obj.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark fw-bold">
+                            {% if row.team_obj.logo %}
+                            <img src="{{ row.team_obj.logo.url }}" alt="Logo {{ row.team_obj.name }}" style="width: 24px; height: 24px; object-fit: contain;">
+                            {% endif %}
+                            <span>{{ row.team_obj.name }}</span>
+                        </a>
                         </td>
                         <td>{{ row.played }}</td>
                         <td>{{ row.wins }}</td>
