@@ -180,14 +180,17 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # === Email ===
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-ADMIN_EMAIL = "admin@dbpsports.com"
+# Nếu DEBUG=False (trên host), sử dụng SMTP. Ngược lại (ở máy), dùng console.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
+ADMIN_EMAIL = "admin@dbpsports.com" # Email của bạn để nhận thông báo
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@example.com")
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False) # Thêm dòng này
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="DBP Sports <no-reply@example.com>")
 
 # === Sites ===
 SITE_ID = 2  # chỉnh theo Admin > Sites cho đúng host
