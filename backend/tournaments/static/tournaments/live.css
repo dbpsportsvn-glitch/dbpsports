@@ -5,7 +5,7 @@ body { background: var(--bg); color: var(--text); }
 .card, .list-group-item { background: var(--panel); color: var(--text); border: 1px solid rgba(255,255,255,0.06); }
 .card-header { background: linear-gradient(90deg,#0f1520,transparent); border-bottom: 1px solid rgba(255,255,255,0.06); }
 .text-muted{ color: var(--muted)!important; }
-.live-hero{ background: linear-gradient(90deg,#0c1320,#121822); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px 20px; margin-bottom:14px; box-shadow: 0 6px 24px rgba(0,0,0,.35);}
+.live-hero{ background: linear-gradient(90deg,#0c1320,#121822); border:1px solid rgba(255,255,255,.06); border-radius:16px; margin-bottom:14px; box-shadow: 0 6px 24px rgba(0,0,0,.35);}
 .team{ display:flex; align-items:center; gap:10px; }
 .team .logo{ width:32px; height:32px; border-radius:8px; background:#1a2332; display:inline-flex; align-items:center; justify-content:center; font-weight:700; }
 .vsep{ opacity:.25; margin:0 10px; }
@@ -16,7 +16,7 @@ body { background: var(--bg); color: var(--text); }
 .small-btn:hover{ color:var(--text); border-color: rgba(255,255,255,.18); }
 .video-wrap{ border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,.06); background:#000; }
 .tabbar{ display:flex; gap:8px; margin-top:12px; }
-.tabbar .tab{ padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08); color:var(--muted); background:#0f1520; }
+.tabbar .tab{ padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08); color:var(--muted); background:#0f1520; cursor:pointer; }
 .tabbar .tab.active{ color:var(--text); border-color:rgba(255,255,255,.18); }
 .sticky-col{ position: sticky; top:84px; }
 .match-item{ display:block; padding:12px; border-bottom:1px solid rgba(255,255,255,.06); }
@@ -25,47 +25,93 @@ body { background: var(--bg); color: var(--text); }
 .stat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .stat{ background:#0f1520; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:10px; text-align:center; }
 .live-page .team .logo{ display:none; }
+.live-page .tab-panel{ display:none; }
+.live-page .tab-panel.is-active{ display:block; }
 
 /* Màu link trong "Sắp diễn ra" */
 .live-page .list-group .match-item,
 .live-page .list-group .match-item:link,
 .live-page .list-group .match-item:visited{
-  color: var(--text);            /* đổi theo ý */
+  color: var(--text);
   text-decoration: none;
 }
-
 .live-page .list-group .match-item:hover{
-  color: #fff;                   /* màu khi hover */
+  color: #fff;
   background:#0f1520;
 }
-
 .live-page .list-group .match-item,
 .live-page .list-group .match-item strong{ color: #ffe600; }
 
 /* Chỉ đổi màu "vs" ở header */
 .live-page .live-hero .vsep{
-  color:#ff0000;   /* đổi mã màu tùy ý */
-  opacity:1;       /* nếu muốn rõ hơn */
-  font-weight:800; /* tùy chọn */
+  color:#ff0000;
+  opacity:1;
+  font-weight:800;
 }
 
-.live-page .tabbar .tab{ cursor:pointer; }
-.live-page .tab-panel{ display:none; }
-.live-page .tab-panel.is-active{ display:block; }
+/* --- BẮT ĐẦU CẤU TRÚC GIAO DIỆN MỚI --- */
+
+/* Cấu trúc mới cho live-hero */
+.live-page .live-hero {
+  display: flex; /* Ghi đè lại ticker cũ */
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.live-page .live-hero .live-hero-main {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+/* Class mới cho khu vực tên đội */
+.live-page .live-hero .live-hero-teams {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex-grow: 1;
+}
+
+/* Class mới cho khu vực nút bấm */
+.live-page .live-hero .live-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto; /* Tự động đẩy sang phải */
+    flex-shrink: 0;
+}
+
+/* Đảm bảo tên đội quá dài không phá vỡ giao diện */
+.live-page .live-hero .team .h5 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.live-page .live-hero .ticker-wrapper {
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 100%;
+  display: flex;
+  overflow: hidden; /* Quan trọng để ticker hoạt động */
+}
 
 /* ticker chạy trong header */
-.live-page .live-hero{ gap:12px; }
 .live-page .live-hero .ticker-inline{
-  flex:1; margin:0 8px; height:24px; overflow:hidden;
-  display:flex; align-items:center; border-left:1px solid rgba(255,255,255,.06);
-  border-right:1px solid rgba(255,255,255,.06); padding:0 10px;
+  flex:1;
+  display:flex;
+  align-items:center;
 }
 .live-page .live-hero .ticker-inline .track{
-  display:inline-flex; gap:36px; white-space:nowrap;
+  display:inline-flex;
+  gap:36px;
+  white-space:nowrap;
   animation: livehdr 60s linear infinite;
 }
 .live-page .live-hero .ticker-inline:hover .track{ animation-play-state: paused; }
 .live-page .live-hero .ticker-inline .item{ color:var(--muted); font-size:14px; }
 @keyframes livehdr{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
-
-
