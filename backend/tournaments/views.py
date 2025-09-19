@@ -106,6 +106,7 @@ def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
 # --- THAY THẾ TOÀN BỘ HÀM tournament_detail BẰNG PHIÊN BẢN MỚI NÀY ---
+@never_cache # THÊM DÒNG NÀY VÀO
 def tournament_detail(request, pk):
     tournament = get_object_or_404(
         Tournament.objects.prefetch_related(
