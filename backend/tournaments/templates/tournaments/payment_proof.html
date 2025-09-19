@@ -11,12 +11,15 @@
     <h4>Thông tin chuyển khoản</h4>
     <p>Vui lòng chuyển khoản lệ phí đến tài khoản sau:</p>
     <ul>
-        <li><strong>Ngân hàng:</strong> Vietcombank</li>
-        <li><strong>Số tài khoản:</strong> 0123456789</li>
-        <li><strong>Chủ tài khoản:</strong> BAN TO CHUC GIAI DAU</li>
-        <li><strong>Nội dung:</strong> {{ team.name }} nop le phi</li>
+        <li><strong>Ngân hàng:</strong> {{ team.tournament.bank_name|default:"Chưa cập nhật" }}</li>
+        <li><strong>Số tài khoản:</strong> {{ team.tournament.bank_account_number|default:"Chưa cập nhật" }}</li>
+        <li><strong>Chủ tài khoản:</strong> {{ team.tournament.bank_account_name|default:"Chưa cập nhật" }}</li>
+        <li><strong>Nội dung:</strong> {{ team.name }} Nộp Lệ Phí Giải</li>
     </ul>
-    <img src="https://www.investopedia.com/thmb/hJrIBjjMB5zv2ajpDe-x-QD-d_M=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/qr-code-bc94057f452f4806977e76e1d1e42b8d.png" alt="Sample QR Code" class="img-fluid mb-4" style="max-width: 200px;">
+
+    {% if team.tournament.payment_qr_code %}
+        <img src="{{ team.tournament.payment_qr_code.url }}" alt="Mã QR thanh toán" class="img-fluid mb-4" style="max-width: 200px;">
+    {% endif %}
 
     <hr>
     <h4>Tải lên bằng chứng thanh toán</h4>

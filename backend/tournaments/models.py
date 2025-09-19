@@ -23,6 +23,12 @@ class Tournament(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN')
     image = models.ImageField(upload_to='tournament_banners/', null=True, blank=True)
 
+    # >>> THÊM CÁC DÒNG MỚI NÀY VÀO <<<
+    bank_name = models.CharField("Tên ngân hàng", max_length=100, blank=True)
+    bank_account_number = models.CharField("Số tài khoản", max_length=50, blank=True)
+    bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)
+    payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
+
     def __str__(self):
         return self.name
 
