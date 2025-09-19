@@ -229,3 +229,20 @@ function printTab(contentId, title){
 </script>
 
 {% endblock %}
+
+{% comment %} Them vao cuoi file tournament_detail.html {% endcomment %}
+{% block extra_css %}
+<style>
+  @media (max-width: 767px) {
+    .tour-tabs {
+      display: flex !important; /* Quan trọng: Buộc các tab phải hiện ra */
+      flex-wrap: wrap !important; /* Buộc các tab phải xuống dòng */
+      justify-content: flex-start !important;
+    }
+    .tour-tabs .nav-link {
+      padding: .4rem .8rem;
+      font-size: 14px;
+    }
+  }
+</style>
+{% endblock %}

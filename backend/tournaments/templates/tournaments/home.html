@@ -88,3 +88,21 @@
     {% endfor %}
   </div>
 {% endblock %}
+
+{% comment %} Them vao cuoi file home.html {% endcomment %}
+{% block extra_css %}
+<style>
+  @media (max-width: 767px) {
+    .carousel-slide {
+      height: 40vh !important;
+      min-height: 280px !important;
+    }
+    .carousel-caption h2 {
+      font-size: 24px !important;
+    }
+    .carousel-caption p {
+      font-size: 14px !important;
+    }
+  }
+</style>
+{% endblock %}
