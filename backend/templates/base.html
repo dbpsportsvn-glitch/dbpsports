@@ -84,16 +84,57 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
 <script>
   (function(){
     const toggle = document.querySelector('.menu-toggle');
-    // Sửa lại selector để khớp với cấu trúc mới
-    const nav = document.querySelector('.site-header .nav-primary'); 
+    const nav = document.querySelector('.site-header .nav-primary');
     if (toggle && nav) {
       toggle.addEventListener('click', function() {
         nav.classList.toggle('open');
       });
     }
+
+    // --- BẮT ĐẦU: MÃ TỐI ƯU HÓA UPLOAD ẢNH ---
+    function attachImageCompression(form) {
+      if (!form) return;
+      const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
+      if (!inputFile) return;
+
+      form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Ngăn form submit ngay lập-tức
+
+        const file = inputFile.files[0];
+        if (!file) {
+          form.submit(); // Nếu không có file, submit bình-thường
+          return;
+        }
+
+        new Compressor(file, {
+          quality: 0.8, // Chất-lượng ảnh (0-1)
+          maxWidth: 1280, // Chiều rộng tối-đa
+          maxHeight: 1280, // Chiều cao tối-đa
+          success(result) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(new File([result], result.name, { type: result.type }));
+            inputFile.files = dataTransfer.files;
+
+            // Submit form sau khi đã thay-thế file
+            form.submit();
+          },
+          error(err) {
+            console.error(err.message);
+            // Nếu có lỗi, vẫn submit file gốc
+            form.submit();
+          },
+        });
+      });
+    }
+
+    // Áp dụng cho tất cả các form trong trang
+    document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
+    // --- KẾT THÚC: MÃ TỐI ƯU HÓA UPLOAD ẢNH ---
+
   })();
 </script>
 
