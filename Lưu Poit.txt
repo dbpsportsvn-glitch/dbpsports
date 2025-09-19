@@ -14,7 +14,7 @@ cd ..
 
 
 git add .
-git commit -m "Hoan thien he thong dang nhap email va Google"
+git commit -m "Hoan thien giao dien trang chu va toi uu responsive"
 git push
 
 Sao lưu DB + media (PowerShell)

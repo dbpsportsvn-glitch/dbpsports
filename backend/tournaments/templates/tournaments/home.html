@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block hero %}
-<section class="carousel" id="heroCarousel">
-  <div class="carousel-track">
+<section class="carousel" id="heroCarousel" style="position: relative; overflow: hidden;">
+  <div class="carousel-track" style="display: flex; transition: transform .6s ease;">
     {% for b in banners %}
-      <div class="carousel-slide">
-        <img src="{{ b.image.url }}" alt="" onerror="this.style.display='none'">
+      <div class="carousel-slide" style="min-width: 100%; position: relative; height: 85vh; min-height: 450px;">
+        <img src="{{ b.image.url }}" alt="" onerror="this.style.display='none'" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
         <div class="carousel-caption">
           <h2>{{ b.title }}</h2>
           {% if b.subtitle %}<p>{{ b.subtitle }}</p>{% endif %}
@@ -16,8 +16,8 @@
         </div>
       </div>
     {% empty %}
-      <div class="carousel-slide">
-        <img src="{% static 'images/hero-1.jpg' %}" alt="">
+      <div class="carousel-slide" style="min-width: 100%; position: relative; height: 85vh; min-height: 450px;">
+        <img src="{% static 'images/hero-1.jpg' %}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
         <div class="carousel-caption">
           <h2>Sân chơi bóng đá đỉnh cao</h2>
           <p>Tổ chức, tham gia và theo dõi giải đấu dễ dàng.</p>
@@ -25,16 +25,6 @@
         </div>
       </div>
     {% endfor %}
-  </div>
-
-  <div class="carousel-nav">
-    <button type="button" aria-label="Prev" onclick="heroMove(-1)">&lt;</button>
-    <button type="button" aria-label="Next" onclick="heroMove(1)">&gt;</button>
-  </div>
-
-  <div class="carousel-dots">
-    {% for b in banners %}<button onclick="heroGo({{ forloop.counter0 }})"></button>{% endfor %}
-    {% if not banners %}<button class="active"></button>{% endif %}
   </div>
 </section>
 
@@ -44,12 +34,9 @@
   if(!root) return;
   const track = root.querySelector('.carousel-track');
   const slides = Array.from(root.querySelectorAll('.carousel-slide'));
-  const dots = Array.from(root.querySelectorAll('.carousel-dots button'));
   let i = 0, timer = null;
-  function render(){ track.style.transform = `translateX(-${i*100}%)`; dots.forEach((d,idx)=>d.classList.toggle('active', idx===i)); }
+  function render(){ track.style.transform = `translateX(-${i*100}%)`; }
   function tick(){ timer = setInterval(()=>{ i = (i+1)%slides.length; render(); }, 4500); }
-  window.heroMove = function(dir){ if(!slides.length) return; clearInterval(timer); i = (i+dir+slides.length)%slides.length; render(); tick(); }
-  window.heroGo = function(idx){ if(!slides.length) return; clearInterval(timer); i = idx; render(); tick(); }
   if(slides.length){ render(); tick(); }
 })();
 </script>
@@ -57,7 +44,12 @@
 
 
 {% block content %}
-  <h2 class="mb-4 mt-4">Các giải đấu nổi bật</h2>
+  <div class="section-title-wrapper">
+      <div class="section-title-container">
+        <h2 class="section-title">Các giải đấu nổi bật</h2>
+      </div>
+  </div>
+  
   <div class="row">
     {% for tournament in tournaments_list %}
       <div class="col-lg-6 mb-4">
@@ -89,19 +81,67 @@
   </div>
 {% endblock %}
 
-{% comment %} Them vao cuoi file home.html {% endcomment %}
+
 {% block extra_css %}
 <style>
+  /* === CSS CHO TIÊU ĐỀ "CÁC GIẢI ĐẤU" === */
+   .section-title-wrapper {
+    text-align: left; /* Căn lề trái */
+    margin-bottom: 1.5rem;
+  }
+  .section-title-container {
+    display: inline-block; /* Chỉ bao trọn chữ */
+    background: linear-gradient(90deg, #0f172a, #1e293b);
+    padding: 0.75rem 1.5rem;
+    border-radius: .75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  }
+  .section-title-container .section-title {
+    color: #FFC107; /* Màu chữ vàng */
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  /* === CSS TINH CHỈNH BANNER === */
+  .carousel-caption {
+    position: absolute;
+    left: 50%;
+    top: 50%; 
+    transform: translate(-50%, -50%); 
+    color: #fff;
+    width: 90%;
+    text-align: center;
+    z-index: 2;
+  }
+  .carousel-caption h2 {
+    font-size: 56px; 
+    font-weight: 800;
+    text-shadow: 0 5px 20px rgba(0,0,0,0.9);
+    margin-bottom: 0.75rem;
+  }
+  .carousel-caption p {
+    font-size: 1.2rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    margin-bottom: 1.75rem; 
+  }
+
+  /* CSS CHO DI ĐỘNG */
   @media (max-width: 767px) {
     .carousel-slide {
-      height: 40vh !important;
-      min-height: 280px !important;
+      height: 60vh !important;
+      min-height: 350px !important;
     }
     .carousel-caption h2 {
-      font-size: 24px !important;
+      font-size: 2.5rem !important;
+      line-height: 1.2;
     }
     .carousel-caption p {
-      font-size: 14px !important;
+      font-size: 1rem !important;
+      margin-bottom: 1.25rem;
+    }
+    .section-title-container .section-title {
+        font-size: 1.25rem;
     }
   }
 </style>
