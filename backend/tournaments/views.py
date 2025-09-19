@@ -1,6 +1,10 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
+# --- THÊM CÁC DÒNG NÀY VÀO ---
+from collections import defaultdict
+from django.db.models import Prefetch
+# --- KẾT THÚC ---
 from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from .forms import TeamCreationForm, PlayerCreationForm 
@@ -99,43 +103,91 @@ def livestream_view(request, pk=None):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
-# backend/tournaments/views.py
-
+# --- THAY THẾ TOÀN BỘ HÀM tournament_detail BẰNG PHIÊN BẢN MỚI NÀY ---
 def tournament_detail(request, pk):
-    tournament = get_object_or_404(Tournament, pk=pk)
+    tournament = get_object_or_404(
+        Tournament.objects.prefetch_related(
+            Prefetch('groups', queryset=Group.objects.order_by('name').prefetch_related(
+                Prefetch('teams', queryset=Team.objects.select_related('captain'))
+            ))
+        ),
+        pk=pk
+    )
 
-    all_matches = tournament.matches.all().order_by('match_time')
+    all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
     knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
-
-    # Dòng quan trọng để lấy các đội chưa được phân nhóm
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
 
+    # === TÍNH TOÁN BẢNG XẾP HẠNG ĐÃ ĐƯỢC TỐI ƯU ===
+    standings_data = defaultdict(list)
+    # Lấy tất cả các nhóm và đội của chúng từ tournament đã prefetch
+    groups_with_teams = list(tournament.groups.all())
+    
+    team_stats = {}
+    for group in groups_with_teams:
+        for team in group.teams.all():
+            team_stats[team.id] = {
+                'played': 0, 'wins': 0, 'draws': 0, 'losses': 0,
+                'gf': 0, 'ga': 0, 'gd': 0, 'points': 0, 'team_obj': team
+            }
+
+    # Chỉ 1 câu lệnh để lấy tất cả các trận vòng bảng đã kết thúc của giải đấu
+    finished_group_matches = group_matches.filter(team1_score__isnull=False, team2_score__isnull=False)
+
+    for match in finished_group_matches:
+        team1_id, team2_id = match.team1_id, match.team2_id
+        score1, score2 = match.team1_score, match.team2_score
+
+        if team1_id in team_stats and team2_id in team_stats:
+            team_stats[team1_id]['played'] += 1
+            team_stats[team2_id]['played'] += 1
+            team_stats[team1_id]['gf'] += score1; team_stats[team1_id]['ga'] += score2
+            team_stats[team2_id]['gf'] += score2; team_stats[team2_id]['ga'] += score1
+
+            if score1 > score2:
+                team_stats[team1_id]['wins'] += 1; team_stats[team1_id]['points'] += 3
+                team_stats[team2_id]['losses'] += 1
+            elif score2 > score1:
+                team_stats[team2_id]['wins'] += 1; team_stats[team2_id]['points'] += 3
+                team_stats[team1_id]['losses'] += 1
+            else:
+                team_stats[team1_id]['draws'] += 1; team_stats[team1_id]['points'] += 1
+                team_stats[team2_id]['draws'] += 1; team_stats[team2_id]['points'] += 1
+
+    for group in groups_with_teams:
+        group_standings = [team_stats[team.id] for team in group.teams.all() if team.id in team_stats]
+        for stats in group_standings:
+            stats['gd'] = stats['gf'] - stats['ga']
+        
+        group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
+        standings_data[group.id] = group_standings
+
+    # === CÁC THỐNG KÊ KHÁC VẪN GIỮ NGUYÊN ===
     total_teams = tournament.teams.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
     total_goals = finished_matches.aggregate(total=Sum('team1_score') + Sum('team2_score'))['total'] or 0
-
     top_scorers = Player.objects.filter(
         goals__match__tournament=tournament
     ).annotate(
         goal_count=Count('goals')
-    ).order_by('-goal_count')[:5]
+    ).select_related('team').order_by('-goal_count')[:5]
 
     context = {
         'tournament': tournament,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
         'now': timezone.now(),
-        'unassigned_teams': unassigned_teams, # Đảm bảo biến này được gửi đi
+        'unassigned_teams': unassigned_teams,
         'total_teams': total_teams,
         'total_players': total_players,
         'total_goals': total_goals,
         'top_scorers': top_scorers,
         'finished_matches_count': finished_matches.count(),
+        'standings_data': standings_data, # Gửi dữ liệu BXH đã xử lý ra template
     }
     return render(request, 'tournaments/tournament_detail.html', context)
-
 
 @login_required
 def team_detail(request, pk):

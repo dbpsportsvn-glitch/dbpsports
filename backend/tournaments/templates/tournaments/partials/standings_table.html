@@ -1,3 +1,4 @@
+{% load custom_filters %} {# Thêm dòng này để sử dụng bộ lọc get_item #}
 {% for group in tournament.groups.all %}
     <h4 class="mt-4">{{ group.name }}</h4>
     <div class="table-responsive">
@@ -15,7 +16,8 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in group.get_standings %}
+                {# THAY ĐỔI Ở ĐÂY: Dùng standings_data thay vì gọi hàm get_standings #}
+                {% for row in standings_data|get_item:group.id %}
                     <tr>
                         <th>{{ forloop.counter }}</th>
                         <td>
