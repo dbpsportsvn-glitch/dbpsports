@@ -231,3 +231,32 @@
     font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
 }
+
+/* ================================================= */
+/* == FIX GIAO DIỆN MENU TAB GIẢI ĐẤU TRÊN MOBILE == */
+/* ================================================= */
+@media (max-width: 960px) {
+  /* Ghi đè lên site.css để menu tab không bị ẩn hoặc xếp dọc */
+  .tour-tabs.nav {
+    display: flex !important;
+    flex-direction: row !important; /* QUAN TRỌNG: Buộc menu nằm ngang */
+    padding-bottom: 8px; /* Thêm chút không gian để không bị quá sát */
+  }
+
+  /* Bật chế độ cuộn ngang */
+  .tour-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .tour-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tour-tabs .nav-link {
+    white-space: nowrap;
+  }
+}
