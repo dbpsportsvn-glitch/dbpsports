@@ -28,6 +28,7 @@ class Tournament(models.Model):
     bank_account_number = models.CharField("Số tài khoản", max_length=50, blank=True)
     bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)
     payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
+    rules = models.TextField("Điều lệ & Thông báo", blank=True, help_text="Nhập các điều lệ, quy định hoặc thông báo của giải đấu tại đây. Bạn có thể sử dụng mã HTML cơ bản để định dạng.")
 
     def __str__(self):
         return self.name
