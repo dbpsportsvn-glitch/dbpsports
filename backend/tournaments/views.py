@@ -3,7 +3,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
-from .forms import TeamCreationForm, PlayerCreationForm # Sửa dòng này
+from .forms import TeamCreationForm, PlayerCreationForm 
 from django.http import HttpResponseForbidden
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -41,37 +41,6 @@ def tournaments_active(request):
 
 from datetime import timedelta
 from django.utils import timezone
-
-# backend/tournaments/views.py
-
-def livestream_view(request, pk=None):
-    now = timezone.now()
-    live_match = None
-
-    if pk:
-        live_match = get_object_or_404(Match, pk=pk)
-    else:
-        live_match = Match.objects.filter(
-            livestream_url__isnull=False,
-            match_time__lte=now
-        ).order_by('-match_time').first()
-
-    qs = Match.objects.filter(
-        team1_score__isnull=True,
-        team2_score__isnull=True,
-        match_time__gte=now
-    )
-
-    if live_match:
-        qs = qs.filter(tournament=live_match.tournament).exclude(pk=live_match.pk)
-    
-    upcoming_matches = qs.order_by('match_time')[:12]
-
-    # >>> LOGIC MỚI ĐỂ LẤY DÒNG CHỮ CHẠY <<<
-    ticker_text_to_display = "Chào mừng tới DBP Sports • Liên hệ quảng cáo: 09xx xxx xxx" # Dòng chữ mặc định
-    if live_match and live_match.ticker_text:
-        ticker_text_to_display = live_match.ticker_text
-
 
 def livestream_view(request, pk=None):
     now = timezone.now()
@@ -130,51 +99,40 @@ def livestream_view(request, pk=None):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
+# backend/tournaments/views.py
+
 def tournament_detail(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
 
-    # Lấy tất cả các trận
     all_matches = tournament.matches.all().order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
-    knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL']) # Lấy cả bán kết và chung kết
+    knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
 
-    # === TÍNH TOÁN CÁC THÔNG SỐ THỐNG KÊ ===
+    # Dòng quan trọng để lấy các đội chưa được phân nhóm
+    unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
+
     total_teams = tournament.teams.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
     total_goals = finished_matches.aggregate(total=Sum('team1_score') + Sum('team2_score'))['total'] or 0
 
-    # === TÍNH TOÁN VUA PHÁ LƯỚI ===
     top_scorers = Player.objects.filter(
         goals__match__tournament=tournament
     ).annotate(
         goal_count=Count('goals')
-    ).order_by('-goal_count')[:5] # Lấy 5 người dẫn đầu
+    ).order_by('-goal_count')[:5]
 
     context = {
         'tournament': tournament,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
         'now': timezone.now(),
-        # Gửi các thông số ra template
+        'unassigned_teams': unassigned_teams, # Đảm bảo biến này được gửi đi
         'total_teams': total_teams,
         'total_players': total_players,
         'total_goals': total_goals,
         'top_scorers': top_scorers,
         'finished_matches_count': finished_matches.count(),
-    }
-    return render(request, 'tournaments/tournament_detail.html', context)    
-
-    # Chuẩn bị riêng các trận Knock-out
-    semi_final_matches = all_matches.filter(match_round='SEMI')
-    final_match = all_matches.filter(match_round='FINAL').first() # Chỉ có 1 trận chung kết
-
-    context = {
-        'tournament': tournament,
-        'group_matches': group_matches,
-        # Gửi riêng các trận knock-out ra ngoài
-        'semi_final_matches': semi_final_matches,
-        'final_match': final_match,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
