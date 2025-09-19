@@ -183,7 +183,7 @@ JAZZMIN_UI_TWEAKS = {
 # Nếu DEBUG=False (trên host), sử dụng SMTP. Ngược lại (ở máy), dùng console.
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
-ADMIN_EMAIL = "admin@dbpsports.com" # Email của bạn để nhận thông báo
+ADMIN_EMAIL = env("ADMIN_EMAIL", default="admin@example.com") # Đọc email admin từ file .env
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
