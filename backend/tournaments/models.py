@@ -7,6 +7,12 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
+# --- THÊM CÁC DÒNG NÀY VÀO ---
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+# --- KẾT THÚC ---
+
 MAX_STARTERS = 11  # số cầu thủ đá chính tối đa cho mỗi đội trong một trận
 
 # --- Model Tournament ---
@@ -130,6 +136,41 @@ class Team(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        # Nén ảnh logo
+        if self.logo:
+            self.logo = self.compress_image(self.logo)
+        
+        # Nén ảnh hóa đơn
+        if self.payment_proof:
+            self.payment_proof = self.compress_image(self.payment_proof)
+
+        super().save(*args, **kwargs)
+
+    def compress_image(self, image_field):
+        img = Image.open(image_field)
+
+        # Giữ nguyên ảnh GIF, chỉ xử lý các định dạng khác
+        if img.format == 'GIF':
+            return image_field
+            
+        # --- BẮT ĐẦU SỬA LỖI ---
+        # Chuyển đổi sang RGB nếu ảnh có kênh trong suốt (RGBA)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        # --- KẾT THÚC SỬA LỖI ---
+
+        buffer = BytesIO()
+        # Đổi kích thước nếu ảnh quá lớn
+        if img.height > 1280 or img.width > 1280:
+            img.thumbnail((1280, 1280))
+
+        img.save(buffer, format='JPEG', quality=85, optimize=True)
+
+        # Tạo file mới từ buffer đã nén
+        new_image = ContentFile(buffer.getvalue(), name=image_field.name)
+        return new_image
+
 # --- Model Player ---
 class Player(models.Model):
     POSITION_CHOICES = [
@@ -159,8 +200,28 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.full_name} (#{self.jersey_number})"
+    
+    # Bỏ hàm save() cũ và thay bằng hàm này
+    def save(self, *args, **kwargs):
+        self.full_clean() # Giữ lại phần kiểm tra số áo đã có
 
-# --- Model Match ---
+        # Nén ảnh avatar
+        if self.avatar:
+            img = Image.open(self.avatar)
+            if img.format != 'GIF':
+                # --- BẮT ĐẦU SỬA LỖI ---
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                # --- KẾT THÚC SỬA LỖI ---
+                
+                buffer = BytesIO()
+                if img.height > 800 or img.width > 800:
+                    img.thumbnail((800, 800))
+
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                self.avatar = ContentFile(buffer.getvalue(), name=self.avatar.name)
+
+        return super().save(*args, **kwargs)
 
     def clean(self):
         # Tránh trùng số áo trong cùng đội
@@ -170,10 +231,7 @@ class Player(models.Model):
                 exists = exists.exclude(pk=self.pk)
             if exists.exists():
                 raise ValidationError({'jersey_number': 'Số áo đã tồn tại trong đội.'})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
+                
 class Match(models.Model):
     ROUND_CHOICES = [
         ('GROUP', 'Vòng bảng'),
