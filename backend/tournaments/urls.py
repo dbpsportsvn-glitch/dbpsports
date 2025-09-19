@@ -13,6 +13,8 @@ urlpatterns = [
     path('shop/', views.shop_view, name='shop'),
     path('archive/', views.archive_view, name='archive'),
 
+    path('dashboard/announcements/', views.announcement_dashboard, name='announcement_dashboard'),
+    
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
 

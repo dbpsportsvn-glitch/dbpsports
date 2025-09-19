@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from collections import defaultdict
 from django.db.models import Prefetch
 # --- KẾT THÚC ---
-from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group
+from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from django.views.decorators.cache import never_cache # Thêm dòng này
 from .forms import TeamCreationForm, PlayerCreationForm 
@@ -497,3 +497,21 @@ def archive_view(request):
         'tournaments_list': finished_tournaments
     }
     return render(request, 'tournaments/archive.html', context)
+
+# >> THÊM HÀM MỚI NÀY VÀO CUỐI FILE views.py <<
+@login_required
+@never_cache # Không cache trang này để đội trưởng luôn thấy thông báo mới nhất
+def announcement_dashboard(request):
+    # Lấy danh sách ID các giải đấu mà người dùng đang làm đội trưởng
+    managed_tournaments_ids = Team.objects.filter(captain=request.user).values_list('tournament_id', flat=True).distinct()
+    
+    # Lấy tất cả thông báo thuộc các giải đấu đó và đã được công khai
+    announcements = Announcement.objects.filter(
+        tournament_id__in=managed_tournaments_ids,
+        is_published=True
+    ).select_related('tournament') # Dùng select_related để tối ưu truy vấn
+    
+    context = {
+        'announcements': announcements
+    }
+    return render(request, 'tournaments/announcement_dashboard.html', context)    

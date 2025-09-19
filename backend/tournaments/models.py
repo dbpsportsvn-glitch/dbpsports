@@ -406,3 +406,17 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'Comment by {self.user.username} on {self.match}'
+
+# >> THÊM MODEL MỚI NÀY VÀO CUỐI FILE models.py <<
+class Announcement(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='announcements')
+    title = models.CharField("Tiêu đề", max_length=200)
+    content = models.TextField("Nội dung")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField("Công khai", default=True, help_text="Bỏ chọn nếu đây là bản nháp.")
+
+    class Meta:
+        ordering = ['-created_at'] # Sắp xếp thông báo mới nhất lên đầu
+
+    def __str__(self):
+        return self.title        

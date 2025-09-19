@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement
 from .utils import send_notification_email
 
 # ===== Inlines =====
@@ -324,3 +324,12 @@ class HomeBannerAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="height:36px;border-radius:6px;object-fit:cover">', obj.image.url)
         return "-"
     preview.short_description = "Ảnh"
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'tournament', 'is_published', 'created_at')
+    list_filter = ('tournament', 'is_published')
+    search_fields = ('title', 'content')
+    list_editable = ('is_published',)
+    date_hierarchy = 'created_at'
+
