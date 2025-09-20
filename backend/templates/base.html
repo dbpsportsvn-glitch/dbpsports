@@ -151,6 +151,34 @@
     document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
     // --- KẾT THÚC: MÃ TỐI ƯU HÓA UPLOAD ẢNH ---
 
+  // --- BẮT ĐẦU: MÃ HIỂN THỊ MẬT KHẨU ---
+  function setupPasswordToggle(buttonId, inputName) {
+    const toggleButton = document.getElementById(buttonId);
+    if (!toggleButton) return;
+
+    const passwordInput = document.querySelector(`input[name="${inputName}"]`);
+    if (!passwordInput) return;
+
+    toggleButton.addEventListener('click', function () {
+      // Toggle the type attribute
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+
+      // Toggle the icon
+      const icon = this.querySelector('i');
+      icon.classList.toggle('bi-eye');
+      icon.classList.toggle('bi-eye-slash');
+    });
+  }
+
+  // Áp dụng cho các trang
+  document.addEventListener('DOMContentLoaded', function() {
+    setupPasswordToggle('togglePassword', 'password');
+    setupPasswordToggle('togglePassword1', 'password1');
+    setupPasswordToggle('togglePassword2', 'password2');
+  });
+  // --- KẾT THÚC: MÃ HIỂN THỊ MẬT KHẨU ---
+
   })();
 </script>
 

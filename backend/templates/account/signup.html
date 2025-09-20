@@ -22,15 +22,25 @@
 
     <div class="mb-3">
       <label class="form-label">Mật khẩu</label>
-      <input type="password" name="password1"
-             class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+      <div class="input-group">
+        <input type="password" name="password1"
+              class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+        <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+          <i class="bi bi-eye-slash"></i>
+        </button>
+      </div>
       {% for e in form.password1.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
     </div>
 
     <div class="mb-3">
       <label class="form-label">Nhập lại mật khẩu</label>
-      <input type="password" name="password2"
-             class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+      <div class="input-group">
+        <input type="password" name="password2"
+              class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+        <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+          <i class="bi bi-eye-slash"></i>
+        </button>
+      </div>
       {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
     </div>
 
