@@ -22,6 +22,25 @@
         </div>
 
         <div class="col-md-8">
+
+            {% if badges %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h4>Thành tích & Huy hiệu</h4>
+                </div>
+                <div class="card-body">
+                    {% for badge in badges %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi {{ badge.icon }} fs-4 {{ badge.color }}"></i>
+                        <strong class="ms-2">{{ badge.name }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mb-4">
+            ```
             <div class="row mb-4">
                 <div class="col-sm-4">
                     <div class="card text-center shadow-sm h-100">

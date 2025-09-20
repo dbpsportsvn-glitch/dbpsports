@@ -523,38 +523,48 @@ def faq_view(request):
 
 # >> THÊM VÀO CUỐI FILE views.py <<
 from django.db.models import Count, Q
-
-# backend/tournaments/views.py
-
 def player_detail(request, pk):
     player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
+    tournament = player.team.tournament
 
-    # --- BẮT ĐẦU TÍNH TOÁN THỐNG KÊ ---
-    # Đếm tổng số bàn thắng
+    # --- Tính toán thống kê ---
     total_goals = Goal.objects.filter(player=player).count()
-
-    # Đếm số thẻ phạt theo từng loại
     cards = Card.objects.filter(player=player).aggregate(
         yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
         red_cards=Count('id', filter=Q(card_type='RED'))
     )
-
-    # Lấy danh sách các trận đã tham gia (có trong đội hình)
-    matches_played = Match.objects.filter(
-        lineups__player=player
-    ).select_related('team1', 'team2').distinct().order_by('-match_time')
+    matches_played = Match.objects.filter(lineups__player=player).distinct()
 
     stats = {
         'total_goals': total_goals,
         'yellow_cards': cards.get('yellow_cards', 0),
         'red_cards': cards.get('red_cards', 0),
-        'matches_played': matches_played,
+        'matches_played': matches_played.select_related('team1', 'team2').order_by('-match_time'),
         'matches_played_count': matches_played.count(),
     }
-    # --- KẾT THÚC TÍNH TOÁN ---
+
+    # --- BẮT ĐẦU: Xác định các huy hiệu đạt được ---
+    badges = []
+
+    # 1. Huy hiệu "Vua phá lưới"
+    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals')).order_by('-goal_count').first()
+    if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
+        badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
+
+    # 2. Huy hiệu "Fair-play"
+    if stats['yellow_cards'] == 0 and stats['red_cards'] == 0 and stats['matches_played_count'] > 0:
+        badges.append({'name': 'Cầu thủ Fair-play', 'icon': 'bi-shield-check', 'color': 'text-primary'})
+
+    # 3. Huy hiệu "Cột trụ đội bóng"
+    most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
+    if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
+        badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
+
+    # --- KẾT THÚC: Xác định huy hiệu ---
 
     context = {
         'player': player,
         'stats': stats,
+        'badges': badges, # Gửi danh sách huy hiệu ra template
     }
     return render(request, 'tournaments/player_detail.html', context)
