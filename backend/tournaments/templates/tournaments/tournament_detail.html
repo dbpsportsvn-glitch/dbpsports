@@ -71,7 +71,15 @@
       {% else %}
         <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
       {% endif %}
-    </div>
+
+      {% if user.is_staff and unassigned_teams %}
+        <div class="mt-3">
+            <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-shuffle"></i> Tới trang Bốc thăm Trực quan
+            </a>
+        </div>
+      {% endif %}
+      </div>
 
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
       {% if tournament.rules %}
