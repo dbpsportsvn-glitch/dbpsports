@@ -11,12 +11,20 @@ from .forms import CustomUserChangeForm
 @login_required
 def dashboard(request):
     # Lấy tất cả các đội mà người dùng hiện tại là đội trưởng
-    managed_teams = Team.objects.filter(captain=request.user)
+    managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
+
+    # --- BẮT ĐẦU NÂNG CẤP ---
+    # Kiểm tra xem người dùng có hồ sơ cầu thủ nào được liên kết không
+    player_profile = None
+    if hasattr(request.user, 'player_profile'):
+        player_profile = request.user.player_profile
+    # --- KẾT THÚC NÂNG CẤP ---
 
     context = {
-        'managed_teams': managed_teams
+        'managed_teams': managed_teams,
+        'player_profile': player_profile, # Gửi hồ sơ cầu thủ ra template
     }
-    return render(request, 'users/dashboard.html', context)    
+    return render(request, 'users/dashboard.html', context)
 
 @login_required
 def profile_view(request):

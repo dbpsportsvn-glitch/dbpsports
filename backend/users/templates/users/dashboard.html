@@ -9,6 +9,19 @@
         <p class="lead">Chào mừng trở lại, {{ user.username }}!</p>
     </div>
 
+    {% if player_profile %}
+        <h3 class="section-title">Hồ sơ Cầu thủ của bạn</h3>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Cầu thủ: {{ player_profile.full_name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">Đội: {{ player_profile.team.name }} - Giải: {{ player_profile.team.tournament.name }}</h6>
+                <p class="card-text">
+                    Xem lại thành tích, thống kê chi tiết và lịch sử thi đấu của bạn.
+                </p>
+                <a href="{% url 'player_detail' pk=player_profile.pk %}" class="btn btn-primary">Xem hồ sơ chi tiết</a>
+            </div>
+        </div>
+    {% endif %}
     <h3 class="section-title">Các đội bạn đang quản lý</h3>
     <div class="row mt-3">
         {% for team in managed_teams %}
