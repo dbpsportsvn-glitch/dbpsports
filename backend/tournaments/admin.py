@@ -86,7 +86,7 @@ class CardInline(admin.TabularInline):
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ("name", "status", "start_date", "end_date", "image", "view_details_link")
+    list_display = ("name", "status", "start_date", "end_date", "draw_groups_link", "view_details_link")
     list_filter = ("status",)
     search_fields = ("name",)
     list_editable = ("status",)
@@ -94,6 +94,15 @@ class TournamentAdmin(admin.ModelAdmin):
     inlines = [GroupInline]
     list_per_page = 50
     actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
+
+    # Thêm hàm mới này vào class
+    def draw_groups_link(self, obj):
+        if obj.teams.filter(payment_status='PAID', group__isnull=True).exists():
+            url = reverse('draw_groups', args=[obj.pk])
+            return format_html('<a class="button" href="{}" target="_blank">Bốc thăm</a>', url)
+        return "—"
+    draw_groups_link.short_description = 'Bốc thăm Chia bảng'
+    draw_groups_link.allow_tags = True
 
     def view_details_link(self, obj):
         teams_url = reverse('admin:tournaments_team_changelist') + f'?tournament__id__exact={obj.pk}'

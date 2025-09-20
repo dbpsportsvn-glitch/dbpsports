@@ -21,6 +21,9 @@ from django.utils import timezone
 from django.db.models import Q
 from .models import HomeBanner
 from datetime import timedelta
+import json
+from django.http import JsonResponse
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def home(request):
@@ -520,6 +523,66 @@ def announcement_dashboard(request):
 # >> FAG <<
 def faq_view(request):
     return render(request, 'tournaments/faq.html')        
+
+
+@staff_member_required # Chỉ admin hoặc staff mới được truy cập
+@login_required
+@never_cache
+def draw_groups_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+
+    # Xử lý khi admin nhấn nút "Lưu kết quả"
+    if request.method == 'POST':
+        try:
+            results_str = request.POST.get('draw_results')
+            if not results_str:
+                raise ValueError("Không nhận được dữ liệu bốc thăm.")
+
+            # Chuyển đổi chuỗi JSON từ frontend thành dictionary của Python
+            group_assignments = json.loads(results_str) 
+
+            with transaction.atomic(): # Đảm bảo tất cả các cập nhật đều thành công
+                for group_id_str, team_ids in group_assignments.items():
+                    group_id = int(group_id_str)
+                    group = get_object_or_404(Group, pk=group_id, tournament=tournament)
+                    
+                    for team_id in team_ids:
+                        team = get_object_or_404(Team, pk=team_id, tournament=tournament)
+                        team.group = group # Gán đội vào bảng đấu
+                        team.save()
+            
+            messages.success(request, "Kết quả bốc thăm đã được lưu thành công!")
+            return redirect('tournament_detail', pk=tournament.pk)
+
+        except Exception as e:
+            messages.error(request, f"Đã có lỗi xảy ra: {e}")
+            # Quay lại trang bốc thăm nếu có lỗi
+            return redirect('draw_groups', tournament_pk=tournament.pk)
+
+
+    # Lấy dữ liệu cho lần đầu tải trang (GET request)
+    unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
+    groups = tournament.groups.all().order_by('name')
+
+    # Chuyển đổi dữ liệu sang định dạng mà JavaScript có thể đọc được
+    teams_data = [{
+        'id': team.id, 
+        'name': team.name, 
+        'logo': team.logo.url if team.logo else ''
+    } for team in unassigned_teams]
+
+    groups_data = [{
+        'id': group.id, 
+        'name': group.name
+    } for group in groups]
+
+    context = {
+        'tournament': tournament,
+        'teams_json': json.dumps(teams_data), # Chuyển thành chuỗi JSON
+        'groups_json': json.dumps(groups_data), # Chuyển thành chuỗi JSON
+    }
+    return render(request, 'tournaments/draw_groups.html', context)
+
 
 # >> THÊM VÀO CUỐI FILE views.py <<
 from django.db.models import Count, Q

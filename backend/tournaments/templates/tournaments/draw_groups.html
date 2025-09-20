@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block title %}Bốc thăm chia bảng - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* --- CÁC BIẾN MÀU VÀ FONT --- */
+    :root {
+        --bg-color: #f0f2f5;
+        --panel-bg: #ffffff;
+        --header-bg: linear-gradient(135deg, #1e3a8a, #2563eb);
+        --team-bg: #e2e8f0;
+        --team-hover: #cbd5e1;
+        --group-header: #475569;
+        --border-color: #e5e7eb;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* --- GIAO DIỆN CHUNG --- */
+    .draw-container {
+        font-family: var(--font-family);
+        background-color: var(--bg-color);
+        padding: 2rem;
+        border-radius: 12px;
+    }
+
+    .draw-header {
+        color: white;
+        background: var(--header-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow);
+    }
+
+    .draw-header h1 {
+        margin: 0;
+        font-size: 2.25rem;
+        font-weight: 700;
+    }
+    
+    .draw-header p {
+        opacity: 0.9;
+        margin: 0.5rem 0 0;
+    }
+
+    /* --- BỐ CỤC CHÍNH (2 CỘT) --- */
+    .draw-main {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 2rem;
+    }
+
+    /* --- KHU VỰC ĐIỀU KHIỂN & DANH SÁCH ĐỘI --- */
+    .draw-sidebar {
+        background: var(--panel-bg);
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 80px; /* Dính lại khi cuộn */
+    }
+
+    .controls h4, .unassigned-pool h4 {
+        font-size: 1.25rem;
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: #1e293b;
+    }
+
+    .unassigned-pool .team-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 200px;
+        background: #f8fafc;
+        border: 1px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .team-item {
+        background-color: var(--team-bg);
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: grab;
+        transition: background-color 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .team-item:hover {
+        background-color: var(--team-hover);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .team-item .logo {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+    }
+
+    /* --- KHU VỰC CÁC BẢNG ĐẤU --- */
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .group-card {
+        background: var(--panel-bg);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .group-card h5 {
+        background: var(--group-header);
+        color: white;
+        margin: 0;
+        padding: 1rem;
+        border-radius: 10px 10px 0 0;
+        font-size: 1.1rem;
+    }
+    
+    .group-card .team-list {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 150px;
+        flex-grow: 1; /* Quan trọng để team-list lấp đầy card */
+    }
+
+    /* --- HIỆU ỨNG ANIMATION KHI BỐC THĂM --- */
+    .team-item.is-drawing {
+        animation: pulse 0.8s infinite;
+        background-color: #fef08a; /* Vàng nổi bật */
+        box-shadow: 0 0 15px #facc15;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* --- GIAO DIỆN CHO MOBILE --- */
+    @media (max-width: 992px) {
+        .draw-main {
+            grid-template-columns: 1fr; /* Chuyển thành 1 cột */
+        }
+        .draw-sidebar {
+            position: static; /* Bỏ dính */
+        }
+    }
+</style>
+
+<div class="draw-container">
+    <div class="draw-header">
+        <h1><i class="bi bi-shuffle"></i> Bốc thăm Chia bảng</h1>
+        <p>Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+
+    <div class="draw-main">
+        <div class="draw-sidebar">
+            <div class="controls mb-4">
+                <h4>Bảng điều khiển</h4>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-lg" id="draw-btn"><i class="bi bi-dice-5"></i> Bốc thăm 1 đội</button>
+                    <button class="btn btn-secondary" id="reset-btn"><i class="bi bi-arrow-counterclockwise"></i> Làm lại</button>
+                    <button class="btn btn-success" id="save-btn" disabled><i class="bi bi-check-circle"></i> Lưu kết quả</button>
+                </div>
+            </div>
+
+            <div class="unassigned-pool">
+                <h4>Đội chờ bốc thăm (<span id="unassigned-count">0</span>)</h4>
+                <div class="team-list" id="unassigned-list">
+                    <p class="text-muted placeholder-text">Không có đội nào chờ bốc thăm.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="groups-grid" id="groups-container">
+            </div>
+    </div>
+</div>
+
+<form method="post" id="draw-result-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="draw_results" id="draw-results-input">
+</form>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // (+) --- LẤY DỮ LIỆU THẬT TỪ DJANGO ---
+    const unassignedTeams = JSON.parse('{{ teams_json|escapejs }}');
+    const groups = JSON.parse('{{ groups_json|escapejs }}');
+    // (+) --- KẾT THÚC LẤY DỮ LIỆU ---
+
+    const unassignedListEl = document.getElementById('unassigned-list');
+    const groupsContainerEl = document.getElementById('groups-container');
+    const unassignedCountEl = document.getElementById('unassigned-count');
+    const drawBtn = document.getElementById('draw-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const saveBtn = document.getElementById('save-btn');
+    const placeholderText = unassignedListEl.querySelector('.placeholder-text');
+
+    let currentTeams = [...unassignedTeams];
+    let groupAssignments = {}; // { groupId: [teamId, teamId, ...] }
+
+    function createTeamElement(team) {
+        const div = document.createElement('div');
+        div.className = 'team-item';
+        div.dataset.id = team.id;
+        div.innerHTML = `
+            ${team.logo ? `<img src="${team.logo}" alt="${team.name}" class="logo">` : ''}
+            <span>${team.name}</span>
+        `;
+        return div;
+    }
+    
+    // Khởi tạo giao diện
+    function initialize() {
+        // Reset
+        unassignedListEl.innerHTML = '';
+        if (placeholderText) unassignedListEl.appendChild(placeholderText);
+        groupsContainerEl.innerHTML = '';
+        currentTeams = [...unassignedTeams];
+        groupAssignments = {};
+
+        // Hiển thị danh sách đội chờ
+        if (currentTeams.length > 0) {
+            placeholderText.style.display = 'none';
+            currentTeams.forEach(team => {
+                unassignedListEl.appendChild(createTeamElement(team));
+            });
+        } else {
+            placeholderText.style.display = 'block';
+        }
+        
+        // Hiển thị các bảng đấu
+        groups.forEach(group => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group-card';
+            groupDiv.dataset.groupId = group.id;
+            groupDiv.innerHTML = `
+                <h5>${group.name}</h5>
+                <div class="team-list"></div>
+            `;
+            groupsContainerEl.appendChild(groupDiv);
+            groupAssignments[group.id] = [];
+        });
+
+        updateUIState();
+    }
+    
+    // Cập nhật trạng thái các nút và số đếm
+    function updateUIState() {
+        unassignedCountEl.textContent = currentTeams.length;
+        drawBtn.disabled = currentTeams.length === 0;
+        saveBtn.disabled = unassignedTeams.length > 0 && currentTeams.length > 0;
+    }
+
+    // Hành động bốc thăm
+    function performDraw() {
+        if (currentTeams.length === 0) return;
+
+        // Chọn ngẫu nhiên một đội
+        const randomIndex = Math.floor(Math.random() * currentTeams.length);
+        const selectedTeam = currentTeams[randomIndex];
+        const teamEl = unassignedListEl.querySelector(`.team-item[data-id='${selectedTeam.id}']`);
+        
+        // Hiệu ứng "đang quay"
+        teamEl.classList.add('is-drawing');
+        drawBtn.disabled = true;
+
+        setTimeout(() => {
+            // Tìm bảng có ít đội nhất
+            let targetGroupEl = null;
+            let minTeams = Infinity;
+            
+            groupsContainerEl.querySelectorAll('.group-card').forEach(card => {
+                const count = card.querySelectorAll('.team-item').length;
+                if (count < minTeams) {
+                    minTeams = count;
+                    targetGroupEl = card;
+                }
+            });
+
+            // Nếu tìm thấy bảng, chuyển đội vào
+            if (targetGroupEl) {
+                // Xóa đội khỏi danh sách chờ
+                teamEl.remove();
+                currentTeams.splice(randomIndex, 1);
+                
+                // Thêm vào bảng
+                targetGroupEl.querySelector('.team-list').appendChild(teamEl);
+                
+                // Cập nhật lại dữ liệu
+                const groupId = targetGroupEl.dataset.groupId;
+                groupAssignments[groupId].push(selectedTeam.id);
+            }
+
+            teamEl.classList.remove('is-drawing');
+            updateUIState();
+
+        }, 1500); // 1.5 giây cho hiệu ứng
+    }
+
+    // Lưu kết quả
+    function saveResults() {
+        const drawResultsInput = document.getElementById('draw-results-input');
+        const form = document.getElementById('draw-result-form');
+
+        // Chuyển đổi dữ liệu sang dạng JSON để gửi đi
+        drawResultsInput.value = JSON.stringify(groupAssignments);
+
+        // Submit form
+        if (confirm('Bạn có chắc chắn muốn lưu kết quả bốc thăm này? Hành động này không thể hoàn tác.')) {
+            form.submit();
+        }
+    }
+
+
+    // Gán sự kiện cho các nút
+    drawBtn.addEventListener('click', performDraw);
+    resetBtn.addEventListener('click', initialize);
+    saveBtn.addEventListener('click', saveResults);
+
+    // Chạy lần đầu
+    initialize();
+});
+</script>
+{% endblock %}

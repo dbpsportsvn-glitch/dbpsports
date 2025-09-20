@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bốc thăm Chia bảng - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* CSS cho giao diện bốc thăm */
+    .draw-container { display: flex; flex-wrap: wrap; gap: 2rem; }
+    .team-pool, .groups-container { flex: 1; min-width: 300px; }
+    .team-list-item { background-color: #fff; border: 1px solid #ddd; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 0.25rem; font-weight: 500; cursor: grab; }
+    .group-box { background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .group-header { background-color: #e9ecef; padding: 0.75rem; font-weight: bold; border-bottom: 1px solid #ddd; }
+    .group-body { padding: 0.75rem; min-height: 100px; }
+</style>
+
+<div class="container mt-4">
+    {% csrf_token %}
+
+    <div class="pb-3 mb-4 border-bottom">
+        <h1>Bốc thăm Chia bảng</h1>
+        <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+
+    <div class="draw-container">
+        <div class="team-pool card">
+            <div class="card-header">
+                <h5><i class="bi bi-people-fill"></i> Đội chờ bốc thăm (<span id="team-count">{{ unassigned_teams.count }}</span>)</h5>
+            </div>
+            <div id="team-pool-body" class="card-body">
+                {% for team in unassigned_teams %}
+                    <div class="team-list-item" data-team-id="{{ team.pk }}">{{ team.name }}</div>
+                {% empty %}
+                    <p id="empty-message" class="text-muted">
+                        {% if tournament.teams.all.count > 0 %}
+                            Tất cả các đội đã được xếp bảng. Nhấn "Làm lại" để bốc thăm lại.
+                        {% else %}
+                            Không có đội nào đang chờ.
+                        {% endif %}
+                    </p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="groups-container">
+             {% for group in groups %}
+                <div class="group-box">
+                    <div class="group-header">{{ group.name }}</div>
+                    <div class="group-body" id="group-{{ group.pk }}">
+                       {% for team in group.teams.all %}
+                         <div class="team-list-item" data-team-id="{{ team.pk }}">{{ team.name }}</div>
+                       {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">Giải đấu này chưa có bảng nào được tạo.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="text-center mt-4 d-flex justify-content-center gap-2">
+        <button class="btn btn-danger" id="resetDrawButton">
+            <i class="bi bi-arrow-counterclockwise"></i> Làm lại
+        </button>
+        <button class="btn btn-primary btn-lg" id="startDrawButton" {% if not unassigned_teams %}disabled{% endif %}>
+            <i class="bi bi-shuffle"></i> Bắt đầu Bốc thăm
+        </button>
+    </div>
+</div>
+
+{# --- SCRIPT ĐƯỢC ĐẶT TRỰC TIẾP VÀO ĐÂY --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('Checkpoint 1: DOM content loaded. Script is running.');
+
+    const startButton = document.getElementById('startDrawButton');
+    const resetButton = document.getElementById('resetDrawButton');
+    const tournamentId = "{{ tournament.pk }}";
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+
+    if (!startButton) {
+        console.error('Error: Start Button not found!');
+        return;
+    }
+    console.log('Checkpoint 2: Start Button found.');
+
+    if (!csrfTokenInput) {
+        console.error('CRITICAL ERROR: CSRF token input field not found!');
+        return;
+    }
+    const csrfToken = csrfTokenInput.value;
+    console.log('Checkpoint 3: CSRF token found with value:', csrfToken);
+
+
+    // --- XỬ LÝ NÚT BỐC THĂM ---
+    startButton.addEventListener('click', function () {
+        console.log('Checkpoint 4: Start Button clicked!');
+
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang bốc thăm...';
+
+        const apiUrl = `/api/tournament/${tournamentId}/execute-draw/`;
+        console.log('Checkpoint 5: Preparing to fetch from URL:', apiUrl);
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+        })
+        .then(response => {
+            console.log('Checkpoint 6: Received a response from the server.', response);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Checkpoint 7: Parsed JSON data from server.', data);
+            if (data.status === 'success') {
+                animateDraw(data.assignments);
+                startButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Hoàn tất!';
+            } else {
+                alert('Lỗi: ' + data.message);
+                this.disabled = false;
+                startButton.innerHTML = '<i class="bi bi-shuffle"></i> Bắt đầu Bốc thăm';
+            }
+        })
+        .catch(error => {
+            console.error('Checkpoint 8: An error occurred during fetch!', error);
+            alert('Đã có lỗi nghiêm trọng xảy ra. Vui lòng kiểm tra console.');
+            this.disabled = false;
+            startButton.innerHTML = 'Thử lại';
+        });
+    });
+
+    // --- XỬ LÝ NÚT LÀM LẠI ---
+    if (resetButton) {
+        resetButton.addEventListener('click', function() {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ kết quả bốc thăm hiện tại không?')) { return; }
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang reset...';
+            fetch(`/api/tournament/${tournamentId}/reset-draw/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Làm lại';
+                }
+            });
+        });
+    }
+
+    function animateDraw(assignments) {
+        const teamPoolBody = document.getElementById('team-pool-body');
+        const teamCountSpan = document.getElementById('team-count');
+        let delay = 100;
+        const assignmentMap = new Map(Object.entries(assignments));
+        assignmentMap.forEach((result, teamId) => {
+            const teamEl = teamPoolBody.querySelector(`[data-team-id="${teamId}"]`);
+            if (!teamEl) return;
+            setTimeout(() => {
+                const groupBox = document.getElementById(`group-${result.group_id}`);
+                teamEl.style.transition = 'opacity 0.5s, transform 0.5s';
+                teamEl.style.opacity = '0';
+                teamEl.style.transform = 'translateX(20px)';
+                const currentCount = parseInt(teamCountSpan.textContent) - 1;
+                teamCountSpan.textContent = currentCount;
+                setTimeout(() => {
+                    if (groupBox) {
+                        groupBox.appendChild(teamEl);
+                        teamEl.style.opacity = '1';
+                        teamEl.style.transform = 'translateX(0)';
+                    }
+                }, 500);
+            }, delay);
+            delay += 700;
+        });
+        const emptyMessage = document.getElementById('empty-message');
+        if (emptyMessage) {
+            emptyMessage.textContent = 'Tất cả các đội đã được xếp bảng. Nhấn "Làm lại" để bốc thăm lại.';
+        }
+    }
+});
+</script>
+{% endblock %}
