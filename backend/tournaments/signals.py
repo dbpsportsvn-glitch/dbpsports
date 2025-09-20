@@ -2,14 +2,13 @@
 from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import HomeBanner
+from .models import HomeBanner, Tournament # Thêm Tournament vào đây
 
-@receiver([post_save, post_delete], sender=HomeBanner)
+# Thêm Tournament vào danh sách theo dõi
+@receiver([post_save, post_delete], sender=[HomeBanner, Tournament])
 def clear_home_page_cache(sender, instance, **kwargs):
     """
-    Tự động xóa cache của trang chủ mỗi khi có thay đổi trong HomeBanner.
+    Tự động xóa cache của trang chủ mỗi khi có thay đổi trong HomeBanner hoặc Tournament.
     """
-    # Django cache middleware tạo một key phức tạp, cách đơn giản nhất
-    # là xóa toàn bộ cache. Đối với trang ít thay đổi, việc này chấp nhận được.
     cache.clear()
-    print("Cache của trang chủ đã được xóa do có thay đổi banner.")
+    print("Cache đã được xóa do có thay đổi banner hoặc giải đấu.")
