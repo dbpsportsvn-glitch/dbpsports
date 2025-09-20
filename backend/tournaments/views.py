@@ -738,13 +738,15 @@ def generate_schedule_view(request, tournament_pk):
 
             # Sắp xếp và nhóm kết quả theo bảng đấu
             schedule_by_group = {}
-            # Sắp xếp các trận theo ngày giờ trước
             scheduled_matches.sort(key=lambda x: x['match_time'])
             for match in scheduled_matches:
                 group_name = match['group_name']
                 if group_name not in schedule_by_group:
                     schedule_by_group[group_name] = []
                 schedule_by_group[group_name].append(match)
+
+            # (+) THÊM DÒNG SẮP XẾP NÀY VÀO
+            schedule_by_group = dict(sorted(schedule_by_group.items()))
 
             # Lưu bản danh sách phẳng vào session để dễ xử lý khi lưu
             schedule_for_session = [
