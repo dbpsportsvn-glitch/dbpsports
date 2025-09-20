@@ -3,38 +3,46 @@
 {% block title %}{{ tournament.name }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="pb-3 mb-4 border-bottom">
+<div class="pb-3 mb-4 border-bottom">
     <h1 class="text-start">{{ tournament.name }}</h1>
-  </div>
+</div>
 
-  <style>
+<style>
     .sticky-tabs{position:sticky;top:56px;z-index:1020;background:var(--bs-body-bg);padding:.5rem 0 .25rem}
-    /* Fix: luôn căn trái cụm tab, tránh CSS global đẩy .nav ra giữa/phải */
     .sticky-tabs .nav{margin:0 !important;justify-content:flex-start}
-    /* Đẩy nút In sang phải khi hiển thị */
     #print-all-btn{margin-left:auto}
 
     .tour-tabs .nav-link{border-radius:9999px;font-weight:600;padding:.5rem 1rem}
     .tour-tabs .nav-link:hover{background:var(--bs-light)}
     .tour-tabs .nav-link.active{color:#fff;background:linear-gradient(90deg,#0d6efd,#20c997);box-shadow:0 .25rem .75rem rgba(13,110,253,.25)}
-    .tab-pane.card-pane{border:1px solid var(--bs-border-color);border-top:0;border-radius:0 0 .5rem .5rem;padding:1rem}
+    
+    .tab-pane.card-pane {
+      border: 1px solid var(--bs-border-color);
+      border-top: 0;
+      border-radius: 0 0 .5rem .5rem;
+      padding: 1rem;
+    }
+    /* SỬA LỖI LAYOUT TRIỆT ĐỂ BẰNG CLEARFIX */
+    .tab-pane.card-pane::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
     .section-title{font-weight:700}
     .table thead th{position:sticky;top:0;background:var(--bs-body-bg);z-index:1}
     .table-hover tbody tr:hover{background:var(--bs-light)}
     .chip{display:inline-block;padding:.15rem .5rem;border-radius:9999px;background:var(--bs-light);font-size:.75rem;margin-right:.4rem}
-  </style>
+</style>
 
-  <div class="sticky-tabs d-flex align-items-center flex-wrap gap-2">
+<div class="sticky-tabs d-flex align-items-center flex-wrap gap-2">
     <ul class="nav nav-pills gap-2 tour-tabs mb-0" id="tournamentTab" role="tablist">
-      <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
-
-      <li class="nav-item"><button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button">📜 Điều lệ</button></li>
-
-      <li class="nav-item"><button class="nav-link" id="teams-tab"    data-bs-toggle="tab" data-bs-target="#teams"    type="button">👥 Các đội</button></li>
-      <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
-      <li class="nav-item"><button class="nav-link" id="standings-tab"data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
-      <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
+        <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
+        <li class="nav-item"><button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button">📜 Điều lệ</button></li>
+        <li class="nav-item"><button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button">👥 Các đội</button></li>
+        <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
+        <li class="nav-item"><button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
+        <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
     </ul>
     
     <button id="print-all-btn"
@@ -42,10 +50,10 @@
             onclick="printTab('schedule-all', '{{ tournament.name }} - Lịch thi đấu')" type="button">
       🖨️ In
     </button>
-  </div>
+</div>
 
-  <script>
-  (function () {
+<script>
+(function () {
     const btn = document.getElementById('print-all-btn');
     function updatePrintBtn(e){
       const target = e ? e.target.getAttribute('data-bs-target') : (document.querySelector('#tournamentTab .nav-link.active')?.getAttribute('data-bs-target') || '');
@@ -55,31 +63,22 @@
       el.addEventListener('shown.bs.tab', updatePrintBtn);
     });
     updatePrintBtn();
-  })();
-  </script>
+})();
+</script>
 
-  <div class="tab-content" id="tournamentTabContent">
-    <!-- Tổng quan -->
+<div class="tab-content" id="tournamentTabContent">
     <div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
       <p>
         <span class="chip">Trạng thái: {{ tournament.get_status_display }}</span>
         <span class="chip">Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }}</span>
         <span class="chip">Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}</span>
       </p>
+
       {% if tournament.status == 'REGISTRATION_OPEN' %}
         <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg mt-2">Đăng ký tham gia giải đấu</a>
       {% else %}
         <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
       {% endif %}
-
-      {% if user.is_staff and unassigned_teams %}
-        <div class="mt-3">
-            <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
-                <i class="bi bi-shuffle"></i> Tới trang Bốc thăm Trực quan
-            </a>
-        </div>
-      {% endif %}
-      </div>
 
       {% if user.is_staff %}
         <div class="mt-3 d-flex flex-wrap gap-2">
@@ -89,15 +88,14 @@
             </a>
             {% endif %}
 
-            {# (+) BẮT ĐẦU ĐOẠN CODE MỚI #}
-            {% if tournament.groups.exists and not tournament.matches.exists %}
+            {% if tournament.groups.exists and not tournament.matches.exists and not unassigned_teams %}
             <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
                 <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
             </a>
             {% endif %}
-            {# (+) KẾT THÚC ĐOẠN CODE MỚI #}
         </div>
       {% endif %}
+    </div>
 
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
       {% if tournament.rules %}
@@ -107,9 +105,7 @@
       {% endif %}
     </div>
 
-    <!-- Các đội -->
     <div class="tab-pane fade card-pane" id="teams" role="tabpanel">
-
       {% if unassigned_teams %}
         <h5 class="section-title mt-2">Đội chờ xếp bảng</h5>
         <p class="text-muted">Đây là danh sách các đội đã hoàn tất đăng ký và đang chờ ban tổ chức bốc thăm chia bảng.</p>
@@ -132,6 +128,7 @@
         </div>
         <hr>
       {% endif %}
+
       {% for group in tournament.groups.all %}
         <h5 class="section-title mt-2">{{ group.name }}</h5>
         <div class="row row-cols-1 row-cols-md-3 g-3">
@@ -153,45 +150,45 @@
       {% endfor %}
     </div>
 
-    <!-- Lịch thi đấu -->
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
-      <div id="schedule-all">
-        {% for g in tournament.groups.all %}
-          <h5 class="section-title mt-3">{{ g.name }}</h5>
-          <div class="row row-cols-1 g-2">
-            {% for m in group_matches %}
-              {% if m.team1.group_id == g.id %}
+      {% if group_matches or knockout_matches %}
+        <div id="schedule-all">
+          {% for g in tournament.groups.all %}
+            <h5 class="section-title mt-3">{{ g.name }}</h5>
+            <div class="row row-cols-1 g-2">
+              {% for m in group_matches %}
+                {% if m.team1.group_id == g.id %}
+                  <div class="col">
+                    {% include 'tournaments/partials/match_card.html' with match=m %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          {% if knockout_matches %}
+            <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
+            <div class="row row-cols-1 g-2">
+              {% for m in knockout_matches %}
                 <div class="col">
                   {% include 'tournaments/partials/match_card.html' with match=m %}
                 </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        {% endfor %}
-
-        {% if knockout_matches %}
-          <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
-          <div class="row row-cols-1 g-2">
-            {% for m in knockout_matches %}
-              <div class="col">
-                {% include 'tournaments/partials/match_card.html' with match=m %}
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="text-muted mt-2">Chưa có lịch thi đấu nào được tạo cho giải này.</p>
+      {% endif %}
     </div>
 
-    <!-- BXH -->
     <div class="tab-pane fade card-pane" id="standings" role="tabpanel">
       {% include 'tournaments/partials/standings_table.html' %}
     </div>
 
-    <!-- Thống kê -->
     <div class="tab-pane fade card-pane" id="stats" role="tabpanel">
       {% include 'tournaments/partials/tournament_stats.html' %}
     </div>
-  </div>
 </div>
 
 <script>
@@ -255,5 +252,3 @@ function printTab(contentId, title){
 </script>
 
 {% endblock %}
-
-{% comment %} Them vao cuoi file tournament_detail.html {% endcomment %}
