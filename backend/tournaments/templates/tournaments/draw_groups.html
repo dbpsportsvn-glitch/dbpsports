@@ -173,7 +173,7 @@
                 <h4>Bảng điều khiển</h4>
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary btn-lg" id="draw-btn"><i class="bi bi-dice-5"></i> Bốc thăm 1 đội</button>
-                    <button class="btn btn-secondary" id="reset-btn"><i class="bi bi-arrow-counterclockwise"></i> Làm lại</button>
+                    <button class="btn btn-info" id="auto-draw-btn"><i class="bi bi-robot"></i> Bốc thăm Tất cả</button> <button class="btn btn-secondary" id="reset-btn"><i class="bi bi-arrow-counterclockwise"></i> Làm lại</button>
                     <button class="btn btn-success" id="save-btn" disabled><i class="bi bi-check-circle"></i> Lưu kết quả</button>
                 </div>
             </div>
@@ -199,23 +199,26 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-
-    // (+) --- LẤY DỮ LIỆU THẬT TỪ DJANGO ---
+    // --- LẤY DỮ LIỆU THẬT TỪ DJANGO ---
     const unassignedTeams = JSON.parse('{{ teams_json|escapejs }}');
     const groups = JSON.parse('{{ groups_json|escapejs }}');
-    // (+) --- KẾT THÚC LẤY DỮ LIỆU ---
-
+    
+    // --- LẤY CÁC THÀNH PHẦN HTML ---
     const unassignedListEl = document.getElementById('unassigned-list');
     const groupsContainerEl = document.getElementById('groups-container');
     const unassignedCountEl = document.getElementById('unassigned-count');
     const drawBtn = document.getElementById('draw-btn');
+    const autoDrawBtn = document.getElementById('auto-draw-btn'); // Nút mới
     const resetBtn = document.getElementById('reset-btn');
     const saveBtn = document.getElementById('save-btn');
     const placeholderText = unassignedListEl.querySelector('.placeholder-text');
 
-    let currentTeams = [...unassignedTeams];
-    let groupAssignments = {}; // { groupId: [teamId, teamId, ...] }
+    let currentTeams = [];
+    let groupAssignments = {};
 
+    // --- CÁC HÀM XỬ LÝ ---
+
+    // Hàm tạo một thẻ HTML cho đội bóng
     function createTeamElement(team) {
         const div = document.createElement('div');
         div.className = 'team-item';
@@ -227,26 +230,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return div;
     }
     
-    // Khởi tạo giao diện
+    // Khởi tạo hoặc reset giao diện về trạng thái ban đầu
     function initialize() {
-        // Reset
         unassignedListEl.innerHTML = '';
         if (placeholderText) unassignedListEl.appendChild(placeholderText);
         groupsContainerEl.innerHTML = '';
         currentTeams = [...unassignedTeams];
         groupAssignments = {};
 
-        // Hiển thị danh sách đội chờ
         if (currentTeams.length > 0) {
             placeholderText.style.display = 'none';
-            currentTeams.forEach(team => {
-                unassignedListEl.appendChild(createTeamElement(team));
-            });
+            currentTeams.forEach(team => unassignedListEl.appendChild(createTeamElement(team)));
         } else {
             placeholderText.style.display = 'block';
         }
         
-        // Hiển thị các bảng đấu
         groups.forEach(group => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'group-card';
@@ -262,28 +260,32 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUIState();
     }
     
-    // Cập nhật trạng thái các nút và số đếm
+    // Cập nhật trạng thái (enable/disable) của các nút
     function updateUIState() {
         unassignedCountEl.textContent = currentTeams.length;
-        drawBtn.disabled = currentTeams.length === 0;
-        saveBtn.disabled = unassignedTeams.length > 0 && currentTeams.length > 0;
+        const isDrawingFinished = currentTeams.length === 0;
+
+        drawBtn.disabled = isDrawingFinished;
+        autoDrawBtn.disabled = isDrawingFinished;
+        resetBtn.disabled = false; // Nút reset luôn bật
+        
+        // Chỉ bật nút Lưu khi tất cả các đội đã được bốc thăm
+        saveBtn.disabled = !(unassignedTeams.length > 0 && isDrawingFinished);
     }
 
-    // Hành động bốc thăm
+    // Hành động bốc thăm một đội
     function performDraw() {
         if (currentTeams.length === 0) return;
 
-        // Chọn ngẫu nhiên một đội
         const randomIndex = Math.floor(Math.random() * currentTeams.length);
         const selectedTeam = currentTeams[randomIndex];
         const teamEl = unassignedListEl.querySelector(`.team-item[data-id='${selectedTeam.id}']`);
         
-        // Hiệu ứng "đang quay"
         teamEl.classList.add('is-drawing');
         drawBtn.disabled = true;
+        autoDrawBtn.disabled = true;
 
         setTimeout(() => {
-            // Tìm bảng có ít đội nhất
             let targetGroupEl = null;
             let minTeams = Infinity;
             
@@ -295,47 +297,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Nếu tìm thấy bảng, chuyển đội vào
             if (targetGroupEl) {
-                // Xóa đội khỏi danh sách chờ
                 teamEl.remove();
                 currentTeams.splice(randomIndex, 1);
-                
-                // Thêm vào bảng
                 targetGroupEl.querySelector('.team-list').appendChild(teamEl);
                 
-                // Cập nhật lại dữ liệu
                 const groupId = targetGroupEl.dataset.groupId;
                 groupAssignments[groupId].push(selectedTeam.id);
             }
 
             teamEl.classList.remove('is-drawing');
             updateUIState();
-
-        }, 1500); // 1.5 giây cho hiệu ứng
+        }, 3000);
     }
 
-    // Lưu kết quả
-    function saveResults() {
-        const drawResultsInput = document.getElementById('draw-results-input');
-        const form = document.getElementById('draw-result-form');
+    // Hàm tiện ích để tạo độ trễ
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        // Chuyển đổi dữ liệu sang dạng JSON để gửi đi
+    // Hành động bốc thăm tự động tất cả các đội
+    async function performAutoDraw() {
+        // Vô hiệu hóa các nút điều khiển trong khi chạy tự động
+        drawBtn.disabled = true;
+        autoDrawBtn.disabled = true;
+        resetBtn.disabled = true;
+
+        // Lặp cho đến khi không còn đội nào trong danh sách chờ
+        while (currentTeams.length > 0) {
+            performDraw();
+            // Đợi cho hiệu ứng của lần bốc thăm hiện tại hoàn tất rồi mới tiếp tục
+            await sleep(3100); 
+        }
+
+        // Bật lại nút Reset khi đã hoàn thành
+        resetBtn.disabled = false;
+    }
+
+    // Hành động lưu kết quả
+    function saveResults() {
+        const form = document.getElementById('draw-result-form');
+        const drawResultsInput = document.getElementById('draw-results-input');
         drawResultsInput.value = JSON.stringify(groupAssignments);
 
-        // Submit form
         if (confirm('Bạn có chắc chắn muốn lưu kết quả bốc thăm này? Hành động này không thể hoàn tác.')) {
             form.submit();
         }
     }
 
-
-    // Gán sự kiện cho các nút
+    // --- GÁN SỰ KIỆN CHO CÁC NÚT ---
     drawBtn.addEventListener('click', performDraw);
+    autoDrawBtn.addEventListener('click', performAutoDraw);
     resetBtn.addEventListener('click', initialize);
     saveBtn.addEventListener('click', saveResults);
 
-    // Chạy lần đầu
+    // --- CHẠY LẦN ĐẦU KHI TẢI TRANG ---
     initialize();
 });
 </script>
