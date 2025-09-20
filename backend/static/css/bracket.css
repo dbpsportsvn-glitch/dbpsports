@@ -1,0 +1,122 @@
+/* backend/static/css/bracket.css (Dark Theme Version) */
+:root {
+    --panel-dark: #1e2b3b;
+    --border-color: #334155;
+    --text-light: #f1f5f9;
+    --text-muted: #94a3b8;
+    --gold: #f59e0b;
+    --bg-dark: #0f172a;
+}
+
+.bracket-container {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+    overflow-x: auto;
+}
+
+.bracket {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem; /* Tăng khoảng cách giữa các trận bán kết */
+    min-width: 280px;
+}
+
+.bracket-match {
+    background-color: var(--panel-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.bracket-match:hover {
+    transform: translateY(-2px);
+}
+
+.match-top, .match-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+}
+
+.match-top {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.team-name {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.team-score {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--text-light);
+    background-color: var(--bg-dark);
+    padding: 2px 10px;
+    border-radius: 4px;
+    min-width: 32px;
+    text-align: center;
+}
+
+.match-winner .team-name {
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.match-winner .team-score {
+    background-color: var(--gold);
+    color: var(--bg-dark);
+}
+
+.placeholder-text {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+/* --- VẼ CÁC ĐƯỜNG NỐI --- */
+.connector {
+    width: 2.5rem; /* Bằng với gap của .bracket */
+    height: 100%;
+    position: relative;
+}
+.connector-line {
+    position: absolute;
+    background-color: var(--border-color);
+}
+.bracket-match::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem; /* Một nửa gap */
+    height: 2px;
+    background-color: var(--border-color);
+}
+.bracket-round.semi-finals .bracket-match::after {
+    right: -1.25rem;
+}
+.bracket-round.final .bracket-match::after {
+    left: -1.25rem;
+}
+
+.connector-v-line {
+    position: absolute;
+    width: 2px;
+    background-color: var(--border-color);
+    left: 50%;
+    transform: translateX(-50%);
+}

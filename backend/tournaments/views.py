@@ -112,7 +112,7 @@ def livestream_view(request, pk=None):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
-# --- THAY THẾ TOÀN BỘ HÀM tournament_detail BẰNG PHIÊN BẢN MỚI NÀY ---
+# Thống kê giải đấu
 @never_cache # THÊM DÒNG NÀY VÀO
 def tournament_detail(request, pk):
     tournament = get_object_or_404(
@@ -129,9 +129,23 @@ def tournament_detail(request, pk):
     knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
 
-    # === TÍNH TOÁN BẢNG XẾP HẠNG ĐÃ ĐƯỢC TỐI ƯU ===
+    # === BẮT ĐẦU NÂNG CẤP: XỬ LÝ DỮ LIỆU SƠ ĐỒ THI ĐẤU ===
+    semi_finals = list(knockout_matches.filter(match_round='SEMI'))
+    final_match = knockout_matches.filter(match_round='FINAL').first()
+
+    # Đảm bảo luôn có 2 trận bán kết để không bị lỗi index
+    while len(semi_finals) < 2:
+        semi_finals.append(None)
+
+    knockout_data = {
+        'semi_final_1': semi_finals[0],
+        'semi_final_2': semi_finals[1],
+        'final_match': final_match,
+    }
+    # === KẾT THÚC NÂNG CẤP ===
+
+    # === TÍNH TOÁN BẢNG XẾP HẠNG (giữ nguyên) ===
     standings_data = defaultdict(list)
-    # Lấy tất cả các nhóm và đội của chúng từ tournament đã prefetch
     groups_with_teams = list(tournament.groups.all())
     
     team_stats = {}
@@ -142,7 +156,6 @@ def tournament_detail(request, pk):
                 'gf': 0, 'ga': 0, 'gd': 0, 'points': 0, 'team_obj': team
             }
 
-    # Chỉ 1 câu lệnh để lấy tất cả các trận vòng bảng đã kết thúc của giải đấu
     finished_group_matches = group_matches.filter(team1_score__isnull=False, team2_score__isnull=False)
 
     for match in finished_group_matches:
@@ -173,7 +186,7 @@ def tournament_detail(request, pk):
         group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
         standings_data[group.id] = group_standings
 
-    # === CÁC THỐNG KÊ KHÁC VẪN GIỮ NGUYÊN ===
+    # === CÁC THỐNG KÊ KHÁC (giữ nguyên) ===
     total_teams = tournament.teams.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
@@ -188,6 +201,7 @@ def tournament_detail(request, pk):
         'tournament': tournament,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
+        'knockout_data': knockout_data, # Gửi dữ liệu sơ đồ ra template
         'now': timezone.now(),
         'unassigned_teams': unassigned_teams,
         'total_teams': total_teams,
@@ -195,7 +209,7 @@ def tournament_detail(request, pk):
         'total_goals': total_goals,
         'top_scorers': top_scorers,
         'finished_matches_count': finished_matches.count(),
-        'standings_data': standings_data, # Gửi dữ liệu BXH đã xử lý ra template
+        'standings_data': standings_data,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 

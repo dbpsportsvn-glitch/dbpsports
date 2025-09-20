@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ tournament.name }}{% endblock %}
 
@@ -35,6 +36,8 @@
     .chip{display:inline-block;padding:.15rem .5rem;border-radius:9999px;background:var(--bs-light);font-size:.75rem;margin-right:.4rem}
 </style>
 
+<link rel="stylesheet" href="{% static 'css/bracket.css' %}">
+
 <div class="sticky-tabs d-flex align-items-center flex-wrap gap-2">
     <ul class="nav nav-pills gap-2 tour-tabs mb-0" id="tournamentTab" role="tablist">
         <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
@@ -43,6 +46,9 @@
         <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
         <li class="nav-item"><button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
         <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
+        {% if knockout_matches %}
+        <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
+        {% endif %}
     </ul>
     
     <button id="print-all-btn"
@@ -189,6 +195,13 @@
     <div class="tab-pane fade card-pane" id="stats" role="tabpanel">
       {% include 'tournaments/partials/tournament_stats.html' %}
     </div>
+
+    {% if knockout_matches %}
+    <div class="tab-pane fade card-pane" id="bracket" role="tabpanel">
+        <h4 class="section-title mb-3">Sơ đồ Vòng loại trực tiếp</h4>
+        {% include 'tournaments/partials/knockout_bracket.html' %}
+    </div>
+    {% endif %}
 </div>
 
 <script>

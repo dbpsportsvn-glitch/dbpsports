@@ -273,6 +273,16 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.team1.name} vs {self.team2.name}"
 
+    # (+) THÊM ĐOẠN CODE NÀY VÀO
+    @property
+    def winner(self):
+        if self.team1_score is not None and self.team2_score is not None:
+            if self.team1_score > self.team2_score:
+                return self.team1
+            elif self.team2_score > self.team1_score:
+                return self.team2
+        return None
+
 # --- Model Lineup ---
 class Lineup(models.Model):
     STATUS_CHOICES = [
