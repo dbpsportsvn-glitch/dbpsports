@@ -17,6 +17,20 @@
                     <hr>
                     <p class="mb-1"><strong>Đội:</strong> <a href="{% url 'team_detail' pk=player.team.pk %}">{{ player.team.name }}</a></p>
                     <p><strong>Giải đấu:</strong> <a href="{% url 'tournament_detail' pk=player.team.tournament.pk %}">{{ player.team.tournament.name }}</a></p>
+                    {% if user.is_authenticated and not player.user and not user.player_profile %}
+                    <div class="d-grid gap-2 mt-3">
+                        <form method="POST" action="{% url 'claim_player_profile' pk=player.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-person-check-fill"></i> Đây là tôi
+                            </button>
+                        </form>
+                    </div>
+                    {% elif player.user == user %}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <i class="bi bi-check-circle-fill"></i> Đây là hồ sơ của bạn.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

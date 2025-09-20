@@ -180,6 +180,15 @@ class Player(models.Model):
         ('FW', 'Tiền đạo'),
     ]
 
+    # >> THÊM TRƯỜNG MỚI NÀY VÀO <<
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='player_profile'
+    )
+
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     full_name = models.CharField(max_length=100)
     jersey_number = models.PositiveIntegerField()

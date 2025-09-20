@@ -568,3 +568,26 @@ def player_detail(request, pk):
         'badges': badges, # Gửi danh sách huy hiệu ra template
     }
     return render(request, 'tournaments/player_detail.html', context)
+
+# >> THÊM VÀO CUỐI FILE views.py <<
+from django.contrib import messages
+
+@login_required
+def claim_player_profile(request, pk):
+    player_to_claim = get_object_or_404(Player, pk=pk)
+
+    # Kiểm tra xem người dùng đã có hồ sơ nào chưa
+    if hasattr(request.user, 'player_profile') and request.user.player_profile is not None:
+        messages.error(request, "Tài khoản của bạn đã được liên kết với một hồ sơ cầu thủ khác.")
+        return redirect('player_detail', pk=pk)
+
+    # Kiểm tra xem hồ sơ này đã có ai nhận chưa
+    if player_to_claim.user is not None:
+        messages.error(request, "Hồ sơ này đã được một tài khoản khác liên kết.")
+        return redirect('player_detail', pk=pk)
+
+    # Nếu mọi thứ hợp lệ, tiến hành liên kết
+    player_to_claim.user = request.user
+    player_to_claim.save()
+    messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
+    return redirect('player_detail', pk=pk)    
