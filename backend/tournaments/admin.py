@@ -347,13 +347,11 @@ class HomeBannerAdmin(admin.ModelAdmin):
 # >> GỬI MAIL VÀ THÔNG BÁO <<
 @admin.register(Announcement)
 class AnnouncementAdmin(admin.ModelAdmin):
-    list_display = ('title', 'tournament', 'is_published', 'created_at')
-    list_filter = ('tournament', 'is_published')
+    list_display = ('title', 'tournament', 'audience', 'is_published', 'created_at')
+    list_filter = ('tournament', 'is_published', 'audience')
     search_fields = ('title', 'content')
     list_editable = ('is_published',)
-    date_hierarchy = 'created_at'
-    
-    # Thêm dòng này để kích hoạt actions
+    date_hierarchy = 'created_at'   
     actions = ['send_email_notification']
 
     @admin.action(description='Gửi email thông báo cho các đội trưởng')

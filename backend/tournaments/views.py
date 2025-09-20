@@ -520,18 +520,39 @@ def archive_view(request):
     }
     return render(request, 'tournaments/archive.html', context)
 
-# >> THÊM HÀM MỚI NÀY VÀO CUỐI FILE views.py <<
+# >> THÔNG BÁO CHO ĐỘI TRƯỞNG VÀ CẦU THỦ GIẢI ĐẤU <<
 @login_required
-@never_cache # Không cache trang này để đội trưởng luôn thấy thông báo mới nhất
+@never_cache
 def announcement_dashboard(request):
-    # Lấy danh sách ID các giải đấu mà người dùng đang làm đội trưởng
-    managed_tournaments_ids = Team.objects.filter(captain=request.user).values_list('tournament_id', flat=True).distinct()
+    # Lấy danh sách ID các giải đấu mà người dùng là đội trưởng
+    tournament_ids_as_captain = set(
+        Team.objects.filter(captain=request.user).values_list('tournament_id', flat=True)
+    )
     
-    # Lấy tất cả thông báo thuộc các giải đấu đó và đã được công khai
-    announcements = Announcement.objects.filter(
-        tournament_id__in=managed_tournaments_ids,
-        is_published=True
-    ).select_related('tournament') # Dùng select_related để tối ưu truy vấn
+    # Lấy danh sách ID các giải đấu mà người dùng là cầu thủ
+    tournament_ids_as_player = set(
+        Player.objects.filter(user=request.user).values_list('team__tournament_id', flat=True)
+    )
+    
+    # Gộp tất cả các giải đấu người dùng có liên quan
+    all_relevant_ids = tournament_ids_as_captain.union(tournament_ids_as_player)
+
+    if not all_relevant_ids:
+        announcements = Announcement.objects.none()
+    else:
+        # Lấy các thông báo "Công khai" mà người dùng có liên quan
+        public_announcements = Q(audience='PUBLIC', tournament_id__in=all_relevant_ids)
+
+        # Lấy các thông báo "Chỉ dành cho đội trưởng" (nếu người dùng là đội trưởng)
+        captain_only_announcements = Q() # Mặc định là một truy vấn rỗng
+        if tournament_ids_as_captain:
+            captain_only_announcements = Q(audience='CAPTAINS_ONLY', tournament_id__in=tournament_ids_as_captain)
+        
+        # Kết hợp 2 điều kiện: Lấy (công khai) HOẶC (chỉ cho đội trưởng)
+        announcements = Announcement.objects.filter(
+            public_announcements | captain_only_announcements,
+            is_published=True
+        ).select_related('tournament').distinct().order_by('-created_at')
     
     context = {
         'announcements': announcements

@@ -428,6 +428,20 @@ class Comment(models.Model):
 
 # >> THÊM MODEL MỚI NÀY VÀO CUỐI FILE models.py <<
 class Announcement(models.Model):
+    # (+) THÊM CÁC DÒNG NÀY VÀO ĐẦU CLASS
+    AUDIENCE_CHOICES = [
+        ('PUBLIC', 'Gửi cho Mọi người (Cầu thủ & Đội trưởng)'),
+        ('CAPTAINS_ONLY', 'Chỉ gửi cho Đội trưởng'),
+    ]
+    audience = models.CharField(
+        "Đối tượng",
+        max_length=15,
+        choices=AUDIENCE_CHOICES,
+        default='PUBLIC',
+        help_text="Chọn nhóm người dùng sẽ thấy thông báo này."
+    )
+    # KẾT THÚC PHẦN THÊM MỚI
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='announcements')
     title = models.CharField("Tiêu đề", max_length=200)
     content = models.TextField("Nội dung")
