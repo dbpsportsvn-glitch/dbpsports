@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ player.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm sticky-top" style="top: 80px;">
+                <div class="card-body text-center">
+                    {% if player.avatar %}
+                        <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h3 class="card-title mb-1">{{ player.full_name }}</h3>
+                    <p class="text-muted mb-0">Số áo: {{ player.jersey_number }}</p>
+                    <p class="text-muted">Vị trí: {{ player.get_position_display }}</p>
+                    <hr>
+                    <p class="mb-1"><strong>Đội:</strong> <a href="{% url 'team_detail' pk=player.team.pk %}">{{ player.team.name }}</a></p>
+                    <p><strong>Giải đấu:</strong> <a href="{% url 'tournament_detail' pk=player.team.tournament.pk %}">{{ player.team.tournament.name }}</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="row mb-4">
+                <div class="col-sm-4">
+                    <div class="card text-center shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Số trận</h5>
+                            <p class="display-4">{{ stats.matches_played_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card text-center shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Bàn thắng</h5>
+                            <p class="display-4">{{ stats.total_goals }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="card text-center shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Thẻ phạt</h5>
+                            <p class="display-4">
+                                <span class="text-warning">{{ stats.yellow_cards }}</span> / <span class="text-danger">{{ stats.red_cards }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4>Lịch sử thi đấu</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Trận đấu</th>
+                                <th>Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in stats.matches_played %}
+                                <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
+                                    <td>{{ match.match_time|date:"d/m/Y" }}</td>
+                                    <td>{{ match.team1.name }} vs {{ match.team2.name }}</td>
+                                    <td>
+                                        {% if match.team1_score is not None %}
+                                            {{ match.team1_score }} - {{ match.team2_score }}
+                                        {% else %}
+                                            <span class="text-muted">Chưa đá</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Cầu thủ chưa tham gia trận đấu nào.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

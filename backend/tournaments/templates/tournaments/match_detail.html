@@ -103,11 +103,11 @@
                     <ul class="list-group">
                         <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
                         {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'STARTER' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
                         {% endif %}{% endfor %}
                         <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
                         {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
                         {% endif %}{% empty %}
                             <li class="list-group-item">Đội hình chưa được đăng ký.</li>
                         {% endfor %}
@@ -118,11 +118,11 @@
                     <ul class="list-group">
                          <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
                         {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'STARTER' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
                         {% endif %}{% endfor %}
                         <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
                         {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - {{ lineup_entry.player.full_name }}</li>
+                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
                         {% endif %}{% empty %}
                             <li class="list-group-item">Đội hình chưa được đăng ký.</li>
                         {% endfor %}

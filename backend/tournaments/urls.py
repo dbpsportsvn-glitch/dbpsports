@@ -26,6 +26,7 @@ urlpatterns = [
     path('team/<int:pk>/payment/', views.team_payment, name='team_payment'), # Dòng mới
 
     # --- URL liên quan đến Cầu thủ (Player) ---
+    path('player/<int:pk>/', views.player_detail, name='player_detail'),
     path('player/<int:pk>/update/', views.update_player, name='update_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),
 

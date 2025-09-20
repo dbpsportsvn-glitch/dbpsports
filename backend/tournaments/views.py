@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from collections import defaultdict
 from django.db.models import Prefetch
 # --- KẾT THÚC ---
-from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement
+from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement, Goal, Card
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from django.views.decorators.cache import never_cache # Thêm dòng này
 from .forms import TeamCreationForm, PlayerCreationForm 
@@ -520,3 +520,41 @@ def announcement_dashboard(request):
 # >> FAG <<
 def faq_view(request):
     return render(request, 'tournaments/faq.html')        
+
+# >> THÊM VÀO CUỐI FILE views.py <<
+from django.db.models import Count, Q
+
+# backend/tournaments/views.py
+
+def player_detail(request, pk):
+    player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
+
+    # --- BẮT ĐẦU TÍNH TOÁN THỐNG KÊ ---
+    # Đếm tổng số bàn thắng
+    total_goals = Goal.objects.filter(player=player).count()
+
+    # Đếm số thẻ phạt theo từng loại
+    cards = Card.objects.filter(player=player).aggregate(
+        yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
+        red_cards=Count('id', filter=Q(card_type='RED'))
+    )
+
+    # Lấy danh sách các trận đã tham gia (có trong đội hình)
+    matches_played = Match.objects.filter(
+        lineups__player=player
+    ).select_related('team1', 'team2').distinct().order_by('-match_time')
+
+    stats = {
+        'total_goals': total_goals,
+        'yellow_cards': cards.get('yellow_cards', 0),
+        'red_cards': cards.get('red_cards', 0),
+        'matches_played': matches_played,
+        'matches_played_count': matches_played.count(),
+    }
+    # --- KẾT THÚC TÍNH TOÁN ---
+
+    context = {
+        'player': player,
+        'stats': stats,
+    }
+    return render(request, 'tournaments/player_detail.html', context)
