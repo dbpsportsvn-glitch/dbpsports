@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Xếp lịch thi đấu - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="text-center mb-4">
+        <h2><i class="bi bi-calendar2-week"></i> Xếp lịch thi đấu Tự động</h2>
+        <p class="text-muted">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+
+    <div class="alert alert-info">
+        <h5 class="alert-heading">Hướng dẫn</h5>
+        <p>Nhập các thông số dưới đây để hệ thống tự động tạo lịch thi đấu vòng bảng. Lịch sẽ được ưu tiên xếp dàn đều cho các đội và đảm bảo ngày nghỉ tối thiểu.</p>
+    </div>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-gear-fill"></i> Tạo lịch thi đấu (Xem trước)
+            </button>
+        </div>
+    </form>
+</div>
+
+{# -- BẮT ĐẦU PHẦN HIỂN THỊ KẾT QUẢ -- #}
+{% if schedule_by_group is not None %}
+<div class="container mt-5">
+    <hr class="my-4">
+    <div class="results-container mt-4">
+        <h3 class="text-center mb-3">Lịch thi đấu (Xem trước)</h3>
+
+        {% if unscheduled_matches %}
+        <div class="alert alert-danger">
+            <strong>Cảnh báo!</strong> Không thể xếp lịch cho {{ unscheduled_matches|length }} trận đấu.
+            Có thể do không đủ thời gian hoặc các ràng buộc quá chặt. Vui lòng thử lại với các thông số khác.
+        </div>
+        {% endif %}
+
+        {% if schedule_by_group %}
+        <p>Hệ thống đã tạo ra lịch thi đấu. Vui lòng kiểm tra kỹ lịch bên dưới trước khi xác nhận.</p>
+
+        {% for group_name, matches_in_group in schedule_by_group.items %}
+            <h4 class="mt-4">{{ group_name }}</h4>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Giờ</th>
+                            <th>Cặp đấu</th>
+                            <th>Sân</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in matches_in_group %}
+                        <tr>
+                            <td>{{ match.match_time|date:"d/m/Y" }}</td>
+                            <td>{{ match.match_time|date:"H:i" }}</td>
+                            <td><strong>{{ match.team1_name }}</strong> vs <strong>{{ match.team2_name }}</strong></td>
+                            <td>{{ match.location }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="d-grid">
+                <button type="submit" name="confirm_schedule" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle-fill"></i> Tôi đồng ý, Xác nhận & Lưu Lịch
+                </button>
+                <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-secondary mt-2">
+                    Tạo lại với thông số khác
+                </a>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{# -- KẾT THÚC PHẦN HIỂN THỊ KẾT QUẢ -- #}
+
+{% endblock %}

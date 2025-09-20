@@ -81,6 +81,24 @@
       {% endif %}
       </div>
 
+      {% if user.is_staff %}
+        <div class="mt-3 d-flex flex-wrap gap-2">
+            {% if unassigned_teams %}
+            <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
+            </a>
+            {% endif %}
+
+            {# (+) BẮT ĐẦU ĐOẠN CODE MỚI #}
+            {% if tournament.groups.exists and not tournament.matches.exists %}
+            <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
+                <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
+            </a>
+            {% endif %}
+            {# (+) KẾT THÚC ĐOẠN CODE MỚI #}
+        </div>
+      {% endif %}
+
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
       {% if tournament.rules %}
         {{ tournament.rules|safe|linebreaks }}

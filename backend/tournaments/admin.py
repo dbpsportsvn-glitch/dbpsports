@@ -86,7 +86,7 @@ class CardInline(admin.TabularInline):
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ("name", "status", "start_date", "end_date", "draw_groups_link", "view_details_link")
+    list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "view_details_link")
     list_filter = ("status",)
     search_fields = ("name",)
     list_editable = ("status",)
@@ -94,6 +94,16 @@ class TournamentAdmin(admin.ModelAdmin):
     inlines = [GroupInline]
     list_per_page = 50
     actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
+
+    # THÊM HÀM MỚI NÀY VÀO DƯỚI HÀM draw_groups_link
+    def generate_schedule_link(self, obj):
+        # Nút chỉ hiện khi giải đấu đã có bảng và chưa có trận đấu nào được tạo
+        if obj.groups.exists() and not obj.matches.exists():
+            url = reverse('generate_schedule', args=[obj.pk])
+            return format_html('<a class="button" href="{}" target="_blank">Xếp Lịch</a>', url)
+        return "—"
+    generate_schedule_link.short_description = 'Xếp Lịch Thi Đấu'
+    generate_schedule_link.allow_tags = True
 
     # Thêm hàm mới này vào class
     def draw_groups_link(self, obj):

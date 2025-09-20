@@ -47,3 +47,30 @@ class CommentForm(forms.ModelForm):
         labels = {
             'text': '' # Ẩn nhãn của trường text
         }      
+
+# (+) THÊM CLASS FORM MỚI NÀY VÀO CUỐI FILE
+class ScheduleGenerationForm(forms.Form):
+    start_date = forms.DateField(
+        label="Ngày bắt đầu thi đấu",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        help_text="Chọn ngày diễn ra trận đấu đầu tiên."
+    )
+    
+    time_slots = forms.CharField(
+        label="Các khung giờ trong ngày (cách nhau bằng dấu phẩy)",
+        initial="08:00, 10:00, 14:00, 16:00",
+        help_text="Ví dụ: 08:00, 15:00, 19:30"
+    )
+    
+    locations = forms.CharField(
+        label="Các sân thi đấu (cách nhau bằng dấu phẩy)",
+        initial="Sân 1, Sân 2",
+        help_text="Ví dụ: Sân Cỏ Nhân tạo A, Sân Vận động B"
+    )
+    
+    rest_days = forms.IntegerField(
+        label="Số ngày nghỉ tối thiểu giữa 2 trận của một đội",
+        initial=1,
+        min_value=0,
+        help_text="Ví dụ: nhập 1 để đảm bảo một đội không phải đá 2 ngày liên tiếp."
+    )        

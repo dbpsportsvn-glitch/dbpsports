@@ -8,22 +8,26 @@ from django.db.models import Prefetch
 from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement, Goal, Card
 from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
 from django.views.decorators.cache import never_cache # Thêm dòng này
-from .forms import TeamCreationForm, PlayerCreationForm 
+#from .forms import TeamCreationForm, PlayerCreationForm 
 from django.http import HttpResponseForbidden
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.db.models import Sum, Count
-from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm, CommentForm
+from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm, CommentForm, ScheduleGenerationForm
 from .utils import send_notification_email
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q
 from .models import HomeBanner
 from datetime import timedelta
+from django.contrib import messages
 import json
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
+from itertools import combinations
+import random
+from datetime import datetime, time, timedelta
 
 
 def home(request):
@@ -632,8 +636,132 @@ def player_detail(request, pk):
     }
     return render(request, 'tournaments/player_detail.html', context)
 
-# >> THÊM VÀO CUỐI FILE views.py <<
-from django.contrib import messages
+
+# Tính năng xếp lịch thi đấu
+@staff_member_required
+@login_required
+@never_cache
+def generate_schedule_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Logic lưu lịch (POST confirm_schedule) giữ nguyên
+    if request.method == 'POST' and 'confirm_schedule' in request.POST:
+        schedule_preview_json = request.session.get('schedule_preview_json')
+        if not schedule_preview_json:
+            messages.error(request, "Không tìm thấy lịch thi đấu xem trước. Vui lòng tạo lại.")
+            return redirect('generate_schedule', tournament_pk=tournament.pk)
+        
+        try:
+            with transaction.atomic():
+                Match.objects.filter(tournament=tournament).delete()
+                schedule_to_save = json.loads(schedule_preview_json)
+                for match_data in schedule_to_save:
+                    Match.objects.create(
+                        tournament=tournament,
+                        team1=Team.objects.get(pk=match_data['team1_id']),
+                        team2=Team.objects.get(pk=match_data['team2_id']),
+                        match_time=datetime.fromisoformat(match_data['match_time']),
+                        location=match_data['location'],
+                        match_round='GROUP'
+                    )
+            del request.session['schedule_preview_json']
+            messages.success(request, "Lịch thi đấu đã được tạo thành công!")
+            return redirect('tournament_detail', pk=tournament.pk)
+        except Exception as e:
+            messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
+
+    # Xử lý khi nhấn nút "Tạo lịch (Xem trước)"
+    schedule_by_group = None # Sẽ có dạng: {'Bảng A': [trận...], 'Bảng B': [trận...]}
+    unscheduled_matches = None
+    if request.method == 'POST':
+        form = ScheduleGenerationForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            
+            start_date = data['start_date']
+            time_slots_str = [t.strip() for t in data['time_slots'].split(',')]
+            locations = [loc.strip() for loc in data['locations'].split(',')]
+            rest_days = timedelta(days=data['rest_days'])
+            
+            # Sửa đổi ở đây: Tạo cặp đấu theo từng bảng
+            all_pairings = []
+            groups = tournament.groups.prefetch_related('teams').all()
+            for group in groups:
+                teams_in_group = list(group.teams.all())
+                # Thêm thông tin group vào mỗi cặp đấu
+                group_pairings = list(combinations(teams_in_group, 2))
+                for pair in group_pairings:
+                    all_pairings.append({'pair': pair, 'group_name': group.name})
+
+            random.shuffle(all_pairings)
+            
+            scheduled_matches = []
+            team_last_played = {}
+            current_date = start_date
+            day_offset = 0
+            
+            while all_pairings:
+                for time_str in time_slots_str:
+                    for location in locations:
+                        if not all_pairings: break
+                        
+                        current_datetime = datetime.combine(current_date, time.fromisoformat(time_str))
+                        best_match_index = -1
+                        for i, pairing_info in enumerate(all_pairings):
+                            team1, team2 = pairing_info['pair']
+                            last_played1 = team_last_played.get(team1.id, None)
+                            last_played2 = team_last_played.get(team2.id, None)
+                            can_play1 = not last_played1 or (current_date - last_played1.date()) > rest_days
+                            can_play2 = not last_played2 or (current_date - last_played2.date()) > rest_days
+                            if can_play1 and can_play2:
+                                best_match_index = i
+                                break
+                        
+                        if best_match_index != -1:
+                            pairing_info = all_pairings.pop(best_match_index)
+                            team1, team2 = pairing_info['pair']
+                            scheduled_matches.append({
+                                'team1_name': team1.name, 'team1_id': team1.id,
+                                'team2_name': team2.name, 'team2_id': team2.id,
+                                'match_time': current_datetime,
+                                'location': location,
+                                'group_name': pairing_info['group_name'] # Lưu lại tên bảng
+                            })
+                            team_last_played[team1.id] = current_datetime
+                            team_last_played[team2.id] = current_datetime
+
+                day_offset += 1
+                current_date = start_date + timedelta(days=day_offset)
+                if day_offset > 100:
+                    unscheduled_matches = [p['pair'] for p in all_pairings]
+                    all_pairings = []
+
+            # Sắp xếp và nhóm kết quả theo bảng đấu
+            schedule_by_group = {}
+            # Sắp xếp các trận theo ngày giờ trước
+            scheduled_matches.sort(key=lambda x: x['match_time'])
+            for match in scheduled_matches:
+                group_name = match['group_name']
+                if group_name not in schedule_by_group:
+                    schedule_by_group[group_name] = []
+                schedule_by_group[group_name].append(match)
+
+            # Lưu bản danh sách phẳng vào session để dễ xử lý khi lưu
+            schedule_for_session = [
+                {**match, 'match_time': match['match_time'].isoformat()}
+                for match in scheduled_matches
+            ]
+            request.session['schedule_preview_json'] = json.dumps(schedule_for_session)
+    else:
+        form = ScheduleGenerationForm()
+
+    context = {
+        'tournament': tournament,
+        'form': form,
+        'schedule_by_group': schedule_by_group, # Gửi dữ liệu đã nhóm ra template
+        'unscheduled_matches': unscheduled_matches,
+    }
+    return render(request, 'tournaments/generate_schedule.html', context)
 
 @login_required
 def claim_player_profile(request, pk):
