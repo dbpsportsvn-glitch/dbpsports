@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Hướng dẫn & Câu hỏi thường gặp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-question-circle-fill"></i> Hướng dẫn & Câu hỏi thường gặp</h1>
+        <p class="lead">Tất cả những gì đội trưởng cần biết để quản lý đội bóng trên DBP Sports.</p>
+    </div>
+
+    <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                    <strong>Bước 1: Tạo Tài khoản và Đăng ký Đội bóng</strong>
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <p>Để bắt đầu, bạn cần có một tài khoản. Truy cập trang chủ và chọn "Đăng ký". Chúng tôi khuyến khích sử dụng tùy chọn "Đăng nhập với Google" để quá trình diễn ra nhanh chóng và an toàn nhất.</p>
+                    <p>Sau khi đăng nhập, hãy vào giải đấu bạn muốn tham gia và nhấn "Đăng ký tham gia giải đấu". Điền các thông tin cơ bản như Tên đội, Tên HLV và Logo đội.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                    <strong>Bước 2: Hoàn tất Lệ phí</strong>
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <p>Sau khi tạo đội, bạn sẽ được chuyển đến trang "Quản lý đội". Tại đây, hãy nhấn vào nút "Thanh toán Lệ phí".</p>
+                    <p>Hệ thống sẽ hiển thị thông tin tài khoản của Ban tổ chức. Vui lòng chuyển khoản chính xác nội dung được yêu cầu.</p>
+                    <p><strong>QUAN TRỌNG:</strong> Sau khi chuyển khoản thành công, hãy chụp lại màn hình giao dịch và tải ảnh lên ở mục "Tải lên bằng chứng thanh toán". Ban tổ chức sẽ duyệt và kích hoạt đội của bạn.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                    <strong>Bước 3: Quản lý Cầu thủ và Đội hình thi đấu</strong>
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <p>Khi lệ phí đã được xác nhận, bạn có thể bắt đầu thêm cầu thủ vào đội hình. Tại trang "Quản lý đội", bạn sẽ thấy form để thêm cầu thủ mới. Hãy điền đầy đủ thông tin và nhấn "Thêm vào đội hình".</p>
+                    <p><strong>Đăng ký đội hình thi đấu:</strong> Đây là bước bắt buộc trước mỗi trận đấu. Hãy vào "Lịch thi đấu", chọn trận đấu sắp tới và nhấn "Quản lý Đội hình". Tại đây, bạn sẽ chọn ra các cầu thủ đá chính và dự bị. Lưu ý, đội hình phải được chốt **trước giờ bóng lăn 2 tiếng**.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

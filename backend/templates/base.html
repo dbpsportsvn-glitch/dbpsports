@@ -77,10 +77,23 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="pt-4 my-md-5 pt-md-5 border-top">
-    <div class="row">
-      <div class="col-12 col-md">
-        <small class="d-block mb-3 text-muted">&copy; 2025 DBP Sports</small>
+  <footer class="py-4 my-4 border-top">
+    <div class="row align-items-center">
+      <div class="col-md-6 mb-2 mb-md-0">
+        <a href="{% url 'home' %}" class="d-inline-flex align-items-center gap-2 text-muted text-decoration-none">
+          <img src="{% static 'images/logo.png' %}" alt="DBP Sports" style="height: 24px;">
+          <span>&copy; {% now "Y" %} DBP Sports</span>
+        </a>
+      </div>
+
+      <div class="col-md-6 text-md-end">
+        <ul class="list-inline mb-0">
+          <li class="list-inline-item"><a href="{% url 'home' %}" class="text-muted text-decoration-none">Trang chủ</a></li>
+          <li class="list-inline-item"><a href="{% url 'tournaments_active' %}" class="text-muted text-decoration-none">Giải đấu</a></li>
+          
+          <li class="list-inline-item"><a href="{% url 'faq' %}" class="text-muted text-decoration-none">Hướng dẫn</a></li>
+
+        </ul>
       </div>
     </div>
   </footer>

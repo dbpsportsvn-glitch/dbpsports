@@ -515,4 +515,8 @@ def announcement_dashboard(request):
     context = {
         'announcements': announcements
     }
-    return render(request, 'tournaments/announcement_dashboard.html', context)    
+    return render(request, 'tournaments/announcement_dashboard.html', context)
+
+# >> FAG <<
+def faq_view(request):
+    return render(request, 'tournaments/faq.html')        

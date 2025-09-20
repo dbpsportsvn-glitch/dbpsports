@@ -14,6 +14,7 @@ urlpatterns = [
     path('archive/', views.archive_view, name='archive'),
 
     path('dashboard/announcements/', views.announcement_dashboard, name='announcement_dashboard'),
+    path('faq/', views.faq_view, name='faq'),
     
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
