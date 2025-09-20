@@ -448,6 +448,14 @@ class Announcement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField("Công khai", default=True, help_text="Bỏ chọn nếu đây là bản nháp.")
 
+    # (+) THÊM TRƯỜNG MỚI NÀY VÀO CUỐI CLASS
+    read_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='read_announcements',
+        blank=True,
+        verbose_name="Đã đọc bởi"
+    )
+    
     class Meta:
         ordering = ['-created_at'] # Sắp xếp thông báo mới nhất lên đầu
 

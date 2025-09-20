@@ -553,7 +553,11 @@ def announcement_dashboard(request):
             public_announcements | captain_only_announcements,
             is_published=True
         ).select_related('tournament').distinct().order_by('-created_at')
-    
+
+    # Đánh dấu tất cả các thông báo được hiển thị là đã đọc bởi người dùng hiện tại
+    unread_announcements = announcements.exclude(read_by=request.user)
+    request.user.read_announcements.add(*unread_announcements) 
+
     context = {
         'announcements': announcements
     }

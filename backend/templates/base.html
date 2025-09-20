@@ -51,10 +51,15 @@
             {% endwith %}
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li><a class="dropdown-item" href="{% url 'dashboard' %}">QL Đội Bóng</a></li>
-            
-            <li><a class="dropdown-item" href="{% url 'announcement_dashboard' %}">Bảng tin BTC</a></li>
-            
+            <li><a class="dropdown-item" href="{% url 'dashboard' %}">QL Đội Bóng</a></li>           
+            <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
+                    Bảng tin BTC
+                    {% if unread_announcements_count > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
+                    {% endif %}
+                </a>
+            </li>            
             <li><a class="dropdown-item" href="{% url 'account_email' %}">Đổi email</a></li>
             <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Đổi mật khẩu</a></li>
             <li><hr class="dropdown-divider"></li>
