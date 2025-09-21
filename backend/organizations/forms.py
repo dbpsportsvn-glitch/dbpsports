@@ -1,19 +1,19 @@
 from django import forms
-from tournaments.models import Tournament
+from tournaments.models import Tournament, Organization, Match
 from .models import Organization
 from django.contrib.auth.models import User
 
-# === THAY THẾ FORM CŨ BẰNG PHIÊN BẢN HOÀN CHỈNH NÀY ===
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
         model = Tournament
-        # Bao gồm tất cả các trường cần thiết ngay từ đầu
+        # Thêm 'status' vào danh sách fields
         fields = [
-            'name', 'region', 'start_date', 'end_date', 'image', 'rules',
+            'name', 'status', 'region', 'start_date', 'end_date', 'image', 'rules',
             'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
             'name': 'Tên giải đấu',
+            'status': 'Trạng thái giải đấu', # Thêm nhãn cho status
             'region': 'Khu vực tổ chức',
             'start_date': 'Ngày bắt đầu',
             'end_date': 'Ngày kết thúc',
@@ -54,3 +54,20 @@ class MemberInviteForm(forms.Form):
         if not User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
         return email
+
+# === BẮT ĐẦU THÊM MỚI ===
+class MatchUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = [
+            'team1_score', 'team2_score', 'livestream_url', 
+            'referee', 'commentator', 'ticker_text'
+        ]
+        labels = {
+            'team1_score': 'Tỉ số đội 1',
+            'team2_score': 'Tỉ số đội 2',
+            'livestream_url': 'Đường dẫn Livestream (YouTube)',
+            'referee': 'Tên trọng tài',
+            'commentator': 'Tên bình luận viên',
+            'ticker_text': 'Dòng chữ chạy trên Livestream',
+        }        

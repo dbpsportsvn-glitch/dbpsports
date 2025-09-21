@@ -1,14 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect 
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .models import Organization, Membership
-from tournaments.models import Tournament, Group, Team
+from tournaments.models import Tournament, Group, Team, Match
 from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User 
 from django.contrib import messages 
-from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm
+from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm # Thêm MatchUpdateForm
 
 #=================================
 
@@ -145,8 +146,8 @@ def manage_tournament(request, pk):
     pending_teams = tournament.teams.filter(payment_status='PENDING').select_related('captain')
     # Lấy các đội đã được duyệt
     paid_teams = tournament.teams.filter(payment_status='PAID').select_related('captain')
-
-    members = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')   
+    members = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')  
+    matches = tournament.matches.select_related('team1', 'team2').order_by('match_time') 
 
     context = {
         'tournament': tournament,
@@ -154,6 +155,7 @@ def manage_tournament(request, pk):
         'pending_teams': pending_teams, # Gửi danh sách ra template
         'paid_teams': paid_teams,       # Gửi danh sách ra template
         'members': members,
+        'matches': matches,
     }
     return render(request, 'organizations/manage_tournament.html', context)
 
@@ -273,3 +275,33 @@ def edit_tournament(request, pk):
         'tournament': tournament,
     }
     return render(request, 'organizations/edit_tournament.html', context)
+
+# === BẮT ĐẦU THÊM MỚI ===
+@login_required
+@never_cache
+def manage_match(request, pk):
+    match = get_object_or_404(Match.objects.select_related('tournament__organization'), pk=pk)
+    tournament = match.tournament
+    organization = tournament.organization
+
+    # KIỂM TRA BẢO MẬT: Đảm bảo người dùng thuộc BTC của giải đấu này
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        form = MatchUpdateForm(request.POST, instance=match)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã cập nhật thông tin trận đấu thành công!")
+            # Quay về trang chi tiết giải đấu, tab lịch thi đấu
+            return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=schedule#schedule')
+    else:
+        form = MatchUpdateForm(instance=match)
+
+    context = {
+        'form': form,
+        'match': match,
+        'tournament': tournament,
+    }
+    return render(request, 'organizations/manage_match.html', context)
+# === KẾT THÚC THÊM MỚI ===    

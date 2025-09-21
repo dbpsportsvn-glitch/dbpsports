@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Quản lý trận đấu{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <a href="{% url 'tournament_detail' pk=tournament.pk %}?tab=schedule#schedule" class="btn btn-link p-0 mb-3">← Về Lịch thi đấu</a>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Quản lý Trận đấu</h3>
+            <p class="mb-0 text-muted">
+                {{ match.team1.name }} vs {{ match.team2.name }}
+            </p>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

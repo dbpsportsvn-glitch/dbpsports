@@ -47,6 +47,9 @@
             <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">Đội đăng ký</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="matches-tab" data-bs-toggle="tab" data-bs-target="#matches" type="button" role="tab">Trận đấu</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">Thành viên</button>
         </li>
     </ul>
@@ -131,6 +134,25 @@
             {% endif %}
         </div>
 
+        <div class="tab-pane fade p-3" id="matches" role="tabpanel">
+            <h5>Quản lý các Trận đấu</h5>
+            <p class="text-muted">Nhấn "Quản lý" để cập nhật tỉ số, link livestream và các thông tin khác cho trận đấu.</p>
+            <div class="list-group">
+                {% for match in matches %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
+                            <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                        </div>
+                        <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil-fill"></i> Quản lý
+                        </a>
+                    </div>
+                {% empty %}
+                    <div class="list-group-item text-muted">Chưa có trận đấu nào được xếp lịch.</div>
+                {% endfor %}
+            </div>
+        </div>
         <div class="tab-pane fade p-3" id="members" role="tabpanel">
             <div class="row">
                 <div class="col-md-5">

@@ -1,16 +1,13 @@
 # tournaments/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
-# --- THÊM CÁC DÒNG NÀY VÀO ---
 from collections import defaultdict
 from django.db.models import Prefetch
-# --- KẾT THÚC ---
 from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement, Goal, Card
-from django.contrib.auth.decorators import login_required # Để yêu cầu đăng nhập
-from django.views.decorators.cache import never_cache # Thêm dòng này
-#from .forms import TeamCreationForm, PlayerCreationForm 
+from django.contrib.auth.decorators import login_required 
+from django.views.decorators.cache import never_cache 
 from django.http import HttpResponseForbidden
-from django.db import transaction
+from django.db import transaction, IntegrityError # Thêm IntegrityError
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.db.models import Sum, Count
@@ -132,8 +129,7 @@ def livestream_view(request, pk=None):
 def shop_view(request):
     return render(request, 'tournaments/shop.html')
 
-# Thống kê giải đấu
-@never_cache # THÊM DÒNG NÀY VÀO
+@never_cache
 def tournament_detail(request, pk):
     tournament = get_object_or_404(
         Tournament.objects.prefetch_related(
@@ -143,26 +139,20 @@ def tournament_detail(request, pk):
         ),
         pk=pk
     )
-
-    # === BẮT ĐẦU THÊM MỚI ===
-    # Mặc định người xem không phải là người tổ chức
+    
     is_organizer = False
     if request.user.is_authenticated and tournament.organization:
-        # Kiểm tra xem người dùng có phải là thành viên của đơn vị tổ chức giải đấu này không
         if tournament.organization.members.filter(pk=request.user.pk).exists():
             is_organizer = True
-    # === KẾT THÚC THÊM MỚI ===
 
     all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
     knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
 
-    # === BẮT ĐẦU NÂNG CẤP: XỬ LÝ DỮ LIỆU SƠ ĐỒ THI ĐẤU ===
     semi_finals = list(knockout_matches.filter(match_round='SEMI'))
     final_match = knockout_matches.filter(match_round='FINAL').first()
 
-    # Đảm bảo luôn có 2 trận bán kết để không bị lỗi index
     while len(semi_finals) < 2:
         semi_finals.append(None)
 
@@ -171,9 +161,7 @@ def tournament_detail(request, pk):
         'semi_final_2': semi_finals[1],
         'final_match': final_match,
     }
-    # === KẾT THÚC NÂNG CẤP ===
 
-    # === TÍNH TOÁN BẢNG XẾP HẠNG (giữ nguyên) ===
     standings_data = defaultdict(list)
     groups_with_teams = list(tournament.groups.all())
     
@@ -215,7 +203,6 @@ def tournament_detail(request, pk):
         group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
         standings_data[group.id] = group_standings
 
-    # === CÁC THỐNG KÊ KHÁC (giữ nguyên) ===
     total_teams = tournament.teams.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
@@ -231,7 +218,7 @@ def tournament_detail(request, pk):
         'is_organizer': is_organizer,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
-        'knockout_data': knockout_data, # Gửi dữ liệu sơ đồ ra template
+        'knockout_data': knockout_data, 
         'now': timezone.now(),
         'unassigned_teams': unassigned_teams,
         'total_teams': total_teams,
@@ -248,28 +235,25 @@ def tournament_detail(request, pk):
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
     
-    # Xử lý form thêm cầu thủ
     if request.method == 'POST':
-        # Chỉ đội trưởng mới có quyền thêm cầu thủ
         if request.user == team.captain:
-            player_form = PlayerCreationForm(request.POST, request.FILES) # Sửa lại đây
+            player_form = PlayerCreationForm(request.POST, request.FILES)
             if player_form.is_valid():
                 player = player_form.save(commit=False)
-                player.team = team  # Gán cầu thủ vào đội này
+                player.team = team
                 try:
                     player.full_clean()
                     player.save()
-                    return redirect('team_detail', pk=team.pk)  # Tải lại trang để xem cầu thủ mới
+                    return redirect('team_detail', pk=team.pk)
                 except ValidationError as e:
                     player_form.add_error('jersey_number', 'Số áo đã tồn tại trong đội.')
     
-    # Tạo form trống cho GET. Nếu POST lỗi, giữ nguyên form có lỗi.
     if request.method != 'POST':
         player_form = PlayerCreationForm()
     
     context = {
         'team': team,
-        'player_form': player_form, # Gửi form vào template
+        'player_form': player_form,
     }
     return render(request, 'tournaments/team_detail.html', context)
 
@@ -280,7 +264,7 @@ def create_team(request, tournament_pk):
     if request.method == 'POST':
         form = TeamCreationForm(request.POST, request.FILES)
         if form.is_valid():
-            try: # --- BẮT ĐẦU SỬA LỖI ---
+            try:
                 team = form.save(commit=False)
                 team.tournament = tournament
                 team.captain = request.user
@@ -288,7 +272,6 @@ def create_team(request, tournament_pk):
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
                 form.add_error(None, "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
-            # --- KẾT THÚC SỬA LỖI ---
     else:
         form = TeamCreationForm()
         
@@ -304,14 +287,12 @@ def delete_player(request, pk):
     player = get_object_or_404(Player, pk=pk)
     team = player.team
 
-    # Chỉ đội trưởng của đội mới có quyền xóa cầu thủ
     if request.user != team.captain:
-        # (Trong tương lai, chúng ta sẽ hiển thị trang báo lỗi thay vì redirect)
         return redirect('home')
 
     if request.method == 'POST':
         player.delete()
-        return redirect('team_detail', pk=team.pk) # Chuyển về trang chi tiết đội
+        return redirect('team_detail', pk=team.pk)
 
     context = {
         'player': player,
@@ -325,12 +306,11 @@ def update_player(request, pk):
     player = get_object_or_404(Player, pk=pk)
     team = player.team
 
-    # Chỉ đội trưởng của đội mới có quyền sửa
     if request.user != team.captain:
         return redirect('home')
 
     if request.method == 'POST':
-        form = PlayerCreationForm(request.POST, request.FILES, instance=player) # Thêm request.FILES
+        form = PlayerCreationForm(request.POST, request.FILES, instance=player)
         if form.is_valid():
             form.save()
             return redirect('team_detail', pk=team.pk)
@@ -348,18 +328,15 @@ def update_player(request, pk):
 def update_team(request, pk):
     team = get_object_or_404(Team, pk=pk)
     
-    # Chỉ đội-trưởng mới có quyền sửa
     if request.user != team.captain:
         return redirect('home')
 
     if request.method == 'POST':
-        # Thêm request.FILES vào đây
         form = TeamCreationForm(request.POST, request.FILES, instance=team)
         if form.is_valid():
             form.save()
             return redirect('team_detail', pk=team.pk)
     else:
-        # Hiển-thị form với thông-tin có sẵn của đội
         form = TeamCreationForm(instance=team)
         
     context = {
@@ -368,18 +345,12 @@ def update_team(request, pk):
     }
     return render(request, 'tournaments/update_team.html', context)    
 
-
-# tournaments/views.py
-from django.shortcuts import get_object_or_404, render
-from .models import Match, Lineup
-
 def match_detail(request, pk):
     match = get_object_or_404(
         Match.objects.select_related('team1', 'team2'),
         pk=pk
     )
 
-    # đội mà user là đội trưởng (để hiện nút)
     captain_team = None
     if request.user.is_authenticated:
         if match.team1 and getattr(match.team1, "captain_id", None) == request.user.id:
@@ -387,7 +358,6 @@ def match_detail(request, pk):
         elif match.team2 and getattr(match.team2, "captain_id", None) == request.user.id:
             captain_team = match.team2
 
-    # lineup theo đội
     team1_lineup = (
         Lineup.objects
         .filter(match=match, team=match.team1)
@@ -400,7 +370,6 @@ def match_detail(request, pk):
         .select_related('player')
         .order_by('player__full_name')
     )
-    # Lấy thông tin thẻ phạt
     cards = match.cards.all().order_by('minute')
 
     context = {
@@ -427,12 +396,10 @@ def manage_lineup(request, match_pk, team_pk):
     tab = request.GET.get('tab', 'schedule')
     back_url = f"{reverse('match_detail', kwargs={'pk': match.pk})}?tab={tab}#{tab}"
 
-    # Chỉ đội trưởng của team này hoặc staff được sửa
     if request.user != team.captain and not request.user.is_staff:
         return HttpResponseForbidden("Không có quyền.")
 
     if request.method == "POST":
-        # Build selection from POST
         selection = {}
         starters = 0
         for player in team.players.all():
@@ -470,7 +437,7 @@ def manage_lineup(request, match_pk, team_pk):
                     error_message = str(e)
 
         if error_message:
-            existing_lineup = selection  # keep user's choices
+            existing_lineup = selection 
             context = {
                 "match": match,
                 "team": team,
@@ -520,27 +487,22 @@ def team_payment(request, pk):
             team.payment_status = 'PENDING'
             team.save()
 
-            # Gửi email cho admin (giữ nguyên)
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
                 context={'team': team},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
-
-            # === BẮT ĐẦU THAY ĐỔI ===
-            # 1. Gửi email cảm ơn và thông báo chờ cho đội trưởng
+            
             if team.captain.email:
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
                     context={'team': team},
-                    recipient_list=[team.captain.email] # Gửi cho đội trưởng
+                    recipient_list=[team.captain.email]
                 )
             
-            # 2. Thêm message để hiển thị popup ở bước sau
             messages.success(request, 'Đã tải lên hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
-            # === KẾT THÚC THAY ĐỔI ===
             
             return redirect('team_detail', pk=team.pk)
     else:
@@ -554,7 +516,6 @@ def team_payment(request, pk):
 
 
 def archive_view(request):
-    # Lấy tất cả các giải đấu đã kết thúc
     finished_tournaments = Tournament.objects.filter(status='FINISHED').order_by('-start_date')
 
     context = {
@@ -562,41 +523,33 @@ def archive_view(request):
     }
     return render(request, 'tournaments/archive.html', context)
 
-# >> THÔNG BÁO CHO ĐỘI TRƯỞNG VÀ CẦU THỦ GIẢI ĐẤU <<
 @login_required
 @never_cache
 def announcement_dashboard(request):
-    # Lấy danh sách ID các giải đấu mà người dùng là đội trưởng
     tournament_ids_as_captain = set(
         Team.objects.filter(captain=request.user).values_list('tournament_id', flat=True)
     )
     
-    # Lấy danh sách ID các giải đấu mà người dùng là cầu thủ
     tournament_ids_as_player = set(
         Player.objects.filter(user=request.user).values_list('team__tournament_id', flat=True)
     )
     
-    # Gộp tất cả các giải đấu người dùng có liên quan
     all_relevant_ids = tournament_ids_as_captain.union(tournament_ids_as_player)
 
     if not all_relevant_ids:
         announcements = Announcement.objects.none()
     else:
-        # Lấy các thông báo "Công khai" mà người dùng có liên quan
         public_announcements = Q(audience='PUBLIC', tournament_id__in=all_relevant_ids)
 
-        # Lấy các thông báo "Chỉ dành cho đội trưởng" (nếu người dùng là đội trưởng)
-        captain_only_announcements = Q() # Mặc định là một truy vấn rỗng
+        captain_only_announcements = Q()
         if tournament_ids_as_captain:
             captain_only_announcements = Q(audience='CAPTAINS_ONLY', tournament_id__in=tournament_ids_as_captain)
         
-        # Kết hợp 2 điều kiện: Lấy (công khai) HOẶC (chỉ cho đội trưởng)
         announcements = Announcement.objects.filter(
             public_announcements | captain_only_announcements,
             is_published=True
         ).select_related('tournament').distinct().order_by('-created_at')
 
-    # Đánh dấu tất cả các thông báo được hiển thị là đã đọc bởi người dùng hiện tại
     unread_announcements = announcements.exclude(read_by=request.user)
     request.user.read_announcements.add(*unread_announcements) 
 
@@ -605,35 +558,38 @@ def announcement_dashboard(request):
     }
     return render(request, 'tournaments/announcement_dashboard.html', context)
 
-# >> FAG <<
 def faq_view(request):
     return render(request, 'tournaments/faq.html')        
 
-
-@staff_member_required # Chỉ admin hoặc staff mới được truy cập
-@login_required
+# === BẮT ĐẦU SỬA LỖI ===
+@login_required # Giữ lại để đảm bảo người dùng đã đăng nhập
 @never_cache
+# Bỏ decorator @staff_member_required
 def draw_groups_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
 
-    # Xử lý khi admin nhấn nút "Lưu kết quả"
+    # --- THÊM ĐOẠN KIỂM TRA QUYỀN MỚI ---
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    # --- KẾT THÚC ĐOẠN KIỂM TRA ---
+
     if request.method == 'POST':
         try:
             results_str = request.POST.get('draw_results')
             if not results_str:
                 raise ValueError("Không nhận được dữ liệu bốc thăm.")
 
-            # Chuyển đổi chuỗi JSON từ frontend thành dictionary của Python
             group_assignments = json.loads(results_str) 
 
-            with transaction.atomic(): # Đảm bảo tất cả các cập nhật đều thành công
+            with transaction.atomic():
                 for group_id_str, team_ids in group_assignments.items():
                     group_id = int(group_id_str)
                     group = get_object_or_404(Group, pk=group_id, tournament=tournament)
                     
                     for team_id in team_ids:
                         team = get_object_or_404(Team, pk=team_id, tournament=tournament)
-                        team.group = group # Gán đội vào bảng đấu
+                        team.group = group
                         team.save()
             
             messages.success(request, "Kết quả bốc thăm đã được lưu thành công!")
@@ -641,15 +597,11 @@ def draw_groups_view(request, tournament_pk):
 
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
-            # Quay lại trang bốc thăm nếu có lỗi
             return redirect('draw_groups', tournament_pk=tournament.pk)
 
-
-    # Lấy dữ liệu cho lần đầu tải trang (GET request)
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
     groups = tournament.groups.all().order_by('name')
 
-    # Chuyển đổi dữ liệu sang định dạng mà JavaScript có thể đọc được
     teams_data = [{
         'id': team.id, 
         'name': team.name, 
@@ -663,69 +615,23 @@ def draw_groups_view(request, tournament_pk):
 
     context = {
         'tournament': tournament,
-        'teams_json': json.dumps(teams_data), # Chuyển thành chuỗi JSON
-        'groups_json': json.dumps(groups_data), # Chuyển thành chuỗi JSON
+        'teams_json': json.dumps(teams_data),
+        'groups_json': json.dumps(groups_data),
     }
     return render(request, 'tournaments/draw_groups.html', context)
 
-
-# >> THÊM VÀO CUỐI FILE views.py <<
-from django.db.models import Count, Q
-def player_detail(request, pk):
-    player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
-    tournament = player.team.tournament
-
-    # --- Tính toán thống kê ---
-    total_goals = Goal.objects.filter(player=player).count()
-    cards = Card.objects.filter(player=player).aggregate(
-        yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
-        red_cards=Count('id', filter=Q(card_type='RED'))
-    )
-    matches_played = Match.objects.filter(lineups__player=player).distinct()
-
-    stats = {
-        'total_goals': total_goals,
-        'yellow_cards': cards.get('yellow_cards', 0),
-        'red_cards': cards.get('red_cards', 0),
-        'matches_played': matches_played.select_related('team1', 'team2').order_by('-match_time'),
-        'matches_played_count': matches_played.count(),
-    }
-
-    # --- BẮT ĐẦU: Xác định các huy hiệu đạt được ---
-    badges = []
-
-    # 1. Huy hiệu "Vua phá lưới"
-    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals')).order_by('-goal_count').first()
-    if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
-        badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
-
-    # 2. Huy hiệu "Fair-play"
-    if stats['yellow_cards'] == 0 and stats['red_cards'] == 0 and stats['matches_played_count'] > 0:
-        badges.append({'name': 'Cầu thủ Fair-play', 'icon': 'bi-shield-check', 'color': 'text-primary'})
-
-    # 3. Huy hiệu "Cột trụ đội bóng"
-    most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
-    if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
-        badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
-
-    # --- KẾT THÚC: Xác định huy hiệu ---
-
-    context = {
-        'player': player,
-        'stats': stats,
-        'badges': badges, # Gửi danh sách huy hiệu ra template
-    }
-    return render(request, 'tournaments/player_detail.html', context)
-
-
-# Tính năng xếp lịch thi đấu
-@staff_member_required
-@login_required
+@login_required # Giữ lại
 @never_cache
+# Bỏ decorator @staff_member_required
 def generate_schedule_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     
-    # Logic lưu lịch (POST confirm_schedule) giữ nguyên
+    # --- THÊM ĐOẠN KIỂM TRA QUYỀN MỚI ---
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    # --- KẾT THÚC ĐOẠN KIỂM TRA ---
+
     if request.method == 'POST' and 'confirm_schedule' in request.POST:
         schedule_preview_json = request.session.get('schedule_preview_json')
         if not schedule_preview_json:
@@ -751,8 +657,7 @@ def generate_schedule_view(request, tournament_pk):
         except Exception as e:
             messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
 
-    # Xử lý khi nhấn nút "Tạo lịch (Xem trước)"
-    schedule_by_group = None # Sẽ có dạng: {'Bảng A': [trận...], 'Bảng B': [trận...]}
+    schedule_by_group = None
     unscheduled_matches = None
     if request.method == 'POST':
         form = ScheduleGenerationForm(request.POST)
@@ -764,12 +669,10 @@ def generate_schedule_view(request, tournament_pk):
             locations = [loc.strip() for loc in data['locations'].split(',')]
             rest_days = timedelta(days=data['rest_days'])
             
-            # Sửa đổi ở đây: Tạo cặp đấu theo từng bảng
             all_pairings = []
             groups = tournament.groups.prefetch_related('teams').all()
             for group in groups:
                 teams_in_group = list(group.teams.all())
-                # Thêm thông tin group vào mỗi cặp đấu
                 group_pairings = list(combinations(teams_in_group, 2))
                 for pair in group_pairings:
                     all_pairings.append({'pair': pair, 'group_name': group.name})
@@ -806,7 +709,7 @@ def generate_schedule_view(request, tournament_pk):
                                 'team2_name': team2.name, 'team2_id': team2.id,
                                 'match_time': current_datetime,
                                 'location': location,
-                                'group_name': pairing_info['group_name'] # Lưu lại tên bảng
+                                'group_name': pairing_info['group_name']
                             })
                             team_last_played[team1.id] = current_datetime
                             team_last_played[team2.id] = current_datetime
@@ -817,7 +720,6 @@ def generate_schedule_view(request, tournament_pk):
                     unscheduled_matches = [p['pair'] for p in all_pairings]
                     all_pairings = []
 
-            # Sắp xếp và nhóm kết quả theo bảng đấu
             schedule_by_group = {}
             scheduled_matches.sort(key=lambda x: x['match_time'])
             for match in scheduled_matches:
@@ -826,10 +728,8 @@ def generate_schedule_view(request, tournament_pk):
                     schedule_by_group[group_name] = []
                 schedule_by_group[group_name].append(match)
 
-            # (+) THÊM DÒNG SẮP XẾP NÀY VÀO
             schedule_by_group = dict(sorted(schedule_by_group.items()))
 
-            # Lưu bản danh sách phẳng vào session để dễ xử lý khi lưu
             schedule_for_session = [
                 {**match, 'match_time': match['match_time'].isoformat()}
                 for match in scheduled_matches
@@ -841,27 +741,64 @@ def generate_schedule_view(request, tournament_pk):
     context = {
         'tournament': tournament,
         'form': form,
-        'schedule_by_group': schedule_by_group, # Gửi dữ liệu đã nhóm ra template
+        'schedule_by_group': schedule_by_group,
         'unscheduled_matches': unscheduled_matches,
     }
     return render(request, 'tournaments/generate_schedule.html', context)
+# === KẾT THÚC SỬA LỖI ===
+
+def player_detail(request, pk):
+    player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
+    tournament = player.team.tournament
+
+    total_goals = Goal.objects.filter(player=player).count()
+    cards = Card.objects.filter(player=player).aggregate(
+        yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
+        red_cards=Count('id', filter=Q(card_type='RED'))
+    )
+    matches_played = Match.objects.filter(lineups__player=player).distinct()
+
+    stats = {
+        'total_goals': total_goals,
+        'yellow_cards': cards.get('yellow_cards', 0),
+        'red_cards': cards.get('red_cards', 0),
+        'matches_played': matches_played.select_related('team1', 'team2').order_by('-match_time'),
+        'matches_played_count': matches_played.count(),
+    }
+
+    badges = []
+    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals')).order_by('-goal_count').first()
+    if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
+        badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
+
+    if stats['yellow_cards'] == 0 and stats['red_cards'] == 0 and stats['matches_played_count'] > 0:
+        badges.append({'name': 'Cầu thủ Fair-play', 'icon': 'bi-shield-check', 'color': 'text-primary'})
+
+    most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
+    if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
+        badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
+
+    context = {
+        'player': player,
+        'stats': stats,
+        'badges': badges,
+    }
+    return render(request, 'tournaments/player_detail.html', context)
+
 
 @login_required
 def claim_player_profile(request, pk):
     player_to_claim = get_object_or_404(Player, pk=pk)
 
-    # Kiểm tra xem người dùng đã có hồ sơ nào chưa
     if hasattr(request.user, 'player_profile') and request.user.player_profile is not None:
         messages.error(request, "Tài khoản của bạn đã được liên kết với một hồ sơ cầu thủ khác.")
         return redirect('player_detail', pk=pk)
 
-    # Kiểm tra xem hồ sơ này đã có ai nhận chưa
     if player_to_claim.user is not None:
         messages.error(request, "Hồ sơ này đã được một tài khoản khác liên kết.")
         return redirect('player_detail', pk=pk)
 
-    # Nếu mọi thứ hợp lệ, tiến hành liên kết
     player_to_claim.user = request.user
     player_to_claim.save()
     messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
-    return redirect('player_detail', pk=pk)    
+    return redirect('player_detail', pk=pk)
