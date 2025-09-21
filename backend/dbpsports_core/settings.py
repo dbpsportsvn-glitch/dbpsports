@@ -160,24 +160,28 @@ JAZZMIN_SETTINGS = {
         {"name": "Trang chủ", "url": "admin:index"},
         {"name": "Xem trang web", "url": "/", "new_window": True},
     ],
+    "custom_css": "css/custom_admin.css",
     "language_chooser": False,
 }
+
 JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
+    "theme": "darkly", # Sử dụng một theme sáng sủa và phẳng hơn
+    "dark_mode_theme": "darkly", # Tùy chọn theme cho chế độ tối
+    "navbar_small_text": True,
+    "footer_small_text": True,
     "body_small_text": False,
-    "brand_small_text": False,
+    "brand_small_text": True,
     "brand_colour": "navbar-dark",
     "accent": "accent-primary",
     "navbar": "navbar-dark",
     "no_navbar_border": False,
     "sidebar": "sidebar-dark-primary",
-    "sidebar_nav_small_text": False,
+    "sidebar_nav_small_text": True,
     "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": False,
+    "sidebar_nav_child_indent": True, # Thụt lề các menu con cho dễ nhìn
+    "sidebar_nav_compact_style": True, # Giao diện menu gọn gàng hơn
     "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": False,
+    "sidebar_nav_flat_style": True, # Giao diện menu phẳng, hiện đại
 }
 
 # === Email ===

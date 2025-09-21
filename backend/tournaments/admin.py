@@ -5,6 +5,7 @@ from itertools import combinations
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -309,23 +310,32 @@ class PlayerAdmin(admin.ModelAdmin):
     display_avatar.short_description = 'Ảnh đại diện'
 
 @admin.register(Match)
-class MatchAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "tournament", "colored_round", "match_time", "location", "team1_score", "team2_score", "referee")
-    list_filter = ("tournament", "match_round", MatchResultFilter) # <<< SỬA ĐỔI
-    list_editable = ("team1_score", "team2_score", "match_time", "location", "referee") # <<< SỬA ĐỔI
-    list_display_links = ("__str__",) # <<< SỬA ĐỔI
+class MatchAdmin(admin.ModelAdmin): # Bây giờ Python đã hiểu ModelAdmin là gì
+    list_display = (
+        "__str__",
+        "tournament",
+        "colored_round",
+        "display_match_time",
+        "team1_score",
+        "team2_score",
+    )
+    list_filter = ("tournament", "match_round", MatchResultFilter)
     search_fields = ("team1__name", "team2__name", "tournament__name")
+    list_editable = ("team1_score", "team2_score")
     date_hierarchy = "match_time"
     inlines = [LineupInline, GoalInline, CardInline]
     autocomplete_fields = ("team1", "team2", "tournament")
     list_select_related = ("tournament", "team1", "team2")
     list_per_page = 50
 
-    # <<< THÊM HÀM MỚI >>>
-    @admin.action(description='Xóa các trận đấu đã chọn')
-    def delete_selected_matches(self, request, queryset):
-        deleted_count, _ = queryset.delete()
-        self.message_user(request, f'Đã xóa thành công {deleted_count} trận đấu.')
+    @admin.display(description='Thời gian thi đấu', ordering='match_time')
+    def display_match_time(self, obj):
+        from django.utils.html import format_html
+        return format_html(
+            "{}<br>{}",
+            obj.match_time.strftime("%H:%M"),
+            obj.match_time.strftime("%d-%m-%Y")
+        )
 
     fieldsets = (
         (None, {
@@ -356,7 +366,6 @@ class MatchAdmin(admin.ModelAdmin):
         instances = formset.save(commit=False)
         try:
             for instance in instances:
-                # Tự động gán team theo player
                 if isinstance(instance, (Lineup, Goal, Card)) and getattr(instance, "player", None):
                     instance.team = instance.player.team
                 instance.save()

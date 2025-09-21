@@ -1,0 +1,74 @@
+/* backend/static/css/custom_admin.css (Phiên bản Tối giản cuối cùng) */
+:root {
+    --bg-main: #0f172a;
+    --bg-panel: #1e293b;
+    --border: #334155;
+    --text-header: #ffffff;
+    --text-body: #cbd5e1;
+    --gold: #f59e0b;
+    --blue-link: #5fa8ff; /* Màu xanh nhạt hơn cho link */
+}
+
+/* --- NỀN VÀ FONT CHỮ CHUNG --- */
+body, .main-footer, .content-wrapper, .card, .main-sidebar, .main-header, .actions {
+    background-color: var(--bg-main) !important;
+    color: var(--text-body) !important;
+}
+.card, .main-sidebar, .main-header {
+    background-color: var(--bg-panel) !important;
+}
+.main-header, .brand-link, .card-header, .card-footer, .actions, #result_list tbody tr {
+    border-color: var(--border) !important;
+}
+
+/* --- TIÊU ĐỀ & TEXT --- */
+h1, h2, h3, h4, h5, h6, .card-title, .brand-text, #result_list tbody tr th a {
+    color: var(--text-header) !important;
+}
+
+/* --- BẢNG DANH SÁCH --- */
+#result_list thead th {
+    background-color: var(--bg-main) !important;
+    color: var(--gold) !important;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+#result_list tbody tr:hover {
+    background-color: #2c3a4f !important;
+}
+
+/* --- LINK, BUTTON & MENU --- */
+a { color: var(--blue-link) !important; }
+.btn-primary, .sidebar-dark-primary .nav-sidebar>.nav-item>.nav-link.active {
+    background-color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: var(--bg-main) !important;
+    font-weight: bold;
+}
+.btn-primary:hover {
+    opacity: 0.9;
+}
+.nav-sidebar .nav-link p, .nav-sidebar .nav-link i {
+    color: var(--text-body) !important;
+}
+.nav-sidebar .nav-link.active p, .nav-sidebar .nav-link.active i {
+    color: var(--bg-main) !important;
+}
+
+/* [Tinh chỉnh cuối cùng] Đổi màu nút "Thêm mới" sang màu vàng gold */
+.btn-success {
+    background-color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: var(--bg-main) !important;
+    font-weight: bold;
+}
+/* [Tinh chỉnh cuối cùng] Sửa màu nút "Thay đổi" trên dashboard */
+.btn-info {
+    background-color: var(--border) !important; /* Dùng màu viền làm nền */
+    border-color: var(--border) !important;
+    color: var(--text-body) !important; /* Dùng màu chữ sáng hơn */
+}
+.btn-info:hover {
+    background-color: #475569 !important; /* Sáng hơn một chút khi di chuột vào */
+    color: var(--text-header) !important;
+}
