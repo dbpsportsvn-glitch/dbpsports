@@ -17,12 +17,17 @@
                     <h5 class="mb-1">{{ tournament.name }}</h5>
                     <small>{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</small>
                 </div>
-                {# === BẮT ĐẦU THAY ĐỔI === #}
                 <div class="d-flex gap-2">
                     <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-sm btn-outline-secondary">Xem trang giải</a>
                     <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-sm btn-primary">Quản lý</a>
+                    
+                    {# === BẮT ĐẦU THÊM MỚI === #}
+                    <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giải đấu \'{{ tournament.name }}\' không? Mọi dữ liệu liên quan (đội, cầu thủ, trận đấu...) sẽ bị xóa hết.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
+                    {# === KẾT THÚC THÊM MỚI === #}
                 </div>
-                {# === KẾT THÚC THAY ĐỔI === #}
             </div>
         {% empty %}
             <div class="list-group-item">

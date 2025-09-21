@@ -34,7 +34,7 @@ def organization_dashboard(request):
 def create_tournament(request):
     organization = Organization.objects.filter(members=request.user).first()
     if not organization:
-        return redirect('organizations:dashboard') # Dòng này giờ sẽ hoạt động
+        return redirect('organizations:dashboard') 
 
     if request.method == 'POST':
         form = TournamentCreationForm(request.POST, request.FILES)
@@ -42,7 +42,7 @@ def create_tournament(request):
             tournament = form.save(commit=False)
             tournament.organization = organization
             tournament.save()
-            return redirect('organizations:dashboard') # Dòng này giờ sẽ hoạt động
+            return redirect('organizations:dashboard') 
     else:
         form = TournamentCreationForm()
 
@@ -86,7 +86,6 @@ def manage_tournament(request, pk):
                             recipient_list=[team_to_approve.captain.email]
                         )
             return redirect('organizations:manage_tournament', pk=pk)
-        # === KẾT THÚC THÊM MỚI ===
 
         # === BẮT ĐẦU THÊM MỚI: Xử lý thu hồi đội ===
         if 'revoke_payment' in request.POST:
@@ -103,7 +102,6 @@ def manage_tournament(request, pk):
 
     groups = tournament.groups.all().order_by('name')
     
-    # === BẮT ĐẦU THÊM MỚI: Lấy danh sách các đội ===
     # Lấy các đội đang chờ duyệt
     pending_teams = tournament.teams.filter(payment_status='PENDING').select_related('captain')
     # Lấy các đội đã được duyệt
@@ -118,7 +116,7 @@ def manage_tournament(request, pk):
     }
     return render(request, 'organizations/manage_tournament.html', context)
 
-# === BẮT ĐẦU THÊM MỚI ===
+
 @login_required
 def delete_group(request, pk):
     group = get_object_or_404(Group, pk=pk)
@@ -136,4 +134,20 @@ def delete_group(request, pk):
 
     # Nếu là request GET, không làm gì cả và điều hướng về trang quản lý
     return redirect('organizations:manage_tournament', pk=tournament.pk)
-# === KẾT THÚC THÊM MỚI ===    
+
+
+@login_required
+def delete_tournament(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+
+    # KIỂM TRA BẢO MẬT: Đảm bảo người dùng thuộc đơn vị tổ chức của giải đấu này
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        tournament.delete()
+        # Sau khi xóa, quay về trang dashboard của đơn vị
+        return redirect('organizations:dashboard')
+
+    # Nếu là request GET, không làm gì cả và điều hướng về dashboard
+    return redirect('organizations:dashboard')
