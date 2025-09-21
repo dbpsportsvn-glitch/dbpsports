@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/custom.css' %}">
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
 
   <style>
     .avatar-ph{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
@@ -130,6 +131,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 <script>
   (function(){
     const toggle = document.querySelector('.menu-toggle');
@@ -219,6 +221,14 @@
   });
 </script>
 {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      Fancybox.bind("[data-fancybox]", {
+        // Các tùy chọn tùy chỉnh có thể thêm vào đây
+      });
+    });
+  </script>
 
 </body>
 </html>

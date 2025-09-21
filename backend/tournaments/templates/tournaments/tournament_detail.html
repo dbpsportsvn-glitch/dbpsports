@@ -207,8 +207,8 @@
             .photo-gallery .gallery-item img {
                 transition: transform 0.3s ease;
                 width: 100%;
-                height: 250px; /* Cố định chiều cao */
-                object-fit: cover; /* Đảm bảo ảnh lấp đầy mà không bị méo */
+                height: 250px;
+                object-fit: cover;
             }
             .photo-gallery .gallery-item a:hover img {
                 transform: scale(1.05);
@@ -225,7 +225,7 @@
                 {% for photo in tournament.photos.all %}
                 <div class="col-lg-4 col-md-6">
                     <div class="gallery-item">
-                        <a href="{{ photo.image.url }}" target="_blank" data-caption="{{ photo.caption }}">
+                        <a href="{{ photo.image.url }}" data-fancybox="gallery-{{ tournament.pk }}" data-caption="{{ photo.caption }}">
                             <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid">
                         </a>
                         {% if photo.caption %}
