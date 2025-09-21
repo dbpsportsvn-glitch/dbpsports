@@ -58,8 +58,8 @@ def create_tournament(request):
     }
     return render(request, 'organizations/create_tournament.html', context)
 
-# File: backend/organizations/views.py
 
+# Sắp Xếp các cặp đấu
 @login_required
 @never_cache
 def manage_tournament(request, pk):
@@ -130,8 +130,6 @@ def manage_tournament(request, pk):
         'organization': tournament.organization,
         'active_page': view_name,
     }
-
-    # === BẮT ĐẦU NÂNG CẤP THỐNG KÊ ===
     if view_name == 'overview':
         all_teams = tournament.teams.all()
         context['stats'] = {
@@ -139,18 +137,24 @@ def manage_tournament(request, pk):
             'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),
             'total_matches': tournament.matches.count(),
         }
-    # === KẾT THÚC NÂNG CẤP THỐNG KÊ ===
-    
     elif view_name == 'teams':
         context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
         context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
     elif view_name == 'matches':
-        context['matches'] = tournament.matches.select_related('team1', 'team2').order_by('match_time')
+        all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
+        context['group_matches'] = all_matches.filter(match_round='GROUP')
+        
+        # --- BẮT ĐẦU SỬA LỖI SẮP XẾP ---
+        knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
+        round_order = {'SEMI': 1, 'THIRD_PLACE': 2, 'FINAL': 3}
+        knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
+        context['knockout_matches'] = knockout_matches_list
+        # --- KẾT THÚC SỬA LỖI SẮP XẾP ---
+
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
-    
     return render(request, 'organizations/manage_tournament.html', context)
 
 @login_required
