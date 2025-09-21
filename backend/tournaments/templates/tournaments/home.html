@@ -52,7 +52,7 @@
   
   <div class="row">
     {% for tournament in tournaments_list %}
-    
+
       <div class="col-lg-6 mb-4">
         {# 1. Thêm class để có viền vàng nếu là giải của Super Admin #}
         <div class="card shadow-sm h-100 {% if not tournament.organization %}admin-tournament-card{% endif %}">
@@ -161,5 +161,11 @@
         font-size: 1.25rem;
     }
   }
+
+    .admin-tournament-card {
+    border: 2px solid #FFC107;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5) !important;
+  }
+  
 </style>
 {% endblock %}
