@@ -1,0 +1,51 @@
+{% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Quản lý Vòng Knockout - {{ tournament.name }}{% endblock %}
+
+{% block sidebar %}
+    {# Trang này sẽ dùng chung menu, ta sẽ thêm link sau #}
+    {% include 'organizations/_manage_tournament_nav.html' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-diagram-3-fill"></i> Quản lý Vòng loại trực tiếp</h3>
+        <p class="mb-0 text-muted">
+            Tạo và quản lý các cặp đấu cho vòng Tứ kết, Bán kết và Chung kết.
+        </p>
+    </div>
+    <div class="card-body p-4">
+        {# Khu vực thêm các nút tạo trận đấu sẽ được đặt ở đây trong các bước sau #}
+        <div class="mb-4">
+            <h5>Tạo cặp đấu mới (Sắp ra mắt)</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" disabled>Tạo Tứ kết</button>
+                <button class="btn btn-primary" disabled>Tạo Bán kết</button>
+                <button class="btn btn-primary" disabled>Tạo Chung kết</button>
+            </div>
+        </div>
+
+        <hr>
+
+        <h5>Các trận đấu đã xếp lịch</h5>
+        <div class="list-group">
+            {% for match in knockout_matches %}
+                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-info me-2">{{ match.get_match_round_display }}</span>
+                        <strong>{{ match.team1.name|default:"Chưa xác định" }} vs {{ match.team2.name|default:"Chưa xác định" }}</strong>
+                        <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                    </div>
+                    <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-pencil-fill"></i> Quản lý
+                    </a>
+                </div>
+            {% empty %}
+                <div class="list-group-item text-muted">Chưa có trận đấu loại trực tiếp nào được tạo.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

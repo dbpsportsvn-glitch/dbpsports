@@ -321,3 +321,32 @@ def delete_card(request, pk):
         card.delete()
         messages.success(request, f"Đã xóa thẻ phạt của {player_name}.")
     return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards')
+
+
+@login_required
+@never_cache
+def manage_knockout(request, pk):
+    tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
+    organization = tournament.organization
+
+    # Kiểm tra quyền
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # Lấy tất cả các đội đã được xếp bảng
+    teams_in_groups = Team.objects.filter(tournament=tournament, group__isnull=False)
+    if not teams_in_groups.exists():
+        messages.warning(request, "Chưa có đội nào được xếp bảng để bắt đầu vòng loại trực tiếp.")
+        return redirect('organizations:manage_tournament', pk=pk)
+
+    # Lấy các trận knockout đã tồn tại
+    knockout_matches = tournament.matches.filter(match_round__in=['QUARTER', 'SEMI', 'FINAL']).order_by('match_time')
+
+    context = {
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'active_page': 'knockout', # <-- SỬA DÒNG NÀY
+        'knockout_matches': knockout_matches,
+    }
+
+    return render(request, 'organizations/manage_knockout.html', context)
