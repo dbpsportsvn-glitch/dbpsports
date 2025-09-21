@@ -14,7 +14,23 @@ from django.db.models import Count
 from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement
 from .utils import send_notification_email
 
-# ===== CÁC HÀM LOGIC =====
+# ===== CÁC Hàm Cho Bộ lọc =====
+
+class MatchResultFilter(admin.SimpleListFilter):
+    title = 'tình trạng kết quả'
+    parameter_name = 'has_result'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Đã có kết quả'),
+            ('no', 'Chưa đá'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(team1_score__isnull=False, team2_score__isnull=False)
+        if self.value() == 'no':
+            return queryset.filter(team1_score__isnull=True, team2_score__isnull=True)
 
 class PlayerCountFilter(admin.SimpleListFilter):
     title = 'tình trạng đội hình' # Tên sẽ hiển thị trên thanh filter
@@ -294,10 +310,10 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "tournament", "colored_round", "match_round", "match_time", "location", "team1_score", "team2_score", "referee")
-    list_filter = ("tournament", "match_round")
-    list_editable = ("team1_score", "team2_score")
-    list_display_links = ("__str__", "match_time")
+    list_display = ("__str__", "tournament", "colored_round", "match_time", "location", "team1_score", "team2_score", "referee")
+    list_filter = ("tournament", "match_round", MatchResultFilter) # <<< SỬA ĐỔI
+    list_editable = ("team1_score", "team2_score", "match_time", "location", "referee") # <<< SỬA ĐỔI
+    list_display_links = ("__str__",) # <<< SỬA ĐỔI
     search_fields = ("team1__name", "team2__name", "tournament__name")
     date_hierarchy = "match_time"
     inlines = [LineupInline, GoalInline, CardInline]
@@ -305,7 +321,12 @@ class MatchAdmin(admin.ModelAdmin):
     list_select_related = ("tournament", "team1", "team2")
     list_per_page = 50
 
-   # >>> THÊM KHỐI fieldsets NÀY VÀO <<<
+    # <<< THÊM HÀM MỚI >>>
+    @admin.action(description='Xóa các trận đấu đã chọn')
+    def delete_selected_matches(self, request, queryset):
+        deleted_count, _ = queryset.delete()
+        self.message_user(request, f'Đã xóa thành công {deleted_count} trận đấu.')
+
     fieldsets = (
         (None, {
             'fields': ('tournament', 'match_round', ('team1', 'team2'))
@@ -314,11 +335,10 @@ class MatchAdmin(admin.ModelAdmin):
             'fields': (('team1_score', 'team2_score'), 'match_time', 'location', 'referee', 'commentator')
         }),
         ('Cài đặt Livestream', {
-            'classes': ('collapse',), # Giúp có thể thu gọn/mở rộng
+            'classes': ('collapse',),
             'fields': ('livestream_url', 'ticker_text')
         }),
     )
-    # >>> KẾT THÚC KHỐI fieldsets <<<
 
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
