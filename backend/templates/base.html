@@ -40,31 +40,44 @@
 
     <div class="nav-user">
       {% if user.is_authenticated %}
-        <div class="dropdown">
-          <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-light" data-bs-toggle="dropdown" aria-expanded="false">
-            {% with acct=user.socialaccount_set.first %}
-              {% if acct and acct.get_avatar_url %}
-                <img src="{{ acct.get_avatar_url }}" alt="" class="rounded-circle" style="width:28px;height:28px;object-fit:cover">
-              {% else %}
-                <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
-              {% endif %}
-            {% endwith %}
+        <div class="d-flex align-items-center gap-2">
+          
+          {# === BẮT ĐẦU NÚT MỚI CHO BAN TỔ CHỨC === #}
+          {% if user.organizations.all.first %}
+          <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning" title="Quản lý Đơn vị Tổ chức">
+              <i class="bi bi-shield-check"></i> QL. BTC
           </a>
-          <ul class="dropdown-menu dropdown-menu-end shadow">
-              <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}">QL Đơn Vị BTC</a></li> <li><a class="dropdown-item" href="{% url 'dashboard' %}">QL Đội Bóng</a></li>
-            <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
-                    Bảng tin BTC
-                    {% if unread_announcements_count > 0 %}
-                        <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
-                    {% endif %}
-                </a>
-            </li>
-            <li><a class="dropdown-item" href="{% url 'account_email' %}">Đổi email</a></li>
-            <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Đổi mật khẩu</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'account_logout' %}">Đăng xuất</a></li>
-          </ul>
+          {% endif %}
+          {# === KẾT THÚC NÚT MỚI CHO BAN TỔ CHỨC === #}
+
+          {# Dropdown tài khoản #}
+          <div class="dropdown">
+            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-light" data-bs-toggle="dropdown" aria-expanded="false">
+              {% with acct=user.socialaccount_set.first %}
+                {% if acct and acct.get_avatar_url %}
+                  <img src="{{ acct.get_avatar_url }}" alt="" class="rounded-circle" style="width:28px;height:28px;object-fit:cover">
+                {% else %}
+                  <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
+                {% endif %}
+              {% endwith %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                {# Xóa dòng QL Đơn vị BTC ở đây để tránh trùng lặp #}
+                <li><a class="dropdown-item" href="{% url 'dashboard' %}">QL Đội Bóng</a></li>           
+              <li>
+                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
+                      Bảng tin BTC
+                      {% if unread_announcements_count > 0 %}
+                          <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
+                      {% endif %}
+                  </a>
+              </li>            
+              <li><a class="dropdown-item" href="{% url 'account_email' %}">Đổi email</a></li>
+              <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Đổi mật khẩu</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'account_logout' %}">Đăng xuất</a></li>
+            </ul>
+          </div>
         </div>
       {% else %}
         <div class="d-flex align-items-center gap-2">
@@ -90,7 +103,6 @@
           <span>&copy; {% now "Y" %} DBP Sports</span>
         </a>
       </div>
-
       <div class="col-md-6 text-md-end">
         <ul class="list-inline mb-0">
           <li class="list-inline-item"><a href="{% url 'home' %}" class="text-muted text-decoration-none">Trang chủ</a></li>
@@ -102,18 +114,16 @@
   </footer>
 </div>
 
-{# === BẮT ĐẦU VÙNG THÔNG BÁO TOAST MỚI === #}
+{# VÙNG THÔNG BÁO TOAST #}
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
   <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header">
       <strong class="me-auto">Thông báo</strong>
       <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
-    <div class="toast-body">
-      </div>
+    <div class="toast-body"></div>
   </div>
 </div>
-{# === KẾT THÚC VÙNG THÔNG BÁO TOAST MỚI === #}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
@@ -180,19 +190,16 @@
   })();
 </script>
 
-{# === BẮT ĐẦU SCRIPT HIỂN THỊ TOAST MỚI (THAY THẾ CHO ALERT) === #}
 {% if messages %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const toastTemplate = document.getElementById('toastTemplate');
     const toastContainer = document.querySelector('.toast-container');
-    
     if (toastTemplate && toastContainer) {
       {% for message in messages %}
         const newToastEl = toastTemplate.cloneNode(true);
         newToastEl.removeAttribute('id');
         newToastEl.querySelector('.toast-body').textContent = '{{ message }}';
-        
         const header = newToastEl.querySelector('.toast-header');
         if ('{{ message.tags }}'.includes('success')) {
             header.classList.add('bg-success', 'text-white');
@@ -201,7 +208,6 @@
         } else if ('{{ message.tags }}'.includes('warning')) {
             header.classList.add('bg-warning', 'text-dark');
         }
-        
         toastContainer.appendChild(newToastEl);
         const newToast = new bootstrap.Toast(newToastEl);
         newToast.show();
@@ -210,7 +216,6 @@
   });
 </script>
 {% endif %}
-{# === KẾT THÚC SCRIPT HIỂN THỊ TOAST MỚI === #}
 
 </body>
 </html>
