@@ -10,9 +10,29 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
-
+from django.db.models import Count
 from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement
 from .utils import send_notification_email
+
+# ===== CÁC HÀM LOGIC =====
+
+class PlayerCountFilter(admin.SimpleListFilter):
+    title = 'tình trạng đội hình' # Tên sẽ hiển thị trên thanh filter
+    parameter_name = 'player_count' # Tên trên URL
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Đã có cầu thủ'),
+            ('no', 'Chưa có cầu thủ'),
+        )
+
+    def queryset(self, request, queryset):
+        # Thêm một trường 'player_count' tạm thời vào mỗi đội
+        queryset = queryset.annotate(player_count=Count('players'))
+        if self.value() == 'yes':
+            return queryset.filter(player_count__gt=0)
+        if self.value() == 'no':
+            return queryset.filter(player_count=0)
 
 # ===== Inlines =====
 
@@ -195,15 +215,15 @@ class TournamentAdmin(admin.ModelAdmin):
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     list_display = ("name", "tournament", "group", "payment_status", "captain", "display_proof", "display_logo")
-    list_filter = ("tournament", "group", "payment_status")
+    list_filter = ("tournament", "group", "payment_status", PlayerCountFilter)
     search_fields = ("name", "tournament__name", "captain__username")
     list_editable = ("payment_status",)
     inlines = [PlayerInline]
     autocomplete_fields = ("group", "tournament", "captain")
     list_select_related = ("tournament", "group", "captain")
     list_per_page = 50
-    actions = ['approve_payments'] # <--- THÊM DÒNG NÀY VÀO ĐÂY
-    
+    actions = ['approve_payments']
+
     @admin.action(description='Duyệt thanh toán cho các đội đã chọn')
     def approve_payments(self, request, queryset):
         # Cập nhật trạng thái cho tất cả các đội được chọn và đang ở trạng thái "Chờ xác nhận"
