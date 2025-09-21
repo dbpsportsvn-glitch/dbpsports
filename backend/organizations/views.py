@@ -17,6 +17,7 @@ from django.utils import timezone
 from .forms import SemiFinalCreationForm
 from .forms import FinalCreationForm
 from .forms import ThirdPlaceCreationForm
+from django.db import transaction
 
 #=================================
 
@@ -67,7 +68,31 @@ def manage_tournament(request, pk):
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return redirect('organizations:dashboard')
     view_name = request.GET.get('view', 'overview')
+
     if request.method == 'POST':
+        # --- BẮT ĐẦU LOGIC MỚI: LƯU TẤT CẢ TỈ SỐ ---
+        if 'save_all_scores' in request.POST:
+            match_ids = request.POST.getlist('match_ids')
+            try:
+                with transaction.atomic():
+                    for match_id in match_ids:
+                        match = Match.objects.get(pk=match_id, tournament=tournament)
+                        score1_str = request.POST.get(f'score_team1_{match_id}')
+                        score2_str = request.POST.get(f'score_team2_{match_id}')
+                        
+                        s1 = int(score1_str) if score1_str and score1_str.isdigit() else None
+                        s2 = int(score2_str) if score2_str and score2_str.isdigit() else None
+
+                        match.team1_score = s1
+                        match.team2_score = s2
+                        match.save()
+                messages.success(request, "Đã cập nhật thành công tất cả tỉ số.")
+            except (Match.DoesNotExist, ValueError):
+                messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
+            return redirect(request.path_info + '?view=matches')
+        # --- KẾT THÚC LOGIC MỚI ---
+
+        # ... (Toàn bộ logic xử lý POST cũ cho các hành động khác vẫn giữ nguyên y hệt) ...
         if 'quick_update_score' in request.POST:
             match_id = request.POST.get('match_id')
             try:
@@ -145,14 +170,10 @@ def manage_tournament(request, pk):
     elif view_name == 'matches':
         all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
         context['group_matches'] = all_matches.filter(match_round='GROUP')
-        
-        # --- BẮT ĐẦU SỬA LỖI SẮP XẾP ---
         knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
         round_order = {'SEMI': 1, 'THIRD_PLACE': 2, 'FINAL': 3}
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
         context['knockout_matches'] = knockout_matches_list
-        # --- KẾT THÚC SỬA LỖI SẮP XẾP ---
-
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
     return render(request, 'organizations/manage_tournament.html', context)
