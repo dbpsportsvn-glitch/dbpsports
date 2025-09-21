@@ -23,7 +23,8 @@ body, .main-footer, .content-wrapper, .card, .main-sidebar, .main-header, .actio
 
 /* --- TIÊU ĐỀ & TEXT --- */
 h1, h2, h3, h4, h5, h6, .card-title, .brand-text, #result_list tbody tr th a {
-    color: var(--text-header) !important;
+      color: var(--text-header) !important;
+    font-weight: 600; /* Thêm dòng này để chữ đậm hơn một chút */
 }
 
 /* --- BẢNG DANH SÁCH --- */
@@ -71,4 +72,37 @@ a { color: var(--blue-link) !important; }
 .btn-info:hover {
     background-color: #475569 !important; /* Sáng hơn một chút khi di chuột vào */
     color: var(--text-header) !important;
+}
+
+/* [Tinh chỉnh cuối cùng] Sửa màu chữ trong các ô dropdown */
+.select2-container--default .select2-results__option,
+.select2-container--default .select2-results__option[aria-selected=true] {
+    color: var(--text-body) !important; /* Màu chữ cho các lựa chọn */
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--gold) !important; /* Màu nền khi di chuột */
+    color: var(--bg-main) !important; /* Màu chữ khi di chuột */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text-header) !important; /* Màu chữ của mục đã chọn */
+}
+
+/* [Tinh chỉnh cuối cùng] Sửa màu chữ trong ô filter tìm kiếm */
+.select2-container--default .select2-selection--multiple,
+.select2-container--default .select2-selection--single {
+    background-color: var(--bg-main) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: var(--bg-main) !important;
+    font-weight: bold;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--bg-main) !important;
 }
