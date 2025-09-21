@@ -1,0 +1,21 @@
+<h3>Có đơn vị tổ chức mới đăng ký</h3>
+<p>Chào Admin,</p>
+<p>Một đơn vị tổ chức mới vừa đăng ký trên hệ thống DBP Sports:</p>
+<ul>
+    <li><strong>Tên đơn vị:</strong> {{ organization.name }}</li>
+
+    {# === THAY THẾ DÒNG DƯỚI ĐÂY === #}
+    <li>
+        <strong>Người đăng ký:</strong>
+        {% if organization.owner.get_full_name %}
+            {{ organization.owner.get_full_name }} ({{ organization.owner.email }})
+        {% else %}
+            {{ organization.owner.email }}
+        {% endif %}
+    </li>
+    {# === KẾT THÚC THAY THẾ === #}
+
+    <li><strong>Thời gian:</strong> {{ organization.created_at|date:"H:i, d/m/Y" }}</li>
+</ul>
+<p>Vui lòng truy cập trang quản trị để xem xét và duyệt đơn vị này.</p>
+<p>Trân trọng,<br>Hệ thống DBP Sports</p>

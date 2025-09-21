@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Đang chờ xét duyệt{% endblock %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <div class="alert alert-success">
+        <h4 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Gửi yêu cầu thành công!</h4>
+        <p>Cảm ơn bạn đã đăng ký. Yêu cầu tạo đơn vị tổ chức <strong>{{ organization.name }}</strong> đã được gửi đến Ban quản trị.</p>
+        <p>Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất. Một email sẽ được gửi đến bạn khi yêu cầu được duyệt.</p>
+        <hr>
+        <a href="{% url 'home' %}" class="btn btn-primary">Quay về Trang chủ</a>
+    </div>
+</div>
+{% endblock %}

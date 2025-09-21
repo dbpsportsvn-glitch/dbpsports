@@ -12,13 +12,21 @@ from django.http import HttpResponseForbidden
 @login_required
 @never_cache
 def organization_dashboard(request):
-    """
-    Hiển thị trang quản lý chính cho đơn vị tổ chức của người dùng.
-    """
+    # Sửa lại logic: tìm đơn vị của người dùng
     organization = Organization.objects.filter(members=request.user).first()
 
     if not organization:
         return render(request, 'organizations/no_organization.html')
+
+    # === BẮT ĐẦU THAY ĐỔI: Kiểm tra trạng thái ===
+    # Nếu đơn vị đang chờ duyệt, hiển thị trang chờ
+    if organization.status == Organization.Status.PENDING:
+        return render(request, 'organizations/organization_pending.html', {'organization': organization})
+
+    # Nếu đơn vị bị từ chối hoặc vô hiệu hóa, có thể thêm trang thông báo riêng sau
+    if organization.status != Organization.Status.ACTIVE:
+         return render(request, 'organizations/no_organization.html') # Tạm thời về trang này
+    # === KẾT THÚC THAY ĐỔI ===
 
     tournaments = organization.tournaments.all().order_by('-start_date')
 
@@ -155,8 +163,8 @@ def delete_tournament(request, pk):
 
 # === BẮT ĐẦU THÊM MỚI ===
 @login_required
+@never_cache
 def create_organization(request):
-    # Nếu người dùng đã có đơn vị rồi thì không cho tạo nữa
     if Organization.objects.filter(members=request.user).exists():
         return redirect('organizations:dashboard')
 
@@ -164,12 +172,21 @@ def create_organization(request):
         form = OrganizationCreationForm(request.POST, request.FILES)
         if form.is_valid():
             organization = form.save(commit=False)
-            # Gán người dùng đang tạo làm chủ sở hữu
             organization.owner = request.user
-            organization.save() # (Hàm save chúng ta viết ở model sẽ tự tạo Membership)
+            organization.save()
+
+            # === BẮT ĐẦU SỬA LỖI ĐƯỜNG DẪN TEMPLATE ===
+            send_notification_email(
+                subject=f"Có đơn vị mới đăng ký: {organization.name}",
+                # Bỏ đi phần "organizations/templates/" ở đầu
+                template_name='organizations/emails/new_organization_notification.html',
+                context={'organization': organization},
+                recipient_list=[settings.ADMIN_EMAIL]
+            )
+            # === KẾT THÚC SỬA LỖI ===
+
             return redirect('organizations:dashboard')
     else:
         form = OrganizationCreationForm()
 
     return render(request, 'organizations/create_organization.html', {'form': form})
-# === KẾT THÚC THÊM MỚI ===

@@ -5,16 +5,31 @@ class Organization(models.Model):
     """
     Đại diện cho một đơn vị tổ chức giải đấu trên nền tảng.
     """
+    # === BẮT ĐẦU THÊM MỚI ===
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Chờ xét duyệt'
+        ACTIVE = 'ACTIVE', 'Đang hoạt động'
+        REJECTED = 'REJECTED', 'Bị từ chối'
+        DISABLED = 'DISABLED', 'Vô hiệu hóa'
+
+    status = models.CharField(
+        "Trạng thái",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING # Mặc định khi mới tạo là "Chờ xét duyệt"
+    )
+    # === KẾT THÚC THÊM MỚI ===
+
     name = models.CharField("Tên đơn vị tổ chức", max_length=150)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT, # Không cho xóa User nếu họ đang là chủ sở hữu
+        on_delete=models.PROTECT,
         related_name='owned_organizations',
         verbose_name="Chủ sở hữu"
     )
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        through='Membership', # Liên kết thông qua model Membership
+        through='Membership',
         related_name='organizations',
         verbose_name="Thành viên"
     )
@@ -24,20 +39,16 @@ class Organization(models.Model):
     def __str__(self):
         return self.name
 
-    # === BẮT ĐẦU THÊM MỚI ===
     def save(self, *args, **kwargs):
-        # is_new sẽ là True nếu đây là lần đầu tiên object được tạo
         is_new = self._state.adding
         super().save(*args, **kwargs)
-        # Nếu là object mới, hãy tự động tạo Membership cho owner
         if is_new and self.owner:
             Membership.objects.create(
                 organization=self,
                 user=self.owner,
                 role=Membership.Role.OWNER
             )
-    # === KẾT THÚC THÊM MỚI ===        
-    
+
 class Membership(models.Model):
     """
     Liên kết một User với một Organization và gán vai trò cho họ.
