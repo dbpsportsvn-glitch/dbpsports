@@ -105,24 +105,36 @@
 
             {% elif active_page == 'matches' %}
                 {# Nội dung quản lý trận đấu #}
-                <h5>Quản lý các Trận đấu</h5>
-                <p class="text-muted">Nhấn "Quản lý" để cập nhật tỉ số, link livestream và các thông tin khác cho trận đấu.</p>
+                <h5>Cập nhật nhanh Tỉ số Trận đấu</h5>
+                <p class="text-muted">Nhập tỉ số và nhấn "Lưu" để cập nhật nhanh. Để trống cả hai ô sẽ xóa kết quả. Để cập nhật thông tin khác, hãy vào trang "Quản lý" chi tiết.</p>
                 <div class="list-group">
                     {% for match in matches %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
-                                <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
-                            </div>
-                            <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil-fill"></i> Quản lý
-                            </a>
+                        <div class="list-group-item">
+                            <form method="post" class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="match_id" value="{{ match.pk }}">
+
+                                <div class="flex-grow-1">
+                                    <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
+                                    <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="number" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 80px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
+                                    <span>-</span>
+                                    <input type="number" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 80px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
+                                    <button type="submit" name="quick_update_score" class="btn btn-sm btn-success">Lưu</button>
+                                </div>
+
+                                <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil-fill"></i> Quản lý
+                                </a>
+                            </form>
                         </div>
                     {% empty %}
                         <div class="list-group-item text-muted">Chưa có trận đấu nào được xếp lịch.</div>
                     {% endfor %}
                 </div>
-
 
             {% elif active_page == 'members' %}
                  {# Nội dung quản lý thành viên #}

@@ -59,6 +59,8 @@ def create_tournament(request):
     }
     return render(request, 'organizations/create_tournament.html', context)
 
+# File: backend/organizations/views.py
+
 @login_required
 @never_cache
 def manage_tournament(request, pk):
@@ -67,19 +69,36 @@ def manage_tournament(request, pk):
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return redirect('organizations:dashboard')
 
-    # Lấy view từ URL, mặc định là 'overview'
     view_name = request.GET.get('view', 'overview')
 
-    # Xử lý các POST request
     if request.method == 'POST':
-        # Xử lý tạo bảng đấu
+        # === BẮT ĐẦU CODE MỚI: Xử lý lưu tỉ số nhanh ===
+        if 'quick_update_score' in request.POST:
+            match_id = request.POST.get('match_id')
+            try:
+                match = Match.objects.get(pk=match_id, tournament=tournament)
+                score1_str = request.POST.get(f'score_team1_{match_id}')
+                score2_str = request.POST.get(f'score_team2_{match_id}')
+
+                # Chuyển chuỗi rỗng thành None, nếu không thì chuyển thành số nguyên
+                match.team1_score = int(score1_str) if score1_str else None
+                match.team2_score = int(score2_str) if score2_str else None
+                
+                match.save()
+                messages.success(request, f"Đã cập nhật tỉ số cho trận đấu: {match.team1.name} vs {match.team2.name}.")
+            
+            except (Match.DoesNotExist, ValueError):
+                messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
+            
+            return redirect(request.path_info + '?view=matches')
+        # === KẾT THÚC CODE MỚI ===
+
         if 'create_group' in request.POST:
             group_name = request.POST.get('group_name', '').strip()
             if group_name:
                 Group.objects.create(tournament=tournament, name=group_name)
             return redirect(request.path_info + '?view=groups')
 
-        # Xử lý duyệt đội
         if 'approve_payment' in request.POST:
             team_id = request.POST.get('team_id')
             if team_id:
@@ -95,7 +114,6 @@ def manage_tournament(request, pk):
                         )
             return redirect(request.path_info + '?view=teams')
 
-        # Xử lý thu hồi đội
         if 'revoke_payment' in request.POST:
             team_id = request.POST.get('team_id')
             if team_id:
@@ -105,7 +123,6 @@ def manage_tournament(request, pk):
                     team.save()
             return redirect(request.path_info + '?view=teams')
 
-        # Xử lý mời thành viên
         if 'invite_member' in request.POST:
             if request.user == tournament.organization.owner:
                 invite_form = MemberInviteForm(request.POST)
@@ -123,14 +140,12 @@ def manage_tournament(request, pk):
                         for error in errors: messages.error(request, error)
             return redirect(request.path_info + '?view=members')
 
-    # Chuẩn bị context chung
     context = {
         'tournament': tournament,
         'organization': tournament.organization,
-        'active_page': view_name, # Biến này sẽ giúp menu biết mục nào đang active
+        'active_page': view_name,
     }
-
-    # Thêm dữ liệu vào context tùy theo view người dùng chọn
+    
     if view_name == 'teams':
         context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
         context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
@@ -141,7 +156,6 @@ def manage_tournament(request, pk):
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
     
-    # Render ra template chính
     return render(request, 'organizations/manage_tournament.html', context)
 
 
