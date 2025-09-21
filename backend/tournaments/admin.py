@@ -202,6 +202,24 @@ class TeamAdmin(admin.ModelAdmin):
     autocomplete_fields = ("group", "tournament", "captain")
     list_select_related = ("tournament", "group", "captain")
     list_per_page = 50
+    actions = ['approve_payments'] # <--- THÊM DÒNG NÀY VÀO ĐÂY
+    
+    @admin.action(description='Duyệt thanh toán cho các đội đã chọn')
+    def approve_payments(self, request, queryset):
+        # Cập nhật trạng thái cho tất cả các đội được chọn và đang ở trạng thái "Chờ xác nhận"
+        updated_count = queryset.filter(payment_status='PENDING').update(payment_status='PAID')
+
+        # Gửi email thông báo cho từng đội được duyệt
+        for team in queryset.filter(pk__in=queryset.values_list('pk', flat=True)):
+            if team.captain.email:
+                send_notification_email(
+                    subject=f"Xác nhận thanh toán thành công cho đội {team.name}",
+                    template_name='tournaments/emails/payment_confirmed.html',
+                    context={'team': team},
+                    recipient_list=[team.captain.email]
+                )
+
+        self.message_user(request, f'Đã duyệt thành công thanh toán cho {updated_count} đội.')
 
     def display_logo(self, obj):
         if obj.logo:
@@ -237,6 +255,7 @@ class PlayerAdmin(admin.ModelAdmin):
     autocomplete_fields = ("team",)
     list_select_related = ("team",)
     list_per_page = 50
+    actions = ['approve_payments']
 
     def display_avatar(self, obj):
         if obj.avatar:
