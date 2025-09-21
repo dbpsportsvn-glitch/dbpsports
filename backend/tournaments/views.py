@@ -26,6 +26,8 @@ from itertools import combinations
 import random
 from datetime import datetime, time, timedelta
 from organizations.models import Organization
+from .models import Tournament, TournamentPhoto
+from .forms import MultipleImageUploadForm
 
 #==================================
 
@@ -811,3 +813,28 @@ def claim_player_profile(request, pk):
     player_to_claim.save()
     messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
     return redirect('player_detail', pk=pk)
+
+@staff_member_required
+def tournament_bulk_upload(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    if request.method == 'POST':
+        form = MultipleImageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Lấy danh sách các file ảnh được tải lên
+            images = request.FILES.getlist('images')
+            for image in images:
+                # Tạo một đối tượng TournamentPhoto cho mỗi ảnh
+                TournamentPhoto.objects.create(tournament=tournament, image=image)
+            
+            messages.success(request, f"Đã tải lên thành công {len(images)} ảnh cho giải đấu.")
+            # Chuyển hướng về trang chi tiết giải đấu sau khi tải xong
+            return redirect('tournament_detail', pk=tournament_pk)
+    else:
+        form = MultipleImageUploadForm()
+
+    context = {
+        'tournament': tournament,
+        'form': form,
+    }
+    return render(request, 'tournaments/bulk_upload.html', context)    

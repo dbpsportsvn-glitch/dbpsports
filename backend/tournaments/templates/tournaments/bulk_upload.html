@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Tải ảnh hàng loạt - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-images"></i> Tải ảnh hàng loạt</h1>
+        <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_images" class="form-label">{{ form.images.label }}</label>
+                    <input type="file" name="images" required id="id_images" class="form-control" multiple>
+                    
+                    {% if form.images.help_text %}
+                        <small class="form-text text-muted">{{ form.images.help_text }}</small>
+                    {% endif %}
+                    {% for error in form.images.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-upload"></i> Bắt đầu Tải lên
+                    </button>
+                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-secondary">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

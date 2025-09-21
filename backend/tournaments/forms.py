@@ -74,3 +74,11 @@ class ScheduleGenerationForm(forms.Form):
         min_value=0,
         help_text="Ví dụ: nhập 1 để đảm bảo một đội không phải đá 2 ngày liên tiếp."
     )        
+
+# === UPLOAD NHIỀU ẢNH ===
+class MultipleImageUploadForm(forms.Form):
+    # Bỏ hoàn toàn phần widget đi
+    images = forms.ImageField(
+        label="Chọn một hoặc nhiều ảnh để tải lên",
+        required=True
+    )

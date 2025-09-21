@@ -135,7 +135,7 @@ class TournamentPhotoInline(admin.TabularInline):
 # ===== Admins =====
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "view_details_link")
+    list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "bulk_upload_link", "view_details_link")
     list_filter = ("status",)
     search_fields = ("name",)
     list_editable = ("status",)
@@ -143,6 +143,12 @@ class TournamentAdmin(admin.ModelAdmin):
     inlines = [GroupInline, TournamentPhotoInline] 
     list_per_page = 50
     actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
+
+    # === THÊM HÀM MỚI NÀY VÀO TRONG CLASS TournamentAdmin ===
+    @admin.display(description='Tải ảnh hàng loạt')
+    def bulk_upload_link(self, obj):
+        url = reverse('tournament_bulk_upload', args=[obj.pk])
+        return format_html('<a class="button" href="{}" target="_blank">Tải ảnh</a>', url)
 
     # THÊM HÀM MỚI NÀY VÀO DƯỚI HÀM draw_groups_link
     def generate_schedule_link(self, obj):

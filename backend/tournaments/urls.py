@@ -19,8 +19,9 @@ urlpatterns = [
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
     path('tournament/<int:tournament_pk>/draw/', views.draw_groups_view, name='draw_groups'),
+    path('tournament/<int:tournament_pk>/gallery/bulk-upload/', views.tournament_bulk_upload, name='tournament_bulk_upload'),
     path('tournament/<int:tournament_pk>/schedule/generate/', views.generate_schedule_view, name='generate_schedule'),
-
+    
     # --- URL liên quan đến Đội bóng (Team) ---
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),
     path('team/<int:pk>/', views.team_detail, name='team_detail'),
