@@ -52,8 +52,10 @@
   
   <div class="row">
     {% for tournament in tournaments_list %}
+    
       <div class="col-lg-6 mb-4">
-        <div class="card shadow-sm h-100">
+        {# 1. Thêm class để có viền vàng nếu là giải của Super Admin #}
+        <div class="card shadow-sm h-100 {% if not tournament.organization %}admin-tournament-card{% endif %}">
           <div class="tournament-card-bg" style="position: relative; color: white;">
             {% if tournament.image %}
               <img src="{{ tournament.image.url }}" class="card-img-bg" alt="{{ tournament.name }} banner">
@@ -67,7 +69,21 @@
                   Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}
                 </small>
               </p>
-              <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto">Xem chi tiết</a>
+              
+              {# 2. Thêm thông tin BTC với logo và chữ màu vàng #}
+              <div class="d-inline-flex align-items-center gap-2 mb-3">
+                {% if tournament.organization and tournament.organization.logo %}
+                  <img src="{{ tournament.organization.logo.url }}" alt="{{ tournament.organization.name }}" style="width: 20px; height: 20px; object-fit: contain; border-radius: 4px;">
+                {% endif %}
+                <span class="small badge bg-dark px-2 py-1" style="--bs-bg-opacity: .7;">
+                  BTC: 
+                  <span {% if not tournament.organization %}class="text-warning fw-bold"{% endif %}>
+                    {% if tournament.organization %}{{ tournament.organization.name }}{% else %}DBP Sports{% endif %}
+                  </span>
+                </span>
+              </div>
+
+              <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto d-block">Xem chi tiết</a>
             </div>
           </div>
           <div class="card-footer">
@@ -75,6 +91,7 @@
           </div>
         </div>
       </div>
+      {# === KẾT THÚC THAY THẾ TẠI ĐÂY === #}
     {% empty %}
       <div class="col"><p>Chưa có giải đấu nào nổi bật.</p></div>
     {% endfor %}
