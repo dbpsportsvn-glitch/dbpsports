@@ -28,7 +28,9 @@ from django.contrib.admin.views.decorators import staff_member_required
 from itertools import combinations
 import random
 from datetime import datetime, time, timedelta
+from organizations.models import Organization
 
+#==================================
 
 def home(request):
     # Giải chưa kết thúc
@@ -44,15 +46,33 @@ def home(request):
     )
 
 def tournaments_active(request):
-    today = timezone.localdate()
-    qs = Tournament.objects.filter(
-        Q(start_date__lte=today, end_date__gte=today) |
-        Q(status__in=["REGISTRATION_OPEN","ONGOING","IN_PROGRESS"])
-    ).order_by("-start_date")
-    return render(request, "tournaments/active_list.html", {"tournaments": qs})
+    # Lấy tham số lọc từ URL (ví dụ: ?region=MIEN_BAC)
+    region_filter = request.GET.get('region', '')
+    org_filter = request.GET.get('org', '')
 
-from datetime import timedelta
-from django.utils import timezone
+    # Bắt đầu với việc lấy tất cả các giải đang hoạt động
+    tournaments_list = Tournament.objects.exclude(status='FINISHED').select_related('organization').order_by('-start_date')
+
+    # Áp dụng bộ lọc nếu có
+    if region_filter:
+        tournaments_list = tournaments_list.filter(region=region_filter)
+    
+    if org_filter:
+        tournaments_list = tournaments_list.filter(organization__id=org_filter)
+
+    # Lấy danh sách các đơn vị tổ chức có giải đấu để đưa vào bộ lọc
+    active_orgs_ids = tournaments_list.values_list('organization__id', flat=True).distinct()
+    all_organizations = Organization.objects.filter(id__in=active_orgs_ids).order_by('name')
+
+    context = {
+        'tournaments': tournaments_list,
+        'all_organizations': all_organizations, # Gửi danh sách đơn vị ra template
+        'all_regions': Tournament.Region.choices, # Gửi danh sách khu vực ra template
+        'current_region': region_filter, # Giữ lại lựa chọn của người dùng
+        'current_org': org_filter, # Giữ lại lựa chọn của người dùng
+    }
+    return render(request, "tournaments/active_list.html", context)
+
 
 @never_cache
 def livestream_view(request, pk=None):

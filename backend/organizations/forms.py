@@ -4,13 +4,14 @@ from tournaments.models import Tournament
 from .models import Organization
 from django.contrib.auth.models import User
 
+# Sửa "cclass" thành "class" ở dòng dưới
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
         model = Tournament
-        # Chỉ cho phép người dùng điền các trường này
-        fields = ['name', 'start_date', 'end_date', 'image', 'rules']
+        fields = ['name', 'region', 'start_date', 'end_date', 'image', 'rules']
         labels = {
             'name': 'Tên giải đấu',
+            'region': 'Khu vực tổ chức',
             'start_date': 'Ngày bắt đầu',
             'end_date': 'Ngày kết thúc',
             'image': 'Ảnh bìa / Banner giải đấu',
@@ -32,8 +33,9 @@ class OrganizationCreationForm(forms.ModelForm):
             'name': 'Tên đơn vị tổ chức của bạn',
             'logo': 'Logo (không bắt buộc)',
         }
-# === KẾT THÚC THÊM MỚI ===      
 
+
+# === Tờ khai mời thành viên nhóm ===      
 class MemberInviteForm(forms.Form):
     email = forms.EmailField(
         label="Email của thành viên mới",

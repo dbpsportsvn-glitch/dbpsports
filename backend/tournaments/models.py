@@ -18,38 +18,48 @@ MAX_STARTERS = 11  # số cầu thủ đá chính tối đa cho mỗi đội tro
 
 # --- Model Tournament ---
 class Tournament(models.Model):
-    STATUS_CHOICES = [
-        ('REGISTRATION_OPEN', 'Đang mở đăng ký'),
-        ('IN_PROGRESS', 'Đang diễn ra'),
-        ('FINISHED', 'Đã kết thúc'),
-    ]
+    # --- Các lựa chọn (Choices) ---
+    class Status(models.TextChoices):
+        REGISTRATION_OPEN = 'REGISTRATION_OPEN', 'Đang mở đăng ký'
+        IN_PROGRESS = 'IN_PROGRESS', 'Đang diễn ra'
+        FINISHED = 'FINISHED', 'Đã kết thúc'
 
-    name = models.CharField(max_length=200)
-    # === BẮT ĐẦU THÊM MỚI ===
+    class Region(models.TextChoices):
+        MIEN_BAC = 'MIEN_BAC', 'Miền Bắc'
+        MIEN_TRUNG = 'MIEN_TRUNG', 'Miền Trung'
+        MIEN_NAM = 'MIEN_NAM', 'Miền Nam'
+        KHAC = 'KHAC', 'Khác'
+
+    # --- Các trường dữ liệu (Fields) ---
     organization = models.ForeignKey(
-        Organization,
+        "organizations.Organization", # Sửa lại để tránh lỗi import vòng tròn
         on_delete=models.CASCADE,
         related_name='tournaments',
         verbose_name="Đơn vị tổ chức",
-        null=True, # Tạm thời cho phép null để không ảnh hưởng dữ liệu cũ
+        null=True,
         blank=True
     )
-    # === KẾT THÚC THÊM MỚI ===
+    name = models.CharField(max_length=200)
     start_date = models.DateField()
     end_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.REGISTRATION_OPEN)
     image = models.ImageField(upload_to='tournament_banners/', null=True, blank=True)
-
-    # >>> THÊM CÁC DÒNG MỚI NÀY VÀO <<<
+    region = models.CharField(
+        "Khu vực",
+        max_length=20,
+        choices=Region.choices,
+        default=Region.KHAC
+    )
     bank_name = models.CharField("Tên ngân hàng", max_length=100, blank=True)
     bank_account_number = models.CharField("Số tài khoản", max_length=50, blank=True)
     bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)
     payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
     rules = models.TextField("Điều lệ & Thông báo", blank=True, help_text="Nhập các điều lệ, quy định hoặc thông báo của giải đấu tại đây. Bạn có thể sử dụng mã HTML cơ bản để định dạng.")
 
+    # --- Các phương thức (Methods) ---
     def __str__(self):
         return self.name
-
+        
 # --- Model Group ---
 class Group(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='groups')
