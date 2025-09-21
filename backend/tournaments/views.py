@@ -480,7 +480,6 @@ def match_print_view(request, pk):
 def team_payment(request, pk):
     team = get_object_or_404(Team, pk=pk)
 
-    # Chỉ đội trưởng mới có quyền
     if request.user != team.captain:
         return redirect('home')
 
@@ -488,16 +487,30 @@ def team_payment(request, pk):
         form = PaymentProofForm(request.POST, request.FILES, instance=team)
         if form.is_valid():
             team = form.save(commit=False)
-            team.payment_status = 'PENDING' # Chuyển trạng thái sang "Chờ xác nhận"
+            team.payment_status = 'PENDING'
             team.save()
 
-            # === GỌI HÀM GỬI EMAIL TẠI ĐÂY ===
+            # Gửi email cho admin (giữ nguyên)
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
                 context={'team': team},
-                recipient_list=[settings.ADMIN_EMAIL] # <-- Gửi trong một danh sách
+                recipient_list=[settings.ADMIN_EMAIL]
             )
+
+            # === BẮT ĐẦU THAY ĐỔI ===
+            # 1. Gửi email cảm ơn và thông báo chờ cho đội trưởng
+            if team.captain.email:
+                send_notification_email(
+                    subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
+                    template_name='tournaments/emails/payment_pending_confirmation.html',
+                    context={'team': team},
+                    recipient_list=[team.captain.email] # Gửi cho đội trưởng
+                )
+            
+            # 2. Thêm message để hiển thị popup ở bước sau
+            messages.success(request, 'Đã tải lên hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
+            # === KẾT THÚC THAY ĐỔI ===
             
             return redirect('team_detail', pk=team.pk)
     else:
@@ -510,7 +523,6 @@ def team_payment(request, pk):
     return render(request, 'tournaments/payment_proof.html', context)
 
 
-    # tournaments/views.py
 def archive_view(request):
     # Lấy tất cả các giải đấu đã kết thúc
     finished_tournaments = Tournament.objects.filter(status='FINISHED').order_by('-start_date')

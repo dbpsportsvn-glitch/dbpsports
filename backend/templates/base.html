@@ -187,5 +187,23 @@
   })();
 </script>
 
+{# === BẮT ĐẦU THÊM MỚI: SCRIPT HIỂN THỊ POPUP TỪ MESSAGES === #}
+{% if messages %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    let messages = '';
+    {% for message in messages %}
+      // Nối các message lại với nhau, xuống dòng nếu có nhiều message
+      messages += `{{ message }}\\n`;
+    {% endfor %}
+    
+    if (messages) {
+      alert(messages.trim());
+    }
+  });
+</script>
+{% endif %}
+{# === KẾT THÚC THÊM MỚI === #}
+
 </body>
 </html>
