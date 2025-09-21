@@ -54,6 +54,8 @@ def create_tournament(request):
     }
     return render(request, 'organizations/create_tournament.html', context)
 
+# File: backend/organizations/views.py
+
 @login_required
 @never_cache
 def manage_tournament(request, pk):
@@ -118,12 +120,24 @@ def manage_tournament(request, pk):
                     for field, errors in invite_form.errors.items():
                         for error in errors: messages.error(request, error)
             return redirect(request.path_info + '?view=members')
+
     context = {
         'tournament': tournament,
         'organization': tournament.organization,
         'active_page': view_name,
     }
-    if view_name == 'teams':
+
+    # === BẮT ĐẦU NÂNG CẤP THỐNG KÊ ===
+    if view_name == 'overview':
+        all_teams = tournament.teams.all()
+        context['stats'] = {
+            'total_teams': all_teams.count(),
+            'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),
+            'total_matches': tournament.matches.count(),
+        }
+    # === KẾT THÚC NÂNG CẤP THỐNG KÊ ===
+    
+    elif view_name == 'teams':
         context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
         context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
     elif view_name == 'groups':
@@ -132,6 +146,7 @@ def manage_tournament(request, pk):
         context['matches'] = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
+    
     return render(request, 'organizations/manage_tournament.html', context)
 
 @login_required

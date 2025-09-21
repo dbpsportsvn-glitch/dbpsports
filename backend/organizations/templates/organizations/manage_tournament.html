@@ -8,11 +8,66 @@
     <div class="card">
         <div class="card-body p-4">
             {% if active_page == 'overview' %}
-                {# Nội dung cho trang tổng quan #}
-                <h3>Tổng quan giải đấu</h3>
-                <p>Chào mừng đến với khu vực quản lý giải đấu <strong>{{ tournament.name }}</strong>.</p>
-                <p>Sử dụng menu bên trái để điều hướng qua các chức năng quản lý.</p>
-                <hr>
+                {# Thêm style cho các thẻ thống kê #}
+                <style>
+                    .stat-card {
+                        border-left: 5px solid;
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    }
+                    .stat-card:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,.1);
+                    }
+                    .stat-card-teams { border-color: #0d6efd; }
+                    .stat-card-pending { border-color: #ffc107; }
+                    .stat-card-matches { border-color: #198754; }
+                </style>
+
+                {# --- BẮT ĐẦU NỘI DUNG MỚI --- #}
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card stat-card-teams h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-subtitle text-muted">Tổng số đội</h6>
+                                        <p class="display-5 mb-0">{{ stats.total_teams }}</p>
+                                    </div>
+                                    <i class="bi bi-people-fill fs-1 text-primary opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card stat-card-pending h-100">
+                            <div class="card-body">
+                                 <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-subtitle text-muted">Đội chờ duyệt</h6>
+                                        <p class="display-5 mb-0">{{ stats.pending_teams_count }}</p>
+                                    </div>
+                                    <i class="bi bi-hourglass-split fs-1 text-warning opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card stat-card-matches h-100">
+                            <div class="card-body">
+                                 <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-subtitle text-muted">Tổng số trận</h6>
+                                        <p class="display-5 mb-0">{{ stats.total_matches }}</p>
+                                    </div>
+                                    <i class="bi bi-calendar2-event-fill fs-1 text-success opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
                 <h5>Các thao tác nhanh</h5>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
@@ -22,6 +77,7 @@
                         <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                     </a>
                 </div>
+                {# --- KẾT THÚC NỘI DUNG MỚI --- #}
 
             {% elif active_page == 'teams' %}
                 {# Nội dung quản lý đội #}
