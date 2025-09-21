@@ -12,40 +12,54 @@ User = get_user_model()
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         """
-        Can thiệp vào quá trình đăng nhập social.
-        Nếu email của người dùng social đã tồn tại trong hệ thống,
-        hãy liên kết tài khoản social này với tài khoản đã có.
+        Can thiệp trước khi quá trình đăng nhập social hoàn tất.
+
+        Kiểm tra xem email từ tài khoản social (Google) đã tồn tại trong
+        hệ thống hay chưa. Nếu đã tồn tại, hãy liên kết tài khoản social này
+        với người dùng hiện có và đăng nhập cho họ.
         """
-        # Bỏ qua nếu người dùng đã được kết nối
+        # Bỏ qua nếu tài khoản social này đã được kết nối với người dùng nào đó
         if sociallogin.is_existing:
             return
 
-        # Kiểm tra xem có tài khoản social nào khác đã kết nối chưa
+        # Lấy email từ dữ liệu của Google
         if sociallogin.account.extra_data:
             email = sociallogin.account.extra_data.get('email', '').lower()
             if email:
-                # Tìm người dùng có cùng email và chưa có tài khoản social
+                # Tìm xem có người dùng nào trong hệ thống có email này không
                 try:
                     user = User.objects.get(email__iexact=email)
-                    if not user.socialaccount_set.exists():
-                        # Nếu tìm thấy, liên kết tài khoản social này với người dùng đó
-                        sociallogin.connect(request, user)
-                        
-                        # Đăng nhập cho người dùng
-                        perform_login(request, user, email_verification='none')
-                        messages.success(request, "Đăng nhập thành công! Tài khoản Google của bạn đã được liên kết.")
-                        raise ImmediateHttpResponse(redirect('dashboard')) # Chuyển hướng sau khi đăng nhập
+                    
+                    # Nếu tìm thấy, kết nối tài khoản social với người dùng đó
+                    sociallogin.connect(request, user)
+                    
+                    # Thực hiện đăng nhập cho người dùng
+                    perform_login(request, user, email_verification='none')
+                    messages.success(request, "Đăng nhập thành công! Tài khoản Google của bạn đã được liên kết.")
+                    
+                    # Dừng quá trình và chuyển hướng ngay lập tức
+                    raise ImmediateHttpResponse(redirect('dashboard'))
 
                 except User.DoesNotExist:
-                    pass # Không tìm thấy, tiếp tục quy trình đăng ký bình thường
+                    # Nếu không tìm thấy email, tiếp tục quy trình đăng ký bình thường
+                    pass
 
     def save_user(self, request, sociallogin, form=None):
         """
-        Ghi đè để đảm bảo username là duy nhất.
+        Ghi đè phương thức lưu người dùng để đảm bảo username là duy nhất.
+        
+        Phương thức này được gọi khi tạo một người dùng mới từ social login.
+        Chúng ta sẽ đặt username của người dùng bằng email của họ để đảm bảo
+        tính duy nhất, vì email đã được cấu hình là duy nhất.
         """
-        user = super().save_user(request, sociallogin, form)
-        # Đảm bảo username được đặt thành email nếu nó trống hoặc đã tồn tại
-        if not user.username or User.objects.filter(username=user.username).exclude(pk=user.pk).exists():
-            user.username = user.email
-            user.save()
+        # Lấy đối tượng user đã được allauth tạo ra (nhưng chưa lưu)
+        user = sociallogin.user
+        
+        # Gán username bằng email của người dùng
+        # Allauth đã tự động điền email từ thông tin của Google
+        user.username = user.email
+        
+        # Bây giờ, gọi phương thức lưu của sociallogin, lúc này username đã hợp lệ
+        sociallogin.save(request)
+        
         return user
