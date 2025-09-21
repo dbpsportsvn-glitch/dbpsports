@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from django.core.exceptions import ValidationError
 from .models import Organization, Membership
 from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player
 from tournaments.utils import send_notification_email
@@ -11,7 +12,6 @@ from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
-# Dòng import này đã được sửa lỗi và bổ sung
 from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm
 
 #=================================
@@ -22,13 +22,10 @@ def organization_dashboard(request):
     organization = Organization.objects.filter(members=request.user).first()
     if not organization:
         return render(request, 'organizations/no_organization.html')
-
     if organization.status == Organization.Status.PENDING:
         return render(request, 'organizations/organization_pending.html', {'organization': organization})
-
     if organization.status != Organization.Status.ACTIVE:
          return render(request, 'organizations/no_organization.html')
-
     tournaments = organization.tournaments.all().order_by('-start_date')
     context = {
         'organization': organization,
@@ -36,14 +33,12 @@ def organization_dashboard(request):
     }
     return render(request, 'organizations/organization_dashboard.html', context)
 
-
 @login_required
 @never_cache
 def create_tournament(request):
     organization = Organization.objects.filter(members=request.user).first()
     if not organization:
         return redirect('organizations:dashboard')
-
     if request.method == 'POST':
         form = TournamentCreationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -53,7 +48,6 @@ def create_tournament(request):
             return redirect('organizations:dashboard')
     else:
         form = TournamentCreationForm()
-
     context = {
         'form': form,
         'organization': organization
@@ -64,12 +58,9 @@ def create_tournament(request):
 @never_cache
 def manage_tournament(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
-
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return redirect('organizations:dashboard')
-
     view_name = request.GET.get('view', 'overview')
-
     if request.method == 'POST':
         if 'quick_update_score' in request.POST:
             match_id = request.POST.get('match_id')
@@ -84,13 +75,11 @@ def manage_tournament(request, pk):
             except (Match.DoesNotExist, ValueError):
                 messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
             return redirect(request.path_info + '?view=matches')
-
         if 'create_group' in request.POST:
             group_name = request.POST.get('group_name', '').strip()
             if group_name:
                 Group.objects.create(tournament=tournament, name=group_name)
             return redirect(request.path_info + '?view=groups')
-
         if 'approve_payment' in request.POST:
             team_id = request.POST.get('team_id')
             if team_id:
@@ -105,7 +94,6 @@ def manage_tournament(request, pk):
                             context={'team': team}, recipient_list=[team.captain.email]
                         )
             return redirect(request.path_info + '?view=teams')
-
         if 'revoke_payment' in request.POST:
             team_id = request.POST.get('team_id')
             if team_id:
@@ -114,7 +102,6 @@ def manage_tournament(request, pk):
                     team.payment_status = 'PENDING'
                     team.save()
             return redirect(request.path_info + '?view=teams')
-
         if 'invite_member' in request.POST:
             if request.user == tournament.organization.owner:
                 invite_form = MemberInviteForm(request.POST)
@@ -131,13 +118,11 @@ def manage_tournament(request, pk):
                     for field, errors in invite_form.errors.items():
                         for error in errors: messages.error(request, error)
             return redirect(request.path_info + '?view=members')
-
     context = {
         'tournament': tournament,
         'organization': tournament.organization,
         'active_page': view_name,
     }
-    
     if view_name == 'teams':
         context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
         context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
@@ -147,9 +132,7 @@ def manage_tournament(request, pk):
         context['matches'] = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
-    
     return render(request, 'organizations/manage_tournament.html', context)
-
 
 @login_required
 def delete_group(request, pk):
@@ -162,7 +145,6 @@ def delete_group(request, pk):
         return redirect('organizations:manage_tournament', pk=tournament.pk)
     return redirect('organizations:manage_tournament', pk=tournament.pk)
 
-
 @login_required
 def delete_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
@@ -172,7 +154,6 @@ def delete_tournament(request, pk):
         tournament.delete()
         return redirect('organizations:dashboard')
     return redirect('organizations:dashboard')
-
 
 @login_required
 @never_cache
@@ -196,7 +177,6 @@ def create_organization(request):
         form = OrganizationCreationForm()
     return render(request, 'organizations/create_organization.html', {'form': form})
 
-
 @login_required
 def remove_member(request, pk):
     membership_to_delete = get_object_or_404(Membership, pk=pk)
@@ -210,7 +190,6 @@ def remove_member(request, pk):
     if tournament_id_to_return:
         return redirect('organizations:manage_tournament', pk=tournament_id_to_return)
     return redirect('organizations:dashboard')
-
 
 @login_required
 def edit_tournament(request, pk):
@@ -233,22 +212,18 @@ def edit_tournament(request, pk):
     }
     return render(request, 'organizations/edit_tournament.html', context)
 
-
 @login_required
 @never_cache
 def manage_match(request, pk):
     match = get_object_or_404(Match.objects.select_related('tournament__organization', 'team1', 'team2'), pk=pk)
     tournament = match.tournament
     organization = tournament.organization
-
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
-
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
-
+    
     if request.method == 'POST':
         action = request.POST.get('action')
-
         if action == 'update_match':
             form = MatchUpdateForm(request.POST, instance=match)
             if form.is_valid():
@@ -256,38 +231,43 @@ def manage_match(request, pk):
                 messages.success(request, "Đã cập nhật thông tin chung của trận đấu.")
                 return redirect('organizations:manage_match', pk=match.pk)
         
+        # === PHẦN SỬA LỖI CHO BÀN THẮNG ===
         elif action == 'add_goal':
             goal_form = GoalForm(request.POST)
             goal_form.fields['player'].queryset = players_in_match
             if goal_form.is_valid():
                 goal = goal_form.save(commit=False)
                 goal.match = match
-                goal.team = goal.player.team
-                goal.save()
-                messages.success(request, f"Đã thêm bàn thắng của {goal.player.full_name}.")
+                try:
+                    goal.full_clean()
+                    goal.save()
+                    messages.success(request, f"Đã thêm bàn thắng của {goal.player.full_name}.")
+                except ValidationError as e:
+                    messages.error(request, f"Lỗi: {e.messages[0]}")
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=goals')
 
+        # === PHẦN SỬA LỖI CHO THẺ PHẠT ===
         elif action == 'add_card':
             card_form = CardForm(request.POST)
             card_form.fields['player'].queryset = players_in_match
             if card_form.is_valid():
                 card = card_form.save(commit=False)
                 card.match = match
-                card.team = card.player.team
-                card.save()
-                messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
+                try:
+                    card.full_clean()
+                    card.save()
+                    messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
+                except ValidationError as e:
+                    messages.error(request, f"Lỗi: {e.messages[0]}")
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=cards')
 
     form = MatchUpdateForm(instance=match)
     goal_form = GoalForm()
     card_form = CardForm()
-    
     goal_form.fields['player'].queryset = players_in_match
     card_form.fields['player'].queryset = players_in_match
-    
     goals = match.goals.select_related('player', 'team').order_by('-minute')
     cards = match.cards.select_related('player', 'team').order_by('-minute')
-
     context = {
         'form': form,
         'goal_form': goal_form,
@@ -300,3 +280,29 @@ def manage_match(request, pk):
         'active_page': 'matches'
     }
     return render(request, 'organizations/manage_match.html', context)
+
+@login_required
+def delete_goal(request, pk):
+    goal = get_object_or_404(Goal, pk=pk)
+    match = goal.match
+    organization = match.tournament.organization
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    if request.method == 'POST':
+        player_name = goal.player.full_name
+        goal.delete()
+        messages.success(request, f"Đã xóa bàn thắng của {player_name}.")
+    return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=goals')
+
+@login_required
+def delete_card(request, pk):
+    card = get_object_or_404(Card, pk=pk)
+    match = card.match
+    organization = match.tournament.organization
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    if request.method == 'POST':
+        player_name = card.player.full_name
+        card.delete()
+        messages.success(request, f"Đã xóa thẻ phạt của {player_name}.")
+    return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards')

@@ -32,13 +32,11 @@
         </ul>
 
         <div class="tab-content pt-3" id="matchTabsContent">
-            {# --- TAB 1: Thông tin chung (ĐÃ CẬP NHẬT) --- #}
+            {# --- TAB 1: Thông tin chung --- #}
             <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_match">
-                    
-                    {# Dùng grid của Bootstrap để chia đôi hàng tỉ số #}
                     <div class="row">
                         <div class="col-md-6">
                             {{ form.team1_score|as_crispy_field }}
@@ -47,13 +45,10 @@
                             {{ form.team2_score|as_crispy_field }}
                         </div>
                     </div>
-
-                    {# Hiển thị các trường còn lại của form #}
                     {{ form.livestream_url|as_crispy_field }}
                     {{ form.referee|as_crispy_field }}
                     {{ form.commentator|as_crispy_field }}
                     {{ form.ticker_text|as_crispy_field }}
-
                     <div class="d-flex justify-content-end mt-4">
                         <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
                     </div>
@@ -98,6 +93,11 @@
                                         ⚽ <strong>{{ goal.player.full_name }}</strong> ({{ goal.team.name }})
                                         {% if goal.minute %}- Phút {{ goal.minute }}{% endif %}
                                     </span>
+                                    {# --- NÚT XÓA MỚI --- #}
+                                    <form method="post" action="{% url 'organizations:delete_goal' pk=goal.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bàn thắng này?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
                                 </li>
                             {% empty %}
                                 <li class="list-group-item text-muted">Chưa có bàn thắng nào.</li>
@@ -151,6 +151,11 @@
                                         <strong>{{ card.player.full_name }}</strong> ({{ card.team.name }})
                                         {% if card.minute %}- Phút {{ card.minute }}{% endif %}
                                     </span>
+                                    {# --- NÚT XÓA MỚI --- #}
+                                    <form method="post" action="{% url 'organizations:delete_card' pk=card.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa thẻ phạt này?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
                                 </li>
                             {% empty %}
                                 <li class="list-group-item text-muted">Chưa có thẻ phạt nào.</li>
@@ -178,18 +183,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function setupPlayerFilter(inputId, selectId) {
         const searchInput = document.getElementById(inputId);
         const selectElement = document.getElementById(selectId);
-
         if (!searchInput || !selectElement) return;
-
         searchInput.addEventListener('keyup', function() {
             const filter = searchInput.value.toLowerCase();
             const optgroups = selectElement.getElementsByTagName('optgroup');
-
             for (let i = 0; i < optgroups.length; i++) {
                 const optgroup = optgroups[i];
                 const options = optgroup.getElementsByTagName('option');
                 let groupHasVisibleOptions = false;
-
                 for (let j = 0; j < options.length; j++) {
                     const option = options[j];
                     const txtValue = option.textContent || option.innerText;
@@ -200,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.style.display = "none";
                     }
                 }
-                
                 if (groupHasVisibleOptions) {
                     optgroup.style.display = "";
                 } else {

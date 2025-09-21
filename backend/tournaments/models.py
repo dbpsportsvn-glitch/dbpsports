@@ -355,17 +355,18 @@ class Goal(models.Model):
                 name="goal_minute_range",
             ),
         ]
-
-    
+   
     def clean(self):
         # Tự điền team theo cầu thủ nếu để trống
         if self.team_id is None and self.player_id:
             self.team_id = self.player.team_id
-        # Kiểm tra thuộc trận và khớp đội
-        if self.team_id not in [self.match.team1_id, self.match.team2_id]:
-            raise ValidationError("Đội ghi bàn không thuộc trận.")
-        if self.player_id and self.player.team_id != self.team_id:
-            raise ValidationError("Cầu thủ ghi bàn không thuộc đội.")
+
+        # CHỈ KIỂM TRA NẾU ĐÃ CÓ TRẬN ĐẤU
+        if hasattr(self, 'match'):
+            if self.team_id not in [self.match.team1_id, self.match.team2_id]:
+                raise ValidationError("Đội ghi bàn không thuộc trận.")
+            if self.player_id and self.player.team_id != self.team_id:
+                raise ValidationError("Cầu thủ ghi bàn không thuộc đội.")
 
     def save(self, *args, **kwargs):
         if self.team_id is None and self.player_id:
@@ -401,11 +402,13 @@ class Card(models.Model):
         # Tự điền team theo cầu thủ nếu để trống
         if self.team_id is None and self.player_id:
             self.team_id = self.player.team_id
-        # Kiểm tra thuộc trận và khớp đội
-        if self.team_id not in [self.match.team1_id, self.match.team2_id]:
-            raise ValidationError("Đội nhận thẻ không thuộc trận.")
-        if self.player_id and self.player.team_id != self.team_id:
-            raise ValidationError("Cầu thủ nhận thẻ không thuộc đội.")
+
+        # CHỈ KIỂM TRA NẾU ĐÃ CÓ TRẬN ĐẤU
+        if hasattr(self, 'match'):
+            if self.team_id not in [self.match.team1_id, self.match.team2_id]:
+                raise ValidationError("Đội nhận thẻ không thuộc trận.")
+            if self.player_id and self.player.team_id != self.team_id:
+                raise ValidationError("Cầu thủ nhận thẻ không thuộc đội.")
 
     def save(self, *args, **kwargs):
         if self.team_id is None and self.player_id:
