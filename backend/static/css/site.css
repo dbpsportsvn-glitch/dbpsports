@@ -18,8 +18,8 @@ body{ color:#0f172a; }
 .menu-toggle{ display:none; margin-left:auto; background:transparent; border:1px solid rgba(255,255,255,.2); color:#cbd5e1; padding:6px 10px; border-radius:8px;}
 @media (max-width:960px){
   .menu-toggle{ display:block; }
-  .nav{ display:none; flex-direction:column; width:100%; margin-left:0; padding:10px 16px 16px;}
-  .nav.open{ display:flex; }
+  .nav-primary{ display:none; flex-direction:column; width:100%; margin-left:0; padding:10px 16px 16px;}
+  .nav-primary.open{ display:flex; }
 }
 
 /* ===== Carousel full-width ===== */
