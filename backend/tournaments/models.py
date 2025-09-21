@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from organizations.models import Organization
 
 # --- THÊM CÁC DÒNG NÀY VÀO ---
 from PIL import Image
@@ -24,6 +25,16 @@ class Tournament(models.Model):
     ]
 
     name = models.CharField(max_length=200)
+    # === BẮT ĐẦU THÊM MỚI ===
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='tournaments',
+        verbose_name="Đơn vị tổ chức",
+        null=True, # Tạm thời cho phép null để không ảnh hưởng dữ liệu cũ
+        blank=True
+    )
+    # === KẾT THÚC THÊM MỚI ===
     start_date = models.DateField()
     end_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='REGISTRATION_OPEN')

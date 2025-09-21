@@ -124,6 +124,15 @@ def tournament_detail(request, pk):
         pk=pk
     )
 
+    # === BẮT ĐẦU THÊM MỚI ===
+    # Mặc định người xem không phải là người tổ chức
+    is_organizer = False
+    if request.user.is_authenticated and tournament.organization:
+        # Kiểm tra xem người dùng có phải là thành viên của đơn vị tổ chức giải đấu này không
+        if tournament.organization.members.filter(pk=request.user.pk).exists():
+            is_organizer = True
+    # === KẾT THÚC THÊM MỚI ===
+
     all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
     knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
@@ -199,6 +208,7 @@ def tournament_detail(request, pk):
 
     context = {
         'tournament': tournament,
+        'is_organizer': is_organizer,
         'group_matches': group_matches,
         'knockout_matches': knockout_matches,
         'knockout_data': knockout_data, # Gửi dữ liệu sơ đồ ra template
