@@ -168,10 +168,18 @@ class Player(models.Model):
             if exists.exists():
                 raise ValidationError({'jersey_number': 'Số áo đã tồn tại trong đội.'})
 
+
 class Match(models.Model):
-    ROUND_CHOICES = [('GROUP', 'Vòng bảng'), ('QUARTER', 'Tứ kết'), ('SEMI', 'Bán kết'), ('FINAL', 'Chung kết')]
+    ROUND_CHOICES = [
+        ('GROUP', 'Vòng bảng'),
+        ('QUARTER', 'Tứ kết'),
+        ('SEMI', 'Bán kết'),
+        ('THIRD_PLACE', 'Tranh Hạng Ba'), # <-- DÒNG MỚI
+        ('FINAL', 'Chung kết'),
+    ]
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
-    match_round = models.CharField(max_length=10, choices=ROUND_CHOICES, default='GROUP')
+    match_round = models.CharField(max_length=20, choices=ROUND_CHOICES, default='GROUP') # Tăng max_length
     team1 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team1')
     team2 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches_as_team2')
     match_time = models.DateTimeField()
@@ -194,6 +202,13 @@ class Match(models.Model):
         if self.team1_score is not None and self.team2_score is not None:
             if self.team1_score > self.team2_score: return self.team1
             elif self.team2_score > self.team1_score: return self.team2
+        return None
+    
+    # Thêm property mới để lấy đội thua
+    @property
+    def loser(self):
+        if self.winner is not None:
+            return self.team2 if self.winner == self.team1 else self.team1
         return None
 
 class Lineup(models.Model):

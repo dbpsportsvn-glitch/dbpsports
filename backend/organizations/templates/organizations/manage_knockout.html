@@ -17,7 +17,6 @@
     </div>
     <div class="card-body p-4">
 
-        {# --- HIỂN THỊ KẾT QUẢ VÒNG BẢNG --- #}
         <h5 class="mb-3">Kết quả Vòng bảng</h5>
         <div class="row">
             {% for group_id, group_data in standings_by_group.items %}
@@ -43,7 +42,6 @@
 
         <hr class="my-4">
 
-        {# --- FORM TẠO BÁN KẾT --- #}
         <h5 class="mb-3">Tạo cặp đấu Bán kết</h5>
         {% if qualified_teams|length >= 4 %}
             <form method="post">
@@ -74,32 +72,47 @@
 
         <hr class="my-4">
         
-        {# --- FORM TẠO CHUNG KẾT --- #}
-        <h5 class="mb-3">Tạo trận Chung kết</h5>
-        {% if semi_final_winners|length == 2 %}
-            <p class="text-muted">Hệ thống đã xác định 2 đội thắng Bán kết. Hãy xếp lịch cho trận đấu cuối cùng.</p>
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create_final">
-                {% if final_form.non_field_errors %}<div class="alert alert-danger">{{ final_form.non_field_errors }}</div>{% endif %}
-                 <div class="row">
-                    <div class="col-lg-6">
+        {# --- FORM TẠO CHUNG KẾT & TRANH HẠNG BA --- #}
+        <div class="row">
+            <div class="col-lg-6 border-end pe-lg-4">
+                <h5 class="mb-3">Tạo trận Chung kết</h5>
+                {% if semi_final_winners|length == 2 %}
+                    <p class="text-muted">Hệ thống đã xác định 2 đội thắng Bán kết.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create_final">
+                        {% if final_form.non_field_errors %}<div class="alert alert-danger">{{ final_form.non_field_errors }}</div>{% endif %}
                         {{ final_form.final_team1|as_crispy_field }}
-                    </div>
-                     <div class="col-lg-6">
                         {{ final_form.final_team2|as_crispy_field }}
-                    </div>
-                </div>
-                {{ final_form.final_datetime|as_crispy_field }}
-                 <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <i class="bi bi-trophy-fill"></i> Tạo trận Chung kết
-                    </button>
-                </div>
-            </form>
-        {% else %}
-            <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết để tạo trận Chung kết.</p>
-        {% endif %}
+                        {{ final_form.final_datetime|as_crispy_field }}
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-trophy-fill"></i> Tạo Chung kết</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 ps-lg-4">
+                <h5 class="mb-3">Tạo trận Tranh Hạng Ba</h5>
+                {% if semi_final_losers|length == 2 %}
+                    <p class="text-muted">Hệ thống đã xác định 2 đội thua Bán kết.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create_third_place">
+                        {% if third_place_form.non_field_errors %}<div class="alert alert-danger">{{ third_place_form.non_field_errors }}</div>{% endif %}
+                        {{ third_place_form.tp_team1|as_crispy_field }}
+                        {{ third_place_form.tp_team2|as_crispy_field }}
+                        {{ third_place_form.tp_datetime|as_crispy_field }}
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-info btn-lg">Tạo Tranh Hạng Ba</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
