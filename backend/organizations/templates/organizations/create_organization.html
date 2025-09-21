@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Tạo Đơn vị Tổ chức{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Đăng ký Đơn vị Tổ chức của bạn</h3>
+        </div>
+        <div class="card-body">
+            <p>Sau khi tạo, bạn sẽ có thể bắt đầu tạo các giải đấu của riêng mình.</p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Hoàn tất và Tạo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

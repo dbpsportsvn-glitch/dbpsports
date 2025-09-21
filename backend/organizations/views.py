@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect # Đã sửa �
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .models import Organization
-from .forms import TournamentCreationForm
+from .forms import TournamentCreationForm, OrganizationCreationForm
 from tournaments.models import Tournament, Group, Team
 from tournaments.utils import send_notification_email
 from django.conf import settings
@@ -151,3 +151,25 @@ def delete_tournament(request, pk):
 
     # Nếu là request GET, không làm gì cả và điều hướng về dashboard
     return redirect('organizations:dashboard')
+
+
+# === BẮT ĐẦU THÊM MỚI ===
+@login_required
+def create_organization(request):
+    # Nếu người dùng đã có đơn vị rồi thì không cho tạo nữa
+    if Organization.objects.filter(members=request.user).exists():
+        return redirect('organizations:dashboard')
+
+    if request.method == 'POST':
+        form = OrganizationCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            organization = form.save(commit=False)
+            # Gán người dùng đang tạo làm chủ sở hữu
+            organization.owner = request.user
+            organization.save() # (Hàm save chúng ta viết ở model sẽ tự tạo Membership)
+            return redirect('organizations:dashboard')
+    else:
+        form = OrganizationCreationForm()
+
+    return render(request, 'organizations/create_organization.html', {'form': form})
+# === KẾT THÚC THÊM MỚI ===

@@ -1,6 +1,7 @@
 # organizations/forms.py
 from django import forms
 from tournaments.models import Tournament
+from .models import Organization
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
@@ -20,3 +21,14 @@ class TournamentCreationForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date'}),
             'rules': forms.Textarea(attrs={'rows': 5}),
         }
+
+# === BẮT ĐẦU THÊM MỚI ===
+class OrganizationCreationForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        fields = ['name', 'logo']
+        labels = {
+            'name': 'Tên đơn vị tổ chức của bạn',
+            'logo': 'Logo (không bắt buộc)',
+        }
+# === KẾT THÚC THÊM MỚI ===        
