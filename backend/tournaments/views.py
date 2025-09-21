@@ -135,7 +135,8 @@ def tournament_detail(request, pk):
         Tournament.objects.prefetch_related(
             Prefetch('groups', queryset=Group.objects.order_by('name').prefetch_related(
                 Prefetch('teams', queryset=Team.objects.select_related('captain'))
-            ))
+            )),
+            'photos'  # <-- THÊM DÒNG NÀY ĐỂ LẤY ẢNH
         ),
         pk=pk
     )

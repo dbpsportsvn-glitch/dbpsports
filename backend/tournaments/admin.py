@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 from django.db.models import Count
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement, TournamentPhoto
 from .utils import send_notification_email
 
 # ===== CÁC Hàm Cho Bộ lọc =====
@@ -119,8 +119,20 @@ class CardInline(admin.TabularInline):
                 pass
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-# ===== Admins =====
+# === BẮT ĐẦU THÊM CLASS MỚI TẠI ĐÂY ===
+class TournamentPhotoInline(admin.TabularInline):
+    model = TournamentPhoto
+    extra = 1  # Hiển thị sẵn 1 dòng để tải ảnh mới
+    readonly_fields = ('image_preview',)
+    fields = ('image', 'image_preview', 'caption')
 
+    @admin.display(description='Xem trước')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;" />', obj.image.url)
+        return "Chưa có ảnh"
+
+# ===== Admins =====
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
     list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "view_details_link")
@@ -128,7 +140,7 @@ class TournamentAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_editable = ("status",)
     date_hierarchy = "start_date"
-    inlines = [GroupInline]
+    inlines = [GroupInline, TournamentPhotoInline] 
     list_per_page = 50
     actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
 

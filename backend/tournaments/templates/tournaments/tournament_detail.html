@@ -46,6 +46,7 @@
         <li class="nav-item"><button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button">📅 Lịch thi đấu</button></li>
         <li class="nav-item"><button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
         <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
+        <li class="nav-item"><button class="nav-link" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery" type="button">🖼️ Thư viện ảnh</button></li>
         {% if knockout_matches %}
         <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
         {% endif %}
@@ -194,6 +195,53 @@
 
     <div class="tab-pane fade card-pane" id="stats" role="tabpanel">
       {% include 'tournaments/partials/tournament_stats.html' %}
+    </div>
+
+    <div class="tab-pane fade card-pane" id="gallery" role="tabpanel">
+        <style>
+            .photo-gallery .gallery-item {
+                overflow: hidden;
+                border-radius: .5rem;
+                box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,.1);
+            }
+            .photo-gallery .gallery-item img {
+                transition: transform 0.3s ease;
+                width: 100%;
+                height: 250px; /* Cố định chiều cao */
+                object-fit: cover; /* Đảm bảo ảnh lấp đầy mà không bị méo */
+            }
+            .photo-gallery .gallery-item a:hover img {
+                transform: scale(1.05);
+            }
+            .photo-gallery .gallery-caption {
+                padding: 0.75rem;
+                background-color: rgba(0,0,0,0.03);
+                font-size: 0.9rem;
+                color: #555;
+            }
+        </style>
+        <div class="photo-gallery">
+            <div class="row g-3">
+                {% for photo in tournament.photos.all %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="gallery-item">
+                        <a href="{{ photo.image.url }}" target="_blank" data-caption="{{ photo.caption }}">
+                            <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid">
+                        </a>
+                        {% if photo.caption %}
+                        <div class="gallery-caption">
+                            <p class="mb-0">{{ photo.caption }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col">
+                    <p class="text-muted">Chưa có hình ảnh nào được tải lên cho giải đấu này.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
     {% if knockout_matches %}

@@ -314,3 +314,44 @@ class Announcement(models.Model):
         ordering = ['-created_at']
     def __str__(self):
         return self.title
+
+# === BẮT ĐẦU THÊM MODEL MỚI TẠI ĐÂY ===
+class TournamentPhoto(models.Model):
+    """Lưu trữ một ảnh trong thư viện của giải đấu."""
+    tournament = models.ForeignKey(
+        Tournament, 
+        on_delete=models.CASCADE, 
+        related_name='photos',
+        verbose_name="Giải đấu"
+    )
+    image = models.ImageField("Ảnh", upload_to='tournament_photos/')
+    caption = models.CharField("Chú thích", max_length=200, blank=True)
+    uploaded_at = models.DateTimeField("Ngày tải lên", auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name = "Ảnh Giải đấu"
+        verbose_name_plural = "Thư viện ảnh Giải đấu"
+
+    def __str__(self):
+        return f"Ảnh của giải {self.tournament.name} - {self.pk}"
+
+    def save(self, *args, **kwargs):
+        # Tối ưu ảnh trước khi lưu (giống như model Player/Team)
+        if self.image and self.image._file:
+            img = Image.open(self.image)
+            if img.format != 'GIF':
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                
+                buffer = BytesIO()
+                # Giảm kích thước ảnh lớn hơn 2K
+                if img.height > 1920 or img.width > 1920:
+                    img.thumbnail((1920, 1920))
+                
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                
+                file_name = os.path.basename(self.image.name)
+                self.image = ContentFile(buffer.getvalue(), name=file_name)
+
+        super().save(*args, **kwargs)
