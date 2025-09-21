@@ -8,6 +8,7 @@ def send_notification_email(subject, template_name, context, recipient_list, req
     """
     Một hàm đa năng để gửi email thông báo.
     Có thể hiển thị message báo lỗi nếu có request.
+    Trả về True nếu gửi thành công, False nếu có lỗi.
     """
     try:
         html_message = render_to_string(template_name, context)
@@ -21,13 +22,12 @@ def send_notification_email(subject, template_name, context, recipient_list, req
             fail_silently=False,
         )
         print(f"Đã gửi email thông báo: '{subject}' đến {recipient_list}")
-        # Nếu có request, hiển thị message thành công (tùy chọn)
-        # if request:
-        #     messages.success(request, f"Đã gửi email '{subject}' thành công.")
+        return True # <-- THÊM DÒNG NÀY: Báo hiệu thành công
 
     except Exception as e:
         error_message = f"Lỗi nghiêm trọng khi gửi email '{subject}': {e}"
         print(error_message)
-        # === THAY ĐỔI: Hiển thị lỗi trên giao diện nếu có request ===
         if request:
-            messages.error(request, error_message)
+            # Làm cho thông báo lỗi cụ thể và hữu ích hơn
+            messages.error(request, f"Không thể gửi email đến {recipient_list}. Lỗi: {e}")
+        return False # <-- THÊM DÒNG NÀY: Báo hiệu thất bại
