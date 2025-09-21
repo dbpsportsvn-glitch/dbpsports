@@ -561,18 +561,15 @@ def announcement_dashboard(request):
 def faq_view(request):
     return render(request, 'tournaments/faq.html')        
 
-# === BẮT ĐẦU SỬA LỖI ===
-@login_required # Giữ lại để đảm bảo người dùng đã đăng nhập
+# === THAY THẾ HÀM NÀY ===
+@login_required
 @never_cache
-# Bỏ decorator @staff_member_required
 def draw_groups_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
 
-    # --- THÊM ĐOẠN KIỂM TRA QUYỀN MỚI ---
     is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
-    # --- KẾT THÚC ĐOẠN KIỂM TRA ---
 
     if request.method == 'POST':
         try:
@@ -583,20 +580,31 @@ def draw_groups_view(request, tournament_pk):
             group_assignments = json.loads(results_str) 
 
             with transaction.atomic():
+                # --- BẮT ĐẦU SỬA LỖI ---
+                # 1. Xóa tất cả các trận đấu vòng bảng cũ của giải này
+                Match.objects.filter(tournament=tournament, match_round='GROUP').delete()
+                
+                # 2. Đưa tất cả các đội về trạng thái "chưa có bảng"
+                tournament.teams.update(group=None)
+                # --- KẾT THÚC SỬA LỖI ---
+
+                # 3. Tiến hành xếp các đội vào bảng mới
                 for group_id_str, team_ids in group_assignments.items():
                     group_id = int(group_id_str)
                     group = get_object_or_404(Group, pk=group_id, tournament=tournament)
                     
-                    for team_id in team_ids:
-                        team = get_object_or_404(Team, pk=team_id, tournament=tournament)
+                    # Cập nhật lại các đội trong bảng
+                    teams_to_assign = Team.objects.filter(pk__in=team_ids, tournament=tournament)
+                    for team in teams_to_assign:
                         team.group = group
                         team.save()
             
-            messages.success(request, "Kết quả bốc thăm đã được lưu thành công!")
+            messages.success(request, "Kết quả bốc thăm mới đã được lưu thành công! Lịch thi đấu vòng bảng cũ đã được xóa.")
             return redirect('tournament_detail', pk=tournament.pk)
 
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
+            # Sửa lại redirect khi có lỗi
             return redirect('draw_groups', tournament_pk=tournament.pk)
 
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)

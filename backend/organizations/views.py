@@ -13,6 +13,9 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm
+from django.utils import timezone
+from .forms import SemiFinalCreationForm
+from .forms import FinalCreationForm
 
 #=================================
 
@@ -323,30 +326,112 @@ def delete_card(request, pk):
     return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards')
 
 
+# File: backend/organizations/views.py
+
 @login_required
 @never_cache
 def manage_knockout(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
     organization = tournament.organization
 
-    # Kiểm tra quyền
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    # Lấy tất cả các đội đã được xếp bảng
-    teams_in_groups = Team.objects.filter(tournament=tournament, group__isnull=False)
-    if not teams_in_groups.exists():
-        messages.warning(request, "Chưa có đội nào được xếp bảng để bắt đầu vòng loại trực tiếp.")
+    groups = tournament.groups.prefetch_related('teams').all()
+    if not groups.exists():
+        messages.warning(request, "Giải đấu chưa có bảng nào được tạo.")
         return redirect('organizations:manage_tournament', pk=pk)
 
-    # Lấy các trận knockout đã tồn tại
+    standings_by_group = {}
+    qualified_teams_list = []
+    for group in groups:
+        standings = group.get_standings()
+        standings_by_group[group.id] = {'name': group.name, 'standings': standings}
+        qualified_teams_list.extend([s['team_obj'] for s in standings[:2]])
+    
+    qualified_teams_queryset = Team.objects.filter(id__in=[team.id for team in qualified_teams_list])
+
+    semi_final_matches = tournament.matches.filter(match_round='SEMI', team1_score__isnull=False, team2_score__isnull=False)
+    semi_final_winners = []
+    if semi_final_matches.count() == 2:
+        for match in semi_final_matches:
+            if match.winner:
+                semi_final_winners.append(match.winner)
+    semi_final_winners_queryset = Team.objects.filter(id__in=[team.id for team in semi_final_winners])
+
+    # Khai báo các form ở đây để sử dụng chung
+    semi_final_form = None
+    final_form = None
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_semi_finals':
+            semi_final_form = SemiFinalCreationForm(request.POST, qualified_teams=qualified_teams_queryset)
+            if semi_final_form.is_valid():
+                data = semi_final_form.cleaned_data
+                tournament.matches.filter(match_round='SEMI').delete()
+                Match.objects.create(
+                    tournament=tournament, match_round='SEMI',
+                    team1=data['sf1_team1'], team2=data['sf1_team2'],
+                    match_time=data['sf1_datetime'] or timezone.now() + timezone.timedelta(days=1)
+                )
+                Match.objects.create(
+                    tournament=tournament, match_round='SEMI',
+                    team1=data['sf2_team1'], team2=data['sf2_team2'],
+                    match_time=data['sf2_datetime'] or timezone.now() + timezone.timedelta(days=1)
+                )
+                messages.success(request, "Đã tạo thành công các cặp đấu Bán kết!")
+                return redirect('organizations:manage_knockout', pk=pk)
+        
+        elif action == 'create_final':
+            final_form = FinalCreationForm(request.POST, semi_final_winners=semi_final_winners_queryset)
+            if final_form.is_valid():
+                data = final_form.cleaned_data
+                tournament.matches.filter(match_round='FINAL').delete()
+                Match.objects.create(
+                    tournament=tournament, match_round='FINAL',
+                    team1=data['final_team1'], team2=data['final_team2'],
+                    match_time=data['final_datetime'] or timezone.now() + timezone.timedelta(days=1)
+                )
+                messages.success(request, "Đã tạo thành công trận Chung kết!")
+                return redirect('organizations:manage_knockout', pk=pk)
+    
+    # Luôn khởi tạo form cho GET request hoặc nếu POST không hợp lệ
+    if not semi_final_form:
+        initial_semi = {}
+        if len(standings_by_group) == 2:
+             group_ids = list(standings_by_group.keys())
+             g1_standings = standings_by_group[group_ids[0]]['standings']
+             g2_standings = standings_by_group[group_ids[1]]['standings']
+             if len(g1_standings) >= 2 and len(g2_standings) >= 2:
+                 initial_semi = {
+                     'sf1_team1': g1_standings[0]['team_obj'].id, 'sf1_team2': g2_standings[1]['team_obj'].id,
+                     'sf2_team1': g2_standings[0]['team_obj'].id, 'sf2_team2': g1_standings[1]['team_obj'].id,
+                 }
+        semi_final_form = SemiFinalCreationForm(qualified_teams=qualified_teams_queryset, initial=initial_semi)
+
+    if not final_form:
+        # === SỬA LỖI TẠI ĐÂY ===
+        initial_final = {}
+        if len(semi_final_winners) == 2:
+            initial_final = {
+                'final_team1': semi_final_winners[0].id,
+                'final_team2': semi_final_winners[1].id
+            }
+        final_form = FinalCreationForm(semi_final_winners=semi_final_winners_queryset, initial=initial_final)
+        # === KẾT THÚC SỬA LỖI ===
+
+    group_matches_finished = tournament.matches.filter(match_round='GROUP', team1_score__isnull=False).exists()
     knockout_matches = tournament.matches.filter(match_round__in=['QUARTER', 'SEMI', 'FINAL']).order_by('match_time')
 
     context = {
-        'tournament': tournament,
-        'organization': tournament.organization,
-        'active_page': 'knockout', # <-- SỬA DÒNG NÀY
-        'knockout_matches': knockout_matches,
+        'tournament': tournament, 'organization': tournament.organization,
+        'active_page': 'knockout', 'knockout_matches': knockout_matches,
+        'standings_by_group': standings_by_group, 'qualified_teams': qualified_teams_list,
+        'group_matches_finished': group_matches_finished,
+        'semi_final_form': semi_final_form,
+        'final_form': final_form,
+        'semi_final_winners': semi_final_winners,
     }
-
     return render(request, 'organizations/manage_knockout.html', context)

@@ -1,20 +1,21 @@
+# File: backend/organizations/forms.py
+
 from django import forms
-from tournaments.models import Tournament, Organization, Match
+from tournaments.models import Tournament, Organization, Match, Goal, Card, Player, Team # Đảm bảo 'Team' được import
 from .models import Organization
 from django.contrib.auth.models import User
-from tournaments.models import Goal, Card, Player 
+from django.core.exceptions import ValidationError # Thêm import này
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
         model = Tournament
-        # Thêm 'status' vào danh sách fields
         fields = [
             'name', 'status', 'region', 'start_date', 'end_date', 'image', 'rules',
             'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
             'name': 'Tên giải đấu',
-            'status': 'Trạng thái giải đấu', # Thêm nhãn cho status
+            'status': 'Trạng thái giải đấu',
             'region': 'Khu vực tổ chức',
             'start_date': 'Ngày bắt đầu',
             'end_date': 'Ngày kết thúc',
@@ -31,7 +32,6 @@ class TournamentCreationForm(forms.ModelForm):
             'rules': forms.Textarea(attrs={'rows': 5}),
         }
 
-# === BẮT ĐẦU THÊM MỚI ===
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
         model = Organization
@@ -40,9 +40,7 @@ class OrganizationCreationForm(forms.ModelForm):
             'name': 'Tên đơn vị tổ chức của bạn',
             'logo': 'Logo (không bắt buộc)',
         }
-
-
-# === Tờ khai mời thành viên nhóm ===      
+     
 class MemberInviteForm(forms.Form):
     email = forms.EmailField(
         label="Email của thành viên mới",
@@ -51,12 +49,10 @@ class MemberInviteForm(forms.Form):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        # Kiểm tra xem có tài khoản nào dùng email này không
         if not User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
         return email
 
-# === BẮT ĐẦU THÊM MỚI ===
 class MatchUpdateForm(forms.ModelForm):
     class Meta:
         model = Match
@@ -74,19 +70,14 @@ class MatchUpdateForm(forms.ModelForm):
         }        
 
 class GoalForm(forms.ModelForm):
-    # Field này sẽ được tùy chỉnh trong view để chỉ hiện cầu thủ của 2 đội
     player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
-
     class Meta:
         model = Goal
         fields = ['player', 'minute']
-        labels = {
-            'minute': 'Phút ghi bàn'
-        }
+        labels = { 'minute': 'Phút ghi bàn' }
 
 class CardForm(forms.ModelForm):
     player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ nhận thẻ")
-
     class Meta:
         model = Card
         fields = ['player', 'card_type', 'minute']
@@ -94,3 +85,65 @@ class CardForm(forms.ModelForm):
             'card_type': 'Loại thẻ',
             'minute': 'Phút nhận thẻ'
         }
+
+class SemiFinalCreationForm(forms.Form):
+    sf1_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 1 - Đội 1")
+    sf1_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 1 - Đội 2")
+    sf1_datetime = forms.DateTimeField(
+        label="Thời gian Bán kết 1",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+    sf2_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 2 - Đội 1")
+    sf2_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 2 - Đội 2")
+    sf2_datetime = forms.DateTimeField(
+        label="Thời gian Bán kết 2",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        qualified_teams_queryset = kwargs.pop('qualified_teams', None)
+        super().__init__(*args, **kwargs)
+        if qualified_teams_queryset is not None:
+            self.fields['sf1_team1'].queryset = qualified_teams_queryset
+            self.fields['sf1_team2'].queryset = qualified_teams_queryset
+            self.fields['sf2_team1'].queryset = qualified_teams_queryset
+            self.fields['sf2_team2'].queryset = qualified_teams_queryset
+
+    def clean(self):
+        cleaned_data = super().clean()
+        teams = [
+            cleaned_data.get('sf1_team1'),
+            cleaned_data.get('sf1_team2'),
+            cleaned_data.get('sf2_team1'),
+            cleaned_data.get('sf2_team2'),
+        ]
+        if len(set(teams)) != 4:
+            raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu.")
+        return cleaned_data
+
+# === TẠO CẶP ĐẤU CHUNG KẾT ===
+class FinalCreationForm(forms.Form):
+    final_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
+    final_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
+    final_datetime = forms.DateTimeField(
+        label="Thời gian Chung kết",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        semi_final_winners_queryset = kwargs.pop('semi_final_winners', None)
+        super().__init__(*args, **kwargs)
+        if semi_final_winners_queryset is not None:
+            self.fields['final_team1'].queryset = semi_final_winners_queryset
+            self.fields['final_team2'].queryset = semi_final_winners_queryset
+
+    def clean(self):
+        cleaned_data = super().clean()
+        team1 = cleaned_data.get('final_team1')
+        team2 = cleaned_data.get('final_team2')
+        if team1 and team2 and team1 == team2:
+            raise ValidationError("Hai đội trong trận chung kết không được trùng nhau.")
+        return cleaned_data     

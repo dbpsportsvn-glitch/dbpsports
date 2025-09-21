@@ -4,7 +4,6 @@
 {% block title %}Quản lý Vòng Knockout - {{ tournament.name }}{% endblock %}
 
 {% block sidebar %}
-    {# Trang này sẽ dùng chung menu, ta sẽ thêm link sau #}
     {% include 'organizations/_manage_tournament_nav.html' %}
 {% endblock %}
 
@@ -17,35 +16,90 @@
         </p>
     </div>
     <div class="card-body p-4">
-        {# Khu vực thêm các nút tạo trận đấu sẽ được đặt ở đây trong các bước sau #}
-        <div class="mb-4">
-            <h5>Tạo cặp đấu mới (Sắp ra mắt)</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-primary" disabled>Tạo Tứ kết</button>
-                <button class="btn btn-primary" disabled>Tạo Bán kết</button>
-                <button class="btn btn-primary" disabled>Tạo Chung kết</button>
-            </div>
-        </div>
 
-        <hr>
-
-        <h5>Các trận đấu đã xếp lịch</h5>
-        <div class="list-group">
-            {% for match in knockout_matches %}
-                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                        <span class="badge bg-info me-2">{{ match.get_match_round_display }}</span>
-                        <strong>{{ match.team1.name|default:"Chưa xác định" }} vs {{ match.team2.name|default:"Chưa xác định" }}</strong>
-                        <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+        {# --- HIỂN THỊ KẾT QUẢ VÒNG BẢNG --- #}
+        <h5 class="mb-3">Kết quả Vòng bảng</h5>
+        <div class="row">
+            {% for group_id, group_data in standings_by_group.items %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header"><strong>{{ group_data.name }}</strong></div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm mb-0">
+                            <thead><tr><th>#</th><th>Đội</th><th>Đ</th><th>HS</th><th>Điểm</th></tr></thead>
+                            <tbody>
+                                {% for row in group_data.standings %}
+                                <tr class="{% if forloop.counter <= 2 %}table-success{% endif %}">
+                                    <td>{{ forloop.counter }}</td><td>{{ row.team_obj.name }}</td><td>{{ row.played }}</td><td>{{ row.gd }}</td><td><strong>{{ row.points }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
-                        <i class="bi bi-pencil-fill"></i> Quản lý
-                    </a>
                 </div>
-            {% empty %}
-                <div class="list-group-item text-muted">Chưa có trận đấu loại trực tiếp nào được tạo.</div>
+            </div>
             {% endfor %}
         </div>
+
+        <hr class="my-4">
+
+        {# --- FORM TẠO BÁN KẾT --- #}
+        <h5 class="mb-3">Tạo cặp đấu Bán kết</h5>
+        {% if qualified_teams|length >= 4 %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_semi_finals">
+                {% if semi_final_form.non_field_errors %}<div class="alert alert-danger">{{ semi_final_form.non_field_errors }}</div>{% endif %}
+                <div class="row">
+                    <div class="col-lg-6 border-end pe-lg-4">
+                        <h6>Trận Bán kết 1</h6>
+                        {{ semi_final_form.sf1_team1|as_crispy_field }}
+                        {{ semi_final_form.sf1_team2|as_crispy_field }}
+                        {{ semi_final_form.sf1_datetime|as_crispy_field }}
+                    </div>
+                    <div class="col-lg-6 ps-lg-4">
+                        <h6>Trận Bán kết 2</h6>
+                        {{ semi_final_form.sf2_team1|as_crispy_field }}
+                        {{ semi_final_form.sf2_team2|as_crispy_field }}
+                        {{ semi_final_form.sf2_datetime|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">Lưu cặp đấu Bán kết</button>
+                </div>
+            </form>
+        {% else %}
+             <p class="text-danger">Chưa xác định đủ 4 đội để vào Bán kết.</p>
+        {% endif %}
+
+        <hr class="my-4">
+        
+        {# --- FORM TẠO CHUNG KẾT --- #}
+        <h5 class="mb-3">Tạo trận Chung kết</h5>
+        {% if semi_final_winners|length == 2 %}
+            <p class="text-muted">Hệ thống đã xác định 2 đội thắng Bán kết. Hãy xếp lịch cho trận đấu cuối cùng.</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_final">
+                {% if final_form.non_field_errors %}<div class="alert alert-danger">{{ final_form.non_field_errors }}</div>{% endif %}
+                 <div class="row">
+                    <div class="col-lg-6">
+                        {{ final_form.final_team1|as_crispy_field }}
+                    </div>
+                     <div class="col-lg-6">
+                        {{ final_form.final_team2|as_crispy_field }}
+                    </div>
+                </div>
+                {{ final_form.final_datetime|as_crispy_field }}
+                 <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-trophy-fill"></i> Tạo trận Chung kết
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết để tạo trận Chung kết.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
