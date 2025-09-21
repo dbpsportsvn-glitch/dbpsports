@@ -1,0 +1,39 @@
+<div class="card">
+    <div class="card-header">
+        <strong>{{ tournament.name }}</strong>
+    </div>
+    <div class="card-body p-2">
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'overview' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=overview">
+                    <i class="bi bi-bar-chart-fill"></i> Tổng quan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'teams' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=teams">
+                    <i class="bi bi-people-fill"></i> Đội đăng ký
+                </a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link {% if active_page == 'groups' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=groups">
+                    <i class="bi bi-grid-fill"></i> Bảng đấu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'matches' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=matches">
+                    <i class="bi bi-calendar2-event-fill"></i> Trận đấu
+                </a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link {% if active_page == 'members' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=members">
+                    <i class="bi bi-person-lines-fill"></i> Thành viên BTC
+                </a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="{% url 'organizations:edit_tournament' pk=tournament.pk %}">
+                    <i class="bi bi-gear-fill"></i> Cài đặt Giải đấu
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

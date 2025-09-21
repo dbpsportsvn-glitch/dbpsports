@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/management.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1><i class="bi bi-shield-check"></i> Khu vực Quản lý BTC</h1>
+            <p class="lead mb-0">{{ organization.name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'organizations:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Về trang tổng quan
+            </a>
+        </div>
+    </div>
+
+    <div class="management-layout">
+        <aside class="management-sidebar">
+            {% block sidebar %}
+            {# Nơi chứa menu sẽ được đặt ở đây #}
+            {% endblock %}
+        </aside>
+
+        <main class="management-content">
+            {% block management_content %}
+            {# Nội dung chính của từng trang sẽ ở đây #}
+            {% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}

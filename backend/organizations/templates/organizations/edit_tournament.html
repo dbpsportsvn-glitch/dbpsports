@@ -1,24 +1,25 @@
-{% extends 'base.html' %}
+{% extends 'organizations/organization_base.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %}Chỉnh sửa: {{ tournament.name }}{% endblock %}
 
-{% block content %}
-<div class="container mt-4" style="max-width: 800px;">
-    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-link p-0 mb-3">← Quay lại trang quản lý</a>
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3>Chỉnh sửa thông tin giải đấu</h3>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
-                </div>
-            </form>
-        </div>
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin giải đấu</h3>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

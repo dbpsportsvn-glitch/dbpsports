@@ -1,0 +1,53 @@
+/* File: backend/static/css/management.css */
+
+.management-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr; /* Sidebar 240px, phần còn lại cho nội dung */
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.management-sidebar {
+    position: sticky;
+    top: 80px; /* Vị trí dính lại khi cuộn */
+}
+
+.management-sidebar .nav-pills .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: #343a40; /* Màu chữ tối */
+}
+
+.management-sidebar .nav-pills .nav-link.active,
+.management-sidebar .nav-pills .nav-link:hover {
+    background-color: #e9ecef; /* Màu nền khi active hoặc hover */
+    color: #000;
+}
+
+.management-sidebar .nav-pills .nav-link.active {
+    font-weight: 600;
+}
+
+.management-content .card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive cho màn hình nhỏ */
+@media (max-width: 991px) {
+    .management-layout {
+        grid-template-columns: 1fr; /* Chuyển thành 1 cột */
+    }
+    .management-sidebar {
+        position: static; /* Bỏ dính */
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* === BỔ SUNG: Làm đậm label cho các form quản lý === */
+.management-content form label {
+    font-weight: 600;
+}

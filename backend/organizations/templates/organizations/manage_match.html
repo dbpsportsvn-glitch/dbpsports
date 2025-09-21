@@ -1,27 +1,32 @@
-{% extends 'base.html' %}
+{% extends 'organizations/organization_base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Quản lý trận đấu{% endblock %}
+{% block title %}Quản lý: {{ match.team1.name }} vs {{ match.team2.name }}{% endblock %}
 
-{% block content %}
-<div class="container mt-4" style="max-width: 720px;">
-    <a href="{% url 'tournament_detail' pk=tournament.pk %}?tab=schedule#schedule" class="btn btn-link p-0 mb-3">← Về Lịch thi đấu</a>
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3>Quản lý Trận đấu</h3>
-            <p class="mb-0 text-muted">
-                {{ match.team1.name }} vs {{ match.team2.name }}
-            </p>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
-                </div>
-            </form>
-        </div>
+{% block sidebar %}
+    {# Trang này cũng dùng chung menu quản lý giải đấu #}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='matches' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-pencil-fill"></i> Quản lý Trận đấu</h3>
+        <p class="mb-0 text-muted">
+            {{ match.team1.name }} vs {{ match.team2.name }}
+            <br>
+            <small>{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+        </p>
+    </div>
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=matches" class="btn btn-outline-secondary">← Quay lại danh sách</a>
+                <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
