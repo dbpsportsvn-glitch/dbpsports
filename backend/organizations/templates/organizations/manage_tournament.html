@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-    
+
 {% block title %}Quản lý: {{ tournament.name }}{% endblock %}
 
 {% block content %}
@@ -10,72 +10,25 @@
         <p class="lead">{{ tournament.name }}</p>
     </div>
 
-    {# === BẮT ĐẦU KHU VỰC MỚI: DUYỆT ĐỘI === #}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">
-            <h5><i class="bi bi-person-check-fill"></i> Duyệt Đội đăng ký</h5>
-        </div>
-        <div class="card-body">
-            <h6>Các đội chờ xác nhận thanh toán</h6>
-            {% if pending_teams %}
-                <ul class="list-group">
-                    {% for team in pending_teams %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
-                                {% if team.payment_proof %}
-                                    <a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>
-                                {% endif %}
-                            </div>
-                            <form method="post" class="mb-0">
-                                {% csrf_token %}
-                                <input type="hidden" name="team_id" value="{{ team.id }}">
-                                <button type="submit" name="approve_payment" class="btn btn-success btn-sm">Duyệt</button>
-                            </form>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Không có đội nào đang chờ duyệt.</p>
-            {% endif %}
+    {# === BẮT ĐẦU HỆ THỐNG TABS === #}
+    <ul class="nav nav-tabs" id="manageTournamentTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab">Bảng đấu</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">Đội đăng ký</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">Thành viên</button>
+        </li>
+    </ul>
 
-            <hr>
-            <h6>Các đội đã được duyệt</h6>
-            {% if paid_teams %}
-                <ul class="list-group list-group-flush">
-                    {% for team in paid_teams %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{ team.name }}
-
-                            {# === BẮT ĐẦU THÊM MỚI === #}
-                            {# Chỉ hiển thị nút Thu hồi nếu đội chưa được xếp vào bảng nào #}
-                            {% if not team.group %}
-                            <form method="post" class="mb-0">
-                                {% csrf_token %}
-                                <input type="hidden" name="team_id" value="{{ team.id }}">
-                                <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
-                            </form>
-                            {% else %}
-                                <span class="badge bg-secondary">Đã xếp bảng</span>
-                            {% endif %}
-                            {# === KẾT THÚC THÊM MỚI === #}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Chưa có đội nào được duyệt.</p>
-            {% endif %}
-        </div>
-    </div>
-    {# === KẾT THÚC KHU VỰC MỚI === #}
-
-    <div class="row">
-        <div class="col-md-5">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5><i class="bi bi-list-ol"></i> Quản lý Bảng đấu</h5>
-                </div>
-                <div class="card-body">
+    <div class="tab-content card" id="manageTournamentTabContent" style="border-top-left-radius: 0;">
+        {# === TAB 1: QUẢN LÝ BẢNG ĐẤU === #}
+        <div class="tab-pane fade show active p-3" id="groups" role="tabpanel">
+            <div class="row">
+                <div class="col-md-5">
+                    <h5>Tạo Bảng đấu mới</h5>
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -84,31 +37,131 @@
                         </div>
                         <button type="submit" name="create_group" class="btn btn-primary">Thêm bảng</button>
                     </form>
-                    <hr>
+                </div>
+                <div class="col-md-7">
                     <h6>Các bảng hiện có</h6>
                     <ul class="list-group">
                         {% for group in groups %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ group.name }}
-
-                                {# === BẮT ĐẦU THÊM MỚI === #}
-                                <form method="post" action="{% url 'organizations:delete_group' pk=group.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bảng {{ group.name }} không?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                                </form>
-                                {# === KẾT THÚC THÊM MỚI === #}
-
-                            </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ group.name }}
+                            <form method="post" action="{% url 'organizations:delete_group' pk=group.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bảng {{ group.name }} không?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                        </li>
                         {% empty %}
-                            <li class="list-group-item text-muted">Chưa có bảng đấu.</li>
+                        <li class="list-group-item text-muted">Chưa có bảng đấu nào.</li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
         </div>
-        <div class="col-md-7">
-            {# Khu vực này chúng ta sẽ thêm các công cụ khác sau #}
+
+        {# === TAB 2: DUYỆT ĐỘI ĐĂNG KÝ === #}
+        <div class="tab-pane fade p-3" id="teams" role="tabpanel">
+            <h5>Duyệt Đội đăng ký</h5>
+            <hr>
+            <h6>Các đội chờ xác nhận thanh toán</h6>
+            {% if pending_teams %}
+                <ul class="list-group">
+                    {% for team in pending_teams %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
+                            {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}
+                        </div>
+                        <form method="post" class="mb-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="team_id" value="{{ team.id }}">
+                            <button type="submit" name="approve_payment" class="btn btn-success btn-sm">Duyệt</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Không có đội nào đang chờ duyệt.</p>
+            {% endif %}
+            <hr>
+            <h6>Các đội đã được duyệt</h6>
+            {% if paid_teams %}
+                <ul class="list-group list-group-flush">
+                    {% for team in paid_teams %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ team.name }}
+                        {% if not team.group %}
+                        <form method="post" class="mb-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="team_id" value="{{ team.id }}">
+                            <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
+                        </form>
+                        {% else %}
+                            <span class="badge bg-secondary">Đã xếp bảng</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Chưa có đội nào được duyệt.</p>
+            {% endif %}
+        </div>
+
+        {# === TAB 3: QUẢN LÝ THÀNH VIÊN === #}
+        <div class="tab-pane fade p-3" id="members" role="tabpanel">
+            <div class="row">
+                {# === BẮT ĐẦU CỘT TRÁI: FORM MỜI === #}
+                <div class="col-md-5">
+                    <h5>Mời thành viên mới</h5>
+                    {# Chỉ chủ sở hữu mới thấy form mời #}
+                    {% if request.user == tournament.organization.owner %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="emailInput" class="form-label">Email của thành viên</label>
+                            <input type="email" name="email" class="form-control" id="emailInput" placeholder="nhapemail@vidu.com" required>
+                            <div class="form-text">Người được mời phải có tài khoản trên hệ thống.</div>
+                        </div>
+                        <button type="submit" name="invite_member" class="btn btn-primary">Gửi lời mời</button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted">Chỉ chủ sở hữu đơn vị mới có quyền mời thành viên mới.</p>
+                    {% endif %}
+                </div>
+                {# === KẾT THÚC CỘT TRÁI === #}
+
+                {# === BẮT ĐẦU CỘT PHẢI: DANH SÁCH THÀNH VIÊN === #}
+                <div class="col-md-7">
+                    <h6>Các thành viên hiện tại</h6>
+                    <ul class="list-group">
+                        {% for member in members %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>
+                                    {% if member.user.get_full_name %}
+                                        {{ member.user.get_full_name }}
+                                    {% else %}
+                                        {{ member.user.email }}
+                                    {% endif %}
+                                </strong>
+                                <span class="badge 
+                                    {% if member.role == 'OWNER' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ member.get_role_display }}
+                                </span>
+                            </div>
+                            {# Chỉ chủ sở hữu mới thấy nút xóa, và không thể xóa chính mình #}
+                            {% if request.user == tournament.organization.owner and member.user != request.user %}
+                            <form method="post" action="{% url 'organizations:remove_member' pk=member.pk %}?tournament_id={{ tournament.pk }}" onsubmit="return confirm('Bạn có chắc muốn xóa thành viên này?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {# === KẾT THÚC CỘT PHẢI === #}
+            </div>
         </div>
     </div>
+    {# === KẾT THÚC HỆ THỐNG TABS === #}
 </div>
 {% endblock %}

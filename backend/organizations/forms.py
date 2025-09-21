@@ -2,6 +2,7 @@
 from django import forms
 from tournaments.models import Tournament
 from .models import Organization
+from django.contrib.auth.models import User
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
@@ -31,4 +32,17 @@ class OrganizationCreationForm(forms.ModelForm):
             'name': 'Tên đơn vị tổ chức của bạn',
             'logo': 'Logo (không bắt buộc)',
         }
-# === KẾT THÚC THÊM MỚI ===        
+# === KẾT THÚC THÊM MỚI ===      
+
+class MemberInviteForm(forms.Form):
+    email = forms.EmailField(
+        label="Email của thành viên mới",
+        widget=forms.EmailInput(attrs={'placeholder': 'nhapemail@vidu.com'})
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        # Kiểm tra xem có tài khoản nào dùng email này không
+        if not User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
+        return email

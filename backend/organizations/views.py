@@ -1,13 +1,16 @@
-from django.shortcuts import render, get_object_or_404, redirect # Đã sửa ở đây
+from django.shortcuts import render, get_object_or_404, redirect 
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from .models import Organization
-from .forms import TournamentCreationForm, OrganizationCreationForm
+from .models import Organization, Membership
 from tournaments.models import Tournament, Group, Team
 from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
+from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm 
+from django.contrib.auth.models import User 
+from django.contrib import messages 
 
+#=================================
 
 @login_required
 @never_cache
@@ -106,6 +109,34 @@ def manage_tournament(request, pk):
                     team_to_revoke.save()
                 # (Chúng ta có thể thêm message báo lỗi nếu đội đã được xếp bảng)
             return redirect('organizations:manage_tournament', pk=pk)
+
+        # === BẮT ĐẦU THÊM MỚI: Xử lý mời thành viên ===
+        if 'invite_member' in request.POST:
+            # Chỉ chủ sở hữu mới có quyền mời
+            if request.user == tournament.organization.owner:
+                invite_form = MemberInviteForm(request.POST)
+                if invite_form.is_valid():
+                    email = invite_form.cleaned_data['email']
+                    user_to_invite = User.objects.get(email__iexact=email)
+
+                    # Tạo membership, nếu đã tồn tại thì bỏ qua lỗi
+                    membership, created = Membership.objects.get_or_create(
+                        organization=tournament.organization,
+                        user=user_to_invite,
+                        defaults={'role': Membership.Role.ADMIN}
+                    )
+
+                    if created:
+                        messages.success(request, f"Đã thêm {user_to_invite.email} vào đơn vị thành công.")
+                    else:
+                        messages.warning(request, f"{user_to_invite.email} đã là thành viên.")
+                else:
+                    # Gửi lỗi của form ra message để hiển thị
+                    for field, errors in invite_form.errors.items():
+                        for error in errors:
+                            messages.error(request, error)
+
+            return redirect('organizations:manage_tournament', pk=pk)
         # === KẾT THÚC THÊM MỚI ===
 
     groups = tournament.groups.all().order_by('name')
@@ -114,13 +145,15 @@ def manage_tournament(request, pk):
     pending_teams = tournament.teams.filter(payment_status='PENDING').select_related('captain')
     # Lấy các đội đã được duyệt
     paid_teams = tournament.teams.filter(payment_status='PAID').select_related('captain')
-    # === KẾT THÚC THÊM MỚI ===
+
+    members = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')   
 
     context = {
         'tournament': tournament,
         'groups': groups,
         'pending_teams': pending_teams, # Gửi danh sách ra template
         'paid_teams': paid_teams,       # Gửi danh sách ra template
+        'members': members,
     }
     return render(request, 'organizations/manage_tournament.html', context)
 
@@ -190,3 +223,27 @@ def create_organization(request):
         form = OrganizationCreationForm()
 
     return render(request, 'organizations/create_organization.html', {'form': form})
+
+# === BẮT ĐẦU THÊM MỚI ===
+@login_required
+def remove_member(request, pk):
+    membership_to_delete = get_object_or_404(Membership, pk=pk)
+    organization = membership_to_delete.organization
+    tournament_id_to_return = request.GET.get('tournament_id')
+
+    # KIỂM TRA BẢO MẬT: 
+    # 1. Người thực hiện phải là chủ sở hữu của đơn vị này
+    # 2. Chủ sở hữu không được tự xóa chính mình (phải là người khác)
+    if request.user != organization.owner or membership_to_delete.user == organization.owner:
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        membership_to_delete.delete()
+        messages.success(request, f"Đã xóa thành viên {membership_to_delete.user.email} khỏi đơn vị.")
+
+    # Quay về trang quản lý giải đấu trước đó
+    if tournament_id_to_return:
+        return redirect('organizations:manage_tournament', pk=tournament_id_to_return)
+
+    return redirect('organizations:dashboard') # Fallback nếu không có tournament_id
+# === KẾT THÚC THÊM MỚI ===    
