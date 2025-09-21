@@ -170,13 +170,20 @@
 .match-card-final:hover {
     box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
 }
+
+/* === THAY ĐỔI BẮT ĐẦU TỪ ĐÂY === */
 .match-card-final .team-logo {
-    height: 32px; width: 32px; object-fit: contain;
+    height: 48px; /* Tăng kích thước logo một chút */
+    width: 48px; 
+    object-fit: contain;
 }
 .match-card-final .team-name {
     font-weight: 600;
     font-size: 1.1rem;
+    color: #2563eb; /* Thêm dòng này để chữ đậm và rõ nét */
 }
+/* === KẾT THÚC THAY ĐỔI === */
+
 .match-card-final .match-score {
     font-weight: 700;
     font-size: 1.5rem;
@@ -187,7 +194,6 @@
     padding: 0.5rem 1rem;
 }
 
-/* backend/static/css/custom.css */
 
 /* Card giải đấu với ảnh nền */
 .tournament-card-bg {

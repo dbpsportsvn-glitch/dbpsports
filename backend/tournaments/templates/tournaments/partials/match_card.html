@@ -1,11 +1,18 @@
+{% comment %} File: backend/tournaments/templates/tournaments/partials/match_card.html {% endcomment %}
 <a href="{% url 'match_detail' pk=match.pk %}" class="text-decoration-none text-reset">
     <div class="card shadow-sm match-card-final">
         <div class="card-body">
+            
+            {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
             <div class="row align-items-center text-center">
-                <div class="col-5 d-flex align-items-center justify-content-end gap-2">
+                <div class="col-2 text-end">
                     {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo">{% endif %}
+                </div>
+
+                <div class="col-3 text-end">
                     <span class="team-name">{{ match.team1.name }}</span>
                 </div>
+
                 <div class="col-2">
                     {% if match.team1_score is not None and match.team2_score is not None %}
                         <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
@@ -13,11 +20,17 @@
                         <span class="match-score">VS</span>
                     {% endif %}
                 </div>
-                <div class="col-5 d-flex align-items-center justify-content-start gap-2">
+
+                <div class="col-3 text-start">
                     <span class="team-name">{{ match.team2.name }}</span>
+                </div>
+
+                <div class="col-2 text-start">
                     {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo">{% endif %}
                 </div>
             </div>
+            {# === KẾT THÚC THAY ĐỔI === #}
+
         </div>
         <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
