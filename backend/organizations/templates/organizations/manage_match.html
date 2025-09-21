@@ -19,7 +19,6 @@
     </div>
     <div class="card-body p-4">
 
-        {# --- Cấu trúc TAB --- #}
         <ul class="nav nav-tabs" id="matchTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">Thông tin chung</button>
@@ -33,12 +32,28 @@
         </ul>
 
         <div class="tab-content pt-3" id="matchTabsContent">
-            {# --- TAB 1: Thông tin chung --- #}
+            {# --- TAB 1: Thông tin chung (ĐÃ CẬP NHẬT) --- #}
             <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_match">
-                    {{ form|crispy }}
+                    
+                    {# Dùng grid của Bootstrap để chia đôi hàng tỉ số #}
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.team1_score|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.team2_score|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    {# Hiển thị các trường còn lại của form #}
+                    {{ form.livestream_url|as_crispy_field }}
+                    {{ form.referee|as_crispy_field }}
+                    {{ form.commentator|as_crispy_field }}
+                    {{ form.ticker_text|as_crispy_field }}
+
                     <div class="d-flex justify-content-end mt-4">
                         <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
                     </div>
@@ -53,9 +68,9 @@
                         <form method="post" novalidate>
                              {% csrf_token %}
                             <input type="hidden" name="action" value="add_goal">
-                            {# Hiển thị các field khác của form (nếu có) #}
                              <div class="mb-3">
                                 <label for="id_goal_player" class="form-label requiredField">Cầu thủ ghi bàn<span class="asteriskField">*</span></label>
+                                <input type="text" class="form-control form-control-sm mb-2" id="goalPlayerSearch" placeholder="Tìm tên cầu thủ...">
                                 <select name="player" id="id_goal_player" class="form-select" required>
                                     <option value="">---------</option>
                                     <optgroup label="{{ match.team1.name }}">
@@ -83,7 +98,6 @@
                                         ⚽ <strong>{{ goal.player.full_name }}</strong> ({{ goal.team.name }})
                                         {% if goal.minute %}- Phút {{ goal.minute }}{% endif %}
                                     </span>
-                                    {# Nút xóa sẽ được làm ở bước sau #}
                                 </li>
                             {% empty %}
                                 <li class="list-group-item text-muted">Chưa có bàn thắng nào.</li>
@@ -103,6 +117,7 @@
                             <input type="hidden" name="action" value="add_card">
                              <div class="mb-3">
                                 <label for="id_card_player" class="form-label requiredField">Cầu thủ nhận thẻ<span class="asteriskField">*</span></label>
+                                <input type="text" class="form-control form-control-sm mb-2" id="cardPlayerSearch" placeholder="Tìm tên cầu thủ...">
                                 <select name="player" id="id_card_player" class="form-select" required>
                                      <option value="">---------</option>
                                     <optgroup label="{{ match.team1.name }}">
@@ -136,7 +151,6 @@
                                         <strong>{{ card.player.full_name }}</strong> ({{ card.team.name }})
                                         {% if card.minute %}- Phút {{ card.minute }}{% endif %}
                                     </span>
-                                    {# Nút xóa sẽ được làm ở bước sau #}
                                 </li>
                             {% empty %}
                                 <li class="list-group-item text-muted">Chưa có thẻ phạt nào.</li>
@@ -149,7 +163,6 @@
     </div>
 </div>
 
-{# Script để tự động active đúng tab khi chuyển trang #}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
@@ -161,6 +174,44 @@ document.addEventListener('DOMContentLoaded', function () {
             tab.show();
         }
     }
+
+    function setupPlayerFilter(inputId, selectId) {
+        const searchInput = document.getElementById(inputId);
+        const selectElement = document.getElementById(selectId);
+
+        if (!searchInput || !selectElement) return;
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = searchInput.value.toLowerCase();
+            const optgroups = selectElement.getElementsByTagName('optgroup');
+
+            for (let i = 0; i < optgroups.length; i++) {
+                const optgroup = optgroups[i];
+                const options = optgroup.getElementsByTagName('option');
+                let groupHasVisibleOptions = false;
+
+                for (let j = 0; j < options.length; j++) {
+                    const option = options[j];
+                    const txtValue = option.textContent || option.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        option.style.display = "";
+                        groupHasVisibleOptions = true;
+                    } else {
+                        option.style.display = "none";
+                    }
+                }
+                
+                if (groupHasVisibleOptions) {
+                    optgroup.style.display = "";
+                } else {
+                    optgroup.style.display = "none";
+                }
+            }
+        });
+    }
+
+    setupPlayerFilter('goalPlayerSearch', 'id_goal_player');
+    setupPlayerFilter('cardPlayerSearch', 'id_card_player');
 });
 </script>
 {% endblock %}

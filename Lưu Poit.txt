@@ -1,11 +1,11 @@
 
+.\venv\Scripts\activate
+
 python manage.py runserver
 
 cd dbpsports
 
 cd backend
-
-.\venv\Scripts\activate
 
 
 Ctrl + C
@@ -14,7 +14,7 @@ cd ..
 
 
 git add .
-git commit -m "Hoan thien giao dien trang chu va toi uu responsive"
+git commit -m "Thêm Tính năng Phân Quyền 13"
 git push
 
 Sao lưu DB + media (PowerShell)
