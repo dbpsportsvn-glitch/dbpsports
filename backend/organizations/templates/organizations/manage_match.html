@@ -4,7 +4,6 @@
 {% block title %}Quản lý: {{ match.team1.name }} vs {{ match.team2.name }}{% endblock %}
 
 {% block sidebar %}
-    {# Trang này cũng dùng chung menu quản lý giải đấu #}
     {% include 'organizations/_manage_tournament_nav.html' with active_page='matches' %}
 {% endblock %}
 
@@ -19,14 +18,149 @@
         </p>
     </div>
     <div class="card-body p-4">
-        <form method="post">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=matches" class="btn btn-outline-secondary">← Quay lại danh sách</a>
-                <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
+
+        {# --- Cấu trúc TAB --- #}
+        <ul class="nav nav-tabs" id="matchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab">Thông tin chung</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="goals-tab" data-bs-toggle="tab" data-bs-target="#goals-pane" type="button" role="tab">Bàn thắng</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cards-tab" data-bs-toggle="tab" data-bs-target="#cards-pane" type="button" role="tab">Thẻ phạt</button>
+            </li>
+        </ul>
+
+        <div class="tab-content pt-3" id="matchTabsContent">
+            {# --- TAB 1: Thông tin chung --- #}
+            <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_match">
+                    {{ form|crispy }}
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
+                    </div>
+                </form>
             </div>
-        </form>
+
+            {# --- TAB 2: Bàn thắng --- #}
+            <div class="tab-pane fade" id="goals-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-5">
+                        <h5>Thêm bàn thắng mới</h5>
+                        <form method="post" novalidate>
+                             {% csrf_token %}
+                            <input type="hidden" name="action" value="add_goal">
+                            {# Hiển thị các field khác của form (nếu có) #}
+                             <div class="mb-3">
+                                <label for="id_goal_player" class="form-label requiredField">Cầu thủ ghi bàn<span class="asteriskField">*</span></label>
+                                <select name="player" id="id_goal_player" class="form-select" required>
+                                    <option value="">---------</option>
+                                    <optgroup label="{{ match.team1.name }}">
+                                        {% for player in goal_form.fields.player.queryset %}{% if player.team == match.team1 %}
+                                        <option value="{{ player.pk }}">{{ player.full_name }}</option>
+                                        {% endif %}{% endfor %}
+                                    </optgroup>
+                                    <optgroup label="{{ match.team2.name }}">
+                                        {% for player in goal_form.fields.player.queryset %}{% if player.team == match.team2 %}
+                                        <option value="{{ player.pk }}">{{ player.full_name }}</option>
+                                        {% endif %}{% endfor %}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            {{ goal_form.minute|as_crispy_field }}
+                            <button type="submit" class="btn btn-success mt-3">Thêm bàn thắng</button>
+                        </form>
+                    </div>
+                    <div class="col-md-7">
+                        <h6>Danh sách bàn thắng đã ghi</h6>
+                        <ul class="list-group">
+                            {% for goal in goals %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        ⚽ <strong>{{ goal.player.full_name }}</strong> ({{ goal.team.name }})
+                                        {% if goal.minute %}- Phút {{ goal.minute }}{% endif %}
+                                    </span>
+                                    {# Nút xóa sẽ được làm ở bước sau #}
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">Chưa có bàn thắng nào.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {# --- TAB 3: Thẻ phạt --- #}
+            <div class="tab-pane fade" id="cards-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-5">
+                        <h5>Thêm thẻ phạt mới</h5>
+                        <form method="post" novalidate>
+                             {% csrf_token %}
+                            <input type="hidden" name="action" value="add_card">
+                             <div class="mb-3">
+                                <label for="id_card_player" class="form-label requiredField">Cầu thủ nhận thẻ<span class="asteriskField">*</span></label>
+                                <select name="player" id="id_card_player" class="form-select" required>
+                                     <option value="">---------</option>
+                                    <optgroup label="{{ match.team1.name }}">
+                                        {% for player in card_form.fields.player.queryset %}{% if player.team == match.team1 %}
+                                        <option value="{{ player.pk }}">{{ player.full_name }}</option>
+                                        {% endif %}{% endfor %}
+                                    </optgroup>
+                                    <optgroup label="{{ match.team2.name }}">
+                                         {% for player in card_form.fields.player.queryset %}{% if player.team == match.team2 %}
+                                        <option value="{{ player.pk }}">{{ player.full_name }}</option>
+                                        {% endif %}{% endfor %}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            {{ card_form.card_type|as_crispy_field }}
+                            {{ card_form.minute|as_crispy_field }}
+                            <button type="submit" class="btn btn-success mt-3">Thêm thẻ phạt</button>
+                        </form>
+                    </div>
+                    <div class="col-md-7">
+                        <h6>Danh sách thẻ phạt</h6>
+                        <ul class="list-group">
+                           {% for card in cards %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        {% if card.card_type == 'YELLOW' %}
+                                            <span class="badge bg-warning text-dark" style="width: 12px; height: 16px; display: inline-block; border: 1px solid #666;"></span>
+                                        {% else %}
+                                            <span class="badge bg-danger" style="width: 12px; height: 16px; display: inline-block; border: 1px solid #666;"></span>
+                                        {% endif %}
+                                        <strong>{{ card.player.full_name }}</strong> ({{ card.team.name }})
+                                        {% if card.minute %}- Phút {{ card.minute }}{% endif %}
+                                    </span>
+                                    {# Nút xóa sẽ được làm ở bước sau #}
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-muted">Chưa có thẻ phạt nào.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+{# Script để tự động active đúng tab khi chuyển trang #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab) {
+        const triggerEl = document.querySelector(`#matchTabs button[data-bs-target="#${tab}-pane"]`);
+        if (triggerEl) {
+            const tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+});
+</script>
 {% endblock %}

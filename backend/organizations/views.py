@@ -5,13 +5,14 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .models import Organization, Membership
-from tournaments.models import Tournament, Group, Team, Match
+from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player
 from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm
+# Dòng import này đã được sửa lỗi và bổ sung
+from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm
 
 #=================================
 
@@ -59,8 +60,6 @@ def create_tournament(request):
     }
     return render(request, 'organizations/create_tournament.html', context)
 
-# File: backend/organizations/views.py
-
 @login_required
 @never_cache
 def manage_tournament(request, pk):
@@ -72,26 +71,19 @@ def manage_tournament(request, pk):
     view_name = request.GET.get('view', 'overview')
 
     if request.method == 'POST':
-        # === BẮT ĐẦU CODE MỚI: Xử lý lưu tỉ số nhanh ===
         if 'quick_update_score' in request.POST:
             match_id = request.POST.get('match_id')
             try:
                 match = Match.objects.get(pk=match_id, tournament=tournament)
                 score1_str = request.POST.get(f'score_team1_{match_id}')
                 score2_str = request.POST.get(f'score_team2_{match_id}')
-
-                # Chuyển chuỗi rỗng thành None, nếu không thì chuyển thành số nguyên
                 match.team1_score = int(score1_str) if score1_str else None
                 match.team2_score = int(score2_str) if score2_str else None
-                
                 match.save()
                 messages.success(request, f"Đã cập nhật tỉ số cho trận đấu: {match.team1.name} vs {match.team2.name}.")
-            
             except (Match.DoesNotExist, ValueError):
                 messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
-            
             return redirect(request.path_info + '?view=matches')
-        # === KẾT THÚC CODE MỚI ===
 
         if 'create_group' in request.POST:
             group_name = request.POST.get('group_name', '').strip()
@@ -245,22 +237,66 @@ def edit_tournament(request, pk):
 @login_required
 @never_cache
 def manage_match(request, pk):
-    match = get_object_or_404(Match.objects.select_related('tournament__organization'), pk=pk)
+    match = get_object_or_404(Match.objects.select_related('tournament__organization', 'team1', 'team2'), pk=pk)
     tournament = match.tournament
     organization = tournament.organization
+
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
+
     if request.method == 'POST':
-        form = MatchUpdateForm(request.POST, instance=match)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Đã cập nhật thông tin trận đấu thành công!")
-            return redirect(reverse('organizations:manage_tournament', args=[tournament.pk]) + '?view=matches')
-    else:
-        form = MatchUpdateForm(instance=match)
+        action = request.POST.get('action')
+
+        if action == 'update_match':
+            form = MatchUpdateForm(request.POST, instance=match)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Đã cập nhật thông tin chung của trận đấu.")
+                return redirect('organizations:manage_match', pk=match.pk)
+        
+        elif action == 'add_goal':
+            goal_form = GoalForm(request.POST)
+            goal_form.fields['player'].queryset = players_in_match
+            if goal_form.is_valid():
+                goal = goal_form.save(commit=False)
+                goal.match = match
+                goal.team = goal.player.team
+                goal.save()
+                messages.success(request, f"Đã thêm bàn thắng của {goal.player.full_name}.")
+                return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=goals')
+
+        elif action == 'add_card':
+            card_form = CardForm(request.POST)
+            card_form.fields['player'].queryset = players_in_match
+            if card_form.is_valid():
+                card = card_form.save(commit=False)
+                card.match = match
+                card.team = card.player.team
+                card.save()
+                messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
+                return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=cards')
+
+    form = MatchUpdateForm(instance=match)
+    goal_form = GoalForm()
+    card_form = CardForm()
+    
+    goal_form.fields['player'].queryset = players_in_match
+    card_form.fields['player'].queryset = players_in_match
+    
+    goals = match.goals.select_related('player', 'team').order_by('-minute')
+    cards = match.cards.select_related('player', 'team').order_by('-minute')
+
     context = {
         'form': form,
+        'goal_form': goal_form,
+        'card_form': card_form,
         'match': match,
         'tournament': tournament,
+        'organization': tournament.organization,
+        'goals': goals,
+        'cards': cards,
+        'active_page': 'matches'
     }
     return render(request, 'organizations/manage_match.html', context)

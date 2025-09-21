@@ -2,6 +2,7 @@ from django import forms
 from tournaments.models import Tournament, Organization, Match
 from .models import Organization
 from django.contrib.auth.models import User
+from tournaments.models import Goal, Card, Player 
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
@@ -71,3 +72,25 @@ class MatchUpdateForm(forms.ModelForm):
             'commentator': 'Tên bình luận viên',
             'ticker_text': 'Dòng chữ chạy trên Livestream',
         }        
+
+class GoalForm(forms.ModelForm):
+    # Field này sẽ được tùy chỉnh trong view để chỉ hiện cầu thủ của 2 đội
+    player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
+
+    class Meta:
+        model = Goal
+        fields = ['player', 'minute']
+        labels = {
+            'minute': 'Phút ghi bàn'
+        }
+
+class CardForm(forms.ModelForm):
+    player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ nhận thẻ")
+
+    class Meta:
+        model = Card
+        fields = ['player', 'card_type', 'minute']
+        labels = {
+            'card_type': 'Loại thẻ',
+            'minute': 'Phút nhận thẻ'
+        }
