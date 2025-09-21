@@ -6,9 +6,9 @@ from tournaments.models import Tournament, Group, Team
 from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
-from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm 
 from django.contrib.auth.models import User 
 from django.contrib import messages 
+from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm
 
 #=================================
 
@@ -246,4 +246,30 @@ def remove_member(request, pk):
         return redirect('organizations:manage_tournament', pk=tournament_id_to_return)
 
     return redirect('organizations:dashboard') # Fallback nếu không có tournament_id
-# === KẾT THÚC THÊM MỚI ===    
+# === KẾT THÚC THÊM MỚI ===
+
+# === Logic sửa From cho BTC ===
+@login_required
+def edit_tournament(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+
+    # Kiểm tra quyền: người dùng phải thuộc đơn vị tổ chức của giải này
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+
+    if request.method == 'POST':
+        # Sửa ở đây: dùng TournamentCreationForm
+        form = TournamentCreationForm(request.POST, request.FILES, instance=tournament)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã cập nhật thông tin giải đấu thành công!")
+            return redirect('organizations:manage_tournament', pk=pk)
+    else:
+        # Sửa ở đây: dùng TournamentCreationForm
+        form = TournamentCreationForm(instance=tournament)
+
+    context = {
+        'form': form,
+        'tournament': tournament,
+    }
+    return render(request, 'organizations/edit_tournament.html', context)

@@ -2,16 +2,44 @@
 
 {% block title %}Quản lý: {{ tournament.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* CSS để cho phép cuộn ngang các tab trên di động */
+  @media (max-width: 767px) {
+    .manage-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      -ms-overflow-style: none; /* Ẩn thanh cuộn trên IE/Edge */
+      scrollbar-width: none;  /* Ẩn thanh cuộn trên Firefox */
+    }
+    .manage-tabs::-webkit-scrollbar {
+      display: none; /* Ẩn thanh cuộn trên Chrome/Safari */
+    }
+    .manage-tabs .nav-link {
+      white-space: nowrap;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <a href="{% url 'organizations:dashboard' %}" class="btn btn-link p-0 mb-3">← Quay lại Bảng điều khiển</a>
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>Quản lý Giải đấu</h1>
-        <p class="lead">{{ tournament.name }}</p>
+    
+    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1>Quản lý Giải đấu</h1>
+            <p class="lead mb-0">{{ tournament.name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'organizations:edit_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil-square"></i> Chỉnh sửa Giải đấu
+            </a>
+        </div>
     </div>
 
-    {# === BẮT ĐẦU HỆ THỐNG TABS === #}
-    <ul class="nav nav-tabs" id="manageTournamentTab" role="tablist">
+    <ul class="nav nav-tabs manage-tabs" id="manageTournamentTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab">Bảng đấu</button>
         </li>
@@ -23,8 +51,7 @@
         </li>
     </ul>
 
-    <div class="tab-content card" id="manageTournamentTabContent" style="border-top-left-radius: 0;">
-        {# === TAB 1: QUẢN LÝ BẢNG ĐẤU === #}
+    <div class="tab-content card" id="manageTournamentTabContent" style="border-top: none; border-top-left-radius: 0; border-top-right-radius: 0;">
         <div class="tab-pane fade show active p-3" id="groups" role="tabpanel">
             <div class="row">
                 <div class="col-md-5">
@@ -57,7 +84,6 @@
             </div>
         </div>
 
-        {# === TAB 2: DUYỆT ĐỘI ĐĂNG KÝ === #}
         <div class="tab-pane fade p-3" id="teams" role="tabpanel">
             <h5>Duyệt Đội đăng ký</h5>
             <hr>
@@ -65,7 +91,7 @@
             {% if pending_teams %}
                 <ul class="list-group">
                     {% for team in pending_teams %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
                             {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}
@@ -84,9 +110,9 @@
             <hr>
             <h6>Các đội đã được duyệt</h6>
             {% if paid_teams %}
-                <ul class="list-group list-group-flush">
+                <ul class="list-group">
                     {% for team in paid_teams %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                         {{ team.name }}
                         {% if not team.group %}
                         <form method="post" class="mb-0">
@@ -105,13 +131,10 @@
             {% endif %}
         </div>
 
-        {# === TAB 3: QUẢN LÝ THÀNH VIÊN === #}
         <div class="tab-pane fade p-3" id="members" role="tabpanel">
             <div class="row">
-                {# === BẮT ĐẦU CỘT TRÁI: FORM MỜI === #}
                 <div class="col-md-5">
                     <h5>Mời thành viên mới</h5>
-                    {# Chỉ chủ sở hữu mới thấy form mời #}
                     {% if request.user == tournament.organization.owner %}
                     <form method="post">
                         {% csrf_token %}
@@ -126,9 +149,6 @@
                     <p class="text-muted">Chỉ chủ sở hữu đơn vị mới có quyền mời thành viên mới.</p>
                     {% endif %}
                 </div>
-                {# === KẾT THÚC CỘT TRÁI === #}
-
-                {# === BẮT ĐẦU CỘT PHẢI: DANH SÁCH THÀNH VIÊN === #}
                 <div class="col-md-7">
                     <h6>Các thành viên hiện tại</h6>
                     <ul class="list-group">
@@ -136,18 +156,12 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>
-                                    {% if member.user.get_full_name %}
-                                        {{ member.user.get_full_name }}
-                                    {% else %}
-                                        {{ member.user.email }}
-                                    {% endif %}
+                                    {% if member.user.get_full_name %}{{ member.user.get_full_name }}{% else %}{{ member.user.email }}{% endif %}
                                 </strong>
-                                <span class="badge 
-                                    {% if member.role == 'OWNER' %}bg-success{% else %}bg-secondary{% endif %}">
+                                <span class="badge {% if member.role == 'OWNER' %}bg-success{% else %}bg-secondary{% endif %}">
                                     {{ member.get_role_display }}
                                 </span>
                             </div>
-                            {# Chỉ chủ sở hữu mới thấy nút xóa, và không thể xóa chính mình #}
                             {% if request.user == tournament.organization.owner and member.user != request.user %}
                             <form method="post" action="{% url 'organizations:remove_member' pk=member.pk %}?tournament_id={{ tournament.pk }}" onsubmit="return confirm('Bạn có chắc muốn xóa thành viên này?');">
                                 {% csrf_token %}
@@ -158,10 +172,8 @@
                         {% endfor %}
                     </ul>
                 </div>
-                {# === KẾT THÚC CỘT PHẢI === #}
             </div>
         </div>
     </div>
-    {# === KẾT THÚC HỆ THỐNG TABS === #}
 </div>
 {% endblock %}

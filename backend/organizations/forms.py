@@ -1,14 +1,17 @@
-# organizations/forms.py
 from django import forms
 from tournaments.models import Tournament
 from .models import Organization
 from django.contrib.auth.models import User
 
-# Sửa "cclass" thành "class" ở dòng dưới
+# === THAY THẾ FORM CŨ BẰNG PHIÊN BẢN HOÀN CHỈNH NÀY ===
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
         model = Tournament
-        fields = ['name', 'region', 'start_date', 'end_date', 'image', 'rules']
+        # Bao gồm tất cả các trường cần thiết ngay từ đầu
+        fields = [
+            'name', 'region', 'start_date', 'end_date', 'image', 'rules',
+            'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
+        ]
         labels = {
             'name': 'Tên giải đấu',
             'region': 'Khu vực tổ chức',
@@ -16,8 +19,11 @@ class TournamentCreationForm(forms.ModelForm):
             'end_date': 'Ngày kết thúc',
             'image': 'Ảnh bìa / Banner giải đấu',
             'rules': 'Điều lệ & Quy định',
+            'bank_name': 'Tên ngân hàng (cho đội tham gia chuyển khoản)',
+            'bank_account_number': 'Số tài khoản',
+            'bank_account_name': 'Tên chủ tài khoản',
+            'payment_qr_code': 'Ảnh mã QR thanh toán (tùy chọn)',
         }
-        # Thêm widget để có thể chọn ngày tháng dễ dàng
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
