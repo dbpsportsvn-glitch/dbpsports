@@ -266,16 +266,25 @@ class TeamAdmin(admin.ModelAdmin):
                     recipient_list=[captain_email]
                 )
 
+# Thay thế class PlayerAdmin cũ bằng class đã được nâng cấp này
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "team", "jersey_number", "position", "display_avatar")
-    list_filter = ("team__tournament", "team", "position")
-    search_fields = ("full_name", "team__name")
+    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar") # <<< SỬA ĐỔI: Dùng link_to_team
+    list_filter = ("team__tournament", "position", "team") # <<< SỬA ĐỔI: Đổi thứ tự cho hợp lý
+    search_fields = ("full_name", "team__name", "jersey_number") # <<< THÊM VÀO: jersey_number
+    list_editable = ("position",) # <<< THÊM VÀO
     ordering = ("team", "jersey_number")
     autocomplete_fields = ("team",)
     list_select_related = ("team",)
     list_per_page = 50
-    actions = ['approve_payments']
+
+    # <<< THÊM HÀM MỚI >>>
+    @admin.display(description='Đội', ordering='team__name')
+    def link_to_team(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        link = reverse("admin:tournaments_team_change", args=[obj.team.id])
+        return format_html('<a href="{}">{}</a>', link, obj.team.name)
 
     def display_avatar(self, obj):
         if obj.avatar:
