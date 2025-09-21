@@ -103,29 +103,34 @@
                 {% else %}
                     <p class="text-muted">Không có đội nào đang chờ duyệt.</p>
                 {% endif %}
+                
                 <hr>
                 <h6>Các đội đã được duyệt</h6>
                 {% if paid_teams %}
-                    <ul class="list-group">
+                    {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
+                    <div class="row">
                         {% for team in paid_teams %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            {{ team.name }}
-                            {% if not team.group %}
-                            <form method="post" class="mb-0">
-                                {% csrf_token %}
-                                <input type="hidden" name="team_id" value="{{ team.id }}">
-                                <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
-                            </form>
-                            {% else %}
-                                <span class="badge bg-secondary">Đã xếp bảng</span>
-                            {% endif %}
-                        </li>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                                <span>{{ team.name }}</span>
+                                
+                                {% if not team.group %}
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="team_id" value="{{ team.id }}">
+                                    <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
+                                </form>
+                                {% else %}
+                                    <span class="badge bg-secondary">Đã xếp bảng</span>
+                                {% endif %}
+                            </div>
+                        </div>
                         {% endfor %}
-                    </ul>
+                    </div>
+                    {# === KẾT THÚC THAY ĐỔI === #}
                 {% else %}
                     <p class="text-muted">Chưa có đội nào được duyệt.</p>
                 {% endif %}
-
 
             {% elif active_page == 'groups' %}
                 {# Nội dung quản lý bảng đấu #}

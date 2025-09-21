@@ -46,7 +46,6 @@
   </form>
 </div>
 
-
 {% if tournaments %}
   <div class="row row-cols-1 row-cols-md-3 g-3">
     {% for t in tournaments %}
@@ -57,15 +56,32 @@
             <img class="card-img-top" src="{{ t.image.url }}" alt="{{ t.name }}">
           {% endif %}
 
-          <div class="card-body">
+          {# === THÊM class flex-grow-1 VÀO DÒNG DƯỚI ĐÂY === #}
+          <div class="card-body flex-grow-1">
             <h5 class="card-title mb-2 text-start">{{ t.name }}</h5>
+
             <p class="mb-2 text-muted">
               <span class="badge bg-info text-dark me-2">{{ t.get_region_display }}</span>
-              {# === THAY ĐỔI: Hiển thị tên BTC DBP Sports nếu không có organization === #}
-              <span class="badge bg-secondary me-2">
-                BTC: {% if t.organization %}{{ t.organization.name }}{% else %}DBP Sports{% endif %}
+              
+              {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
+              <span class="d-inline-flex align-items-center gap-2">
+                {% if t.organization and t.organization.logo %}
+                  <img src="{{ t.organization.logo.url }}" alt="{{ t.organization.name }}" style="width: 20px; height: 20px; object-fit: contain; border-radius: 4px;">
+                {% endif %}
+                
+                <span class="small badge bg-secondary px-2 py-1">
+                  BTC: 
+                  {# Thêm điều kiện để đổi màu chữ #}
+                  <span {% if not t.organization %}class="text-warning fw-bold"{% endif %}>
+                    {% if t.organization %}{{ t.organization.name }}{% else %}DBP Sports{% endif %}
+                  </span>
+                </span>
+
               </span>
+              {# === KẾT THÚC THAY ĐỔI === #}
+
             </p>
+
             <p class="mb-2 text-muted">
               {{ t.start_date|date:"d/m/Y" }} – {{ t.end_date|date:"d/m/Y" }}
               <span class="badge bg-success ms-2">{{ t.get_status_display }}</span>
