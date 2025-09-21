@@ -3,7 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .models import Organization
 from .forms import TournamentCreationForm
-from tournaments.models import Tournament, Group
+from tournaments.models import Tournament, Group, Team
+from tournaments.utils import send_notification_email
+from django.conf import settings
+from django.http import HttpResponseForbidden
+
 
 @login_required
 @never_cache
@@ -48,31 +52,88 @@ def create_tournament(request):
     }
     return render(request, 'organizations/create_tournament.html', context)
 
-# === BẮT ĐẦU THÊM MỚI ===
 @login_required
 @never_cache
 def manage_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
 
-    # Kiểm tra quyền: người dùng phải thuộc đơn vị tổ chức của giải này
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
-        return redirect('organizations:dashboard') # Nếu không có quyền, đá về dashboard
+        return redirect('organizations:dashboard')
 
-    # Xử lý khi người tổ chức gửi form tạo Bảng đấu mới
     if request.method == 'POST':
+        # Xử lý tạo bảng đấu (giữ nguyên)
         if 'create_group' in request.POST:
             group_name = request.POST.get('group_name', '').strip()
             if group_name:
-                # Tạo bảng đấu mới, gán vào giải đấu này
                 Group.objects.create(tournament=tournament, name=group_name)
-                return redirect('organizations:manage_tournament', pk=pk) # Tải lại trang
+            return redirect('organizations:manage_tournament', pk=pk)
 
-    # Lấy danh sách các bảng đấu hiện có của giải
+        # === BẮT ĐẦU THÊM MỚI: Xử lý duyệt đội ===
+        if 'approve_payment' in request.POST:
+            team_id = request.POST.get('team_id')
+            if team_id:
+                team_to_approve = get_object_or_404(Team, id=team_id, tournament=tournament)
+                if team_to_approve.payment_status == 'PENDING':
+                    team_to_approve.payment_status = 'PAID'
+                    team_to_approve.save()
+
+                    # Gửi email xác nhận cho đội trưởng
+                    if team_to_approve.captain.email:
+                        send_notification_email(
+                            subject=f"Thanh toán thành công cho đội {team_to_approve.name}",
+                            template_name='tournaments/emails/payment_confirmed.html',
+                            context={'team': team_to_approve},
+                            recipient_list=[team_to_approve.captain.email]
+                        )
+            return redirect('organizations:manage_tournament', pk=pk)
+        # === KẾT THÚC THÊM MỚI ===
+
+        # === BẮT ĐẦU THÊM MỚI: Xử lý thu hồi đội ===
+        if 'revoke_payment' in request.POST:
+            team_id = request.POST.get('team_id')
+            if team_id:
+                team_to_revoke = get_object_or_404(Team, id=team_id, tournament=tournament)
+                # Chỉ thu hồi được đội đã thanh toán và chưa được xếp bảng
+                if team_to_revoke.payment_status == 'PAID' and team_to_revoke.group is None:
+                    team_to_revoke.payment_status = 'PENDING' # Chuyển về trạng thái "Chờ xác nhận"
+                    team_to_revoke.save()
+                # (Chúng ta có thể thêm message báo lỗi nếu đội đã được xếp bảng)
+            return redirect('organizations:manage_tournament', pk=pk)
+        # === KẾT THÚC THÊM MỚI ===
+
     groups = tournament.groups.all().order_by('name')
+    
+    # === BẮT ĐẦU THÊM MỚI: Lấy danh sách các đội ===
+    # Lấy các đội đang chờ duyệt
+    pending_teams = tournament.teams.filter(payment_status='PENDING').select_related('captain')
+    # Lấy các đội đã được duyệt
+    paid_teams = tournament.teams.filter(payment_status='PAID').select_related('captain')
+    # === KẾT THÚC THÊM MỚI ===
 
     context = {
         'tournament': tournament,
         'groups': groups,
+        'pending_teams': pending_teams, # Gửi danh sách ra template
+        'paid_teams': paid_teams,       # Gửi danh sách ra template
     }
     return render(request, 'organizations/manage_tournament.html', context)
+
+# === BẮT ĐẦU THÊM MỚI ===
+@login_required
+def delete_group(request, pk):
+    group = get_object_or_404(Group, pk=pk)
+    tournament = group.tournament
+
+    # KIỂM TRA BẢO MẬT: Đảm bảo người dùng thuộc đơn vị tổ chức của giải đấu này
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # Chỉ thực hiện xóa nếu là request POST để an toàn hơn
+    if request.method == 'POST':
+        group.delete()
+        # Sau khi xóa, quay về trang quản lý của giải đấu đó
+        return redirect('organizations:manage_tournament', pk=tournament.pk)
+
+    # Nếu là request GET, không làm gì cả và điều hướng về trang quản lý
+    return redirect('organizations:manage_tournament', pk=tournament.pk)
 # === KẾT THÚC THÊM MỚI ===    
