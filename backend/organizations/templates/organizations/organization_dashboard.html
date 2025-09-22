@@ -27,14 +27,9 @@
                     <small>{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</small>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-sm btn-outline-secondary">Xem trang giải</a>
                     <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-sm btn-primary">Quản lý</a>
-                    
-                    {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
-                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-sm btn-outline-info" target="_blank">Tải ảnh</a>
-                    {# === KẾT THÚC THÊM MỚI === #}
-
-                    <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giải đấu \'{{ tournament.name }}\' không? Mọi dữ liệu liên quan (đội, cầu thủ, trận đấu...) sẽ bị xóa hết.');">
+                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-sm btn-outline-secondary">Xem trang giải</a>
+                    <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="...">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                     </form>

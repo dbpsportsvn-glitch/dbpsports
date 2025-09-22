@@ -76,8 +76,13 @@
                     <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
                         <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                     </a>
+                    
+                    {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
+                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
+                        <i class="bi bi-images"></i> Tải ảnh hàng loạt
+                    </a>
+                    {# === KẾT THÚC THÊM MỚI === #}
                 </div>
-                {# --- KẾT THÚC NỘI DUNG MỚI --- #}
 
             {% elif active_page == 'teams' %}
                 {# Nội dung quản lý đội #}
