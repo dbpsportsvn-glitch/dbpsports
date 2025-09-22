@@ -13,7 +13,7 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
-from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm
+from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, MatchCreationForm
 from django.utils import timezone
 from django.db import transaction
 
@@ -565,3 +565,42 @@ def delete_match(request, pk):
 
     # Nếu không phải POST request, đơn giản là quay về trang trước
     return redirect('organizations:manage_tournament', pk=tournament.pk)    
+
+
+# === HIỂN THỊ FROM TẠO TRẬN ĐẤU CỦA BTC ===
+@login_required
+@never_cache
+def create_match(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    teams_in_tournament = tournament.teams.all().order_by('name')
+
+    if request.method == 'POST':
+        form = MatchCreationForm(request.POST)
+        # Cung cấp queryset cho form trước khi validate
+        form.fields['team1'].queryset = teams_in_tournament
+        form.fields['team2'].queryset = teams_in_tournament
+
+        if form.is_valid():
+            match = form.save(commit=False)
+            match.tournament = tournament
+            match.save()
+            messages.success(request, "Đã tạo trận đấu mới thành công!")
+            return redirect('organizations:manage_tournament', pk=tournament.pk)
+    else:
+        form = MatchCreationForm()
+        # Cung cấp queryset cho form khi hiển thị lần đầu
+        form.fields['team1'].queryset = teams_in_tournament
+        form.fields['team2'].queryset = teams_in_tournament
+
+    context = {
+        'form': form,
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'active_page': 'matches' # Để giữ cho menu được highlight đúng
+    }
+    return render(request, 'organizations/create_match.html', context)    

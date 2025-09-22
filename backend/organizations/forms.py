@@ -261,4 +261,33 @@ class ThirdPlaceCreationForm(forms.Form):
         if team1 and team2 and team1 == team2:
             raise ValidationError("Hai đội trong trận tranh hạng Ba không được trùng nhau.")
         return cleaned_data
-# === KẾT THÚC THÊM MỚI ===
+
+# === BTC TẠO TRẬN ĐẤU THỦ CÔNG ===
+class MatchCreationForm(forms.ModelForm):
+    team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
+    team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
+
+    class Meta:
+        model = Match
+        # Lấy các trường cần thiết để tạo một trận đấu mới
+        fields = [
+            'match_round', 'team1', 'team2', 'match_time', 'location'
+        ]
+        labels = {
+            'match_round': 'Vòng đấu',
+            'match_time': 'Thời gian thi đấu',
+            'location': 'Địa điểm',
+        }
+        widgets = {
+            'match_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        team1 = cleaned_data.get("team1")
+        team2 = cleaned_data.get("team2")
+
+        if team1 and team2 and team1 == team2:
+            raise ValidationError("Hai đội trong một trận đấu không được trùng nhau.")
+        
+        return cleaned_data

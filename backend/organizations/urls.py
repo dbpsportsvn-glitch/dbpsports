@@ -20,4 +20,5 @@ urlpatterns = [
     path('photo/<int:pk>/delete/', views.delete_photo, name='delete_photo'),
     path('tournaments/<int:tournament_pk>/photos/delete-all/', views.delete_all_photos, name='delete_all_photos'),
     path('match/<int:pk>/delete/', views.delete_match, name='delete_match'),
+    path('tournaments/<int:tournament_pk>/create-match/', views.create_match, name='create_match'),
 ]
