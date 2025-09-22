@@ -96,7 +96,7 @@
   top:50%;
   right:calc(var(--connector-width)/-2);
   width:var(--line-thickness);
-  height:calc(100% + var(--match-gap)*2);
+  height: calc(50% + var(--match-gap));
   background:var(--border-color);
   pointer-events:none;
 }
@@ -107,7 +107,7 @@
   bottom:50%;
   right:calc(var(--connector-width)/-2);
   width:var(--line-thickness);
-  height:calc(100% + var(--match-gap)*2);
+  height: calc(50% + var(--match-gap));
   background:var(--border-color);
   pointer-events:none;
 }
@@ -119,7 +119,7 @@
   top:50%;
   right:calc(var(--connector-width)/-2);
   width:var(--line-thickness);
-  height:calc(100% + var(--match-gap)*2);
+  height: calc(50% + var(--match-gap));
   background:var(--border-color);
   pointer-events:none;
 }
@@ -129,13 +129,14 @@
   bottom:50%;
   right:calc(var(--connector-width)/-2);
   width:var(--line-thickness);
-  height:calc(100% + var(--match-gap)*2);
+  height: calc(50% + var(--match-gap));
   background:var(--border-color);
   pointer-events:none;
 }
 
-/* 4) Đường “đi vào” ô CHUNG KẾT từ bên trái
-   (hỗ trợ cả .final-round mới và .finals cũ) */
+/* === KẾT THÚC THAY THẾ TẠI ĐÂY === */
+
+/* 4) Đường “đi vào” ô CHUNG KẾT từ bên trái (giữ nguyên) */
 .final-round .final::before,
 .finals .final::before{
   content:'';
@@ -150,7 +151,6 @@
 }
 
 /* 5) Cột Tranh Hạng Ba: độc lập, không vẽ nối */
-
 /* Responsive */
 @media (max-width: 992px){
   :root{ --connector-width:2.5rem; }

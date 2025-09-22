@@ -216,22 +216,22 @@
                                         <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 70px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
+                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
                                         <span>-</span>
-                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 70px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
+                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                     </div>
                                     <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-fill"></i> Quản lý
                                     </a>
                                     <button
-                                    type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    formmethod="post"
-                                    formaction="{% url 'organizations:delete_match' pk=match.pk %}"
-                                    formnovalidate
-                                    title="Xóa trận đấu"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');">
-                                    <i class="bi bi-trash-fill"></i>
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        formmethod="post"
+                                        formaction="{% url 'organizations:delete_match' pk=match.pk %}"
+                                        formnovalidate
+                                        title="Xóa trận đấu"
+                                        {% comment %} XÓA DÒNG NÀY ĐI ---> onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" {% endcomment %}>
+                                        <i class="bi bi-trash-fill"></i>
                                     </button>
                                 </div>
                             </div>
@@ -258,23 +258,23 @@
                                         <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 70px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
+                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
                                         <span>-</span>
-                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 70px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
+                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                     </div>
                                     <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-fill"></i> Quản lý
                                     </a>
                                     <button
-                                    type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    formmethod="post"
-                                    formaction="{% url 'organizations:delete_match' pk=match.pk %}"
-                                    formnovalidate
-                                    title="Xóa trận đấu"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');">
-                                    <i class="bi bi-trash-fill"></i>
-                                    </button>                   
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        formmethod="post"
+                                        formaction="{% url 'organizations:delete_match' pk=match.pk %}"
+                                        formnovalidate
+                                        title="Xóa trận đấu"
+                                        {% comment %} XÓA DÒNG NÀY ĐI ---> onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" {% endcomment %}>
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>                
                                 </div>
                             </div>
                         {% endfor %}
