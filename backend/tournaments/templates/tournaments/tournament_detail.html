@@ -30,6 +30,16 @@
         clear: both;
     }
 
+    .gallery-item {
+        position: relative; /* Cần thiết để định vị nút xóa */
+    }
+    .delete-photo-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 10; /* Đảm bảo nút nổi lên trên ảnh */
+    }
+ 
     .section-title{font-weight:700}
     .table thead th{position:sticky;top:0;background:var(--bs-body-bg);z-index:1}
     .table-hover tbody tr:hover{background:var(--bs-light)}
@@ -220,19 +230,50 @@
                 color: #555;
             }
         </style>
-        {% if tournament.gallery_url %}
-            <div class="text-center mb-4">
-                <a href="{{ tournament.gallery_url }}" class="btn btn-success btn-lg" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-images"></i> Xem Toàn bộ Album Ảnh Gốc
-                </a>
+
+        {% if tournament.gallery_url or is_organizer and tournament.photos.all %}
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                
+                {# Nút "Xem Album" (bên trái) #}
+                <div>
+                    {% if tournament.gallery_url %}
+                        <a href="{{ tournament.gallery_url }}" class="btn btn-success" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-images"></i> Xem Album Ảnh Gốc
+                        </a>
+                    {% endif %}
+                </div>
+
+                {# Nút "Xóa Tất cả" (bên phải) #}
+                <div>
+                    {% if is_organizer and tournament.photos.all %}
+                        <form method="post" action="{% url 'organizations:delete_all_photos' tournament_pk=tournament.pk %}" onsubmit="return confirm('Hành động này sẽ xóa vĩnh viễn TOÀN BỘ ảnh trong thư viện. Bạn có chắc chắn muốn tiếp tục?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" title="Xóa toàn bộ thư viện ảnh">
+                                <i class="bi bi-trash3-fill fs-5"></i> {# Tăng kích thước icon #}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
             </div>
             <hr class="mb-4">
-        {% endif %}        
+        {% endif %}
+
         <div class="photo-gallery">
             <div class="row g-3">
                 {% for photo in tournament.photos.all %}
                 <div class="col-lg-4 col-md-6">
                     <div class="gallery-item">
+                        {% comment %} Nút xóa chỉ hiển thị cho BTC {% endcomment %}
+                        {% if is_organizer %}
+                            <form method="post" action="{% url 'organizations:delete_photo' pk=photo.pk %}" class="delete-photo-btn">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa ảnh">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+
                         <a href="{{ photo.image.url }}" data-fancybox="gallery-{{ tournament.pk }}" data-caption="{{ photo.caption }}">
                             <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid">
                         </a>

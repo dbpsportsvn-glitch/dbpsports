@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.core.exceptions import ValidationError
 from .models import Organization, Membership
-from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player
+from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto
 from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
@@ -472,3 +472,52 @@ def manage_knockout(request, pk):
         'semi_final_losers': semi_final_losers, # <-- GỬI DANH SÁCH ĐỘI THUA
     }
     return render(request, 'organizations/manage_knockout.html', context)
+
+@login_required
+def delete_photo(request, pk):
+    photo = get_object_or_404(TournamentPhoto, pk=pk)
+    tournament = photo.tournament
+    organization = tournament.organization
+
+    # Kiểm tra quyền: chỉ BTC hoặc superuser mới được xóa
+    is_organizer = organization and request.user in organization.members.all()
+    if not request.user.is_superuser and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        # Xóa file ảnh vật lý khỏi server
+        photo.image.delete(save=False)
+        # Xóa bản ghi trong database
+        photo.delete()
+        messages.success(request, "Đã xóa ảnh thành công.")
+    
+    # Chuyển hướng người dùng về lại tab thư viện ảnh
+    return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery')
+
+@login_required
+def delete_all_photos(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    organization = tournament.organization
+
+    # Kiểm tra quyền
+    is_organizer = organization and request.user in organization.members.all()
+    if not request.user.is_superuser and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        photos = tournament.photos.all()
+        photo_count = photos.count()
+
+        if photo_count > 0:
+            # Xóa các file vật lý trước
+            for photo in photos:
+                photo.image.delete(save=False)
+            
+            # Xóa các bản ghi trong database
+            photos.delete()
+            messages.success(request, f"Đã xóa thành công toàn bộ {photo_count} ảnh.")
+        else:
+            messages.info(request, "Thư viện ảnh đã trống.")
+
+    # Chuyển hướng về tab thư viện
+    return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery')    
