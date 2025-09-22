@@ -1,0 +1,14 @@
+{% comment %} File: backend/tournaments/templates/tournaments/partials/_bracket_match_content.html {% endcomment %}
+
+{% if match %}
+    <div class="match-top {% if match.team1 == match.winner %}match-winner{% endif %}">
+        <span class="team-name">{{ match.team1.name|default:"Chờ..." }}</span>
+        <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
+    </div>
+    <div class="match-bottom {% if match.team2 == match.winner %}match-winner{% endif %}">
+        <span class="team-name">{{ match.team2.name|default:"Chờ..." }}</span>
+        <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
+    </div>
+{% else %}
+    <div class="placeholder-text">{{ placeholder }}</div>
+{% endif %}

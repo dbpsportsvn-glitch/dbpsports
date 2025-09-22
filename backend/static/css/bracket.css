@@ -1,122 +1,162 @@
-/* backend/static/css/bracket.css (Dark Theme Version) */
-:root {
-    --panel-dark: #1e2b3b;
-    --border-color: #334155;
-    --text-light: #f1f5f9;
-    --text-muted: #94a3b8;
-    --gold: #f59e0b;
-    --bg-dark: #0f172a;
+/* File: backend/static/css/bracket.css — Vẽ nối QF→SF→Final ổn định */
+:root{
+  --panel-dark:#1e2b3b;
+  --border-color:#334155;
+  --text-light:#f1f5f9;
+  --text-muted:#94a3b8;
+  --gold:#f59e0b;
+  --bg-dark:#0f172a;
+
+  --connector-width:3rem;   /* khoảng giữa 2 cột */
+  --match-gap:1.5rem;       /* khoảng cách dọc giữa các trận */
+  --line-thickness:2px;     /* độ dày đường nối */
 }
 
-.bracket-container {
-    display: flex;
-    justify-content: center;
-    padding: 1rem 0;
-    overflow-x: auto;
+.bracket-container{
+  display:flex;
+  justify-content:center;
+  padding:2rem 0;
+  overflow-x:auto;
 }
 
-.bracket {
-    display: flex;
-    align-items: center;
-    gap: 2.5rem;
+.bracket{ display:inline-flex; align-items:stretch; }
+
+.bracket-round{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-around;
+  width:250px;
+  flex-shrink:0;
+  position:relative;
 }
 
-.bracket-round {
-    display: flex;
-    flex-direction: column;
-    gap: 4rem; /* Tăng khoảng cách giữa các trận bán kết */
-    min-width: 280px;
+.bracket-round + .bracket-round{ margin-left:var(--connector-width); }
+
+/* Card trận đấu */
+.bracket-match{
+  background-color:var(--panel-dark);
+  border:1px solid var(--border-color);
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  margin:var(--match-gap) 0;
+  z-index:1;              /* nằm trên đường nối */
+  overflow:visible;       /* QUAN TRỌNG: cho phép đường nối trồi ra ngoài box */
 }
 
-.bracket-match {
-    background-color: var(--panel-dark);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+/* Nội dung trong card */
+.bracket-match h5{
+  font-size:.8rem;font-weight:700;color:var(--gold);
+  padding:.5rem;margin:0;text-align:center;
+  border-bottom:1px solid var(--border-color);
+  background-color:rgba(0,0,0,.2);
 }
 
-.bracket-match:hover {
-    transform: translateY(-2px);
+.match-top,.match-bottom{ display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem; }
+.match-top{ border-bottom:1px solid var(--border-color); }
+
+.team-name{ font-weight:600;color:var(--text-light); }
+.team-score{
+  font-weight:700;font-size:1.1em;color:var(--bg-dark);
+  background-color:var(--text-muted);
+  padding:2px 10px;border-radius:4px;min-width:32px;text-align:center;
 }
 
-.match-top, .match-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 1rem;
+.match-winner .team-name{ color:var(--gold); }
+.match-winner .team-score{ background-color:var(--gold); }
+.placeholder-text{ color:var(--text-muted);font-style:italic;text-align:center;padding:1.25rem 1rem;font-size:.9rem; }
+
+/* Giữ chiều cao hàng tương đồng → đường nối thẳng đẹp hơn */
+.bracket-match .match-top, .bracket-match .match-bottom{ min-height:42px; }
+
+/* ===================== */
+/* VẼ ĐƯỜNG NỐI BRACKET */
+/* ===================== */
+
+/* 1) Nét ngang từ mỗi trận QF & SF ra “khe” giữa 2 cột
+   (loại trừ cột Final & cột Hạng Ba; cũng tương thích class .finals cũ) */
+.bracket-round:not(.final-round):not(.finals):not(.third-place-round) .bracket-match::after{
+  content:'';
+  position:absolute;
+  top:50%;
+  right:calc(var(--connector-width)/-2);
+  width:calc(var(--connector-width)/2);
+  height:var(--line-thickness);
+  background:var(--border-color);
+  transform:translateY(-50%);
+  pointer-events:none;
 }
 
-.match-top {
-    border-bottom: 1px solid var(--border-color);
+/* 2) Nét dọc ghép cặp trong TỨ KẾT (1↔2, 3↔4) */
+.quarter-finals .bracket-match:nth-child(1)::before,
+.quarter-finals .bracket-match:nth-child(3)::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  right:calc(var(--connector-width)/-2);
+  width:var(--line-thickness);
+  height:calc(100% + var(--match-gap)*2);
+  background:var(--border-color);
+  pointer-events:none;
+}
+.quarter-finals .bracket-match:nth-child(2)::before,
+.quarter-finals .bracket-match:nth-child(4)::before{
+  content:'';
+  position:absolute;
+  bottom:50%;
+  right:calc(var(--connector-width)/-2);
+  width:var(--line-thickness);
+  height:calc(100% + var(--match-gap)*2);
+  background:var(--border-color);
+  pointer-events:none;
 }
 
-.team-name {
-    font-weight: 600;
-    color: var(--text-muted);
+/* 3) Nét dọc ghép cặp trong BÁN KẾT (1↔2) */
+.semi-finals .bracket-match:nth-child(1)::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  right:calc(var(--connector-width)/-2);
+  width:var(--line-thickness);
+  height:calc(100% + var(--match-gap)*2);
+  background:var(--border-color);
+  pointer-events:none;
+}
+.semi-finals .bracket-match:nth-child(2)::before{
+  content:'';
+  position:absolute;
+  bottom:50%;
+  right:calc(var(--connector-width)/-2);
+  width:var(--line-thickness);
+  height:calc(100% + var(--match-gap)*2);
+  background:var(--border-color);
+  pointer-events:none;
 }
 
-.team-score {
-    font-weight: bold;
-    font-size: 1.1em;
-    color: var(--text-light);
-    background-color: var(--bg-dark);
-    padding: 2px 10px;
-    border-radius: 4px;
-    min-width: 32px;
-    text-align: center;
+/* 4) Đường “đi vào” ô CHUNG KẾT từ bên trái
+   (hỗ trợ cả .final-round mới và .finals cũ) */
+.final-round .final::before,
+.finals .final::before{
+  content:'';
+  position:absolute;
+  top:50%;
+  left:calc(var(--connector-width)/-2);
+  width:calc(var(--connector-width)/2);
+  height:var(--line-thickness);
+  background:var(--border-color);
+  transform:translateY(-50%);
+  pointer-events:none;
 }
 
-.match-winner .team-name {
-    color: var(--gold);
-    font-weight: 700;
-}
+/* 5) Cột Tranh Hạng Ba: độc lập, không vẽ nối */
 
-.match-winner .team-score {
-    background-color: var(--gold);
-    color: var(--bg-dark);
+/* Responsive */
+@media (max-width: 992px){
+  :root{ --connector-width:2.5rem; }
+  .bracket-round{ width:230px; }
 }
-
-.placeholder-text {
-    color: var(--text-muted);
-    font-style: italic;
-    text-align: center;
-    padding: 2rem 1rem;
-}
-
-/* --- VẼ CÁC ĐƯỜNG NỐI --- */
-.connector {
-    width: 2.5rem; /* Bằng với gap của .bracket */
-    height: 100%;
-    position: relative;
-}
-.connector-line {
-    position: absolute;
-    background-color: var(--border-color);
-}
-.bracket-match::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1.25rem; /* Một nửa gap */
-    height: 2px;
-    background-color: var(--border-color);
-}
-.bracket-round.semi-finals .bracket-match::after {
-    right: -1.25rem;
-}
-.bracket-round.final .bracket-match::after {
-    left: -1.25rem;
-}
-
-.connector-v-line {
-    position: absolute;
-    width: 2px;
-    background-color: var(--border-color);
-    left: 50%;
-    transform: translateX(-50%);
+@media (max-width: 768px){
+  :root{ --connector-width:2rem; }
+  .bracket-round{ width:210px; }
 }
