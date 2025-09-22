@@ -173,6 +173,7 @@ def manage_tournament(request, pk):
             'total_matches': tournament.matches.count(),
         }
     elif view_name == 'teams':
+        context['unpaid_teams'] = tournament.teams.filter(payment_status='UNPAID').select_related('captain')
         context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
         context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
     elif view_name == 'groups':
@@ -380,7 +381,7 @@ def delete_card(request, pk):
         messages.success(request, f"Đã xóa thẻ phạt của {player_name}.")
         return safe_redirect(request, default_url)
     return safe_redirect(request, default_url)
-    
+
 
 # === BẮT ĐẦU HÀM MANAGE_KNOCKOUT ĐÃ CẬP NHẬT ===
 @login_required
