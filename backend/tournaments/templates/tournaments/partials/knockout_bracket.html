@@ -1,66 +1,64 @@
+{% comment %} backend/tournaments/templates/tournaments/partials/knockout_bracket.html {% endcomment %}
+{% load custom_filters %}
+
 <div class="bracket-container">
     <div class="bracket">
-        <div class="bracket-round semi-finals">
-            <div class="bracket-match" id="semi-final-1">
-                {% with match=knockout_data.semi_final_1 %}
+
+        {% if knockout_data.quarter_final_1 %}
+        <div class="bracket-round quarter-finals">
+            {% for i in "1234" %}
+                {% with match=knockout_data|get_item:"quarter_final_"|add:i %}
+                <div class="bracket-match">
                     {% if match %}
                         <div class="match-top">
-                            <div class="team-info {% if match.team1 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team1.name }}</span>
-                            </div>
+                            <span class="team-name {% if match.team1 == match.winner %}match-winner{% endif %}">{{ match.team1.name }}</span>
                             <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
                         </div>
                         <div class="match-bottom">
-                             <div class="team-info {% if match.team2 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team2.name }}</span>
-                            </div>
+                            <span class="team-name {% if match.team2 == match.winner %}match-winner{% endif %}">{{ match.team2.name }}</span>
                             <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
                         </div>
                     {% else %}
-                        <div class="placeholder-text">Chưa xác định</div>
+                        <div class="placeholder-text">Tứ kết {{ i }}</div>
                     {% endif %}
+                </div>
                 {% endwith %}
-            </div>
-            <div class="bracket-match" id="semi-final-2">
-                {% with match=knockout_data.semi_final_2 %}
-                     {% if match %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bracket-round semi-finals">
+            {% for i in "12" %}
+                {% with match=knockout_data|get_item:"semi_final_"|add:i %}
+                <div class="bracket-match">
+                    {% if match %}
                         <div class="match-top">
-                            <div class="team-info {% if match.team1 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team1.name }}</span>
-                            </div>
+                             <span class="team-name {% if match.team1 == match.winner %}match-winner{% endif %}">{{ match.team1.name|default:"Chờ..." }}</span>
                             <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
                         </div>
                         <div class="match-bottom">
-                            <div class="team-info {% if match.team2 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team2.name }}</span>
-                            </div>
+                            <span class="team-name {% if match.team2 == match.winner %}match-winner{% endif %}">{{ match.team2.name|default:"Chờ..." }}</span>
                             <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
                         </div>
                     {% else %}
-                        <div class="placeholder-text">Chưa xác định</div>
+                        <div class="placeholder-text">Bán kết {{ i }}</div>
                     {% endif %}
+                </div>
                 {% endwith %}
-            </div>
+            {% endfor %}
         </div>
 
-        <div class="connector" id="connector-v-line-container">
-            <div class="connector-v-line"></div>
-        </div>
-
-        <div class="bracket-round final">
-            <div class="bracket-match">
-                 {% with match=knockout_data.final_match %}
+        <div class="bracket-round finals">
+            <div class="bracket-match final">
+                <h5>Chung kết</h5>
+                {% with match=knockout_data.final_match %}
                      {% if match %}
                         <div class="match-top">
-                            <div class="team-info {% if match.team1 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team1.name|default:"Chờ..." }}</span>
-                            </div>
+                            <span class="team-name {% if match.team1 == match.winner %}match-winner{% endif %}">{{ match.team1.name|default:"Chờ..." }}</span>
                             <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
                         </div>
                         <div class="match-bottom">
-                            <div class="team-info {% if match.team2 == match.winner %}match-winner{% endif %}">
-                                <span class="team-name">{{ match.team2.name|default:"Chờ..." }}</span>
-                            </div>
+                            <span class="team-name {% if match.team2 == match.winner %}match-winner{% endif %}">{{ match.team2.name|default:"Chờ..." }}</span>
                             <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
                         </div>
                     {% else %}
@@ -68,26 +66,26 @@
                     {% endif %}
                 {% endwith %}
             </div>
+
+            {% if knockout_data.third_place_match %}
+            <div class="bracket-match third-place">
+                 <h5>Tranh Hạng Ba</h5>
+                {% with match=knockout_data.third_place_match %}
+                     {% if match %}
+                        <div class="match-top">
+                            <span class="team-name {% if match.team1 == match.winner %}match-winner{% endif %}">{{ match.team1.name|default:"Chờ..." }}</span>
+                            <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
+                        </div>
+                        <div class="match-bottom">
+                           <span class="team-name {% if match.team2 == match.winner %}match-winner{% endif %}">{{ match.team2.name|default:"Chờ..." }}</span>
+                            <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
+                        </div>
+                    {% else %}
+                        <div class="placeholder-text">Tranh Hạng Ba</div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const semi1 = document.getElementById('semi-final-1');
-    const semi2 = document.getElementById('semi-final-2');
-    const vLine = document.querySelector('#connector-v-line-container .connector-v-line');
-    
-    if (semi1 && semi2 && vLine) {
-        const rect1 = semi1.getBoundingClientRect();
-        const rect2 = semi2.getBoundingClientRect();
-        
-        const top = rect1.top + rect1.height / 2;
-        const bottom = rect2.top + rect2.height / 2;
-        const height = bottom - top;
-        
-        vLine.style.height = `${Math.abs(height)}px`;
-        vLine.style.top = `${rect1.height / 2 - (height / 2)}px`;
-    }
-});
-</script>

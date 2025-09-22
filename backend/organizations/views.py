@@ -380,9 +380,9 @@ def delete_card(request, pk):
         messages.success(request, f"Đã xóa thẻ phạt của {player_name}.")
         return safe_redirect(request, default_url)
     return safe_redirect(request, default_url)
+    
 
-
-# === BẮT ĐẦU THAY THẾ TOÀN BỘ HÀM manage_knockout ===
+# === BẮT ĐẦU HÀM MANAGE_KNOCKOUT ĐÃ CẬP NHẬT ===
 @login_required
 @never_cache
 def manage_knockout(request, pk):
@@ -392,7 +392,7 @@ def manage_knockout(request, pk):
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    groups = tournament.groups.prefetch_related('teams').all()
+    groups = tournament.groups.prefetch_related('teams').all().order_by('name') # Thêm order_by('name') để đảm bảo thứ tự
     if not groups.exists():
         messages.warning(request, "Giải đấu chưa có bảng nào được tạo.")
         return redirect('organizations:manage_tournament', pk=pk)
@@ -423,7 +423,7 @@ def manage_knockout(request, pk):
     # Khởi tạo các form
     quarter_final_form, semi_final_form, final_form, third_place_form = None, None, None, None
 
-    # Xử lý POST request
+    # Xử lý POST request (giữ nguyên logic POST)
     if request.method == 'POST':
         action = request.POST.get('action')
 
@@ -442,7 +442,6 @@ def manage_knockout(request, pk):
                 return redirect('organizations:manage_knockout', pk=pk)
 
         elif action == 'create_semi_finals':
-            # Form bán kết sẽ nhận đội từ Tứ kết (nếu có) hoặc từ vòng bảng
             source_teams = quarter_final_winners_queryset if quarter_final_matches.exists() else qualified_teams_queryset
             semi_final_form = SemiFinalCreationForm(request.POST, quarter_final_winners=source_teams)
             if semi_final_form.is_valid():
@@ -477,20 +476,37 @@ def manage_knockout(request, pk):
 
     # Khởi tạo form cho GET request
     if not quarter_final_form:
-        quarter_final_form = QuarterFinalCreationForm(qualified_teams=qualified_teams_queryset)
+        # === LOGIC MỚI: TỰ ĐỘNG XẾP CẶP TỨ KẾT ===
+        initial_qf = {}
+        if len(qualified_teams_list) >= 8 and not tournament.matches.filter(match_round='QUARTER').exists():
+            # Logic xếp cặp chéo kinh điển (giả định 4 bảng A, B, C, D)
+            # A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2
+            # Vị trí trong list: 0=A1, 1=A2, 2=B1, 3=B2, 4=C1, 5=C2, 6=D1, 7=D2
+            initial_qf = {
+                'qf1_team1': qualified_teams_list[0].id, 'qf1_team2': qualified_teams_list[3].id,
+                'qf2_team1': qualified_teams_list[2].id, 'qf2_team2': qualified_teams_list[1].id,
+                'qf3_team1': qualified_teams_list[4].id, 'qf3_team2': qualified_teams_list[7].id,
+                'qf4_team1': qualified_teams_list[6].id, 'qf4_team2': qualified_teams_list[5].id,
+            }
+        quarter_final_form = QuarterFinalCreationForm(
+            qualified_teams=qualified_teams_queryset, 
+            initial=initial_qf
+        )
     
     if not semi_final_form:
         source_teams_for_semi = quarter_final_winners_queryset if quarter_final_matches.exists() else qualified_teams_queryset
         initial_semi = {}
         if quarter_final_matches.exists() and len(quarter_final_winners) == 4:
-            # Tự động gợi ý cặp đấu chéo: Thắng QF1 vs Thắng QF2, Thắng QF3 vs Thắng QF4
-            initial_semi = {'sf1_team1': quarter_final_winners[0].id, 'sf1_team2': quarter_final_winners[1].id, 
-                            'sf2_team1': quarter_final_winners[2].id, 'sf2_team2': quarter_final_winners[3].id}
+            initial_semi = {
+                'sf1_team1': quarter_final_winners[0].id, 'sf1_team2': quarter_final_winners[1].id, 
+                'sf2_team1': quarter_final_winners[2].id, 'sf2_team2': quarter_final_winners[3].id
+            }
         semi_final_form = SemiFinalCreationForm(quarter_final_winners=source_teams_for_semi, initial=initial_semi)
 
     if not final_form:
         initial_final = {}
-        if len(semi_final_winners) == 2: initial_final = {'final_team1': semi_final_winners[0].id, 'final_team2': semi_final_winners[1].id}
+        if len(semi_final_winners) == 2:
+            initial_final = {'final_team1': semi_final_winners[0].id, 'final_team2': semi_final_winners[1].id}
         final_form = FinalCreationForm(semi_final_winners=semi_final_winners_queryset, initial=initial_final)
 
     if not third_place_form:
@@ -519,7 +535,7 @@ def manage_knockout(request, pk):
         'third_place_form': third_place_form,
     }
     return render(request, 'organizations/manage_knockout.html', context)
-# === KẾT THÚC THAY THẾ ===
+# === KẾT THÚC HÀM MANAGE_KNOCKOUT ===
 
 @login_required
 def delete_photo(request, pk):

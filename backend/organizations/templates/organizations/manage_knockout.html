@@ -44,6 +44,8 @@
 
         <h5 class="mb-3">Tạo cặp đấu Tứ kết</h5>
         {% if qualified_teams|length >= 8 %}
+            <p class="text-info"><i class="bi bi-info-circle-fill"></i> Hệ thống đã tự động xếp cặp đấu chéo. Bạn có thể thay đổi nếu cần.</p>
+            
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_quarter_finals">

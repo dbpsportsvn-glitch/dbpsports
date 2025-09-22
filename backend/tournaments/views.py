@@ -1,33 +1,34 @@
-# tournaments/views.py
-
-from django.shortcuts import render, get_object_or_404, redirect
-from collections import defaultdict
-from django.db.models import Prefetch
-from .models import Tournament, Team, Player, Match, Lineup, MAX_STARTERS, Group, Announcement, Goal, Card
-from django.contrib.auth.decorators import login_required 
-from django.views.decorators.cache import never_cache 
-from django.http import HttpResponseForbidden
-from django.db import transaction, IntegrityError # Thêm IntegrityError
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.db.models import Sum, Count
-from .forms import TeamCreationForm, PlayerCreationForm, PaymentProofForm, CommentForm, ScheduleGenerationForm
-from .utils import send_notification_email
-from django.conf import settings
-from django.utils import timezone
-from django.db.models import Q
-from .models import HomeBanner
-from datetime import timedelta
-from django.contrib import messages
+# Python Standard Library
 import json
-from django.http import JsonResponse
-from django.contrib.admin.views.decorators import staff_member_required
-from itertools import combinations
 import random
+from collections import defaultdict
 from datetime import datetime, time, timedelta
+from itertools import combinations
+
+# Django Core
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Prefetch, Q, Sum
+from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.cache import never_cache
+
+# Local Application Imports
 from organizations.models import Organization
-from .models import Tournament, TournamentPhoto
-from .forms import GalleryURLForm
+
+from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
+                    PlayerCreationForm, ScheduleGenerationForm,
+                    TeamCreationForm)
+from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS)
+from .utils import send_notification_email
+
 
 #==================================
 
@@ -138,7 +139,7 @@ def tournament_detail(request, pk):
             Prefetch('groups', queryset=Group.objects.order_by('name').prefetch_related(
                 Prefetch('teams', queryset=Team.objects.select_related('captain'))
             )),
-            'photos'  # <-- THÊM DÒNG NÀY ĐỂ LẤY ẢNH
+            'photos'
         ),
         pk=pk
     )
@@ -150,21 +151,36 @@ def tournament_detail(request, pk):
 
     all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
     group_matches = all_matches.filter(match_round='GROUP')
-    knockout_matches = all_matches.filter(match_round__in=['SEMI', 'FINAL'])
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
 
-    semi_finals = list(knockout_matches.filter(match_round='SEMI'))
-    final_match = knockout_matches.filter(match_round='FINAL').first()
+    # === BẮT ĐẦU PHẦN CẬP NHẬT LOGIC KNOCKOUT ===
+    all_knockout_matches = list(all_matches.filter(
+        match_round__in=['QUARTER', 'SEMI', 'THIRD_PLACE', 'FINAL']
+    ).order_by('match_time'))
 
+    quarter_finals = [m for m in all_knockout_matches if m.match_round == 'QUARTER']
+    semi_finals = [m for m in all_knockout_matches if m.match_round == 'SEMI']
+    third_place_match = next((m for m in all_knockout_matches if m.match_round == 'THIRD_PLACE'), None)
+    final_match = next((m for m in all_knockout_matches if m.match_round == 'FINAL'), None)
+
+    while len(quarter_finals) < 4:
+        quarter_finals.append(None)
     while len(semi_finals) < 2:
         semi_finals.append(None)
 
     knockout_data = {
+        'quarter_final_1': quarter_finals[0],
+        'quarter_final_2': quarter_finals[1],
+        'quarter_final_3': quarter_finals[2],
+        'quarter_final_4': quarter_finals[3],
         'semi_final_1': semi_finals[0],
         'semi_final_2': semi_finals[1],
+        'third_place_match': third_place_match,
         'final_match': final_match,
     }
+    # === KẾT THÚC PHẦN CẬP NHẬT LOGIC KNOCKOUT ===
 
+    # Phần tính toán bảng xếp hạng (giữ nguyên)
     standings_data = defaultdict(list)
     groups_with_teams = list(tournament.groups.all())
     
@@ -206,6 +222,7 @@ def tournament_detail(request, pk):
         group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
         standings_data[group.id] = group_standings
 
+    # Phần thống kê (giữ nguyên)
     total_teams = tournament.teams.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
@@ -220,7 +237,7 @@ def tournament_detail(request, pk):
         'tournament': tournament,
         'is_organizer': is_organizer,
         'group_matches': group_matches,
-        'knockout_matches': knockout_matches,
+        'knockout_matches': all_knockout_matches, # Sử dụng danh sách đã lấy
         'knockout_data': knockout_data, 
         'now': timezone.now(),
         'unassigned_teams': unassigned_teams,
