@@ -194,6 +194,8 @@ class Match(models.Model):
     location = models.CharField(max_length=200, blank=True)
     team1_score = models.PositiveIntegerField(null=True, blank=True)
     team2_score = models.PositiveIntegerField(null=True, blank=True)
+    team1_penalty_score = models.PositiveIntegerField("Tỉ số penalty đội 1", null=True, blank=True)
+    team2_penalty_score = models.PositiveIntegerField("Tỉ số penalty đội 2", null=True, blank=True)
     livestream_url = models.URLField(max_length=500, null=True, blank=True)
     referee = models.CharField(max_length=100, null=True, blank=True)
     commentator = models.CharField(max_length=100, null=True, blank=True)
@@ -208,11 +210,18 @@ class Match(models.Model):
     @property
     def winner(self):
         if self.team1_score is not None and self.team2_score is not None:
-            if self.team1_score > self.team2_score: return self.team1
-            elif self.team2_score > self.team1_score: return self.team2
+            if self.team1_score > self.team2_score:
+                return self.team1
+            elif self.team2_score > self.team1_score:
+                return self.team2
+            # Xử lý trường hợp hòa và có tỉ số penalty
+            elif self.team1_penalty_score is not None and self.team2_penalty_score is not None:
+                if self.team1_penalty_score > self.team2_penalty_score:
+                    return self.team1
+                elif self.team2_penalty_score > self.team1_penalty_score:
+                    return self.team2
         return None
-    
-    # Thêm property mới để lấy đội thua
+
     @property
     def loser(self):
         if self.winner is not None:

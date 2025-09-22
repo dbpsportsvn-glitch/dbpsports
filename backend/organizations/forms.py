@@ -63,7 +63,9 @@ class MatchUpdateForm(forms.ModelForm):
         model = Match
         # === CẬP NHẬT DANH SÁCH fields ===
         fields = [
-            'team1', 'team2', 'match_time', 'location', 'team1_score', 'team2_score', 
+            'team1', 'team2', 'match_time', 'location', 
+            'team1_score', 'team2_score', 
+            'team1_penalty_score', 'team2_penalty_score', # Thêm 2 trường mới
             'livestream_url', 'referee', 'commentator', 'ticker_text'
         ]
         # === CẬP NHẬT labels VÀ widgets ===
@@ -72,6 +74,8 @@ class MatchUpdateForm(forms.ModelForm):
             'location': 'Địa điểm',
             'team1_score': 'Tỉ số đội 1',
             'team2_score': 'Tỉ số đội 2',
+            'team1_penalty_score': 'Tỉ số penalty đội 1',
+            'team2_penalty_score': 'Tỉ số penalty đội 2',
             'livestream_url': 'Đường dẫn Livestream (YouTube)',
             'referee': 'Tên trọng tài',
             'commentator': 'Tên bình luận viên',

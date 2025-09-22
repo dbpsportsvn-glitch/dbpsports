@@ -16,6 +16,11 @@
                 <div class="col-2">
                     {% if match.team1_score is not None and match.team2_score is not None %}
                         <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
+                        {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
+                            <div style="font-size: 0.8rem; line-height: 1; color: #6c757d;">
+                                (Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})
+                            </div>
+                        {% endif %}
                     {% else %}
                         <span class="match-score">VS</span>
                     {% endif %}

@@ -66,7 +66,18 @@
                         <div class="col-md-6">
                             {{ form.team2_score|as_crispy_field }}
                         </div>
+                        {# === BẮT ĐẦU THÊM MỚI === #}
+                        {% if match.match_round != 'GROUP' %}
+                        <div class="col-md-6">
+                            {{ form.team1_penalty_score|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.team2_penalty_score|as_crispy_field }}
+                        </div>
+                        {% endif %}
+                        {# === KẾT THÚC THÊM MỚI === #}
                     </div>
+                    
                     {{ form.livestream_url|as_crispy_field }}
                     {{ form.referee|as_crispy_field }}
                     {{ form.commentator|as_crispy_field }}

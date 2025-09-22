@@ -18,6 +18,11 @@
                 <div class="col-4">
                     {% if match.team1_score is not None and match.team2_score is not None %}
                         <h1 class="display-3 fw-bold">{{ match.team1_score }} - {{ match.team2_score }}</h1>
+                        {# === BẮT ĐẦU THÊM MỚI === #}
+                        {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
+                            <p class="mb-0 text-muted">(Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})</p>
+                        {% endif %}
+                        {# === KẾT THÚC THÊM MỚI === #}
                     {% else %}
                         <h1 class="display-3 fw-bold">VS</h1>
                     {% endif %}

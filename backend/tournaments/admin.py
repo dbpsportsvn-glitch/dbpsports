@@ -263,7 +263,32 @@ class MatchAdmin(ModelAdmin):
     list_display = ("__str__", "tournament", "colored_round", "display_match_time", "team1_score", "team2_score",); list_filter = ("tournament", "match_round", MatchResultFilter); search_fields = ("team1__name", "team2__name", "tournament__name"); list_editable = ("team1_score", "team2_score",); date_hierarchy = "match_time"; inlines = [LineupInline, GoalInline, CardInline]; autocomplete_fields = ("team1", "team2", "tournament"); list_select_related = ("tournament", "team1", "team2"); list_per_page = 50
     @admin.display(description='Thời gian thi đấu', ordering='match_time')
     def display_match_time(self, obj): return format_html("{}<br>{}", obj.match_time.strftime("%H:%M"), obj.match_time.strftime("%d-%m-%Y"))
-    fieldsets = ((None, {'fields': ('tournament', 'match_round', ('team1', 'team2'))}), ('Kết quả & Lịch thi đấu', {'fields': (('team1_score', 'team2_score'), 'match_time', 'location', 'referee', 'commentator')}), ('Cài đặt Livestream', {'classes': ('collapse',), 'fields': ('livestream_url', 'ticker_text')}),)
+    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
+    fieldsets = (
+        ('Thông tin chung', {
+            'fields': (
+                'tournament',
+                'match_round',
+                'team1',  # Đưa về một hàng riêng
+                'team2',  # Đưa về một hàng riêng
+                'livestream_url',  # Chuyển từ tab khác vào đây
+                'ticker_text',     # Chuyển từ tab khác vào đây
+            )
+        }),
+        ('Kết quả & Lịch thi đấu', {
+            'fields': (
+                'team1_score',  # Đưa về một hàng riêng
+                'team2_score',  # Đưa về một hàng riêng
+                'team1_penalty_score',
+                'team2_penalty_score',
+                'match_time',
+                'location',
+                'referee',
+                'commentator',
+            )
+        }),
+    )
+    # === KẾT THÚC THAY THẾ ===
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
         if obj.match_round == 'GROUP': color, text = 'grey', 'Vòng bảng'
