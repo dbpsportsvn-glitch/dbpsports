@@ -88,20 +88,23 @@
                 {# Nội dung quản lý đội #}
                 <h5>Duyệt Đội đăng ký</h5>
                 <hr>
-                {# === BẮT ĐẦU KHỐI MỚI === #}
                 <h6><i class="bi bi-exclamation-triangle-fill text-danger"></i> Các đội chưa thanh toán</h6>
                 {% if unpaid_teams %}
                     <ul class="list-group mb-4">
                         {% for team in unpaid_teams %}
                         <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
                             <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
+                            <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-dark btn-sm">Xóa</button>
+                            </form>
                         </li>
                         {% endfor %}
                     </ul>
                 {% else %}
                     <p class="text-muted">Tất cả các đội đã nộp lệ phí hoặc đang chờ duyệt.</p>
                 {% endif %}
-                {# === KẾT THÚC KHỐI MỚI === #}
+
                 <h6>Các đội chờ xác nhận thanh toán</h6>
                 {% if pending_teams %}
                     <ul class="list-group">
@@ -111,11 +114,17 @@
                                 <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
                                 {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}
                             </div>
-                            <form method="post" class="mb-0">
-                                {% csrf_token %}
-                                <input type="hidden" name="team_id" value="{{ team.id }}">
-                                <button type="submit" name="approve_payment" class="btn btn-success btn-sm">Duyệt</button>
-                            </form>
+                            <div class="d-flex gap-2">
+                                <form method="post" class="mb-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="team_id" value="{{ team.id }}">
+                                    <button type="submit" name="approve_payment" class="btn btn-success btn-sm">Duyệt</button>
+                                </form>
+                                <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                </form>
+                            </div>
                         </li>
                         {% endfor %}
                     </ul>
@@ -126,27 +135,30 @@
                 <hr>
                 <h6>Các đội đã được duyệt</h6>
                 {% if paid_teams %}
-                    {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
                     <div class="row">
                         {% for team in paid_teams %}
                         <div class="col-md-6 mb-2">
                             <div class="d-flex justify-content-between align-items-center p-2 border rounded">
                                 <span>{{ team.name }}</span>
-                                
-                                {% if not team.group %}
-                                <form method="post" class="mb-0">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="team_id" value="{{ team.id }}">
-                                    <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
-                                </form>
-                                {% else %}
-                                    <span class="badge bg-secondary">Đã xếp bảng</span>
-                                {% endif %}
+                                <div class="d-flex gap-2">
+                                    {% if not team.group %}
+                                    <form method="post" class="mb-0">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="team_id" value="{{ team.id }}">
+                                        <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
+                                    </form>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Đã xếp bảng</span>
+                                    {% endif %}
+                                    <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
-                    {# === KẾT THÚC THAY ĐỔI === #}
                 {% else %}
                     <p class="text-muted">Chưa có đội nào được duyệt.</p>
                 {% endif %}

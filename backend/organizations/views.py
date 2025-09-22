@@ -652,3 +652,25 @@ def create_match(request, tournament_pk):
         'active_page': 'matches' # Để giữ cho menu được highlight đúng
     }
     return render(request, 'organizations/create_match.html', context)
+
+# === XOÁ ĐỘI ĐĂNG KÝ ===
+@login_required
+def delete_team(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    tournament = team.tournament
+    
+    # Kiểm tra quyền của người dùng (phải là thành viên BTC của giải đấu đó)
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # URL để quay lại trang quản lý đội
+    default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=teams"
+    
+    if request.method == 'POST':
+        team_name = team.name
+        team.delete()
+        messages.success(request, f"Đã xóa thành công đội: {team_name}.")
+        return safe_redirect(request, default_url)
+
+    # Nếu không phải POST request, chỉ đơn giản là quay về trang trước
+    return safe_redirect(request, default_url)
