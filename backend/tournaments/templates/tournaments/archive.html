@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% block title %}Lưu trữ Giải đấu{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="pb-3 mb-4 border-bottom">
@@ -7,8 +9,38 @@
         <p class="lead">Xem lại lịch sử các giải đấu đã diễn ra.</p>
     </div>
 
+    {# === BẮT ĐẦU KHỐI CODE TÌM KIẾM MỚI === #}
+    <div class="card card-body mb-4">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <label for="regionFilter" class="form-label">Lọc theo Khu vực</label>
+                <select name="region" id="regionFilter" class="form-select">
+                    <option value="">Tất cả khu vực</option>
+                    {% for region_value, region_name in all_regions %}
+                    <option value="{{ region_value }}" {% if region_value == current_region %}selected{% endif %}>{{ region_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="orgFilter" class="form-label">Lọc theo Đơn vị Tổ chức</label>
+                <select name="org" id="orgFilter" class="form-select">
+                    <option value="">Tất cả đơn vị</option>
+                    {% for org in all_organizations %}
+                    <option value="{{ org.id }}" {% if org.id|stringformat:"s" == current_org %}selected{% endif %}>{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mt-auto">
+                <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
+    {# === KẾT THÚC KHỐI CODE TÌM KIẾM MỚI === #}
+
+
     <div class="row">
-        {% for tournament in tournaments_list %}
+        {# Sửa lại biến lặp thành 'tournament' và 'tournaments' #}
+        {% for tournament in tournaments %}
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
@@ -23,7 +55,7 @@
             </div>
         {% empty %}
             <div class="col">
-                <p>Chưa có giải đấu nào được lưu trữ.</p>
+                <div class="alert alert-warning">Không tìm thấy giải đấu nào phù hợp với tiêu chí của bạn.</div>
             </div>
         {% endfor %}
     </div>

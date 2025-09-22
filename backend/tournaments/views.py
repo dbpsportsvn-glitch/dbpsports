@@ -519,10 +519,30 @@ def team_payment(request, pk):
 
 
 def archive_view(request):
-    finished_tournaments = Tournament.objects.filter(status='FINISHED').order_by('-start_date')
+    # Lấy tham số lọc từ URL, tương tự trang giải đấu đang hoạt động
+    region_filter = request.GET.get('region', '')
+    org_filter = request.GET.get('org', '')
+
+    # Bắt đầu với việc lấy tất cả các giải đã kết thúc
+    tournaments_list = Tournament.objects.filter(status='FINISHED').select_related('organization').order_by('-start_date')
+
+    # Áp dụng bộ lọc nếu có
+    if region_filter:
+        tournaments_list = tournaments_list.filter(region=region_filter)
+    
+    if org_filter:
+        tournaments_list = tournaments_list.filter(organization__id=org_filter)
+
+    # Lấy danh sách các đơn vị tổ chức có giải đấu đã kết thúc để đưa vào bộ lọc
+    finished_orgs_ids = Tournament.objects.filter(status='FINISHED').values_list('organization__id', flat=True).distinct()
+    all_organizations = Organization.objects.filter(id__in=finished_orgs_ids).order_by('name')
 
     context = {
-        'tournaments_list': finished_tournaments
+        'tournaments': tournaments_list, # Đổi tên biến để nhất quán
+        'all_organizations': all_organizations,
+        'all_regions': Tournament.Region.choices,
+        'current_region': region_filter,
+        'current_org': org_filter,
     }
     return render(request, 'tournaments/archive.html', context)
 
