@@ -15,7 +15,7 @@ from django.db.models import Count
 from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement, TournamentPhoto
 from .utils import send_notification_email
 
-# ===== CÁC Hàm Cho Bộ lọc =====
+# ===== CÁC Hàm Cho Bộ lọc (Giữ nguyên) =====
 
 class MatchResultFilter(admin.SimpleListFilter):
     title = 'tình trạng kết quả'
@@ -51,7 +51,7 @@ class PlayerCountFilter(admin.SimpleListFilter):
         if self.value() == 'no':
             return queryset.filter(player_count=0)
 
-# ===== Inlines =====
+# ===== Inlines (Giữ nguyên) =====
 
 class GroupInline(admin.TabularInline):
     model = Group
@@ -119,10 +119,9 @@ class CardInline(admin.TabularInline):
                 pass
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-# === BẮT ĐẦU THÊM CLASS MỚI TẠI ĐÂY ===
 class TournamentPhotoInline(admin.TabularInline):
     model = TournamentPhoto
-    extra = 1  # Hiển thị sẵn 1 dòng để tải ảnh mới
+    extra = 1
     readonly_fields = ('image_preview',)
     fields = ('image', 'image_preview', 'caption')
 
@@ -142,17 +141,15 @@ class TournamentAdmin(admin.ModelAdmin):
     date_hierarchy = "start_date"
     inlines = [GroupInline, TournamentPhotoInline] 
     list_per_page = 50
-    actions = ['draw_groups', 'generate_group_stage_matches', 'generate_knockout_matches', 'generate_final_match']
+    # === THAY THẾ TOÀN BỘ ACTIONS CŨ BẰNG ACTION MỚI ===
+    actions = ['auto_create_next_knockout_round', 'create_semi_finals_directly']
 
-    # === THÊM HÀM MỚI NÀY VÀO TRONG CLASS TournamentAdmin ===
     @admin.display(description='Tải ảnh hàng loạt')
     def bulk_upload_link(self, obj):
         url = reverse('tournament_bulk_upload', args=[obj.pk])
         return format_html('<a class="button" href="{}" target="_blank">Tải ảnh</a>', url)
 
-    # THÊM HÀM MỚI NÀY VÀO DƯỚI HÀM draw_groups_link
     def generate_schedule_link(self, obj):
-        # Nút chỉ hiện khi giải đấu đã có bảng và chưa có trận đấu nào được tạo
         if obj.groups.exists() and not obj.matches.exists():
             url = reverse('generate_schedule', args=[obj.pk])
             return format_html('<a class="button" href="{}" target="_blank">Xếp Lịch</a>', url)
@@ -160,7 +157,6 @@ class TournamentAdmin(admin.ModelAdmin):
     generate_schedule_link.short_description = 'Xếp Lịch Thi Đấu'
     generate_schedule_link.allow_tags = True
 
-    # Thêm hàm mới này vào class
     def draw_groups_link(self, obj):
         if obj.teams.filter(payment_status='PAID', group__isnull=True).exists():
             url = reverse('draw_groups', args=[obj.pk])
@@ -177,78 +173,124 @@ class TournamentAdmin(admin.ModelAdmin):
                            teams_url, groups_url, matches_url)
     view_details_link.short_description = 'Quản lý Giải'
 
-    @admin.action(description='Bốc thăm chia bảng cho các giải đã chọn')
-    def draw_groups(self, request, queryset):
+
+    # === BẮT ĐẦU ACTION THÔNG MINH MỚI ===
+    @admin.action(description='Tự động tạo vòng Knockout tiếp theo')
+    def auto_create_next_knockout_round(self, request, queryset):
         for tournament in queryset:
-            teams = list(tournament.teams.all())
-            groups = list(tournament.groups.all())
-            if not groups:
-                self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu.", messages.ERROR)
+            # --- Giai đoạn 1: Từ Vòng bảng tạo Tứ kết hoặc Bán kết ---
+            if not tournament.matches.filter(match_round__in=['QUARTER', 'SEMI', 'FINAL']).exists():
+                groups = list(tournament.groups.order_by('name'))
+                if not groups:
+                    self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu.", messages.ERROR)
+                    continue
+
+                standings_by_group = {group.id: group.get_standings() for group in groups}
+                
+                # Lấy 2 đội đứng đầu mỗi bảng
+                qualified_teams = []
+                for group in groups:
+                    standings = standings_by_group.get(group.id, [])
+                    if len(standings) < 2:
+                        self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ 2 đội.", messages.ERROR)
+                        continue
+                    qualified_teams.append(standings[0]['team_obj'])
+                    qualified_teams.append(standings[1]['team_obj'])
+
+                # Tạo Tứ kết (cho giải 4 bảng / 8 đội)
+                if len(qualified_teams) == 8:
+                    tournament.matches.filter(match_round='QUARTER').delete()
+                    pairings = [
+                        (qualified_teams[0], qualified_teams[3]), # 1A vs 2B
+                        (qualified_teams[2], qualified_teams[1]), # 1B vs 2A
+                        (qualified_teams[4], qualified_teams[7]), # 1C vs 2D
+                        (qualified_teams[6], qualified_teams[5]), # 1D vs 2C
+                    ]
+                    for team1, team2 in pairings:
+                        Match.objects.create(tournament=tournament, match_round='QUARTER', team1=team1, team2=team2, match_time=timezone.now())
+                    self.message_user(request, f"Đã tạo 4 cặp đấu Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
+
+                # Tạo Bán kết (cho giải 2 bảng / 4 đội)
+                elif len(qualified_teams) == 4:
+                    tournament.matches.filter(match_round='SEMI').delete()
+                    pairings = [
+                        (qualified_teams[0], qualified_teams[3]), # 1A vs 2B
+                        (qualified_teams[2], qualified_teams[1]), # 1B vs 2A
+                    ]
+                    for team1, team2 in pairings:
+                        Match.objects.create(tournament=tournament, match_round='SEMI', team1=team1, team2=team2, match_time=timezone.now())
+                    self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                else:
+                    self.message_user(request, f"Không đủ số đội (cần 4 hoặc 8) để tạo vòng knockout cho giải '{tournament.name}'.", messages.WARNING)
                 continue
-            random.shuffle(teams)
-            for i, team in enumerate(teams):
-                team.group = groups[i % len(groups)]
-                team.save()
-            self.message_user(request, f"Đã bốc thăm thành công cho giải '{tournament.name}'.", messages.SUCCESS)
 
-    @admin.action(description='Tạo lịch thi đấu vòng bảng')
-    def generate_group_stage_matches(self, request, queryset):
-        for tournament in queryset:
-            if tournament.status != 'REGISTRATION_OPEN':
-                for group in tournament.groups.all():
-                    teams_in_group = list(group.teams.all())
-                    for team1, team2 in combinations(teams_in_group, 2):
-                        Match.objects.get_or_create(
-                            tournament=tournament,
-                            team1=team1,
-                            team2=team2,
-                            defaults={'match_time': timezone.now()}
-                        )
-                self.message_user(request, f"Đã tạo lịch thi đấu cho giải '{tournament.name}'.", messages.SUCCESS)
-            else:
-                self.message_user(request, f"Không thể tạo lịch cho giải '{tournament.name}' vì vẫn đang mở đăng ký.", messages.ERROR)
+            # --- Giai đoạn 2: Từ Tứ kết tạo Bán kết ---
+            quarter_finals = tournament.matches.filter(match_round='QUARTER')
+            if quarter_finals.exists() and not tournament.matches.filter(match_round__in=['SEMI', 'FINAL']).exists():
+                finished_qf = quarter_finals.filter(team1_score__isnull=False, team2_score__isnull=False)
+                if finished_qf.count() != 4:
+                    self.message_user(request, f"Cần cập nhật đủ tỉ số cho cả 4 trận Tứ kết của giải '{tournament.name}'.", messages.WARNING)
+                    continue
+                
+                winners = [m.winner for m in finished_qf if m.winner]
+                if len(winners) == 4:
+                    tournament.matches.filter(match_round='SEMI').delete()
+                    # Mặc định: Thắng QF1 vs Thắng QF2, Thắng QF3 vs Thắng QF4
+                    Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[0], team2=winners[1], match_time=timezone.now())
+                    Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[2], team2=winners[3], match_time=timezone.now())
+                    self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết từ Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                continue
 
-    @admin.action(description='Tạo cặp đấu Bán kết từ 2 bảng')
-    def generate_knockout_matches(self, request, queryset):
+            # --- Giai đoạn 3: Từ Bán kết tạo Chung kết và Tranh hạng ba ---
+            semi_finals = tournament.matches.filter(match_round='SEMI')
+            if semi_finals.exists() and not tournament.matches.filter(match_round__in=['FINAL', 'THIRD_PLACE']).exists():
+                finished_sf = semi_finals.filter(team1_score__isnull=False, team2_score__isnull=False)
+                if finished_sf.count() != 2:
+                    self.message_user(request, f"Cần cập nhật đủ tỉ số cho 2 trận Bán kết của giải '{tournament.name}'.", messages.WARNING)
+                    continue
+
+                winners = [m.winner for m in finished_sf if m.winner]
+                losers = [m.loser for m in finished_sf if m.loser]
+
+                if len(winners) == 2 and len(losers) == 2:
+                    tournament.matches.filter(match_round__in=['FINAL', 'THIRD_PLACE']).delete()
+                    # Tạo Chung kết
+                    Match.objects.create(tournament=tournament, match_round='FINAL', team1=winners[0], team2=winners[1], match_time=timezone.now())
+                    # Tạo Tranh hạng ba
+                    Match.objects.create(tournament=tournament, match_round='THIRD_PLACE', team1=losers[0], team2=losers[1], match_time=timezone.now())
+                    self.message_user(request, f"Đã tạo trận Chung kết và Tranh hạng ba cho giải '{tournament.name}'.", messages.SUCCESS)
+                continue
+    # === KẾT THÚC ACTION MỚI ===
+
+    # === ACTION MỚI ĐỂ TẠO THẲNG BÁN KẾT ===
+    @admin.action(description='Tạo Bán kết trực tiếp (cho giải 2 bảng)')
+    def create_semi_finals_directly(self, request, queryset):
         for tournament in queryset:
-            groups = list(tournament.groups.all().order_by('name'))
+            groups = list(tournament.groups.order_by('name'))
             if len(groups) != 2:
-                self.message_user(request, "Chức năng này hiện chỉ hỗ trợ 2 bảng đấu.", messages.ERROR)
+                self.message_user(request, f"Giải '{tournament.name}' không có 2 bảng đấu, không thể dùng chức năng này.", messages.ERROR)
                 continue
-            standings_A = groups[0].get_standings()
-            standings_B = groups[1].get_standings()
-            if len(standings_A) < 2 or len(standings_B) < 2:
-                self.message_user(request, f"Không đủ đội trong các bảng của giải '{tournament.name}'.", messages.ERROR)
-                continue
-            winner_A, runner_up_A = standings_A[0]['team_obj'], standings_A[1]['team_obj']
-            winner_B, runner_up_B = standings_B[0]['team_obj'], standings_B[1]['team_obj']
-            Match.objects.get_or_create(tournament=tournament, match_round='SEMI', team1=winner_A, team2=runner_up_B, defaults={'match_time': timezone.now()})
-            Match.objects.get_or_create(tournament=tournament, match_round='SEMI', team1=winner_B, team2=runner_up_A, defaults={'match_time': timezone.now()})
-            self.message_user(request, f"Đã tạo các cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
+            
+            qualified_teams = []
+            for group in groups:
+                standings = group.get_standings()
+                if len(standings) < 2:
+                    self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ 2 đội.", messages.ERROR)
+                    qualified_teams = [] # Reset list
+                    break
+                qualified_teams.extend([s['team_obj'] for s in standings[:2]])
 
-    @admin.action(description='Tạo trận Chung kết từ Bán kết')
-    def generate_final_match(self, request, queryset):
-        for tournament in queryset:
-            semi_finals = tournament.matches.filter(match_round='SEMI', team1_score__isnull=False, team2_score__isnull=False)
-            if self._count_safe(semi_finals) != 2:
-                self.message_user(request, "Cần có đủ 2 trận Bán kết đã có tỉ số.", messages.ERROR)
-                continue
-            winners = [m.team1 if m.team1_score > m.team2_score else m.team2 for m in semi_finals]
-            if len(winners) == 2:
-                Match.objects.get_or_create(tournament=tournament, match_round='FINAL', team1=winners[0], team2=winners[1], defaults={'match_time': timezone.now()})
-                self.message_user(request, f"Đã tạo trận Chung kết cho giải '{tournament.name}'.", messages.SUCCESS)
-            else:
-                self.message_user(request, "Không thể xác định 2 đội thắng từ Bán kết.", messages.ERROR)
+            if len(qualified_teams) == 4:
+                tournament.matches.filter(match_round='SEMI').delete()
+                # Tạo cặp 1A vs 2B và 1B vs 2A
+                Match.objects.create(tournament=tournament, match_round='SEMI', team1=qualified_teams[0], team2=qualified_teams[3], match_time=timezone.now())
+                Match.objects.create(tournament=tournament, match_round='SEMI', team1=qualified_teams[2], team2=qualified_teams[1], match_time=timezone.now())
+                self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết trực tiếp cho giải '{tournament.name}'.", messages.SUCCESS)
 
-    @staticmethod
-    def _count_safe(qs):
-        try:
-            return qs.count()
-        except Exception:
-            return len(list(qs))
-
+# === Các class Admin khác giữ nguyên không đổi ===
 @admin.register(Team)
-class TeamAdmin(admin.ModelAdmin):
+class TeamAdmin(ModelAdmin):
+    # ... (giữ nguyên không đổi)
     list_display = ("name", "tournament", "group", "payment_status", "captain", "display_proof", "display_logo")
     list_filter = ("tournament", "group", "payment_status", PlayerCountFilter)
     search_fields = ("name", "tournament__name", "captain__username")
@@ -301,19 +343,18 @@ class TeamAdmin(admin.ModelAdmin):
                     recipient_list=[captain_email]
                 )
 
-# Thay thế class PlayerAdmin cũ bằng class đã được nâng cấp này
 @admin.register(Player)
-class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar") # <<< SỬA ĐỔI: Dùng link_to_team
-    list_filter = ("team__tournament", "position", "team") # <<< SỬA ĐỔI: Đổi thứ tự cho hợp lý
-    search_fields = ("full_name", "team__name", "jersey_number") # <<< THÊM VÀO: jersey_number
-    list_editable = ("position",) # <<< THÊM VÀO
+class PlayerAdmin(ModelAdmin):
+    # ... (giữ nguyên không đổi)
+    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar")
+    list_filter = ("team__tournament", "position", "team")
+    search_fields = ("full_name", "team__name", "jersey_number")
+    list_editable = ("position",)
     ordering = ("team", "jersey_number")
     autocomplete_fields = ("team",)
     list_select_related = ("team",)
     list_per_page = 50
 
-    # <<< THÊM HÀM MỚI >>>
     @admin.display(description='Đội', ordering='team__name')
     def link_to_team(self, obj):
         from django.urls import reverse
@@ -328,7 +369,8 @@ class PlayerAdmin(admin.ModelAdmin):
     display_avatar.short_description = 'Ảnh đại diện'
 
 @admin.register(Match)
-class MatchAdmin(admin.ModelAdmin): # Bây giờ Python đã hiểu ModelAdmin là gì
+class MatchAdmin(ModelAdmin):
+    # ... (giữ nguyên không đổi)
     list_display = (
         "__str__",
         "tournament",
@@ -370,10 +412,15 @@ class MatchAdmin(admin.ModelAdmin): # Bây giờ Python đã hiểu ModelAdmin l
 
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
+        # THÊM MÀU CHO TỨ KẾT VÀ TRANH HẠNG BA
         if obj.match_round == 'GROUP':
             color, text = 'grey', 'Vòng bảng'
+        elif obj.match_round == 'QUARTER':
+            color, text = '#7B68EE', 'Tứ kết' # MediumSlateBlue
         elif obj.match_round == 'SEMI':
             color, text = 'orange', 'Bán kết'
+        elif obj.match_round == 'THIRD_PLACE':
+            color, text = '#CD853F', 'Hạng Ba' # Peru
         elif obj.match_round == 'FINAL':
             color, text = 'green', 'Chung kết'
         else:
@@ -392,15 +439,16 @@ class MatchAdmin(admin.ModelAdmin): # Bây giờ Python đã hiểu ModelAdmin l
             msg = "; ".join(getattr(e, "messages", [str(e)]))
             self.message_user(request, msg, level=messages.ERROR)
 
+
 @admin.register(Group)
-class GroupAdmin(admin.ModelAdmin):
+class GroupAdmin(ModelAdmin):
     list_display = ("name", "tournament")
     list_filter = ("tournament",)
     search_fields = ("name", "tournament__name")
     list_per_page = 50
 
 @admin.register(Lineup)
-class LineupAdmin(admin.ModelAdmin):
+class LineupAdmin(ModelAdmin):
     list_display = ("player", "team", "match", "status")
     list_filter = ("match__tournament", "team", "status")
     search_fields = ("player__full_name", "match__team1__name", "match__team2__name")
@@ -409,7 +457,7 @@ class LineupAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 @admin.register(Goal)
-class GoalAdmin(admin.ModelAdmin):
+class GoalAdmin(ModelAdmin):
     list_display = ("match", "team", "player", "minute")
     list_filter = ("match__tournament", "team")
     search_fields = ("player__full_name",)
@@ -418,7 +466,7 @@ class GoalAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 @admin.register(Card)
-class CardAdmin(admin.ModelAdmin):
+class CardAdmin(ModelAdmin):
     list_display = ("match", "team", "player", "card_type", "minute")
     list_filter = ("match__tournament", "team", "card_type")
     search_fields = ("player__full_name",)
@@ -427,7 +475,7 @@ class CardAdmin(admin.ModelAdmin):
     list_per_page = 50
 
 @admin.register(HomeBanner)
-class HomeBannerAdmin(admin.ModelAdmin):
+class HomeBannerAdmin(ModelAdmin):
     list_display = ("title", "order", "is_active", "preview")
     list_editable = ("order", "is_active")
     search_fields = ("title",)
@@ -439,9 +487,9 @@ class HomeBannerAdmin(admin.ModelAdmin):
         return "-"
     preview.short_description = "Ảnh"
 
-# >> GỬI MAIL VÀ THÔNG BÁO <<
 @admin.register(Announcement)
-class AnnouncementAdmin(admin.ModelAdmin):
+class AnnouncementAdmin(ModelAdmin):
+    # ... (giữ nguyên không đổi)
     list_display = ('title', 'tournament', 'audience', 'is_published', 'created_at')
     list_filter = ('tournament', 'is_published', 'audience')
     search_fields = ('title', 'content')

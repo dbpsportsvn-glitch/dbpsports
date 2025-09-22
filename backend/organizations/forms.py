@@ -86,6 +86,63 @@ class CardForm(forms.ModelForm):
             'minute': 'Phút nhận thẻ'
         }
 
+# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+class QuarterFinalCreationForm(forms.Form):
+    qf1_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 1 - Đội 1")
+    qf1_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 1 - Đội 2")
+    qf1_datetime = forms.DateTimeField(
+        label="Thời gian Tứ kết 1",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+    
+    qf2_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 2 - Đội 1")
+    qf2_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 2 - Đội 2")
+    qf2_datetime = forms.DateTimeField(
+        label="Thời gian Tứ kết 2",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+
+    qf3_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 3 - Đội 1")
+    qf3_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 3 - Đội 2")
+    qf3_datetime = forms.DateTimeField(
+        label="Thời gian Tứ kết 3",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+
+    qf4_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 4 - Đội 1")
+    qf4_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 4 - Đội 2")
+    qf4_datetime = forms.DateTimeField(
+        label="Thời gian Tứ kết 4",
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        qualified_teams_queryset = kwargs.pop('qualified_teams', None)
+        super().__init__(*args, **kwargs)
+        if qualified_teams_queryset is not None:
+            # Gán queryset cho tất cả 8 trường chọn đội
+            for i in range(1, 5):
+                self.fields[f'qf{i}_team1'].queryset = qualified_teams_queryset
+                self.fields[f'qf{i}_team2'].queryset = qualified_teams_queryset
+
+    def clean(self):
+        cleaned_data = super().clean()
+        teams = [cleaned_data.get(f'qf{i}_team{j}') for i in range(1, 5) for j in range(1, 3)]
+        
+        # Lọc ra các giá trị None (trường hợp người dùng chưa chọn)
+        valid_teams = [team for team in teams if team is not None]
+
+        # Kiểm tra xem có đội nào được chọn nhiều hơn một lần không
+        if len(set(valid_teams)) != len(valid_teams):
+            raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu Tứ kết.")
+        return cleaned_data
+# === KẾT THÚC THÊM MỚI ===
+
+
 class SemiFinalCreationForm(forms.Form):
     sf1_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 1 - Đội 1")
     sf1_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 1 - Đội 2")
@@ -103,13 +160,20 @@ class SemiFinalCreationForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        # Sửa ở đây: chấp nhận cả qualified_teams và quarter_final_winners
         qualified_teams_queryset = kwargs.pop('qualified_teams', None)
+        quarter_final_winners_queryset = kwargs.pop('quarter_final_winners', None)
+        
         super().__init__(*args, **kwargs)
-        if qualified_teams_queryset is not None:
-            self.fields['sf1_team1'].queryset = qualified_teams_queryset
-            self.fields['sf1_team2'].queryset = qualified_teams_queryset
-            self.fields['sf2_team1'].queryset = qualified_teams_queryset
-            self.fields['sf2_team2'].queryset = qualified_teams_queryset
+        
+        # Ưu tiên lấy đội từ vòng Tứ kết, nếu không có thì mới lấy từ vòng bảng
+        final_queryset = quarter_final_winners_queryset if quarter_final_winners_queryset is not None else qualified_teams_queryset
+
+        if final_queryset is not None:
+            self.fields['sf1_team1'].queryset = final_queryset
+            self.fields['sf1_team2'].queryset = final_queryset
+            self.fields['sf2_team1'].queryset = final_queryset
+            self.fields['sf2_team2'].queryset = final_queryset
 
     def clean(self):
         cleaned_data = super().clean()
@@ -119,8 +183,9 @@ class SemiFinalCreationForm(forms.Form):
             cleaned_data.get('sf2_team1'),
             cleaned_data.get('sf2_team2'),
         ]
-        if len(set(teams)) != 4:
-            raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu.")
+        valid_teams = [team for team in teams if team is not None]
+        if len(set(valid_teams)) != len(valid_teams):
+            raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu Bán kết.")
         return cleaned_data
 
 # === TẠO CẶP ĐẤU CHUNG KẾT ===
@@ -172,4 +237,4 @@ class ThirdPlaceCreationForm(forms.Form):
         if team1 and team2 and team1 == team2:
             raise ValidationError("Hai đội trong trận tranh hạng Ba không được trùng nhau.")
         return cleaned_data
-# === KẾT THÚC THÊM MỚI ===        
+# === KẾT THÚC THÊM MỚI ===
