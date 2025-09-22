@@ -205,6 +205,13 @@
                                     <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-fill"></i> Quản lý
                                     </a>
+                                    {# === THÊM FORM MỚI NÀY VÀO === #}
+                                    <form method="post" action="{% url 'organizations:delete_match' pk=match.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa trận đấu">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         {% empty %}
@@ -237,6 +244,16 @@
                                     <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-fill"></i> Quản lý
                                     </a>
+                                    <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-pencil-fill"></i> Quản lý
+                                    </a>
+                                    {# === THÊM FORM MỚI NÀY VÀO === #}
+                                    <form method="post" action="{% url 'organizations:delete_match' pk=match.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa trận đấu">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         {% endfor %}

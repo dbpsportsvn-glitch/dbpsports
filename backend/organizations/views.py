@@ -538,3 +538,23 @@ def delete_all_photos(request, tournament_pk):
 
     # Chuyển hướng về tab thư viện
     return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery')
+
+
+# XOÁ TRẬN ĐẤU CỦA BTC
+@login_required
+def delete_match(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    tournament = match.tournament
+    
+    # Kiểm tra quyền của người dùng
+    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        match.delete()
+        messages.success(request, f"Đã xóa thành công trận đấu: {match.team1.name} vs {match.team2.name}.")
+        # Quay trở lại trang quản lý trận đấu của giải
+        return redirect('organizations:manage_tournament', pk=tournament.pk)
+
+    # Nếu không phải POST request, đơn giản là quay về trang trước
+    return redirect('organizations:manage_tournament', pk=tournament.pk)    
