@@ -84,7 +84,7 @@
                     {# === KẾT THÚC THÊM MỚI === #}
                 </div>
 
-            {% elif active_page == 'teams' %}
+{% elif active_page == 'teams' %}
                 <h5>Duyệt Đội đăng ký</h5>
                 
                 <div class="card card-body mb-3">
@@ -116,7 +116,7 @@
                         {% for team in unpaid_teams %}
                         <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>{{ team.name }}</strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
+                                <strong><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
                                 <br><small>Đội trưởng: {{ team.captain.username }}</small>
                             </div>
                             <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
@@ -136,7 +136,7 @@
                         {% for team in pending_teams %}
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <strong>{{ team.name }}</strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
+                                <strong><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
                                 <br><small>Đội trưởng: {{ team.captain.username }} {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}</small>
                             </div>
                             <div class="d-flex gap-2">
@@ -165,7 +165,7 @@
                         <div class="col-md-6 mb-2">
                             <div class="d-flex justify-content-between align-items-center p-2 border rounded">
                                 <div>
-                                    <span>{{ team.name }}</span>
+                                    <span><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></span>
                                     <small class="d-block text-muted">{{ team.tournament.name }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
