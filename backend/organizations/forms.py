@@ -53,21 +53,45 @@ class MemberInviteForm(forms.Form):
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
         return email
 
+
 class MatchUpdateForm(forms.ModelForm):
+    # === THÊM DÒNG NÀY VÀO ===
+    team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
+    team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
+
     class Meta:
         model = Match
+        # === CẬP NHẬT DANH SÁCH fields ===
         fields = [
-            'team1_score', 'team2_score', 'livestream_url', 
-            'referee', 'commentator', 'ticker_text'
+            'team1', 'team2', 'match_time', 'location', 'team1_score', 'team2_score', 
+            'livestream_url', 'referee', 'commentator', 'ticker_text'
         ]
+        # === CẬP NHẬT labels VÀ widgets ===
         labels = {
+            'match_time': 'Thời gian thi đấu',
+            'location': 'Địa điểm',
             'team1_score': 'Tỉ số đội 1',
             'team2_score': 'Tỉ số đội 2',
             'livestream_url': 'Đường dẫn Livestream (YouTube)',
             'referee': 'Tên trọng tài',
             'commentator': 'Tên bình luận viên',
             'ticker_text': 'Dòng chữ chạy trên Livestream',
-        }        
+        }
+        widgets = {
+            'match_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    # === THÊM HÀM MỚI NÀY VÀO ===
+    def clean(self):
+        cleaned_data = super().clean()
+        team1 = cleaned_data.get("team1")
+        team2 = cleaned_data.get("team2")
+
+        if team1 and team2 and team1 == team2:
+            raise ValidationError("Hai đội trong một trận đấu không được trùng nhau.")
+        
+        return cleaned_data
+
 
 class GoalForm(forms.ModelForm):
     player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")

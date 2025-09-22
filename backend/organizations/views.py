@@ -264,11 +264,15 @@ def manage_match(request, pk):
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
+    teams_in_tournament = tournament.teams.all().order_by('name')
     
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_match':
             form = MatchUpdateForm(request.POST, instance=match)
+            # === THÊM 2 DÒNG NÀY VÀO ===
+            form.fields['team1'].queryset = teams_in_tournament
+            form.fields['team2'].queryset = teams_in_tournament
             if form.is_valid():
                 form.save()
                 messages.success(request, "Đã cập nhật thông tin chung của trận đấu.")
@@ -305,6 +309,9 @@ def manage_match(request, pk):
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=cards')
 
     form = MatchUpdateForm(instance=match)
+    # === THÊM 2 DÒNG NÀY VÀO ===
+    form.fields['team1'].queryset = teams_in_tournament
+    form.fields['team2'].queryset = teams_in_tournament
     goal_form = GoalForm()
     card_form = CardForm()
     goal_form.fields['player'].queryset = players_in_match
