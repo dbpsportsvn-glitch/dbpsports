@@ -16,8 +16,20 @@ from django.contrib import messages
 from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, MatchCreationForm
 from django.utils import timezone
 from django.db import transaction
+# === THÊM: KIỂM TRA URL next AN TOÀN ===
+from django.utils.http import url_has_allowed_host_and_scheme
 
 #=================================
+# Helper: ưu tiên ?next= nếu hợp lệ, nếu không quay về default_url
+def safe_redirect(request, default_url: str):
+    next_url = request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return redirect(next_url)
+    return redirect(default_url)
 
 @login_required
 @never_cache
@@ -183,20 +195,24 @@ def delete_group(request, pk):
     tournament = group.tournament
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=groups"
     if request.method == 'POST':
         group.delete()
-        return redirect('organizations:manage_tournament', pk=tournament.pk)
-    return redirect('organizations:manage_tournament', pk=tournament.pk)
+        messages.success(request, "Đã xoá bảng thành công.")
+        return safe_redirect(request, default_url)
+    return safe_redirect(request, default_url)
 
 @login_required
 def delete_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    default_url = reverse('organizations:dashboard')
     if request.method == 'POST':
         tournament.delete()
-        return redirect('organizations:dashboard')
-    return redirect('organizations:dashboard')
+        messages.success(request, "Đã xoá giải đấu.")
+        return safe_redirect(request, default_url)
+    return safe_redirect(request, default_url)
 
 @login_required
 @never_cache
@@ -227,12 +243,15 @@ def remove_member(request, pk):
     tournament_id_to_return = request.GET.get('tournament_id')
     if request.user != organization.owner or membership_to_delete.user == organization.owner:
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
-    if request.method == 'POST':
-        membership_to_delete.delete()
-        messages.success(request, f"Đã xóa thành viên {membership_to_delete.user.email} khỏi đơn vị.")
+    default_url = reverse('organizations:dashboard')
     if tournament_id_to_return:
-        return redirect('organizations:manage_tournament', pk=tournament_id_to_return)
-    return redirect('organizations:dashboard')
+        default_url = f"{reverse('organizations:manage_tournament', args=[tournament_id_to_return])}?view=members"
+    if request.method == 'POST':
+        member_email = membership_to_delete.user.email
+        membership_to_delete.delete()
+        messages.success(request, f"Đã xóa thành viên {member_email} khỏi đơn vị.")
+        return safe_redirect(request, default_url)
+    return safe_redirect(request, default_url)
 
 @login_required
 def edit_tournament(request, pk):
@@ -244,7 +263,8 @@ def edit_tournament(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, "Đã cập nhật thông tin giải đấu thành công!")
-            return redirect('organizations:manage_tournament', pk=pk)
+            default_url = f"{reverse('organizations:manage_tournament', args=[pk])}?view=settings"
+            return safe_redirect(request, default_url)
     else:
         form = TournamentCreationForm(instance=tournament)
     context = {
@@ -338,11 +358,13 @@ def delete_goal(request, pk):
     organization = match.tournament.organization
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    default_url = reverse('organizations:manage_match', args=[match.pk]) + '?tab=goals'
     if request.method == 'POST':
         player_name = goal.player.full_name
         goal.delete()
         messages.success(request, f"Đã xóa bàn thắng của {player_name}.")
-    return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=goals')
+        return safe_redirect(request, default_url)
+    return safe_redirect(request, default_url)
 
 @login_required
 def delete_card(request, pk):
@@ -351,11 +373,13 @@ def delete_card(request, pk):
     organization = match.tournament.organization
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    default_url = reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards'
     if request.method == 'POST':
         player_name = card.player.full_name
         card.delete()
         messages.success(request, f"Đã xóa thẻ phạt của {player_name}.")
-    return redirect(reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards')
+        return safe_redirect(request, default_url)
+    return safe_redirect(request, default_url)
 
 
 # === BẮT ĐẦU THAY THẾ TOÀN BỘ HÀM manage_knockout ===
@@ -508,15 +532,18 @@ def delete_photo(request, pk):
     if not request.user.is_superuser and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
+    default_url = reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery'
     if request.method == 'POST':
         # Xóa file ảnh vật lý khỏi server
         photo.image.delete(save=False)
         # Xóa bản ghi trong database
         photo.delete()
         messages.success(request, "Đã xóa ảnh thành công.")
-    
-    # Chuyển hướng người dùng về lại tab thư viện ảnh
-    return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery')
+        # Chuyển hướng người dùng về lại tab thư viện ảnh (hoặc ?next= nếu có)
+        return safe_redirect(request, default_url)
+
+    # Chuyển hướng về tab thư viện
+    return safe_redirect(request, default_url)
 
 @login_required
 def delete_all_photos(request, tournament_pk):
@@ -528,6 +555,7 @@ def delete_all_photos(request, tournament_pk):
     if not request.user.is_superuser and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
+    default_url = reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery'
     if request.method == 'POST':
         photos = tournament.photos.all()
         photo_count = photos.count()
@@ -544,7 +572,7 @@ def delete_all_photos(request, tournament_pk):
             messages.info(request, "Thư viện ảnh đã trống.")
 
     # Chuyển hướng về tab thư viện
-    return redirect(reverse('tournament_detail', args=[tournament.pk]) + '?tab=gallery')
+    return safe_redirect(request, default_url)
 
 
 # XOÁ TRẬN ĐẤU CỦA BTC
@@ -557,14 +585,16 @@ def delete_match(request, pk):
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
+    default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=matches"
     if request.method == 'POST':
+        match_name = f"{match.team1.name} vs {match.team2.name}"
         match.delete()
-        messages.success(request, f"Đã xóa thành công trận đấu: {match.team1.name} vs {match.team2.name}.")
-        # Quay trở lại trang quản lý trận đấu của giải
-        return redirect('organizations:manage_tournament', pk=tournament.pk)
+        messages.success(request, f"Đã xóa thành công trận đấu: {match_name}.")
+        # Quay trở lại trang quản lý trận đấu của giải (hoặc ?next= nếu có)
+        return safe_redirect(request, default_url)
 
-    # Nếu không phải POST request, đơn giản là quay về trang trước
-    return redirect('organizations:manage_tournament', pk=tournament.pk)    
+    # Nếu không phải POST request, đơn giản là quay về trang trước/đúng tab
+    return safe_redirect(request, default_url)
 
 
 # === HIỂN THỊ FROM TẠO TRẬN ĐẤU CỦA BTC ===
@@ -590,7 +620,8 @@ def create_match(request, tournament_pk):
             match.tournament = tournament
             match.save()
             messages.success(request, "Đã tạo trận đấu mới thành công!")
-            return redirect('organizations:manage_tournament', pk=tournament.pk)
+            default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=matches"
+            return safe_redirect(request, default_url)
     else:
         form = MatchCreationForm()
         # Cung cấp queryset cho form khi hiển thị lần đầu
@@ -603,4 +634,4 @@ def create_match(request, tournament_pk):
         'organization': tournament.organization,
         'active_page': 'matches' # Để giữ cho menu được highlight đúng
     }
-    return render(request, 'organizations/create_match.html', context)    
+    return render(request, 'organizations/create_match.html', context)
