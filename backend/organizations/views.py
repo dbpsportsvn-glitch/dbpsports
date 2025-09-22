@@ -80,6 +80,25 @@ def manage_tournament(request, pk):
     view_name = request.GET.get('view', 'overview')
 
     if request.method == 'POST':
+        # === lưu nhanh ===
+        if 'quick_save_match' in request.POST:
+            match_id = request.POST.get('quick_save_match')
+            try:
+                match = Match.objects.get(pk=match_id, tournament=tournament)
+                score1_str = request.POST.get(f'score_team1_{match_id}')
+                score2_str = request.POST.get(f'score_team2_{match_id}')
+                
+                s1 = int(score1_str) if score1_str and score1_str.isdigit() else None
+                s2 = int(score2_str) if score2_str and score2_str.isdigit() else None
+
+                match.team1_score = s1
+                match.team2_score = s2
+                match.save()
+                messages.success(request, f"Đã lưu nhanh kết quả trận: {match}.")
+            except (Match.DoesNotExist, ValueError):
+                messages.error(request, "Có lỗi xảy ra khi lưu nhanh trận đấu.")
+            return redirect(request.path_info + '?view=matches')
+    
         # --- BẮT ĐẦU LOGIC MỚI: LƯU TẤT CẢ TỈ SỐ ---
         if 'save_all_scores' in request.POST:
             match_ids = request.POST.getlist('match_ids')

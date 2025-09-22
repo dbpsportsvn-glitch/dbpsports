@@ -246,6 +246,16 @@
                                         <span>-</span>
                                         <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                     </div>
+
+                                    <button
+                                    type="submit"
+                                    name="quick_save_match"
+                                    value="{{ match.pk }}"
+                                    class="btn btn-sm btn-outline-primary"
+                                    title="Lưu nhanh trận này">
+                                        <i class="bi bi-save"></i>
+                                    </button>
+
                                     <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
                                         <i class="bi bi-pencil-fill"></i> Quản lý
                                     </a>
