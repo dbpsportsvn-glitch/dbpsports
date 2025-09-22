@@ -85,15 +85,40 @@
                 </div>
 
             {% elif active_page == 'teams' %}
-                {# Nội dung quản lý đội #}
                 <h5>Duyệt Đội đăng ký</h5>
+                
+                <div class="card card-body mb-3">
+                    <form method="get" class="row g-3 align-items-end">
+                        <input type="hidden" name="view" value="teams">
+                        <div class="col-md-6">
+                            <label for="tournamentFilter" class="form-label">Lọc theo Giải đấu</label>
+                            <select name="tournament_filter" id="tournamentFilter" class="form-select">
+                                <option value="">Tất cả các giải đấu</option>
+                                {% for t in all_tournaments %}
+                                    <option value="{{ t.pk }}" {% if t.pk == selected_tournament_id %}selected{% endif %}>{{ t.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teamSearch" class="form-label">Tìm theo tên đội</label>
+                            <input type="text" name="q" id="teamSearch" class="form-control" placeholder="Nhập tên đội..." value="{{ search_query|default_if_none:'' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                        </div>
+                    </form>
+                </div>
                 <hr>
+
                 <h6><i class="bi bi-exclamation-triangle-fill text-danger"></i> Các đội chưa thanh toán</h6>
                 {% if unpaid_teams %}
                     <ul class="list-group mb-4">
                         {% for team in unpaid_teams %}
                         <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
-                            <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
+                            <div>
+                                <strong>{{ team.name }}</strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
+                                <br><small>Đội trưởng: {{ team.captain.username }}</small>
+                            </div>
                             <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-dark btn-sm">Xóa</button>
@@ -102,7 +127,7 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="text-muted">Tất cả các đội đã nộp lệ phí hoặc đang chờ duyệt.</p>
+                    <p class="text-muted">Không có đội nào chưa thanh toán.</p>
                 {% endif %}
 
                 <h6>Các đội chờ xác nhận thanh toán</h6>
@@ -111,8 +136,8 @@
                         {% for team in pending_teams %}
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <strong>{{ team.name }}</strong> (Đội trưởng: {{ team.captain.username }})
-                                {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}
+                                <strong>{{ team.name }}</strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
+                                <br><small>Đội trưởng: {{ team.captain.username }} {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}</small>
                             </div>
                             <div class="d-flex gap-2">
                                 <form method="post" class="mb-0">
@@ -139,7 +164,10 @@
                         {% for team in paid_teams %}
                         <div class="col-md-6 mb-2">
                             <div class="d-flex justify-content-between align-items-center p-2 border rounded">
-                                <span>{{ team.name }}</span>
+                                <div>
+                                    <span>{{ team.name }}</span>
+                                    <small class="d-block text-muted">{{ team.tournament.name }}</small>
+                                </div>
                                 <div class="d-flex gap-2">
                                     {% if not team.group %}
                                     <form method="post" class="mb-0">

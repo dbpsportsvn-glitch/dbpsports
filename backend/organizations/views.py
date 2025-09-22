@@ -12,6 +12,7 @@ from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db.models import Q
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, MatchCreationForm
 from django.utils import timezone
@@ -191,10 +192,35 @@ def manage_tournament(request, pk):
             'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),
             'total_matches': tournament.matches.count(),
         }
+    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
     elif view_name == 'teams':
-        context['unpaid_teams'] = tournament.teams.filter(payment_status='UNPAID').select_related('captain')
-        context['pending_teams'] = tournament.teams.filter(payment_status='PENDING').select_related('captain')
-        context['paid_teams'] = tournament.teams.filter(payment_status='PAID').select_related('captain')
+        # Lấy tất cả giải đấu của BTC để làm bộ lọc
+        all_tournaments = tournament.organization.tournaments.all().order_by('-start_date')
+        context['all_tournaments'] = all_tournaments
+
+        # Lấy các giá trị lọc từ URL
+        search_query = request.GET.get('q', '')
+        tournament_filter_id = request.GET.get('tournament_filter')
+        context['search_query'] = search_query
+        
+        # Bắt đầu với tất cả các đội của BTC
+        base_teams_qs = Team.objects.filter(tournament__organization=tournament.organization)
+
+        # Áp dụng bộ lọc giải đấu nếu được chọn
+        if tournament_filter_id and tournament_filter_id.isdigit():
+            base_teams_qs = base_teams_qs.filter(tournament_id=int(tournament_filter_id))
+            context['selected_tournament_id'] = int(tournament_filter_id)
+
+        # Áp dụng bộ lọc tìm kiếm theo tên
+        if search_query:
+            base_teams_qs = base_teams_qs.filter(name__icontains=search_query)
+
+        # Phân loại các đội sau khi đã lọc
+        context['unpaid_teams'] = base_teams_qs.filter(payment_status='UNPAID').select_related('captain', 'tournament')
+        context['pending_teams'] = base_teams_qs.filter(payment_status='PENDING').select_related('captain', 'tournament')
+        context['paid_teams'] = base_teams_qs.filter(payment_status='PAID').select_related('captain', 'tournament')
+    # === KẾT THÚC THAY THẾ ===
+
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
     elif view_name == 'matches':
