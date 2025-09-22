@@ -27,7 +27,7 @@ import random
 from datetime import datetime, time, timedelta
 from organizations.models import Organization
 from .models import Tournament, TournamentPhoto
-from .forms import MultipleImageUploadForm
+from .forms import GalleryURLForm
 
 #==================================
 
@@ -818,31 +818,48 @@ def claim_player_profile(request, pk):
 def tournament_bulk_upload(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     
-    # === BẮT ĐẦU THÊM MỚI LOGIC KIỂM TRA QUYỀN ===
+    # Kiểm tra quyền truy cập
     is_organizer = False
     if request.user.is_authenticated and tournament.organization:
         if tournament.organization.members.filter(pk=request.user.pk).exists():
             is_organizer = True
-
-    # Nếu không phải superuser và cũng không phải BTC của giải, từ chối truy cập
     if not request.user.is_superuser and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
-    # === KẾT THÚC THÊM MỚI ===
 
     if request.method == 'POST':
-        form = MultipleImageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
+        # Form xử lý URL vẫn hoạt động bình thường
+        url_form = GalleryURLForm(request.POST, instance=tournament)
+        if url_form.is_valid():
+            url_form.save()
+            messages.success(request, "Đã cập nhật thành công link album ảnh.")
+
+        # Xử lý file ảnh trực tiếp từ request, không cần form
+        if 'images' in request.FILES:
             images = request.FILES.getlist('images')
-            for image in images:
-                TournamentPhoto.objects.create(tournament=tournament, image=image)
+            uploaded_count = 0
+            for image_file in images:
+                # Kiểm tra cơ bản để chắc chắn đó là file ảnh
+                if image_file.content_type.startswith('image'):
+                    TournamentPhoto.objects.create(tournament=tournament, image=image_file)
+                    uploaded_count += 1
+                else:
+                    messages.warning(request, f"File '{image_file.name}' không phải là ảnh và đã bị bỏ qua.")
             
-            messages.success(request, f"Đã tải lên thành công {len(images)} ảnh cho giải đấu.")
-            return redirect('tournament_detail', pk=tournament_pk)
-    else:
-        form = MultipleImageUploadForm()
+            if uploaded_count > 0:
+                 messages.success(request, f"Đã tải lên thành công {uploaded_count} ảnh.")
+        
+        # Nếu không có file và không có URL mới, thông báo không có gì thay đổi
+        if 'images' not in request.FILES and not url_form.has_changed():
+             messages.info(request, "Không có thay đổi nào được thực hiện.")
+
+        return redirect(reverse('tournament_detail', args=[tournament_pk]) + '?tab=gallery')
+
+    else: # GET request
+        # Khi trang được tải, chỉ cần tạo form cho URL
+        url_form = GalleryURLForm(instance=tournament)
 
     context = {
         'tournament': tournament,
-        'form': form,
+        'url_form': url_form,
     }
     return render(request, 'tournaments/bulk_upload.html', context)

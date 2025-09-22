@@ -46,6 +46,14 @@ class Tournament(models.Model):
     payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
     rules = models.TextField("Điều lệ & Thông báo", blank=True, help_text="Nhập các điều lệ, quy định hoặc thông báo của giải đấu tại đây. Bạn có thể sử dụng mã HTML cơ bản để định dạng.")
 
+    gallery_url = models.URLField(
+        "Link Album Ảnh Gốc",
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Dán đường link chia sẻ của album ảnh Google Drive hoặc Google Photos tại đây."
+    )
+
     def __str__(self):
         return self.name
 

@@ -220,6 +220,14 @@
                 color: #555;
             }
         </style>
+        {% if tournament.gallery_url %}
+            <div class="text-center mb-4">
+                <a href="{{ tournament.gallery_url }}" class="btn btn-success btn-lg" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-images"></i> Xem Toàn bộ Album Ảnh Gốc
+                </a>
+            </div>
+            <hr class="mb-4">
+        {% endif %}        
         <div class="photo-gallery">
             <div class="row g-3">
                 {% for photo in tournament.photos.all %}

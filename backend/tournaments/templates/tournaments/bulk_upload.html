@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
-{% block title %}Tải ảnh hàng loạt - {{ tournament.name }}{% endblock %}
+{% block title %}Quản lý Thư viện ảnh - {{ tournament.name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4" style="max-width: 720px;">
     <div class="pb-3 mb-4 border-bottom">
-        <h1><i class="bi bi-images"></i> Tải ảnh hàng loạt</h1>
+        <h1><i class="bi bi-images"></i> Quản lý Thư viện ảnh</h1>
         <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
     </div>
 
@@ -14,23 +15,26 @@
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
+                {# Phần 1: Tải ảnh mới #}
+                <h5>1. Tải lên ảnh đại diện của giải đấu</h5>
                 <div class="mb-3">
-                    <label for="id_images" class="form-label">{{ form.images.label }}</label>
-                    <input type="file" name="images" required id="id_images" class="form-control" multiple>
-                    
-                    {% if form.images.help_text %}
-                        <small class="form-text text-muted">{{ form.images.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.images.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                    {% endfor %}
+                    <label for="id_images" class="form-label">Chọn một hoặc nhiều ảnh để tải lên</label>
+                    <input type="file" name="images" id="id_images" class="form-control" multiple>
                 </div>
+
+                <hr class="my-4">
+
+                {# Phần 2: Dán link album #}
+                <h5>2. Dán link album ảnh đầy đủ</h5>
+                <p class="text-muted small">Dán đường link chia sẻ từ Google Drive, Google Photos, Flickr, etc. để người dùng có thể xem toàn bộ ảnh gốc của giải đấu.</p>
+                {{ url_form|crispy }}
+
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-upload"></i> Bắt đầu Tải lên
+                        <i class="bi bi-save-fill"></i> Lưu thay đổi
                     </button>
-                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-secondary">
-                        Hủy
+                    <a href="{% url 'tournament_detail' pk=tournament.pk %}?tab=gallery" class="btn btn-secondary">
+                        Quay lại Thư viện ảnh
                     </a>
                 </div>
             </form>

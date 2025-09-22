@@ -1,7 +1,6 @@
 # tournaments/forms.py
 from django import forms
-# Sửa dòng import này để thêm "Comment"
-from .models import Team, Player, Comment 
+from .models import Team, Player, Comment, Tournament
 
 class TeamCreationForm(forms.ModelForm):
     class Meta:
@@ -32,7 +31,6 @@ class PaymentProofForm(forms.ModelForm):
             'payment_proof': 'Tải lên ảnh chụp màn hình hóa đơn chuyển khoản',
         }
 
-# >>> THÊM FORM MỚI NÀY VÀO CUỐI FILE <<<
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
@@ -44,41 +42,38 @@ class CommentForm(forms.ModelForm):
                 'placeholder': 'Viết bình luận của bạn...'
             })
         }
-        labels = {
-            'text': '' # Ẩn nhãn của trường text
-        }      
+        labels = { 'text': '' }
 
-# (+) THÊM CLASS FORM MỚI NÀY VÀO CUỐI FILE
 class ScheduleGenerationForm(forms.Form):
     start_date = forms.DateField(
         label="Ngày bắt đầu thi đấu",
         widget=forms.DateInput(attrs={'type': 'date'}),
         help_text="Chọn ngày diễn ra trận đấu đầu tiên."
     )
-    
     time_slots = forms.CharField(
         label="Các khung giờ trong ngày (cách nhau bằng dấu phẩy)",
         initial="08:00, 10:00, 14:00, 16:00",
         help_text="Ví dụ: 08:00, 15:00, 19:30"
     )
-    
     locations = forms.CharField(
         label="Các sân thi đấu (cách nhau bằng dấu phẩy)",
         initial="Sân 1, Sân 2",
         help_text="Ví dụ: Sân Cỏ Nhân tạo A, Sân Vận động B"
     )
-    
     rest_days = forms.IntegerField(
         label="Số ngày nghỉ tối thiểu giữa 2 trận của một đội",
         initial=1,
         min_value=0,
         help_text="Ví dụ: nhập 1 để đảm bảo một đội không phải đá 2 ngày liên tiếp."
-    )        
-
-# === UPLOAD NHIỀU ẢNH ===
-class MultipleImageUploadForm(forms.Form):
-    # Bỏ hoàn toàn phần widget đi
-    images = forms.ImageField(
-        label="Chọn một hoặc nhiều ảnh để tải lên",
-        required=True
     )
+
+class GalleryURLForm(forms.ModelForm):
+    class Meta:
+        model = Tournament
+        fields = ['gallery_url']
+        labels = {
+            'gallery_url': 'Hoặc dán link album ảnh đầy đủ (Google Drive, Photos, etc.)'
+        }
+        widgets = {
+            'gallery_url': forms.URLInput(attrs={'placeholder': 'https://...'})
+        }
