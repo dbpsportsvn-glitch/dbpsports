@@ -814,21 +814,29 @@ def claim_player_profile(request, pk):
     messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
     return redirect('player_detail', pk=pk)
 
-@staff_member_required
+@login_required
 def tournament_bulk_upload(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     
+    # === BẮT ĐẦU THÊM MỚI LOGIC KIỂM TRA QUYỀN ===
+    is_organizer = False
+    if request.user.is_authenticated and tournament.organization:
+        if tournament.organization.members.filter(pk=request.user.pk).exists():
+            is_organizer = True
+
+    # Nếu không phải superuser và cũng không phải BTC của giải, từ chối truy cập
+    if not request.user.is_superuser and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    # === KẾT THÚC THÊM MỚI ===
+
     if request.method == 'POST':
         form = MultipleImageUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            # Lấy danh sách các file ảnh được tải lên
             images = request.FILES.getlist('images')
             for image in images:
-                # Tạo một đối tượng TournamentPhoto cho mỗi ảnh
                 TournamentPhoto.objects.create(tournament=tournament, image=image)
             
             messages.success(request, f"Đã tải lên thành công {len(images)} ảnh cho giải đấu.")
-            # Chuyển hướng về trang chi tiết giải đấu sau khi tải xong
             return redirect('tournament_detail', pk=tournament_pk)
     else:
         form = MultipleImageUploadForm()
@@ -837,4 +845,4 @@ def tournament_bulk_upload(request, tournament_pk):
         'tournament': tournament,
         'form': form,
     }
-    return render(request, 'tournaments/bulk_upload.html', context)    
+    return render(request, 'tournaments/bulk_upload.html', context)
