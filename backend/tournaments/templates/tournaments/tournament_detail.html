@@ -192,36 +192,52 @@
       {% endfor %}
     </div>
 
+{# PASTE THIS ENTIRE BLOCK TO REPLACE THE OLD SCHEDULE TAB #}
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
-      {% if group_matches or knockout_matches %}
-        <div id="schedule-all">
-          {% for g in tournament.groups.all %}
-            <h5 class="section-title mt-3">{{ g.name }}</h5>
-            <div class="row row-cols-1 g-2">
-              {% for m in group_matches %}
-                {% if m.team1.group_id == g.id %}
-                  <div class="col">
-                    {% include 'tournaments/partials/match_card.html' with match=m %}
-                  </div>
-                {% endif %}
-              {% endfor %}
+        {% if group_matches or knockout_matches %}
+            
+            <div class="mb-4">
+                <input type="text" id="scheduleSearchInput" class="form-control" placeholder="🔍 Tìm kiếm theo tên đội...">
             </div>
-          {% endfor %}
 
-          {% if knockout_matches %}
-            <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
-            <div class="row row-cols-1 g-2">
-              {% for m in knockout_matches %}
-                <div class="col">
-                  {% include 'tournaments/partials/match_card.html' with match=m %}
+            <div id="schedule-all">
+                
+                {% for g in tournament.groups.all %}
+                <div class="schedule-block">
+                    <h5 class="section-title mt-3">{{ g.name }}</h5>
+                    <div class="row row-cols-1 g-2">
+                        {% for m in group_matches %}
+                            {% if m.team1.group_id == g.id %}
+                                <div class="col match-card-wrapper">
+                                    {% include 'tournaments/partials/match_card.html' with match=m %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
-              {% endfor %}
+                {% endfor %}
+
+                {% if knockout_matches %}
+                <div class="schedule-block">
+                    <h5 class="section-title mt-4">Vòng Loại trực tiếp</h5>
+                    <div class="row row-cols-1 g-2">
+                        {% for m in knockout_matches %}
+                            <div class="col match-card-wrapper">
+                                {% include 'tournaments/partials/match_card.html' with match=m %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
             </div>
-          {% endif %}
-        </div>
-      {% else %}
-        <p class="text-muted mt-2">Chưa có lịch thi đấu nào được tạo cho giải này.</p>
-      {% endif %}
+            <div id="no-matches-found" class="text-center text-muted mt-4" style="display: none;">
+                <p>Không tìm thấy trận đấu nào phù hợp.</p>
+            </div>
+
+        {% else %}
+            <p class="text-muted mt-2">Chưa có lịch thi đấu nào được tạo cho giải này.</p>
+        {% endif %}
     </div>
 
     <div class="tab-pane fade card-pane" id="standings" role="tabpanel">
@@ -384,6 +400,50 @@ function printTab(contentId, title){
     document.body.removeChild(iframe);
   }, 100);
 }
+</script>
+
+{# PASTE THIS SCRIPT AT THE VERY END OF THE FILE, BEFORE {% endblock %} #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('scheduleSearchInput');
+    const scheduleContainer = document.getElementById('schedule-all');
+    const noMatchesFoundMessage = document.getElementById('no-matches-found');
+
+    if (!searchInput || !scheduleContainer) {
+        return;
+    }
+
+    const allMatchWrappers = scheduleContainer.querySelectorAll('.match-card-wrapper');
+    const allScheduleBlocks = scheduleContainer.querySelectorAll('.schedule-block');
+
+    searchInput.addEventListener('input', function () {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        let matchesFound = 0;
+
+        allMatchWrappers.forEach(function (wrapper) {
+            const teamNames = wrapper.textContent.toLowerCase();
+            if (teamNames.includes(searchTerm)) {
+                wrapper.style.display = '';
+                matchesFound++;
+            } else {
+                wrapper.style.display = 'none';
+            }
+        });
+
+        allScheduleBlocks.forEach(function (block) {
+            const visibleMatchesInBlock = block.querySelectorAll('.match-card-wrapper:not([style*="display: none"])');
+            if (visibleMatchesInBlock.length > 0) {
+                block.style.display = '';
+            } else {
+                block.style.display = 'none';
+            }
+        });
+        
+        if (noMatchesFoundMessage) {
+            noMatchesFoundMessage.style.display = matchesFound === 0 ? 'block' : 'none';
+        }
+    });
+});
 </script>
 
 {% endblock %}
