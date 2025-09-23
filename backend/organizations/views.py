@@ -224,10 +224,17 @@ def manage_tournament(request, pk):
         context['unpaid_teams'] = base_teams_qs.filter(payment_status='UNPAID').select_related('captain', 'tournament')
         context['pending_teams'] = base_teams_qs.filter(payment_status='PENDING').select_related('captain', 'tournament')
         context['paid_teams'] = base_teams_qs.filter(payment_status='PAID').select_related('captain', 'tournament')
-    # === KẾT THÚC THAY THẾ ===
 
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
+        
+        # Thêm logic tính toán bảng xếp hạng giống như trang knockout
+        standings_by_group = {}
+        for group in context['groups']:
+            standings = group.get_standings()
+            standings_by_group[group.id] = {'name': group.name, 'standings': standings}
+        
+        context['standings_by_group'] = standings_by_group
  
     # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
     elif view_name == 'matches':
