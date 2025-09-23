@@ -45,6 +45,14 @@
                 <span class="chip">📍 Sân {{ match.location|default:"-"}}</span>
             </div>
             <div class="d-flex align-items-center flex-wrap gap-2">
+                {% if match.team1_score is not None and match.team2_score is not None %}
+                    <span class="chip bg-success text-white fw-bold">Đã kết thúc</span>
+                {% elif now > match.match_time %}
+                    <span class="chip bg-danger text-white fw-bold">🔴 Trực tiếp</span>
+                {% else %}
+                    <span class="chip bg-warning text-dark fw-bold">Sắp diễn ra</span>
+                {% endif %}    
+
                 <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
                 
                 {% if match.livestream_url %}
