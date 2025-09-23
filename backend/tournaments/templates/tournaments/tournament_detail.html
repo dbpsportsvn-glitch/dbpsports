@@ -18,10 +18,15 @@
     </div>
 </div>
 
+
 <div class="sticky-menu-wrapper card shadow-sm mb-4" style="border-top-left-radius: 0; border-top-right-radius: 0;">
     <div class="card-body py-2">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-            <ul class="nav nav-pills gap-2 tour-tabs mb-0" id="tournamentTab" role="tablist">
+
+        {# Bỏ class 'flex-wrap' để các item không bị rớt xuống #}
+        <div class="d-flex align-items-center gap-2">
+
+            {# Thêm 'flex-grow-1' để ul chiếm hết không gian thừa và cho phép cuộn ngang #}
+            <ul class="nav nav-pills gap-2 tour-tabs mb-0 flex-grow-1" id="tournamentTab" role="tablist">
                 <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
                 <li class="nav-item"><button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button">📜 Điều lệ</button></li>
                 <li class="nav-item"><button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button">👥 Các đội</button></li>
@@ -33,6 +38,8 @@
                 <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
                 {% endif %}
             </ul>
+
+            {# Nút In sẽ luôn nằm ở cuối hàng #}
             <button id="print-all-btn" class="btn btn-outline-secondary btn-sm no-print d-none" onclick="window.open('{% url 'tournament_schedule_print' pk=tournament.pk %}', '_blank')" type="button">
               🖨️ In
             </button>
