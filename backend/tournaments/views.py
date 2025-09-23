@@ -683,6 +683,13 @@ def draw_groups_view(request, tournament_pk):
         # Chuyển hướng họ về trang chi tiết giải đấu
         return redirect('tournament_detail', pk=tournament.pk)
 
+    # Kiểm tra xem giải đấu còn đang mở đăng ký không
+    if tournament.status == 'REGISTRATION_OPEN':
+        # Gửi một thông báo lỗi cho người dùng
+        messages.error(request, "Không thể bốc thăm khi giải đấu vẫn đang trong giai đoạn đăng ký.")
+        # Chuyển hướng họ về trang chi tiết giải đấu
+        return redirect('tournament_detail', pk=tournament.pk)
+
     if request.method == 'POST':
         try:
             results_str = request.POST.get('draw_results')
@@ -750,6 +757,21 @@ def generate_schedule_view(request, tournament_pk):
     is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+
+    # === BẮT ĐẦU THÊM ĐOẠN KIỂM TRA MỚI ===
+    has_groups = tournament.groups.exists()
+    has_unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True).exists()
+    has_paid_teams = tournament.teams.filter(payment_status='PAID').exists()
+
+    # Nếu chưa đủ điều kiện, báo lỗi và trả về trang chi tiết
+    if not has_groups or not has_paid_teams or has_unassigned_teams:
+        messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
+        return redirect('tournament_detail', pk=tournament.pk)
+
+    # Nếu đã có lịch rồi thì cũng không cho tạo lại
+    if tournament.matches.exists():
+        messages.warning(request, "Lịch thi đấu đã được tạo cho giải này.")
+        return redirect('tournament_detail', pk=tournament.pk)
 
     # === BẮT ĐẦU THÊM ĐOẠN KIỂM TRA MỚI ===
     has_groups = tournament.groups.exists()
