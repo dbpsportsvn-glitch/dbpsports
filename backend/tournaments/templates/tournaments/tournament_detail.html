@@ -83,58 +83,52 @@
 })();
 </script>
 
-<div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
-    <p>
+<div class="tab-content" id="tournamentTabContent">
+    <div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
+      <p>
         <span class="chip">Trạng thái: {{ tournament.get_status_display }}</span>
         <span class="chip">Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }}</span>
         <span class="chip">Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}</span>
-    </p>
+      </p>
 
-    {% if knockout_matches|length > 0 %}
-        <div class="my-4">
+      {% if knockout_matches|length > 0 %}
+        <div class="mt-4">
             <h5 class="section-title">Trạng thái Vòng loại trực tiếp</h5>
             {% with final=knockout_data.final_match semi=knockout_data.semi_final_1 quarter=knockout_data.quarter_final_1 %}
                 {% if final and final.winner %}
                     <div class="alert alert-success"><i class="bi bi-trophy-fill"></i> Chúc mừng <strong>{{ final.winner.name }}</strong> đã vô địch giải đấu!</div>
                 {% elif final %}
-                    <div class="alert alert-info">Đang diễn ra trận Chung kết.</div>
+                     <div class="alert alert-info">Đang diễn ra trận Chung kết.</div>
                 {% elif semi %}
-                    <div class="alert alert-info">Đã xác định các cặp đấu Bán kết. Chờ kết quả...</div>
+                     <div class="alert alert-info">Đã xác định các cặp đấu Bán kết. Chờ kết quả...</div>
                 {% elif quarter %}
-                    <div class="alert alert-info">Đã xác định các cặp đấu Tứ kết. Chờ kết quả...</div>
+                     <div class="alert alert-info">Đã xác định các cặp đấu Tứ kết. Chờ kết quả...</div>
                 {% endif %}
             {% endwith %}
         </div>
-    {% endif %}
-
-    {# === KHU VỰC NÚT BẤM ĐÃ ĐƯỢC GỘP LẠI === #}
-    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
-        {% if tournament.status == 'REGISTRATION_OPEN' %}
-            <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg">Đăng ký tham gia</a>
-        {% endif %}
-        
-        <button class="btn btn-outline-primary btn-lg" id="copyLinkBtn">
-            <i class="bi bi-share-fill"></i> Sao chép Link
-        </button>
-
-        {% if user.is_staff or is_organizer %}
-            {% if unassigned_teams %}
-                <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
-                    <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
-                </a>
-            {% endif %}
-            {% if tournament.groups.exists and not tournament.matches.exists and not unassigned_teams %}
-                <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
-                    <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
-                </a>
-            {% endif %}
-        {% endif %}
-    </div>
-
-    {% if tournament.status != 'REGISTRATION_OPEN' %}
+      {% endif %}
+      {% if tournament.status == 'REGISTRATION_OPEN' %}
+        <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg mt-2">Đăng ký tham gia giải đấu</a>
+      {% else %}
         <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
-    {% endif %}
-</div>
+      {% endif %}
+
+      {% if user.is_staff or is_organizer %}
+        <div class="mt-3 d-flex flex-wrap gap-2">
+            {% if unassigned_teams %}
+            <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
+            </a>
+            {% endif %}
+
+            {% if tournament.groups.exists and not tournament.matches.exists and not unassigned_teams %}
+            <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
+                <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
+            </a>
+            {% endif %}
+        </div>
+      {% endif %}
+    </div>
 
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
       {% if tournament.rules %}
@@ -381,29 +375,6 @@ function printTab(contentId, title){
     document.body.removeChild(iframe);
   }, 100);
 }
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const copyBtn = document.getElementById('copyLinkBtn');
-    if (copyBtn) {
-        copyBtn.addEventListener('click', function() {
-            navigator.clipboard.writeText(window.location.href).then(function() {
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
-                copyBtn.classList.add('btn-success');
-                copyBtn.classList.remove('btn-outline-primary');
-                setTimeout(function() {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.classList.remove('btn-success');
-                    copyBtn.classList.add('btn-outline-primary');
-                }, 2000);
-            }, function(err) {
-                console.error('Không thể sao chép link: ', err);
-            });
-        });
-    }
-});
 </script>
 
 {% endblock %}
