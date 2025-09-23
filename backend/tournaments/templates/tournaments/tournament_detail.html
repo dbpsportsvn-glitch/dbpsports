@@ -118,12 +118,41 @@
       {% endif %}
     </div>
 
+    {# --- THAY THẾ LẠI TOÀN BỘ KHỐI CODE NÀY --- #}
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
-      {% if tournament.rules %}
-        {{ tournament.rules|safe|linebreaks }}
-      {% else %}
-        <p class="text-muted">Chưa có điều lệ hay thông báo nào được cập nhật cho giải đấu này.</p>
-      {% endif %}
+        <style>
+            .rules-content {
+                background-color: #f8f9fa; /* Một màu nền sáng nhẹ */
+                border-left: 5px solid #0d6efd; /* Một đường viền màu xanh để nhấn mạnh */
+                padding: 2rem;
+                border-radius: 5px;
+            }
+            .rules-content h1, .rules-content h2, .rules-content h3 {
+                font-weight: bold;
+                margin-top: 1.5em;
+                margin-bottom: 0.75em;
+                color: #212529;
+            }
+            .rules-content p {
+                line-height: 1.7; /* Tăng khoảng cách dòng cho dễ đọc */
+                margin-bottom: 1.25em;
+            }
+            .rules-content ul, .rules-content ol {
+                padding-left: 2em;
+            }
+        </style>
+
+        {% if tournament.rules %}
+            <div class="rules-content">
+                {# SỬA LẠI DÒNG NÀY #}
+                {{ tournament.rules|linebreaks|safe }}
+            </div>
+        {% else %}
+            <div class="text-center p-5">
+                <i class="bi bi-file-earmark-text fs-1 text-muted"></i>
+                <p class="mt-3 text-muted">Chưa có điều lệ hay thông báo nào được cập nhật cho giải đấu này.</p>
+            </div>
+        {% endif %}
     </div>
 
     <div class="tab-pane fade card-pane" id="teams" role="tabpanel">
