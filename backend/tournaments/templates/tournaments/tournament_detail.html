@@ -9,14 +9,18 @@
     <img src="{{ tournament.image.url }}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
 </div>
 {% endif %}
-{# --- THAY THẾ TOÀN BỘ KHỐI TIÊU ĐỀ & MENU BẰNG KHỐI NÀY --- #}
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <div class="pb-3 mb-2 border-bottom">
-            <h1 class="text-start">{{ tournament.name }}</h1>
+{# --- THAY THẾ KHỐI CŨ BẰNG 2 KHỐI MỚI NÀY --- #}
+<div class="card shadow-sm" style="border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+    <div class="card-body pb-2">
+        <div class="border-bottom">
+            <h1 class="text-start pb-3">{{ tournament.name }}</h1>
         </div>
+    </div>
+</div>
 
-        <div class="sticky-tabs d-flex align-items-center flex-wrap gap-2">
+<div class="sticky-menu-wrapper card shadow-sm mb-4" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center flex-wrap gap-2">
             <ul class="nav nav-pills gap-2 tour-tabs mb-0" id="tournamentTab" role="tablist">
                 <li class="nav-item"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">🏁 Tổng quan</button></li>
                 <li class="nav-item"><button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button">📜 Điều lệ</button></li>
@@ -29,10 +33,7 @@
                 <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
                 {% endif %}
             </ul>
-
-            <button id="print-all-btn"
-                    class="btn btn-outline-secondary btn-sm no-print d-none"
-                    onclick="window.open('{% url 'tournament_schedule_print' pk=tournament.pk %}', '_blank')" type="button">
+            <button id="print-all-btn" class="btn btn-outline-secondary btn-sm no-print d-none" onclick="window.open('{% url 'tournament_schedule_print' pk=tournament.pk %}', '_blank')" type="button">
               🖨️ In
             </button>
         </div>
@@ -40,14 +41,10 @@
 </div>
 
 <style>
-    /* CSS này sẽ làm cho menu dính lại khi cuộn chuột */
-    .sticky-tabs{
+    .sticky-menu-wrapper {
         position: sticky;
-        top: 60px; /* Điều chỉnh khoảng cách với đỉnh trang */
+        top: 56px; /* Chiều cao của thanh điều hướng chính */
         z-index: 1020;
-        background: var(--bs-card-bg, white); /* Lấy màu nền của card */
-        padding-top: 0.5rem;
-        margin-top: -0.5rem; /* Bù lại khoảng trống */
     }
 </style>
 
