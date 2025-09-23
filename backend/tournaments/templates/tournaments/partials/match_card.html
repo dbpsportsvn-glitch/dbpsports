@@ -1,69 +1,79 @@
-{% comment %} File: backend/tournaments/templates/tournaments/partials/match_card.html {% endcomment %}
+{# File: backend/tournaments/templates/tournaments/partials/match_card.html #}
 <a href="{% url 'match_detail' pk=match.pk %}" class="text-decoration-none text-reset">
-    <div class="card shadow-sm match-card-final">
-        <div class="card-body">
-            
-            {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
-            <div class="row align-items-center text-center">
-                <div class="col-2 text-end">
-                    {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo">{% endif %}
-                </div>
+  <div class="card shadow-sm match-card-final">
+    <div class="card-body">
 
-                <div class="col-3 text-end">
-                    <span class="team-name">{{ match.team1.name }}</span>
-                </div>
-
-                <div class="col-2">
-                    {% if match.team1_score is not None and match.team2_score is not None %}
-                        <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
-                        {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
-                            <div style="font-size: 0.8rem; line-height: 1; color: #6c757d;">
-                                (Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        <span class="match-score">VS</span>
-                    {% endif %}
-                </div>
-
-                <div class="col-3 text-start">
-                    <span class="team-name">{{ match.team2.name }}</span>
-                </div>
-
-                <div class="col-2 text-start">
-                    {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo">{% endif %}
-                </div>
-            </div>
-            {# === KẾT THÚC THAY ĐỔI === #}
-
+      {# === VÙNG HIỂN THỊ TÊN ĐỘI / TỈ SỐ === #}
+      <div class="row align-items-center text-center">
+        <!-- Logo đội 1 -->
+        <div class="col-2 text-end">
+          {% if match.team1.logo %}
+            <img src="{{ match.team1.logo.url }}" class="team-logo" alt="{{ match.team1.name }}">
+          {% endif %}
         </div>
-        <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                <span class="chip">📅 {{ match.match_time|date:"H:i, d/m/Y" }}</span>
-                {% if match.referee %}<span class="chip">🧑‍⚖️ TT: {{ match.referee }}</span>{% endif %}
-                {% if match.commentator %}<span class="chip">🎤 BLV: {{ match.commentator }}</span>{% endif %}
-                <span class="chip">📍 Sân {{ match.location|default:"-"}}</span>
-            </div>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                {% if match.team1_score is not None and match.team2_score is not None %}
-                    <span class="chip bg-success text-white fw-bold">Đã kết thúc</span>
-                {% elif now > match.match_time %}
-                    <span class="chip bg-danger text-white fw-bold">🔴 Trực tiếp</span>
-                {% else %}
-                    <span class="chip bg-warning text-dark fw-bold">Sắp diễn ra</span>
-                {% endif %}    
 
-                <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
-                
-                {% if match.livestream_url %}
-                    {% if match.match_time > now %}
-                        <a href="{% url 'livestream_match' pk=match.pk %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
-                    {% else %}
-                        <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-info text-dark text-decoration-none">📼 Xem lại</a>
-                    {% endif %}
-                {% endif %}
-       
-            </div>
+        <!-- Tên đội 1 (có .team-col để CSS ellipsis hoạt động) -->
+        <div class="col-3 text-end team-col">
+          <span class="team-name" title="{{ match.team1.name }}">{{ match.team1.name }}</span>
         </div>
+
+        <!-- Tỉ số/VS + Penalty (dùng class bootstrap, không inline style) -->
+        <div class="col-2">
+          {% if match.team1_score is not None and match.team2_score is not None %}
+            <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
+            {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
+              <small class="text-muted d-block lh-1 mt-1">
+                (Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})
+              </small>
+            {% endif %}
+          {% else %}
+            <span class="match-score">VS</span>
+          {% endif %}
+        </div>
+
+        <!-- Tên đội 2 -->
+        <div class="col-3 text-start team-col">
+          <span class="team-name" title="{{ match.team2.name }}">{{ match.team2.name }}</span>
+        </div>
+
+        <!-- Logo đội 2 -->
+        <div class="col-2 text-start">
+          {% if match.team2.logo %}
+            <img src="{{ match.team2.logo.url }}" class="team-logo" alt="{{ match.team2.name }}">
+          {% endif %}
+        </div>
+      </div>
+      {# === HẾT VÙNG HIỂN THỊ TÊN ĐỘI / TỈ SỐ === #}
+
     </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <span class="chip">📅 {{ match.match_time|date:"H:i, d/m/Y" }}</span>
+        {% if match.referee %}<span class="chip">🧑‍⚖️ TT: {{ match.referee }}</span>{% endif %}
+        {% if match.commentator %}<span class="chip">🎤 BLV: {{ match.commentator }}</span>{% endif %}
+        <span class="chip">📍 Sân {{ match.location|default:"-"}}</span>
+      </div>
+
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        {% if match.team1_score is not None and match.team2_score is not None %}
+          <span class="chip bg-success text-white fw-bold">Đã kết thúc</span>
+        {% elif now > match.match_time %}
+          <span class="chip bg-danger text-white fw-bold">🔴 Trực tiếp</span>
+        {% else %}
+          <span class="chip bg-warning text-dark fw-bold">Sắp diễn ra</span>
+        {% endif %}
+
+        <span class="chip bg-secondary text-white">{{ match.get_match_round_display }}</span>
+
+        {% if match.livestream_url %}
+          {% if match.match_time > now %}
+            <a href="{% url 'livestream_match' pk=match.pk %}" class="chip bg-danger text-white text-decoration-none">🔴 Live</a>
+          {% else %}
+            <a href="{{ match.livestream_url }}" target="_blank" class="chip bg-info text-dark text-decoration-none">📼 Xem lại</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </a>

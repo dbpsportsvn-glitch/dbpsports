@@ -1,255 +1,217 @@
-/* backend/static/css/custom.css */
+/* =========================================================
+   File: backend/static/css/custom.css
+   Last update: fix size/weight team names + mobile layout
+   ========================================================= */
 
+/* FORM */
 .form-container {
-    /* ... code cũ của bạn vẫn ở đây, không thay đổi ... */
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 2rem;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    background-color: #f9f9f9;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* === THAY THẾ KHỐI CODE DƯỚI ĐÂY === */
+/* =================== HERO =================== */
 .hero-section {
-    /* Thêm một lớp phủ màu đen mờ (rgba) lên trên ảnh nền */
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('../images/hero-bg.jpg') no-repeat center center;
-    background-size: cover;
-    color: white;
-    padding: 100px 0;
-    text-align: center;
-    border-radius: 10px;
-    margin-bottom: 40px;
-    position: relative; /* Cần cho lớp phủ */
+  background: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)),
+              url('../images/hero-bg.jpg') no-repeat center center;
+  background-size: cover;
+  color: #fff;
+  padding: 100px 0;
+  text-align: center;
+  border-radius: 10px;
+  margin-bottom: 40px;
+  position: relative;
 }
-
 .hero-section h1 {
-    font-size: 3.5rem;
-    font-weight: bold;
-    /* Tăng độ đậm và rõ nét của bóng chữ */
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+  font-size: 3.5rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0,0,0,.8);
 }
-
 .hero-section p {
-    font-size: 1.25rem;
-    margin-bottom: 30px;
-    /* Tăng độ đậm và rõ nét của bóng chữ */
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+  font-size: 1.25rem;
+  margin-bottom: 30px;
+  text-shadow: 1px 1px 4px rgba(0,0,0,.8);
 }
 
-/* backend/static/css/custom.css */
-
-/* Định dạng cho bảng tỉ số */
+/* ================= SCOREBOARD ================= */
 .scoreboard-card .card-header h3 {
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .team-logo {
-    max-height: 100px;
-    max-width: 100px;
-    width: auto;
-    height: auto;
-    object-fit: contain;
+  max-height: 100px;
+  max-width: 100px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
-/* Định dạng chung cho các tiêu đề khu vực */
 .section-title {
-    text-transform: uppercase;
-    font-weight: bold;
-    letter-spacing: 1.5px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
-/* Định dạng cho khu vực đội hình */
-.lineup-section .card-header {
-    position: relative; /* Cần cho việc định vị nút In */
-}
+/* LINEUP */
+.lineup-section .card-header { position: relative; }
+.print-btn { position: absolute; top: 10px; right: 15px; }
 
-/* Nút In được đặt ở góc trên bên phải */
-.print-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-}
-
-/* Định dạng cho ảnh banner giải đấu */
+/* Banner giải đấu */
 .tournament-banner-img {
-    max-width: 100%; /* Đảm bảo ảnh không vượt quá chiều rộng của phần chứa nó */
-    height: auto;   /* Giữ nguyên tỉ lệ khung hình */
-    display: block; /* Loại bỏ khoảng trắng thừa dưới ảnh */
-    margin: 0 auto; /* Căn giữa ảnh */
-    border-radius: 8px; /* Bo tròn nhẹ góc ảnh */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Thêm đổ bóng nhẹ */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.1);
 }
 
-/* === KHỐI CODE CUỐI CÙNG CHO SƠ ĐỒ THI ĐẤU === */
+/* ================= BRACKET ================= */
 .bracket {
-    display: flex;
-    align-items: center; /* Căn giữa các cột theo chiều dọc */
+  display: flex;
+  align-items: center;
 }
-
 .bracket-round {
-    flex: 1; /* Cho các cột tự động co giãn */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    gap: 30px; /* Thêm khoảng cách giữa các trận */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 30px;
 }
-
 .bracket-match {
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: .25rem;
-    padding: 0.75rem;
-    position: relative;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: .25rem;
+  padding: .75rem;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
 }
-
 .bracket-connector {
-    flex: 0 0 50px; /* Đặt chiều rộng cố định cho cột nối */
-    position: relative;
-    height: 150px; /* Chiều cao của đường nối dọc */
-    display: flex;
-    align-items: center;
+  flex: 0 0 50px;
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
 }
-
-/* Vẽ đường nối ngang từ các trận bán kết */
 .bracket-round:first-child .bracket-match::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -25px; /* Chiều dài bằng nửa chiều rộng cột nối */
-    width: 25px;
-    height: 2px;
-    background-color: #ccc;
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  width: 25px;
+  height: 2px;
+  background-color: #ccc;
 }
-
-/* Vẽ đường nối dọc */
 .bracket-connector::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 2px;
-    background-color: #ccc;
-    transform: translateX(-50%);
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 2px; background-color: #ccc;
+  transform: translateX(-50%);
 }
-
-/* Vẽ đường nối ngang đến trận chung kết */
 .bracket-connector::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 50%;
-    height: 2px;
-    background-color: #ccc;
-    transform: translateY(-50%);
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 50%; height: 2px;
+  background-color: #ccc;
+  transform: translateY(-50%);
 }
 
-/* LiveStream */
+/* ================= LIVESTREAM / UPCOMING ================= */
 .upcoming-matches-list {
-    max-height: 500px; /* Giới hạn chiều cao */
-    overflow-y: auto; /* Thêm thanh cuộn dọc khi cần */
+  max-height: 500px;
+  overflow-y: auto;
 }
-
 .upcoming-matches-list .list-group-item {
-    border-right: 0;
-    border-left: 0;
+  border-right: 0; border-left: 0;
 }
 
-/* backend/static/css/custom.css */
+/* ================= MATCH CARD (FINAL) ================= */
+.match-card-final { transition: box-shadow .2s ease-in-out; }
+.match-card-final:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
 
-.match-card-final {
-    transition: box-shadow .2s ease-in-out;
-}
-.match-card-final:hover {
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-}
-
-/* === THAY ĐỔI BẮT ĐẦU TỪ ĐÂY === */
+/* Logo trong match-card */
 .match-card-final .team-logo {
-    height: 48px; /* Tăng kích thước logo một chút */
-    width: 48px; 
-    object-fit: contain;
+  height: 48px;
+  width: 48px;
+  object-fit: contain;
 }
-.match-card-final .team-name {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #2563eb; /* Thêm dòng này để chữ đậm và rõ nét */
-}
-/* === KẾT THÚC THAY ĐỔI === */
 
+/* === TÊN ĐỘI: to & đậm + chống lộn xộn mobile === */
+.match-card-final .team-col { min-width: 0; } /* CHÌA KHÓA để ellipsis hoạt động trong grid */
+
+.match-card-final .team-name,
+.upcoming-matches-list .team-name {
+  display: inline-block;
+  max-width: 100%;
+  font-weight: 700;
+  font-size: 1.25rem;     /* to hơn mặc định */
+  line-height: 1.15;
+  color: #2563eb;
+  white-space: nowrap;    /* mobile: giữ 1 dòng để không vỡ layout */
+  overflow: hidden;
+  text-overflow: ellipsis;/* hiện "..." khi thiếu chỗ */
+  word-break: break-word; /* fallback khi tên có từ rất dài */
+}
+
+/* Điểm số */
 .match-card-final .match-score {
-    font-weight: 700;
-    font-size: 1.5rem;
+  font-weight: 700;
+  font-size: 1.5rem;
 }
+
+/* Footer card */
 .match-card-final .card-footer {
-    background-color: #f8f9fa;
-    font-size: 0.8rem;
-    padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  font-size: .8rem;
+  padding: .5rem 1rem;
 }
 
-
-/* Card giải đấu với ảnh nền */
+/* ================= CARD GIẢI ĐẤU ẢNH NỀN ================= */
 .tournament-card-bg {
-    position: relative; /* Cần thiết để định vị các phần tử con */
-    color: white;
-    border: none; /* Bỏ viền card mặc định */
+  position: relative;
+  color: #fff;
+  border: none;
 }
-
 .tournament-card-bg .card-img-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 1; /* Nằm dưới cùng */
-    border-radius: .375rem; /* Bo tròn góc giống card */
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  border-radius: .375rem;
 }
-
 .tournament-card-bg .card-img-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)); /* Lớp nền mờ */
-    z-index: 2; /* Nằm trên ảnh, dưới chữ */
-    border-radius: .375rem;
+  position: absolute; inset: 0;
+  background: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.8));
+  z-index: 2;
+  border-radius: .375rem;
 }
-
 .tournament-card-bg .card-body {
-    position: relative;
-    z-index: 3; /* Nằm trên cùng */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* Đẩy nội dung xuống dưới */
-    height: 250px; /* Chiều cao cố định cho card */
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+  height: 250px;
 }
-
 .tournament-card-bg .card-title {
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0,0,0,.7);
 }
 
-/* ================================================= */
-/* == FIX GIAO DIỆN MENU TAB GIẢI ĐẤU TRÊN MOBILE == */
-/* ================================================= */
+/* ================== TOURNAMENT TABS – MOBILE ================== */
 @media (max-width: 960px) {
-  /* Ghi đè lên site.css để menu tab không bị ẩn hoặc xếp dọc */
   .tour-tabs.nav {
     display: flex !important;
-    flex-direction: row !important; /* QUAN TRỌNG: Buộc menu nằm ngang */
-    padding-bottom: 8px; /* Thêm chút không gian để không bị quá sát */
+    flex-direction: row !important;
+    padding-bottom: 8px;
   }
-
-  /* Bật chế độ cuộn ngang */
   .tour-tabs {
     overflow-x: auto;
     flex-wrap: nowrap;
@@ -257,12 +219,36 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  .tour-tabs::-webkit-scrollbar { display: none; }
+  .tour-tabs .nav-link { white-space: nowrap; }
+}
 
-  .tour-tabs::-webkit-scrollbar {
-    display: none;
-  }
+/* ===================== RESPONSIVE TUNING ===================== */
+/* XS (mobile) – ưu tiên gọn gàng, tránh lệch cột */
+@media (max-width: 576px) {
+  .match-card-final .team-logo { width: 36px; height: 36px; }
+  .match-card-final .match-score { font-size: 1.25rem; }
+  .match-card-final .col-2,
+  .match-card-final .team-col { padding-left: 6px; padding-right: 6px; }
+}
 
-  .tour-tabs .nav-link {
-    white-space: nowrap;
+/* SM+ (>=576px) – có chỗ hơn, cho phép tối đa 2 dòng */
+@media (min-width: 576px) {
+  .match-card-final .team-name,
+  .upcoming-matches-list .team-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;         /* tối đa 2 dòng */
+    -webkit-box-orient: vertical;
+    white-space: normal;           /* bỏ nowrap khi đã line-clamp */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.3rem;
   }
+}
+
+/* MD+ (>=768px) – tăng thêm kích thước, vẫn giữ đẹp */
+@media (min-width: 768px) {
+  .match-card-final .team-logo { width: 48px; height: 48px; }
+  .match-card-final .team-name { font-size: 1.35rem; }
+  .match-card-final .match-score { font-size: 1.6rem; }
 }
