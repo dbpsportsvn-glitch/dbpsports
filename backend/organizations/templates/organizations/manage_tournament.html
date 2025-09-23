@@ -251,53 +251,57 @@
                     </div>
 
                     <p class="text-muted mb-3">
-                    Nhập tỉ số bên dưới rồi nhấn “Lưu nhanh tất cả”.
+                    Nhập tỉ số bên dưới rồi nhấn “Lưu nhanh tất cả” hoặc lưu từng trận.
                     </p>
-                    <h6>Vòng Bảng</h6>
-                    <div class="list-group">
-                        {% for match in group_matches %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                    <input type="hidden" name="match_ids" value="{{ match.pk }}">
-                                    <div class="flex-grow-1">
-                                        <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
-                                            <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
-                                        </a>
-                                        <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                    
+                    {% for group, matches_in_group in sorted_matches_by_group %}
+                        <h6 class="mt-4">{{ group.name }}</h6>
+                        <div class="list-group">
+                            {% for match in matches_in_group %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                        <input type="hidden" name="match_ids" value="{{ match.pk }}">
+                                        <div class="flex-grow-1">
+                                            <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
+                                                <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
+                                            </a>
+                                            <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
+                                            <span>-</span>
+                                            <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
+                                        </div>
+                                        
+                                        <div class="btn-group">
+                                            <button
+                                            type="submit"
+                                            name="quick_save_match"
+                                            value="{{ match.pk }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Lưu nhanh trận này">
+                                                <i class="bi bi-save"></i>
+                                            </button>
+                                            <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-outline-warning" title="Quản lý chi tiết">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                formmethod="post"
+                                                formaction="{% url 'organizations:delete_match' pk=match.pk %}"
+                                                formnovalidate
+                                                title="Xóa trận đấu">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
-                                        <span>-</span>
-                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
-                                    </div>
-
-                                    <button
-                                    type="submit"
-                                    name="quick_save_match"
-                                    value="{{ match.pk }}"
-                                    class="btn btn-sm btn-outline-primary"
-                                    title="Lưu nhanh trận này">
-                                        <i class="bi bi-save"></i>
-                                    </button>
-
-                                    <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
-                                        <i class="bi bi-pencil-fill"></i> Quản lý
-                                    </a>
-                                    <button
-                                        type="submit"
-                                        class="btn btn-sm btn-outline-danger"
-                                        formmethod="post"
-                                        formaction="{% url 'organizations:delete_match' pk=match.pk %}"
-                                        formnovalidate
-                                        title="Xóa trận đấu">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>
                                 </div>
-                            </div>
-                        {% empty %}
-                            <div class="list-group-item text-muted">Chưa có trận đấu vòng bảng nào.</div>
-                        {% endfor %}
-                    </div>
+                            {% empty %}
+                                <div class="list-group-item text-muted">Bảng này chưa có trận đấu nào.</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
 
                     {% if knockout_matches %}
                     <h6 class="mt-4">Vòng Loại Trực Tiếp</h6>
@@ -305,10 +309,11 @@
                         {% for match in knockout_matches %}
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                     <input type="hidden" name="match_ids" value="{{ match.pk }}">
+                                    <input type="hidden" name="match_ids" value="{{ match.pk }}">
                                     <div class="flex-grow-1">
                                         <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
                                             {% if match.match_round == 'SEMI' %}<strong style="color: #ffc107;">{{ match.get_match_round_display }}:</strong>
+                                            {% elif match.match_round == 'THIRD_PLACE' %}<strong style="color: #135f10;">{{ match.get_match_round_display }}:</strong>
                                             {% elif match.match_round == 'FINAL' %}<strong style="color: #dc3545;">{{ match.get_match_round_display }}:</strong>
                                             {% else %}<strong>{{ match.get_match_round_display }}:</strong>{% endif %}
                                             <strong>{{ match.team1.name|default:"TBD" }} vs {{ match.team2.name|default:"TBD" }}</strong>
@@ -320,18 +325,29 @@
                                         <span>-</span>
                                         <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                     </div>
-                                    <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-sm btn-outline-warning">
-                                        <i class="bi bi-pencil-fill"></i> Quản lý
-                                    </a>
-                                    <button
+                                    
+                                    <div class="btn-group">
+                                        <button
                                         type="submit"
-                                        class="btn btn-sm btn-outline-danger"
-                                        formmethod="post"
-                                        formaction="{% url 'organizations:delete_match' pk=match.pk %}"
-                                        formnovalidate
-                                        title="Xóa trận đấu">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>                
+                                        name="quick_save_match"
+                                        value="{{ match.pk }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Lưu nhanh trận này">
+                                            <i class="bi bi-save"></i>
+                                        </button>
+                                        <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-outline-warning" title="Quản lý chi tiết">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                            formmethod="post"
+                                            formaction="{% url 'organizations:delete_match' pk=match.pk %}"
+                                            formnovalidate
+                                            title="Xóa trận đấu">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>      
+                                    </div>      
                                 </div>
                             </div>
                         {% endfor %}

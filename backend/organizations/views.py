@@ -13,6 +13,7 @@ from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q
+from collections import defaultdict
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import (
     TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, 
@@ -127,7 +128,6 @@ def manage_tournament(request, pk):
             return redirect(request.path_info + '?view=matches')
         # --- KẾT THÚC LOGIC MỚI ---
 
-        # ... (Toàn bộ logic xử lý POST cũ cho các hành động khác vẫn giữ nguyên y hệt) ...
         if 'quick_update_score' in request.POST:
             match_id = request.POST.get('match_id')
             try:
@@ -228,14 +228,29 @@ def manage_tournament(request, pk):
 
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
+ 
+    # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
     elif view_name == 'matches':
-        all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
-        context['group_matches'] = all_matches.filter(match_round='GROUP')
+        all_matches = tournament.matches.select_related('team1__group', 'team2__group').order_by('match_time')
+
+        # Nhóm các trận đấu vòng bảng theo bảng đấu
+        group_matches = all_matches.filter(match_round='GROUP')
+        matches_by_group = defaultdict(list)
+        for match in group_matches:
+            # Giả định đội 1 thuộc 1 bảng thì trận đấu đó thuộc bảng đó
+            if match.team1.group:
+                matches_by_group[match.team1.group].append(match)
+
+        # Sắp xếp các bảng theo tên để hiển thị nhất quán
+        sorted_matches_by_group = sorted(matches_by_group.items(), key=lambda item: item[0].name)
+        context['sorted_matches_by_group'] = sorted_matches_by_group
+
+        # Giữ nguyên logic cho các trận knockout
         knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
-        # === THAY ĐỔI: THÊM TỨ KẾT VÀO THỨ TỰ SẮP XẾP ===
         round_order = {'QUARTER': 1, 'SEMI': 2, 'THIRD_PLACE': 3, 'FINAL': 4}
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
         context['knockout_matches'] = knockout_matches_list
+
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
 
