@@ -258,6 +258,9 @@ class Goal(models.Model):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='goals')
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='goals')
     minute = models.PositiveIntegerField(null=True, blank=True)
+    # --- THÊM DÒNG MỚI NÀY VÀO ---
+    is_own_goal = models.BooleanField("Bàn phản lưới?", default=False)
+    # -----------------------------
     class Meta:
         constraints = [models.CheckConstraint(check=Q(minute__gte=0) & Q(minute__lte=150), name="goal_minute_range")]
     def clean(self):

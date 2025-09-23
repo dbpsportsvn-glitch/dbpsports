@@ -222,31 +222,96 @@ def tournament_detail(request, pk):
         group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
         standings_data[group.id] = group_standings
 
-    # Phần thống kê (giữ nguyên)
-    total_teams = tournament.teams.count()
+    # Các truy vấn cơ bản
+    all_teams_in_tournament = tournament.teams.all()
+    total_teams = all_teams_in_tournament.count()
     total_players = Player.objects.filter(team__tournament=tournament).count()
     finished_matches = all_matches.filter(team1_score__isnull=False)
-    total_goals = finished_matches.aggregate(total=Sum('team1_score') + Sum('team2_score'))['total'] or 0
+    finished_matches_count = finished_matches.count()
+    
+    # Thống kê bàn thắng & thẻ phạt tổng quát
+    total_goals_obj = Goal.objects.filter(match__in=finished_matches)
+    total_own_goals = total_goals_obj.filter(is_own_goal=True).count()
+    total_normal_goals = total_goals_obj.filter(is_own_goal=False).count()
+    
+    total_cards_obj = Card.objects.filter(match__in=finished_matches)
+    total_yellow_cards = total_cards_obj.filter(card_type='YELLOW').count()
+    total_red_cards = total_cards_obj.filter(card_type='RED').count()
+    
+    avg_goals_per_match = round(total_normal_goals / finished_matches_count, 2) if finished_matches_count > 0 else 0
+
+    # Thống kê cầu thủ
     top_scorers = Player.objects.filter(
-        goals__match__tournament=tournament
+        goals__match__tournament=tournament,
+        goals__is_own_goal=False  # Chỉ tính bàn thắng, không tính phản lưới
     ).annotate(
         goal_count=Count('goals')
     ).select_related('team').order_by('-goal_count')[:5]
 
+    hattricks = Player.objects.filter(
+        goals__match__tournament=tournament,
+        goals__is_own_goal=False
+    ).values('full_name', 'team__name', 'goals__match_id').annotate(
+        goals_in_match=Count('id')
+    ).filter(goals_in_match__gte=3).count()
+
+    # Thống kê theo từng đội
+    team_goal_stats = []
+    team_card_stats = []
+    for team in all_teams_in_tournament:
+        goals_for = Goal.objects.filter(team=team, is_own_goal=False).count()
+        goals_against_matches_as_team1 = Goal.objects.filter(match__team1=team, is_own_goal=False).exclude(team=team)
+        goals_against_matches_as_team2 = Goal.objects.filter(match__team2=team, is_own_goal=False).exclude(team=team)
+        goals_against = goals_against_matches_as_team1.count() + goals_against_matches_as_team2.count()
+        team_goal_stats.append({
+            'team_obj': team,
+            'gf': goals_for,
+            'ga': goals_against,
+            'gd': goals_for - goals_against
+        })
+
+        yellow_cards = Card.objects.filter(team=team, card_type='YELLOW').count()
+        red_cards = Card.objects.filter(team=team, card_type='RED').count()
+        team_card_stats.append({
+            'team_obj': team,
+            'yellow_cards': yellow_cards,
+            'red_cards': red_cards
+        })
+
+    # Sắp xếp danh sách thống kê đội
+    team_goal_stats.sort(key=lambda x: (x['gd'], x['gf']), reverse=True)
+    team_card_stats.sort(key=lambda x: (x['red_cards'], x['yellow_cards']), reverse=True)
+
+
+    # === KẾT THÚC KHỐI THỐNG KÊ MỚI ===
+
+    # Kiểm tra xem có ít nhất một đội đã thanh toán trong giải đấu chưa
+    has_paid_teams = tournament.teams.filter(payment_status='PAID').exists()
+    
     context = {
         'tournament': tournament,
         'is_organizer': is_organizer,
         'group_matches': group_matches,
-        'knockout_matches': all_knockout_matches, # Sử dụng danh sách đã lấy
+        'knockout_matches': all_knockout_matches,
         'knockout_data': knockout_data, 
         'now': timezone.now(),
         'unassigned_teams': unassigned_teams,
+        'standings_data': standings_data,
+        'has_paid_teams': has_paid_teams, # Giữ lại biến này
+
+        # --- Gửi các biến thống kê mới ra template ---
         'total_teams': total_teams,
         'total_players': total_players,
-        'total_goals': total_goals,
+        'finished_matches_count': finished_matches_count,
+        'total_normal_goals': total_normal_goals,
+        'total_own_goals': total_own_goals,
+        'avg_goals_per_match': avg_goals_per_match,
+        'total_yellow_cards': total_yellow_cards,
+        'total_red_cards': total_red_cards,
+        'hattricks': hattricks,
         'top_scorers': top_scorers,
-        'finished_matches_count': finished_matches.count(),
-        'standings_data': standings_data,
+        'team_goal_stats': team_goal_stats,
+        'team_card_stats': team_card_stats,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
@@ -611,6 +676,13 @@ def draw_groups_view(request, tournament_pk):
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
 
+    # Kiểm tra xem giải đấu còn đang mở đăng ký không
+    if tournament.status == 'REGISTRATION_OPEN':
+        # Gửi một thông báo lỗi cho người dùng
+        messages.error(request, "Không thể bốc thăm khi giải đấu vẫn đang trong giai đoạn đăng ký.")
+        # Chuyển hướng họ về trang chi tiết giải đấu
+        return redirect('tournament_detail', pk=tournament.pk)
+
     if request.method == 'POST':
         try:
             results_str = request.POST.get('draw_results')
@@ -678,7 +750,21 @@ def generate_schedule_view(request, tournament_pk):
     is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
-    # --- KẾT THÚC ĐOẠN KIỂM TRA ---
+
+    # === BẮT ĐẦU THÊM ĐOẠN KIỂM TRA MỚI ===
+    has_groups = tournament.groups.exists()
+    has_unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True).exists()
+    has_paid_teams = tournament.teams.filter(payment_status='PAID').exists()
+
+    # Nếu chưa đủ điều kiện, báo lỗi và trả về trang chi tiết
+    if not has_groups or not has_paid_teams or has_unassigned_teams:
+        messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
+        return redirect('tournament_detail', pk=tournament.pk)
+
+    # Nếu đã có lịch rồi thì cũng không cho tạo lại
+    if tournament.matches.exists():
+        messages.warning(request, "Lịch thi đấu đã được tạo cho giải này.")
+        return redirect('tournament_detail', pk=tournament.pk)
 
     if request.method == 'POST' and 'confirm_schedule' in request.POST:
         schedule_preview_json = request.session.get('schedule_preview_json')

@@ -97,12 +97,11 @@ class MatchUpdateForm(forms.ModelForm):
         
         return cleaned_data
 
-
 class GoalForm(forms.ModelForm):
     player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
     class Meta:
         model = Goal
-        fields = ['player', 'minute']
+        fields = ['player', 'minute', 'is_own_goal'] # Đã bao gồm trường mới
         labels = { 'minute': 'Phút ghi bàn' }
 
 class CardForm(forms.ModelForm):
