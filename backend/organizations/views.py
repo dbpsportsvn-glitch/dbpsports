@@ -192,6 +192,16 @@ def manage_tournament(request, pk):
     }
     if view_name == 'overview':
         all_teams = tournament.teams.all()
+
+        # Lấy danh sách các đội đã thanh toán nhưng chưa có bảng
+        unassigned_teams = all_teams.filter(payment_status='PAID', group__isnull=True)
+        # Kiểm tra xem có tồn tại ít nhất một đội đã thanh toán chưa
+        has_paid_teams = all_teams.filter(payment_status='PAID').exists()
+
+        # Thêm các biến vừa tạo vào context để template có thể sử dụng
+        context['unassigned_teams'] = unassigned_teams
+        context['has_paid_teams'] = has_paid_teams
+
         context['stats'] = {
             'total_teams': all_teams.count(),
             'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),

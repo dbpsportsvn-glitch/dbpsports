@@ -99,14 +99,37 @@ class TournamentAdmin(admin.ModelAdmin):
     @admin.display(description='Tải ảnh hàng loạt')
     def bulk_upload_link(self, obj):
         url = reverse('tournament_bulk_upload', args=[obj.pk]); return format_html('<a class="button" href="{}" target="_blank">Tải ảnh</a>', url)
+
     def generate_schedule_link(self, obj):
-        if obj.groups.exists() and not obj.matches.exists(): url = reverse('generate_schedule', args=[obj.pk]); return format_html('<a class="button" href="{}" target="_blank">Xếp Lịch</a>', url)
+        # ĐK 1: Giải đấu phải đang diễn ra
+        is_in_progress = obj.status == 'IN_PROGRESS'
+        # ĐK 2: Phải có bảng đấu
+        has_groups = obj.groups.exists()
+        # ĐK 3: Giải đấu chưa được xếp lịch
+        has_matches = obj.matches.exists()
+        # ĐK 4: Không còn đội nào chờ xếp bảng
+        has_unassigned_teams = obj.teams.filter(payment_status='PAID', group__isnull=True).exists()
+        # ĐK 5: Phải có đội đã thanh toán
+        has_paid_teams = obj.teams.filter(payment_status='PAID').exists()
+
+        # Nút chỉ hiển thị khi tất cả các điều kiện đều đúng
+        if is_in_progress and has_groups and has_paid_teams and not has_unassigned_teams and not has_matches:
+            url = reverse('generate_schedule', args=[obj.pk])
+            return format_html('<a class="button" href="{}" target="_blank">Xếp Lịch</a>', url)
+        
         return "—"
     generate_schedule_link.short_description = 'Xếp Lịch Thi Đấu'
+
     def draw_groups_link(self, obj):
-        if obj.teams.filter(payment_status='PAID', group__isnull=True).exists(): url = reverse('draw_groups', args=[obj.pk]); return format_html('<a class="button" href="{}" target="_blank">Bốc thăm</a>', url)
+        # Nút chỉ hiển thị khi:
+        # 1. Giải đấu đang ở trạng thái "Đang diễn ra"
+        # 2. Có các đội đã thanh toán nhưng chưa được xếp vào bảng
+        if obj.status == 'IN_PROGRESS' and obj.teams.filter(payment_status='PAID', group__isnull=True).exists():
+            url = reverse('draw_groups', args=[obj.pk])
+            return format_html('<a class="button" href="{}" target="_blank">Bốc thăm</a>', url)
         return "—"
     draw_groups_link.short_description = 'Bốc thăm Chia bảng'
+
     def view_details_link(self, obj):
         teams_url = reverse('admin:tournaments_team_changelist') + f'?tournament__id__exact={obj.pk}'
         matches_url = reverse('admin:tournaments_match_changelist') + f'?tournament__id__exact={obj.pk}'

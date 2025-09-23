@@ -70,12 +70,19 @@
 
                 <h5>Các thao tác nhanh</h5>
                 <div class="d-flex flex-wrap gap-2 mt-3">
+                    {# Nút Bốc thăm: Chỉ hiện khi giải đang diễn ra VÀ có đội chờ xếp bảng #}
+                    {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
                     <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
                         <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
                     </a>
+                    {% endif %}
+
+                    {# Nút Xếp lịch: Chỉ hiện khi giải đang diễn ra, có đội đã đăng ký, đã bốc thăm xong VÀ chưa có trận đấu #}
+                    {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not unassigned_teams and not tournament.matches.exists %}
                     <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
                         <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                     </a>
+                    {% endif %}
                     
                     <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
                         <i class="bi bi-images"></i> Tải ảnh hàng loạt
