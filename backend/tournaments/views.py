@@ -1008,3 +1008,42 @@ def tournament_bulk_upload(request, tournament_pk):
         'url_form': url_form,
     }
     return render(request, 'tournaments/bulk_upload.html', context)
+
+# TẠO LỊCH THI ĐẤU ĐẸP
+def tournament_schedule_print_view(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+
+    # --- BẮT ĐẦU THÊM KHỐI CODE KIỂM TRA QUYỀN ---
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Bạn cần đăng nhập để xem trang này.")
+
+    is_organizer = False
+    if tournament.organization:
+        is_organizer = tournament.organization.members.filter(pk=request.user.pk).exists()
+
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    # --- KẾT THÚC KHỐI CODE KIỂM TRA QUYỀN ---
+
+    # Lấy tất cả các bảng đấu và các trận đấu tương ứng
+    groups_with_matches = []
+    groups = tournament.groups.all().order_by('name')
+    for group in groups:
+        matches = Match.objects.filter(
+            tournament=tournament, 
+            team1__group=group
+        ).select_related('team1', 'team2').order_by('match_time')
+        groups_with_matches.append({'group_name': group.name, 'matches': matches})
+
+    # Chia các bảng đấu thành các trang, mỗi trang 4 bảng
+    page_size = 4
+    group_pages = [
+        groups_with_matches[i:i + page_size] 
+        for i in range(0, len(groups_with_matches), page_size)
+    ]
+
+    context = {
+        'tournament': tournament,
+        'group_pages': group_pages,
+    }
+    return render(request, 'tournaments/schedule_print.html', context)    

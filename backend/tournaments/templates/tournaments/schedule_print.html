@@ -1,101 +1,210 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Lịch thi đấu - {{ tournament.name }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 10pt; /* Tăng cỡ chữ cơ bản */
-            margin: 0;
-        }
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 12mm; /* Giảm lề để có thêm không gian */
-            margin: 0 auto;
-            box-sizing: border-box;
-            page-break-after: always;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .grid-container {
-            display: grid;
-            /* Thay đổi thành 2 cột để có nhiều không gian hơn */
-            grid-template-columns: 1fr 1fr;
-            gap: 15mm 10mm; /* Tăng khoảng cách giữa các bảng */
-        }
-        .group-table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 9pt; /* Cỡ chữ trong bảng */
-        }
-        .group-table th, .group-table td {
-            border: 1px solid #999;
-            padding: 6px;
-            text-align: left;
-        }
-        .group-table th {
-            background-color: #e9e9e9;
-            font-weight: bold;
-        }
-        h1, h2, h3 {
-            margin: 0;
-            padding: 0;
-        }
-        h1 { font-size: 16pt; }
-        h3 { font-size: 12pt; margin-bottom: 8px; }
+  <meta charset="UTF-8" />
+  <title>Lịch thi đấu - {{ tournament.name }}</title>
+  <style>
+    @page { size: A4 landscape; margin: 10mm; }
 
-        @media print {
-            body, .page {
-                margin: 0;
-                box-shadow: none;
-            }
-        }
-    </style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 9pt;
+      margin: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Khung trang: giảm nhẹ để tránh tràn do rounding khi in */
+    .page {
+      width: 275.5mm;
+      height: 190mm;
+      margin: 0 auto;
+      padding: 0;
+      page-break-after: always;
+      overflow: hidden;
+    }
+
+    .header { text-align: center; margin-bottom: 6mm; }
+    h1 { font-size: 16pt; margin: 0; }
+    h3 {
+      font-size: 11pt;
+      background-color: #343a40; color: #fff;
+      padding: 4px 8px; margin: 0 0 4px 0; border-radius: 4px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6mm;
+    }
+    .group-container { page-break-inside: avoid; }
+
+    .group-table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;          /* cần cho colgroup */
+      font-size: 8.6pt;
+    }
+    .group-table th, .group-table td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      vertical-align: middle;
+    }
+    .group-table thead th {
+      background: #f2f2f2;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* KHÓA tỉ lệ cột */
+    .col-date  { width: 16%; }      /* Ngày */
+    .col-time  { width: 12%; }      /* Giờ  */
+    .col-match { width: 52%; }      /* Cặp đấu */
+    .col-info  { width: 20%; }      /* Thông tin */
+
+    /* Ngày/Giờ: không xuống dòng, canh giữa, số thẳng cột */
+    .group-table th:nth-child(1),
+    .group-table td:nth-child(1),
+    .group-table th:nth-child(2),
+    .group-table td:nth-child(2) {
+      white-space: nowrap;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Ô Cặp đấu: bỏ padding hai bên để logo “sát mép” ô */
+    .group-table td:nth-child(3) { padding-left: 0; padding-right: 0; }
+
+    /* Bố cục Cặp đấu:
+       [logo trái] [tên đội 1] [vs] [tên đội 2] [logo phải]  */
+    .matchup-cell {
+      display: grid;
+      grid-template-columns: auto 1fr auto 1fr auto;
+      align-items: center;
+      gap: 2px;
+      min-width: 0;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    .team-logo {
+      width: 14px; height: 14px; object-fit: contain;
+    }
+    .team-logo-left  { justify-self: start; }  /* bám mép trái ô */
+    .team-logo-right { justify-self: end; }    /* bám mép phải ô */
+    .logo-spacer { width: 14px; height: 14px; display: block; }
+
+    .team-name-left, .team-name-right {
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      display: inline-block; max-width: 100%;
+    }
+    .team-name-left  { text-align: left; }
+    .team-name-right { text-align: right; }
+
+    .vs {
+      font-style: italic; color: #e10000; font-weight: 700; font-size: 8pt;
+      padding: 0 4px; white-space: nowrap; text-align: center; justify-self: center;
+    }
+
+    .info-cell {
+      font-size: 8pt; color: #555; text-align: center; word-break: break-word;
+    }
+
+    /* Tránh cắt ngang hàng khi in */
+    tr { page-break-inside: avoid; }
+
+    /* ========= PATCH CHỐNG “NẸM” Ở MÉP DƯỚI KHI IN ========= */
+    @media print {
+      /* Co toàn bộ nội dung một chút cho an toàn (Chrome/PDF) */
+      body { zoom: 0.995; } /* nếu còn nẹm: 0.994 hoặc 0.996 */
+
+      /* Bớt nhẹ khoảng dọc để dư thêm 2–3px */
+      .header{ margin-bottom: 5mm !important; }
+      .grid-container{ row-gap: 4mm !important; } /* giữ column-gap theo gap gốc */
+
+      .group-table th, .group-table td{
+        padding: 3px 6px !important;   /* từ 4px -> 3px */
+        line-height: 1.18 !important;
+        border-width: 0.8px !important;/* viền mảnh hơn tí */
+      }
+
+      h3{ padding: 3px 6px !important; margin-bottom: 3px !important; }
+    }
+    /* ========= END PATCH ========= */
+  </style>
 </head>
 <body onload="window.print()">
-    {% for page in group_pages %}
-    <div class="page">
-        <div class="header">
-            <h1>LỊCH THI ĐẤU - {{ tournament.name|upper }}</h1>
-        </div>
-        <div class="grid-container">
-            {% for group in page %}
-            <div class="group-container">
-                <h3>{{ group.name }}</h3>
-                <table class="group-table">
-                    <thead>
-                        <tr>
-                            <th>Thời gian</th>
-                            <th>Cặp đấu</th>
-                            <th>Thông tin khác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for match in group.group_matches %}
-                        <tr>
-                            <td>{{ match.match_time|date:"H:i, d/m" }}</td>
-                            <td>{{ match.team1.name }} <br>vs<br> {{ match.team2.name }}</td>
-                            <td>
-                                {% if match.location %}Sân: {{ match.location }}<br>{% endif %}
-                                {% if match.referee %}TT: {{ match.referee }}<br>{% endif %}
-                                {% if match.commentator %}BLV: {{ match.commentator }}{% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" style="text-align: center;">Chưa có lịch thi đấu.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endfor %}
-        </div>
+  {% for page in group_pages %}
+  <div class="page">
+    <div class="header">
+      <h1>LỊCH THI ĐẤU - {{ tournament.name|upper }}</h1>
     </div>
-    {% endfor %}
+
+    <div class="grid-container">
+      {% for group_data in page %}
+      <div class="group-container">
+        <h3>{{ group_data.group_name }}</h3>
+
+        <table class="group-table">
+          <colgroup>
+            <col class="col-date">
+            <col class="col-time">
+            <col class="col-match">
+            <col class="col-info">
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Giờ</th>
+              <th>Cặp đấu</th>
+              <th>Thông tin</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for match in group_data.matches %}
+            <tr>
+              <td>{{ match.match_time|date:"d/m/Y" }}</td>
+              <td>{{ match.match_time|date:"H:i" }}</td>
+              <td>
+                <div class="matchup-cell">
+                  {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo.url }}" class="team-logo team-logo-left" alt="">
+                  {% else %}
+                    <span class="logo-spacer"></span>
+                  {% endif %}
+
+                  <span class="team-name-left">{{ match.team1.name }}</span>
+
+                  <span class="vs">vs</span>
+
+                  <span class="team-name-right">{{ match.team2.name }}</span>
+
+                  {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo.url }}" class="team-logo team-logo-right" alt="">
+                  {% else %}
+                    <span class="logo-spacer"></span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="info-cell">
+                {{ match.get_match_round_display }}<br>
+                Sân: {{ match.location|default:"N/A" }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" style="text-align:center;">Chưa có lịch thi đấu.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
 </body>
 </html>

@@ -32,7 +32,7 @@
 
             <button id="print-all-btn"
                     class="btn btn-outline-secondary btn-sm no-print d-none"
-                    onclick="printTab('schedule-all', '{{ tournament.name }} - Lịch thi đấu')" type="button">
+                    onclick="window.open('{% url 'tournament_schedule_print' pk=tournament.pk %}', '_blank')" type="button">
               🖨️ In
             </button>
         </div>
