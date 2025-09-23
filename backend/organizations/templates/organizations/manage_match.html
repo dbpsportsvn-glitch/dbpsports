@@ -9,13 +9,23 @@
 
 {% block management_content %}
 <div class="card">
-    <div class="card-header">
-        <h3><i class="bi bi-pencil-fill"></i> Quản lý Trận đấu</h3>
-        <p class="mb-0 text-muted">
-            {{ match.team1.name }} vs {{ match.team2.name }}
-            <br>
-            <small>{{ match.match_time|date:"H:i, d/m/Y" }}</small>
-        </p>
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h3><i class="bi bi-pencil-fill"></i> Quản lý Trận đấu</h3>
+            <p class="mb-0 text-muted">
+                {{ match.team1.name }} vs {{ match.team2.name }}
+                <br>
+                <small>{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=matches" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại Danh sách
+            </a>
+            <button type="submit" form="match-info-form" class="btn btn-primary">
+                <i class="bi bi-save-fill"></i> Lưu thay đổi
+            </button>
+        </div>
     </div>
     <div class="card-body p-4">
 
@@ -35,11 +45,10 @@
 
             {# --- TAB 1: Thông tin chung --- #}
             <div class="tab-pane fade show active" id="info-pane" role="tabpanel">
-                <form method="post" novalidate>
+                <form method="post" novalidate id="match-info-form">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="update_match">
                     
-                    {# === BẮT ĐẦU NỘI DUNG THAY THẾ === #}
                     <h5>Cặp đấu & Lịch trình</h5>
                     <div class="row">
                         <div class="col-md-6">
@@ -66,7 +75,6 @@
                         <div class="col-md-6">
                             {{ form.team2_score|as_crispy_field }}
                         </div>
-                        {# === BẮT ĐẦU THÊM MỚI === #}
                         {% if match.match_round != 'GROUP' %}
                         <div class="col-md-6">
                             {{ form.team1_penalty_score|as_crispy_field }}
@@ -75,18 +83,13 @@
                             {{ form.team2_penalty_score|as_crispy_field }}
                         </div>
                         {% endif %}
-                        {# === KẾT THÚC THÊM MỚI === #}
                     </div>
-                    
                     {{ form.livestream_url|as_crispy_field }}
                     {{ form.referee|as_crispy_field }}
                     {{ form.commentator|as_crispy_field }}
                     {{ form.ticker_text|as_crispy_field }}
-                    {# === KẾT THÚC NỘI DUNG THAY THẾ === #}
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
-                    </div>
+                    
+                    {# NÚT LƯU CŨ ĐÃ ĐƯỢC XÓA KHỎI ĐÂY #}
                 </form>
             </div>
 
