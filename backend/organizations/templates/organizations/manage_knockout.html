@@ -17,145 +17,157 @@
     </div>
     <div class="card-body p-4">
 
-        <h5 class="mb-3">Kết quả Vòng bảng</h5>
-        <div class="row">
-            {% for group_id, group_data in standings_by_group.items %}
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header"><strong>{{ group_data.name }}</strong></div>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-sm mb-0">
-                            <thead><tr><th>#</th><th>Đội</th><th>Đ</th><th>HS</th><th>Điểm</th></tr></thead>
-                            <tbody>
-                                {% for row in group_data.standings %}
-                                <tr class="{% if forloop.counter <= 2 %}table-success{% endif %}">
-                                    <td>{{ forloop.counter }}</td><td>{{ row.team_obj.name }}</td><td>{{ row.played }}</td><td>{{ row.gd }}</td><td><strong>{{ row.points }}</strong></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        {% comment %} === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === {% endcomment %}
+        {% if not tournament.groups.all %}
+            <div class="alert alert-warning">
+                <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Chưa thể thiết lập Vòng Knockout!</h4>
+                <p>Giải đấu của bạn cần phải có các bảng đấu được tạo trước khi bạn có thể xếp lịch cho vòng loại trực tiếp.</p>
+                <hr>
+                <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=groups" class="btn btn-primary">
+                    <i class="bi bi-grid-fill"></i> Tới trang quản lý Bảng đấu
+                </a>
+            </div>
+        {% else %}
+            <h5 class="mb-3">Kết quả Vòng bảng</h5>
+            <div class="row">
+                {% for group_id, group_data in standings_by_group.items %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>{{ group_data.name }}</strong></div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm mb-0">
+                                <thead><tr><th>#</th><th>Đội</th><th>Đ</th><th>HS</th><th>Điểm</th></tr></thead>
+                                <tbody>
+                                    {% for row in group_data.standings %}
+                                    <tr class="{% if forloop.counter <= 2 %}table-success{% endif %}">
+                                        <td>{{ forloop.counter }}</td><td>{{ row.team_obj.name }}</td><td>{{ row.played }}</td><td>{{ row.gd }}</td><td><strong>{{ row.points }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
 
-        <hr class="my-4">
+            <hr class="my-4">
 
-        <h5 class="mb-3">Tạo cặp đấu Tứ kết</h5>
-        {% if qualified_teams|length >= 8 %}
-            <p class="text-info"><i class="bi bi-info-circle-fill"></i> Hệ thống đã tự động xếp cặp đấu chéo. Bạn có thể thay đổi nếu cần.</p>
+            <h5 class="mb-3">Tạo cặp đấu Tứ kết</h5>
+            {% if qualified_teams|length >= 8 %}
+                <p class="text-info"><i class="bi bi-info-circle-fill"></i> Hệ thống đã tự động xếp cặp đấu chéo. Bạn có thể thay đổi nếu cần.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_quarter_finals">
+                    {% if quarter_final_form.non_field_errors %}<div class="alert alert-danger">{{ quarter_final_form.non_field_errors }}</div>{% endif %}
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <h6>Trận Tứ kết 1</h6>
+                            {{ quarter_final_form.qf1_team1|as_crispy_field }}
+                            {{ quarter_final_form.qf1_team2|as_crispy_field }}
+                            {{ quarter_final_form.qf1_datetime|as_crispy_field }}
+                        </div>
+                        <div class="col-lg-6">
+                            <h6>Trận Tứ kết 2</h6>
+                            {{ quarter_final_form.qf2_team1|as_crispy_field }}
+                            {{ quarter_final_form.qf2_team2|as_crispy_field }}
+                            {{ quarter_final_form.qf2_datetime|as_crispy_field }}
+                        </div>
+                        <div class="col-lg-6">
+                            <h6>Trận Tứ kết 3</h6>
+                            {{ quarter_final_form.qf3_team1|as_crispy_field }}
+                            {{ quarter_final_form.qf3_team2|as_crispy_field }}
+                            {{ quarter_final_form.qf3_datetime|as_crispy_field }}
+                        </div>
+                        <div class="col-lg-6">
+                            <h6>Trận Tứ kết 4</h6>
+                            {{ quarter_final_form.qf4_team1|as_crispy_field }}
+                            {{ quarter_final_form.qf4_team2|as_crispy_field }}
+                            {{ quarter_final_form.qf4_datetime|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">Lưu cặp đấu Tứ kết</button>
+                    </div>
+                </form>
+            {% else %}
+                 <p class="text-danger">Chưa xác định đủ 8 đội để vào Tứ kết.</p>
+            {% endif %}
+            <hr class="my-4">
+
+            <h5 class="mb-3">Tạo cặp đấu Bán kết</h5>
+            {% if qualified_teams|length >= 4 %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_semi_finals">
+                    {% if semi_final_form.non_field_errors %}<div class="alert alert-danger">{{ semi_final_form.non_field_errors }}</div>{% endif %}
+                    <div class="row">
+                        <div class="col-lg-6 border-end pe-lg-4">
+                            <h6>Trận Bán kết 1</h6>
+                            {{ semi_final_form.sf1_team1|as_crispy_field }}
+                            {{ semi_final_form.sf1_team2|as_crispy_field }}
+                            {{ semi_final_form.sf1_datetime|as_crispy_field }}
+                        </div>
+                        <div class="col-lg-6 ps-lg-4">
+                            <h6>Trận Bán kết 2</h6>
+                            {{ semi_final_form.sf2_team1|as_crispy_field }}
+                            {{ semi_final_form.sf2_team2|as_crispy_field }}
+                            {{ semi_final_form.sf2_datetime|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">Lưu cặp đấu Bán kết</button>
+                    </div>
+                </form>
+            {% else %}
+                 <p class="text-danger">Chưa xác định đủ 4 đội để vào Bán kết.</p>
+            {% endif %}
+
+            <hr class="my-4">
             
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create_quarter_finals">
-                {% if quarter_final_form.non_field_errors %}<div class="alert alert-danger">{{ quarter_final_form.non_field_errors }}</div>{% endif %}
-                <div class="row g-4">
-                    <div class="col-lg-6">
-                        <h6>Trận Tứ kết 1</h6>
-                        {{ quarter_final_form.qf1_team1|as_crispy_field }}
-                        {{ quarter_final_form.qf1_team2|as_crispy_field }}
-                        {{ quarter_final_form.qf1_datetime|as_crispy_field }}
-                    </div>
-                    <div class="col-lg-6">
-                        <h6>Trận Tứ kết 2</h6>
-                        {{ quarter_final_form.qf2_team1|as_crispy_field }}
-                        {{ quarter_final_form.qf2_team2|as_crispy_field }}
-                        {{ quarter_final_form.qf2_datetime|as_crispy_field }}
-                    </div>
-                    <div class="col-lg-6">
-                        <h6>Trận Tứ kết 3</h6>
-                        {{ quarter_final_form.qf3_team1|as_crispy_field }}
-                        {{ quarter_final_form.qf3_team2|as_crispy_field }}
-                        {{ quarter_final_form.qf3_datetime|as_crispy_field }}
-                    </div>
-                    <div class="col-lg-6">
-                        <h6>Trận Tứ kết 4</h6>
-                        {{ quarter_final_form.qf4_team1|as_crispy_field }}
-                        {{ quarter_final_form.qf4_team2|as_crispy_field }}
-                        {{ quarter_final_form.qf4_datetime|as_crispy_field }}
-                    </div>
+            <div class="row">
+                <div class="col-lg-6 border-end pe-lg-4">
+                    <h5 class="mb-3">Tạo trận Chung kết</h5>
+                    {% if semi_final_winners|length == 2 %}
+                        <p class="text-muted">Hệ thống đã xác định 2 đội thắng Bán kết.</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="create_final">
+                            {% if final_form.non_field_errors %}<div class="alert alert-danger">{{ final_form.non_field_errors }}</div>{% endif %}
+                            {{ final_form.final_team1|as_crispy_field }}
+                            {{ final_form.final_team2|as_crispy_field }}
+                            {{ final_form.final_datetime|as_crispy_field }}
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-trophy-fill"></i> Tạo Chung kết</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
+                    {% endif %}
                 </div>
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">Lưu cặp đấu Tứ kết</button>
+                <div class="col-lg-6 ps-lg-4">
+                    <h5 class="mb-3">Tạo trận Tranh Hạng Ba</h5>
+                    {% if semi_final_losers|length == 2 %}
+                        <p class="text-muted">Hệ thống đã xác định 2 đội thua Bán kết.</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="create_third_place">
+                            {% if third_place_form.non_field_errors %}<div class="alert alert-danger">{{ third_place_form.non_field_errors }}</div>{% endif %}
+                            {{ third_place_form.tp_team1|as_crispy_field }}
+                            {{ third_place_form.tp_team2|as_crispy_field }}
+                            {{ third_place_form.tp_datetime|as_crispy_field }}
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="submit" class="btn btn-info btn-lg">Tạo Tranh Hạng Ba</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
+                    {% endif %}
                 </div>
-            </form>
-        {% else %}
-             <p class="text-danger">Chưa xác định đủ 8 đội để vào Tứ kết.</p>
-        {% endif %}
-        <hr class="my-4">
-
-        <h5 class="mb-3">Tạo cặp đấu Bán kết</h5>
-        {% if qualified_teams|length >= 4 %}
-            <form method="post">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="create_semi_finals">
-                {% if semi_final_form.non_field_errors %}<div class="alert alert-danger">{{ semi_final_form.non_field_errors }}</div>{% endif %}
-                <div class="row">
-                    <div class="col-lg-6 border-end pe-lg-4">
-                        <h6>Trận Bán kết 1</h6>
-                        {{ semi_final_form.sf1_team1|as_crispy_field }}
-                        {{ semi_final_form.sf1_team2|as_crispy_field }}
-                        {{ semi_final_form.sf1_datetime|as_crispy_field }}
-                    </div>
-                    <div class="col-lg-6 ps-lg-4">
-                        <h6>Trận Bán kết 2</h6>
-                        {{ semi_final_form.sf2_team1|as_crispy_field }}
-                        {{ semi_final_form.sf2_team2|as_crispy_field }}
-                        {{ semi_final_form.sf2_datetime|as_crispy_field }}
-                    </div>
-                </div>
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-success btn-lg">Lưu cặp đấu Bán kết</button>
-                </div>
-            </form>
-        {% else %}
-             <p class="text-danger">Chưa xác định đủ 4 đội để vào Bán kết.</p>
-        {% endif %}
-
-        <hr class="my-4">
-        
-        {# --- FORM TẠO CHUNG KẾT & TRANH HẠNG BA --- #}
-        <div class="row">
-            <div class="col-lg-6 border-end pe-lg-4">
-                <h5 class="mb-3">Tạo trận Chung kết</h5>
-                {% if semi_final_winners|length == 2 %}
-                    <p class="text-muted">Hệ thống đã xác định 2 đội thắng Bán kết.</p>
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="create_final">
-                        {% if final_form.non_field_errors %}<div class="alert alert-danger">{{ final_form.non_field_errors }}</div>{% endif %}
-                        {{ final_form.final_team1|as_crispy_field }}
-                        {{ final_form.final_team2|as_crispy_field }}
-                        {{ final_form.final_datetime|as_crispy_field }}
-                        <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-trophy-fill"></i> Tạo Chung kết</button>
-                        </div>
-                    </form>
-                {% else %}
-                    <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
-                {% endif %}
             </div>
-            <div class="col-lg-6 ps-lg-4">
-                <h5 class="mb-3">Tạo trận Tranh Hạng Ba</h5>
-                {% if semi_final_losers|length == 2 %}
-                    <p class="text-muted">Hệ thống đã xác định 2 đội thua Bán kết.</p>
-                    <form method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="create_third_place">
-                        {% if third_place_form.non_field_errors %}<div class="alert alert-danger">{{ third_place_form.non_field_errors }}</div>{% endif %}
-                        {{ third_place_form.tp_team1|as_crispy_field }}
-                        {{ third_place_form.tp_team2|as_crispy_field }}
-                        {{ third_place_form.tp_datetime|as_crispy_field }}
-                        <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-info btn-lg">Tạo Tranh Hạng Ba</button>
-                        </div>
-                    </form>
-                {% else %}
-                    <p class="text-info">Vui lòng cập nhật đầy đủ tỉ số 2 trận Bán kết.</p>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
+        {% comment %} === KẾT THÚC THAY ĐỔI === {% endcomment %}
     </div>
 </div>
 {% endblock %}

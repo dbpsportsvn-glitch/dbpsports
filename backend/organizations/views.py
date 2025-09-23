@@ -14,7 +14,12 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
-from .forms import TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, MatchCreationForm
+from .forms import (
+    TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, 
+    MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, 
+    SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, 
+    MatchCreationForm, PlayerUpdateForm # <-- Thêm PlayerUpdateForm vào đây
+)
 from django.utils import timezone
 from django.db import transaction
 # === THÊM: KIỂM TRA URL next AN TOÀN ===
@@ -233,6 +238,27 @@ def manage_tournament(request, pk):
         context['knockout_matches'] = knockout_matches_list
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
+
+    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+    elif view_name == 'players':
+        # Lấy danh sách cầu thủ thuộc giải đấu này
+        players_qs = Player.objects.filter(team__tournament=tournament).select_related('team').order_by('team__name', 'full_name')
+
+        # Lọc theo đội
+        team_filter_id = request.GET.get('team_filter')
+        if team_filter_id and team_filter_id.isdigit():
+            players_qs = players_qs.filter(team_id=int(team_filter_id))
+            context['selected_team_id'] = int(team_filter_id)
+
+        # Tìm kiếm theo tên
+        search_query = request.GET.get('q', '')
+        if search_query:
+            players_qs = players_qs.filter(full_name__icontains=search_query)
+            context['search_query'] = search_query
+        
+        context['players_list'] = players_qs
+        context['teams_in_tournament'] = tournament.teams.all().order_by('name')
+
     return render(request, 'organizations/manage_tournament.html', context)
 
 @login_required
@@ -439,9 +465,9 @@ def manage_knockout(request, pk):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
     groups = tournament.groups.prefetch_related('teams').all().order_by('name') # Thêm order_by('name') để đảm bảo thứ tự
-    if not groups.exists():
-        messages.warning(request, "Giải đấu chưa có bảng nào được tạo.")
-        return redirect('organizations:manage_tournament', pk=pk)
+    #if not groups.exists():
+    #    messages.warning(request, "Giải đấu chưa có bảng nào được tạo.")
+    #    return redirect('organizations:manage_tournament', pk=pk)
 
     # --- Lấy dữ liệu các đội và các vòng đấu ---
     standings_by_group = {}
@@ -719,3 +745,52 @@ def delete_team(request, pk):
 
     # Nếu không phải POST request, chỉ đơn giản là quay về trang trước
     return safe_redirect(request, default_url)
+
+@login_required
+@never_cache
+def edit_player(request, pk):
+    player = get_object_or_404(Player.objects.select_related('team__tournament__organization'), pk=pk)
+    tournament = player.team.tournament
+    organization = tournament.organization
+
+    # Kiểm tra quyền
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        form = PlayerUpdateForm(request.POST, request.FILES, instance=player)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Đã cập nhật thành công thông tin cho cầu thủ {player.full_name}.")
+            return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players")
+    else:
+        form = PlayerUpdateForm(instance=player)
+
+    context = {
+        'form': form,
+        'player': player,
+        'tournament': tournament,
+        'organization': organization,
+        'active_page': 'players'
+    }
+    return render(request, 'organizations/edit_player.html', context)
+
+@login_required
+def delete_player(request, pk):
+    player = get_object_or_404(Player.objects.select_related('team__tournament__organization'), pk=pk)
+    tournament = player.team.tournament
+    organization = tournament.organization
+
+    # Kiểm tra quyền
+    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players"
+    if request.method == 'POST':
+        player_name = player.full_name
+        player.delete()
+        messages.success(request, f"Đã xóa thành công cầu thủ {player_name}.")
+        return safe_redirect(request, default_url)
+
+    return safe_redirect(request, default_url)
+# === KẾT THÚC THÊM MỚI ===    

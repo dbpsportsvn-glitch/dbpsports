@@ -77,11 +77,9 @@
                         <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                     </a>
                     
-                    {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
                     <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
                         <i class="bi bi-images"></i> Tải ảnh hàng loạt
                     </a>
-                    {# === KẾT THÚC THÊM MỚI === #}
                 </div>
 
             {% elif active_page == 'teams' %}
@@ -192,7 +190,6 @@
                 {% endif %}
 
             {% elif active_page == 'groups' %}
-                {# Nội dung quản lý bảng đấu #}
                  <div class="row">
                     <div class="col-md-5">
                         <h5>Tạo Bảng đấu mới</h5>
@@ -256,7 +253,6 @@
                     <p class="text-muted mb-3">
                     Nhập tỉ số bên dưới rồi nhấn “Lưu nhanh tất cả”.
                     </p>
-                    {# --- VÒNG BẢNG --- #}
                     <h6>Vòng Bảng</h6>
                     <div class="list-group">
                         {% for match in group_matches %}
@@ -293,8 +289,7 @@
                                         formmethod="post"
                                         formaction="{% url 'organizations:delete_match' pk=match.pk %}"
                                         formnovalidate
-                                        title="Xóa trận đấu"
-                                        {% comment %} XÓA DÒNG NÀY ĐI ---> onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" {% endcomment %}>
+                                        title="Xóa trận đấu">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                 </div>
@@ -304,7 +299,6 @@
                         {% endfor %}
                     </div>
 
-                    {# --- VÒNG LOẠI TRỰC TIẾP --- #}
                     {% if knockout_matches %}
                     <h6 class="mt-4">Vòng Loại Trực Tiếp</h6>
                     <div class="list-group">
@@ -335,8 +329,7 @@
                                         formmethod="post"
                                         formaction="{% url 'organizations:delete_match' pk=match.pk %}"
                                         formnovalidate
-                                        title="Xóa trận đấu"
-                                        {% comment %} XÓA DÒNG NÀY ĐI ---> onclick="return confirm('Bạn có chắc chắn muốn xóa trận đấu này? Hành động này không thể hoàn tác.');" {% endcomment %}>
+                                        title="Xóa trận đấu">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>                
                                 </div>
@@ -347,8 +340,7 @@
                 </form>
 
             {% elif active_page == 'members' %}
-                 {# Nội dung quản lý thành viên #}
-                 <div class="row">
+                <div class="row">
                     <div class="col-md-5">
                         <h5>Mời thành viên mới</h5>
                         {% if request.user == tournament.organization.owner %}
@@ -389,7 +381,75 @@
                         </ul>
                     </div>
                 </div>
+            
+            {% elif active_page == 'players' %}
+                <h5>Quản lý Cầu thủ</h5>
+                <p class="text-muted">Xem, tìm kiếm và chỉnh sửa thông tin cầu thủ trong giải đấu.</p>
 
+                <div class="card card-body mb-3">
+                    <form method="get" class="row g-3 align-items-end">
+                        <input type="hidden" name="view" value="players">
+                        <div class="col-md-5">
+                            <label for="teamFilter" class="form-label">Lọc theo Đội bóng</label>
+                            <select name="team_filter" id="teamFilter" class="form-select">
+                                <option value="">Tất cả các đội</option>
+                                {% for team in teams_in_tournament %}
+                                    <option value="{{ team.pk }}" {% if team.pk == selected_team_id %}selected{% endif %}>{{ team.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="playerSearch" class="form-label">Tìm theo tên cầu thủ</label>
+                            <input type="text" name="q" id="playerSearch" class="form-control" placeholder="Nhập tên cầu thủ..." value="{{ search_query|default_if_none:'' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Tên Cầu thủ</th>
+                                <th>Đội</th>
+                                <th>Số áo</th>
+                                <th>Vị trí</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in players_list %}
+                            <tr>
+                                <td>
+                                    {% if player.avatar %}
+                                        <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ player.full_name }}</strong></td>
+                                <td>{{ player.team.name }}</td>
+                                <td>{{ player.jersey_number }}</td>
+                                <td>{{ player.get_position_display }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'organizations:edit_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                        <form method="post" action="{% url 'organizations:delete_player' pk=player.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa cầu thủ {{ player.full_name }}?');" class="mb-0">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Không tìm thấy cầu thủ nào.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </div>
     </div>

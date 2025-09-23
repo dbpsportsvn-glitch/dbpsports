@@ -22,4 +22,6 @@ urlpatterns = [
     path('match/<int:pk>/delete/', views.delete_match, name='delete_match'),
     path('tournaments/<int:tournament_pk>/create-match/', views.create_match, name='create_match'),
     path('teams/<int:pk>/delete/', views.delete_team, name='delete_team'),
+    path('player/<int:pk>/edit/', views.edit_player, name='edit_player'),
+    path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),    
 ]

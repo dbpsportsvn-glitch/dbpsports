@@ -5,6 +5,7 @@ from tournaments.models import Tournament, Organization, Match, Goal, Card, Play
 from .models import Organization
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError # Thêm import này
+from tournaments.forms import PlayerCreationForm
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
@@ -295,3 +296,11 @@ class MatchCreationForm(forms.ModelForm):
             raise ValidationError("Hai đội trong một trận đấu không được trùng nhau.")
         
         return cleaned_data
+
+class PlayerUpdateForm(PlayerCreationForm):
+    """
+    Form cho phép BTC chỉnh sửa thông tin cầu thủ.
+    Kế thừa từ form gốc để tái sử dụng các trường đã có.
+    """
+    class Meta(PlayerCreationForm.Meta):
+        pass # Giữ nguyên các thiết lập từ form cha        

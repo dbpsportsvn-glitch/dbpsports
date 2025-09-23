@@ -25,7 +25,13 @@
                     <i class="bi bi-calendar2-event-fill"></i> Trận đấu
                 </a>
             </li>
-            
+
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'players' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=players">
+                    <i class="bi bi-person-badge-fill"></i> Cầu thủ
+                </a>
+            </li> 
+                       
             {# === BẮT ĐẦU THÊM MỚI === #}
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'knockout' %}active{% endif %}" href="{% url 'organizations:manage_knockout' pk=tournament.pk %}">
