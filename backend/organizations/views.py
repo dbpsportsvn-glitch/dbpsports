@@ -261,10 +261,25 @@ def manage_tournament(request, pk):
     elif view_name == 'members':
         context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
 
-    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
     elif view_name == 'players':
-        # Lấy danh sách cầu thủ thuộc giải đấu này
-        players_qs = Player.objects.filter(team__tournament=tournament).select_related('team').order_by('team__name', 'full_name')
+        # Lấy tất cả giải đấu của BTC để làm bộ lọc
+        all_tournaments_in_org = tournament.organization.tournaments.all().order_by('-start_date')
+        context['all_tournaments_in_org'] = all_tournaments_in_org
+
+        # Bắt đầu với tất cả cầu thủ của BTC
+        players_qs = Player.objects.filter(team__tournament__organization=tournament.organization).select_related('team').order_by('team__tournament__name', 'team__name', 'full_name')
+
+        # Lọc theo giải đấu được chọn
+        tournament_filter_id = request.GET.get('tournament_filter')
+        if tournament_filter_id and tournament_filter_id.isdigit():
+            players_qs = players_qs.filter(team__tournament_id=int(tournament_filter_id))
+            context['selected_tournament_id'] = int(tournament_filter_id)
+        else:
+            # Mặc định, chỉ hiển thị cầu thủ của giải đấu hiện tại
+            players_qs = players_qs.filter(team__tournament=tournament)
+            context['selected_tournament_id'] = tournament.pk
+
 
         # Lọc theo đội
         team_filter_id = request.GET.get('team_filter')
@@ -279,7 +294,10 @@ def manage_tournament(request, pk):
             context['search_query'] = search_query
         
         context['players_list'] = players_qs
-        context['teams_in_tournament'] = tournament.teams.all().order_by('name')
+        # Lấy các đội thuộc giải đấu đã được lọc (hoặc giải hiện tại)
+        selected_tourn_id = context.get('selected_tournament_id', tournament.pk)
+        context['teams_in_tournament'] = Team.objects.filter(tournament_id=selected_tourn_id).order_by('name')
+    # === KẾT THÚC THAY THẾ TẠI ĐÂY ===
 
     return render(request, 'organizations/manage_tournament.html', context)
 

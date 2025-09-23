@@ -5,7 +5,6 @@
 {% block content %}
 
 <div class="container mt-4">
-    {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
     <div class="pb-3 mb-4 border-bottom d-flex align-items-center gap-3">
         {% if organization.logo %}
             <img src="{{ organization.logo.url }}" alt="Logo {{ organization.name }}" style="height: 64px; width: 64px; object-fit: contain; border-radius: .5rem;">
@@ -15,21 +14,22 @@
             <p class="lead mb-0">Quản lý các giải đấu và thành viên của bạn tại đây.</p>
         </div>
     </div>
-    {# === KẾT THÚC THAY ĐỔI === #}
 
     <h3 class="section-title">Các giải đấu của bạn</h3>
     <div class="list-group mt-3">
 
         {% for tournament in tournaments %}
-            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h5 class="mb-1">{{ tournament.name }}</h5>
                     <small>{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</small>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-sm btn-primary">Quản lý</a>
+                <div class="d-flex gap-2 align-items-center">
+                    
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-primary">Quản lý</a>
+                    
                     <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-sm btn-outline-secondary">Xem trang giải</a>
-                    <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="...">
+                    <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giải đấu \'{{ tournament.name }}\' và toàn bộ dữ liệu liên quan không?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                     </form>
