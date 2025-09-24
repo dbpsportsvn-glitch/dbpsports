@@ -252,3 +252,18 @@
   .match-card-final .team-name { font-size: 1.35rem; }
   .match-card-final .match-score { font-size: 1.6rem; }
 }
+
+/* === SỬA MÀU CHO MENU CHI TIẾT GIẢI ĐẤU === */
+.tour-tabs .nav-link {
+    color: #495057; /* Màu chữ đậm hơn cho các tab chưa chọn */
+    font-weight: 500;
+}
+
+.tour-tabs .nav-link:hover {
+    color: #000; /* Màu chữ khi di chuột qua */
+}
+
+/* Giữ nguyên màu xanh cho tab đang được chọn */
+.tour-tabs .nav-link.active {
+    color: #fff; 
+}
