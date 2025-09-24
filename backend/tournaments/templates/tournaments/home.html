@@ -163,24 +163,29 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
   /* === CSS CHO TIÊU ĐỀ "CÁC GIẢI ĐẤU" === */
    .section-title-wrapper {
-    text-align: left; /* Căn lề trái */
+    text-align: left;
     margin-bottom: 1.5rem;
   }
   .section-title-container {
-    display: inline-block; /* Chỉ bao trọn chữ */
+    display: inline-block;
     background: linear-gradient(90deg, #0f172a, #1e293b);
     padding: 0.75rem 1.5rem;
     border-radius: .75rem;
     box-shadow: 0 4px 12px rgba(0,0,0,.1);
   }
   .section-title-container .section-title {
-    color: #FFC107; /* Màu chữ vàng */
+    color: #FFC107;
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
   }
 
-  /* === CSS TINH CHỈNH BANNER === */
+  /* === BẮT ĐẦU SỬA KÍCH THƯỚC BANNER === */
+  /* 1. CHỈNH CHIỀU CAO BANNER TẠI ĐÂY */
+  .carousel-slide {
+      height: 430px; /* <-- Tăng từ 380px lên 420px (bạn có thể đổi thành số khác) */
+  }
+
   .carousel-caption {
     position: absolute;
     left: 50%;
@@ -191,38 +196,43 @@ document.addEventListener('DOMContentLoaded', function() {
     text-align: center;
     z-index: 2;
   }
+  /* 2. CHỈNH KÍCH THƯỚC CHỮ TẠI ĐÂY */
   .carousel-caption h2 {
-    font-size: 56px; 
+    font-size: 48px;  /* <-- Tăng từ 32px lên 48px (bạn có thể đổi thành số khác) */
     font-weight: 800;
-    text-shadow: 0 5px 20px rgba(0,0,0,0.9);
-    margin-bottom: 0.75rem;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.9);
+    margin-bottom: 0.5rem;
   }
   .carousel-caption p {
-    font-size: 1.2rem;
+    font-size: 1.3rem; /* <-- Tăng chữ nhỏ cho tương xứng */
     text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-    margin-bottom: 1.75rem; 
+    margin-bottom: 1rem; 
+  }
+
+  /* === THÊM DÒNG CHỈNH KÍCH THƯỚC CHỮ NÚT BẤM TẠI ĐÂY === */
+  .carousel-actions .btn {
+      font-size: 1rem; /* <-- Bạn có thể thay đổi số này, ví dụ: 0.9rem, 1.1rem */
+      padding: 0.5rem 1.5rem; /* Tăng khoảng đệm cho nút to hơn một chút */
   }
 
   /* CSS CHO DI ĐỘNG */
   @media (max-width: 767px) {
     .carousel-slide {
-      height: 60vh !important;
-      min-height: 350px !important;
+      height: 40vh; /* Giữ nguyên chiều cao trên di động */
     }
     .carousel-caption h2 {
-      font-size: 2.5rem !important;
-      line-height: 1.2;
+      font-size: 1.8rem !important; /* Giữ nguyên chữ trên điện thoại */
     }
     .carousel-caption p {
-      font-size: 1rem !important;
-      margin-bottom: 1.25rem;
+      display: none;
     }
     .section-title-container .section-title {
         font-size: 1.25rem;
     }
   }
+  /* === KẾT THÚC SỬA KÍCH THƯỚC BANNER === */
 
-    .admin-tournament-card {
+  .admin-tournament-card {
     border: 2px solid #FFC107;
     box-shadow: 0 0 15px rgba(255, 193, 7, 0.5) !important;
   }
