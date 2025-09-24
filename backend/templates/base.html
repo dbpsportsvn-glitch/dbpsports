@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
 
   <style>
+    /* Style này chỉ để hiển thị avatar chữ cái cho người dùng chưa có ảnh đại diện */
     .avatar-ph{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
                background:#6f42c1;color:#fff;font-weight:700;font-size:.9rem}
   </style>
@@ -21,103 +22,145 @@
 
 <body>
 
-<header class="site-header">
-  <div class="navbar">
-    <a class="brand" href="{% url 'home' %}">
-      <img src="{% static 'images/logo.png' %}" alt="DBP Sports"> DBP Sports
-    </a>
+{% comment %} File: backend/templates/base.html {% endcomment %}
 
-    <nav class="nav nav-primary">
-      <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
-      <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-      <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
-      <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
-      <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+<header class="site-header sticky-top">
+    <nav class="navbar container">
+        <a class="brand" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+            <span>DBP Sports</span>
+        </a>
+
+        <div class="nav-center">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        </div>
+        
+        <div class="nav-actions">
+            {% if user.is_authenticated %}
+                <div class="d-flex align-items-center gap-2">
+                    {% if user.organizations.all.first %}
+                    <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
+                        <i class="bi bi-shield-check"></i> <span>QL. BTC</span>
+                    </a>
+                    {% endif %}
+    
+                    <div class="dropdown user-dropdown">
+                        <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% with acct=user.socialaccount_set.first %}
+                                {% if acct and acct.get_avatar_url %}
+                                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="avatar">
+                                {% else %}
+                                <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
+                                {% endif %}
+                            {% endwith %}
+                            <span class="username d-none d-lg-block">{{ user.username }}</span>
+                            <i class="bi bi-chevron-down d-none d-lg-block"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-toggles"></i> QL Đội Bóng</a></li>
+                            <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-building"></i> Khu vực BTC</a></li>
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
+                                    <span><i class="bi bi-bell"></i> Bảng tin BTC</span>
+                                    {% if unread_announcements_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Đổi email</a></li>
+                            <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <div class="d-flex align-items-center gap-2">
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'account_login' %}">Đăng nhập</a>
+                    <a class="btn btn-warning btn-sm d-none d-md-inline-block" href="{% url 'account_signup' %}">Đăng ký</a>
+                </div>
+            {% endif %}
+            
+            <button class="mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
     </nav>
-
-    <button class="menu-toggle" type="button" aria-label="Toggle navigation">
-      <i class="bi bi-list fs-4"></i>
-    </button>
-
-    <div class="nav-user">
-      {% if user.is_authenticated %}
-        <div class="d-flex align-items-center gap-2">
-          
-          {# === BẮT ĐẦU NÚT MỚI CHO BAN TỔ CHỨC === #}
-          {% if user.organizations.all.first %}
-          <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning" title="Quản lý Đơn vị Tổ chức">
-              <i class="bi bi-shield-check"></i> QL. BTC
-          </a>
-          {% endif %}
-          {# === KẾT THÚC NÚT MỚI CHO BAN TỔ CHỨC === #}
-
-          {# Dropdown tài khoản #}
-          <div class="dropdown">
-            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-light" data-bs-toggle="dropdown" aria-expanded="false">
-              {% with acct=user.socialaccount_set.first %}
-                {% if acct and acct.get_avatar_url %}
-                  <img src="{{ acct.get_avatar_url }}" alt="" class="rounded-circle" style="width:28px;height:28px;object-fit:cover">
-                {% else %}
-                  <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
-                {% endif %}
-              {% endwith %}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow">
-                {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
-                <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}">Khu vực BTC</a></li>
-                {# === KẾT THÚC THÊM MỚI === #}
-                
-                <li><a class="dropdown-item" href="{% url 'dashboard' %}">QL Đội Bóng</a></li>           
-              <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
-                      Bảng tin BTC
-                      {% if unread_announcements_count > 0 %}
-                          <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
-                      {% endif %}
-                  </a>
-              </li>            
-              <li><a class="dropdown-item" href="{% url 'account_email' %}">Đổi email</a></li>
-              <li><a class="dropdown-item" href="{% url 'account_change_password' %}">Đổi mật khẩu</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{% url 'account_logout' %}">Đăng xuất</a></li>
-            </ul>
-          </div>
-        </div>
-      {% else %}
-        <div class="d-flex align-items-center gap-2">
-          <a class="nav-link text-light small" href="{% url 'account_login' %}">Đăng nhập</a>
-          <span style="color: rgba(255,255,255,0.3);">|</span>
-          <a class="nav-link text-light small" href="{% url 'account_signup' %}">Đăng ký</a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
 </header>
 
+<div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">Menu</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <nav class="mobile-nav">
+        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        {% if not user.is_authenticated %}
+        <hr>
+        <a class="nav-link" href="{% url 'account_signup' %}">Đăng ký</a>
+        {% endif %}
+    </nav>
+  </div>
+</div>
+
 {% block hero %}{% endblock %}
-<div class="container mt-4">
+
+<div class="container mt-4 content-wrapper">
   <main>
     {% block content %}{% endblock %}
   </main>
-
-  <footer class="py-4 my-4 border-top">
-    <div class="row align-items-center">
-      <div class="col-md-6 mb-2 mb-md-0">
-        <a href="{% url 'home' %}" class="d-inline-flex align-items-center gap-2 text-muted text-decoration-none">
-          <img src="{% static 'images/logo.png' %}" alt="DBP Sports" style="height: 24px;">
-          <span>&copy; {% now "Y" %} DBP Sports</span>
-        </a>
-      </div>
-      <div class="col-md-6 text-md-end">
-        <ul class="list-inline mb-0">
-          <li class="list-inline-item"><a href="{% url 'home' %}" class="text-muted text-decoration-none">Trang chủ</a></li>
-          <li class="list-inline-item"><a href="{% url 'tournaments_active' %}" class="text-muted text-decoration-none">Giải đấu</a></li>
-          <li class="list-inline-item"><a href="{% url 'faq' %}" class="text-muted text-decoration-none">Hướng dẫn</a></li>
-        </ul>
-      </div>
-    </div>
-  </footer>
 </div>
+
+{% comment %} File: backend/templates/base.html - PHẦN FOOTER ĐÃ SỬA {% endcomment %}
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-about">
+                <a href="{% url 'home' %}" class="footer-brand">
+                    <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+                    <span>DBP Sports</span>
+                </a>
+                <p class="text-muted">Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào hàng đầu Việt Nam.</p>
+                
+                <p class="footer-copyright">&copy; {% now "Y" %} DBP Sports. All Rights Reserved.</p>
+            </div>
+            <div class="footer-links">
+                <h6>Về DBP Sports</h6>
+                <ul>
+                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
+                    <li><a href="{% url 'tournaments_active' %}">Giải đấu</a></li>
+                    <li><a href="{% url 'faq' %}">Hướng dẫn</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h6>Pháp lý</h6>
+                <ul>
+                    <li><a href="{% url 'terms_of_service' %}">Điều khoản dịch vụ</a></li>
+                    <li><a href="{% url 'privacy_policy' %}">Chính sách bảo mật</a></li>
+                    <li><a href="{% url 'data_deletion' %}">Xóa dữ liệu</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h6>Theo dõi chúng tôi</h6>
+                <div class="social-icons">
+                    <a href="#" title="Facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="#" title="YouTube"><i class="bi bi-youtube"></i></a>
+                    <a href="#" title="TikTok"><i class="bi bi-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        </div>
+</footer>
 
 {# VÙNG THÔNG BÁO TOAST #}
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -135,14 +178,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 <script>
   (function(){
-    const toggle = document.querySelector('.menu-toggle');
-    const nav = document.querySelector('.site-header .nav-primary');
-    if (toggle && nav) {
-      toggle.addEventListener('click', function() {
-        nav.classList.toggle('open');
-      });
-    }
-
     function attachImageCompression(form) {
       if (!form) return;
       const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
@@ -225,9 +260,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      Fancybox.bind("[data-fancybox]", {
-        // Các tùy chọn tùy chỉnh có thể thêm vào đây
-      });
+      Fancybox.bind("[data-fancybox]", {});
     });
   </script>
 

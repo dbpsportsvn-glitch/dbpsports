@@ -1,47 +1,107 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% comment %} File: backend/tournaments/templates/tournaments/home.html {% endcomment %}
+
 {% block hero %}
-<section class="carousel" id="heroCarousel" style="position: relative; overflow: hidden;">
-  <div class="carousel-track" style="display: flex; transition: transform .6s ease;">
+<section class="carousel" id="heroCarousel">
+  <div class="carousel-track">
     {% for b in banners %}
-      <div class="carousel-slide" style="min-width: 100%; position: relative; height: 85vh; min-height: 450px;">
-        <img src="{{ b.image.url }}" alt="" onerror="this.style.display='none'" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
+      <div class="carousel-slide">
+        <img src="{{ b.image.url }}" alt="{{ b.title }}">
         <div class="carousel-caption">
           <h2>{{ b.title }}</h2>
           {% if b.subtitle %}<p>{{ b.subtitle }}</p>{% endif %}
           {% if b.button_text and b.button_url %}
-            <div class="carousel-actions"><a href="{{ b.button_url }}">{{ b.button_text }}</a></div>
+            <div class="carousel-actions">
+              <a href="{{ b.button_url }}" class="btn btn-warning">{{ b.button_text }}</a>
+            </div>
           {% endif %}
         </div>
       </div>
     {% empty %}
-      <div class="carousel-slide" style="min-width: 100%; position: relative; height: 85vh; min-height: 450px;">
-        <img src="{% static 'images/hero-1.jpg' %}" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;">
+      <div class="carousel-slide">
+        <img src="{% static 'images/hero-1.jpg' %}" alt="Sân vận động">
         <div class="carousel-caption">
           <h2>Sân chơi bóng đá đỉnh cao</h2>
           <p>Tổ chức, tham gia và theo dõi giải đấu dễ dàng.</p>
-          <div class="carousel-actions"><a href="{% url 'livestream' %}">Xem livestream</a></div>
+          <div class="carousel-actions">
+            <a href="{% url 'livestream' %}" class="btn btn-warning">Xem Livestream</a>
+          </div>
         </div>
       </div>
     {% endfor %}
   </div>
+
+  <div class="carousel-dots"></div>
+  <div class="carousel-nav">
+      <button class="carousel-prev" aria-label="Previous slide"><i class="bi bi-chevron-left"></i></button>
+      <button class="carousel-next" aria-label="Next slide"><i class="bi bi-chevron-right"></i></button>
+  </div>
 </section>
 
 <script>
-(function(){
+document.addEventListener('DOMContentLoaded', function() {
   const root = document.getElementById('heroCarousel');
-  if(!root) return;
+  if (!root) return;
+
   const track = root.querySelector('.carousel-track');
   const slides = Array.from(root.querySelectorAll('.carousel-slide'));
-  let i = 0, timer = null;
-  function render(){ track.style.transform = `translateX(-${i*100}%)`; }
-  function tick(){ timer = setInterval(()=>{ i = (i+1)%slides.length; render(); }, 4500); }
-  if(slides.length){ render(); tick(); }
-})();
+  const dotsContainer = root.querySelector('.carousel-dots');
+  const nextBtn = root.querySelector('.carousel-next');
+  const prevBtn = root.querySelector('.carousel-prev');
+  let currentIndex = 0;
+  let autoPlayInterval = null;
+
+  if (slides.length <= 1) {
+    if(dotsContainer) dotsContainer.style.display = 'none';
+    if(nextBtn) nextBtn.style.display = 'none';
+    if(prevBtn) prevBtn.style.display = 'none';
+    return;
+  }
+  
+  function updateCarousel() {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    const dots = dotsContainer.querySelectorAll('button');
+    dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === currentIndex);
+    });
+  }
+
+  function goToSlide(index) {
+    currentIndex = (index + slides.length) % slides.length;
+    updateCarousel();
+    resetAutoPlay();
+  }
+  
+  function createDots() {
+      slides.forEach((_, index) => {
+          const button = document.createElement('button');
+          button.addEventListener('click', () => goToSlide(index));
+          dotsContainer.appendChild(button);
+      });
+  }
+
+  function startAutoPlay() {
+    autoPlayInterval = setInterval(() => {
+      goToSlide(currentIndex + 1);
+    }, 5000); // Chuyển slide sau mỗi 5 giây
+  }
+
+  function resetAutoPlay() {
+    clearInterval(autoPlayInterval);
+    startAutoPlay();
+  }
+
+  prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+  nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+  
+  createDots();
+  updateCarousel();
+  startAutoPlay();
+});
 </script>
 {% endblock %}
-
 
 {% block content %}
   <div class="section-title-wrapper">
