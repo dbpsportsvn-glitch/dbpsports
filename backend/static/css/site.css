@@ -1,6 +1,6 @@
 /* =========================================================
    File: backend/static/css/site.css
-   Version: FINAL v4 - Mobile Header Layout Fix
+   Version: FINAL v6 - Absolute Centering for Mobile Logo
    ========================================================= */
 
 /* --- STICKY FOOTER & BODY SETUP --- */
@@ -26,13 +26,13 @@ body {
     justify-content: space-between;
 }
 
-/* Các khu vực của Navbar */
+/* Các khu vực của Navbar trên Desktop */
 .nav-left, .nav-right {
-    flex: 1 0 0; /* Cho phép co giãn và chiếm không gian bằng nhau */
+    flex: 1 0 0;
 }
-.nav-left { display: flex; justify-content: flex-start; }
+.nav-left { display: flex; justify-content: flex-start; align-items: center; gap: 1rem; }
 .nav-right { display: flex; justify-content: flex-end; }
-.nav-center { display: flex; align-items: center; gap: 2rem; }
+.nav-center { display: flex; justify-content: center; }
 
 .brand {
     display: flex;
@@ -89,7 +89,7 @@ body {
     background: transparent; border: none; color: #fff; font-size: 1.5rem; display: none;
 }
 .offcanvas { background-color: #0f172a; color: #fff; }
-.offcanvas.offcanvas-start { width: 300px; } /* Chiều rộng của menu */
+.offcanvas.offcanvas-start { width: 300px; }
 .mobile-nav { display: flex; flex-direction: column; gap: 0.5rem; }
 .mobile-nav .nav-link { padding: 0.75rem 1rem; font-size: 1.1rem; border-radius: 0.5rem; }
 
@@ -98,8 +98,26 @@ body {
     .main-menu { display: none; }
     .brand-text { display: none; }
     .mobile-menu-toggle { display: block; }
-    .nav-center { flex-grow: 1; justify-content: center; } /* Đẩy logo ra giữa */
+
+    /* --- START OF THE NEW FIX --- */
+    .navbar {
+        position: relative; /* Cần thiết cho việc định vị tuyệt đối của phần tử con */
+    }
+
+    /* Di chuyển logo vào giữa tuyệt đối */
+    .nav-left .brand {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Ẩn khu vực menu trung tâm */
+    .nav-center {
+        display: none;
+    }
+    /* --- END OF THE NEW FIX --- */
 }
+
 
 /* Các phần CSS khác giữ nguyên */
 /* --- 2. Footer --- */

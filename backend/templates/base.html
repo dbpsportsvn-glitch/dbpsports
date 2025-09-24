@@ -27,16 +27,16 @@
 <header class="site-header sticky-top">
     <nav class="navbar container">
         <div class="nav-left">
+            <a class="brand" href="{% url 'home' %}">
+                <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+                <span class="brand-text">DBP Sports</span>
+            </a>
             <button class="mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
                 <i class="bi bi-list"></i>
             </button>
         </div>
 
         <div class="nav-center">
-            <a class="brand" href="{% url 'home' %}">
-                <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
-                <span class="brand-text">DBP Sports</span>
-            </a>
             <div class="main-menu">
                 <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
