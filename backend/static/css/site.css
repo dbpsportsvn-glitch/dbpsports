@@ -122,11 +122,11 @@ body {
 /* Các phần CSS khác giữ nguyên */
 /* --- 2. Footer --- */
 .site-footer {
-    background-color: #0f172a; padding: 2.5rem 0 2rem 0;
+    background-color: #0f172a; padding: 1.5rem 0 2rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0;
 }
 .footer-about p.text-muted { color: #94a3b8 !important; }
-.footer-copyright { margin-top: 1.5rem; font-size: 0.875rem; color: #64748b; }
+.footer-copyright { margin-top: 1rem; font-size: 0.875rem; color: #64748b; }
 .footer-content { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem; }
 .footer-brand {
     display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;
