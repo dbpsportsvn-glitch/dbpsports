@@ -24,3 +24,13 @@ class AvatarUpdateForm(forms.ModelForm):
         labels = {
             'avatar': 'Chọn ảnh mới'
         }
+
+# === BẮT ĐẦU THÊM FORM MỚI ===
+class NotificationPreferencesForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['notify_match_results', 'notify_new_teams']
+        labels = {
+            'notify_match_results': 'Khi có kết quả trận đấu mới',
+            'notify_new_teams': 'Khi có đội mới được duyệt tham gia giải',
+        }
