@@ -25,6 +25,7 @@ urlpatterns = [
     path('tournament/<int:tournament_pk>/gallery/bulk-upload/', views.tournament_bulk_upload, name='tournament_bulk_upload'),
     path('tournament/<int:tournament_pk>/schedule/generate/', views.generate_schedule_view, name='generate_schedule'),
     path('tournament/<int:pk>/schedule/print/', views.tournament_schedule_print_view, name='tournament_schedule_print'),
+    path('tournament/<int:pk>/toggle_follow/', views.toggle_follow_view, name='toggle_follow'),
     
     # --- URL liên quan đến Đội bóng (Team) ---
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),

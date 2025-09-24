@@ -18,6 +18,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 # Local Application Imports
 from organizations.models import Organization
@@ -45,6 +47,7 @@ def home(request):
         {'tournaments_list': active_tournaments, 'banners': banners}
     )
 
+
 def tournaments_active(request):
     # Lấy tham số lọc từ URL (ví dụ: ?region=MIEN_BAC)
     region_filter = request.GET.get('region', '')
@@ -52,6 +55,12 @@ def tournaments_active(request):
 
     # Bắt đầu với việc lấy tất cả các giải đang hoạt động
     tournaments_list = Tournament.objects.exclude(status='FINISHED').select_related('organization').order_by('-start_date')
+
+    # --- BẮT ĐẦU THÊM MỚI ---
+    followed_tournament_ids = []
+    if request.user.is_authenticated:
+        followed_tournament_ids = request.user.followed_tournaments.values_list('id', flat=True)
+    # --- KẾT THÚC THÊM MỚI ---
 
     # Áp dụng bộ lọc nếu có
     if region_filter:
@@ -66,10 +75,11 @@ def tournaments_active(request):
 
     context = {
         'tournaments': tournaments_list,
-        'all_organizations': all_organizations, # Gửi danh sách đơn vị ra template
-        'all_regions': Tournament.Region.choices, # Gửi danh sách khu vực ra template
-        'current_region': region_filter, # Giữ lại lựa chọn của người dùng
-        'current_org': org_filter, # Giữ lại lựa chọn của người dùng
+        'all_organizations': all_organizations,
+        'all_regions': Tournament.Region.choices,
+        'current_region': region_filter,
+        'current_org': org_filter,
+        'followed_tournament_ids': followed_tournament_ids, # Gửi danh sách ID ra template
     }
     return render(request, "tournaments/active_list.html", context)
 
@@ -1058,4 +1068,21 @@ def terms_of_service_view(request):
 
 def data_deletion_view(request):
     """Hiển thị trang hướng dẫn xóa dữ liệu."""
-    return render(request, 'tournaments/legal/data_deletion.html')    
+    return render(request, 'tournaments/legal/data_deletion.html') 
+
+@login_required
+@require_POST # Chỉ cho phép truy cập bằng phương thức POST
+def toggle_follow_view(request, pk):
+    tournament = get_object_or_404(Tournament, pk=pk)
+    user = request.user
+
+    if user in tournament.followers.all():
+        # Nếu đã theo dõi -> Bỏ theo dõi
+        tournament.followers.remove(user)
+        is_following = False
+    else:
+        # Nếu chưa theo dõi -> Theo dõi
+        tournament.followers.add(user)
+        is_following = True
+
+    return JsonResponse({'status': 'ok', 'is_following': is_following})      

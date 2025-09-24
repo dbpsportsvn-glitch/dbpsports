@@ -6,20 +6,16 @@
     height: 180px;
     object-fit: cover;
   }
-  /* === BẮT ĐẦU CSS MỚI === */
-  /* Thêm một viền vàng phát sáng cho card của admin */
   .admin-tournament-card {
     border: 2px solid #FFC107;
     box-shadow: 0 0 15px rgba(255, 193, 7, 0.5) !important;
   }
-  /* === KẾT THÚC CSS MỚI === */
 </style>
 
 <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
   <h1 class="h3 m-0">Giải đấu</h1>
 </div>
 
-{# Khu vực bộ lọc giữ nguyên #}
 <div class="card card-body mb-4">
   <form method="get" class="row g-3 align-items-center">
     <div class="col-md-5">
@@ -50,38 +46,27 @@
   <div class="row row-cols-1 row-cols-md-3 g-3">
     {% for t in tournaments %}
       <div class="col">
-        {# === THAY ĐỔI: Thêm class đặc biệt nếu là giải của admin === #}
         <div class="card h-100 shadow-sm tour-card d-flex flex-column {% if not t.organization %}admin-tournament-card{% endif %}">
           {% if t.image %}
             <img class="card-img-top" src="{{ t.image.url }}" alt="{{ t.name }}">
           {% endif %}
 
-          {# === THÊM class flex-grow-1 VÀO DÒNG DƯỚI ĐÂY === #}
           <div class="card-body flex-grow-1">
             <h5 class="card-title mb-2 text-start">{{ t.name }}</h5>
-
             <p class="mb-2 text-muted">
               <span class="badge bg-info text-dark me-2">{{ t.get_region_display }}</span>
-              
-              {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
               <span class="d-inline-flex align-items-center gap-2">
                 {% if t.organization and t.organization.logo %}
                   <img src="{{ t.organization.logo.url }}" alt="{{ t.organization.name }}" style="width: 20px; height: 20px; object-fit: contain; border-radius: 4px;">
                 {% endif %}
-                
                 <span class="small badge bg-secondary px-2 py-1">
                   BTC: 
-                  {# Thêm điều kiện để đổi màu chữ #}
                   <span {% if not t.organization %}class="text-warning fw-bold"{% endif %}>
                     {% if t.organization %}{{ t.organization.name }}{% else %}DBP Sports{% endif %}
                   </span>
                 </span>
-
               </span>
-              {# === KẾT THÚC THAY ĐỔI === #}
-
             </p>
-
             <p class="mb-2 text-muted">
               {{ t.start_date|date:"d/m/Y" }} – {{ t.end_date|date:"d/m/Y" }}
               <span class="badge bg-success ms-2">{{ t.get_status_display }}</span>
@@ -91,9 +76,31 @@
           <div class="card-footer bg-white border-0 pt-0 mt-auto">
             <div class="d-flex gap-2">
               <a class="btn btn-primary btn-sm" href="{% url 'tournament_detail' pk=t.pk %}">Xem chi tiết</a>
+              
               {% if t.status == "REGISTRATION_OPEN" %}
                 <a class="btn btn-outline-success btn-sm" href="{% url 'create_team' tournament_pk=t.pk %}">Đăng ký</a>
               {% endif %}
+
+              {% if user.is_authenticated %}
+                {% if t.id in followed_tournament_ids %}
+                    <button class="btn btn-outline-success btn-sm btn-follow active" data-tournament-id="{{ t.pk }}">
+                        <i class="bi bi-check-circle-fill"></i> Đang theo dõi
+                    </button>
+                {% else %}
+                    <button class="btn btn-outline-secondary btn-sm btn-follow" data-tournament-id="{{ t.pk }}">
+                        <i class="bi bi-bell"></i> Theo dõi
+                    </button>
+                {% endif %}
+              {% else %}
+                {# Nút Theo dõi cho khách, nhấn vào sẽ chuyển đến trang đăng nhập #}
+                <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-bell"></i> Theo dõi
+                </a>
+              {% endif %}
+              
+              <button class="btn btn-outline-info btn-sm btn-share" data-url="{{ request.scheme }}://{{ request.get_host }}{{ t.get_absolute_url }}" data-title="{{ t.name }}">
+                  <i class="bi bi-share"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -103,4 +110,104 @@
 {% else %}
   <p class="text-muted">Không tìm thấy giải đấu nào phù hợp với tiêu chí của bạn.</p>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Hàm để lấy CSRF token từ cookie (cách làm an toàn và đúng chuẩn)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // --- Xử lý nút Theo dõi (chỉ dành cho người đã đăng nhập) ---
+    document.querySelectorAll('.btn-follow').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
+            const tournamentId = this.dataset.tournamentId;
+            const csrftoken = getCookie('csrftoken');
+
+            if (!csrftoken) {
+                // Nếu không tìm thấy token (người dùng chưa đăng nhập), chuyển đến trang login
+                window.location.href = "{% url 'account_login' %}?next=" + window.location.pathname;
+                return;
+            }
+
+            fetch(`/tournament/${tournamentId}/toggle_follow/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) { // Nếu có lỗi như 403 Forbidden
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'ok') {
+                    if (data.is_following) {
+                        this.classList.add('active', 'btn-outline-success');
+                        this.classList.remove('btn-outline-secondary');
+                        this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Đang theo dõi';
+                    } else {
+                        this.classList.remove('active', 'btn-outline-success');
+                        this.classList.add('btn-outline-secondary');
+                        this.innerHTML = '<i class="bi bi-bell"></i> Theo dõi';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Nếu có lỗi, cũng chuyển hướng đến trang đăng nhập
+                window.location.href = "{% url 'account_login' %}?next=" + window.location.pathname;
+            });
+        });
+    });
+
+    // --- Xử lý nút Chia sẻ ---
+    document.querySelectorAll('.btn-share').forEach(button => {
+        button.addEventListener('click', async function () {
+            const url = this.dataset.url;
+            const title = this.dataset.title;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: title,
+                        text: `Xem thông tin giải đấu ${title} trên DBP Sports!`,
+                        url: url,
+                    });
+                } catch (err) {
+                    console.error('Lỗi khi chia sẻ:', err);
+                }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                } catch (err) {
+                    alert('Không thể sao chép link. Vui lòng sao chép thủ công.');
+                }
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

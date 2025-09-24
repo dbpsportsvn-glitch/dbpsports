@@ -53,9 +53,12 @@ class Tournament(models.Model):
         null=True,
         help_text="Dán đường link chia sẻ của album ảnh Google Drive hoặc Google Photos tại đây."
     )
-
+    followers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='followed_tournaments', blank=True, verbose_name="Người theo dõi")
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('tournament_detail', kwargs={'pk': self.pk})
 
 class Group(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='groups')
