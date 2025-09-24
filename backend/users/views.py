@@ -56,7 +56,7 @@ def dashboard(request):
 
     # Lấy dữ liệu cho các tab khác
     managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
-    followed_tournaments = request.user.followed_tournaments.exclude(status='FINISHED').order_by('start_date')
+    followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
     player_profile = getattr(request.user, 'player_profile', None)
 
     context = {
