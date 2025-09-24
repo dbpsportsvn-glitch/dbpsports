@@ -8,12 +8,10 @@
     /* CSS cho bố cục dashboard mới */
     .dashboard-layout {
         display: grid;
-        grid-template-columns: 280px 1fr; /* Tăng chiều rộng menu trái */
+        grid-template-columns: 280px 1fr;
         gap: 2rem;
         align-items: flex-start;
     }
-
-    /* === BẮT ĐẦU CSS CHO PROFILE CARD MỚI === */
     .profile-card {
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -49,8 +47,27 @@
         font-size: 0.9rem;
         color: #6c757d;
     }
-    /* === KẾT THÚC CSS CHO PROFILE CARD MỚI === */
-
+    .avatar-wrapper {
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .avatar-wrapper .change-avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0,0,0,0.5);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 1.5rem;
+    }
+    .avatar-wrapper:hover .change-avatar-overlay {
+        opacity: 1;
+    }
     .dashboard-nav .nav-link {
         display: flex;
         align-items: center;
@@ -90,7 +107,7 @@
 
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-success mt-3" role="alert">
+            <div class="alert alert-{{ message.tags|default:'info' }} mt-3" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
@@ -99,15 +116,24 @@
     <div class="dashboard-layout">
         <aside>
             <div class="profile-card">
-                {% with acct=user.socialaccount_set.first %}
-                    {% if acct and acct.get_avatar_url %}
-                        <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="profile-avatar">
+                <div class="avatar-wrapper" data-bs-toggle="modal" data-bs-target="#avatarModal">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="profile-avatar">
                     {% else %}
-                        <div class="profile-avatar profile-avatar-ph">
-                            {{ user.email|default:user.username|first|upper }}
-                        </div>
+                        {% with acct=user.socialaccount_set.first %}
+                            {% if acct and acct.get_avatar_url %}
+                                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="profile-avatar">
+                            {% else %}
+                                <div class="profile-avatar profile-avatar-ph">
+                                    {{ user.email|default:user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
                     {% endif %}
-                {% endwith %}
+                    <div class="change-avatar-overlay">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                </div>
                 <h5 class="profile-name">
                     {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
                 </h5>
@@ -145,7 +171,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="tab-pane fade" id="following" role="tabpanel">
                 <h5>Các giải đấu bạn đang theo dõi</h5>
                 <div class="row mt-3">
@@ -169,7 +194,6 @@
                     {% endfor %}
                 </div>
             </div>
-
             <div class="tab-pane fade" id="teams" role="tabpanel">
                 <h5>Các đội bạn đang quản lý</h5>
                 <div class="row mt-3">
@@ -190,7 +214,6 @@
                     {% endfor %}
                 </div>
             </div>
-
             <div class="tab-pane fade" id="password" role="tabpanel">
                 <div class="row justify-content-center">
                     <div class="col-lg-10">
@@ -210,4 +233,34 @@
         </main>
     </div>
 </div>
+
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="avatarModalLabel">Thay đổi ảnh đại diện</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" enctype="multipart/form-data" class="no-compress">
+            {% csrf_token %}
+            {{ avatar_form|crispy }}
+            <div class="d-grid mt-3">
+                <button type="submit" name="update_avatar" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if avatar_form_has_errors %}
+        var avatarModal = new bootstrap.Modal(document.getElementById('avatarModal'));
+        avatarModal.show();
+    {% endif %}
+});
+</script>
+
 {% endblock %}

@@ -179,32 +179,39 @@
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 <script>
   (function(){
+    // Tìm hàm này trong file backend/templates/base.html
     function attachImageCompression(form) {
-      if (!form) return;
-      const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
-      if (!inputFile) return;
-
-      form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const file = inputFile.files[0];
-        if (!file) {
-          form.submit();
-          return;
+        // === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
+        if (!form || form.classList.contains('no-compress')) {
+            // Nếu form không tồn tại, hoặc có class 'no-compress', thì bỏ qua
+            return;
         }
-        new Compressor(file, {
-          quality: 0.8, maxWidth: 1280, maxHeight: 1280,
-          success(result) {
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(new File([result], result.name, { type: result.type }));
-            inputFile.files = dataTransfer.files;
-            form.submit();
-          },
-          error(err) {
-            console.error(err.message);
-            form.submit();
-          },
+        // === KẾT THÚC THAY THẾ ===
+
+        const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
+        if (!inputFile) return;
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const file = inputFile.files[0];
+            if (!file) {
+                form.submit();
+                return;
+            }
+            new Compressor(file, {
+                quality: 0.8, maxWidth: 1280, maxHeight: 1280,
+                success(result) {
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(new File([result], result.name, { type: result.type }));
+                    inputFile.files = dataTransfer.files;
+                    form.submit();
+                },
+                error(err) {
+                    console.error(err.message);
+                    form.submit();
+                },
+            });
         });
-      });
     }
 
     document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
