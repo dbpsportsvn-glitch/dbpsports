@@ -38,6 +38,7 @@ def safe_redirect(request, default_url: str):
         return redirect(next_url)
     return redirect(default_url)
 
+# === THAY THẾ TOÀN BỘ HÀM NÀY ===
 @login_required
 @never_cache
 def organization_dashboard(request):
@@ -48,12 +49,41 @@ def organization_dashboard(request):
         return render(request, 'organizations/organization_pending.html', {'organization': organization})
     if organization.status != Organization.Status.ACTIVE:
          return render(request, 'organizations/no_organization.html')
+
+    if request.method == 'POST':
+        if 'invite_member' in request.POST:
+            if request.user == organization.owner:
+                invite_form = MemberInviteForm(request.POST)
+                if invite_form.is_valid():
+                    email = invite_form.cleaned_data['email']
+                    user_to_invite = User.objects.get(email__iexact=email)
+                    membership, created = Membership.objects.get_or_create(
+                        organization=organization, user=user_to_invite,
+                        defaults={'role': Membership.Role.ADMIN}
+                    )
+                    if created: 
+                        messages.success(request, f"Đã thêm {user_to_invite.email} vào đơn vị.")
+                    else: 
+                        messages.warning(request, f"{user_to_invite.email} đã là thành viên.")
+                else:
+                    for field, errors in invite_form.errors.items():
+                        for error in errors: messages.error(request, error)
+            return redirect('organizations:dashboard')
+
     tournaments = organization.tournaments.all().order_by('-start_date')
+    # Lấy danh sách thành viên để hiển thị trong tab mới
+    members = Membership.objects.filter(organization=organization).select_related('user').order_by('role')
+    # Form để mời thành viên
+    invite_form = MemberInviteForm()
+
     context = {
         'organization': organization,
         'tournaments': tournaments,
+        'members': members,
+        'invite_form': invite_form,
     }
     return render(request, 'organizations/organization_dashboard.html', context)
+# === KẾT THÚC THAY THẾ ===
 
 @login_required
 @never_cache
