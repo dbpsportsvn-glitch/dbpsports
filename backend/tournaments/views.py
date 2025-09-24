@@ -1116,4 +1116,13 @@ def notification_list(request):
         'notifications': notifications
     }
     return render(request, 'tournaments/notification_list.html', context)
-# === KẾT THÚC VIEW MỚI ===    
+
+# === Đánh dấu đã đọc Thông Báo ===
+@login_required
+@require_POST # Chỉ cho phép truy cập qua phương thức POST để bảo mật
+def mark_all_notifications_as_read(request):
+    """
+    Đánh dấu tất cả các thông báo của người dùng hiện tại là đã đọc.
+    """
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect('notification_list')
