@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Thông báo của bạn{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-bell-fill"></i> Thông báo của bạn</h1>
+        <p class="lead">Tất cả các cập nhật từ những giải đấu bạn quan tâm.</p>
+    </div>
+
+    <div class="list-group">
+        {% for notif in notifications %}
+            <a href="{{ notif.related_url|default:'#' }}" 
+               class="list-group-item list-group-item-action {% if not notif.is_read %}list-group-item-light{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ notif.title }}</h5>
+                    <small>{{ notif.created_at|timesince }} trước</small>
+                </div>
+                <p class="mb-1">{{ notif.message }}</p>
+            </a>
+        {% empty %}
+            <div class="list-group-item text-center text-muted">
+                <p class="mb-0">Bạn chưa có thông báo nào.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

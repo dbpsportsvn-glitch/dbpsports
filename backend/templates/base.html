@@ -66,16 +66,28 @@
                             {% endwith %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                             <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-toggles"></i> Tài Khoản</a></li>
+                            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-toggles"></i> Tài Khoản</a></li>
                             <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-building"></i> Khu vực BTC</a></li>
+                            
+                            {# === BẮT ĐẦU CẬP NHẬT TỪ ĐÂY === #}
                             <li>
                                 <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
-                                    <span><i class="bi bi-bell"></i> Bảng tin BTC</span>
+                                    <span><i class="bi bi-megaphone"></i> Bảng tin BTC</span>
                                     {% if unread_announcements_count > 0 %}
-                                    <span class="badge bg-danger rounded-pill">{{ unread_announcements_count }}</span>
+                                    <span class="badge bg-info rounded-pill">{{ unread_announcements_count }}</span>
                                     {% endif %}
                                 </a>
                             </li>
+                            <li>
+                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'notification_list' %}">
+                                    <span><i class="bi bi-bell"></i> Thông báo</span>
+                                    {% if unread_notifications_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ unread_notifications_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            {# === KẾT THÚC CẬP NHẬT === #}
+
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Đổi email</a></li>
                             <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>

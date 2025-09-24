@@ -28,7 +28,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification)
 from .utils import send_notification_email
 
 
@@ -649,7 +649,15 @@ def announcement_dashboard(request):
         Player.objects.filter(user=request.user).values_list('team__tournament_id', flat=True)
     )
     
-    all_relevant_ids = tournament_ids_as_captain.union(tournament_ids_as_player)
+    # === BẮT ĐẦU THAY ĐỔI ===
+    # Lấy thêm danh sách ID các giải đấu mà người dùng theo dõi
+    tournament_ids_as_follower = set(
+        request.user.followed_tournaments.values_list('id', flat=True)
+    )
+
+    # Gộp tất cả các ID lại với nhau
+    all_relevant_ids = tournament_ids_as_captain.union(tournament_ids_as_player, tournament_ids_as_follower)
+    # === KẾT THÚC THAY ĐỔI ===
 
     if not all_relevant_ids:
         announcements = Announcement.objects.none()
@@ -665,8 +673,10 @@ def announcement_dashboard(request):
             is_published=True
         ).select_related('tournament').distinct().order_by('-created_at')
 
+    # Đánh dấu các thông báo là đã đọc
     unread_announcements = announcements.exclude(read_by=request.user)
-    request.user.read_announcements.add(*unread_announcements) 
+    if unread_announcements.exists():
+        request.user.read_announcements.add(*unread_announcements) 
 
     context = {
         'announcements': announcements
@@ -1086,3 +1096,24 @@ def toggle_follow_view(request, pk):
         is_following = True
 
     return JsonResponse({'status': 'ok', 'is_following': is_following})      
+
+# === Thong bao tu dong ===
+@login_required
+@never_cache
+def notification_list(request):
+    """
+    Hiển thị danh sách tất cả thông báo cho người dùng đã đăng nhập.
+    Đánh dấu tất cả là đã đọc khi người dùng truy cập trang này.
+    """
+    notifications = Notification.objects.filter(user=request.user)
+
+    # Lấy danh sách ID các thông báo chưa đọc và sau đó cập nhật chúng
+    unread_notification_ids = list(notifications.filter(is_read=False).values_list('id', flat=True))
+    if unread_notification_ids:
+        Notification.objects.filter(id__in=unread_notification_ids).update(is_read=True)
+
+    context = {
+        'notifications': notifications
+    }
+    return render(request, 'tournaments/notification_list.html', context)
+# === KẾT THÚC VIEW MỚI ===    

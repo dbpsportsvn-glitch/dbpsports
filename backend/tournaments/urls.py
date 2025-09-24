@@ -17,7 +17,8 @@ urlpatterns = [
     path('faq/', views.faq_view, name='faq'),
     path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service_view, name='terms_of_service'),
-    path('data-deletion-instructions/', views.data_deletion_view, name='data_deletion'),    
+    path('data-deletion-instructions/', views.data_deletion_view, name='data_deletion'),
+    path('notifications/', views.notification_list, name='notification_list'),    
     
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
