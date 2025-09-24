@@ -401,12 +401,15 @@ class Notification(models.Model):
     )
     is_read = models.BooleanField("Đã đọc", default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    # URL để người dùng nhấn vào và xem chi tiết
     related_url = models.URLField("Link liên quan", max_length=500, null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
+        # === BẮT ĐẦU THÊM MỚI ===
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+        ]
+        # === KẾT THÚC THÊM MỚI ===
 
     def __str__(self):
         return f"Thông báo cho {self.user.username}: {self.title}"
-# === KẾT THÚC THÊM MODEL MỚI ===
