@@ -1,54 +1,130 @@
 {% extends "base.html" %}
-{% load i18n socialaccount %}
+{% load i18n socialaccount static %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+    }
+    .login-card {
+        width: 100%;
+        max-width: 450px;
+        border: none;
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+        border-radius: 0.75rem;
+    }
+    .btn-social {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-weight: 500;
+    }
+    .btn-google {
+        background-color: #fff;
+        border-color: #ddd;
+        color: #444;
+    }
+    .btn-google:hover {
+        background-color: #f8f9fa;
+        border-color: #ccc;
+    }
+    .btn-facebook {
+        background-color: #1877F2;
+        color: #fff;
+        border: none;
+    }
+    .btn-facebook:hover {
+        background-color: #166fe5;
+        color: #fff;
+    }
+    .divider-text {
+        position: relative;
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        color: #999;
+    }
+    .divider-text:before, .divider-text:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: #ddd;
+    }
+    .divider-text:before { right: 100%; margin-right: 15px; }
+    .divider-text:after { left: 100%; margin-left: 15px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width:520px">
-  <h1 class="h4 mb-3">Đăng nhập</h1>
+<div class="login-container">
+    <div class="card login-card">
+        <div class="card-body p-4 p-md-5">
 
-  {% if form.non_field_errors %}
-    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-  {% endif %}
+            <div class="text-center mb-4">
+                <img src="{% static 'images/logo.png' %}" alt="DBP Sports Logo" style="height: 60px;">
+                <h3 class="mt-3">Đăng nhập tài khoản</h3>
+            </div>
 
-  <form method="post" action="{% url 'account_login' %}" novalidate>
-    {% csrf_token %}
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="login" value="{{ form.login.value|default_if_none:'' }}"
-             class="form-control {% if form.login.errors %}is-invalid{% endif %}" required>
-      {% for e in form.login.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <form method="post" action="{% url 'account_login' %}" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label visually-hidden">Email</label>
+                    <input type="email" name="login" placeholder="Email" value="{{ form.login.value|default_if_none:'' }}"
+                           class="form-control {% if form.login.errors %}is-invalid{% endif %}" required>
+                    {% for e in form.login.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label visually-hidden">Mật khẩu</label>
+                    <div class="input-group">
+                        <input type="password" name="password" placeholder="Mật khẩu"
+                               class="form-control {% if form.password.errors %}is-invalid{% endif %}" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                    {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                        <label class="form-check-label" for="remember">Ghi nhớ</label>
+                    </div>
+                    <a href="{% url 'account_reset_password' %}" class="small">Quên mật khẩu?</a>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">Đăng nhập</button>
+                </div>
+            </form>
+
+            <div class="divider-text">hoặc</div>
+
+            <div class="d-grid gap-2">
+                <a class="btn btn-social btn-google" href="{% provider_login_url 'google' %}">
+                    <i class="bi bi-google"></i> Tiếp tục với Google
+                </a>
+                <a class="btn btn-social btn-facebook" href="{% provider_login_url 'facebook' %}">
+                    <i class="bi bi-facebook"></i> Tiếp tục với Facebook
+                </a>
+            </div>
+
+            <p class="mt-4 text-center small">
+                Chưa có tài khoản?
+                <a href="{% url 'account_signup' %}">Đăng ký ngay</a>
+            </p>
+        </div>
     </div>
-
-    <div class="mb-3">
-      <label class="form-label">Mật khẩu</label>
-      <div class="input-group">
-        <input type="password" name="password"
-              class="form-control {% if form.password.errors %}is-invalid{% endif %}" required>
-        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-          <i class="bi bi-eye-slash"></i>
-        </button>
-      </div>
-      {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="remember" id="remember">
-        <label class="form-check-label" for="remember">Ghi nhớ</label>
-      </div>
-      <a href="{% url 'account_reset_password' %}">Quên mật khẩu?</a>
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-  </form>
-
-  <div class="text-center text-muted my-3">hoặc</div>
-
-  <div class="d-grid gap-2">
-    <a class="btn btn-outline-danger" href="{% provider_login_url 'google' %}">Đăng nhập với Google</a>
-  </div>
-
-  <p class="mt-3">Chưa có tài khoản?
-    <a href="{% url 'account_signup' %}">Đăng ký</a>
-  </p>
 </div>
 {% endblock %}

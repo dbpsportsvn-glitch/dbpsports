@@ -1047,3 +1047,15 @@ def tournament_schedule_print_view(request, pk):
         'group_pages': group_pages,
     }
     return render(request, 'tournaments/schedule_print.html', context)    
+
+def privacy_policy_view(request):
+    """Hiển thị trang chính sách quyền riêng tư."""
+    return render(request, 'tournaments/legal/privacy_policy.html')
+
+def terms_of_service_view(request):
+    """Hiển thị trang điều khoản dịch vụ."""
+    return render(request, 'tournaments/legal/terms_of_service.html')
+
+def data_deletion_view(request):
+    """Hiển thị trang hướng dẫn xóa dữ liệu."""
+    return render(request, 'tournaments/legal/data_deletion.html')    

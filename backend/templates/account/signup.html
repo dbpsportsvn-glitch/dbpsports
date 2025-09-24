@@ -1,66 +1,143 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% load socialaccount %}
+{% load i18n socialaccount static %}
+
+{% block extra_css %}
+{# Sao chép CSS từ trang đăng nhập để đảm bảo đồng bộ #}
+<style>
+    .signup-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+    .signup-card {
+        width: 100%;
+        max-width: 480px; /* Rộng hơn một chút cho 2 trường mật khẩu */
+        border: none;
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+        border-radius: 0.75rem;
+    }
+    .btn-social {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-weight: 500;
+    }
+    .btn-google {
+        background-color: #fff;
+        border-color: #ddd;
+        color: #444;
+    }
+    .btn-google:hover {
+        background-color: #f8f9fa;
+        border-color: #ccc;
+    }
+    .btn-facebook {
+        background-color: #1877F2;
+        color: #fff;
+        border: none;
+    }
+    .btn-facebook:hover {
+        background-color: #166fe5;
+        color: #fff;
+    }
+    .divider-text {
+        position: relative;
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        color: #999;
+    }
+    .divider-text:before, .divider-text:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 40%;
+        height: 1px;
+        background: #ddd;
+    }
+    .divider-text:before { right: 100%; margin-right: 15px; }
+    .divider-text:after { left: 100%; margin-left: 15px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4" style="max-width:520px">
-  <h1 class="h4 mb-3">{% trans "Tạo tài khoản" %}</h1>
+<div class="signup-container">
+    <div class="card signup-card">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <img src="{% static 'images/logo.png' %}" alt="DBP Sports Logo" style="height: 60px;">
+                <h3 class="mt-3">Tạo tài khoản mới</h3>
+            </div>
 
-  {% if form.non_field_errors %}
-    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-  {% endif %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
 
-  <form method="post" action="{% url 'account_signup' %}" novalidate>
-    {% csrf_token %}
+            <form method="post" action="{% url 'account_signup' %}" novalidate>
+                {% csrf_token %}
 
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" name="email" value="{{ form.email.value|default_if_none:'' }}"
-             class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
-      {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                <div class="mb-3">
+                    <input type="email" name="email" placeholder="Email" value="{{ form.email.value|default_if_none:'' }}"
+                           class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
+                    {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="password" name="password1" placeholder="Mật khẩu"
+                               class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                    {% for e in form.password1.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                     <div class="input-group">
+                        <input type="password" name="password2" placeholder="Nhập lại mật khẩu"
+                               class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </div>
+                    {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                {# === BẮT ĐẦU THÊM TẠI ĐÂY === #}
+                <div class="form-check mb-3 small">
+                    <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                    <label class="form-check-label text-muted" for="termsCheck">
+                        Tôi đã đọc và đồng ý với
+                        <a href="{% url 'terms_of_service' %}" target="_blank">Điều khoản Dịch vụ</a> và
+                        <a href="{% url 'privacy_policy' %}" target="_blank">Chính sách Quyền riêng tư</a>.
+                    </label>
+                </div>              
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Đăng ký</button>
+                </div>
+            </form>
+
+            <div class="divider-text">hoặc</div>
+
+            <div class="d-grid gap-2">
+                <a class="btn btn-social btn-google" href="{% provider_login_url 'google' process='signup' %}">
+                    <i class="bi bi-google"></i> Đăng ký với Google
+                </a>
+                <a class="btn btn-social btn-facebook" href="{% provider_login_url 'facebook' process='signup' %}">
+                    <i class="bi bi-facebook"></i> Đăng ký với Facebook
+                </a>
+            </div>
+
+            <p class="mt-4 text-center small">
+                Đã có tài khoản?
+                <a href="{% url 'account_login' %}">Đăng nhập ngay</a>
+            </p>
+        </div>
     </div>
-
-    <div class="mb-3">
-      <label class="form-label">Mật khẩu</label>
-      <div class="input-group">
-        <input type="password" name="password1"
-              class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
-        <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
-          <i class="bi bi-eye-slash"></i>
-        </button>
-      </div>
-      {% for e in form.password1.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label">Nhập lại mật khẩu</label>
-      <div class="input-group">
-        <input type="password" name="password2"
-              class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
-        <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
-          <i class="bi bi-eye-slash"></i>
-        </button>
-      </div>
-      {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
-  </form>
-
-  <div class="text-center text-muted my-3">hoặc</div>
-
-  {% get_providers as socialaccount_providers %}
-  {% if socialaccount_providers %}
-    <div class="d-grid gap-2">
-      <a class="btn btn-outline-danger"
-         href="{% provider_login_url 'google' process='signup' %}">
-        Đăng ký bằng Google
-      </a>
-    </div>
-  {% endif %}
-
-  <p class="mt-3">Đã có tài khoản?
-    <a href="{% url 'account_login' %}">Đăng nhập</a>
-  </p>
 </div>
 {% endblock %}

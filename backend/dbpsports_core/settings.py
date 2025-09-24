@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",  # dùng Google
+    'allauth.socialaccount.providers.facebook',
 ]
 
 # === Middleware ===
@@ -212,6 +213,8 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = "account_login" # Sử dụng URL chuẩn của allauth
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # Cấu hình allauth để sử dụng email làm username
 ACCOUNT_AUTHENTICATION_METHOD = "email" # Đăng nhập bằng email
@@ -237,3 +240,22 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # ... (cấu hình google)
+    },
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile'],
+        'FIELDS': [
+            'id', 'email', 'name', 'first_name', 'last_name',
+        ],
+        # ... (các cài đặt khác)
+        'APP': {
+            'client_id': env('FACEBOOK_APP_ID'),      # <-- Đọc ID từ .env
+            'secret': env('FACEBOOK_SECRET_KEY'), # <-- Đọc Khóa bí mật từ .env
+            'key': ''
+        }
+    }
+}

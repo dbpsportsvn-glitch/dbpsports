@@ -15,6 +15,9 @@ urlpatterns = [
 
     path('dashboard/announcements/', views.announcement_dashboard, name='announcement_dashboard'),
     path('faq/', views.faq_view, name='faq'),
+    path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
+    path('terms-of-service/', views.terms_of_service_view, name='terms_of_service'),
+    path('data-deletion-instructions/', views.data_deletion_view, name='data_deletion'),    
     
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),

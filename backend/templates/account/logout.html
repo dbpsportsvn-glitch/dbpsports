@@ -1,12 +1,40 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+    }
+    .auth-card {
+        width: 100%;
+        max-width: 450px;
+        border: none;
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+        border-radius: 0.75rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4" style="max-width:480px">
-  <h1 class="h4 mb-3">{% trans "Sign Out" %}</h1>
-  <p class="mb-3">{% trans "Are you sure you want to sign out?" %}</p>
-  <form method="post" action="{% url 'account_logout' %}">
-    {% csrf_token %}
-    <button class="btn btn-danger" type="submit">{% trans "Sign Out" %}</button>
-  </form>
+<div class="auth-container">
+    <div class="card auth-card">
+        <div class="card-body p-4 p-md-5">
+            <img src="{% static 'images/logo.png' %}" alt="DBP Sports Logo" style="height: 60px;" class="mb-4">
+            <h3>{% trans "Đăng xuất" %}</h3>
+            <p class="text-muted">{% trans "Bạn có chắc chắn muốn đăng xuất?" %}</p>
+            <form method="post" action="{% url 'account_logout' %}">
+                {% csrf_token %}
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-danger btn-lg" type="submit">{% trans "Đăng xuất" %}</button>
+                    <a href="{% url 'home' %}" class="btn btn-secondary">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
