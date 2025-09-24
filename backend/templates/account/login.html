@@ -41,20 +41,23 @@
         background-color: #166fe5;
         color: #fff;
     }
-    .divider-text {
-        position: relative;
-        text-align: center;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+.or-divider {
+        display: flex;
+        align-items: center;
         color: #999;
+        margin: 1.5rem 0;
     }
-    .divider-text:before, .divider-text:after {
-        content: "";
-        position: absolute;
-        top: 50%;
-        width: 40%;
+    .or-divider::before, .or-divider::after {
+        content: '';
+        flex-grow: 1;
         height: 1px;
         background: #ddd;
+    }
+    .or-divider::before {
+        margin-right: 1rem;
+    }
+    .or-divider::after {
+        margin-left: 1rem;
     }
     .divider-text:before { right: 100%; margin-right: 15px; }
     .divider-text:after { left: 100%; margin-left: 15px; }
@@ -109,7 +112,7 @@
                 </div>
             </form>
 
-            <div class="divider-text">hoặc</div>
+            <div class="or-divider">hoặc</div>
 
             <div class="d-grid gap-2">
                 <a class="btn btn-social btn-google" href="{% provider_login_url 'google' %}">
