@@ -1,6 +1,6 @@
 /* =========================================================
    File: backend/static/css/site.css
-   Version: FINAL v3 - Final Responsive Fix
+   Version: FINAL v4 - Mobile Header Layout Fix
    ========================================================= */
 
 /* --- STICKY FOOTER & BODY SETUP --- */
@@ -10,10 +10,7 @@ body {
     min-height: 100vh;
     color: #0f172a;
 }
-
-.content-wrapper {
-    flex-grow: 1;
-}
+.content-wrapper { flex-grow: 1; }
 
 /* --- 1. Header --- */
 .site-header {
@@ -22,14 +19,20 @@ body {
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .navbar {
     height: 64px;
-    display: flex; /* Đổi lại thành flex để dễ kiểm soát hơn */
+    display: flex;
     align-items: center;
-    justify-content: space-between; /* Căn các nhóm ra xa nhau */
-    gap: 1.5rem;
+    justify-content: space-between;
 }
+
+/* Các khu vực của Navbar */
+.nav-left, .nav-right {
+    flex: 1 0 0; /* Cho phép co giãn và chiếm không gian bằng nhau */
+}
+.nav-left { display: flex; justify-content: flex-start; }
+.nav-right { display: flex; justify-content: flex-end; }
+.nav-center { display: flex; align-items: center; gap: 2rem; }
 
 .brand {
     display: flex;
@@ -39,82 +42,41 @@ body {
     font-weight: 700;
     font-size: 1.25rem;
     text-decoration: none;
-    flex-shrink: 0; /* Ngăn logo bị co lại */
 }
 .brand img { height: 32px; }
+.brand-text { display: block; }
 
-.nav-center {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    flex-grow: 1; /* Cho phép menu trung tâm chiếm không gian thừa */
-}
-
+.main-menu { display: flex; gap: 0.5rem; }
 .nav-link {
-    color: #cbd5e1;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-weight: 500;
-    position: relative;
-    white-space: nowrap; /* Ngăn menu xuống dòng */
+    color: #cbd5e1; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none;
+    font-weight: 500; position: relative; white-space: nowrap;
     transition: color 0.2s ease, background-color 0.2s ease;
 }
-.nav-link:hover {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-.nav-link.active {
-    color: #fff;
-    font-weight: 600;
-}
+.nav-link:hover { color: #fff; background-color: rgba(255, 255, 255, 0.1); }
+.nav-link.active { color: #fff; font-weight: 600; }
 .nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    left: 1rem;
-    right: 1rem;
-    height: 2px;
-    background-color: #f59e0b;
-    border-radius: 2px;
-}
-
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0; /* Ngăn khu vực này bị co lại */
+    content: ''; position: absolute; bottom: 4px; left: 1rem; right: 1rem;
+    height: 2px; background-color: #f59e0b; border-radius: 2px;
 }
 
 /* User Dropdown */
 .user-dropdown .user-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: transparent;
-    border: none;
-    color: #e2e8f0;
-    padding: 0.25rem;
-    border-radius: 99px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    display: flex; align-items: center; gap: 0.5rem; background: transparent;
+    border: none; color: #e2e8f0; padding: 0.25rem; border-radius: 99px;
+    cursor: pointer; transition: background-color 0.2s ease;
 }
 .user-dropdown .user-chip:hover { background-color: rgba(255, 255, 255, 0.1); }
 .user-dropdown .avatar, .user-dropdown .avatar-ph {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
 }
-.user-dropdown .username { font-weight: 500; }
 .user-dropdown .dropdown-menu {
-    background-color: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-    border-radius: 0.75rem; padding: 0.5rem; margin-top: 0.5rem !important;
+    background-color: #1e293b; border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-radius: 0.75rem;
+    padding: 0.5rem; margin-top: 0.5rem !important;
 }
 .user-dropdown .dropdown-item {
-    color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; border-radius: 0.5rem;
+    color: #cbd5e1; display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 1rem; border-radius: 0.5rem;
 }
 .user-dropdown .dropdown-item i { font-size: 1.1rem; width: 20px; text-align: center; color: #94a3b8; }
 .user-dropdown .dropdown-item:hover { background-color: #334155; color: #fff; }
@@ -122,80 +84,46 @@ body {
 .user-dropdown .dropdown-item.text-danger:hover { background-color: rgba(239, 68, 68, 0.1); }
 .user-dropdown .dropdown-divider { border-color: rgba(255, 255, 255, 0.1); }
 
-
 /* Mobile Menu Toggle & Offcanvas */
 .mobile-menu-toggle {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.5rem;
-    display: none;
+    background: transparent; border: none; color: #fff; font-size: 1.5rem; display: none;
 }
 .offcanvas { background-color: #0f172a; color: #fff; }
+.offcanvas.offcanvas-start { width: 300px; } /* Chiều rộng của menu */
 .mobile-nav { display: flex; flex-direction: column; gap: 0.5rem; }
 .mobile-nav .nav-link { padding: 0.75rem 1rem; font-size: 1.1rem; border-radius: 0.5rem; }
 
-/* Responsive: Áp dụng cho màn hình nhỏ hơn 992px */
+/* Responsive */
 @media (max-width: 991.98px) {
-    .nav-center { display: none; }
+    .main-menu { display: none; }
+    .brand-text { display: none; }
     .mobile-menu-toggle { display: block; }
+    .nav-center { flex-grow: 1; justify-content: center; } /* Đẩy logo ra giữa */
 }
 
+/* Các phần CSS khác giữ nguyên */
 /* --- 2. Footer --- */
 .site-footer {
-    background-color: #0f172a;
-    padding: 2.5rem 0 2rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
+    background-color: #0f172a; padding: 2.5rem 0 2rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0;
 }
 .footer-about p.text-muted { color: #94a3b8 !important; }
-.footer-copyright {
-    margin-top: 1.5rem;
-    font-size: 0.875rem;
-    color: #64748b;
-}
-.footer-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 2rem;
-}
+.footer-copyright { margin-top: 1.5rem; font-size: 0.875rem; color: #64748b; }
+.footer-content { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem; }
 .footer-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #fff !important;
-    text-decoration: none;
-    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem;
+    font-weight: 700; color: #fff !important; text-decoration: none; margin-bottom: 1rem;
 }
 .footer-brand img { height: 32px; }
-.footer-links h6 {
-    color: #fff;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
+.footer-links h6 { color: #fff; font-weight: 600; margin-bottom: 1rem; }
 .footer-links ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;
 }
-.footer-links a {
-    color: #94a3b8;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-.footer-links a:hover {
-    color: #fff;
-    text-decoration: underline;
-}
+.footer-links a { color: #94a3b8; text-decoration: none; transition: color 0.2s ease; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
 .social-icons { display: flex; gap: 1rem; }
 .social-icons a { color: #94a3b8; font-size: 1.5rem; }
 .social-icons a:hover { color: #fff; }
-
 @media (max-width: 767px) {
     .footer-content { grid-template-columns: 1fr 1fr; }
     .footer-about { grid-column: 1 / -1; }
@@ -206,109 +134,42 @@ body {
     .footer-about .footer-copyright { margin-top: 1rem; }
 }
 
-/* --- 3. Banner / Carousel Fix --- */
-.carousel {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    margin: 0;
-}
-.carousel-track {
-    display: flex;
-    transition: transform .6s ease;
-}
-.carousel-slide {
-    min-width: 100%;
-    position: relative;
-    aspect-ratio: 16 / 9;
-    background-color: #000;
-}
-.carousel-slide img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+/* --- 3. Banner / Carousel --- */
+.carousel { position: relative; overflow: hidden; width: 100%; margin: 0; }
+.carousel-track { display: flex; transition: transform .6s ease; }
+.carousel-slide { min-width: 100%; position: relative; aspect-ratio: 16 / 9; background-color: #000; }
+.carousel-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .carousel-slide::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%);
-  pointer-events: none;
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%); pointer-events: none;
 }
 .carousel-caption {
-    position: absolute;
-    left: 50%;
-    bottom: 10%;
-    transform: translateX(-50%);
-    color: #fff;
-    width: 90%;
-    max-width: 800px;
-    text-align: center;
-    z-index: 2;
+    position: absolute; left: 50%; bottom: 10%; transform: translateX(-50%);
+    color: #fff; width: 90%; max-width: 800px; text-align: center; z-index: 2;
 }
-.carousel-caption h2 {
-    font-size: 3.5rem;
-    font-weight: 800;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.7);
-}
-.carousel-caption p {
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-}
-.carousel-actions .btn {
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-}
+.carousel-caption h2 { font-size: 3.5rem; font-weight: 800; text-shadow: 0 4px 15px rgba(0,0,0,0.7); }
+.carousel-caption p { font-size: 1.25rem; margin-bottom: 1.5rem; text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+.carousel-actions .btn { font-weight: 600; padding: 0.75rem 1.5rem; }
 .carousel-dots {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 20px;
-    display: flex;
-    gap: 10px;
-    z-index: 3;
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 20px;
+    display: flex; gap: 10px; z-index: 3;
 }
 .carousel-dots button {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff;
+    background: transparent; padding: 0; cursor: pointer; transition: background-color 0.3s ease;
 }
-.carousel-dots button.active {
-    background-color: #fff;
-}
+.carousel-dots button.active { background-color: #fff; }
 .carousel-nav {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 3;
-    pointer-events: none;
+    position: absolute; inset: 0; display: flex; justify-content: space-between;
+    align-items: center; z-index: 3; pointer-events: none;
 }
 .carousel-nav button {
-    pointer-events: auto;
-    background: rgba(0,0,0,0.4);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.2);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    margin: 0 1rem;
-    cursor: pointer;
-    font-size: 1.5rem;
+    pointer-events: auto; background: rgba(0,0,0,0.4); color: #fff;
+    border: 1px solid rgba(255,255,255,0.2); width: 48px; height: 48px;
+    border-radius: 50%; margin: 0 1rem; cursor: pointer; font-size: 1.5rem;
     transition: background-color 0.2s ease;
 }
-.carousel-nav button:hover {
-    background: rgba(0,0,0,0.6);
-}
+.carousel-nav button:hover { background: rgba(0,0,0,0.6); }
 @media (max-width: 767px) {
     .carousel-slide { aspect-ratio: 4 / 3; }
     .carousel-caption h2 { font-size: 2rem; }
@@ -316,7 +177,5 @@ body {
     .carousel-nav button { width: 40px; height: 40px; font-size: 1.2rem; }
 }
 
-/* --- 4. Popup Notification Fix --- */
-.toast-body {
-    color: #212529;
-}
+/* --- 4. Popup Notification --- */
+.toast-body { color: #212529; }
