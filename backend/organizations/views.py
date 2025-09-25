@@ -418,15 +418,17 @@ def edit_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
     if request.method == 'POST':
         form = TournamentCreationForm(request.POST, request.FILES, instance=tournament)
         if form.is_valid():
             form.save()
             messages.success(request, "Đã cập nhật thông tin giải đấu thành công!")
-            default_url = f"{reverse('organizations:manage_tournament', args=[pk])}?view=settings"
-            return safe_redirect(request, default_url)
+            # === DÒNG SỬA LỖI: Chuyển hướng về lại chính trang chỉnh sửa ===
+            return redirect('organizations:edit_tournament', pk=pk)
     else:
         form = TournamentCreationForm(instance=tournament)
+        
     context = {
         'form': form,
         'tournament': tournament,
