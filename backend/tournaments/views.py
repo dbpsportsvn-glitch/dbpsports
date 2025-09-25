@@ -29,7 +29,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
                      Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification)
-from .utils import send_notification_email
+from .utils import send_notification_email, send_schedule_notification
 
 
 #==================================
@@ -703,13 +703,6 @@ def draw_groups_view(request, tournament_pk):
         # Chuyển hướng họ về trang chi tiết giải đấu
         return redirect('tournament_detail', pk=tournament.pk)
 
-    # Kiểm tra xem giải đấu còn đang mở đăng ký không
-    if tournament.status == 'REGISTRATION_OPEN':
-        # Gửi một thông báo lỗi cho người dùng
-        messages.error(request, "Không thể bốc thăm khi giải đấu vẫn đang trong giai đoạn đăng ký.")
-        # Chuyển hướng họ về trang chi tiết giải đấu
-        return redirect('tournament_detail', pk=tournament.pk)
-
     if request.method == 'POST':
         try:
             results_str = request.POST.get('draw_results')
@@ -747,7 +740,8 @@ def draw_groups_view(request, tournament_pk):
                 "Kết quả bốc thăm chia bảng đã có. Hãy vào xem chi tiết.",
                 'tournament_detail'
             )            
-            return redirect('tournament_detail', pk=tournament.pk)
+            # CHỈNH SỬA TẠI ĐÂY
+            return redirect(reverse('tournament_detail', kwargs={'pk': tournament.pk}) + '?tab=teams#teams')
 
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
@@ -775,6 +769,7 @@ def draw_groups_view(request, tournament_pk):
     }
     return render(request, 'tournaments/draw_groups.html', context)
 
+# Thay thế toàn bộ hàm generate_schedule_view cũ bằng hàm này
 @login_required
 @never_cache
 def generate_schedule_view(request, tournament_pk):
@@ -824,8 +819,9 @@ def generate_schedule_view(request, tournament_pk):
                     f"Giải đấu '{tournament.name}' đã có lịch thi đấu",
                     "Lịch thi đấu vòng bảng đã được tạo. Hãy vào xem chi tiết.",
                     'tournament_detail'
-                )            
-                return redirect('tournament_detail', pk=tournament.pk)
+                )
+                # CHỈNH SỬA TẠI ĐÂY
+                return redirect(reverse('tournament_detail', kwargs={'pk': tournament.pk}) + '?tab=schedule#schedule')
             except Exception as e:
                 messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
                 return redirect('generate_schedule', tournament_pk=tournament.pk)
@@ -834,6 +830,7 @@ def generate_schedule_view(request, tournament_pk):
         else:
             form = ScheduleGenerationForm(request.POST)
             if form.is_valid():
+                # (Toàn bộ logic tạo lịch xem trước của bạn giữ nguyên ở đây)
                 data = form.cleaned_data
                 start_date = data['start_date']
                 time_slots_str = [t.strip() for t in data['time_slots'].split(',')]
@@ -920,6 +917,7 @@ def generate_schedule_view(request, tournament_pk):
         'unscheduled_matches': None,
     }
     return render(request, 'tournaments/generate_schedule.html', context)
+
 
 def player_detail(request, pk):
     player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
