@@ -2,7 +2,13 @@
 from django import forms
 from .models import Team, Player, Comment, Tournament
 
+# === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class TeamCreationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        # Lấy user từ view và xóa khỏi kwargs trước khi gọi super()
+        self.user = kwargs.pop('user', None)
+        super(TeamCreationForm, self).__init__(*args, **kwargs)
+
     class Meta:
         model = Team
         fields = ['name', 'coach_name', 'logo']
@@ -11,6 +17,13 @@ class TeamCreationForm(forms.ModelForm):
             'coach_name': 'Tên huấn luyện viên (không bắt buộc)',
             'logo': 'Logo đội bóng',
         }
+    
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        # Chỉ kiểm tra nếu user đã được truyền vào
+        if self.user and Team.objects.filter(captain=self.user, name__iexact=name).exists():
+            raise forms.ValidationError("Bạn đã có một đội với tên này. Vui lòng chọn một tên khác.")
+        return name
 
 class PlayerCreationForm(forms.ModelForm):
     class Meta:

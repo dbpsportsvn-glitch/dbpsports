@@ -357,18 +357,24 @@ def team_detail(request, pk):
 def create_team(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     if request.method == 'POST':
-        form = TeamCreationForm(request.POST, request.FILES)
+        # === THAY ĐỔI DÒNG NÀY ===
+        form = TeamCreationForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
+            # Bỏ try-except vì form đã xử lý lỗi trùng tên của captain
+            team = form.save(commit=False)
+            team.tournament = tournament
+            team.captain = request.user
+            
+            # Chỉ cần bắt lỗi trùng tên trong cùng giải đấu
             try:
-                team = form.save(commit=False)
-                team.tournament = tournament
-                team.captain = request.user
                 team.save()
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
-                form.add_error(None, "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
+                 form.add_error('name', "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
+
     else:
-        form = TeamCreationForm()
+        # === VÀ THAY ĐỔI DÒNG NÀY ===
+        form = TeamCreationForm(user=request.user)
         
     context = {
         'form': form,

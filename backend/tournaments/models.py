@@ -112,7 +112,11 @@ class Team(models.Model):
     payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["tournament", "name"], name="uniq_team_name_in_tournament")]
+        constraints = [
+            models.UniqueConstraint(fields=["tournament", "name"], name="uniq_team_name_in_tournament"),
+            # === THÊM DÒNG NÀY VÀO ===
+            models.UniqueConstraint(fields=["captain", "name"], name="unique_team_name_per_captain"),
+        ]
 
     def __str__(self):
         return self.name
