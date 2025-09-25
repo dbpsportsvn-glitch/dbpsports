@@ -16,13 +16,43 @@
     /* Style này chỉ để hiển thị avatar chữ cái cho người dùng chưa có ảnh đại diện */
     .avatar-ph{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
                background:#6f42c1;color:#fff;font-weight:700;font-size:.9rem}
+    
+    /* === BẮT ĐẦU CSS MỚI CHO ICON THÔNG BÁO === */
+    .notification-icon {
+        position: relative;
+        color: #cbd5e1;
+        font-size: 1.4rem; /* Kích thước icon chuông & loa */
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        padding: 0 0.5rem;
+        transition: color 0.2s ease;
+    }
+    .notification-icon:hover {
+        color: #fff;
+    }
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: 0px;
+        font-size: 0.65rem;
+        font-weight: bold;
+        background-color: #ef4444; /* Màu đỏ cho thông báo */
+        color: white;
+        border-radius: 50%;
+        padding: 2px 5px;
+        line-height: 1;
+        border: 2px solid #0f172a; /* Màu nền header để tạo viền */
+    }
+    .notification-badge.info {
+        background-color: #3b82f6; /* Màu xanh cho bảng tin */
+    }
+    /* === KẾT THÚC CSS MỚI === */
   </style>
   {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-
-{% comment %} File: backend/templates/base.html - Sửa lại Header và Offcanvas {% endcomment %}
 
 <header class="site-header sticky-top">
     <nav class="navbar container">
@@ -48,17 +78,32 @@
 
         <div class="nav-right">
             {% if user.is_authenticated %}
-                <div class="d-flex align-items-center gap-2">
-                    {% if user.organizations.all.first %}
+                <div class="d-flex align-items-center gap-3"> {% if user.organizations.all.first %}
                     <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
                         <i class="bi bi-shield-check"></i> <span>QL. BTC</span>
                     </a>
                     {% endif %}
+
+                    <a href="{% url 'announcement_dashboard' %}" class="notification-icon" title="Bảng tin từ BTC">
+                        <i class="bi bi-megaphone-fill"></i>
+                        {% if unread_announcements_count > 0 %}
+                        <span class="notification-badge info">{{ unread_announcements_count }}</span>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'notification_list' %}" class="notification-icon" title="Thông báo của bạn">
+                        <i class="bi bi-bell-fill"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
     
                     <div class="dropdown user-dropdown">
                         <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                              {% with acct=user.socialaccount_set.first %}
-                                {% if acct and acct.get_avatar_url %}
+                                {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar">
+                                {% elif acct and acct.get_avatar_url %}
                                 <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="avatar">
                                 {% else %}
                                 <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
@@ -66,37 +111,19 @@
                             {% endwith %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-toggles"></i> Tài Khoản</a></li>
-                            <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-building"></i> Khu vực BTC</a></li>
-                            
-                            {# === BẮT ĐẦU CẬP NHẬT TỪ ĐÂY === #}
-                            <li>
-                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'announcement_dashboard' %}">
-                                    <span><i class="bi bi-megaphone"></i> Bảng tin BTC</span>
-                                    {% if unread_announcements_count > 0 %}
-                                    <span class="badge bg-info rounded-pill">{{ unread_announcements_count }}</span>
-                                    {% endif %}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'notification_list' %}">
-                                    <span><i class="bi bi-bell"></i> Thông báo</span>
-                                    {% if unread_notifications_count > 0 %}
-                                    <span class="badge bg-danger rounded-pill">{{ unread_notifications_count }}</span>
-                                    {% endif %}
-                                </a>
-                            </li>
-                            {# === KẾT THÚC CẬP NHẬT === #}
-
+                            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
+                            {% if user.organizations.all.first %}
+                            <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
+                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Đổi email</a></li>
+                            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Quản lý Email</a></li>
                             <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
                         </ul>
                     </div>
                 </div>
-            {% else %}
+                {% else %}
                 <div class="d-flex align-items-center gap-2">
                     <a class="btn btn-outline-light btn-sm" href="{% url 'account_login' %}">Đăng nhập</a>
                     <a class="btn btn-warning btn-sm d-none d-md-inline-block" href="{% url 'account_signup' %}">Đăng ký</a>
@@ -134,7 +161,6 @@
   </main>
 </div>
 
-{% comment %} File: backend/templates/base.html - PHẦN FOOTER ĐÃ SỬA {% endcomment %}
 <footer class="site-footer">
     <div class="container">
         <div class="footer-content">
@@ -191,14 +217,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 <script>
   (function(){
-    // Tìm hàm này trong file backend/templates/base.html
     function attachImageCompression(form) {
-        // === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
         if (!form || form.classList.contains('no-compress')) {
-            // Nếu form không tồn tại, hoặc có class 'no-compress', thì bỏ qua
             return;
         }
-        // === KẾT THÚC THAY THẾ ===
 
         const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
         if (!inputFile) return;
