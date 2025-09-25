@@ -81,12 +81,19 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         position: relative;
+        border: 2px solid transparent;
     }
     .team-ball:hover {
         transform: scale(1.1);
         box-shadow: 0 0 15px var(--blue-accent);
+    }
+    /* === CSS MỚI: Style cho đội đang được bốc thăm === */
+    .team-ball.is-drawing {
+        border-color: var(--gold);
+        box-shadow: 0 0 20px var(--gold);
+        transform: scale(1.15);
     }
     .team-ball .logo {
         width: 32px;
@@ -126,6 +133,12 @@
         background: var(--panel-dark);
         border-radius: 10px;
         border: 1px solid var(--border-color);
+        transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    /* === CSS MỚI: Style cho bảng đấu là ứng viên === */
+    .group-card.is-candidate {
+        border-color: var(--gold);
+        box-shadow: 0 0 20px var(--gold);
     }
     .group-card h5 {
         background: var(--border-color);
@@ -149,7 +162,7 @@
         align-items: center;
         gap: 0.75rem;
         font-weight: 600;
-        opacity: 0; /* Ẩn ban đầu */
+        opacity: 0;
         transform: scale(0.8);
         transition: opacity 0.5s ease, transform 0.5s ease;
     }
@@ -175,11 +188,11 @@
     }
     .flying-ball {
         position: absolute;
-        background: #4f46e5;
+        background: var(--gold);
         border: 2px solid white;
-        box-shadow: 0 0 20px #6366f1;
+        box-shadow: 0 0 20px var(--gold);
         z-index: 10000;
-        transition: all 0.8s cubic-bezier(0.5, 0, 0.5, 1); /* Hiệu ứng bay */
+        transition: all 0.8s cubic-bezier(0.5, 0, 0.5, 1);
     }
 </style>
 
@@ -244,17 +257,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- CÁC HÀM XỬ LÝ ---
 
-    // Hàm tạo quả bóng cho đội
     function createTeamBall(team) {
         const div = document.createElement('div');
         div.className = 'team-ball';
         div.dataset.id = team.id;
-        div.dataset.name = team.name; // Tooltip
+        div.dataset.name = team.name;
         div.innerHTML = `<img src="${team.logo || 'https://via.placeholder.com/32'}" alt="${team.name}" class="logo">`;
         return div;
     }
     
-    // Khởi tạo hoặc reset giao diện
     function initialize() {
         potListEl.innerHTML = '';
         if (placeholderText) potListEl.appendChild(placeholderText);
@@ -284,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUIState();
     }
     
-    // Cập nhật trạng thái các nút
     function updateUIState() {
         unassignedCountEl.textContent = currentTeams.length;
         const isDrawingFinished = currentTeams.length === 0;
@@ -294,10 +304,8 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.disabled = !(unassignedTeams.length > 0 && isDrawingFinished);
     }
     
-    // Hàm tiện ích tạo độ trễ
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    // Hiệu ứng bay
     async function animateFly(startEl, endEl) {
         const flyingBall = startEl.cloneNode(true);
         flyingBall.classList.add('flying-ball');
@@ -306,60 +314,76 @@ document.addEventListener('DOMContentLoaded', function() {
         flyingBall.style.left = `${startRect.left}px`;
         flyingBall.style.top = `${startRect.top}px`;
         animContainer.appendChild(flyingBall);
-        startEl.style.opacity = '0'; // Ẩn quả bóng gốc
+        startEl.style.opacity = '0';
 
-        await sleep(50); // Đợi 1 frame để trình duyệt áp dụng style
+        await sleep(50);
 
         const endRect = endEl.getBoundingClientRect();
-        flyingBall.style.left = `${endRect.left + 16}px`; // Căn giữa
+        flyingBall.style.left = `${endRect.left + 16}px`;
         flyingBall.style.top = `${endRect.top + 16}px`;
 
-        await sleep(800); // Đợi animation hoàn thành
+        await sleep(800);
         animContainer.removeChild(flyingBall);
-        endEl.classList.add('filled'); // Hiển thị slot ở bảng đấu
+        endEl.classList.add('filled');
     }
     
-    // Hành động bốc thăm một đội
-    async function performDraw() {
+    async function performDraw(teamToDraw = null) {
         if (currentTeams.length === 0) return;
         
         drawBtn.disabled = true;
         autoDrawBtn.disabled = true;
 
-        const randomIndex = Math.floor(Math.random() * currentTeams.length);
-        const selectedTeam = currentTeams[randomIndex];
+        const selectedTeam = teamToDraw || currentTeams[Math.floor(Math.random() * currentTeams.length)];
+        const teamIndex = currentTeams.findIndex(t => t.id === selectedTeam.id);
         const teamBallEl = potListEl.querySelector(`.team-ball[data-id='${selectedTeam.id}']`);
         
-        // 1. Tìm bảng có ít đội nhất
-        let targetGroupCard = null;
+        if (teamIndex === -1 || !teamBallEl) {
+            updateUIState();
+            return;
+        }
+
+        // === LOGIC RANDOM BẢNG ĐẤU ĐÃ CẢI TIẾN ===
         let minTeams = Infinity;
+        let candidateGroups = [];
+
         groupsContainerEl.querySelectorAll('.group-card').forEach(card => {
             const count = groupAssignments[card.dataset.groupId].length;
             if (count < minTeams) {
                 minTeams = count;
-                targetGroupCard = card;
+                candidateGroups = [card]; 
+            } else if (count === minTeams) {
+                candidateGroups.push(card);
             }
         });
 
+        const targetGroupCard = candidateGroups.length > 0 
+            ? candidateGroups[Math.floor(Math.random() * candidateGroups.length)]
+            : null;
+        
+        // === THÊM HIỆU ỨNG VÀNG TRƯỚC KHI BAY ===
         if (targetGroupCard) {
-            // 2. Tạo một slot chờ trong bảng đấu
+            teamBallEl.classList.add('is-drawing');
+            candidateGroups.forEach(g => g.classList.add('is-candidate'));
+            await sleep(300); // Chờ một chút để người dùng thấy hiệu ứng
+
             const teamSlotEl = document.createElement('div');
             teamSlotEl.className = 'team-slot';
             teamSlotEl.innerHTML = `<img src="${teamBallEl.querySelector('img').src}" class="logo"> <span>${selectedTeam.name}</span>`;
             targetGroupCard.querySelector('.team-list').appendChild(teamSlotEl);
 
-            // 3. Thực hiện animation bay
             await animateFly(teamBallEl, teamSlotEl);
             
-            // 4. Cập nhật dữ liệu
-            currentTeams.splice(randomIndex, 1);
+            currentTeams.splice(teamIndex, 1);
             groupAssignments[targetGroupCard.dataset.groupId].push(selectedTeam.id);
+            
+            // Xóa hiệu ứng sau khi hoàn tất
+            teamBallEl.classList.remove('is-drawing');
+            candidateGroups.forEach(g => g.classList.remove('is-candidate'));
         }
         
         updateUIState();
     }
 
-    // Hành động bốc thăm tự động
     async function performAutoDraw() {
         drawBtn.disabled = true;
         autoDrawBtn.disabled = true;
@@ -367,24 +391,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
         while (currentTeams.length > 0) {
             await performDraw();
-            await sleep(500); // Nghỉ giữa các lần bốc tự động
+            await sleep(500);
         }
         resetBtn.disabled = false;
     }
 
-    // Lưu kết quả
     function saveResults() {
         const form = document.getElementById('draw-result-form');
         const drawResultsInput = document.getElementById('draw-results-input');
         drawResultsInput.value = JSON.stringify(groupAssignments);
 
-        if (confirm('Bạn có chắc chắn muốn lưu kết quả bốc thăm này? Hành động này không thể hoàn tác.')) {
+        if (confirm('Bạn có chắc chắn muốn lưu kết quả bốc thăm này?')) {
             form.submit();
         }
     }
 
-    // --- GÁN SỰ KIỆN & CHẠY LẦN ĐẦU ---
-    drawBtn.addEventListener('click', performDraw);
+    potListEl.addEventListener('click', (e) => {
+        const clickedBall = e.target.closest('.team-ball');
+        if (!clickedBall || drawBtn.disabled) return;
+
+        const teamId = parseInt(clickedBall.dataset.id, 10);
+        const teamToDraw = currentTeams.find(t => t.id === teamId);
+
+        if (teamToDraw) {
+            performDraw(teamToDraw);
+        }
+    });
+
+    drawBtn.addEventListener('click', () => performDraw());
     autoDrawBtn.addEventListener('click', performAutoDraw);
     resetBtn.addEventListener('click', initialize);
     saveBtn.addEventListener('click', saveResults);
