@@ -24,4 +24,9 @@ urlpatterns = [
     path('teams/<int:pk>/delete/', views.delete_team, name='delete_team'),
     path('player/<int:pk>/edit/', views.edit_player, name='edit_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),    
+    # === THÊM CÁC URL MỚI CHO THÔNG BÁO ===
+    path('tournaments/<int:tournament_pk>/announcements/create/', views.create_announcement, name='create_announcement'),
+    path('announcements/<int:pk>/edit/', views.edit_announcement, name='edit_announcement'),
+    path('announcements/<int:pk>/delete/', views.delete_announcement, name='delete_announcement'),
+    path('announcements/<int:pk>/send/', views.send_announcement_email, name='send_announcement_email'),
 ]

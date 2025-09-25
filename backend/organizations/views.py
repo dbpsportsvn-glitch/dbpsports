@@ -15,6 +15,9 @@ from collections import defaultdict
 
 from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification # Thêm Notification
 from tournaments.utils import send_notification_email, send_schedule_notification # Thêm send_schedule_notification
+# THÊM IMPORT MỚI
+from .forms import AnnouncementForm
+from tournaments.models import Announcement
 
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import (
@@ -340,6 +343,9 @@ def manage_tournament(request, pk):
         selected_tourn_id = context.get('selected_tournament_id', tournament.pk)
         context['teams_in_tournament'] = Team.objects.filter(tournament_id=selected_tourn_id).order_by('name')
     # === KẾT THÚC THAY THẾ TẠI ĐÂY ===
+
+    elif view_name == 'announcements':
+        context['announcements'] = Announcement.objects.filter(tournament=tournament).order_by('-created_at')
 
     return render(request, 'organizations/manage_tournament.html', context)
 
@@ -903,4 +909,109 @@ def delete_player(request, pk):
         return safe_redirect(request, default_url)
 
     return safe_redirect(request, default_url)
-# === KẾT THÚC THÊM MỚI ===    
+
+# === THÊM CÁC HÀM MỚI VÀO CUỐI FILE ===
+@login_required
+@never_cache
+def create_announcement(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    # Kiểm tra quyền
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.tournament = tournament
+            announcement.save()
+            messages.success(request, "Đã tạo thông báo mới thành công!")
+            return redirect(f"{reverse('organizations:manage_tournament', args=[tournament_pk])}?view=announcements")
+    else:
+        form = AnnouncementForm()
+
+    context = {
+        'form': form,
+        'tournament': tournament,
+        'organization': tournament.organization
+    }
+    return render(request, 'organizations/announcement_form.html', context)
+
+@login_required
+@never_cache
+def edit_announcement(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    tournament = announcement.tournament
+    # Kiểm tra quyền
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST, instance=announcement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã cập nhật thông báo thành công!")
+            return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
+    else:
+        form = AnnouncementForm(instance=announcement)
+
+    context = {
+        'form': form,
+        'tournament': tournament,
+        'organization': tournament.organization
+    }
+    return render(request, 'organizations/announcement_form.html', context)
+
+@login_required
+def delete_announcement(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    tournament = announcement.tournament
+    # Kiểm tra quyền
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        announcement.delete()
+        messages.success(request, "Đã xóa thông báo thành công.")
+        return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
+
+    # === DÒNG SỬA LỖI NẰM Ở ĐÂY ===
+    # Thêm 'tournament' và 'organization' vào context để template có thể dùng
+    context = {
+        'announcement': announcement,
+        'tournament': tournament,
+        'organization': tournament.organization
+    }
+    return render(request, 'organizations/announcement_confirm_delete.html', context)
+
+
+@login_required
+def send_announcement_email(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    tournament = announcement.tournament
+    # Kiểm tra quyền
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if not announcement.is_published:
+        messages.warning(request, "Thông báo này là bản nháp và chưa được công khai nên không thể gửi.")
+        return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
+    
+    # Lấy danh sách email đội trưởng
+    captains = Team.objects.filter(tournament=tournament, payment_status='PAID').select_related('captain')
+    recipient_list = {c.captain.email for c in captains if c.captain.email}
+
+    if recipient_list:
+        success = send_notification_email(
+            subject=f"[Thông báo] {tournament.name}: {announcement.title}",
+            template_name='tournaments/emails/announcement_notification.html',
+            context={'announcement': announcement},
+            recipient_list=list(recipient_list),
+            request=request
+        )
+        if success:
+            messages.success(request, f"Đã gửi thành công email thông báo đến {len(recipient_list)} đội trưởng.")
+    else:
+        messages.warning(request, "Không tìm thấy email của đội trưởng nào đã đăng ký thành công để gửi.")
+
+    return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")

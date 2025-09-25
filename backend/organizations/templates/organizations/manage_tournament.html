@@ -520,6 +520,58 @@
                         </tbody>
                     </table>
                 </div>
+
+            {% elif active_page == 'announcements' %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Quản lý Thông báo</h5>
+                    <a href="{% url 'organizations:create_announcement' tournament_pk=tournament.pk %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle-fill"></i> Soạn Thông báo mới
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Tiêu đề</th>
+                                <th>Đối tượng</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-end">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ann in announcements %}
+                            <tr>
+                                <td><strong>{{ ann.title }}</strong></td>
+                                <td>{{ ann.get_audience_display }}</td>
+                                <td>
+                                    {% if ann.is_published %}
+                                        <span class="badge bg-success">Công khai</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Bản nháp</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ ann.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        {% if ann.is_published %}
+                                        <a href="{% url 'organizations:send_announcement_email' pk=ann.pk %}" class="btn btn-info btn-sm" title="Gửi email cho các đội trưởng">
+                                            <i class="bi bi-send-fill"></i> Gửi
+                                        </a>
+                                        {% endif %}
+                                        <a href="{% url 'organizations:edit_announcement' pk=ann.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                        <a href="{% url 'organizations:delete_announcement' pk=ann.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Chưa có thông báo nào được tạo.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
         </div>
     </div>

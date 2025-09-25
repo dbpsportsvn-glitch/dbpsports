@@ -43,6 +43,11 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link {% if active_page == 'announcements' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=announcements">
+                    <i class="bi bi-megaphone-fill"></i> Gửi Thông báo
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {% if active_page == 'members' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=members">
                     <i class="bi bi-person-lines-fill"></i> Thành viên BTC
                 </a>

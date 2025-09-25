@@ -6,6 +6,7 @@ from .models import Organization
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError # Thêm import này
 from tournaments.forms import PlayerCreationForm
+from tournaments.models import Announcement
 
 class TournamentCreationForm(forms.ModelForm):
     class Meta:
@@ -302,4 +303,21 @@ class PlayerUpdateForm(PlayerCreationForm):
     Kế thừa từ form gốc để tái sử dụng các trường đã có.
     """
     class Meta(PlayerCreationForm.Meta):
-        pass # Giữ nguyên các thiết lập từ form cha        
+        pass # Giữ nguyên các thiết lập từ form cha  
+
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = Announcement
+        fields = ['title', 'audience', 'content', 'is_published']
+        labels = {
+            'title': 'Tiêu đề thông báo',
+            'audience': 'Đối tượng nhận',
+            'content': 'Nội dung chi tiết',
+            'is_published': 'Công khai ngay',
+        }
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 10}),
+        }
+        help_texts = {
+            'is_published': 'Bỏ chọn nếu đây là bản nháp và bạn muốn gửi sau.'
+        }              

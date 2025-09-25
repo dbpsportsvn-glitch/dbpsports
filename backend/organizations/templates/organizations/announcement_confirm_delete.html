@@ -1,0 +1,29 @@
+{% extends 'organizations/organization_base.html' %}
+
+{% block title %}Xác nhận Xóa Thông báo{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='announcements' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h3><i class="bi bi-exclamation-triangle-fill"></i> Xác nhận Xóa</h3>
+    </div>
+    <div class="card-body p-4">
+        <p>Bạn có chắc chắn muốn xóa vĩnh viễn thông báo sau không?</p>
+        <div class="alert alert-warning">
+            <strong>Tiêu đề:</strong> {{ announcement.title }}
+        </div>
+        <p>Hành động này không thể hoàn tác.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="{% url 'organizations:manage_tournament' pk=announcement.tournament.pk %}?view=announcements" class="btn btn-secondary">Hủy</a>
+                <button type="submit" class="btn btn-danger btn-lg">Vâng, tôi chắc chắn</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

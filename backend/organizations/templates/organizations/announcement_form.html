@@ -1,0 +1,34 @@
+{% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Sửa{% else %}Tạo{% endif %} Thông báo{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='announcements' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h3><i class="bi bi-pencil-square"></i> {% if form.instance.pk %}Chỉnh sửa{% else %}Soạn{% endif %} Thông báo mới</h3>
+            <p class="mb-0 text-muted">
+                Dành cho giải đấu: <strong>{{ tournament.name }}</strong>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=announcements" class="btn btn-secondary btn-sm">Hủy</a>
+            <button type="submit" form="announcement-form" class="btn btn-primary btn-sm">
+                <i class="bi bi-save-fill"></i> Lưu Thông báo
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" id="announcement-form">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            </form>
+    </div>
+</div>
+{% endblock %}
