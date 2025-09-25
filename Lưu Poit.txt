@@ -1,21 +1,35 @@
-
-.\venv\Scripts\activate
-
-python manage.py runserver
-
 cd dbpsports
 
 cd backend
-
 
 Ctrl + C
 
 cd ..
 
+.\venv\Scripts\activate
+
+python manage.py runserver
 
 git add .
-git commit -m "Thêm Tính năng Phân Quyền 13"
+git commit -m "Cap nhat gui thong bao cho BTC 3"
 git push
+
+
+#Cập Nhật Dữ Liệu
+
+python manage.py makemigrations
+python manage.py migrate
+
+# xoá git
+git checkout main
+git pull origin main
+
+git reset --hard (phien ban)
+
+git push origin main --force-with-lease
+
+
+
 
 Sao lưu DB + media (PowerShell)
 
@@ -62,10 +76,41 @@ python manage.py migrate
 
 
 
+Cách giải quyết
+Bạn cần hợp nhất các thay đổi từ remote về máy mình trước khi đẩy lên. Có 2 cách phổ biến để làm việc này, bạn chỉ cần chọn một trong hai.
+
+Cách 1: Dùng rebase (Khuyến khích)
+Cách này sẽ giúp lịch sử commit của bạn gọn gàng và thẳng hàng hơn. Nó sẽ lấy 2 commit của bạn, tạm cất đi, cập nhật các commit mới từ remote về, sau đó đặt 2 commit của bạn lên trên cùng.
+
+Kéo code từ remote về và tự động rebase:
+
+Bash
+
+git pull --rebase origin main
+Sau khi lệnh trên chạy xong (nếu không có xung đột/conflict), bạn hãy đẩy code lên:
+
+Bash
+
+git push origin main
+Cách 2: Dùng merge (Cách mặc định)
+Cách này sẽ tạo ra một "merge commit" để gộp 2 nhánh lịch sử lại với nhau. Cách này đơn giản nhưng sẽ làm lịch sử commit của bạn trông phức tạp hơn một chút.
+
+Kéo code từ remote về và merge:
+
+Bash
+
+git pull origin main
+Git có thể sẽ mở trình soạn thảo để bạn nhập commit message cho việc merge. Bạn chỉ cần lưu lại và đóng nó.
+
+Đẩy code lên:
+
+Bash
+
+git push origin main
+Tóm lại, bạn chỉ cần chạy git pull --rebase origin main rồi git push origin main là được.
 
 
-
-
+Client secret: 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
 -------------------------------------------------
 
 git log --oneline
