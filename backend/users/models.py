@@ -8,7 +8,9 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField("Ảnh đại diện", upload_to='user_avatars/', null=True, blank=True)
     notify_match_results = models.BooleanField("Nhận thông báo kết quả trận đấu", default=True)
-    notify_new_teams = models.BooleanField("Nhận thông báo khi có đội mới", default=True)    
+    notify_new_teams = models.BooleanField("Nhận thông báo khi có đội mới", default=True)
+    notify_draw_results = models.BooleanField("Nhận thông báo khi có kết quả bốc thăm", default=True)  # Thêm dòng này
+    notify_schedule_updates = models.BooleanField("Nhận thông báo khi có lịch thi đấu mới", default=True) # Thêm dòng này
 
     def __str__(self):
         return f"Hồ sơ của {self.user.username}"

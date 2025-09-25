@@ -388,6 +388,8 @@ class Notification(models.Model):
     class NotificationType(models.TextChoices):
         MATCH_RESULT = 'MATCH_RESULT', 'Kết quả trận đấu'
         NEW_TEAM = 'NEW_TEAM', 'Đội mới đăng ký'
+        DRAW_COMPLETE = 'DRAW_COMPLETE', 'Bốc thăm hoàn tất'  # Thêm dòng này
+        SCHEDULE_CREATED = 'SCHEDULE_CREATED', 'Lịch thi đấu mới'  # Thêm dòng này
         GENERIC = 'GENERIC', 'Thông báo chung'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')

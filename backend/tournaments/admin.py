@@ -12,8 +12,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 from django.db.models import Count
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement, TournamentPhoto
-from .utils import send_notification_email
+from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement, TournamentPhoto, Notification
+from .utils import send_notification_email, send_schedule_notification
 
 # ===== CÁC Hàm Cho Bộ lọc (Giữ nguyên) =====
 
@@ -153,6 +153,11 @@ class TournamentAdmin(admin.ModelAdmin):
                     pairings = [(qualified_teams[0], qualified_teams[3]), (qualified_teams[2], qualified_teams[1]), (qualified_teams[4], qualified_teams[7]), (qualified_teams[6], qualified_teams[5])]
                     for t1, t2 in pairings: Match.objects.create(tournament=tournament, match_round='QUARTER', team1=t1, team2=t2, match_time=timezone.now())
                     self.message_user(request, f"Đã tạo 4 cặp đấu Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                    send_schedule_notification(
+                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                        f"Giải '{tournament.name}' có lịch Tứ kết", "Các cặp đấu Tứ kết đã được thiết lập. Xem ngay!",
+                        'tournament_detail'
+                    )                    
                 elif len(qualified_teams) == 4:
                     tournament.matches.filter(match_round='SEMI').delete()
                     pairings = [(qualified_teams[0], qualified_teams[3]), (qualified_teams[2], qualified_teams[1])]
@@ -170,6 +175,11 @@ class TournamentAdmin(admin.ModelAdmin):
                     Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[0], team2=winners[1], match_time=timezone.now())
                     Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[2], team2=winners[3], match_time=timezone.now())
                     self.message_user(request, f"Đã tạo 2 cặp Bán kết từ Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                    send_schedule_notification(
+                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                        f"Giải '{tournament.name}' có lịch Bán kết", "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!",
+                        'tournament_detail'
+                    )                    
                 continue
             semi_finals = tournament.matches.filter(match_round='SEMI')
             if semi_finals.exists() and not tournament.matches.filter(match_round__in=['FINAL', 'THIRD_PLACE']).exists():
@@ -182,6 +192,11 @@ class TournamentAdmin(admin.ModelAdmin):
                     Match.objects.create(tournament=tournament, match_round='FINAL', team1=winners[0], team2=winners[1], match_time=timezone.now())
                     Match.objects.create(tournament=tournament, match_round='THIRD_PLACE', team1=losers[0], team2=losers[1], match_time=timezone.now())
                     self.message_user(request, f"Đã tạo trận Chung kết và Tranh hạng ba cho giải '{tournament.name}'.", messages.SUCCESS)
+                    send_schedule_notification(
+                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                        f"Giải '{tournament.name}' có lịch Chung kết", "Trận Chung kết và Tranh Hạng Ba đã được thiết lập. Xem ngay!",
+                        'tournament_detail'
+                    )                    
                 continue
 
     # === BẮT ĐẦU ACTION MỚI ĐÃ ĐƯỢC NÂNG CẤP ===
@@ -243,6 +258,11 @@ class TournamentAdmin(admin.ModelAdmin):
                 Match.objects.create(tournament=tournament, match_round='SEMI', team1=team1, team2=team2, match_time=timezone.now())
             
             self.message_user(request, f"Đã tạo Bán kết thành công cho giải '{tournament.name}' từ các đội xuất sắc nhất.", messages.SUCCESS)
+            send_schedule_notification(
+                tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                f"Giải '{tournament.name}' có lịch Bán kết", "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!",
+                'tournament_detail'
+            )            
 
 # === Các class Admin khác giữ nguyên không đổi ===
 @admin.register(Team)

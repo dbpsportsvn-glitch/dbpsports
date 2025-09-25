@@ -6,14 +6,16 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.core.exceptions import ValidationError
 from .models import Organization, Membership
-from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto
-from tournaments.utils import send_notification_email
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q
 from collections import defaultdict
+
+from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification # Thêm Notification
+from tournaments.utils import send_notification_email, send_schedule_notification # Thêm send_schedule_notification
+
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import (
     TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, 
@@ -591,6 +593,13 @@ def manage_knockout(request, pk):
                         match_time=data[f'qf{i}_datetime'] or timezone.now() + timezone.timedelta(days=1)
                     )
                 messages.success(request, "Đã tạo thành công các cặp đấu Tứ kết!")
+                # GỬI THÔNG BÁO
+                send_schedule_notification(
+                    tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                    f"Giải '{tournament.name}' có lịch Tứ kết",
+                    "Các cặp đấu Tứ kết đã được thiết lập. Xem ngay!",
+                    'tournament_detail'
+                )                
                 return redirect('organizations:manage_knockout', pk=pk)
 
         elif action == 'create_semi_finals':
@@ -602,6 +611,13 @@ def manage_knockout(request, pk):
                 Match.objects.create(tournament=tournament, match_round='SEMI', team1=data['sf1_team1'], team2=data['sf1_team2'], match_time=data['sf1_datetime'] or timezone.now() + timezone.timedelta(days=1))
                 Match.objects.create(tournament=tournament, match_round='SEMI', team1=data['sf2_team1'], team2=data['sf2_team2'], match_time=data['sf2_datetime'] or timezone.now() + timezone.timedelta(days=1))
                 messages.success(request, "Đã tạo thành công các cặp đấu Bán kết!")
+                # GỬI THÔNG BÁO
+                send_schedule_notification(
+                    tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                    f"Giải '{tournament.name}' có lịch Bán kết",
+                    "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!",
+                    'tournament_detail'
+                )                
                 return redirect('organizations:manage_knockout', pk=pk)
         
         elif action == 'create_final':
@@ -611,6 +627,13 @@ def manage_knockout(request, pk):
                 tournament.matches.filter(match_round='FINAL').delete()
                 Match.objects.create(tournament=tournament, match_round='FINAL', team1=data['final_team1'], team2=data['final_team2'], match_time=data['final_datetime'] or timezone.now() + timezone.timedelta(days=1))
                 messages.success(request, "Đã tạo thành công trận Chung kết!")
+                # GỬI THÔNG BÁO
+                send_schedule_notification(
+                    tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                    f"Giải '{tournament.name}' có lịch Chung kết",
+                    "Trận Chung kết đã được thiết lập. Xem ngay!",
+                    'tournament_detail'
+                )                
                 return redirect('organizations:manage_knockout', pk=pk)
         
         elif action == 'create_third_place':
@@ -624,6 +647,13 @@ def manage_knockout(request, pk):
                     match_time=data['tp_datetime'] or timezone.now() + timezone.timedelta(days=1)
                 )
                 messages.success(request, "Đã tạo thành công trận Tranh Hạng Ba!")
+                # GỬI THÔNG BÁO
+                send_schedule_notification(
+                    tournament, Notification.NotificationType.SCHEDULE_CREATED,
+                    f"Giải '{tournament.name}' có lịch Tranh Hạng Ba",
+                    "Trận Tranh Hạng Ba đã được thiết lập. Xem ngay!",
+                    'tournament_detail'
+                )                
                 return redirect('organizations:manage_knockout', pk=pk)
 
     # Khởi tạo form cho GET request

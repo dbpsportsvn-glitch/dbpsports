@@ -739,6 +739,14 @@ def draw_groups_view(request, tournament_pk):
                         team.save()
             
             messages.success(request, "Kết quả bốc thăm mới đã được lưu thành công! Lịch thi đấu vòng bảng cũ đã được xóa.")
+            # Gửi thông báo
+            send_schedule_notification(
+                tournament,
+                Notification.NotificationType.DRAW_COMPLETE,
+                f"Giải đấu '{tournament.name}' đã có kết quả bốc thăm",
+                "Kết quả bốc thăm chia bảng đã có. Hãy vào xem chi tiết.",
+                'tournament_detail'
+            )            
             return redirect('tournament_detail', pk=tournament.pk)
 
         except Exception as e:
@@ -829,6 +837,14 @@ def generate_schedule_view(request, tournament_pk):
                     )
             del request.session['schedule_preview_json']
             messages.success(request, "Lịch thi đấu đã được tạo thành công!")
+            # Gửi thông báo
+            send_schedule_notification(
+                tournament,
+                Notification.NotificationType.SCHEDULE_CREATED,
+                f"Giải đấu '{tournament.name}' đã có lịch thi đấu",
+                "Lịch thi đấu vòng bảng đã được tạo. Hãy vào xem chi tiết.",
+                'tournament_detail'
+            )            
             return redirect('tournament_detail', pk=tournament.pk)
         except Exception as e:
             messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
