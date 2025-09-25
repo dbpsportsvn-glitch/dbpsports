@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q
 from collections import defaultdict
+from tournaments.forms import TournamentForm
 
 from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification # Thêm Notification
 from tournaments.utils import send_notification_email, send_schedule_notification # Thêm send_schedule_notification
@@ -19,9 +20,10 @@ from tournaments.utils import send_notification_email, send_schedule_notificatio
 from .forms import AnnouncementForm
 from tournaments.models import Announcement
 
+
 # === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import (
-    TournamentCreationForm, OrganizationCreationForm, MemberInviteForm, 
+    OrganizationCreationForm, MemberInviteForm, 
     MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, 
     SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, 
     MatchCreationForm, PlayerUpdateForm # <-- Thêm PlayerUpdateForm vào đây
@@ -88,23 +90,27 @@ def organization_dashboard(request):
         'invite_form': invite_form,
     }
     return render(request, 'organizations/organization_dashboard.html', context)
-# === KẾT THÚC THAY THẾ ===
 
-@login_required
-@never_cache
+
 def create_tournament(request):
     organization = Organization.objects.filter(members=request.user).first()
     if not organization:
         return redirect('organizations:dashboard')
+    
     if request.method == 'POST':
-        form = TournamentCreationForm(request.POST, request.FILES)
+        # SỬA DÒNG NÀY: Dùng TournamentForm thay vì TournamentCreationForm
+        form = TournamentForm(request.POST, request.FILES)
         if form.is_valid():
             tournament = form.save(commit=False)
             tournament.organization = organization
             tournament.save()
+            # Thêm thông báo thành công
+            messages.success(request, f"Đã tạo thành công giải đấu '{tournament.name}'!")
             return redirect('organizations:dashboard')
     else:
-        form = TournamentCreationForm()
+        # VÀ SỬA DÒNG NÀY
+        form = TournamentForm()
+        
     context = {
         'form': form,
         'organization': organization
@@ -414,20 +420,20 @@ def remove_member(request, pk):
     return safe_redirect(request, default_url)
 
 @login_required
+@never_cache # <-- THÊM DÒNG NÀY
 def edit_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
     
     if request.method == 'POST':
-        form = TournamentCreationForm(request.POST, request.FILES, instance=tournament)
+        form = TournamentForm(request.POST, request.FILES, instance=tournament)
         if form.is_valid():
             form.save()
             messages.success(request, "Đã cập nhật thông tin giải đấu thành công!")
-            # === DÒNG SỬA LỖI: Chuyển hướng về lại chính trang chỉnh sửa ===
             return redirect('organizations:edit_tournament', pk=pk)
     else:
-        form = TournamentCreationForm(instance=tournament)
+        form = TournamentForm(instance=tournament)
         
     context = {
         'form': form,

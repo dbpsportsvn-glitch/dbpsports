@@ -1,38 +1,9 @@
-# File: backend/organizations/forms.py
-
 from django import forms
-from tournaments.models import Tournament, Organization, Match, Goal, Card, Player, Team # Đảm bảo 'Team' được import
+from tournaments.models import Match, Goal, Card, Player, Team, Announcement
 from .models import Organization
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError # Thêm import này
+from django.core.exceptions import ValidationError
 from tournaments.forms import PlayerCreationForm
-from tournaments.models import Announcement
-
-class TournamentCreationForm(forms.ModelForm):
-    class Meta:
-        model = Tournament
-        fields = [
-            'name', 'status', 'region', 'start_date', 'end_date', 'image', 'rules',
-            'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
-        ]
-        labels = {
-            'name': 'Tên giải đấu',
-            'status': 'Trạng thái giải đấu',
-            'region': 'Khu vực tổ chức',
-            'start_date': 'Ngày bắt đầu',
-            'end_date': 'Ngày kết thúc',
-            'image': 'Ảnh bìa / Banner giải đấu',
-            'rules': 'Điều lệ & Quy định',
-            'bank_name': 'Tên ngân hàng (cho đội tham gia chuyển khoản)',
-            'bank_account_number': 'Số tài khoản',
-            'bank_account_name': 'Tên chủ tài khoản',
-            'payment_qr_code': 'Ảnh mã QR thanh toán (tùy chọn)',
-        }
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'rules': forms.Textarea(attrs={'rows': 5}),
-        }
 
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
@@ -57,20 +28,17 @@ class MemberInviteForm(forms.Form):
 
 
 class MatchUpdateForm(forms.ModelForm):
-    # === THÊM DÒNG NÀY VÀO ===
     team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
     team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
 
     class Meta:
         model = Match
-        # === CẬP NHẬT DANH SÁCH fields ===
         fields = [
             'team1', 'team2', 'match_time', 'location', 
             'team1_score', 'team2_score', 
-            'team1_penalty_score', 'team2_penalty_score', # Thêm 2 trường mới
+            'team1_penalty_score', 'team2_penalty_score',
             'livestream_url', 'referee', 'commentator', 'ticker_text'
         ]
-        # === CẬP NHẬT labels VÀ widgets ===
         labels = {
             'match_time': 'Thời gian thi đấu',
             'location': 'Địa điểm',
@@ -87,7 +55,6 @@ class MatchUpdateForm(forms.ModelForm):
             'match_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
-    # === THÊM HÀM MỚI NÀY VÀO ===
     def clean(self):
         cleaned_data = super().clean()
         team1 = cleaned_data.get("team1")
@@ -102,7 +69,7 @@ class GoalForm(forms.ModelForm):
     player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
     class Meta:
         model = Goal
-        fields = ['player', 'minute', 'is_own_goal'] # Đã bao gồm trường mới
+        fields = ['player', 'minute', 'is_own_goal']
         labels = { 'minute': 'Phút ghi bàn' }
 
 class CardForm(forms.ModelForm):

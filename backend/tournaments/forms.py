@@ -125,3 +125,30 @@ class GalleryURLForm(forms.ModelForm):
         widgets = {
             'gallery_url': forms.URLInput(attrs={'placeholder': 'https://...'})
         }
+
+# === THÊM FORM MỚI VÀO CUỐI FILE ===
+class TournamentForm(forms.ModelForm):
+    class Meta:
+        model = Tournament
+        fields = [
+            'name', 'status', 'region', 'start_date', 'end_date', 'image', 'rules',
+            'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
+        ]
+        labels = {
+            'name': 'Tên giải đấu',
+            'status': 'Trạng thái giải đấu',
+            'region': 'Khu vực tổ chức',
+            'start_date': 'Ngày bắt đầu',
+            'end_date': 'Ngày kết thúc',
+            'image': 'Ảnh bìa / Banner giải đấu',
+            'rules': 'Điều lệ & Quy định',
+            'bank_name': 'Tên ngân hàng (cho đội tham gia chuyển khoản)',
+            'bank_account_number': 'Số tài khoản',
+            'bank_account_name': 'Tên chủ tài khoản',
+            'payment_qr_code': 'Ảnh mã QR thanh toán (tùy chọn)',
+        }
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'rules': forms.Textarea(attrs={'rows': 5}),
+        }        
