@@ -779,7 +779,6 @@ def generate_schedule_view(request, tournament_pk):
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
 
-    # Kiểm tra các điều kiện tiên quyết
     if not tournament.groups.exists() or tournament.teams.filter(payment_status='PAID', group__isnull=True).exists() or not tournament.teams.filter(payment_status='PAID').exists():
         messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
         return redirect('tournament_detail', pk=tournament.pk)
@@ -789,7 +788,6 @@ def generate_schedule_view(request, tournament_pk):
         return redirect('tournament_detail', pk=tournament.pk)
 
     if request.method == 'POST':
-        # --- XỬ LÝ KHI NHẤN NÚT "XÁC NHẬN & LƯU" ---
         if 'confirm_schedule' in request.POST:
             schedule_preview_json = request.session.get('schedule_preview_json')
             if not schedule_preview_json:
@@ -798,7 +796,6 @@ def generate_schedule_view(request, tournament_pk):
             
             try:
                 with transaction.atomic():
-                    # Xóa lịch cũ nếu có để tránh trùng lặp
                     Match.objects.filter(tournament=tournament, match_round='GROUP').delete()
                     schedule_to_save = json.loads(schedule_preview_json)
                     for match_data in schedule_to_save:
@@ -812,104 +809,130 @@ def generate_schedule_view(request, tournament_pk):
                         )
                 del request.session['schedule_preview_json']
                 messages.success(request, "Lịch thi đấu đã được tạo thành công!")
-                # Gửi thông báo
                 send_schedule_notification(
-                    tournament,
-                    Notification.NotificationType.SCHEDULE_CREATED,
+                    tournament, Notification.NotificationType.SCHEDULE_CREATED,
                     f"Giải đấu '{tournament.name}' đã có lịch thi đấu",
                     "Lịch thi đấu vòng bảng đã được tạo. Hãy vào xem chi tiết.",
                     'tournament_detail'
                 )
-                # CHỈNH SỬA TẠI ĐÂY
                 return redirect(reverse('tournament_detail', kwargs={'pk': tournament.pk}) + '?tab=schedule#schedule')
             except Exception as e:
                 messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
                 return redirect('generate_schedule', tournament_pk=tournament.pk)
 
-        # --- XỬ LÝ KHI NHẤN NÚT "TẠO LỊCH (XEM TRƯỚC)" ---
         else:
             form = ScheduleGenerationForm(request.POST)
             if form.is_valid():
-                # (Toàn bộ logic tạo lịch xem trước của bạn giữ nguyên ở đây)
                 data = form.cleaned_data
                 start_date = data['start_date']
                 time_slots_str = [t.strip() for t in data['time_slots'].split(',')]
                 locations = [loc.strip() for loc in data['locations'].split(',')]
                 rest_days = timedelta(days=data['rest_days'])
                 
-                all_pairings = []
+                # === BẮT ĐẦU LOGIC MỚI ===
+                selected_weekdays = {int(d) for d in data['weekdays']}
+                matches_per_week = data.get('matches_per_week')
+                strategy = data['scheduling_strategy']
+                
+                all_pairings_by_group = {}
                 groups = tournament.groups.prefetch_related('teams').all()
                 for group in groups:
                     teams_in_group = list(group.teams.all())
                     group_pairings = list(combinations(teams_in_group, 2))
-                    for pair in group_pairings:
-                        all_pairings.append({'pair': pair, 'group_name': group.name})
+                    random.shuffle(group_pairings)
+                    all_pairings_by_group[group] = [{'pair': pair, 'group_name': group.name} for pair in group_pairings]
 
-                random.shuffle(all_pairings)
-                
                 scheduled_matches = []
                 team_last_played = {}
                 current_date = start_date
                 day_offset = 0
-                
-                while all_pairings and day_offset <= 100: # Thêm giới hạn để tránh lặp vô hạn
-                    for time_str in time_slots_str:
-                        for location in locations:
-                            if not all_pairings: break
-                            
-                            current_datetime = datetime.combine(current_date, time.fromisoformat(time_str))
-                            best_match_index = -1
-                            for i, pairing_info in enumerate(all_pairings):
-                                team1, team2 = pairing_info['pair']
-                                last_played1 = team_last_played.get(team1.id, None)
-                                last_played2 = team_last_played.get(team2.id, None)
-                                can_play1 = not last_played1 or (current_date - last_played1.date()) >= rest_days
-                                can_play2 = not last_played2 or (current_date - last_played2.date()) >= rest_days
-                                if can_play1 and can_play2:
-                                    best_match_index = i
+
+                # Giới hạn 365 ngày để tránh lặp vô hạn
+                while any(all_pairings_by_group.values()) and day_offset <= 365:
+                    current_week = current_date.isocalendar()[1]
+                    matches_this_week = len([m for m in scheduled_matches if datetime.fromisoformat(m['match_time']).isocalendar()[1] == current_week])
+
+                    if current_date.weekday() in selected_weekdays:
+                        for time_str in time_slots_str:
+                            for location in locations:
+                                if matches_per_week and matches_this_week >= matches_per_week:
                                     break
-                            
-                            if best_match_index != -1:
-                                pairing_info = all_pairings.pop(best_match_index)
-                                team1, team2 = pairing_info['pair']
-                                scheduled_matches.append({
-                                    'team1_name': team1.name, 'team1_id': team1.id,
-                                    'team2_name': team2.name, 'team2_id': team2.id,
-                                    'match_time': current_datetime,
-                                    'location': location,
-                                    'group_name': pairing_info['group_name']
-                                })
-                                team_last_played[team1.id] = current_datetime
-                                team_last_played[team2.id] = current_datetime
-                        if not all_pairings: break
+
+                                current_datetime = datetime.combine(current_date, time.fromisoformat(time_str))
+                                
+                                # Chọn nhóm để lấy cặp đấu dựa trên chiến lược
+                                group_pool = []
+                                if strategy == 'ROTATIONAL':
+                                    # Ưu tiên nhóm của tuần hiện tại
+                                    current_group_index = (current_week - start_date.isocalendar()[1]) % len(groups) if len(groups) > 0 else 0
+                                    group_pool = [groups[current_group_index]] if len(groups) > current_group_index else list(groups)
+                                else: # MIXED
+                                    group_pool = list(groups)
+                                
+                                random.shuffle(group_pool)
+
+                                best_pairing_info = None
+                                best_group = None
+                                
+                                for group in group_pool:
+                                    if not all_pairings_by_group.get(group): continue
+                                    
+                                    for i, pairing_info in enumerate(all_pairings_by_group[group]):
+                                        team1, team2 = pairing_info['pair']
+                                        last_played1 = team_last_played.get(team1.id, None)
+                                        last_played2 = team_last_played.get(team2.id, None)
+                                        
+                                        can_play1 = not last_played1 or (current_date - last_played1.date()) >= rest_days
+                                        can_play2 = not last_played2 or (current_date - last_played2.date()) >= rest_days
+
+                                        if can_play1 and can_play2:
+                                            best_pairing_info = pairing_info
+                                            best_group = group
+                                            all_pairings_by_group[group].pop(i)
+                                            break
+                                    if best_pairing_info:
+                                        break
+                                
+                                if best_pairing_info:
+                                    team1, team2 = best_pairing_info['pair']
+                                    scheduled_matches.append({
+                                        'team1_name': team1.name, 'team1_id': team1.id,
+                                        'team2_name': team2.name, 'team2_id': team2.id,
+                                        'match_time': current_datetime.isoformat(),
+                                        'location': location,
+                                        'group_name': best_pairing_info['group_name']
+                                    })
+                                    team_last_played[team1.id] = current_datetime
+                                    team_last_played[team2.id] = current_datetime
+                                    matches_this_week += 1
+                            if matches_per_week and matches_this_week >= matches_per_week:
+                                break
                     
                     day_offset += 1
                     current_date = start_date + timedelta(days=day_offset)
-
-                unscheduled_matches = [p['pair'] for p in all_pairings] if all_pairings else None
-
+                
+                unscheduled_matches = [p for pairings in all_pairings_by_group.values() for p in pairings]
+                
                 schedule_by_group = defaultdict(list)
                 scheduled_matches.sort(key=lambda x: x['match_time'])
                 for match in scheduled_matches:
+                    match['match_time'] = datetime.fromisoformat(match['match_time'])
                     schedule_by_group[match['group_name']].append(match)
 
-                schedule_for_session = [
-                    {**match, 'match_time': match['match_time'].isoformat()}
-                    for match in scheduled_matches
-                ]
-                request.session['schedule_preview_json'] = json.dumps(schedule_for_session)
+                request.session['schedule_preview_json'] = json.dumps([
+                    {**m, 'match_time': m['match_time'].isoformat()} for m in scheduled_matches
+                ])
+                # === KẾT THÚC LOGIC MỚI ===
                 
-                # Render lại trang với dữ liệu xem trước
                 context = {
                     'tournament': tournament,
-                    'form': form, # Truyền lại form để hiển thị lỗi nếu có
+                    'form': form,
                     'schedule_by_group': dict(sorted(schedule_by_group.items())),
                     'unscheduled_matches': unscheduled_matches,
                 }
                 return render(request, 'tournaments/generate_schedule.html', context)
     
-    # --- XỬ LÝ GET REQUEST (HIỂN THỊ FORM LẦN ĐẦU) ---
-    form = ScheduleGenerationForm()
+    form = ScheduleGenerationForm(initial={'start_date': timezone.now().date() + timedelta(days=1)})
     context = {
         'tournament': tournament,
         'form': form,

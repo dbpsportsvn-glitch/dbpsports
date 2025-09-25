@@ -44,7 +44,22 @@ class CommentForm(forms.ModelForm):
         }
         labels = { 'text': '' }
 
+# === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class ScheduleGenerationForm(forms.Form):
+    WEEKDAY_CHOICES = [
+        (6, 'Chủ Nhật'),
+        (5, 'Thứ Bảy'),
+        (4, 'Thứ Sáu'),
+        (3, 'Thứ Năm'),
+        (2, 'Thứ Tư'),
+        (1, 'Thứ Ba'),
+        (0, 'Thứ Hai'),
+    ]
+    STRATEGY_CHOICES = [
+        ('MIXED', 'Xếp xen kẽ (ưu tiên lấp đầy lịch)'),
+        ('ROTATIONAL', 'Xếp xoay vòng (mỗi tuần một bảng)'),
+    ]
+
     start_date = forms.DateField(
         label="Ngày bắt đầu thi đấu",
         widget=forms.DateInput(attrs={'type': 'date'}),
@@ -66,6 +81,26 @@ class ScheduleGenerationForm(forms.Form):
         min_value=0,
         help_text="Ví dụ: nhập 1 để đảm bảo một đội không phải đá 2 ngày liên tiếp."
     )
+    weekdays = forms.MultipleChoiceField(
+        choices=WEEKDAY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        label="Chỉ xếp lịch vào các ngày",
+        initial=[5, 6], # Mặc định chọn Thứ 7, Chủ Nhật
+        required=True
+    )
+    matches_per_week = forms.IntegerField(
+        label="Số trận tối đa mỗi tuần (để trống nếu không giới hạn)",
+        min_value=1,
+        required=False,
+        help_text="Hữu ích khi bạn muốn giãn lịch thi đấu."
+    )
+    scheduling_strategy = forms.ChoiceField(
+        choices=STRATEGY_CHOICES,
+        label="Chiến lược xếp lịch",
+        initial='MIXED',
+        widget=forms.RadioSelect
+    )
+# === KẾT THÚC THAY THẾ TẠI ĐÂY ===
 
 class GalleryURLForm(forms.ModelForm):
     class Meta:

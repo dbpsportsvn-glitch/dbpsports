@@ -20,7 +20,6 @@
     .schedule-page { font-family: var(--font-family); background-color: var(--bg-dark); color: var(--text-light); padding: 2rem; border-radius: 12px; }
     .schedule-header { text-align: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; }
     .schedule-header h2 { font-size: 2.5rem; font-weight: 800; color: var(--gold); text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
-    /* Sửa ở đây: Định nghĩa màu riêng cho thẻ p và strong trong header */
     .schedule-header p { color: var(--text-muted); }
     .schedule-header p strong { color: var(--text-light); }
 
@@ -33,10 +32,18 @@
     .schedule-form-container input[type="date"]::-webkit-calendar-picker-indicator {
         filter: invert(1);
     }    
+    /* === BẮT ĐẦU THÊM CSS MỚI === */
+    #div_id_weekdays .form-check {
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    #div_id_scheduling_strategy .form-check {
+        margin-bottom: 0.5rem;
+    }
+    /* === KẾT THÚC THÊM CSS MỚI === */
 
     .preview-container { max-width: 1000px; margin: 3rem auto 0 auto; }
     .preview-container h3, .preview-container h4 { color: #f59e0b; }
-    /* Sửa ở đây: Định nghĩa màu riêng cho thẻ p trong phần preview */
     .preview-container .preview-intro-text { color: var(--text-muted); }
 
     .preview-table-wrapper { background-color: var(--panel-dark); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
@@ -44,8 +51,8 @@
     .custom-table thead { background-color: var(--border-color); }
     .custom-table th, .custom-table td {
         padding: 0.75rem 1rem;
-        text-align: center; /* Căn giữa nội dung theo chiều ngang */
-        vertical-align: middle; /* Căn giữa nội dung theo chiều dọc */
+        text-align: center; 
+        vertical-align: middle; 
         border-bottom: 1px solid var(--border-color);
     }
     .custom-table th { color: var(--text-light); font-weight: 600; }
@@ -80,7 +87,7 @@
     {% if schedule_by_group is not None %}
     <div class="preview-container">
         <h3 class="text-center mb-3">Lịch thi đấu (Xem trước)</h3>
-        {% if unscheduled_matches %}<div class="alert alert-danger"><strong>Cảnh báo!</strong> Không thể xếp lịch cho {{ unscheduled_matches|length }} trận đấu. Vui lòng thử lại với các thông số khác.</div>{% endif %}
+        {% if unscheduled_matches %}<div class="alert alert-danger"><strong>Cảnh báo!</strong> Không thể xếp lịch cho {{ unscheduled_matches|length }} trận đấu. Vui lòng thử lại với các thông số khác (tăng số ngày hoặc khung giờ).</div>{% endif %}
         {% if schedule_by_group %}
         <p class="text-center preview-intro-text mb-4">Hệ thống đã tạo ra lịch thi đấu. Vui lòng kiểm tra kỹ lịch bên dưới trước khi xác nhận.</p>
         
