@@ -109,7 +109,7 @@
                 </table>
             </div>
         {% endfor %}
-        <form method="post" class="mt-4">
+        <form method="post" class="mt-4" onsubmit="return confirm('Bạn có chắc chắn muốn lưu lịch thi đấu này không? Hành động này sẽ xóa mọi lịch thi đấu vòng bảng đã có trước đó.');">
             {% csrf_token %}
             <div class="d-grid gap-2">
                 <button type="submit" name="confirm_schedule" class="btn btn-success btn-lg"><i class="bi bi-check-circle-fill"></i> Tôi đồng ý, Xác nhận & Lưu Lịch</button>
