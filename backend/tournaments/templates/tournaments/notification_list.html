@@ -2,36 +2,70 @@
 
 {% block title %}Thông báo của bạn{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* CSS MỚI: Hiệu ứng cho thông báo chưa đọc */
+    .notification-item.unread {
+        background-color: #f8f9fa; /* Màu nền sáng hơn một chút */
+        border-left: 5px solid #0d6efd; /* Viền xanh bên trái */
+    }
+
+    /* CSS MỚI: Nút xóa nhỏ ở góc */
+    .delete-notification-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        opacity: 0.2;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .notification-item:hover .delete-notification-btn {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
+    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-bell-fill"></i> Thông báo của bạn</h1>
             <p class="lead mb-0">Tất cả các cập nhật từ những giải đấu bạn quan tâm.</p>
         </div>
         
-        {# === BẮT ĐẦU THÊM MỚI === #}
-        {% if notifications|length > 0 %}
-        <form action="{% url 'mark_all_notifications_as_read' %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check-all"></i> Đánh dấu đã đọc
-            </button>
-        </form>
+        {% if notifications %}
+        <div class="d-flex gap-2">
+            <form action="{% url 'mark_all_notifications_as_read' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-all"></i> Đánh dấu đã đọc
+                </button>
+            </form>
+            <form action="{% url 'delete_all_notifications' %}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa TẤT CẢ thông báo không?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash3-fill"></i> Xóa tất cả
+                </button>
+            </form>
+        </div>
         {% endif %}
-        {# === KẾT THÚC THÊM MỚI === #}
     </div>
 
     <div class="list-group">
         {% for notif in notifications %}
-            <a href="{{ notif.related_url|default:'#' }}" 
-               class="list-group-item list-group-item-action {% if not notif.is_read %}list-group-item-light{% endif %}">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">{{ notif.title }}</h5>
-                    <small>{{ notif.created_at|timesince }} trước</small>
-                </div>
-                <p class="mb-1">{{ notif.message }}</p>
-            </a>
+            <div class="list-group-item list-group-item-action notification-item {% if not notif.is_read %}unread{% endif %} position-relative">
+                <a href="{{ notif.related_url|default:'#' }}" class="text-decoration-none text-reset stretched-link">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ notif.title }}</h5>
+                        <small class="text-muted">{{ notif.created_at|timesince }} trước</small>
+                    </div>
+                    <p class="mb-1 me-4">{{ notif.message }}</p>
+                </a>
+                
+                <form action="{% url 'delete_notification' pk=notif.pk %}" method="post" class="delete-notification-btn">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-close" title="Xóa thông báo này"></button>
+                </form>
+            </div>
         {% empty %}
             <div class="list-group-item text-center text-muted">
                 <p class="mb-0">Bạn chưa có thông báo nào.</p>

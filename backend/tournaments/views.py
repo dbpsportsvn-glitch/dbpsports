@@ -1142,12 +1142,37 @@ def notification_list(request):
     }
     return render(request, 'tournaments/notification_list.html', context)
 
-# === Đánh dấu đã đọc Thông Báo ===
+# === Đọc Tất Cả Thông Báo ===
 @login_required
-@require_POST # Chỉ cho phép truy cập qua phương thức POST để bảo mật
+@require_POST
 def mark_all_notifications_as_read(request):
     """
     Đánh dấu tất cả các thông báo của người dùng hiện tại là đã đọc.
     """
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    messages.success(request, "Tất cả thông báo đã được đánh dấu là đã đọc.")
+    return redirect('home') # Chuyển hướng về trang chủ
+
+# === THÊM MỚI: Hàm xóa một thông báo ===
+@login_required
+@require_POST
+def delete_notification(request, pk):
+    """
+    Xóa một thông báo cụ thể.
+    """
+    # Lấy thông báo, đảm bảo chỉ user sở hữu mới có thể xóa
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    notification.delete()
+    messages.success(request, "Đã xóa thông báo.")
+    return redirect('notification_list')
+
+# === THÊM MỚI: Hàm xóa tất cả thông báo ===
+@login_required
+@require_POST
+def delete_all_notifications(request):
+    """
+    Xóa tất cả thông báo của người dùng hiện tại.
+    """
+    Notification.objects.filter(user=request.user).delete()
+    messages.success(request, "Đã xóa tất cả thông báo.")
     return redirect('notification_list')

@@ -18,8 +18,12 @@ urlpatterns = [
     path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service_view, name='terms_of_service'),
     path('data-deletion-instructions/', views.data_deletion_view, name='data_deletion'),
+
+    # === BẮT ĐẦU KHỐI URL THÔNG BÁO ĐÃ CẬP NHẬT ===
     path('notifications/', views.notification_list, name='notification_list'),
-    path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),    
+    path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),
+    path('notifications/<int:pk>/delete/', views.delete_notification, name='delete_notification'), # <-- Dòng mới
+    path('notifications/delete-all/', views.delete_all_notifications, name='delete_all_notifications'), # <-- Dòng mới  
     
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
