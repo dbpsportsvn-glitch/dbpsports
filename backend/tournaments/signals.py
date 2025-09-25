@@ -5,6 +5,7 @@ from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
 from .models import HomeBanner, Tournament, Group, Match, Team, Notification
+from .utils import send_schedule_notification
 
 @receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group])
 def clear_cache_on_data_change(sender, instance, **kwargs):
@@ -109,3 +110,21 @@ def create_new_team_notification(sender, instance, created, **kwargs):
             Notification.objects.bulk_create(notifications_to_create)
 
 # === KẾT THÚC KHỐI CODE ĐÃ CẬP NHẬT ===
+
+@receiver(post_save, sender=Match)
+def create_schedule_notification_on_match_creation(sender, instance, created, **kwargs):
+    """
+    Gửi thông báo khi có trận đấu mới được tạo.
+    """
+    if created:
+        tournament = instance.tournament
+        # Kiểm tra xem giải đấu đã có trận đấu nào trước đó chưa
+        # để tránh gửi thông báo cho mỗi trận đấu được tạo riêng lẻ
+        if tournament.matches.count() == 1:
+            send_schedule_notification(
+                tournament,
+                Notification.NotificationType.SCHEDULE_CREATED,
+                f"Giải đấu '{tournament.name}' đã có lịch thi đấu",
+                "Lịch thi đấu mới đã được tạo. Hãy vào xem chi tiết.",
+                'tournament_detail'
+            )
