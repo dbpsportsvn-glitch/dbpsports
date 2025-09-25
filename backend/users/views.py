@@ -6,14 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from tournaments.models import Team, Tournament
-from .forms import CustomUserChangeForm, AvatarUpdateForm
+from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm
 from .models import Profile
 
 @login_required
 def dashboard(request):
     # Lấy hoặc tạo mới profile cho user
     profile, created = Profile.objects.get_or_create(user=request.user)
-
     # Khởi tạo cờ báo lỗi cho form avatar
     avatar_form_has_errors = False
 
@@ -21,6 +20,7 @@ def dashboard(request):
     user_form = CustomUserChangeForm(instance=request.user)
     password_form = PasswordChangeForm(request.user)
     avatar_form = AvatarUpdateForm(instance=profile)
+    preferences_form = NotificationPreferencesForm(instance=profile)
 
     if request.method == 'POST':
         # Xử lý khi người dùng cập nhật thông tin cá nhân
@@ -54,6 +54,14 @@ def dashboard(request):
                 avatar_form_has_errors = True
                 messages.error(request, 'Cập nhật ảnh đại diện thất bại. Vui lòng xem chi tiết trong popup.')
 
+        # === THÊM MỚI: Xử lý khi người dùng cập nhật cài đặt thông báo ===
+        if 'update_preferences' in request.POST:
+            preferences_form = NotificationPreferencesForm(request.POST, instance=profile)
+            if preferences_form.is_valid():
+                preferences_form.save()
+                messages.success(request, 'Đã cập nhật cài đặt thông báo của bạn!')
+                return redirect('dashboard') # Sau này có thể chuyển hướng về đúng tab
+
     # Lấy dữ liệu cho các tab khác
     managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
     followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
@@ -63,6 +71,7 @@ def dashboard(request):
         'user_form': user_form,
         'password_form': password_form,
         'avatar_form': avatar_form,
+        'preferences_form': preferences_form,
         'managed_teams': managed_teams,
         'followed_tournaments': followed_tournaments,
         'player_profile': player_profile,

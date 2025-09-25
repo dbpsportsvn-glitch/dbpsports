@@ -150,6 +150,7 @@
                 <a class="nav-link active" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
                 <a class="nav-link" id="following-tab" data-bs-toggle="pill" href="#following" role="tab"><i class="bi bi-bell-fill"></i>Giải đấu theo dõi</a>
                 <a class="nav-link" id="teams-tab" data-bs-toggle="pill" href="#teams" role="tab"><i class="bi bi-shield-fill"></i>Các đội quản lý</a>
+                <a class="nav-link" id="notifications-tab" data-bs-toggle="pill" href="#notifications" role="tab"><i class="bi bi-gear-wide-connected"></i>Cài đặt Thông báo</a>
                 <a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" role="tab"><i class="bi bi-key-fill"></i>Đổi mật khẩu</a>
             </div>
         </aside>
@@ -214,6 +215,25 @@
                     {% endfor %}
                 </div>
             </div>
+
+            <div class="tab-pane fade" id="notifications" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header"><h4>Cài đặt nhận thông báo tự động</h4></div>
+                            <div class="card-body">
+                                <p class="text-muted">Chọn loại thông báo bạn muốn nhận qua chuông thông báo.</p>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    {{ preferences_form|crispy }}
+                                    <button type="submit" name="update_preferences" class="btn btn-primary w-100 mt-3">Lưu cài đặt</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-pane fade" id="password" role="tabpanel">
                 <div class="row justify-content-center">
                     <div class="col-lg-10">

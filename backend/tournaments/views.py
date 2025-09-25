@@ -47,7 +47,7 @@ def home(request):
         {'tournaments_list': active_tournaments, 'banners': banners}
     )
 
-
+@never_cache
 def tournaments_active(request):
     # Lấy tham số lọc từ URL (ví dụ: ?region=MIEN_BAC)
     region_filter = request.GET.get('region', '')
