@@ -795,6 +795,59 @@ def generate_schedule_view(request, tournament_pk):
         messages.warning(request, "Lịch thi đấu vòng bảng đã được tạo cho giải này.")
         return redirect('tournament_detail', pk=tournament.pk)
 
+<<<<<<< HEAD
+=======
+    # === BẮT ĐẦU THÊM ĐOẠN KIỂM TRA MỚI ===
+    has_groups = tournament.groups.exists()
+    has_unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True).exists()
+    has_paid_teams = tournament.teams.filter(payment_status='PAID').exists()
+
+    # Nếu chưa đủ điều kiện, báo lỗi và trả về trang chi tiết
+    if not has_groups or not has_paid_teams or has_unassigned_teams:
+        messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
+        return redirect('tournament_detail', pk=tournament.pk)
+
+    # Nếu đã có lịch rồi thì cũng không cho tạo lại
+    if tournament.matches.exists():
+        messages.warning(request, "Lịch thi đấu đã được tạo cho giải này.")
+        return redirect('tournament_detail', pk=tournament.pk)
+
+    if request.method == 'POST' and 'confirm_schedule' in request.POST:
+        schedule_preview_json = request.session.get('schedule_preview_json')
+        if not schedule_preview_json:
+            messages.error(request, "Không tìm thấy lịch thi đấu xem trước. Vui lòng tạo lại.")
+            return redirect('generate_schedule', tournament_pk=tournament.pk)
+        
+        try:
+            with transaction.atomic():
+                Match.objects.filter(tournament=tournament).delete()
+                schedule_to_save = json.loads(schedule_preview_json)
+                for match_data in schedule_to_save:
+                    Match.objects.create(
+                        tournament=tournament,
+                        team1=Team.objects.get(pk=match_data['team1_id']),
+                        team2=Team.objects.get(pk=match_data['team2_id']),
+                        match_time=datetime.fromisoformat(match_data['match_time']),
+                        location=match_data['location'],
+                        match_round='GROUP'
+                    )
+            del request.session['schedule_preview_json']
+            messages.success(request, "Lịch thi đấu đã được tạo thành công!")
+            # Gửi thông báo
+            send_schedule_notification(
+                tournament,
+                Notification.NotificationType.SCHEDULE_CREATED,
+                f"Giải đấu '{tournament.name}' đã có lịch thi đấu",
+                "Lịch thi đấu vòng bảng đã được tạo. Hãy vào xem chi tiết.",
+                'tournament_detail'
+            )            
+            return redirect('tournament_detail', pk=tournament.pk)
+        except Exception as e:
+            messages.error(request, f"Lỗi khi lưu lịch thi đấu: {e}")
+
+    schedule_by_group = None
+    unscheduled_matches = None
+>>>>>>> 1ff6a2f685bae43c821d1d47bcca00bc8dc991f8
     if request.method == 'POST':
         # --- XỬ LÝ KHI NHẤN NÚT "XÁC NHẬN & LƯU" ---
         if 'confirm_schedule' in request.POST:
