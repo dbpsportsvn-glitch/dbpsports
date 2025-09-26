@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n socialaccount static %}
+{% load crispy_forms_tags %}
 
 {% block extra_css %}
 {# Sao chép CSS từ trang đăng nhập để đảm bảo đồng bộ #}
@@ -88,37 +89,42 @@
                     {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
                 </div>
 
+                {# === DÁN KHỐI NÀY VÀO (Mật khẩu) === #}
                 <div class="mb-3">
-                    <div class="input-group">
-                        <input type="password" name="password1" placeholder="Mật khẩu"
-                               class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+                    <label class="form-label visually-hidden" for="{{ form.password1.id_for_label }}">Mật khẩu</label>
+                    <div class="input-group has-validation">
+                        <input type="password" name="{{ form.password1.name }}" placeholder="Mật khẩu"
+                            class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required
+                            id="{{ form.password1.id_for_label }}">
                         <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
                             <i class="bi bi-eye-slash"></i>
                         </button>
+                        {% for error in form.password1.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    {% for e in form.password1.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    {% if form.password1.help_text %}
+                        <div class="form-text" style="font-size: 0.8rem; margin-top: 4px;">{{ form.password1.help_text|safe }}</div>
+                    {% endif %}
                 </div>
 
+                {# === DÁN KHỐI NÀY VÀO (Nhập lại mật khẩu) === #}
                 <div class="mb-3">
-                     <div class="input-group">
-                        <input type="password" name="password2" placeholder="Nhập lại mật khẩu"
-                               class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+                    <label class="form-label visually-hidden" for="{{ form.password2.id_for_label }}">Nhập lại mật khẩu</label>
+                    <div class="input-group has-validation">
+                        <input type="password" name="{{ form.password2.name }}" placeholder="Nhập lại mật khẩu"
+                            class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required
+                            id="{{ form.password2.id_for_label }}">
                         <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
                             <i class="bi bi-eye-slash"></i>
                         </button>
+                        {% for error in form.password2.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                    {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
                 </div>
 
-                {# === BẮT ĐẦU THÊM TẠI ĐÂY === #}
-                <div class="form-check mb-3 small">
-                    <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
-                    <label class="form-check-label text-muted" for="termsCheck">
-                        Tôi đã đọc và đồng ý với
-                        <a href="{% url 'terms_of_service' %}" target="_blank">Điều khoản Dịch vụ</a> và
-                        <a href="{% url 'privacy_policy' %}" target="_blank">Chính sách Quyền riêng tư</a>.
-                    </label>
-                </div>              
+                {{ form.terms|as_crispy_field }}             
 
                 <div class="d-grid mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">Đăng ký</button>

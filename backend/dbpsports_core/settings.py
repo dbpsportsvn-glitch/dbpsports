@@ -207,6 +207,7 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
+ACCOUNT_ADAPTER = 'users.adapters.CustomAccountAdapter'
 # URL chuyển hướng
 LOGIN_URL = "account_login" # Sử dụng URL chuẩn của allauth
 LOGIN_REDIRECT_URL = "/"
@@ -214,6 +215,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
+ACCOUNT_FORMS = {'signup': 'users.forms.CustomSignupForm'}
 # Cấu hình allauth để sử dụng email làm username
 ACCOUNT_AUTHENTICATION_METHOD = "email" # Đăng nhập bằng email
 ACCOUNT_EMAIL_REQUIRED = True           # Bắt buộc phải có email

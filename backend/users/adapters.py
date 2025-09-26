@@ -1,5 +1,5 @@
 # backend/users/adapters.py
-
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.utils import perform_login
@@ -7,7 +7,25 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from django.contrib import messages
 
+#------------------------------------
+
 User = get_user_model()
+
+# === THÊM CLASS MỚI NÀY VÀO ĐẦU FILE ===
+class CustomAccountAdapter(DefaultAccountAdapter):
+    def save_user(self, request, user, form, commit=True):
+        """
+        Ghi đè phương thức này để tự động gán username bằng email
+        khi người dùng đăng ký tài khoản thông thường.
+        """
+        # Gọi phương thức gốc để lấy user object
+        user = super().save_user(request, user, form, commit=False)
+        # Gán username bằng email
+        user.username = user.email
+        # Lưu lại user
+        if commit:
+            user.save()
+        return user
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
