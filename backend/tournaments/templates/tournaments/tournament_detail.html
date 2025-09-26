@@ -266,26 +266,49 @@
     </div>
 
     <div class="tab-pane fade card-pane" id="gallery" role="tabpanel">
-        {# === BẮT ĐẦU THAY THẾ TOÀN BỘ NỘI DUNG CỦA TAB NÀY === #}
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <h5 class="section-title mb-0">Thư viện ảnh</h5>
+        
+        {# --- PHẦN 1: LƯỚI ẢNH CỦA TOÀN GIẢI (LOGIC CŨ ĐÃ PHỤC HỒI) --- #}
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="section-title mb-0">Khoảnh khắc Toàn giải</h5>
             <div>
                 {% if tournament.gallery_url %}
-                    <a href="{{ tournament.gallery_url }}" class="btn btn-success" target="_blank" rel="noopener noreferrer">
-                        <i class="bi bi-images"></i> Xem Album Toàn Giải
+                    <a href="{{ tournament.gallery_url }}" class="btn btn-success btn-sm" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-images"></i> Xem Album Gốc Toàn Giải
                     </a>
                 {% endif %}
                 {% if is_organizer %}
-                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary" target="_blank">
-                        <i class="bi bi-upload"></i> Quản lý Album Toàn Giải
+                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                        <i class="bi bi-upload"></i> Quản lý Ảnh Toàn Giải
                     </a>
                 {% endif %}
             </div>
         </div>
-        
-        <p class="text-muted">Xem lại những khoảnh khắc đáng nhớ từ các trận đấu.</p>
-        <hr>
 
+        <div class="row g-3">
+            {% for photo in tournament.photos.all %}
+            <div class="col-lg-4 col-md-6">
+                <div class="gallery-item card shadow-sm">
+                    <a href="{{ photo.image.url }}" data-fancybox="gallery-tournament-{{ tournament.pk }}" data-caption="{{ photo.caption }}">
+                        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid" style="height: 250px; object-fit: cover; width: 100%;">
+                    </a>
+                    {% if photo.caption %}
+                    <div class="card-footer">
+                        <p class="mb-0 small">{{ photo.caption }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col">
+                <p class="text-muted">Chưa có ảnh nào được tải lên cho toàn giải đấu.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <hr class="my-5">
+
+        {# --- PHẦN 2: ALBUM ẢNH CỦA TỪNG TRẬN ĐẤU (TÍNH NĂNG MỚI) --- #}
+        <h5 class="section-title mb-3">Album ảnh theo Trận đấu</h5>
         <div class="row g-4">
             {% for match in matches_with_galleries %}
             <div class="col-lg-4 col-md-6">
@@ -293,7 +316,6 @@
                     {% if match.cover_photo %}
                         <img src="{{ match.cover_photo.url }}" class="card-img-top" alt="Ảnh bìa trận {{ match }}" style="height: 200px; object-fit: cover;">
                     {% else %}
-                        {# Ảnh placeholder nếu trận đấu không có ảnh bìa #}
                         <div class="d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
                             <i class="bi bi-camera fs-1 text-muted"></i>
                         </div>
@@ -316,11 +338,10 @@
             </div>
             {% empty %}
                 <div class="col-12">
-                    <p class="text-muted text-center py-5">Chưa có album ảnh nào cho các trận đấu.</p>
+                    <p class="text-muted">Chưa có album ảnh nào cho các trận đấu.</p>
                 </div>
             {% endfor %}
         </div>
-        {# === KẾT THÚC THAY THẾ === #}
     </div>
 
     {% if knockout_matches %}
