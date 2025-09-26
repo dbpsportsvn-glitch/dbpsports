@@ -306,32 +306,26 @@ class MatchAdmin(ModelAdmin):
     list_display = ("__str__", "tournament", "colored_round", "display_match_time", "team1_score", "team2_score",); list_filter = ("tournament", "match_round", MatchResultFilter); search_fields = ("team1__name", "team2__name", "tournament__name"); list_editable = ("team1_score", "team2_score",); date_hierarchy = "match_time"; inlines = [LineupInline, GoalInline, CardInline]; autocomplete_fields = ("team1", "team2", "tournament"); list_select_related = ("tournament", "team1", "team2"); list_per_page = 50
     @admin.display(description='Thời gian thi đấu', ordering='match_time')
     def display_match_time(self, obj): return format_html("{}<br>{}", obj.match_time.strftime("%H:%M"), obj.match_time.strftime("%d-%m-%Y"))
-    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
+    # === BẮT ĐẦU CẬP NHẬT TẠI ĐÂY ===
     fieldsets = (
         ('Thông tin chung', {
             'fields': (
-                'tournament',
-                'match_round',
-                'team1',  # Đưa về một hàng riêng
-                'team2',  # Đưa về một hàng riêng
-                'livestream_url',  # Chuyển từ tab khác vào đây
-                'ticker_text',     # Chuyển từ tab khác vào đây
+                'tournament', 'match_round', 
+                'team1', 'team2', 
+                'livestream_url', 'ticker_text',
+                'cover_photo', 'gallery_url'  # <-- Thêm 2 trường mới vào đây
             )
         }),
         ('Kết quả & Lịch thi đấu', {
             'fields': (
-                'team1_score',  # Đưa về một hàng riêng
-                'team2_score',  # Đưa về một hàng riêng
-                'team1_penalty_score',
-                'team2_penalty_score',
-                'match_time',
-                'location',
-                'referee',
-                'commentator',
+                'team1_score', 'team2_score', 
+                'team1_penalty_score', 'team2_penalty_score',
+                'match_time', 'location', 
+                'referee', 'commentator'
             )
         }),
     )
-    # === KẾT THÚC THAY THẾ ===
+    # === KẾT THÚC CẬP NHẬT ===
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
         if obj.match_round == 'GROUP': color, text = 'grey', 'Vòng bảng'
@@ -349,6 +343,22 @@ class MatchAdmin(ModelAdmin):
                 instance.save()
             formset.save_m2m()
         except ValidationError as e: self.message_user(request, "; ".join(getattr(e, "messages", [str(e)])), level=messages.ERROR)
+
+# === THÊM MỚI TOÀN BỘ CLASS NÀY ===
+@admin.register(TournamentPhoto)
+class TournamentPhotoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tournament', 'caption', 'image_preview', 'uploaded_at')
+    list_filter = ('tournament',)
+    search_fields = ('caption', 'tournament__name')
+    list_display_links = ('id', 'tournament')
+    readonly_fields = ('image_preview',)
+    list_per_page = 20
+
+    @admin.display(description='Xem trước')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;" />', obj.image.url)
+        return "Không có ảnh"
 
 @admin.register(Group)
 class GroupAdmin(ModelAdmin): list_display = ("name", "tournament"); list_filter = ("tournament",); search_fields = ("name", "tournament__name"); list_per_page = 50
