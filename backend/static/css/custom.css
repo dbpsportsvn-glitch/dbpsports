@@ -267,3 +267,15 @@
 .tour-tabs .nav-link.active {
     color: #fff; 
 }
+
+/* Thêm gạch chân vàng cho tab chi tiết giải đấu đang active */
+.tour-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background-color: #f59e0b;
+    border-radius: 2px;
+}

@@ -210,10 +210,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   /* === THÊM DÒNG CHỈNH KÍCH THƯỚC CHỮ NÚT BẤM TẠI ĐÂY === */
-  .carousel-actions .btn {
-      font-size: 1rem; /* <-- Bạn có thể thay đổi số này, ví dụ: 0.9rem, 1.1rem */
-      padding: 0.5rem 1.5rem; /* Tăng khoảng đệm cho nút to hơn một chút */
-  }
+.carousel-actions .btn {
+    font-size: 1rem;
+    padding: 0.5rem 1.5rem;
+    /* === BẮT ĐẦU THÊM MỚI === */
+    border-bottom: 4px solid #0d6efd; /* Gạch chân màu xanh dương */
+    transition: transform 0.2s ease;  /* Hiệu ứng khi di chuột */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    /* === KẾT THÚC THÊM MỚI === */
+}
+
+/* Thêm hiệu ứng nhấc nút lên một chút khi di chuột qua */
+.carousel-actions .btn:hover {
+    transform: translateY(-3px);
+}
 
   /* CSS CHO DI ĐỘNG */
   @media (max-width: 767px) {
