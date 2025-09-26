@@ -106,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "vi"
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
-USE_TZ = True
+USE_TZ = False
 
 # Cấu hình tùy chỉnh để Whitenoise bỏ qua các file sourcemap bị thiếu
 from whitenoise.storage import CompressedManifestStaticFilesStorage
