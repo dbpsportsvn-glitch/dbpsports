@@ -68,8 +68,10 @@ class ScheduleGenerationForm(forms.Form):
         (1, 'Thứ Ba'),
         (0, 'Thứ Hai'),
     ]
+    # === THÊM LỰA CHỌN MỚI "PRIORITIZED" VÀO ĐÂY ===
     STRATEGY_CHOICES = [
-        ('MIXED', 'Xếp xen kẽ (ưu tiên lấp đầy lịch)'),
+        ('PRIORITIZED', 'Ưu tiên theo thứ tự Bảng (A->B->C)'),
+        ('MIXED', 'Xếp xen kẽ (lấp đầy lịch)'),
         ('ROTATIONAL', 'Xếp xoay vòng (mỗi tuần một bảng)'),
     ]
 
@@ -80,7 +82,7 @@ class ScheduleGenerationForm(forms.Form):
     )
     time_slots = forms.CharField(
         label="Các khung giờ trong ngày (cách nhau bằng dấu phẩy)",
-        initial="08:00, 10:00, 14:00, 16:00",
+        initial="08:00, 10:00, 14:30, 16:30",
         help_text="Ví dụ: 08:00, 15:00, 19:30"
     )
     locations = forms.CharField(
@@ -98,22 +100,33 @@ class ScheduleGenerationForm(forms.Form):
         choices=WEEKDAY_CHOICES,
         widget=forms.CheckboxSelectMultiple,
         label="Chỉ xếp lịch vào các ngày",
-        initial=[5, 6], # Mặc định chọn Thứ 7, Chủ Nhật
+        initial=[5, 6],
         required=True
     )
     matches_per_week = forms.IntegerField(
-        label="Số trận tối đa mỗi tuần (để trống nếu không giới hạn)",
+        label="Tổng số trận tối đa mỗi tuần (để trống nếu không giới hạn)",
         min_value=1,
         required=False,
         help_text="Hữu ích khi bạn muốn giãn lịch thi đấu."
     )
+    max_matches_per_team_per_week = forms.IntegerField(
+        label="Số trận tối đa MỖI ĐỘI trong một tuần (để trống nếu không giới hạn)",
+        min_value=1,
+        required=False,
+        help_text="Ví dụ: nhập 1 để đảm bảo không đội nào phải đá quá 1 trận/tuần."
+    )
+    # === THÊM TRƯỜNG MỚI ĐỂ GIỚI HẠN THEO BẢNG ===
+    matches_per_group_per_week = forms.CharField(
+        label="Giới hạn trận đấu MỖI BẢNG trong tuần (tùy chọn)",
+        required=False,
+        help_text="Định dạng: Tên Bảng:Số trận, Tên Bảng:Số trận. Ví dụ: Bảng A:2, Bảng B:1, Bảng C:1"
+    )
     scheduling_strategy = forms.ChoiceField(
         choices=STRATEGY_CHOICES,
         label="Chiến lược xếp lịch",
-        initial='MIXED',
+        initial='PRIORITIZED', # <-- Đặt chiến lược mới làm mặc định
         widget=forms.RadioSelect
     )
-# === KẾT THÚC THAY THẾ TẠI ĐÂY ===
 
 class GalleryURLForm(forms.ModelForm):
     class Meta:
