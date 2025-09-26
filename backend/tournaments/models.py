@@ -207,7 +207,21 @@ class Match(models.Model):
     referee = models.CharField(max_length=100, null=True, blank=True)
     commentator = models.CharField(max_length=100, null=True, blank=True)
     ticker_text = models.CharField(max_length=255, blank=True, help_text="Dòng chữ chạy trên màn hình livestream. Nếu để trống, hệ thống sẽ dùng thông báo mặc định.")
-
+    # === BẮT ĐẦU THÊM 2 TRƯỜNG MỚI TẠI ĐÂY ===
+    cover_photo = models.ImageField(
+        "Ảnh bìa trận đấu",
+        upload_to='match_covers/',
+        null=True,
+        blank=True,
+        help_text="Ảnh đại diện hiển thị cho trận đấu trong thư viện ảnh."
+    )
+    gallery_url = models.URLField(
+        "Link Album ảnh của trận đấu",
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="Dán đường link album ảnh (Google Photos, Facebook,...) của riêng trận đấu này."
+    )
     def get_absolute_url(self):
         return reverse("match_detail", kwargs={"pk": self.pk})
 

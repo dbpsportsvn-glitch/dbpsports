@@ -160,6 +160,13 @@ def tournament_detail(request, pk):
             is_organizer = True
 
     all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
+
+    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+    # Lấy danh sách các trận đấu có thư viện ảnh riêng
+    matches_with_galleries = all_matches.filter(
+        Q(cover_photo__isnull=False) | Q(gallery_url__isnull=False)
+    ).distinct()
+        
     group_matches = all_matches.filter(match_round='GROUP')
     unassigned_teams = tournament.teams.filter(payment_status='PAID', group__isnull=True)
 
@@ -322,6 +329,7 @@ def tournament_detail(request, pk):
         'top_scorers': top_scorers,
         'team_goal_stats': team_goal_stats,
         'team_card_stats': team_card_stats,
+        'matches_with_galleries': matches_with_galleries,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 

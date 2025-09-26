@@ -457,7 +457,7 @@ def manage_match(request, pk):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_match':
-            form = MatchUpdateForm(request.POST, instance=match)
+            form = MatchUpdateForm(request.POST, request.FILES, instance=match)
             # === THÊM 2 DÒNG NÀY VÀO ===
             form.fields['team1'].queryset = teams_in_tournament
             form.fields['team2'].queryset = teams_in_tournament

@@ -20,11 +20,9 @@
                 <div class="col-4">
                     {% if match.team1_score is not None and match.team2_score is not None %}
                         <h1 class="display-3 fw-bold">{{ match.team1_score }} - {{ match.team2_score }}</h1>
-                        {# === BẮT ĐẦU THÊM MỚI === #}
                         {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
                             <p class="mb-0 text-muted">(Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})</p>
                         {% endif %}
-                        {# === KẾT THÚC THÊM MỚI === #}
                     {% else %}
                         <h1 class="display-3 fw-bold">VS</h1>
                     {% endif %}
@@ -36,6 +34,30 @@
             </div>
         </div>
     </div>
+
+    {% if match.cover_photo or match.gallery_url %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h4 class="section-title mb-0">Khoảnh khắc Trận đấu</h4>
+        </div>
+        <div class="card-body text-center">
+            {% if match.cover_photo %}
+                <a href="{{ match.gallery_url|default:match.cover_photo.url }}" target="_blank" rel="noopener noreferrer">
+                    <img src="{{ match.cover_photo.url }}" alt="Ảnh bìa trận đấu" class="img-fluid rounded mb-3" style="max-height: 400px; cursor: pointer;">
+                </a>
+            {% endif %}
+            {% if match.gallery_url %}
+                <a href="{{ match.gallery_url }}" class="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-images"></i> Xem Toàn bộ Album ảnh
+                </a>
+            {% elif match.cover_photo %}
+                 <a href="{{ match.cover_photo.url }}" class="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-eye-fill"></i> Xem ảnh đầy đủ
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <div class="text-center mb-4">
         {% if captain_team %}

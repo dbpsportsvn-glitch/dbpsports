@@ -266,89 +266,61 @@
     </div>
 
     <div class="tab-pane fade card-pane" id="gallery" role="tabpanel">
-        <style>
-            .photo-gallery .gallery-item {
-                overflow: hidden;
-                border-radius: .5rem;
-                box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,.1);
-            }
-            .photo-gallery .gallery-item img {
-                transition: transform 0.3s ease;
-                width: 100%;
-                height: 250px;
-                object-fit: cover;
-            }
-            .photo-gallery .gallery-item a:hover img {
-                transform: scale(1.05);
-            }
-            .photo-gallery .gallery-caption {
-                padding: 0.75rem;
-                background-color: rgba(0,0,0,0.03);
-                font-size: 0.9rem;
-                color: #555;
-            }
-        </style>
-
-        {% if tournament.gallery_url or is_organizer and tournament.photos.all %}
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                
-                {# Nút "Xem Album" (bên trái) #}
-                <div>
-                    {% if tournament.gallery_url %}
-                        <a href="{{ tournament.gallery_url }}" class="btn btn-success" target="_blank" rel="noopener noreferrer">
-                            <i class="bi bi-images"></i> Xem Album Ảnh Gốc
-                        </a>
-                    {% endif %}
-                </div>
-
-                {# Nút "Xóa Tất cả" (bên phải) #}
-                <div>
-                    {% if is_organizer and tournament.photos.all %}
-                        <form method="post" action="{% url 'organizations:delete_all_photos' tournament_pk=tournament.pk %}" onsubmit="return confirm('Hành động này sẽ xóa vĩnh viễn TOÀN BỘ ảnh trong thư viện. Bạn có chắc chắn muốn tiếp tục?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger" title="Xóa toàn bộ thư viện ảnh">
-                                <i class="bi bi-trash3-fill fs-5"></i> {# Tăng kích thước icon #}
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
-
-            </div>
-            <hr class="mb-4">
-        {% endif %}
-
-        <div class="photo-gallery">
-            <div class="row g-3">
-                {% for photo in tournament.photos.all %}
-                <div class="col-lg-4 col-md-6">
-                    <div class="gallery-item">
-                        {% comment %} Nút xóa chỉ hiển thị cho BTC {% endcomment %}
-                        {% if is_organizer %}
-                            <form method="post" action="{% url 'organizations:delete_photo' pk=photo.pk %}" class="delete-photo-btn">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa ảnh">
-                                    <i class="bi bi-trash-fill"></i>
-                                </button>
-                            </form>
-                        {% endif %}
-
-                        <a href="{{ photo.image.url }}" data-fancybox="gallery-{{ tournament.pk }}" data-caption="{{ photo.caption }}">
-                            <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid">
-                        </a>
-                        {% if photo.caption %}
-                        <div class="gallery-caption">
-                            <p class="mb-0">{{ photo.caption }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col">
-                    <p class="text-muted">Chưa có hình ảnh nào được tải lên cho giải đấu này.</p>
-                </div>
-                {% endfor %}
+        {# === BẮT ĐẦU THAY THẾ TOÀN BỘ NỘI DUNG CỦA TAB NÀY === #}
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h5 class="section-title mb-0">Thư viện ảnh</h5>
+            <div>
+                {% if tournament.gallery_url %}
+                    <a href="{{ tournament.gallery_url }}" class="btn btn-success" target="_blank" rel="noopener noreferrer">
+                        <i class="bi bi-images"></i> Xem Album Toàn Giải
+                    </a>
+                {% endif %}
+                {% if is_organizer %}
+                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary" target="_blank">
+                        <i class="bi bi-upload"></i> Quản lý Album Toàn Giải
+                    </a>
+                {% endif %}
             </div>
         </div>
+        
+        <p class="text-muted">Xem lại những khoảnh khắc đáng nhớ từ các trận đấu.</p>
+        <hr>
+
+        <div class="row g-4">
+            {% for match in matches_with_galleries %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm">
+                    {% if match.cover_photo %}
+                        <img src="{{ match.cover_photo.url }}" class="card-img-top" alt="Ảnh bìa trận {{ match }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        {# Ảnh placeholder nếu trận đấu không có ảnh bìa #}
+                        <div class="d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                            <i class="bi bi-camera fs-1 text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ match.team1.name }} vs {{ match.team2.name }}</h6>
+                        <small class="text-muted mb-3">{{ match.get_match_round_display }} - {{ match.match_time|date:"d/m/Y" }}</small>
+                        
+                        <div class="mt-auto">
+                            {% if match.gallery_url %}
+                                <a href="{{ match.gallery_url }}" class="btn btn-primary w-100" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-images"></i> Xem Album Trận đấu
+                                </a>
+                            {% else %}
+                                <button class="btn btn-secondary w-100" disabled>Chưa có Album</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="col-12">
+                    <p class="text-muted text-center py-5">Chưa có album ảnh nào cho các trận đấu.</p>
+                </div>
+            {% endfor %}
+        </div>
+        {# === KẾT THÚC THAY THẾ === #}
     </div>
 
     {% if knockout_matches %}

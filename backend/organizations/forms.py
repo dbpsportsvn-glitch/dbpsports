@@ -33,11 +33,13 @@ class MatchUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Match
+        # === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY ===
         fields = [
             'team1', 'team2', 'match_time', 'location', 
             'team1_score', 'team2_score', 
             'team1_penalty_score', 'team2_penalty_score',
-            'livestream_url', 'referee', 'commentator', 'ticker_text'
+            'livestream_url', 'referee', 'commentator', 'ticker_text',
+            'cover_photo', 'gallery_url'  # <-- Thêm 2 trường mới vào đây
         ]
         labels = {
             'match_time': 'Thời gian thi đấu',
@@ -50,7 +52,10 @@ class MatchUpdateForm(forms.ModelForm):
             'referee': 'Tên trọng tài',
             'commentator': 'Tên bình luận viên',
             'ticker_text': 'Dòng chữ chạy trên Livestream',
+            'cover_photo': 'Ảnh bìa trận đấu', # <-- Thêm label mới
+            'gallery_url': 'Link Album ảnh của trận đấu' # <-- Thêm label mới
         }
+        # === KẾT THÚC THAY ĐỔI ===
         widgets = {
             'match_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
