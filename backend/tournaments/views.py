@@ -4,6 +4,8 @@ import random
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 from itertools import combinations
+from django.core import serializers
+from django.db import transaction
 
 # Django Core
 from django.conf import settings
@@ -457,118 +459,118 @@ def update_team(request, pk):
     return render(request, 'tournaments/update_team.html', context)    
 
 def match_detail(request, pk):
+    # Lấy thông tin trận đấu và các đội liên quan để tối ưu
     match = get_object_or_404(
-        Match.objects.select_related('team1', 'team2'),
+        Match.objects.select_related('tournament', 'team1', 'team2'),
         pk=pk
     )
 
+    # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ (ĐÃ NÂNG CẤP) ---
+
+    # Lấy danh sách cầu thủ của cả 2 đội trong trận này
+    players_in_match = Player.objects.filter(team__in=[match.team1, match.team2])
+
+    # Lấy tất cả các sự kiện (bàn thắng, thẻ phạt) của trận đấu này
+    all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
+    all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
+
+    # Hàm trợ giúp để xử lý thông tin cho từng đội
+    def get_team_lineup_with_stats(team):
+        lineup_entries = Lineup.objects.filter(match=match, team=team).select_related('player')
+        
+        lineup_with_stats = []
+        for entry in lineup_entries:
+            player = entry.player
+            
+            # Đếm số bàn thắng của cầu thủ trong trận này
+            goals_in_this_match = all_goals_in_match.filter(player=player, is_own_goal=False).count()
+            
+            # Đếm số thẻ của cầu thủ trong trận này
+            yellow_cards_in_this_match = all_cards_in_match.filter(player=player, card_type='YELLOW').count()
+            red_cards_in_this_match = all_cards_in_match.filter(player=player, card_type='RED').count()
+            
+            lineup_with_stats.append({
+                'player': player,
+                'status': entry.get_status_display(), # Lấy tên trạng thái (Đá chính/Dự bị)
+                'goals': goals_in_this_match,
+                'yellow_cards': yellow_cards_in_this_match,
+                'red_cards': red_cards_in_this_match,
+            })
+        return lineup_with_stats
+
+    team1_lineup = get_team_lineup_with_stats(match.team1)
+    team2_lineup = get_team_lineup_with_stats(match.team2)
+    
+    # Lấy danh sách các sự kiện đã sắp xếp theo thời gian để hiển thị
+    events = sorted(
+        list(all_goals_in_match) + list(all_cards_in_match),
+        key=lambda x: x.minute or 0
+    )
+
+    # Kiểm tra xem người dùng hiện tại có phải đội trưởng của 1 trong 2 đội không
     captain_team = None
     if request.user.is_authenticated:
-        if match.team1 and getattr(match.team1, "captain_id", None) == request.user.id:
+        if match.team1.captain == request.user:
             captain_team = match.team1
-        elif match.team2 and getattr(match.team2, "captain_id", None) == request.user.id:
+        elif match.team2.captain == request.user:
             captain_team = match.team2
 
-    team1_lineup = (
-        Lineup.objects
-        .filter(match=match, team=match.team1)
-        .select_related('player')
-        .order_by('player__full_name')
-    )
-    team2_lineup = (
-        Lineup.objects
-        .filter(match=match, team=match.team2)
-        .select_related('player')
-        .order_by('player__full_name')
-    )
-    cards = match.cards.all().order_by('minute')
-
     context = {
-        "match": match,
-        "captain_team": captain_team,
-        "team1_lineup": team1_lineup,
-        "team2_lineup": team2_lineup,
-        'cards': cards,
-        "team1_starters": team1_lineup.filter(status="STARTER"),
-        "team1_subs":     team1_lineup.filter(status="SUBSTITUTE"),
-        "team2_starters": team2_lineup.filter(status="STARTER"),
-        "team2_subs":     team2_lineup.filter(status="SUBSTITUTE"),
+        'match': match,
+        'team1_lineup': team1_lineup,
+        'team2_lineup': team2_lineup,
+        'events': events, # Gửi danh sách sự kiện ra template
+        'captain_team': captain_team,
     }
-    return render(request, "tournaments/match_detail.html", context)
+    return render(request, 'tournaments/match_detail.html', context)
 
 
-
+# backend Kéo Thả đội hình thi đấu
 @login_required
 @never_cache
 def manage_lineup(request, match_pk, team_pk):
-    match = get_object_or_404(Match.objects.select_related('team1','team2','tournament'), pk=match_pk)
+    match = get_object_or_404(Match.objects.select_related('team1', 'team2', 'tournament'), pk=match_pk)
     team = get_object_or_404(Team, pk=team_pk)
 
-    tab = request.GET.get('tab', 'schedule')
-    back_url = f"{reverse('match_detail', kwargs={'pk': match.pk})}?tab={tab}#{tab}"
-
     if request.user != team.captain and not request.user.is_staff:
-        return HttpResponseForbidden("Không có quyền.")
+        messages.error(request, "Bạn không có quyền truy cập trang này.")
+        return redirect('match_detail', pk=match.pk)
 
     if request.method == "POST":
-        selection = {}
-        starters = 0
-        for player in team.players.all():
-            status = request.POST.get(f"player_{player.pk}", "")
-            selection[player.pk] = status
-            if status == "STARTER":
-                starters += 1
+        starters_ids_str = request.POST.get('starters', '')
+        substitutes_ids_str = request.POST.get('substitutes', '')
 
-        error_message = None
-        if starters > MAX_STARTERS:
-            error_message = f"Tối đa {MAX_STARTERS} cầu thủ đá chính cho mỗi đội."
+        starter_ids = [int(pid) for pid in starters_ids_str.split(',') if pid]
+        substitute_ids = [int(pid) for pid in substitutes_ids_str.split(',') if pid]
 
-        if error_message is None:
-            try:
-                with transaction.atomic():
-                    for player in team.players.all():
-                        status = selection.get(player.pk, "")
-                        if status:
-                            Lineup.objects.update_or_create(
-                                match=match, player=player,
-                                defaults={"team": team, "status": status}
-                            )
-                        else:
-                            Lineup.objects.filter(match=match, player=player, team=team).delete()
-            except ValidationError as e:
-                if hasattr(e, 'message_dict'):
-                    msgs = []
-                    for v in e.message_dict.values():
-                        if isinstance(v, (list, tuple)):
-                            msgs.extend(str(x) for x in v)
-                        else:
-                            msgs.append(str(v))
-                    error_message = "; ".join(msgs)
-                else:
-                    error_message = str(e)
+        try:
+            with transaction.atomic():
+                Lineup.objects.filter(match=match, team=team).delete()
 
-        if error_message:
-            existing_lineup = selection 
-            context = {
-                "match": match,
-                "team": team,
-                "existing_lineup": existing_lineup,
-                "back_url": back_url,
-                "error_message": error_message,
-            }
-            return render(request, "tournaments/manage_lineup.html", context)
+                for player_id in starter_ids:
+                    player = get_object_or_404(Player, pk=player_id, team=team)
+                    Lineup.objects.create(match=match, player=player, team=team, status='STARTER')
 
-        tab = request.POST.get('tab') or request.GET.get('tab') or 'schedule'
-        url = reverse('match_detail', kwargs={'pk': match.pk})
-        return redirect(f'{url}?tab={tab}#{tab}')
+                for player_id in substitute_ids:
+                    player = get_object_or_404(Player, pk=player_id, team=team)
+                    Lineup.objects.create(match=match, player=player, team=team, status='SUBSTITUTE')
 
-    existing_lineup = dict(Lineup.objects.filter(match=match, team=team)
-                           .values_list("player_id","status"))
-    return render(request, "tournaments/manage_lineup.html", {
-        "match": match, "team": team,
-        "existing_lineup": existing_lineup,
-        "back_url": back_url, "tab": tab,
-    })
+            messages.success(request, "Đã lưu đội hình thành công!")
+            return redirect('match_detail', pk=match.pk)
+        except Exception as e:
+            messages.error(request, f"Đã có lỗi xảy ra khi lưu đội hình: {e}")
+            return redirect('manage_lineup', match_pk=match.pk, team_pk=team.pk)
+
+    existing_lineup = {
+        'starters': list(Lineup.objects.filter(match=match, team=team, status='STARTER').values_list('player_id', flat=True)),
+        'substitutes': list(Lineup.objects.filter(match=match, team=team, status='SUBSTITUTE').values_list('player_id', flat=True)),
+    }
+    context = {
+        "match": match,
+        "team": team,
+        "existing_lineup_json": json.dumps(existing_lineup),  # an toàn + dễ parse
+    }
+    return render(request, "tournaments/manage_lineup.html", context)
     
 
 def match_print_view(request, pk):

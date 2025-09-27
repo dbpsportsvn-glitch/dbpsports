@@ -1,164 +1,302 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ match.team1.name }} vs {{ match.team2.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+
+    /* Dán vào trong block extra_css */
+    .countdown-timer {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .countdown-box {
+        text-align: center;
+    }
+    .countdown-box .number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #f59e0b; /* Màu vàng */
+        line-height: 1;
+    }
+    .countdown-box .label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #cbd5e1; /* Màu chữ sáng hơn */
+    }    
+    /* CSS cho trang chi tiết trận đấu mới */
+    .scoreboard {
+        background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url("{% static 'images/hero-1.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        text-align: center;
+    }
+    .scoreboard .team-logo {
+        max-height: 100px;
+        max-width: 100px;
+        object-fit: contain;
+        margin-bottom: 1rem;
+    }
+    .scoreboard .team-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .scoreboard .score {
+        font-size: 4rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .scoreboard .match-info {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    .section-title {
+        font-weight: 700;
+        color: #0d6efd;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .player-card {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .player-card:last-child {
+        border-bottom: none;
+    }
+    .player-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+    .player-info {
+        flex-grow: 1;
+    }
+    .player-name {
+        font-weight: 600;
+    }
+    .player-details {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .player-stats {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 1rem;
+    }
+    .event-timeline {
+        list-style: none;
+        padding-left: 0;
+    }
+    .event-item {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 1rem;
+    }
+    .event-minute {
+        font-weight: 700;
+        color: #0d6efd;
+        width: 40px;
+        text-align: center;
+    }
+    .event-icon {
+        margin: 0 1rem;
+        font-size: 1.2rem;
+    }
+    .event-details {
+        flex-grow: 1;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <a href="{% url 'tournament_detail' pk=match.tournament.pk %}?tab=schedule#schedule" class="btn btn-outline-secondary btn-sm mb-3">
-        <i class="bi bi-arrow-left"></i> Về giải đấu
+        <i class="bi bi-arrow-left"></i> Về Lịch thi đấu
     </a>
 
-    <div class="card text-center shadow-sm mb-4 scoreboard-card">
-        <div class="card-header">
-            <h3>{{ match.tournament.name }}</h3>
-            <p class="mb-0 text-muted">{{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}</p>
-        </div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-4">
-                    {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" alt="{{ match.team1.name }} logo" class="team-logo">{% endif %}
-                    <h2 class="mt-2 h4">{{ match.team1.name }}</h2>
-                </div>
-                <div class="col-4">
-                    {% if match.team1_score is not None and match.team2_score is not None %}
-                        <h1 class="display-3 fw-bold">{{ match.team1_score }} - {{ match.team2_score }}</h1>
-                        {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
-                            <p class="mb-0 text-muted">(Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})</p>
-                        {% endif %}
-                    {% else %}
-                        <h1 class="display-3 fw-bold">VS</h1>
+    <div class="scoreboard shadow mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                {% if match.team1.logo %}
+                    <img src="{{ match.team1.logo.url }}" alt="{{ match.team1.name }} logo" class="team-logo">
+                {% endif %}
+                <div class="team-name">{{ match.team1.name }}</div>
+            </div>
+            <div class="col-md-4">
+                {% if match.team1_score is not None %}
+                    <div class="score">{{ match.team1_score }} - {{ match.team2_score }}</div>
+                    {% if match.team1_penalty_score is not None %}
+                        <div class="match-info">(Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})</div>
                     {% endif %}
+                {% else %}
+                    <div class="score">VS</div>
+                {% endif %}
+                <div class="match-info mt-2">
+                    {{ match.get_match_round_display }} - {{ match.tournament.name }}<br>
+                    {{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}
                 </div>
-                <div class="col-4">
-                    {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }} logo" class="team-logo">{% endif %}
-                    <h2 class="mt-2 h4">{{ match.team2.name }}</h2>
-                </div>
+            </div>
+            <div class="col-md-4">
+                {% if match.team2.logo %}
+                    <img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }} logo" class="team-logo">
+                {% endif %}
+                <div class="team-name">{{ match.team2.name }}</div>
             </div>
         </div>
     </div>
 
-    {% if match.cover_photo or match.gallery_url %}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">
-            <h4 class="section-title mb-0">Khoảnh khắc Trận đấu</h4>
+    {% if match.team1_score is None and not match.is_live %}
+    <div id="countdown-wrapper" class="countdown-timer text-white">
+        <h4 class="text-center mb-3">Trận đấu sẽ bắt đầu sau</h4>
+        <div class="row" id="countdown">
+            <div class="col-3 countdown-box"><span class="number" id="days">00</span><span class="label">Ngày</span></div>
+            <div class="col-3 countdown-box"><span class="number" id="hours">00</span><span class="label">Giờ</span></div>
+            <div class="col-3 countdown-box"><span class="number" id="minutes">00</span><span class="label">Phút</span></div>
+            <div class="col-3 countdown-box"><span class="number" id="seconds">00</span><span class="label">Giây</span></div>
         </div>
-        <div class="card-body text-center">
-            {% if match.cover_photo %}
-                <a href="{{ match.gallery_url|default:match.cover_photo.url }}" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ match.cover_photo.url }}" alt="Ảnh bìa trận đấu" class="img-fluid rounded mb-3" style="max-height: 400px; cursor: pointer;">
-                </a>
-            {% endif %}
-            {% if match.gallery_url %}
-                <a href="{{ match.gallery_url }}" class="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-images"></i> Xem Toàn bộ Album ảnh
-                </a>
-            {% elif match.cover_photo %}
-                 <a href="{{ match.cover_photo.url }}" class="btn btn-primary btn-lg" target="_blank" rel="noopener noreferrer">
-                    <i class="bi bi-eye-fill"></i> Xem ảnh đầy đủ
-                </a>
-            {% endif %}
-        </div>
+    </div>
+    <span id="match-start-time" data-datetime="{{ match.match_time.isoformat }}"></span>
+    {% endif %}
+
+    {% if captain_team %}
+    <div class="text-center mb-4">
+        <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-list-check"></i> Quản lý Đội hình thi đấu
+        </a>
     </div>
     {% endif %}
 
-    <div class="text-center mb-4">
-        {% if captain_team %}
-            <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-lg d-block mx-auto" style="max-width: 300px;">Quản lý Đội hình</a>
-        {% endif %}
-    </div>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h4 class="section-title">Diễn biến chính</h4>
+                    <ul class="event-timeline">
+                        {% for event in events %}
+                        <li class="event-item">
+                            <div class="event-minute">{{ event.minute|default:"-" }}'</div>
+                            <div class="event-icon">
+                                {% if event.is_own_goal %}
+                                    <i class="bi bi- فوتبال" style="color: red;" title="Phản lưới nhà"></i>
+                                {% elif event.minute is not None %}
+                                    <i class="bi bi-futbol" title="Bàn thắng"></i>
+                                {% elif event.card_type == 'YELLOW' %}
+                                    <span class="badge bg-warning text-dark" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ vàng"></span>
+                                {% elif event.card_type == 'RED' %}
+                                    <span class="badge bg-danger" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ đỏ"></span>
+                                {% endif %}
+                            </div>
+                            <div class="event-details">
+                                <strong>{{ event.player.full_name }}</strong> ({{ event.team.name }})
+                            </div>
+                        </li>
+                        {% empty %}
+                        <p class="text-muted">Chưa có diễn biến nào nổi bật.</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-header">
-            <h4 class="section-title mb-0">Diễn biến chính</h4>
-        </div>
-        <div class="card-body p-3">
-            <div class="row">
-                <div class="col-6 border-end text-end pe-3">
-                    {% for goal in match.goals.all %}
-                        {% if goal.team == match.team1 %}
-                            <p class="mb-1">
-                                {{ goal.player.full_name }} {% if goal.minute %}({{ goal.minute }}'){% endif %} ⚽
-                            </p>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <div class="col-6 ps-3">
-                    {% for goal in match.goals.all %}
-                        {% if goal.team == match.team2 %}
-                            <p class="mb-1">
-                                ⚽ {{ goal.player.full_name }} {% if goal.minute %}({{ goal.minute }}'){% endif %}
-                            </p>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-            {% if cards %}
-            <hr>
-            <div class="row">
-                <div class="col-6 border-end text-end pe-3">
-                    {% for card in cards %}
-                        {% if card.team == match.team1 %}
-                            <p class="mb-1">
-                                {{ card.player.full_name }} {% if card.minute %}({{ card.minute }}'){% endif %}
-                                {% if card.card_type == 'YELLOW' %}<span class="badge bg-warning text-dark"> </span>{% else %}<span class="badge bg-danger"> </span>{% endif %}
-                            </p>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                <div class="col-6 ps-3">
-                     {% for card in cards %}
-                        {% if card.team == match.team2 %}
-                            <p class="mb-1">
-                                {% if card.card_type == 'YELLOW' %}<span class="badge bg-warning text-dark"> </span>{% else %}<span class="badge bg-danger"> </span>{% endif %}
-                                {{ card.player.full_name }} {% if card.minute %}({{ card.minute }}'){% endif %}
-                            </p>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="card shadow-sm lineup-section">
-        <div class="card-header">
-            <h4 class="section-title mb-0">Đội hình Thi đấu</h4>
-            {% if user.is_staff or user.is_superuser %}
-                <a href="{% url 'match_print' pk=match.pk %}" class="btn btn-outline-secondary btn-sm print-btn" target="_blank" title="In thông tin">🖨️</a>
-            {% endif %}
-        </div>
-        <div class="card-body">
+        <div class="col-lg-8">
             <div class="row">
                 <div class="col-md-6 mb-4">
-                    <h5 class="section-title">{{ match.team1.name }}</h5>
-                    <ul class="list-group">
-                        <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
-                        {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'STARTER' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
-                        {% endif %}{% endfor %}
-                        <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
-                        {% for lineup_entry in team1_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
-                        {% endif %}{% empty %}
-                            <li class="list-group-item">Đội hình chưa được đăng ký.</li>
-                        {% endfor %}
-                    </ul>
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h4 class="section-title">{{ match.team1.name }}</h4>
+                            {% for p_data in team1_lineup %}
+                                <div class="player-card">
+                                    <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                                    <div class="player-info">
+                                        <div class="player-name">#{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}</div>
+                                        <div class="player-details">{{ p_data.player.get_position_display }} | {{ p_data.status }}</div>
+                                    </div>
+                                    <div class="player-stats">
+                                        {% if p_data.goals > 0 %}<span title="Bàn thắng">⚽ {{ p_data.goals }}</span>{% endif %}
+                                        {% if p_data.yellow_cards > 0 %}<span class="badge bg-warning text-dark" title="Thẻ vàng">{{ p_data.yellow_cards }}</span>{% endif %}
+                                        {% if p_data.red_cards > 0 %}<span class="badge bg-danger" title="Thẻ đỏ">{{ p_data.red_cards }}</span>{% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">Đội hình chưa được đăng ký.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6 mb-4">
-                    <h5 class="section-title">{{ match.team2.name }}</h5>
-                    <ul class="list-group">
-                         <li class="list-group-item list-group-item-secondary"><strong>Đá chính</strong></li>
-                        {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'STARTER' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
-                        {% endif %}{% endfor %}
-                        <li class="list-group-item list-group-item-secondary mt-3"><strong>Dự bị</strong></li>
-                        {% for lineup_entry in team2_lineup %}{% if lineup_entry.status == 'SUBSTITUTE' %}
-                            <li class="list-group-item">#{{ lineup_entry.player.jersey_number }} - <a href="{% url 'player_detail' pk=lineup_entry.player.pk %}">{{ lineup_entry.player.full_name }}</a></li>
-                        {% endif %}{% empty %}
-                            <li class="list-group-item">Đội hình chưa được đăng ký.</li>
-                        {% endfor %}
-                    </ul>
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h4 class="section-title">{{ match.team2.name }}</h4>
+                            {% for p_data in team2_lineup %}
+                                <div class="player-card">
+                                    <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                                    <div class="player-info">
+                                        <div class="player-name">#{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}</div>
+                                        <div class="player-details">{{ p_data.player.get_position_display }} | {{ p_data.status }}</div>
+                                    </div>
+                                    <div class="player-stats">
+                                        {% if p_data.goals > 0 %}<span title="Bàn thắng">⚽ {{ p_data.goals }}</span>{% endif %}
+                                        {% if p_data.yellow_cards > 0 %}<span class="badge bg-warning text-dark" title="Thẻ vàng">{{ p_data.yellow_cards }}</span>{% endif %}
+                                        {% if p_data.red_cards > 0 %}<span class="badge bg-danger" title="Thẻ đỏ">{{ p_data.red_cards }}</span>{% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-muted">Đội hình chưa được đăng ký.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const countdownElement = document.getElementById('countdown');
+    const timeElement = document.getElementById('match-start-time');
+
+    if (countdownElement && timeElement) {
+        const countDownDate = new Date(timeElement.dataset.datetime).getTime();
+
+        const interval = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = countDownDate - now;
+
+            if (distance < 0) {
+                clearInterval(interval);
+                document.getElementById('countdown-wrapper').style.display = 'none';
+                // Tùy chọn: Tải lại trang để cập nhật trạng thái "LIVE"
+                // window.location.reload();
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Thêm số 0 đằng trước nếu nhỏ hơn 10
+            document.getElementById('days').innerText = String(days).padStart(2, '0');
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+        }, 1000);
+    }
+});
+</script>
+{% endblock %}
 {% endblock %}

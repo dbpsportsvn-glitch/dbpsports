@@ -251,6 +251,14 @@ class Match(models.Model):
             return self.team2 if self.winner == self.team1 else self.team1
         return None
 
+    # Điều kiện đồng hồ
+    @property
+    def is_live(self):
+        """Kiểm tra xem trận đấu có đang diễn ra không."""
+        now = timezone.now()
+        # Giả sử một trận đấu kéo dài 2 tiếng (120 phút)
+        return self.match_time <= now < self.match_time + timedelta(minutes=120)
+
 class Lineup(models.Model):
     STATUS_CHOICES = [('STARTER', 'Đá chính'), ('SUBSTITUTE', 'Dự bị')]
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='lineups')
