@@ -97,6 +97,9 @@ class TournamentAdmin(admin.ModelAdmin):
     inlines = [GroupInline, TournamentPhotoInline]; list_per_page = 50
     actions = ['auto_create_next_knockout_round', 'create_third_place_match', 'create_semi_finals_with_best_runner_ups']
 
+    class Media:
+        js = ('js/admin_state.js',)
+
     @admin.display(description='Tải ảnh hàng loạt')
     def bulk_upload_link(self, obj):
         url = reverse('tournament_bulk_upload', args=[obj.pk]); return format_html('<a class="button" href="{}" target="_blank">Tải ảnh</a>', url)
@@ -286,6 +289,10 @@ class TeamAdmin(ModelAdmin):
     list_filter = ("tournament", "group", "payment_status", PlayerCountFilter); search_fields = ("name", "tournament__name", "captain__username"); list_editable = ("payment_status",)
     inlines = [PlayerInline]; autocomplete_fields = ("group", "tournament", "captain"); list_select_related = ("tournament", "group", "captain"); list_per_page = 50; actions = ['approve_payments']
     @admin.action(description='Duyệt thanh toán cho các đội đã chọn')
+
+    class Media:
+        js = ('js/admin_state.js',)
+
     def approve_payments(self, request, queryset):
         updated_count = queryset.filter(payment_status='PENDING').update(payment_status='PAID')
         for team in queryset.filter(pk__in=queryset.values_list('pk', flat=True)):
@@ -304,7 +311,7 @@ class TeamAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
         if old_obj and old_obj.payment_status != 'PAID' and obj.payment_status == 'PAID':
             if obj.captain.email: send_notification_email(subject=f"Xác nhận thanh toán thành công cho đội {obj.name}", template_name='tournaments/emails/payment_confirmed.html', context={'team': obj}, recipient_list=[obj.captain.email])
-
+        
 @admin.register(Player)
 class PlayerAdmin(ModelAdmin):
     list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar"); list_filter = ("team__tournament", "position", "team"); search_fields = ("full_name", "team__name", "jersey_number"); list_editable = ("position",); ordering = ("team", "jersey_number"); autocomplete_fields = ("team",); list_select_related = ("team",); list_per_page = 50
@@ -410,6 +417,10 @@ class HomeBannerAdmin(ModelAdmin):
 @admin.register(Announcement)
 class AnnouncementAdmin(ModelAdmin):
     list_display = ('title', 'tournament', 'audience', 'is_published', 'created_at'); list_filter = ('tournament', 'is_published', 'audience'); search_fields = ('title', 'content'); list_editable = ('is_published',); date_hierarchy = 'created_at'; actions = ['send_email_notification']
+
+    class Media:
+        js = ('js/admin_state.js',)
+        
     @admin.action(description='Gửi email thông báo cho các đội trưởng')
     def send_email_notification(self, request, queryset):
         sent_count = 0

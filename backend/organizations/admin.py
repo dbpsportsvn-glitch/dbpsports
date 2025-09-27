@@ -29,6 +29,9 @@ class OrganizationAdmin(admin.ModelAdmin):
     autocomplete_fields = ['owner']
     inlines = [MembershipInline]
 
+    class Media:
+        js = ('js/admin_state.js',)
+        
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related('members').annotate(
             models.Count('members')
