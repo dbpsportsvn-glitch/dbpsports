@@ -38,6 +38,7 @@ urlpatterns = [
     path('team/<int:pk>/', views.team_detail, name='team_detail'),
     path('team/<int:pk>/update/', views.update_team, name='update_team'),
     path('team/<int:pk>/payment/', views.team_payment, name='team_payment'), # Dòng mới
+    path('team/<int:pk>/hall_of_fame/', views.team_hall_of_fame, name='team_hall_of_fame'),
 
     # --- URL liên quan đến Cầu thủ (Player) ---
     path('player/<int:pk>/claim/', views.claim_player_profile, name='claim_player_profile'),

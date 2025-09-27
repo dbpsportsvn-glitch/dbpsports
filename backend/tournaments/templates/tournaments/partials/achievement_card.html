@@ -1,0 +1,20 @@
+{% comment %} File: backend/tournaments/templates/tournaments/partials/achievement_card.html {% endcomment %}
+
+<a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="text-decoration-none text-reset d-block h-100">
+    <div class="card h-100 shadow-sm achievement-card {{ border_class }}">
+        {% if achievement.tournament.image %}
+            <img src="{{ achievement.tournament.image.url }}" class="card-img-top tournament-banner" alt="Banner {{ achievement.tournament.name }}">
+        {% endif %}
+        <div class="card-body">
+            <h5 class="card-title text-{{ color_class }}">
+                <i class="bi {{ icon_class }}"></i> {{ achievement.get_achievement_type_display }}
+            </h5>
+            <p class="card-text">
+                <small class="text-muted">{{ achievement.tournament.name }} - {{ achievement.achieved_at|date:"Y" }}</small>
+            </p>
+            {% if achievement.description %}
+                <p class="fst-italic">"{{ achievement.description }}"</p>
+            {% endif %}
+        </div>
+    </div>
+</a>

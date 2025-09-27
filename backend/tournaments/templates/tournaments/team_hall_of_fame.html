@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Phòng Truyền thống - {{ team.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Bố cục tiêu đề chính của trang */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+    }
+    .page-header h1 {
+        margin-bottom: 0;
+        color: #0d6efd; /* Màu xanh dương nổi bật */
+        font-weight: 700;
+    }
+    .page-header .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .hero-hall-of-fame {
+        position: relative;
+        height: 450px;
+        background-color: #212529; /* Nền tối để ảnh 'contain' đẹp hơn */
+        border-radius: .75rem;
+        overflow: hidden;
+    }
+    .hero-image {
+        width: 100%;
+        height: 100%;
+        /* THAY ĐỔI 3: Hiển thị toàn bộ ảnh */
+        object-fit: contain;
+        z-index: 1;
+    }
+    .upload-btn-wrapper {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 10;
+    }
+    .title-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .team-logo-main {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+    .team-name-main {
+        font-weight: 800;
+        color: #d97706;
+    }
+
+    /* Các style cũ */
+    .achievement-card { transition: transform .2s ease, box-shadow .2s ease; border-width: 1px 1px 1px 5px; border-left-style: solid; }
+    .achievement-card:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .achievement-card .tournament-banner { height: 150px; object-fit: cover; }
+    .text-gold { color: #ffc107; } .border-gold { border-left-color: #ffc107; }
+    .text-silver { color: #adb5bd; } .border-silver { border-left-color: #adb5bd; }
+    .text-bronze { color: #cd7f32; } .border-bronze { border-left-color: #cd7f32; }
+    .section-title-wrapper { border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+    .section-title-wrapper h3 { margin-bottom: 0; color: #fd0d0d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="page-header">
+        <h1><i class="bi bi-trophy-fill"></i> Phòng Truyền thống</h1>
+        <div class="actions">
+            <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+            <button class="btn btn-success btn-sm" id="shareBtn">
+                <i class="bi bi-share-fill"></i> Chia sẻ
+            </button>
+        </div>
+    </div>
+
+    <div class="hero-hall-of-fame mb-4 shadow-sm">
+        {% if request.user == team.captain %}
+        <div class="upload-btn-wrapper">
+            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                <i class="bi bi-camera-fill"></i>
+                {% if team.main_photo %} Thay đổi ảnh bìa {% else %} Tải lên ảnh bìa {% endif %}
+            </button>
+        </div>
+        {% endif %}
+
+        {% if team.main_photo %}
+            <img src="{{ team.main_photo.url }}" class="hero-image" alt="Ảnh đội {{ team.name }}">
+        {% else %}
+            <div class="d-flex align-items-center justify-content-center h-100">
+                <i class="bi bi-image-alt" style="font-size: 4rem; color: #6c757d;"></i>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="title-section">
+        <div>
+            <h2 class="team-name-main">{{ team.name }}</h2>
+        </div>
+        {% if team.logo %}
+        <img src="{{ team.logo.url }}" class="team-logo-main" alt="Logo {{ team.name }}">
+        {% endif %}
+    </div>
+
+    <div class="section-title-wrapper">
+        <h3>Các danh hiệu đạt được</h3>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for achievement in achievements %}
+            <div class="col">
+                {% if achievement.achievement_type == 'CHAMPION' %}
+                    {% with icon_class="bi-trophy-fill" color_class="gold" border_class="border-gold" %}
+                        {% include "tournaments/partials/achievement_card.html" %}
+                    {% endwith %}
+                {% elif achievement.achievement_type == 'RUNNER_UP' %}
+                     {% with icon_class="bi-award-fill" color_class="silver" border_class="border-silver" %}
+                        {% include "tournaments/partials/achievement_card.html" %}
+                    {% endwith %}
+                {% elif achievement.achievement_type == 'THIRD_PLACE' %}
+                     {% with icon_class="bi-award" color_class="bronze" border_class="border-bronze" %}
+                        {% include "tournaments/partials/achievement_card.html" %}
+                    {% endwith %}
+                {% else %}
+                    {% with icon_class="bi-patch-check-fill" color_class="primary" border_class="border-primary" %}
+                        {% include "tournaments/partials/achievement_card.html" %}
+                    {% endwith %}
+                {% endif %}
+            </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-muted">Đội bóng chưa có thành tích nào được ghi nhận.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if request.user == team.captain %}
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tải lên ảnh bìa cho đội</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="id_main_photo" class="form-label">Chọn ảnh mới (ưu tiên ảnh ngang)</label>
+                <input type="file" name="main_photo" class="form-control" id="id_main_photo" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Lưu ảnh</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const url = window.location.href;
+            const title = document.title;
+            const text = `Xem phòng truyền thống của đội {{ team.name }}!`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title, text, url });
+                } catch (err) { console.error('Lỗi khi chia sẻ:', err); }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
+                    setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+                } catch (err) {
+                    alert('Không thể sao chép link.');
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

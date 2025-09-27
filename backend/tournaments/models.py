@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from organizations.models import Organization
+from django.utils import timezone
 
 from PIL import Image
 from io import BytesIO
@@ -108,6 +109,7 @@ class Team(models.Model):
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
+    main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
     payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='UNPAID')
     payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True)
 
@@ -433,3 +435,31 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Thông báo cho {self.user.username}: {self.title}"
+
+# === THÊM MODEL MỚI VÀO CUỐI FILE ===
+class TeamAchievement(models.Model):
+    """
+    Lưu trữ một thành tích mà một đội bóng đạt được trong một giải đấu.
+    """
+    ACHIEVEMENT_CHOICES = [
+        ('CHAMPION', 'Vô địch'),
+        ('RUNNER_UP', 'Á quân'),
+        ('THIRD_PLACE', 'Hạng ba'),
+        ('FAIR_PLAY', 'Giải Phong cách / Fair Play'),
+        ('OTHER', 'Khác'),
+    ]
+
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='achievements', verbose_name="Đội bóng")
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='team_achievements', verbose_name="Giải đấu")
+    achievement_type = models.CharField("Loại danh hiệu", max_length=20, choices=ACHIEVEMENT_CHOICES)
+    description = models.CharField("Mô tả (tùy chọn)", max_length=255, blank=True, help_text="Ghi rõ hơn về danh hiệu, ví dụ: 'Vô địch mùa giải 2025'")
+    achieved_at = models.DateField("Ngày đạt được", default=timezone.now)
+
+    class Meta:
+        ordering = ['-achieved_at']
+        verbose_name = "Thành tích Đội bóng"
+        verbose_name_plural = "Thành tích Đội bóng"
+        unique_together = ('team', 'tournament', 'achievement_type') # Đảm bảo mỗi đội chỉ có 1 danh hiệu/giải
+
+    def __str__(self):
+        return f"{self.team.name} - {self.get_achievement_type_display()} tại {self.tournament.name}"        

@@ -337,7 +337,8 @@ def tournament_detail(request, pk):
 @never_cache
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
-    
+    achievements = team.achievements.select_related('tournament').all()
+
     if request.method == 'POST':
         if request.user == team.captain:
             player_form = PlayerCreationForm(request.POST, request.FILES)
@@ -357,6 +358,7 @@ def team_detail(request, pk):
     context = {
         'team': team,
         'player_form': player_form,
+        'achievements': achievements,
     }
     return render(request, 'tournaments/team_detail.html', context)
 
@@ -1173,3 +1175,29 @@ def delete_all_notifications(request):
     Notification.objects.filter(user=request.user).delete()
     messages.success(request, "Đã xóa tất cả thông báo.")
     return redirect('notification_list')
+
+# === Xử lý thành tích đội bóng ===
+@login_required
+@never_cache
+def team_hall_of_fame(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    achievements = team.achievements.select_related('tournament').order_by('-tournament__start_date')
+
+    # Chỉ đội trưởng mới có thể upload ảnh
+    form = None
+    if request.user == team.captain:
+        form = TeamCreationForm(instance=team, user=request.user) # Tạm thời dùng form cũ để upload ảnh
+        if request.method == 'POST':
+            form = TeamCreationForm(request.POST, request.FILES, instance=team, user=request.user)
+            if 'main_photo' in request.FILES:
+                team.main_photo = request.FILES['main_photo']
+                team.save()
+                messages.success(request, "Đã cập nhật ảnh đại diện cho đội!")
+                return redirect('team_hall_of_fame', pk=team.pk)
+
+    context = {
+        'team': team,
+        'achievements': achievements,
+        'form': form,
+    }
+    return render(request, 'tournaments/team_hall_of_fame.html', context)

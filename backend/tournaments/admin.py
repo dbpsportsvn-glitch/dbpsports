@@ -12,7 +12,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 from django.db.models import Count
-from .models import Tournament, Team, Player, Match, Lineup, Group, Goal, Card, HomeBanner, Announcement, TournamentPhoto, Notification
+from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
+                     HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement)
 from .utils import send_notification_email, send_schedule_notification
 
 # ===== CÁC Hàm Cho Bộ lọc (Giữ nguyên) =====
@@ -392,3 +393,11 @@ class AnnouncementAdmin(ModelAdmin):
                 except Exception as e: self.message_user(request, f"Gặp lỗi khi gửi thông báo '{announcement.title}': {e}", messages.ERROR)
             else: self.message_user(request, f"Không tìm thấy email đội trưởng nào cho giải '{tournament.name}'.", messages.WARNING)
         if sent_count > 0: self.message_user(request, f"Đã gửi thành công {sent_count} thông báo qua email.", messages.SUCCESS)
+
+ # === THÊM CLASS MỚI VÀO CUỐI FILE ===
+@admin.register(TeamAchievement)
+class TeamAchievementAdmin(admin.ModelAdmin):
+    list_display = ('team', 'achievement_type', 'tournament', 'achieved_at')
+    list_filter = ('tournament', 'achievement_type')
+    search_fields = ('team__name', 'tournament__name', 'description')
+    autocomplete_fields = ('team', 'tournament')       

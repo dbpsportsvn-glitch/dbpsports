@@ -36,6 +36,7 @@
                         {% if user == team.captain %}
                         <div class="btn-group">
                             <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning btn-sm">Sửa thông tin đội</a>
+                            <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-info btn-sm">🏆 Phòng Truyền thống</a>
                             <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=schedule#schedule" class="btn btn-primary btn-sm">Lịch thi đấu</a>
                         </div>
                         {% endif %}
