@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
-from .models import HomeBanner, Tournament, Group, Match, Team, Notification
+from .models import HomeBanner, Tournament, Group, Match, Team, Notification, TeamAchievement
 from .utils import send_schedule_notification
 
 @receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group])
@@ -128,3 +128,36 @@ def create_schedule_notification_on_match_creation(sender, instance, created, **
                 "Lịch thi đấu mới đã được tạo. Hãy vào xem chi tiết.",
                 'tournament_detail'
             )
+
+# === Tự động lưu thành tích ===
+@receiver(post_save, sender=Match)
+def award_achievements_on_final_match_save(sender, instance, created, **kwargs):
+    """
+    Tự động trao danh hiệu khi một trận Chung kết hoặc Tranh Hạng Ba có kết quả.
+    """
+    match = instance
+
+    # Chỉ hoạt động khi trận đấu có kết quả và có người thắng/thua
+    if match.winner and match.loser:
+        tournament = match.tournament
+
+        # Trường hợp 1: Trận Chung kết
+        if match.match_round == 'FINAL':
+            # Dùng update_or_create để tránh tạo trùng lặp nếu admin có chỉnh sửa lại tỉ số
+            TeamAchievement.objects.update_or_create(
+                team=match.winner, tournament=tournament, achievement_type='CHAMPION',
+                defaults={'description': f'Vô địch giải {tournament.name} {tournament.start_date.year}'}
+            )
+            TeamAchievement.objects.update_or_create(
+                team=match.loser, tournament=tournament, achievement_type='RUNNER_UP',
+                defaults={'description': f'Á quân giải {tournament.name} {tournament.start_date.year}'}
+            )
+            print(f"Đã tự động trao giải Vô địch và Á quân cho giải {tournament.name}.")
+
+        # Trường hợp 2: Trận Tranh Hạng Ba
+        elif match.match_round == 'THIRD_PLACE':
+            TeamAchievement.objects.update_or_create(
+                team=match.winner, tournament=tournament, achievement_type='THIRD_PLACE',
+                defaults={'description': f'Hạng ba giải {tournament.name} {tournament.start_date.year}'}
+            )
+            print(f"Đã tự động trao giải Hạng ba cho giải {tournament.name}.")            
