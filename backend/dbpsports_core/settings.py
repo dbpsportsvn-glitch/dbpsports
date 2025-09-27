@@ -19,7 +19,6 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # === Apps ===
 INSTALLED_APPS = [
-    "jazzmin",
     "organizations",
     "users",
     "tournaments",
@@ -132,57 +131,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # === Crispy ===
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
-# === Jazzmin ===
-JAZZMIN_SETTINGS = {
-    "site_title": "DBP Sports Admin",
-    "site_header": "DBP Sports",
-    "site_brand": "DBP Sports",
-    "welcome_sign": "Chào mừng bạn đến với trang quản trị DBP Sports",
-    "copyright": "DBP Sports Ltd.",
-    "order_with_respect_to": [
-        "tournaments",
-        "tournaments.Tournament",
-        "tournaments.Team",
-        "tournaments.Player",
-        "tournaments.Match",
-        "users",
-    ],
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "users.user": "fas fa-user",
-        "tournaments.Tournament": "fas fa-trophy",
-        "tournaments.Team": "fas fa-users",
-        "tournaments.Player": "fas fa-user-shield",
-        "tournaments.Match": "fas fa-futbol",
-    },
-    "topmenu_links": [
-        {"name": "Trang chủ", "url": "admin:index"},
-        {"name": "Xem trang web", "url": "/", "new_window": True},
-    ],
-    "custom_css": "css/custom_admin.css",
-    "language_chooser": False,
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "theme": "darkly", # Sử dụng một theme sáng sủa và phẳng hơn
-    "dark_mode_theme": "darkly", # Tùy chọn theme cho chế độ tối
-    "navbar_small_text": True,
-    "footer_small_text": True,
-    "body_small_text": False,
-    "brand_small_text": True,
-    "brand_colour": "navbar-dark",
-    "accent": "accent-primary",
-    "navbar": "navbar-dark",
-    "no_navbar_border": False,
-    "sidebar": "sidebar-dark-primary",
-    "sidebar_nav_small_text": True,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": True, # Thụt lề các menu con cho dễ nhìn
-    "sidebar_nav_compact_style": True, # Giao diện menu gọn gàng hơn
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True, # Giao diện menu phẳng, hiện đại
-}
 
 # === Email ===
 # Nếu DEBUG=False (trên host), sử dụng SMTP. Ngược lại (ở máy), dùng console.
