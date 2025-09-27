@@ -95,7 +95,7 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "bulk_upload_link", "view_details_link")
     list_filter = ("status",); search_fields = ("name",); list_editable = ("status",); date_hierarchy = "start_date"
     inlines = [GroupInline, TournamentPhotoInline]; list_per_page = 50
-    actions = ['auto_create_next_knockout_round', 'create_semi_finals_with_best_runner_ups']
+    actions = ['auto_create_next_knockout_round', 'create_third_place_match', 'create_semi_finals_with_best_runner_ups']
 
     @admin.display(description='Tải ảnh hàng loạt')
     def bulk_upload_link(self, obj):
@@ -138,9 +138,10 @@ class TournamentAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">Xem Đội</a> | <a href="{}">Xem Bảng</a> | <a href="{}">Xem Trận</a>', teams_url, groups_url, matches_url)
     view_details_link.short_description = 'Quản lý Giải'
 
-    @admin.action(description='Tự động tạo vòng Knockout tiếp theo')
+    @admin.action(description='Tự động tạo vòng Knockout tiếp theo (Tứ kết -> Bán kết -> Chung kết)')
     def auto_create_next_knockout_round(self, request, queryset):
         for tournament in queryset:
+            # Logic tạo Tứ kết từ vòng bảng
             if not tournament.matches.filter(match_round__in=['QUARTER', 'SEMI', 'FINAL']).exists():
                 groups = list(tournament.groups.order_by('name'))
                 if not groups: self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu.", messages.ERROR); continue
@@ -149,23 +150,24 @@ class TournamentAdmin(admin.ModelAdmin):
                     standings = group.get_standings()
                     if len(standings) < 2: self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ 2 đội.", messages.ERROR); continue
                     qualified_teams.extend([s['team_obj'] for s in standings[:2]])
-                if len(qualified_teams) == 8:
+                
+                if len(qualified_teams) == 8: # Logic cho giải 8 đội
                     tournament.matches.filter(match_round='QUARTER').delete()
                     pairings = [(qualified_teams[0], qualified_teams[3]), (qualified_teams[2], qualified_teams[1]), (qualified_teams[4], qualified_teams[7]), (qualified_teams[6], qualified_teams[5])]
                     for t1, t2 in pairings: Match.objects.create(tournament=tournament, match_round='QUARTER', team1=t1, team2=t2, match_time=timezone.now())
                     self.message_user(request, f"Đã tạo 4 cặp đấu Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
-                    send_schedule_notification(
-                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
-                        f"Giải '{tournament.name}' có lịch Tứ kết", "Các cặp đấu Tứ kết đã được thiết lập. Xem ngay!",
-                        'tournament_detail'
-                    )                    
-                elif len(qualified_teams) == 4:
+                    send_schedule_notification(tournament, Notification.NotificationType.SCHEDULE_CREATED, f"Giải '{tournament.name}' có lịch Tứ kết", "Các cặp đấu Tứ kết đã được thiết lập. Xem ngay!", 'tournament_detail')
+                elif len(qualified_teams) == 4: # Logic cho giải 4 đội (vào thẳng Bán kết)
                     tournament.matches.filter(match_round='SEMI').delete()
                     pairings = [(qualified_teams[0], qualified_teams[3]), (qualified_teams[2], qualified_teams[1])]
                     for t1, t2 in pairings: Match.objects.create(tournament=tournament, match_round='SEMI', team1=t1, team2=t2, match_time=timezone.now())
                     self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
-                else: self.message_user(request, f"Không đủ số đội (cần 4 hoặc 8) để tạo knockout cho giải '{tournament.name}'.", messages.WARNING)
+                    send_schedule_notification(tournament, Notification.NotificationType.SCHEDULE_CREATED, f"Giải '{tournament.name}' có lịch Bán kết", "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!", 'tournament_detail')
+                else: 
+                    self.message_user(request, f"Không đủ số đội (cần 4 hoặc 8) để tạo knockout cho giải '{tournament.name}'.", messages.WARNING)
                 continue
+
+            # Logic tạo Bán kết từ Tứ kết
             quarter_finals = tournament.matches.filter(match_round='QUARTER')
             if quarter_finals.exists() and not tournament.matches.filter(match_round__in=['SEMI', 'FINAL']).exists():
                 finished_qf = quarter_finals.filter(team1_score__isnull=False, team2_score__isnull=False)
@@ -176,29 +178,41 @@ class TournamentAdmin(admin.ModelAdmin):
                     Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[0], team2=winners[1], match_time=timezone.now())
                     Match.objects.create(tournament=tournament, match_round='SEMI', team1=winners[2], team2=winners[3], match_time=timezone.now())
                     self.message_user(request, f"Đã tạo 2 cặp Bán kết từ Tứ kết cho giải '{tournament.name}'.", messages.SUCCESS)
-                    send_schedule_notification(
-                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
-                        f"Giải '{tournament.name}' có lịch Bán kết", "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!",
-                        'tournament_detail'
-                    )                    
+                    send_schedule_notification(tournament, Notification.NotificationType.SCHEDULE_CREATED, f"Giải '{tournament.name}' có lịch Bán kết", "Các cặp đấu Bán kết đã được thiết lập. Xem ngay!", 'tournament_detail')
                 continue
+
+            # Logic tạo Chung kết từ Bán kết
             semi_finals = tournament.matches.filter(match_round='SEMI')
-            if semi_finals.exists() and not tournament.matches.filter(match_round__in=['FINAL', 'THIRD_PLACE']).exists():
+            if semi_finals.exists() and not tournament.matches.filter(match_round='FINAL').exists():
                 finished_sf = semi_finals.filter(team1_score__isnull=False, team2_score__isnull=False)
                 if finished_sf.count() != 2: self.message_user(request, f"Cần cập nhật tỉ số 2 trận Bán kết của giải '{tournament.name}'.", messages.WARNING); continue
                 winners = [m.winner for m in finished_sf if m.winner]
-                losers = [m.loser for m in finished_sf if m.loser]
-                if len(winners) == 2 and len(losers) == 2:
-                    tournament.matches.filter(match_round__in=['FINAL', 'THIRD_PLACE']).delete()
+                if len(winners) == 2:
+                    tournament.matches.filter(match_round='FINAL').delete()
                     Match.objects.create(tournament=tournament, match_round='FINAL', team1=winners[0], team2=winners[1], match_time=timezone.now())
-                    Match.objects.create(tournament=tournament, match_round='THIRD_PLACE', team1=losers[0], team2=losers[1], match_time=timezone.now())
-                    self.message_user(request, f"Đã tạo trận Chung kết và Tranh hạng ba cho giải '{tournament.name}'.", messages.SUCCESS)
-                    send_schedule_notification(
-                        tournament, Notification.NotificationType.SCHEDULE_CREATED,
-                        f"Giải '{tournament.name}' có lịch Chung kết", "Trận Chung kết và Tranh Hạng Ba đã được thiết lập. Xem ngay!",
-                        'tournament_detail'
-                    )                    
+                    self.message_user(request, f"Đã tạo trận Chung kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                    send_schedule_notification(tournament, Notification.NotificationType.SCHEDULE_CREATED, f"Giải '{tournament.name}' có lịch Chung kết", "Trận Chung kết đã được thiết lập. Xem ngay!", 'tournament_detail')
                 continue
+
+    @admin.action(description='Tạo trận Tranh Hạng Ba (từ Bán kết)')
+    def create_third_place_match(self, request, queryset):
+        for tournament in queryset:
+            if tournament.matches.filter(match_round='THIRD_PLACE').exists():
+                self.message_user(request, f"Giải '{tournament.name}' đã có trận Tranh Hạng Ba.", messages.WARNING)
+                continue
+
+            semi_finals = tournament.matches.filter(match_round='SEMI', team1_score__isnull=False, team2_score__isnull=False)
+            if semi_finals.count() != 2:
+                self.message_user(request, f"Cần cập nhật đầy đủ tỉ số 2 trận Bán kết của giải '{tournament.name}' trước.", messages.WARNING)
+                continue
+            
+            losers = [m.loser for m in semi_finals if m.loser]
+            if len(losers) == 2:
+                Match.objects.create(tournament=tournament, match_round='THIRD_PLACE', team1=losers[0], team2=losers[1], match_time=timezone.now())
+                self.message_user(request, f"Đã tạo thành công trận Tranh Hạng Ba cho giải '{tournament.name}'.", messages.SUCCESS)
+                send_schedule_notification(tournament, Notification.NotificationType.SCHEDULE_CREATED, f"Giải '{tournament.name}' có lịch Tranh Hạng Ba", "Trận Tranh Hạng Ba đã được thiết lập. Xem ngay!", 'tournament_detail')
+            else:
+                self.message_user(request, f"Không thể xác định 2 đội thua từ Bán kết cho giải '{tournament.name}'. Vui lòng kiểm tra lại tỉ số.", messages.ERROR)
 
     # === BẮT ĐẦU ACTION MỚI ĐÃ ĐƯỢC NÂNG CẤP ===
     @admin.action(description='Tạo Bán kết (chọn đội nhì bảng tốt nhất)')
@@ -326,6 +340,22 @@ class MatchAdmin(ModelAdmin):
             )
         }),
     )
+
+    # === Thông báo logic ===
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Sau khi lưu, kiểm tra các điều kiện
+        if (obj.match_round != 'GROUP' and 
+            obj.team1_score is not None and 
+            obj.team1_score == obj.team2_score and
+            (obj.team1_penalty_score is None or obj.team2_penalty_score is None)):
+
+            self.message_user(
+                request,
+                "Cảnh báo: Trận đấu có tỉ số hòa, vui lòng cập nhật tỉ số luân lưu để xác định đội thắng.",
+                messages.WARNING
+            )
+    
     # === KẾT THÚC CẬP NHẬT ===
     @admin.display(description='Vòng đấu', ordering='match_round')
     def colored_round(self, obj):
