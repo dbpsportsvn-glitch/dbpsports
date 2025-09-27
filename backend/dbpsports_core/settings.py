@@ -19,6 +19,9 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # === Apps ===
 INSTALLED_APPS = [
+
+    'admin_interface',
+    'colorfield',
     "organizations",
     "users",
     "tournaments",
