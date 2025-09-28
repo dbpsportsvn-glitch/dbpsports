@@ -16,7 +16,8 @@
     background-size:20px 20px;
     border:2px solid #fff;border-radius:12px;
     aspect-ratio:7/5;position:relative;flex-grow:1;
-    display:grid;grid-template-rows:repeat(5,1fr);padding:10px;
+    display:flex; flex-direction: column; /* THAY ĐỔI: Dùng flexbox dọc */
+    padding:10px;
     box-shadow:0 8px 24px rgba(0,0,0,.12);
     width:100%;max-width:100%;
   }
@@ -25,7 +26,13 @@
     background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.2) 0, rgba(255,255,255,.2) 1px, transparent 2px) no-repeat;
     background-size:120px 120px;background-position:center;pointer-events:none;
   }
-  .pitch-row{display:flex;justify-content:space-around;align-items:center;gap:8px}
+  .pitch-row{
+    flex-grow: 1; /* Các hàng chia đều không gian */
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    gap:8px;
+  }
   .position-slot{
     width:72px;height:88px;border:2px dashed rgba(255,255,255,0.45);
     border-radius:10px;display:flex;align-items:center;justify-content:center;
@@ -125,10 +132,30 @@
   .legend{display:flex;gap:.5rem;align-items:center;color:#555}
   .legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
   .dot-starter{background:#0d6efd}.dot-bench{background:#adb5bd}
+  
+  /* === CSS MỚI: Giao diện cho bộ chọn sơ đồ === */
+  .formation-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+  .custom-formation-inputs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .custom-formation-inputs input {
+    width: 60px;
+    text-align: center;
+  }
+  .custom-formation-inputs label {
+    font-weight: 500;
+  }
 
   @media (max-width: 991px){
     .lineup-builder{flex-direction:column;gap:1rem}
     .bench{width:100%;height:auto;max-height:60vh}
+    .formation-controls {flex-direction: column; align-items: stretch;}
   }
 </style>
 {% endblock %}
@@ -145,19 +172,43 @@
   </p>
 
   <div class="d-flex gap-2 align-items-end flex-wrap mb-2">
-    <div style="max-width:260px;">
-      <label for="player-count-select" class="form-label fw-bold">Số lượng cầu thủ trên sân</label>
-      <select class="form-select" id="player-count-select">
-        <option value="11">11 người (Sân lớn)</option>
-        <option value="10">10 người</option>
-        <option value="9">9 người</option>
-        <option value="8">8 người</option>
-        <option value="7" selected>7 người (Phổ biến)</option>
-        <option value="6">6 người</option>
-      </select>
+    <div class="formation-controls">
+        <div>
+            <label for="formation-select" class="form-label fw-bold">Sơ đồ chiến thuật</label>
+            <select class="form-select" id="formation-select">
+                <optgroup label="Sân 7 người">
+                    <option value="3-2-1" data-size="7" selected>3-2-1 (Phổ biến)</option>
+                    <option value="2-3-1" data-size="7">2-3-1</option>
+                    <option value="3-1-2" data-size="7">3-1-2</option>
+                </optgroup>
+                <optgroup label="Sân 5 người">
+                    <option value="2-1-1" data-size="5">2-1-1</option>
+                    <option value="1-2-1" data-size="5">1-2-1</option>
+                </optgroup>
+                <optgroup label="Sân 11 người">
+                    <option value="4-4-2" data-size="11">4-4-2</option>
+                    <option value="4-3-3" data-size="11">4-3-3</option>
+                </optgroup>
+                <option value="custom">Tùy chỉnh...</option>
+            </select>
+        </div>
+        <div id="custom-formation-wrapper" class="custom-formation-inputs" style="display: none;">
+            <div>
+                <label for="df-count" class="form-label">DF</label>
+                <input type="number" id="df-count" class="form-control form-control-sm" min="0" max="5" value="3">
+            </div>
+            <div>
+                <label for="mf-count" class="form-label">MF</label>
+                <input type="number" id="mf-count" class="form-control form-control-sm" min="0" max="5" value="2">
+            </div>
+            <div>
+                <label for="fw-count" class="form-label">FW</label>
+                <input type="number" id="fw-count" class="form-control form-control-sm" min="0" max="5" value="1">
+            </div>
+        </div>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 mt-2">
       <button id="save-lineup-btn" class="btn btn-primary"><i class="bi bi-save-fill"></i> Lưu đội hình</button>
       <button id="clear-lineup" class="btn btn-outline-danger">Xóa đội hình</button>
       <button id="send-to-bench-btn" class="btn btn-outline-secondary" disabled>Trả về ghế</button>
@@ -174,30 +225,11 @@
       <span class="dot dot-bench"></span> dự bị
     </div>
   </div>
-
-  <p class="text-muted">Nhấp chọn cầu thủ, rồi nhấp vào ô trên sân để đặt. Nhấp vào cầu thủ khác trên sân hoặc ghế dự bị để hoán đổi.</p>
+  <p class="text-muted mt-2">Nhấp chọn cầu thủ, rồi nhấp vào ô trên sân để đặt. Nhấp vào cầu thủ khác trên sân hoặc ghế dự bị để hoán đổi.</p>
 
   <div class="lineup-builder mt-2">
     <div class="pitch shadow">
-      <div class="pitch-row"><div id="slot-11" class="position-slot" data-position="FW"></div></div>
-      <div class="pitch-row">
-        <div id="slot-9" class="position-slot" data-position="FW"></div>
-        <div id="slot-10" class="position-slot" data-position="FW"></div>
-      </div>
-      <div class="pitch-row">
-        <div id="slot-6" class="position-slot" data-position="MF"></div>
-        <div id="slot-7" class="position-slot" data-position="MF"></div>
-        <div id="slot-8" class="position-slot" data-position="MF"></div>
-      </div>
-      <div class="pitch-row">
-        <div id="slot-2" class="position-slot" data-position="DF"></div>
-        <div id="slot-3" class="position-slot" data-position="DF"></div>
-        <div id="slot-4" class="position-slot" data-position="DF"></div>
-        <div id="slot-5" class="position-slot" data-position="DF"></div>
-      </div>
-      <div class="pitch-row"><div id="slot-1" class="position-slot" data-position="GK"></div></div>
-    </div>
-
+        <div class="pitch-row" data-row-index="4"></div> <div class="pitch-row" data-row-index="3"></div> <div class="pitch-row" data-row-index="2"></div> <div class="pitch-row" data-row-index="1"></div> <div class="pitch-row" data-row-index="0"></div> </div>
     <div class="bench shadow-sm">
       <div class="bench-toolbar">
         <input id="search-player" class="form-control" placeholder="Tìm theo tên / vị trí...">
@@ -238,27 +270,75 @@
   const $  = (s)=>document.querySelector(s);
   const $$ = (s)=>Array.from(document.querySelectorAll(s));
 
-  const playerCountSelect = $('#player-count-select');
-  const benchList         = $('#bench-list');
-  const bench             = $('.bench');
-  const pitch             = $('.pitch');
-  const saveBtn           = $('#save-lineup-btn');
-  const startersInput     = $('#starters-input');
-  const substitutesInput  = $('#substitutes-input');
-  const lineupForm        = $('#lineup-form');
-  const starterCountEl    = $('#starter-count');
-  const starterMaxEl      = $('#starter-max');
-  const clearLineupBtn    = $('#clear-lineup');
-  const searchInput       = $('#search-player');
-  const clearBenchBtn     = $('#clear-bench-filters');
-  const sendToBenchBtn    = $('#send-to-bench-btn');
-  const includeBenchCbx   = $('#include-bench-as-subs');
-
-  const allSlots = $$('.position-slot').sort((a,b)=>parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]));
+  // --- Lấy các thành phần DOM ---
+  const formationSelect = $('#formation-select');
+  const customFormationWrapper = $('#custom-formation-wrapper');
+  const dfInput = $('#df-count');
+  const mfInput = $('#mf-count');
+  const fwInput = $('#fw-count');
+  const pitch = $('.pitch');
+  const benchList = $('#bench-list');
+  const saveBtn = $('#save-lineup-btn');
+  const startersInput = $('#starters-input');
+  const substitutesInput = $('#substitutes-input');
+  const lineupForm = $('#lineup-form');
+  const starterCountEl = $('#starter-count');
+  const starterMaxEl = $('#starter-max');
+  const clearLineupBtn = $('#clear-lineup');
+  const searchInput = $('#search-player');
+  const clearBenchBtn = $('#clear-bench-filters');
+  const sendToBenchBtn = $('#send-to-bench-btn');
+  const includeBenchCbx = $('#include-bench-as-subs');
+  const bench = $('.bench');
   const existing = JSON.parse($('#existing-lineup-json').textContent || '{}');
-  
-  let selectedToken = null;
 
+  let selectedToken = null;
+  let allSlots = []; // Sẽ được cập nhật động
+
+  // --- HÀM VẼ SÂN BÓNG ---
+  function drawPitch(df, mf, fw) {
+      pitch.innerHTML = ''; // Xóa sân cũ
+      allSlots = [];
+
+      const formation = [fw, mf, df]; // Mảng sơ đồ: [tiền đạo, tiền vệ, hậu vệ]
+      
+      // Tạo 5 hàng trống
+      const rows = Array.from({ length: 5 }, (_, i) => {
+          const row = document.createElement('div');
+          row.className = 'pitch-row';
+          row.dataset.rowIndex = 4 - i;
+          return row;
+      });
+
+      // Hàng thủ (DF)
+      const dfRow = rows[3];
+      for(let i=0; i<formation[2]; i++) dfRow.appendChild(createSlot('DF'));
+      
+      // Hàng tiền vệ (MF)
+      const mfRow = rows[1];
+      for(let i=0; i<formation[1]; i++) mfRow.appendChild(createSlot('MF'));
+      
+      // Hàng tiền đạo (FW)
+      const fwRow = rows[0];
+      for(let i=0; i<formation[0]; i++) fwRow.appendChild(createSlot('FW'));
+
+      // Hàng thủ môn (GK)
+      rows[4].appendChild(createSlot('GK'));
+
+      // Thêm các hàng vào sân
+      rows.forEach(row => pitch.appendChild(row));
+  }
+
+  function createSlot(position) {
+      const slot = document.createElement('div');
+      slot.className = 'position-slot';
+      slot.dataset.position = position;
+      allSlots.push(slot); // Thêm ô vào danh sách quản lý
+      return slot;
+  }
+  
+  // --- Các hàm xử lý logic cũ đã được điều chỉnh ---
+  
   function setTokenActive(token, isActive) {
       $$('.player-token.token-active').forEach(t => t.classList.remove('token-active'));
       $$('.position-slot.is-droppable').forEach(s => s.classList.remove('is-droppable'));
@@ -279,12 +359,19 @@
   }
 
   function updateCountersAndClasses() {
-      const starters = allSlots.filter(s => s.style.display !== 'none' && s.firstElementChild);
+      const starters = allSlots.filter(s => s.firstElementChild);
       starterCountEl.textContent = starters.length;
-      starterMaxEl.textContent = playerCountSelect.value;
+      
+      const formationText = formationSelect.value;
+      if (formationText !== 'custom') {
+          starterMaxEl.textContent = formationSelect.options[formationSelect.selectedIndex].dataset.size || 0;
+      } else {
+          const total = 1 + parseInt(dfInput.value) + parseInt(mfInput.value) + parseInt(fwInput.value);
+          starterMaxEl.textContent = total;
+      }
       
       $$('.player-token').forEach(t => {
-          const onPitch = t.parentElement?.classList.contains('position-slot') && t.parentElement.style.display !== 'none';
+          const onPitch = t.parentElement?.classList.contains('position-slot');
           t.classList.toggle('is-starter', onPitch);
       });
       allSlots.forEach(s => s.classList.toggle('occupied', !!s.firstElementChild));
@@ -305,14 +392,11 @@
           if (clickedToken) setTokenActive(clickedToken, true);
           return;
       }
-
       const originContainer = selectedToken.parentElement;
-
       if (selectedToken === clickedToken) {
           setTokenActive(null, false);
           return;
       }
-      
       if (clickedSlot && !clickedSlot.firstElementChild) {
           selectedToken.classList.remove('was-substituted');
           clickedSlot.appendChild(selectedToken);
@@ -320,38 +404,57 @@
           updateCountersAndClasses();
           return;
       }
-
       if (clickedToken) {
           const targetContainer = clickedToken.parentElement;
-          
-          // Hoán đổi vị trí
           targetContainer.appendChild(selectedToken);
           originContainer.appendChild(clickedToken);
-
-          // Logic highlight: chỉ áp dụng cho cầu thủ nào bị đưa về ghế dự bị
           const selectedIsBenched = targetContainer.id === 'bench-list';
           const clickedIsBenched = originContainer.id === 'bench-list';
-
           if (selectedIsBenched) selectedToken.classList.add('was-substituted');
           else selectedToken.classList.remove('was-substituted');
-          
           if (clickedIsBenched) clickedToken.classList.add('was-substituted');
           else clickedToken.classList.remove('was-substituted');
-          
           setTokenActive(null, false);
           updateCountersAndClasses();
           return;
       }
   }
+  
+  // --- Lắng nghe sự kiện ---
+  
+  function updateFormation() {
+    // Chuyển tất cả cầu thủ về ghế trước khi vẽ lại sân
+    allSlots.forEach(slot => {
+        if(slot.firstElementChild) {
+            benchList.appendChild(slot.firstElementChild);
+        }
+    });
+
+    const formationValue = formationSelect.value;
+    if (formationValue === 'custom') {
+        customFormationWrapper.style.display = 'flex';
+        const df = parseInt(dfInput.value) || 0;
+        const mf = parseInt(mfInput.value) || 0;
+        const fw = parseInt(fwInput.value) || 0;
+        drawPitch(df, mf, fw);
+    } else {
+        customFormationWrapper.style.display = 'none';
+        const [df, mf, fw] = formationValue.split('-').map(Number);
+        drawPitch(df, mf, fw);
+    }
+    updateCountersAndClasses();
+  }
+
+  formationSelect.addEventListener('change', updateFormation);
+  dfInput.addEventListener('input', updateFormation);
+  mfInput.addEventListener('input', updateFormation);
+  fwInput.addEventListener('input', updateFormation);
 
   document.querySelector('.lineup-builder').addEventListener('click', e => handleInteraction(e.target));
   document.addEventListener('click', e => {
-      if (!e.target.closest('.lineup-builder, .btn')) {
-          setTokenActive(null, false);
-      }
+      if (!e.target.closest('.lineup-builder, .btn')) setTokenActive(null, false);
   });
-
-
+  
   sendToBenchBtn?.addEventListener('click', () => {
       if (selectedToken) {
           moveToBench(selectedToken);
@@ -374,49 +477,37 @@
       if (!confirm('Bạn có chắc muốn xóa toàn bộ đội hình trên sân không?')) return;
       $$('.player-token.was-substituted').forEach(t => t.classList.remove('was-substituted'));
       allSlots.forEach(s => { 
-          if(s.firstElementChild) {
-              benchList.appendChild(s.firstElementChild);
-          }
+          if(s.firstElementChild) benchList.appendChild(s.firstElementChild);
       });
       setTokenActive(null, false);
       updateCountersAndClasses();
   });
-
-  playerCountSelect.addEventListener('change', () => {
-      const maxPlayers = parseInt(playerCountSelect.value, 10);
-      allSlots.forEach((slot, idx) => {
-          const isVisible = idx < maxPlayers;
-          slot.style.display = isVisible ? '' : 'none';
-          if (!isVisible && slot.firstElementChild) {
-              moveToBench(slot.firstElementChild);
-          }
-      });
-      setTokenActive(null, false);
-      updateCountersAndClasses();
-  });
-
+  
   saveBtn?.addEventListener('click', () => {
       const starters = [];
       const substitutes = [];
-      const maxStarters = parseInt(playerCountSelect.value, 10);
+      const maxStarters = parseInt(starterMaxEl.textContent, 10);
 
       allSlots.forEach(slot => {
-          if (slot.style.display !== 'none' && slot.firstElementChild) {
+          if (slot.firstElementChild) {
               starters.push(slot.firstElementChild.dataset.playerId);
           }
       });
 
       if (includeBenchCbx?.checked) {
           benchList.querySelectorAll('.player-token').forEach(t => {
-              substitutes.push(t.dataset.playerId);
+              if (t.style.display !== 'none') substitutes.push(t.dataset.playerId);
           });
       }
 
-      if (starters.length > maxStarters) {
-          alert(`Lỗi: đã chọn ${starters.length} cầu thủ, tối đa ${maxStarters}.`);
+      if (starters.length !== maxStarters) {
+          alert(`Lỗi: Sơ đồ yêu cầu ${maxStarters} cầu thủ, nhưng bạn đã chọn ${starters.length}.`);
           return;
       }
-      if ($('#slot-1').style.display !== 'none' && !$('#slot-1').firstElementChild) {
+      
+      // Kiểm tra thủ môn
+      const gkSlot = pitch.querySelector('[data-position="GK"]');
+      if (gkSlot && !gkSlot.firstElementChild) {
           if(!confirm('Chưa có thủ môn ở vị trí GK. Bạn vẫn muốn lưu?')) return;
       }
 
@@ -424,14 +515,14 @@
       substitutesInput.value = Array.from(new Set(substitutes)).join(',');
       lineupForm.submit();
   });
-
+  
   function preload() {
       const starterIds = new Set((existing.starters || []).map(String));
       const playersToPlace = Array.from(starterIds);
       
       playersToPlace.forEach(pid => {
           const token = benchList.querySelector(`.player-token[data-player-id="${pid}"]`);
-          const emptySlot = allSlots.find(s => s.style.display !== 'none' && !s.firstElementChild);
+          const emptySlot = allSlots.find(s => !s.firstElementChild);
           if (token && emptySlot) {
               emptySlot.appendChild(token);
           }
@@ -448,11 +539,12 @@
       }
   }
 
+  // --- KHỞI TẠO ---
   window.addEventListener('resize', adjustBenchHeight);
-  playerCountSelect.dispatchEvent(new Event('change'));
+  updateFormation(); // Vẽ sân lần đầu
   preload();
-  updateCountersAndClasses();
   adjustBenchHeight();
+
 })();
 </script>
 {% endblock %}
