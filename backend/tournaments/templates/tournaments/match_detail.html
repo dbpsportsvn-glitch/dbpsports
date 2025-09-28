@@ -28,27 +28,6 @@
     .weather-info-item .bi { font-size: 1.1rem; }
     .weather-info-item span { white-space: nowrap; }
 
-    /* Countdown */
-    .countdown-timer {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .countdown-box { text-align: center; }
-    .countdown-box .number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #f59e0b;
-        line-height: 1;
-    }
-    .countdown-box .label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        color: #cbd5e1;
-    }
-
     /* Scoreboard */
     .scoreboard {
         background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url("{% static 'images/hero-1.jpg' %}");
@@ -77,7 +56,7 @@
     }
     .scoreboard .match-info { font-size: 0.9rem; opacity: 0.8; }
 
-    .section-title { font-weight: 700; color: #0d6efd; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+    .section-title { font-weight: 700; color: #0d6efd; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem; margin-bottom: 1rem; }
 
     /* Titles giữ lại */
     .lineup-title { color: #006400; font-weight: bold; }
@@ -105,14 +84,94 @@
         .scoreboard .score { font-size: 3rem; }
         .scoreboard .team-name { font-size: 1.25rem; }
     }
+
+    /* ================== COUNTDOWN (gọn hơn, đúng bề rộng card trung tâm) ================== */
+    :root{
+        --wc-bg: rgba(15, 23, 42, 0.65);
+        --wc-border: rgba(148, 163, 184, 0.25);
+        --wc-glow-1: #22d3ee;
+        --wc-glow-2: #a78bfa;
+        --wc-text: #e5e7eb;
+        --wc-accent: #f59e0b;
+    }
+
+    .wow-countdown{
+        position: relative;
+        overflow: hidden;
+        border-radius: .75rem;
+        padding: .75rem .6rem; /* gọn hơn */
+        color: var(--wc-text);
+        background: linear-gradient(180deg, rgba(2,6,23,.75), rgba(2,6,23,.6)),
+                    radial-gradient(1200px 300px at 10% -10%, rgba(34,211,238,.25), transparent 60%),
+                    radial-gradient(1200px 300px at 90% -20%, rgba(167,139,250,.25), transparent 60%);
+        border: 1px solid var(--wc-border);
+        backdrop-filter: blur(6px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255,255,255, .02) inset;
+        margin: 0 0 1rem 0; /* sát tiêu đề, tiết kiệm không gian */
+        width: 100%; /* đúng bề rộng card trung tâm */
+    }
+    .wow-countdown::after{
+        content: ""; position:absolute; inset:-2px; border-radius: .75rem; pointer-events:none;
+        background: conic-gradient(from 0deg, var(--wc-glow-1), var(--wc-glow-2), var(--wc-glow-1));
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        padding:2px; opacity:.2; filter: blur(2px);
+        animation: wc-rotate 10s linear infinite;
+    }
+    @keyframes wc-rotate{ to{ transform: rotate(360deg); } }
+
+    .wc-header{ display:flex; align-items:center; justify-content:center; gap:.5rem; font-weight:700; letter-spacing:.3px; margin-bottom:.4rem; font-size:.85rem; }
+    .wc-header .bi{ font-size:1.1rem; color: var(--wc-accent); }
+
+    .wc-grid{ display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; align-items:stretch; }
+    @media (max-width: 576px){ .wc-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+    .wc-unit{ position:relative; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius: .65rem; padding: .55rem .45rem; text-align:center; box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+    .wc-label{ font-size:.65rem; text-transform:uppercase; letter-spacing:.08em; color:#cbd5e1; margin-top:.35rem; }
+
+    /* Flip digits - thu nhỏ ~15% và căn giữa số chuẩn */
+    .digits{ display:flex; justify-content:center; gap:.2rem; }
+    .flip{
+        position:relative; width:30px; height:38px; perspective: 900px; border-radius:.55rem; overflow: hidden;
+        background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+        border: 1px solid rgba(255,255,255,.08);
+        box-shadow: 0 2px 8px rgba(0,0,0,.25) inset, 0 10px 20px rgba(0,0,0,.15);
+        font-weight: 800; font-size: 1.2rem; color:#fff;
+    }
+    @media (max-width: 576px){ .flip{ width:28px; height:34px; font-size:1.05rem; } }
+
+    .flip .card-top, .flip .card-bottom, .flip .top-flip, .flip .bottom-flip{
+        position:absolute; left:0; right:0; height:50%; overflow:hidden; backface-visibility: hidden; display:flex; align-items:center; justify-content:center; text-align:center;
+    }
+    .flip .card-top{ top:0; border-bottom:1px solid rgba(255,255,255,.15); }
+    .flip .card-bottom{ bottom:0; }
+
+    .flip .top-flip{ top:0; transform-origin: bottom; background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(255,255,255,.08)); animation: flipDown .7s cubic-bezier(.37,.01,.2,1) forwards; }
+    .flip .bottom-flip{ bottom:0; transform-origin: top; background: linear-gradient(0deg, rgba(0,0,0,.08), rgba(255,255,255,.08)); animation: flipUp .7s cubic-bezier(.37,.01,.2,1) forwards; }
+
+    @keyframes flipDown{ 0%{ transform: rotateX(0deg); } 100%{ transform: rotateX(-90deg); } }
+    @keyframes flipUp{ 0%{ transform: rotateX(90deg); } 100%{ transform: rotateX(0deg); } }
+
+    .confetti-holder{ pointer-events:none; position:absolute; inset:0; overflow:hidden; }
+    .confetti{ position:absolute; top:-10px; width:8px; height:14px; opacity:.9; transform: translateY(-100%); animation: fall linear forwards; }
+    @keyframes fall{ to{ transform: translateY(110vh) rotate(720deg); } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <a href="{% url 'tournament_detail' pk=match.tournament.pk %}?tab=schedule#schedule" class="btn btn-outline-secondary btn-sm mb-3">
-        <i class="bi bi-arrow-left"></i> Về Lịch thi đấu
-    </a>
+    <!-- Thanh điều hướng: Trái + Phải cùng hàng -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'tournament_detail' pk=match.tournament.pk %}?tab=schedule#schedule" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Về Lịch thi đấu
+        </a>
+        {% if captain_team %}
+        <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-list-check"></i>
+            <span>Quản lý Đội hình</span>
+        </a>
+        {% endif %}
+    </div>
 
     <div class="scoreboard shadow mb-4">
         <div class="row align-items-center">
@@ -136,7 +195,7 @@
                     {{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}
                 </div>
 
-                {# Weather block (đã nâng cấp) #}
+                {# Weather block #}
                 {% if weather_data %}
                 <div class="weather-info">
                     <div class="weather-info-item" title="Nhiệt độ">
@@ -185,27 +244,6 @@
             </div>
         </div>
     </div>
-
-    {% if match.team1_score is None and not match.is_live %}
-    <div id="countdown-wrapper" class="countdown-timer text-white">
-        <h4 class="text-center mb-3">Trận đấu sẽ bắt đầu sau</h4>
-        <div class="row" id="countdown">
-            <div class="col-3 countdown-box"><span class="number" id="days">00</span><span class="label">Ngày</span></div>
-            <div class="col-3 countdown-box"><span class="number" id="hours">00</span><span class="label">Giờ</span></div>
-            <div class="col-3 countdown-box"><span class="number" id="minutes">00</span><span class="label">Phút</span></div>
-            <div class="col-3 countdown-box"><span class="number" id="seconds">00</span><span class="label">Giây</span></div>
-        </div>
-    </div>
-    <span id="match-start-time" data-datetime="{{ match.match_time|date:'c' }}"></span>
-    {% endif %}
-
-    {% if captain_team %}
-    <div class="text-center mb-4">
-        <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-list-check"></i> Quản lý Đội hình thi đấu
-        </a>
-    </div>
-    {% endif %}
 
     <div class="row">
         <div class="col-lg-4 mb-4">
@@ -269,6 +307,44 @@
         <div class="col-lg-4 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
+                    {% if match.team1_score is None and not match.is_live %}
+                    <!-- Đồng hồ đếm ngược gọn, đúng bề rộng card trung tâm -->
+                    <div id="wow-countdown" class="wow-countdown" data-datetime="{{ match.match_time|date:'c' }}">
+                        <div class="wc-header"><i class="bi bi-stopwatch"></i> Trận đấu sẽ bắt đầu sau</div>
+                        <div class="wc-grid">
+                            <div class="wc-unit">
+                                <div class="digits" data-unit="days">
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                </div>
+                                <div class="wc-label">Ngày</div>
+                            </div>
+                            <div class="wc-unit">
+                                <div class="digits" data-unit="hours">
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                </div>
+                                <div class="wc-label">Giờ</div>
+                            </div>
+                            <div class="wc-unit">
+                                <div class="digits" data-unit="minutes">
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                </div>
+                                <div class="wc-label">Phút</div>
+                            </div>
+                            <div class="wc-unit">
+                                <div class="digits" data-unit="seconds">
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                    <div class="flip"><div class="card-top">0</div><div class="card-bottom">0</div></div>
+                                </div>
+                                <div class="wc-label">Giây</div>
+                            </div>
+                        </div>
+                        <div class="confetti-holder" aria-hidden="true"></div>
+                    </div>
+                    {% endif %}
+
                     <h4 class="section-title events-title">Diễn biến chính</h4>
                     <ul class="event-timeline">
                         {% for event in events %}
@@ -370,36 +446,91 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const countdownElement = document.getElementById('countdown');
-    const timeElement = document.getElementById('match-start-time');
+(function(){
+  const root = document.getElementById('wow-countdown');
+  if(!root) return;
+  const targetISO = root.dataset.datetime; // ISO 8601 (server)
+  const target = new Date(targetISO);
+  const confettiHolder = root.querySelector('.confetti-holder');
 
-    if (countdownElement && timeElement) {
-        const countDownDate = new Date(timeElement.dataset.datetime).getTime();
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function setDigits(unitSel, str){
+      const digits = root.querySelector(`[data-unit="${unitSel}"]`).querySelectorAll('.flip');
+      const [d1, d2] = str.split('');
+      flipTo(digits[0], d1);
+      flipTo(digits[1], d2);
+  }
 
-        const interval = setInterval(function() {
-            const now = new Date().getTime();
-            const distance = countDownDate - now;
+  function flipTo(flipEl, newNumber){
+      const top = flipEl.querySelector('.card-top');
+      const bottom = flipEl.querySelector('.card-bottom');
+      const current = top.textContent;
+      if(current === newNumber) return;
 
-            if (distance < 0) {
-                clearInterval(interval);
-                const wrap = document.getElementById('countdown-wrapper');
-                if (wrap) wrap.style.display = 'none';
-                return;
-            }
+      const topFlip = document.createElement('div');
+      topFlip.className = 'top-flip';
+      topFlip.textContent = current;
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      const bottomFlip = document.createElement('div');
+      bottomFlip.className = 'bottom-flip';
+      bottomFlip.textContent = newNumber;
 
-            document.getElementById('days').innerText = String(days).padStart(2, '0');
-            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
-            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
-        }, 1000);
-    }
-});
+      topFlip.addEventListener('animationend', () => {
+        top.textContent = newNumber;
+        topFlip.remove();
+      });
+      bottomFlip.addEventListener('animationend', () => {
+        bottom.textContent = newNumber;
+        bottomFlip.remove();
+      });
+
+      flipEl.append(topFlip, bottomFlip);
+  }
+
+  let last = {d:'--', h:'--', m:'--', s:'--'};
+  function tick(){
+      const now = new Date();
+      const diff = target - now;
+      if(diff <= 0){
+        setDigits('days', '00'); setDigits('hours','00'); setDigits('minutes','00'); setDigits('seconds','00');
+        root.querySelector('.wc-header').innerHTML = '<i class="bi bi-trophy"></i> Trận đấu bắt đầu!';
+        launchConfetti();
+        clearInterval(loop);
+        return;
+      }
+      const d = Math.floor(diff / (1000*60*60*24));
+      const h = Math.floor((diff % (1000*60*60*24))/(1000*60*60));
+      const m = Math.floor((diff % (1000*60*60))/(1000*60));
+      const s = Math.floor((diff % (1000*60))/1000);
+
+      const ds = pad2(Math.min(d,99));
+      const hs = pad2(h), ms = pad2(m), ss = pad2(s);
+
+      if(ds !== last.d){ setDigits('days', ds); last.d = ds; }
+      if(hs !== last.h){ setDigits('hours', hs); last.h = hs; }
+      if(ms !== last.m){ setDigits('minutes', ms); last.m = ms; }
+      if(ss !== last.s){ setDigits('seconds', ss); last.s = ss; }
+  }
+
+  function launchConfetti(){
+      const colors = ['#22d3ee','#a78bfa','#f472b6','#f59e0b','#34d399','#60a5fa'];
+      for(let i=0;i<100;i++){
+        const c = document.createElement('div');
+        c.className='confetti';
+        c.style.left = (Math.random()*100)+'%';
+        c.style.background = colors[Math.floor(Math.random()*colors.length)];
+        const dur = 4 + Math.random()*2;
+        c.style.animationDuration = dur+'s';
+        c.style.transform = `translateY(-100%) rotate(${Math.random()*360}deg)`;
+        c.style.opacity = 0.6 + Math.random()*0.4;
+        confettiHolder.appendChild(c);
+        setTimeout(()=>c.remove(), dur*1000+500);
+      }
+  }
+
+  const loop = setInterval(tick, 1000);
+  tick();
+})();
 </script>
 
 <!-- JSON-LD (tuỳ chọn cho SEO) -->
