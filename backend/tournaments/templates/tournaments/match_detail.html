@@ -47,7 +47,7 @@
     .scoreboard .team-name {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #FFD700; /* Màu vàng đậm */
+        color: #FFD700;
     }
     .scoreboard .score {
         font-size: 4rem;
@@ -65,6 +65,7 @@
         padding-bottom: 0.5rem;
         margin-bottom: 1.5rem;
     }
+    /* === THÊM LẠI CÁC STYLE ĐÃ MẤT === */
     .lineup-title { 
         color: #006400; 
         font-weight: bold;
@@ -73,12 +74,11 @@
         color: red;
         text-align: center;
     }
-    /* === BẮT ĐẦU THAY ĐỔI: SỬA LẠI CSS GẠCH CHÂN === */
     .sub-heading {
         text-decoration: underline;
-        text-underline-offset: 4px; /* Tạo khoảng cách giữa chữ và gạch chân */
+        text-underline-offset: 4px;
     }
-    /* === KẾT THÚC THAY ĐỔI === */
+    /* === KẾT THÚC THÊM LẠI === */
     .player-card {
         display: flex;
         align-items: center;
@@ -208,6 +208,9 @@
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
                                         #{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}
                                     </a>
+                                    {% if p_data.player.user and p_data.player.team.captain == p_data.player.user %}
+                                        <span class="captain-indicator">(C)</span>
+                                    {% endif %}
                                 </div>
                                 <div class="player-details">{{ p_data.player.get_position_display }}</div>
                             </div>
@@ -230,6 +233,9 @@
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
                                         #{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}
                                     </a>
+                                    {% if p_data.player.user and p_data.player.team.captain == p_data.player.user %}
+                                        <span class="captain-indicator">(C)</span>
+                                    {% endif %}
                                 </div>
                                 <div class="player-details">{{ p_data.player.get_position_display }}</div>
                             </div>
@@ -270,6 +276,9 @@
                                     <a href="{% url 'player_detail' pk=event.player.pk %}" class="text-decoration-none text-dark">
                                         {{ event.player.full_name }}
                                     </a>
+                                    {% if event.player.user and event.player.team.captain == event.player.user %}
+                                        <span class="captain-indicator">(C)</span>
+                                    {% endif %}
                                 </strong> ({{ event.team.name }})
                             </div>
                         </li>
@@ -295,6 +304,9 @@
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
                                         #{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}
                                     </a>
+                                    {% if p_data.player.user and p_data.player.team.captain == p_data.player.user %}
+                                        <span class="captain-indicator">(C)</span>
+                                    {% endif %}
                                 </div>
                                 <div class="player-details">{{ p_data.player.get_position_display }}</div>
                             </div>
@@ -317,6 +329,9 @@
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
                                         #{{ p_data.player.jersey_number }} - {{ p_data.player.full_name }}
                                     </a>
+                                    {% if p_data.player.user and p_data.player.team.captain == p_data.player.user %}
+                                        <span class="captain-indicator">(C)</span>
+                                    {% endif %}
                                 </div>
                                 <div class="player-details">{{ p_data.player.get_position_display }}</div>
                             </div>
@@ -351,8 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (distance < 0) {
                 clearInterval(interval);
                 document.getElementById('countdown-wrapper').style.display = 'none';
-                // Tùy chọn: Tải lại trang để cập nhật trạng thái "LIVE"
-                // window.location.reload();
                 return;
             }
 
@@ -361,7 +374,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            // Thêm số 0 đằng trước nếu nhỏ hơn 10
             document.getElementById('days').innerText = String(days).padStart(2, '0');
             document.getElementById('hours').innerText = String(hours).padStart(2, '0');
             document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');

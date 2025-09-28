@@ -245,8 +245,15 @@
               <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}"
                    alt="{{ player.full_name }}" class="player-avatar">
               <div class="player-info-wrapper">
-                <div class="player-name">{{ player.full_name }}</div>
-                <div class="player-meta">{{ player.get_position_display }}</div>
+                  <div class="player-name">
+                      {{ player.full_name }}
+                      {# === THÊM ĐOẠN NÀY VÀO === #}
+                      {% if player.user and team.captain == player.user %}
+                          <span class="captain-indicator">(C)</span>
+                      {% endif %}
+                      {# === KẾT THÚC === #}
+                  </div>
+                  <div class="player-meta">{{ player.get_position_display }}</div>
               </div>
               <div class="jersey-number">{{ player.jersey_number }}</div>
             </div>

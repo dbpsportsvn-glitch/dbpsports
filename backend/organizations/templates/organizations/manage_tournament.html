@@ -498,7 +498,13 @@
                                         <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                                     {% endif %}
                                 </td>
-                                <td><strong>{{ player.full_name }}</strong></td>
+                                <td><strong>{{ player.full_name }}</strong>
+                                {# === THÊM ĐOẠN NÀY VÀO === #}
+                                {% if player.user and player.team.captain == player.user %}
+                                    <span class="captain-indicator">(C)</span>
+                                {% endif %}
+                                {# === KẾT THÚC === #}                                
+                                </td>
                                 <td>{{ player.team.name }}</td>
                                 <td>{{ player.jersey_number }}</td>
                                 <td>{{ player.get_position_display }}</td>

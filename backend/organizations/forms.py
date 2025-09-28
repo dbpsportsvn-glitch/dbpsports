@@ -1,3 +1,5 @@
+# File: backend/organizations/forms.py
+
 from django import forms
 from tournaments.models import Match, Goal, Card, Player, Team, Announcement
 from .models import Organization
@@ -26,6 +28,17 @@ class MemberInviteForm(forms.Form):
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
         return email
 
+# === BẮT ĐẦU THAY ĐỔI: TẠO CUSTOM FIELD ĐỂ HIỂN THỊ (C) ===
+class PlayerChoiceFieldWithCaptain(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        """
+        Ghi đè phương thức này để thêm (C) vào sau tên đội trưởng.
+        """
+        is_captain = obj.user and obj.team.captain == obj.user
+        captain_indicator = " (C)" if is_captain else ""
+        return f"{obj.full_name} (#{obj.jersey_number}){captain_indicator}"
+# === KẾT THÚC THAY ĐỔI ===
+
 
 class MatchUpdateForm(forms.ModelForm):
     team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
@@ -33,13 +46,12 @@ class MatchUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Match
-        # === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY ===
         fields = [
             'team1', 'team2', 'match_time', 'location', 
             'team1_score', 'team2_score', 
             'team1_penalty_score', 'team2_penalty_score',
             'livestream_url', 'referee', 'commentator', 'ticker_text',
-            'cover_photo', 'gallery_url'  # <-- Thêm 2 trường mới vào đây
+            'cover_photo', 'gallery_url'
         ]
         labels = {
             'match_time': 'Thời gian thi đấu',
@@ -52,10 +64,9 @@ class MatchUpdateForm(forms.ModelForm):
             'referee': 'Tên trọng tài',
             'commentator': 'Tên bình luận viên',
             'ticker_text': 'Dòng chữ chạy trên Livestream',
-            'cover_photo': 'Ảnh bìa trận đấu', # <-- Thêm label mới
-            'gallery_url': 'Link Album ảnh của trận đấu' # <-- Thêm label mới
+            'cover_photo': 'Ảnh bìa trận đấu',
+            'gallery_url': 'Link Album ảnh của trận đấu'
         }
-        # === KẾT THÚC THAY ĐỔI ===
         widgets = {
             'match_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
@@ -71,14 +82,16 @@ class MatchUpdateForm(forms.ModelForm):
         return cleaned_data
 
 class GoalForm(forms.ModelForm):
-    player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
+    # === THAY ĐỔI: SỬ DỤNG CUSTOM FIELD MỚI ===
+    player = PlayerChoiceFieldWithCaptain(queryset=Player.objects.none(), label="Cầu thủ ghi bàn")
     class Meta:
         model = Goal
         fields = ['player', 'minute', 'is_own_goal']
         labels = { 'minute': 'Phút ghi bàn' }
 
 class CardForm(forms.ModelForm):
-    player = forms.ModelChoiceField(queryset=Player.objects.none(), label="Cầu thủ nhận thẻ")
+    # === THAY ĐỔI: SỬ DỤNG CUSTOM FIELD MỚI ===
+    player = PlayerChoiceFieldWithCaptain(queryset=Player.objects.none(), label="Cầu thủ nhận thẻ")
     class Meta:
         model = Card
         fields = ['player', 'card_type', 'minute']
@@ -87,7 +100,7 @@ class CardForm(forms.ModelForm):
             'minute': 'Phút nhận thẻ'
         }
 
-# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+# ... (các form khác giữ nguyên không đổi) ...
 class QuarterFinalCreationForm(forms.Form):
     qf1_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 1 - Đội 1")
     qf1_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Tứ kết 1 - Đội 2")
@@ -125,7 +138,6 @@ class QuarterFinalCreationForm(forms.Form):
         qualified_teams_queryset = kwargs.pop('qualified_teams', None)
         super().__init__(*args, **kwargs)
         if qualified_teams_queryset is not None:
-            # Gán queryset cho tất cả 8 trường chọn đội
             for i in range(1, 5):
                 self.fields[f'qf{i}_team1'].queryset = qualified_teams_queryset
                 self.fields[f'qf{i}_team2'].queryset = qualified_teams_queryset
@@ -133,16 +145,10 @@ class QuarterFinalCreationForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         teams = [cleaned_data.get(f'qf{i}_team{j}') for i in range(1, 5) for j in range(1, 3)]
-        
-        # Lọc ra các giá trị None (trường hợp người dùng chưa chọn)
         valid_teams = [team for team in teams if team is not None]
-
-        # Kiểm tra xem có đội nào được chọn nhiều hơn một lần không
         if len(set(valid_teams)) != len(valid_teams):
             raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu Tứ kết.")
         return cleaned_data
-# === KẾT THÚC THÊM MỚI ===
-
 
 class SemiFinalCreationForm(forms.Form):
     sf1_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Bán kết 1 - Đội 1")
@@ -161,15 +167,10 @@ class SemiFinalCreationForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        # Sửa ở đây: chấp nhận cả qualified_teams và quarter_final_winners
         qualified_teams_queryset = kwargs.pop('qualified_teams', None)
         quarter_final_winners_queryset = kwargs.pop('quarter_final_winners', None)
-        
         super().__init__(*args, **kwargs)
-        
-        # Ưu tiên lấy đội từ vòng Tứ kết, nếu không có thì mới lấy từ vòng bảng
         final_queryset = quarter_final_winners_queryset if quarter_final_winners_queryset is not None else qualified_teams_queryset
-
         if final_queryset is not None:
             self.fields['sf1_team1'].queryset = final_queryset
             self.fields['sf1_team2'].queryset = final_queryset
@@ -189,7 +190,6 @@ class SemiFinalCreationForm(forms.Form):
             raise ValidationError("Mỗi đội chỉ được chọn một lần. Vui lòng kiểm tra lại các cặp đấu Bán kết.")
         return cleaned_data
 
-# === TẠO CẶP ĐẤU CHUNG KẾT ===
 class FinalCreationForm(forms.Form):
     final_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
     final_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
@@ -214,7 +214,6 @@ class FinalCreationForm(forms.Form):
             raise ValidationError("Hai đội trong trận chung kết không được trùng nhau.")
         return cleaned_data     
 
-# === Tranh Hạng Ba ===
 class ThirdPlaceCreationForm(forms.Form):
     tp_team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
     tp_team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
@@ -239,14 +238,12 @@ class ThirdPlaceCreationForm(forms.Form):
             raise ValidationError("Hai đội trong trận tranh hạng Ba không được trùng nhau.")
         return cleaned_data
 
-# === BTC TẠO TRẬN ĐẤU THỦ CÔNG ===
 class MatchCreationForm(forms.ModelForm):
     team1 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 1")
     team2 = forms.ModelChoiceField(queryset=Team.objects.none(), label="Đội 2")
 
     class Meta:
         model = Match
-        # Lấy các trường cần thiết để tạo một trận đấu mới
         fields = [
             'match_round', 'team1', 'team2', 'match_time', 'location'
         ]
@@ -270,12 +267,8 @@ class MatchCreationForm(forms.ModelForm):
         return cleaned_data
 
 class PlayerUpdateForm(PlayerCreationForm):
-    """
-    Form cho phép BTC chỉnh sửa thông tin cầu thủ.
-    Kế thừa từ form gốc để tái sử dụng các trường đã có.
-    """
     class Meta(PlayerCreationForm.Meta):
-        pass # Giữ nguyên các thiết lập từ form cha  
+        pass
 
 class AnnouncementForm(forms.ModelForm):
     class Meta:
@@ -292,4 +285,4 @@ class AnnouncementForm(forms.ModelForm):
         }
         help_texts = {
             'is_published': 'Bỏ chọn nếu đây là bản nháp và bạn muốn gửi sau.'
-        }              
+        }
