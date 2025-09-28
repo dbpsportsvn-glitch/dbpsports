@@ -4,9 +4,30 @@
 {% block title %}{{ match.team1.name }} vs {{ match.team2.name }}{% endblock %}
 
 {% block extra_css %}
-<style>
+<!-- Bootstrap Icons (nếu base.html chưa nhúng) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    /* Dán vào trong block extra_css */
+<style>
+    /* Weather info */
+    .weather-info {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+    }
+    .weather-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .weather-info-item .bi { font-size: 1.1rem; }
+    .weather-info-item span { white-space: nowrap; }
+
+    /* Countdown */
     .countdown-timer {
         background-color: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -14,21 +35,20 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
-    .countdown-box {
-        text-align: center;
-    }
+    .countdown-box { text-align: center; }
     .countdown-box .number {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #f59e0b; /* Màu vàng */
+        color: #f59e0b;
         line-height: 1;
     }
     .countdown-box .label {
         font-size: 0.8rem;
         text-transform: uppercase;
-        color: #cbd5e1; /* Màu chữ sáng hơn */
-    }    
-    /* CSS cho trang chi tiết trận đấu mới */
+        color: #cbd5e1;
+    }
+
+    /* Scoreboard */
     .scoreboard {
         background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url("{% static 'images/hero-1.jpg' %}");
         background-size: cover;
@@ -54,83 +74,35 @@
         font-weight: 800;
         line-height: 1;
     }
-    .scoreboard .match-info {
-        font-size: 0.9rem;
-        opacity: 0.8;
-    }
-    .section-title {
-        font-weight: 700;
-        color: #0d6efd;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-    /* === THÊM LẠI CÁC STYLE ĐÃ MẤT === */
-    .lineup-title { 
-        color: #006400; 
-        font-weight: bold;
-    }
-    .events-title { 
-        color: red;
-        text-align: center;
-    }
-    .sub-heading {
-        text-decoration: underline;
-        text-underline-offset: 4px;
-    }
-    /* === KẾT THÚC THÊM LẠI === */
-    .player-card {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    .player-card:last-child {
-        border-bottom: none;
-    }
-    .player-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 1rem;
-    }
-    .player-info {
-        flex-grow: 1;
-    }
-    .player-name {
-        font-weight: 600;
-    }
-    .player-details {
-        font-size: 0.85rem;
-        color: #6c757d;
-    }
-    .player-stats {
-        display: flex;
-        gap: 0.75rem;
-        font-size: 1rem;
-    }
-    .event-timeline {
-        list-style: none;
-        padding-left: 0;
-    }
-    .event-item {
-        display: flex;
-        align-items: baseline;
-        margin-bottom: 1rem;
-    }
-    .event-minute {
-        font-weight: 700;
-        color: #0d6efd;
-        width: 40px;
-        text-align: center;
-    }
-    .event-icon {
-        margin: 0 1rem;
-        font-size: 1.2rem;
-    }
-    .event-details {
-        flex-grow: 1;
+    .scoreboard .match-info { font-size: 0.9rem; opacity: 0.8; }
+
+    .section-title { font-weight: 700; color: #0d6efd; border-bottom: 2px solid #e9ecef; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+
+    /* Titles giữ lại */
+    .lineup-title { color: #006400; font-weight: bold; }
+    .events-title { color: red; text-align: center; }
+    .sub-heading { text-decoration: underline; text-underline-offset: 4px; }
+
+    /* Players */
+    .player-card { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f0f0f0; }
+    .player-card:last-child { border-bottom: none; }
+    .player-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 1rem; }
+    .player-info { flex-grow: 1; }
+    .player-name { font-weight: 600; }
+    .player-details { font-size: 0.85rem; color: #6c757d; }
+    .player-stats { display: flex; gap: 0.75rem; font-size: 1rem; }
+
+    /* Events */
+    .event-timeline { list-style: none; padding-left: 0; }
+    .event-item { display: flex; align-items: baseline; margin-bottom: 1rem; }
+    .event-minute { font-weight: 700; color: #0d6efd; width: 40px; text-align: center; }
+    .event-icon { margin: 0 1rem; font-size: 1.2rem; }
+    .event-details { flex-grow: 1; }
+
+    /* Mobile tweaks */
+    @media (max-width: 576px) {
+        .scoreboard .score { font-size: 3rem; }
+        .scoreboard .team-name { font-size: 1.25rem; }
     }
 </style>
 {% endblock %}
@@ -145,7 +117,7 @@
         <div class="row align-items-center">
             <div class="col-md-4">
                 {% if match.team1.logo %}
-                    <img src="{{ match.team1.logo.url }}" alt="{{ match.team1.name }} logo" class="team-logo">
+                    <img src="{{ match.team1.logo.url }}" alt="{{ match.team1.name }} logo" class="team-logo" loading="lazy">
                 {% endif %}
                 <div class="team-name">{{ match.team1.name }}</div>
             </div>
@@ -162,10 +134,45 @@
                     {{ match.get_match_round_display }} - {{ match.tournament.name }}<br>
                     {{ match.match_time|date:"H:i, d/m/Y" }} - Sân {{ match.location }}
                 </div>
+
+                {# Weather block (đã nâng cấp) #}
+                {% if weather_data %}
+                <div class="weather-info">
+                    <div class="weather-info-item" title="Nhiệt độ">
+                        <i class="bi bi-thermometer-half"></i>
+                        <span>{{ weather_data.temp|default:"--" }}</span>
+                    </div>
+                    <div class="weather-info-item" title="Tình trạng">
+                        <i class="bi {{ weather_data.icon|default:'bi-question-circle' }}"></i>
+                        <span>{{ weather_data.condition|default:"—" }}</span>
+                    </div>
+                    <div class="weather-info-item" title="Khả năng mưa">
+                        <i class="bi bi-umbrella-fill"></i>
+                        <span>{{ weather_data.rain_prob|default_if_none:"0" }}%</span>
+                    </div>
+                    <div class="weather-info-item" title="Độ ẩm">
+                        <i class="bi bi-droplet-half"></i>
+                        <span>{{ weather_data.humidity|default_if_none:"0" }}%</span>
+                    </div>
+                    <div class="weather-info-item" title="Sức gió">
+                        <i class="bi bi-wind"></i>
+                        <span>{{ weather_data.wind_kmh|default_if_none:"0" }} km/h</span>
+                    </div>
+                    {% if weather_data.rain_mm is not None %}
+                    <div class="weather-info-item" title="Lượng mưa ước tính">
+                        <i class="bi bi-cloud-rain"></i>
+                        <span>{{ weather_data.rain_mm }} mm</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if weather_data.matched_time %}
+                <div class="text-muted small mt-1">Khớp giờ dự báo: {{ weather_data.matched_time }}</div>
+                {% endif %}
+                {% endif %}
             </div>
             <div class="col-md-4">
                 {% if match.team2.logo %}
-                    <img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }} logo" class="team-logo">
+                    <img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }} logo" class="team-logo" loading="lazy">
                 {% endif %}
                 <div class="team-name">{{ match.team2.name }}</div>
             </div>
@@ -182,7 +189,7 @@
             <div class="col-3 countdown-box"><span class="number" id="seconds">00</span><span class="label">Giây</span></div>
         </div>
     </div>
-    <span id="match-start-time" data-datetime="{{ match.match_time.isoformat }}"></span>
+    <span id="match-start-time" data-datetime="{{ match.match_time|date:'c' }}"></span>
     {% endif %}
 
     {% if captain_team %}
@@ -202,7 +209,7 @@
                     <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team1_starters %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -227,7 +234,7 @@
                     <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team1_substitutes %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -262,13 +269,17 @@
                             <div class="event-minute">{{ event.minute|default:"-" }}'</div>
                             <div class="event-icon">
                                 {% if event.is_own_goal %}
-                                    <i class="bi bi- futbol" style="color: red;" title="Phản lưới nhà"></i>
-                                {% elif event.minute is not None %}
-                                    <i class="bi bi-futbol" title="Bàn thắng"></i>
+                                    <span title="Phản lưới nhà">⚽️</span>
+                                {% elif event.event_type == 'GOAL' %}
+                                    <span title="Bàn thắng">⚽️</span>
                                 {% elif event.card_type == 'YELLOW' %}
                                     <span class="badge bg-warning text-dark" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ vàng"></span>
                                 {% elif event.card_type == 'RED' %}
                                     <span class="badge bg-danger" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ đỏ"></span>
+                                {% elif event.event_type == 'SUBSTITUTION' %}
+                                    <i class="bi bi-arrow-left-right" title="Thay người"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle" title="Sự kiện"></i>
                                 {% endif %}
                             </div>
                             <div class="event-details">
@@ -283,7 +294,7 @@
                             </div>
                         </li>
                         {% empty %}
-                        <p class="text-muted">Chưa có diễn biến nào nổi bật.</p>
+                        <li class="text-muted">Chưa có diễn biến nào nổi bật.</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -298,7 +309,7 @@
                     <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team2_starters %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -323,7 +334,7 @@
                     <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team2_substitutes %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -365,7 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (distance < 0) {
                 clearInterval(interval);
-                document.getElementById('countdown-wrapper').style.display = 'none';
+                const wrap = document.getElementById('countdown-wrapper');
+                if (wrap) wrap.style.display = 'none';
                 return;
             }
 
@@ -381,6 +393,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 });
+</script>
+
+<!-- JSON-LD (tuỳ chọn cho SEO) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ match.team1.name|escapejs }} vs {{ match.team2.name|escapejs }}",
+  "sport": "Soccer",
+  "startDate": "{{ match.match_time|date:'c' }}",
+  "location": {
+    "@type": "Place",
+    "name": "{{ match.location|escapejs }}",
+    "address": {"@type": "PostalAddress", "addressLocality": "Việt Nam"}
+  },
+  "competitor": [
+    {"@type": "SportsTeam", "name": "{{ match.team1.name|escapejs }}"},
+    {"@type": "SportsTeam", "name": "{{ match.team2.name|escapejs }}"}
+  ]
+}
 </script>
 {% endblock %}
 {% endblock %}

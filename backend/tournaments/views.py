@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from services.weather import get_weather_for_match
 
 # Local Application Imports
 from organizations.models import Organization
@@ -465,8 +466,11 @@ def match_detail(request, pk):
         pk=pk
     )
 
-    # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ (ĐÃ NÂNG CẤP) ---
+    weather_data = None
+    if match.match_time and timezone.now() < match.match_time < timezone.now() + timedelta(days=14): # Open-Meteo hỗ trợ 14 ngày
+        weather_data = get_weather_for_match(match.location, match.match_time, match.tournament.region)
 
+    # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ (ĐÃ NÂNG CẤP) ---
     # Lấy tất cả các sự kiện (bàn thắng, thẻ phạt) của trận đấu này
     all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
     all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
@@ -528,6 +532,7 @@ def match_detail(request, pk):
         'team2_substitutes': team2_substitutes,
         'events': events,
         'captain_team': captain_team,
+        'weather_data': weather_data,
     }
     return render(request, 'tournaments/match_detail.html', context)
 
