@@ -160,6 +160,11 @@
     .lineup-builder{flex-direction:column;gap:1rem}
     .bench{width:100%;height:auto;max-height:60vh}
     .formation-controls {flex-direction: column; align-items: stretch;}
+    /* Tắt aspect-ratio trên mobile để chiều cao tự động co giãn */
+    .pitch {
+        aspect-ratio: auto;
+        min-height: 500px; /* Thêm chiều cao tối thiểu để không bị quá lùn */
+    }
   }
 </style>
 {% endblock %}
