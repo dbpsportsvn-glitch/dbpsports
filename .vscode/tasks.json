@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Django: runserver (PowerShell, auto-cd backend)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "$p = Join-Path $PWD 'backend'; if (Test-Path $p) { Set-Location $p }; . .\\venv\\Scripts\\Activate.ps1; python manage.py runserver"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
