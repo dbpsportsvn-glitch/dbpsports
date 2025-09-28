@@ -467,9 +467,6 @@ def match_detail(request, pk):
 
     # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ (ĐÃ NÂNG CẤP) ---
 
-    # Lấy danh sách cầu thủ của cả 2 đội trong trận này
-    players_in_match = Player.objects.filter(team__in=[match.team1, match.team2])
-
     # Lấy tất cả các sự kiện (bàn thắng, thẻ phạt) của trận đấu này
     all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
     all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
@@ -498,8 +495,15 @@ def match_detail(request, pk):
             })
         return lineup_with_stats
 
-    team1_lineup = get_team_lineup_with_stats(match.team1)
-    team2_lineup = get_team_lineup_with_stats(match.team2)
+    # Lấy toàn bộ đội hình của mỗi đội
+    team1_lineup_full = get_team_lineup_with_stats(match.team1)
+    team2_lineup_full = get_team_lineup_with_stats(match.team2)
+
+    # Phân loại ra đá chính và dự bị
+    team1_starters = [p for p in team1_lineup_full if p['status'] == 'Đá chính']
+    team1_substitutes = [p for p in team1_lineup_full if p['status'] == 'Dự bị']
+    team2_starters = [p for p in team2_lineup_full if p['status'] == 'Đá chính']
+    team2_substitutes = [p for p in team2_lineup_full if p['status'] == 'Dự bị']
     
     # Lấy danh sách các sự kiện đã sắp xếp theo thời gian để hiển thị
     events = sorted(
@@ -517,9 +521,12 @@ def match_detail(request, pk):
 
     context = {
         'match': match,
-        'team1_lineup': team1_lineup,
-        'team2_lineup': team2_lineup,
-        'events': events, # Gửi danh sách sự kiện ra template
+        # Gửi các danh sách đã phân loại ra template
+        'team1_starters': team1_starters,
+        'team1_substitutes': team1_substitutes,
+        'team2_starters': team2_starters,
+        'team2_substitutes': team2_substitutes,
+        'events': events,
         'captain_team': captain_team,
     }
     return render(request, 'tournaments/match_detail.html', context)
