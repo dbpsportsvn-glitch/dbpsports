@@ -46,53 +46,63 @@
   }
 
   /* Bench */
-  .bench{width:320px;flex-shrink:0;background:#f8f9fa;padding:1rem;border-radius:12px;height:600px;overflow:auto;border:1px solid #eee}
-  .bench-toolbar{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem}
+  .bench{
+    width:320px;
+    flex-shrink:0;
+    background:#f8f9fa;
+    padding:1rem;
+    border-radius:12px;
+    border:1px solid #eee;
+    display: flex;
+    flex-direction: column;
+  }
+  .bench-toolbar{flex-shrink:0; display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem}
   .bench-toolbar input{flex:1}
+  
+  #bench-list-wrapper {
+      flex-grow: 1;
+      overflow-y: auto;
+  }
 
-  /* === BẮT ĐẦU THAY ĐỔI: GIAO DIỆN THẺ CẦU THỦ MỚI === */
   #bench-list {
       display: grid;
-      /* Tự động tạo các cột có chiều rộng tối thiểu 90px, tối đa là 1fr (chia đều) */
       grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
       gap: 0.75rem;
   }
 
   .player-token {
       display: flex;
-      flex-direction: column; /* Bố cục dọc */
+      flex-direction: column;
       align-items: center;
       text-align: center;
       background: #fff;
       border: 1px solid #e5e7eb;
       border-radius: 10px;
-      padding: 0.75rem 0.5rem; /* Tăng padding trên dưới */
+      padding: 0.75rem 0.5rem;
       box-shadow: 0 2px 6px rgba(0,0,0,.08);
       position: relative;
       user-select: none;
       cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   .player-token.is-starter { background: #e9f5ff; border-color: #0d6efd; }
   .player-token.token-active { outline: 3px solid #ffc107; }
+  
+  .player-token.was-substituted {
+      background-color: #fff3cd;
+      border-color: #ffc107;
+  }
 
   .player-avatar {
       width: 48px;
       height: 48px;
       border-radius: 50%;
       object-fit: cover;
-      margin-bottom: 0.5rem; /* Khoảng cách giữa ảnh và tên */
+      margin-bottom: 0.5rem;
   }
-  .player-info-wrapper {
-      line-height: 1.2;
-  }
-  .player-name {
-      font-weight: 600;
-      font-size: 0.8rem;
-  }
-  .player-meta {
-      font-size: 0.75rem;
-      color: #6c757d;
-  }
+  .player-info-wrapper { line-height: 1.2; }
+  .player-name { font-weight: 600; font-size: 0.8rem; }
+  .player-meta { font-size: 0.75rem; color: #6c757d; }
   .jersey-number {
       position: absolute;
       top: 0px;
@@ -110,19 +120,7 @@
       border: 2px solid #fff;
       box-shadow: 0 2px 6px rgba(13,110,253,.45);
   }
-  .player-token.is-starter .jersey-number {
-      background-color: #0a58ca;
-  }
-
-  .player-token.just-benched {
-      animation: flash-warning 1.5s ease-out;
-  }
-  @keyframes flash-warning {
-      0% { background-color: #fff; }
-      30% { background-color: #fff3cd; border-color: #ffc107; }
-      100% { background-color: #fff; }
-  }
-  /* === KẾT THÚC THAY ĐỔI GIAO DIỆN === */
+  .player-token.is-starter .jersey-number { background-color: #0a58ca; }
 
   .legend{display:flex;gap:.5rem;align-items:center;color:#555}
   .legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -137,7 +135,9 @@
 
 {% block content %}
 <div class="container mt-4">
-  <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-link p-0 mb-3">← Về trận đấu</a>
+  <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+      <i class="bi bi-arrow-left"></i> Về trận đấu
+  </a>
   <h3 class="mb-1">Đăng ký đội hình thi đấu</h3>
   <p class="lead">
     <strong>Trận đấu:</strong> {{ match.team1.name }} vs {{ match.team2.name }}
@@ -204,20 +204,22 @@
         <button id="clear-bench-filters" class="btn btn-light btn-sm" type="button">Bỏ lọc</button>
       </div>
       <h6 class="mb-2">Danh sách cầu thủ (<span id="player-count">{{ team.players.all|length }}</span>)</h6>
-      <div id="bench-list">
-        {% for player in team.players.all %}
-        <div class="player-token"
-             data-player-id="{{ player.pk }}"
-             data-pos="{{ player.position|default_if_none:'' }}">
-          <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}"
-               alt="{{ player.full_name }}" class="player-avatar">
-          <div class="player-info-wrapper">
-            <div class="player-name">{{ player.full_name }}</div>
-            <div class="player-meta">{{ player.get_position_display }}</div>
+      <div id="bench-list-wrapper">
+          <div id="bench-list">
+            {% for player in team.players.all %}
+            <div class="player-token"
+                 data-player-id="{{ player.pk }}"
+                 data-pos="{{ player.position|default_if_none:'' }}">
+              <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}"
+                   alt="{{ player.full_name }}" class="player-avatar">
+              <div class="player-info-wrapper">
+                <div class="player-name">{{ player.full_name }}</div>
+                <div class="player-meta">{{ player.get_position_display }}</div>
+              </div>
+              <div class="jersey-number">{{ player.jersey_number }}</div>
+            </div>
+            {% endfor %}
           </div>
-          <div class="jersey-number">{{ player.jersey_number }}</div>
-        </div>
-        {% endfor %}
       </div>
     </div>
   </div>
@@ -238,6 +240,8 @@
 
   const playerCountSelect = $('#player-count-select');
   const benchList         = $('#bench-list');
+  const bench             = $('.bench');
+  const pitch             = $('.pitch');
   const saveBtn           = $('#save-lineup-btn');
   const startersInput     = $('#starters-input');
   const substitutesInput  = $('#substitutes-input');
@@ -286,17 +290,10 @@
       allSlots.forEach(s => s.classList.toggle('occupied', !!s.firstElementChild));
   }
   
-  function highlightBenchedPlayer(token) {
-      if (!token) return;
-      token.classList.remove('just-benched');
-      void token.offsetWidth; // Trigger reflow
-      token.classList.add('just-benched');
-  }
-
   function moveToBench(token) {
       if (!token) return;
+      token.classList.add('was-substituted');
       benchList.appendChild(token);
-      highlightBenchedPlayer(token);
       updateCountersAndClasses();
   }
 
@@ -317,6 +314,7 @@
       }
       
       if (clickedSlot && !clickedSlot.firstElementChild) {
+          selectedToken.classList.remove('was-substituted');
           clickedSlot.appendChild(selectedToken);
           setTokenActive(null, false);
           updateCountersAndClasses();
@@ -325,15 +323,20 @@
 
       if (clickedToken) {
           const targetContainer = clickedToken.parentElement;
+          
+          // Hoán đổi vị trí
           targetContainer.appendChild(selectedToken);
           originContainer.appendChild(clickedToken);
 
-          if (originContainer.classList.contains('position-slot') && targetContainer.id === 'bench-list') {
-              highlightBenchedPlayer(clickedToken);
-          }
-          if (targetContainer.classList.contains('position-slot') && originContainer.id === 'bench-list') {
-              highlightBenchedPlayer(selectedToken);
-          }
+          // Logic highlight: chỉ áp dụng cho cầu thủ nào bị đưa về ghế dự bị
+          const selectedIsBenched = targetContainer.id === 'bench-list';
+          const clickedIsBenched = originContainer.id === 'bench-list';
+
+          if (selectedIsBenched) selectedToken.classList.add('was-substituted');
+          else selectedToken.classList.remove('was-substituted');
+          
+          if (clickedIsBenched) clickedToken.classList.add('was-substituted');
+          else clickedToken.classList.remove('was-substituted');
           
           setTokenActive(null, false);
           updateCountersAndClasses();
@@ -369,11 +372,10 @@
 
   clearLineupBtn?.addEventListener('click', () => {
       if (!confirm('Bạn có chắc muốn xóa toàn bộ đội hình trên sân không?')) return;
+      $$('.player-token.was-substituted').forEach(t => t.classList.remove('was-substituted'));
       allSlots.forEach(s => { 
           if(s.firstElementChild) {
-              const token = s.firstElementChild;
-              benchList.appendChild(token);
-              token.classList.remove('just-benched'); // Xóa class highlight khi reset
+              benchList.appendChild(s.firstElementChild);
           }
       });
       setTokenActive(null, false);
@@ -437,9 +439,20 @@
       updateCountersAndClasses();
   }
   
+  function adjustBenchHeight() {
+      if (window.innerWidth > 991) {
+          const pitchHeight = pitch.offsetHeight;
+          bench.style.height = `${pitchHeight}px`;
+      } else {
+          bench.style.height = '';
+      }
+  }
+
+  window.addEventListener('resize', adjustBenchHeight);
   playerCountSelect.dispatchEvent(new Event('change'));
   preload();
   updateCountersAndClasses();
+  adjustBenchHeight();
 })();
 </script>
 {% endblock %}
