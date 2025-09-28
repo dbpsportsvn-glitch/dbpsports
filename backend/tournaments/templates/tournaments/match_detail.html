@@ -47,6 +47,7 @@
     .scoreboard .team-name {
         font-size: 1.5rem;
         font-weight: 700;
+        color: #FFD700; /* Màu vàng đậm */
     }
     .scoreboard .score {
         font-size: 4rem;
@@ -64,6 +65,20 @@
         padding-bottom: 0.5rem;
         margin-bottom: 1.5rem;
     }
+    .lineup-title { 
+        color: #006400; 
+        font-weight: bold;
+    }
+    .events-title { 
+        color: red;
+        text-align: center;
+    }
+    /* === BẮT ĐẦU THAY ĐỔI: SỬA LẠI CSS GẠCH CHÂN === */
+    .sub-heading {
+        text-decoration: underline;
+        text-underline-offset: 4px; /* Tạo khoảng cách giữa chữ và gạch chân */
+    }
+    /* === KẾT THÚC THAY ĐỔI === */
     .player-card {
         display: flex;
         align-items: center;
@@ -184,7 +199,7 @@
                 <div class="card-body">
                     <h4 class="section-title">{{ match.team1.name }}</h4>
 
-                    <h5>Đá chính</h5>
+                    <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team1_starters %}
                         <div class="player-card">
                             <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
@@ -206,7 +221,7 @@
                         <p class="text-muted small">Chưa có cầu thủ đá chính.</p>
                     {% endfor %}
 
-                    <h5 class="mt-4">Dự bị</h5>
+                    <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team1_substitutes %}
                         <div class="player-card">
                             <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
@@ -234,7 +249,7 @@
         <div class="col-lg-4 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h4 class="section-title">Diễn biến chính</h4>
+                    <h4 class="section-title events-title">Diễn biến chính</h4>
                     <ul class="event-timeline">
                         {% for event in events %}
                         <li class="event-item">
@@ -271,7 +286,7 @@
                 <div class="card-body">
                     <h4 class="section-title">{{ match.team2.name }}</h4>
 
-                    <h5>Đá chính</h5>
+                    <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team2_starters %}
                         <div class="player-card">
                             <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
@@ -293,7 +308,7 @@
                         <p class="text-muted small">Chưa có cầu thủ đá chính.</p>
                     {% endfor %}
 
-                    <h5 class="mt-4">Dự bị</h5>
+                    <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team2_substitutes %}
                         <div class="player-card">
                             <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar">
