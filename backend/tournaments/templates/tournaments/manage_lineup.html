@@ -29,42 +29,100 @@
   .position-slot{
     width:72px;height:88px;border:2px dashed rgba(255,255,255,0.45);
     border-radius:10px;display:flex;align-items:center;justify-content:center;
-    position:relative;isolation:isolate;transition:transform .1s,border-color .1s;
+    position:relative;isolation:isolate;transition:transform .1s,border-color .1s, background-color 0.2s;
     cursor:pointer;
   }
   .position-slot::after{
     content:attr(data-position);
     position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
     font-size:.75rem;color:#fff;opacity:.9;font-weight:700;text-shadow:0 1px 1px rgba(0,0,0,.25);
-    pointer-events:none; /* không chặn click */
+    pointer-events:none;
   }
   .position-slot.occupied{border-style:solid}
   .position-slot.slot-active{outline:3px solid #ffc107;transform:scale(1.02);border-color:#fff}
+  .position-slot.is-droppable {
+      background-color: rgba(255, 255, 255, 0.25);
+      border-color: #fff;
+  }
 
   /* Bench */
   .bench{width:320px;flex-shrink:0;background:#f8f9fa;padding:1rem;border-radius:12px;height:600px;overflow:auto;border:1px solid #eee}
   .bench-toolbar{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem}
   .bench-toolbar input{flex:1}
 
-  /* Player token */
-  .player-token{
-    background:#fff;border:1px solid #e5e7eb;border-radius:10px;
-    padding:.5rem .625rem;margin-bottom:.5rem;
-    display:flex;align-items:center;gap:.75rem;
-    box-shadow:0 2px 6px rgba(0,0,0,.08);
-    position:relative;user-select:none;cursor:pointer;
+  /* === BẮT ĐẦU THAY ĐỔI: GIAO DIỆN THẺ CẦU THỦ MỚI === */
+  #bench-list {
+      display: grid;
+      /* Tự động tạo các cột có chiều rộng tối thiểu 90px, tối đa là 1fr (chia đều) */
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 0.75rem;
   }
-  .player-token.is-starter{background:#e9f5ff;border-color:#0d6efd}
-  .player-token.token-active{outline:3px solid #ffc107}
-  .player-token *{-webkit-user-drag:none}
-  .player-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover}
-  .player-name{font-weight:700;line-height:1.1}
-  .player-meta{font-size:.8rem;color:#6c757d}
-  .jersey-number{
-    position:absolute;top:-6px;left:-6px;background:#0d6efd;color:#fff;
-    width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-size:.8rem;font-weight:800;border:2px solid #fff;box-shadow:0 2px 6px rgba(13,110,253,.45)
+
+  .player-token {
+      display: flex;
+      flex-direction: column; /* Bố cục dọc */
+      align-items: center;
+      text-align: center;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 0.75rem 0.5rem; /* Tăng padding trên dưới */
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+      position: relative;
+      user-select: none;
+      cursor: pointer;
   }
+  .player-token.is-starter { background: #e9f5ff; border-color: #0d6efd; }
+  .player-token.token-active { outline: 3px solid #ffc107; }
+
+  .player-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 0.5rem; /* Khoảng cách giữa ảnh và tên */
+  }
+  .player-info-wrapper {
+      line-height: 1.2;
+  }
+  .player-name {
+      font-weight: 600;
+      font-size: 0.8rem;
+  }
+  .player-meta {
+      font-size: 0.75rem;
+      color: #6c757d;
+  }
+  .jersey-number {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background: #0d6efd;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 800;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(13,110,253,.45);
+  }
+  .player-token.is-starter .jersey-number {
+      background-color: #0a58ca;
+  }
+
+  .player-token.just-benched {
+      animation: flash-warning 1.5s ease-out;
+  }
+  @keyframes flash-warning {
+      0% { background-color: #fff; }
+      30% { background-color: #fff3cd; border-color: #ffc107; }
+      100% { background-color: #fff; }
+  }
+  /* === KẾT THÚC THAY ĐỔI GIAO DIỆN === */
 
   .legend{display:flex;gap:.5rem;align-items:center;color:#555}
   .legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -86,7 +144,6 @@
     | <strong>Đội của bạn:</strong> {{ team.name }}
   </p>
 
-  <!-- Thanh điều khiển: dropdown + Save + (Xóa đội hình) + Trả về ghế + checkbox -->
   <div class="d-flex gap-2 align-items-end flex-wrap mb-2">
     <div style="max-width:260px;">
       <label for="player-count-select" class="form-label fw-bold">Số lượng cầu thủ trên sân</label>
@@ -102,8 +159,7 @@
 
     <div class="d-flex gap-2">
       <button id="save-lineup-btn" class="btn btn-primary"><i class="bi bi-save-fill"></i> Lưu đội hình</button>
-      <!-- Đã đổi vị trí: đưa XÓA ĐỘI HÌNH lên đây -->
-      <button id="clear-lineup" class="btn btn-outline-secondary">Xóa đội hình</button>
+      <button id="clear-lineup" class="btn btn-outline-danger">Xóa đội hình</button>
       <button id="send-to-bench-btn" class="btn btn-outline-secondary" disabled>Trả về ghế</button>
     </div>
 
@@ -119,10 +175,9 @@
     </div>
   </div>
 
-  <p class="text-muted">Nhấp chọn cầu thủ, rồi nhấp ô trên sân để đặt (nhấp vào ô đã có người để đổi chỗ). Không cần kéo-thả.</p>
+  <p class="text-muted">Nhấp chọn cầu thủ, rồi nhấp vào ô trên sân để đặt. Nhấp vào cầu thủ khác trên sân hoặc ghế dự bị để hoán đổi.</p>
 
   <div class="lineup-builder mt-2">
-    <!-- Sân đảo ngược: FW trên cùng, GK dưới cùng -->
     <div class="pitch shadow">
       <div class="pitch-row"><div id="slot-11" class="position-slot" data-position="FW"></div></div>
       <div class="pitch-row">
@@ -143,11 +198,9 @@
       <div class="pitch-row"><div id="slot-1" class="position-slot" data-position="GK"></div></div>
     </div>
 
-    <!-- Bench -->
     <div class="bench shadow-sm">
       <div class="bench-toolbar">
         <input id="search-player" class="form-control" placeholder="Tìm theo tên / vị trí...">
-        <!-- Đã đổi vị trí: BỎ LỌC chuyển xuống đây -->
         <button id="clear-bench-filters" class="btn btn-light btn-sm" type="button">Bỏ lọc</button>
       </div>
       <h6 class="mb-2">Danh sách cầu thủ (<span id="player-count">{{ team.players.all|length }}</span>)</h6>
@@ -156,20 +209,19 @@
         <div class="player-token"
              data-player-id="{{ player.pk }}"
              data-pos="{{ player.position|default_if_none:'' }}">
-          <div class="jersey-number">{{ player.jersey_number }}</div>
-          <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/40{% endif %}"
+          <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}"
                alt="{{ player.full_name }}" class="player-avatar">
-          <div>
+          <div class="player-info-wrapper">
             <div class="player-name">{{ player.full_name }}</div>
             <div class="player-meta">{{ player.get_position_display }}</div>
           </div>
+          <div class="jersey-number">{{ player.jersey_number }}</div>
         </div>
         {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- form submit ẩn -->
   <form id="lineup-form" method="post" class="d-none">
     {% csrf_token %}
     <input type="hidden" name="starters" id="starters-input">
@@ -177,10 +229,8 @@
   </form>
 </div>
 
-<!-- JSON preload an toàn -->
 <script id="existing-lineup-json" type="application/json">{{ existing_lineup_json|safe }}</script>
 
-<!-- JS: click-to-place với event delegation + lưu đúng starters/substitutes -->
 <script>
 (function(){
   const $  = (s)=>document.querySelector(s);
@@ -188,7 +238,6 @@
 
   const playerCountSelect = $('#player-count-select');
   const benchList         = $('#bench-list');
-  const pitch             = $('.pitch');
   const saveBtn           = $('#save-lineup-btn');
   const startersInput     = $('#starters-input');
   const substitutesInput  = $('#substitutes-input');
@@ -201,209 +250,196 @@
   const sendToBenchBtn    = $('#send-to-bench-btn');
   const includeBenchCbx   = $('#include-bench-as-subs');
 
-  // slot theo thứ tự slot-1..slot-11 (không phụ thuộc DOM order)
-  const allSlots = $$('.position-slot')
-    .sort((a,b)=>parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]));
+  const allSlots = $$('.position-slot').sort((a,b)=>parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]));
+  const existing = JSON.parse($('#existing-lineup-json').textContent || '{}');
+  
+  let selectedToken = null;
 
-  function readJSON(id){
-    try{ return JSON.parse($(id).textContent||'{}'); }
-    catch{ return {starters:[], substitutes:[]} }
-  }
-  const existing = readJSON('#existing-lineup-json');
+  function setTokenActive(token, isActive) {
+      $$('.player-token.token-active').forEach(t => t.classList.remove('token-active'));
+      $$('.position-slot.is-droppable').forEach(s => s.classList.remove('is-droppable'));
+      sendToBenchBtn.disabled = true;
 
-  let selectedToken = null; // cầu thủ đang chọn
-  let activeSlot    = null; // slot được chọn làm đích
-
-  function setTokenActive(t,on){
-    if(!t) return;
-    t.classList.toggle('token-active', !!on);
-    // bật nút "Trả về ghế" khi đang chọn cầu thủ ở trên sân
-    sendToBenchBtn && (sendToBenchBtn.disabled = !(on && t.parentElement?.classList.contains('position-slot')));
-  }
-  function setSlotActive(s,on){
-    if(!s) return;
-    s.classList.toggle('slot-active', !!on);
-  }
-  function deselectAll(){
-    setTokenActive(selectedToken,false); selectedToken=null;
-    setSlotActive(activeSlot,false);     activeSlot=null;
-    if(sendToBenchBtn) sendToBenchBtn.disabled = true;
-  }
-  function updateStarterClass(token){
-    if(!token) return;
-    const onPitch = token.parentElement?.classList.contains('position-slot') &&
-                    token.parentElement.style.display !== 'none';
-    token.classList.toggle('is-starter', onPitch);
-  }
-  function updateCounters(){
-    const starters = allSlots.filter(s=>s.style.display !== 'none' && s.firstElementChild);
-    starterCountEl.textContent = starters.length;
-    starterMaxEl.textContent   = parseInt(playerCountSelect.value,10);
-    allSlots.forEach(s=>s.classList.toggle('occupied', !!s.firstElementChild));
-  }
-  function moveToBench(token){
-    if(!token) return;
-    benchList.appendChild(token);
-    updateStarterClass(token);
-    updateCounters();
-  }
-  function placeTokenInSlot(token, slot){
-    if(!token || !slot) return;
-    const fromSlot = token.parentElement?.classList.contains('position-slot') ? token.parentElement : null;
-    if(!slot.firstElementChild){
-      slot.appendChild(token);
-    }else{
-      const other = slot.firstElementChild;
-      if(fromSlot) fromSlot.appendChild(other); else benchList.appendChild(other);
-      slot.appendChild(token);
-    }
-    updateStarterClass(token);
-    updateStarterClass(slot.firstElementChild);
-    updateCounters();
-  }
-
-  // ------- BENCH: event delegation -------
-  benchList.addEventListener('click', (e)=>{
-    const token = e.target.closest('.player-token');
-    if(!token) return;
-
-    // Nếu đang chọn 1 cầu thủ trên SÂN và bấm 1 cầu thủ GHẾ => HOÁN ĐỔI
-    if (selectedToken && selectedToken.parentElement?.classList.contains('position-slot')) {
-      const fromSlot = selectedToken.parentElement;
-      placeTokenInSlot(token, fromSlot); // selectedToken sẽ tự về bench trong placeTokenInSlot
-      deselectAll();
-      return;
-    }
-
-    // Chỉ chọn token ở ghế
-    if(selectedToken === token){ deselectAll(); return; }
-    setTokenActive(selectedToken,false);
-    selectedToken = token;
-    setTokenActive(selectedToken,true);
-
-    // Nếu đã đánh dấu sẵn 1 slot đích -> đặt luôn
-    if(activeSlot){
-      placeTokenInSlot(selectedToken, activeSlot);
-      deselectAll();
-    }
-  });
-
-  // ------- PITCH: event delegation -------
-  pitch.addEventListener('click', (e)=>{
-    const slot = e.target.closest('.position-slot');
-    if(!slot) return;
-
-    // Nếu đã chọn 1 cầu thủ (từ ghế hoặc slot khác) -> coi slot này là ĐÍCH, hoán đổi nếu có người
-    if (selectedToken){
-      placeTokenInSlot(selectedToken, slot);
-      deselectAll();
-      return;
-    }
-
-    // Chưa chọn ai:
-    if (slot.firstElementChild){ // chọn người trong slot để đổi chỗ/trả ghế
-      setTokenActive(selectedToken,false);
-      selectedToken = slot.firstElementChild;
-      setTokenActive(selectedToken,true);
-      setSlotActive(activeSlot,false); activeSlot = null;
-    } else { // slot trống -> đánh dấu làm đích chờ chọn cầu thủ
-      if(activeSlot === slot){ setSlotActive(activeSlot,false); activeSlot=null; }
-      else { setSlotActive(activeSlot,false); activeSlot=slot; setSlotActive(activeSlot,true); }
-    }
-  });
-
-  // ------- Nút "Trả về ghế" -------
-  sendToBenchBtn?.addEventListener('click', ()=>{
-    if(selectedToken && selectedToken.parentElement?.classList.contains('position-slot')){
-      moveToBench(selectedToken);
-      deselectAll();
-    }
-  });
-
-  // ------- Tìm kiếm bench -------
-  function applySearch(){
-    const q = (searchInput?.value||'').trim().toLowerCase();
-    benchList.querySelectorAll('.player-token').forEach(t=>{
-      const name = t.querySelector('.player-name')?.textContent?.toLowerCase()||'';
-      const pos  = (t.dataset.pos||'').toLowerCase();
-      t.style.display = (!q || name.includes(q) || pos.includes(q)) ? '' : 'none';
-    });
-  }
-  searchInput?.addEventListener('input', applySearch);
-  clearBenchBtn?.addEventListener('click', ()=>{ searchInput.value=''; applySearch(); });
-
-  // ------- Xóa đội hình (đưa hết về ghế) -------
-  clearLineupBtn?.addEventListener('click', ()=>{
-    allSlots.forEach(s=>{ if(s.firstElementChild) benchList.appendChild(s.firstElementChild); });
-    deselectAll(); updateCounters();
-  });
-
-  // ------- Đổi số người -> ẩn/hiện slot theo slot-1↑ -------
-  function updatePitchLayout(){
-    const maxPlayers = parseInt(playerCountSelect.value,10);
-    allSlots.forEach((slot, idx)=>{
-      if(idx >= maxPlayers && slot.firstElementChild) moveToBench(slot.firstElementChild);
-    });
-    allSlots.forEach((slot, idx)=>{ slot.style.display = idx < maxPlayers ? '' : 'none'; });
-    starterMaxEl.textContent = maxPlayers;
-    updateCounters();
-  }
-  playerCountSelect.addEventListener('change', ()=>{ updatePitchLayout(); deselectAll(); });
-
-  // ------- Lưu đội hình -------
-  saveBtn?.addEventListener('click', ()=>{
-    const starters    = [];
-    const substitutes = [];
-
-    // gom đá chính: chỉ các slot đang HIỆN và có người
-    allSlots.forEach(slot=>{
-      if(slot.style.display !== 'none' && slot.firstElementChild){
-        starters.push(slot.firstElementChild.dataset.playerId);
+      selectedToken = isActive ? token : null;
+      if (selectedToken) {
+          selectedToken.classList.add('token-active');
+          const onPitch = selectedToken.parentElement?.classList.contains('position-slot');
+          sendToBenchBtn.disabled = !onPitch;
+          
+          allSlots.forEach(slot => {
+              if (slot.style.display !== 'none' && !slot.firstElementChild) {
+                  slot.classList.add('is-droppable');
+              }
+          });
       }
-    });
+  }
 
-    // chỉ gom dự bị khi người dùng tick
-    if (includeBenchCbx && includeBenchCbx.checked){
-      benchList.querySelectorAll('.player-token').forEach(t=>{
-        substitutes.push(t.dataset.playerId);
+  function updateCountersAndClasses() {
+      const starters = allSlots.filter(s => s.style.display !== 'none' && s.firstElementChild);
+      starterCountEl.textContent = starters.length;
+      starterMaxEl.textContent = playerCountSelect.value;
+      
+      $$('.player-token').forEach(t => {
+          const onPitch = t.parentElement?.classList.contains('position-slot') && t.parentElement.style.display !== 'none';
+          t.classList.toggle('is-starter', onPitch);
       });
-    }
+      allSlots.forEach(s => s.classList.toggle('occupied', !!s.firstElementChild));
+  }
+  
+  function highlightBenchedPlayer(token) {
+      if (!token) return;
+      token.classList.remove('just-benched');
+      void token.offsetWidth; // Trigger reflow
+      token.classList.add('just-benched');
+  }
 
-    // loại trùng
-    const uniq = arr => Array.from(new Set(arr.map(String)));
-    const starterIds    = uniq(starters);
-    const substituteIds = uniq(substitutes);
+  function moveToBench(token) {
+      if (!token) return;
+      benchList.appendChild(token);
+      highlightBenchedPlayer(token);
+      updateCountersAndClasses();
+  }
 
-    const maxStarters = parseInt(playerCountSelect.value,10);
-    if(starterIds.length > maxStarters){
-      alert(`Lỗi: đã chọn ${starterIds.length} cầu thủ, tối đa ${maxStarters}.`);
-      return;
-    }
-    if($('#slot-1').style.display !== 'none' && !$('#slot-1').firstElementChild){
-      if(!confirm('Chưa có thủ môn ở Slot 1. Bạn vẫn muốn lưu?')) return;
-    }
+  function handleInteraction(clickedElement) {
+      const clickedToken = clickedElement.closest('.player-token');
+      const clickedSlot = clickedElement.closest('.position-slot');
 
-    startersInput.value    = starterIds.join(',');
-    substitutesInput.value = substituteIds.join(','); // có thể rỗng
-    lineupForm.submit();
+      if (!selectedToken) {
+          if (clickedToken) setTokenActive(clickedToken, true);
+          return;
+      }
+
+      const originContainer = selectedToken.parentElement;
+
+      if (selectedToken === clickedToken) {
+          setTokenActive(null, false);
+          return;
+      }
+      
+      if (clickedSlot && !clickedSlot.firstElementChild) {
+          clickedSlot.appendChild(selectedToken);
+          setTokenActive(null, false);
+          updateCountersAndClasses();
+          return;
+      }
+
+      if (clickedToken) {
+          const targetContainer = clickedToken.parentElement;
+          targetContainer.appendChild(selectedToken);
+          originContainer.appendChild(clickedToken);
+
+          if (originContainer.classList.contains('position-slot') && targetContainer.id === 'bench-list') {
+              highlightBenchedPlayer(clickedToken);
+          }
+          if (targetContainer.classList.contains('position-slot') && originContainer.id === 'bench-list') {
+              highlightBenchedPlayer(selectedToken);
+          }
+          
+          setTokenActive(null, false);
+          updateCountersAndClasses();
+          return;
+      }
+  }
+
+  document.querySelector('.lineup-builder').addEventListener('click', e => handleInteraction(e.target));
+  document.addEventListener('click', e => {
+      if (!e.target.closest('.lineup-builder, .btn')) {
+          setTokenActive(null, false);
+      }
   });
 
-  // ------- Khởi tạo + preload -------
-  function preload(){
-    const maxPlayers = parseInt(playerCountSelect.value,10);
-    const visible    = allSlots.slice(0, maxPlayers);
-    if(existing && Array.isArray(existing.starters)){
-      existing.starters.map(String).forEach(pid=>{
-        const t = benchList.querySelector(`.player-token[data-player-id="${pid}"]`);
-        const empty = visible.find(s=>!s.firstElementChild);
-        if(t && empty){ empty.appendChild(t); updateStarterClass(t); }
+
+  sendToBenchBtn?.addEventListener('click', () => {
+      if (selectedToken) {
+          moveToBench(selectedToken);
+          setTokenActive(null, false);
+      }
+  });
+
+  searchInput?.addEventListener('input', () => {
+      const q = (searchInput.value || '').trim().toLowerCase();
+      benchList.querySelectorAll('.player-token').forEach(t => {
+          const name = t.querySelector('.player-name')?.textContent?.toLowerCase() || '';
+          const pos  = (t.dataset.pos || '').toLowerCase();
+          t.style.display = (!q || name.includes(q) || pos.includes(q)) ? '' : 'none';
       });
-    }
-    updateCounters();
+  });
+  
+  clearBenchBtn?.addEventListener('click', () => { searchInput.value=''; searchInput.dispatchEvent(new Event('input')); });
+
+  clearLineupBtn?.addEventListener('click', () => {
+      if (!confirm('Bạn có chắc muốn xóa toàn bộ đội hình trên sân không?')) return;
+      allSlots.forEach(s => { 
+          if(s.firstElementChild) {
+              const token = s.firstElementChild;
+              benchList.appendChild(token);
+              token.classList.remove('just-benched'); // Xóa class highlight khi reset
+          }
+      });
+      setTokenActive(null, false);
+      updateCountersAndClasses();
+  });
+
+  playerCountSelect.addEventListener('change', () => {
+      const maxPlayers = parseInt(playerCountSelect.value, 10);
+      allSlots.forEach((slot, idx) => {
+          const isVisible = idx < maxPlayers;
+          slot.style.display = isVisible ? '' : 'none';
+          if (!isVisible && slot.firstElementChild) {
+              moveToBench(slot.firstElementChild);
+          }
+      });
+      setTokenActive(null, false);
+      updateCountersAndClasses();
+  });
+
+  saveBtn?.addEventListener('click', () => {
+      const starters = [];
+      const substitutes = [];
+      const maxStarters = parseInt(playerCountSelect.value, 10);
+
+      allSlots.forEach(slot => {
+          if (slot.style.display !== 'none' && slot.firstElementChild) {
+              starters.push(slot.firstElementChild.dataset.playerId);
+          }
+      });
+
+      if (includeBenchCbx?.checked) {
+          benchList.querySelectorAll('.player-token').forEach(t => {
+              substitutes.push(t.dataset.playerId);
+          });
+      }
+
+      if (starters.length > maxStarters) {
+          alert(`Lỗi: đã chọn ${starters.length} cầu thủ, tối đa ${maxStarters}.`);
+          return;
+      }
+      if ($('#slot-1').style.display !== 'none' && !$('#slot-1').firstElementChild) {
+          if(!confirm('Chưa có thủ môn ở vị trí GK. Bạn vẫn muốn lưu?')) return;
+      }
+
+      startersInput.value = Array.from(new Set(starters)).join(',');
+      substitutesInput.value = Array.from(new Set(substitutes)).join(',');
+      lineupForm.submit();
+  });
+
+  function preload() {
+      const starterIds = new Set((existing.starters || []).map(String));
+      const playersToPlace = Array.from(starterIds);
+      
+      playersToPlace.forEach(pid => {
+          const token = benchList.querySelector(`.player-token[data-player-id="${pid}"]`);
+          const emptySlot = allSlots.find(s => s.style.display !== 'none' && !s.firstElementChild);
+          if (token && emptySlot) {
+              emptySlot.appendChild(token);
+          }
+      });
+      updateCountersAndClasses();
   }
-  updatePitchLayout();
+  
+  playerCountSelect.dispatchEvent(new Event('change'));
   preload();
-  applySearch();
+  updateCountersAndClasses();
 })();
 </script>
 {% endblock %}
