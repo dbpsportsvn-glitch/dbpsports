@@ -267,7 +267,6 @@ class MatchCreationForm(forms.ModelForm):
         
         return cleaned_data
 
-# (Các form khác giữ nguyên)
 
 class PlayerUpdateForm(forms.ModelForm):
     class Meta:
@@ -275,7 +274,7 @@ class PlayerUpdateForm(forms.ModelForm):
         fields = [
             'full_name', 'jersey_number', 'position', 'specialty_position', 
             'date_of_birth', 'height', 'weight', 'preferred_foot', 
-            'agent_contact', 'avatar', 'transfer_value', 'votes'
+            'agent_contact', 'avatar' # <-- Chỉ giữ lại các trường thông tin cơ bản
         ]
         labels = {
             'full_name': 'Họ và tên cầu thủ',
@@ -288,8 +287,6 @@ class PlayerUpdateForm(forms.ModelForm):
             'preferred_foot': 'Chân thuận',
             'agent_contact': 'Thông tin liên hệ (đại diện)',
             'avatar': 'Ảnh đại diện / Giấy tờ',
-            'transfer_value': 'Giá trị chuyển nhượng (VNĐ)',
-            'votes': 'Số phiếu bình chọn',
         }
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),

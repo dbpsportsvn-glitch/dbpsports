@@ -18,7 +18,9 @@
     <div class="card-body p-4">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Bạn còn <strong>{{ remaining_edits }}</strong> lần chỉnh sửa cho cầu thủ này. Thông tin sẽ bị khóa khi cầu thủ có phiếu bầu hoặc hết lượt chỉnh sửa.
+            </div>            
             <h5>Thông tin cơ bản</h5>
             <div class="row">
                 <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
@@ -40,10 +42,8 @@
 
             <hr class="my-4">
             
-            <h5>Thông tin thị trường & Liên hệ</h5>
+            <h5>Thông tin Liên hệ</h5>
             <div class="row">
-                <div class="col-md-6">{{ form.transfer_value|as_crispy_field }}</div>
-                <div class="col-md-6">{{ form.votes|as_crispy_field }}</div>
                 <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
             </div>
 

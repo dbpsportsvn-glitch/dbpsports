@@ -877,15 +877,27 @@ def edit_player(request, pk):
     tournament = player.team.tournament
     organization = tournament.organization
 
-    # Kiểm tra quyền
     if not organization or not organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # === LOGIC KIỂM TRA MỚI CHO BTC ===
+    can_edit = player.votes == 0 and player.edit_count < 3
+    if not can_edit:
+        if player.votes > 0:
+            messages.error(request, f"Không thể chỉnh sửa. Cầu thủ {player.full_name} đã có phiếu bầu.")
+        else:
+            messages.error(request, f"Không thể chỉnh sửa. Đã hết số lần cho phép (3 lần) cho cầu thủ {player.full_name}.")
+        return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players")
+    # === KẾT THÚC LOGIC MỚI ===
 
     if request.method == 'POST':
         form = PlayerUpdateForm(request.POST, request.FILES, instance=player)
         if form.is_valid():
+            # Tăng số lần chỉnh sửa trước khi lưu
+            player.edit_count += 1
             form.save()
-            messages.success(request, f"Đã cập nhật thành công thông tin cho cầu thủ {player.full_name}.")
+            remaining = 3 - player.edit_count
+            messages.success(request, f"Đã cập nhật thành công thông tin cho cầu thủ {player.full_name}. Số lần sửa còn lại: {remaining}.")
             return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players")
     else:
         form = PlayerUpdateForm(instance=player)
@@ -895,7 +907,8 @@ def edit_player(request, pk):
         'player': player,
         'tournament': tournament,
         'organization': organization,
-        'active_page': 'players'
+        'active_page': 'players',
+        'remaining_edits': 3 - player.edit_count, # Gửi số lần sửa còn lại
     }
     return render(request, 'organizations/edit_player.html', context)
 
