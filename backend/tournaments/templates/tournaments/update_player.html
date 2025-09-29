@@ -2,15 +2,38 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="form-container">
-    <h3 class="mb-4">Chỉnh sửa thông tin Cầu thủ</h3>
-    <p><strong>Cầu thủ:</strong> {{ player.full_name }}</p>
-    
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit" class="btn btn-primary mt-3">Lưu thay đổi</button>
-        <a href="{% url 'team_detail' pk=player.team.pk %}" class="btn btn-secondary mt-3">Hủy</a>
-    </form>
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Chỉnh sửa thông tin Cầu thủ</h3>
+            <p class="mb-0 text-muted">Cầu thủ: <strong>{{ player.full_name }}</strong></p>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info small">
+                <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Hãy nhập thông tin chính xác. Các thông tin này sẽ được sử dụng cho "Thị trường chuyển nhượng" trong tương lai. Mỗi cầu thủ chỉ có thể được chỉnh sửa tối đa <strong>3 lần</strong> và sẽ bị khóa khi đã có phiếu bầu.
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.jersey_number|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.position|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.specialty_position|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.date_of_birth|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.preferred_foot|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.height|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.weight|as_crispy_field }}</div>
+                    <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
+                    <div class="col-12">{{ form.avatar|as_crispy_field }}</div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <a href="{% url 'team_detail' pk=player.team.pk %}" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -56,9 +56,29 @@
               <div class="card mb-4">
                 <div class="card-header"><h5>Thêm cầu thủ mới</h5></div>
                 <div class="card-body">
+                  
+                  {# === KHỐI CẢNH BÁO MỚI === #}
+                  <div class="alert alert-info small">
+                      <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Hãy nhập thông tin chính xác. Các thông tin này sẽ được sử dụng cho "Thị trường chuyển nhượng" trong tương lai. Mỗi cầu thủ chỉ có thể được chỉnh sửa tối đa <strong>3 lần</strong> và sẽ bị khóa khi đã có phiếu bầu.
+                  </div>
+
                   <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {{ player_form|crispy }}
+                    
+                    {# === BỐ CỤC 2 CỘT MỚI === #}
+                    <div class="row">
+                        <div class="col-md-6">{{ player_form.full_name|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.jersey_number|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.position|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.specialty_position|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.date_of_birth|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.preferred_foot|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.height|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ player_form.weight|as_crispy_field }}</div>
+                        <div class="col-12">{{ player_form.agent_contact|as_crispy_field }}</div>
+                        <div class="col-12">{{ player_form.avatar|as_crispy_field }}</div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary mt-3 w-100">Thêm vào đội hình</button>
                   </form>
                 </div>
