@@ -1222,7 +1222,7 @@ def team_hall_of_fame(request, pk):
 @never_cache
 def match_control_view(request, pk):
     """
-    Trang điều khiển trực tiếp diễn biến trận đấu (phiên bản 2 - sửa lỗi).
+    Trang điều khiển trực tiếp diễn biến trận đấu (phiên bản 3 - Phân loại đội hình).
     """
     match = get_object_or_404(
         Match.objects.select_related('tournament__organization', 'team1', 'team2'),
@@ -1288,26 +1288,36 @@ def match_control_view(request, pk):
         return redirect('match_control', pk=match.pk)
 
     # --- 3. Chuẩn bị dữ liệu cho template (GET) ---
-    players_in_match = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
+    # Lấy đội hình đã đăng ký
+    lineup_entries = Lineup.objects.filter(match=match).select_related('player')
+    starters_ids = {entry.player.id for entry in lineup_entries if entry.status == 'STARTER'}
+    substitutes_ids = {entry.player.id for entry in lineup_entries if entry.status == 'SUBSTITUTE'}
+    lineup_is_set = bool(starters_ids or substitutes_ids)
+
+    # Phân loại cầu thủ cho Đội 1
+    players_team1 = Player.objects.filter(team=match.team1).order_by('jersey_number')
+    starters_team1 = [p for p in players_team1 if p.id in starters_ids]
+    substitutes_team1 = [p for p in players_team1 if p.id in substitutes_ids]
     
-    goal_form = GoalForm()
-    goal_form.fields['player'].queryset = players_in_match.order_by('team__name', 'full_name')
-    card_form = CardForm()
-    card_form.fields['player'].queryset = players_in_match.order_by('team__name', 'full_name')
-    
+    # Phân loại cầu thủ cho Đội 2
+    players_team2 = Player.objects.filter(team=match.team2).order_by('jersey_number')
+    starters_team2 = [p for p in players_team2 if p.id in starters_ids]
+    substitutes_team2 = [p for p in players_team2 if p.id in substitutes_ids]
+
+    # Lấy các sự kiện và sắp xếp
     goals = list(match.goals.select_related('player', 'team').all())
     cards = list(match.cards.select_related('player', 'team').all())
-    
-    # Sắp xếp các sự kiện theo phút (phút lớn hơn sẽ ở trên cùng)
     events = sorted(goals + cards, key=lambda x: (x.minute is None, x.minute), reverse=True)
 
     context = {
         'match': match,
-        'goal_form': goal_form,
-        'card_form': card_form,
         'events': events,
-        # === PHẦN SỬA LỖI NẰM Ở ĐÂY ===
-        'players_team1': players_in_match.filter(team=match.team1).order_by('jersey_number'),
-        'players_team2': players_in_match.filter(team=match.team2).order_by('jersey_number'),
+        'lineup_is_set': lineup_is_set,
+        'players_team1': players_team1,
+        'starters_team1': starters_team1,
+        'substitutes_team1': substitutes_team1,
+        'players_team2': players_team2,
+        'starters_team2': starters_team2,
+        'substitutes_team2': substitutes_team2,
     }
     return render(request, 'tournaments/match_control.html', context)    
