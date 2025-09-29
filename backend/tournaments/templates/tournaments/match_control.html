@@ -58,6 +58,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: opacity 0.3s, background-color 0.3s;
     }
     .player-info { flex-grow: 1; }
     .player-actions { display: flex; gap: 0.5rem; }
@@ -71,21 +72,19 @@
         padding: 0.5rem 1.25rem;
         font-size: 0.9rem;
     }
-
-    @media (max-width: 991px) {
-        .control-grid { grid-template-columns: 1fr; }
-        .timeline-col { order: 3; }
-    }
-
-    /* Dán vào trong thẻ <style> */
     .player-substituted-out {
         opacity: 0.5;
         background-color: #e9ecef;
     }
     .player-substituted-out .player-actions button {
-        pointer-events: none; /* Vô hiệu hóa click chuột */
+        pointer-events: none;
         filter: grayscale(100%);
-    }    
+    }
+
+    @media (max-width: 991px) {
+        .control-grid { grid-template-columns: 1fr; }
+        .timeline-col { order: 3; }
+    }
 </style>
 {% endblock %}
 
@@ -126,7 +125,7 @@
         <div class="control-card timeline-col">
             <div class="card-header text-center">Diễn biến</div>
             <div class="card-body">
-                <div class="timeline">
+                <div id="timeline-list" class="timeline">
                     {% for event in events %}
                     <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
                         <div class="d-flex justify-content-between">
@@ -144,128 +143,82 @@
                         <div class="small">{{ event.team.name }}</div>
                     </div>
                     {% empty %}
-                    <p class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
+                    <p id="no-events-message" class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
                     {% endfor %}
                 </div>
             </div>
         </div>
         
-        <div class="control-card">
+        <div class="control-card" data-team-card-id="{{ match.team1.id }}">
             <div class="card-header text-center">{{ match.team1.name }}</div>
             <div class="player-list list-group list-group-flush">
                 {% if lineup_is_set %}
                     <div class="list-sub-header">Đá chính</div>
-                    {% for p in starters_team1 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="starters-list-team{{ match.team1.id }}">
+                        {% for p in starters_team1 %}
+                        <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }} {% if p.pk in substituted_out_player_ids %}<i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>{% endif %}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
-                    {% for p in substitutes_team1 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="substitutes-list-team{{ match.team1.id }}">
+                        {% for p in substitutes_team1 %}
+                        <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 {% else %}
-                    <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
-                    {% for p in players_team1 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="starters-list-team{{ match.team1.id }}">
+                        <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
+                        {% for p in players_team1 %}
+                        <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }} {% if p.pk in substituted_out_player_ids %}<i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>{% endif %}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    <div id="substitutes-list-team{{ match.team1.id }}"></div>
                 {% endif %}
             </div>
         </div>
 
-        <div class="control-card">
+        <div class="control-card" data-team-card-id="{{ match.team2.id }}">
             <div class="card-header text-center">{{ match.team2.name }}</div>
             <div class="player-list list-group list-group-flush">
                 {% if lineup_is_set %}
                     <div class="list-sub-header">Đá chính</div>
-                    {% for p in starters_team2 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="starters-list-team{{ match.team2.id }}">
+                        {% for p in starters_team2 %}
+                        <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }} {% if p.pk in substituted_out_player_ids %}<i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>{% endif %}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
-                    {% for p in substitutes_team2 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="substitutes-list-team{{ match.team2.id }}">
+                        {% for p in substitutes_team2 %}
+                        <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 {% else %}
-                    <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
-                     {% for p in players_team2 %}
-                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info">
-                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
-                            {{ p.full_name }}
-                            {% if p.pk in substituted_out_player_ids %}
-                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
-                            {% endif %}
+                    <div id="starters-list-team{{ match.team2.id }}">
+                        <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
+                        {% for p in players_team2 %}
+                        <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                            <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }} {% if p.pk in substituted_out_player_ids %}<i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>{% endif %}</div>
+                            <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button><button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button></div>
                         </div>
-                        <div class="player-actions">
-                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
-                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
-                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
-                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                     <div id="substitutes-list-team{{ match.team2.id }}"></div>
                 {% endif %}
             </div>
         </div>
@@ -284,6 +237,7 @@
                 <form method="post" id="sub-form">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_substitution">
+                    <input type="hidden" id="subTeamId" name="team_id">
                     <div class="mb-3">
                         <label class="form-label">Cầu thủ ra sân</label>
                         <select name="player_out" id="playerOutSelect" class="form-select" required></select>
@@ -382,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const subTeamNameEl = document.getElementById('subTeamName');
     const playerOutSelect = document.getElementById('playerOutSelect');
     const playerInSelect = document.getElementById('playerInSelect');
+    const subForm = document.getElementById('sub-form');
+    const subTeamIdInput = document.getElementById('subTeamId');
 
     // HÀM HỖ TRỢ ĐỂ ĐIỀN CẦU THỦ VÀO SELECT
     function populatePlayers(selectElement, players) {
@@ -393,16 +349,86 @@ document.addEventListener('DOMContentLoaded', function() {
             selectElement.appendChild(option);
         });
     }
+    
+    // === BẮT ĐẦU NÂNG CẤP LOGIC THAY NGƯỜI ===
+    subForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(subForm);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
+        })
+        .then(response => {
+            if (response.ok) return response.json();
+            // Ném lỗi để catch xử lý nếu server trả về lỗi
+            return response.json().then(err => { throw new Error(err.error || 'Lỗi không xác định'); });
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                substitutionModal.hide();
+                
+                const teamId = subTeamIdInput.value;
+                const playerOutId = formData.get('player_out');
+                const playerInId = formData.get('player_in');
+
+                const playerOutEl = document.querySelector(`.player-control-item[data-player-id='${playerOutId}']`);
+                const playerInEl = document.querySelector(`.player-control-item[data-player-id='${playerInId}']`);
+                
+                const startersList = document.getElementById(`starters-list-team${teamId}`);
+                const substitutesList = document.getElementById(`substitutes-list-team${teamId}`);
+
+                if (playerOutEl && playerInEl && startersList && substitutesList) {
+                    // Di chuyển cầu thủ
+                    substitutesList.appendChild(playerOutEl);
+                    startersList.appendChild(playerInEl);
+
+                    // Cập nhật giao diện cầu thủ ra sân
+                    playerOutEl.classList.add('player-substituted-out');
+                    const playerInfo = playerOutEl.querySelector('.player-info');
+                    if (!playerInfo.querySelector('.bi-box-arrow-left')) {
+                        playerInfo.insertAdjacentHTML('beforeend', ' <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>');
+                    }
+
+                    // Cập nhật timeline
+                    const timelineList = document.getElementById('timeline-list');
+                    const noEventsMessage = document.getElementById('no-events-message');
+                    if (noEventsMessage) noEventsMessage.style.display = 'none';
+
+                    const newEventHtml = `
+                        <div class="event-item ps-3 mb-3 ${ data.team_class }">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-bold">
+                                    🔄 ${data.player_in_name} <small>thay</small> ${data.player_out_name}
+                                </div>
+                                <small class="text-muted">${data.minute}'</small>
+                            </div>
+                            <div class="small">${data.team_name}</div>
+                        </div>
+                    `;
+                    timelineList.insertAdjacentHTML('afterbegin', newEventHtml);
+                }
+            } else {
+                alert('Lỗi: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Đã có lỗi xảy ra khi gửi yêu cầu. ' + error.message);
+        });
+    });
+
 
     // HÀM XỬ LÝ SỰ KIỆN CLICK CHUNG CHO TẤT CẢ CÁC NÚT
     document.querySelectorAll('.player-actions button').forEach(button => {
         button.addEventListener('click', function() {
             const action = this.dataset.action;
             const playerItem = this.closest('.player-control-item');
-            const playerId = playerItem.dataset.playerId;
-            const playerName = playerItem.dataset.playerName;
-
+            
             if (action === 'add_goal' || action === 'add_card') {
+                const playerId = playerItem.dataset.playerId;
+                const playerName = playerItem.dataset.playerName;
                 playerNameEl.textContent = playerName;
                 eventPlayerIdInput.value = playerId;
                 eventActionInput.value = action;
@@ -412,50 +438,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventModal.show();
             } else if (action === 'add_sub') {
                 const teamCard = this.closest('.control-card');
+                const teamId = teamCard.dataset.teamCardId;
                 const teamName = teamCard.querySelector('.card-header').textContent;
                 
                 subTeamNameEl.textContent = teamName;
-                
-                const starters = [];
-                const substitutes = [];
+                subTeamIdInput.value = teamId;
 
-                // Hàm kiểm tra một cầu thủ thuộc nhóm nào (đá chính/dự bị)
-                const getPlayerGroup = (item) => {
-                    let currentElement = item;
-                    while (currentElement && currentElement.previousElementSibling) {
-                        currentElement = currentElement.previousElementSibling;
-                        if (currentElement.classList.contains('list-sub-header')) {
-                            return currentElement.textContent;
-                        }
-                    }
-                    return null;
-                };
+                const startersList = document.getElementById(`starters-list-team${teamId}`);
+                const substitutesList = document.getElementById(`substitutes-list-team${teamId}`);
 
-                teamCard.querySelectorAll('.list-group-item.player-control-item').forEach(item => {
-                    const playerInfo = {
-                         id: item.dataset.playerId,
-                         name: item.dataset.playerName,
-                         jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
-                    };
-                    const groupName = getPlayerGroup(item);
-                    if (groupName && groupName.includes('Đá chính')) {
-                        starters.push(playerInfo);
-                    } else if (groupName && groupName.includes('Dự bị')) {
-                        substitutes.push(playerInfo);
-                    } else { // Fallback nếu không có đội hình đăng ký
-                        starters.push(playerInfo);
-                    }
-                });
+                const starters = Array.from(startersList.querySelectorAll('.player-control-item:not(.player-substituted-out)')).map(item => ({
+                    id: item.dataset.playerId,
+                    name: item.dataset.playerName,
+                    jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
+                }));
+
+                const substitutes = Array.from(substitutesList.querySelectorAll('.player-control-item:not(.player-substituted-out)')).map(item => ({
+                    id: item.dataset.playerId,
+                    name: item.dataset.playerName,
+                    jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
+                }));
 
                 populatePlayers(playerOutSelect, starters);
                 populatePlayers(playerInSelect, substitutes);
                 
-                // === LOGIC MỚI: TỰ ĐỘNG CHỌN CẦU THỦ ===
-                const clickedPlayerGroup = getPlayerGroup(playerItem);
-                if (clickedPlayerGroup && clickedPlayerGroup.includes('Đá chính')) {
-                    playerOutSelect.value = playerId;
-                } else if (clickedPlayerGroup && clickedPlayerGroup.includes('Dự bị')) {
-                    playerInSelect.value = playerId;
+                // Tự động chọn cầu thủ nếu có thể
+                if (!playerItem.classList.contains('player-substituted-out')) {
+                    const playerId = playerItem.dataset.playerId;
+                    if (starters.some(p => p.id === playerId)) {
+                        playerOutSelect.value = playerId;
+                    } else if (substitutes.some(p => p.id === playerId)) {
+                        playerInSelect.value = playerId;
+                    }
                 }
                 
                 substitutionModal.show();

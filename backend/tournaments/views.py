@@ -1215,23 +1215,47 @@ def team_hall_of_fame(request, pk):
 @login_required
 @never_cache
 def match_control_view(request, pk):
-    """
-    Trang điều khiển trực tiếp diễn biến trận đấu (phiên bản 3 - Phân loại đội hình).
-    """
     match = get_object_or_404(
         Match.objects.select_related('tournament__organization', 'team1', 'team2'),
         pk=pk
     )
-    # --- 1. Kiểm tra quyền truy cập ---
     is_organizer = False
     if match.tournament.organization and request.user.is_authenticated:
         is_organizer = match.tournament.organization.members.filter(pk=request.user.pk).exists()
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
 
-    # --- 2. Xử lý POST request ---
     if request.method == 'POST':
         action = request.POST.get('action')
+        
+        # Xử lý các yêu cầu AJAX (mong muốn nhận lại JSON)
+        if action == 'add_substitution':
+            # Lấy danh sách cầu thủ hợp lệ dựa trên đội hình đã đăng ký
+            starters_qs = Player.objects.filter(lineups__match=match, lineups__status='STARTER')
+            subs_qs = Player.objects.filter(lineups__match=match, lineups__status='SUBSTITUTE')
+            
+            form = SubstitutionForm(request.POST)
+            # Cung cấp queryset cho form để validation
+            form.fields['player_in'].queryset = subs_qs
+            form.fields['player_out'].queryset = starters_qs
+
+            if form.is_valid():
+                sub = form.save(commit=False)
+                sub.match = match
+                sub.save() # clean() sẽ tự động gán team
+                return JsonResponse({
+                    'status': 'success',
+                    'player_in_name': sub.player_in.full_name,
+                    'player_out_name': sub.player_out.full_name,
+                    'minute': sub.minute or '-',
+                    'team_name': sub.team.name,
+                    'team_class': 'team1' if sub.team == match.team1 else 'team2'
+                })
+            else:
+                error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()])
+                return JsonResponse({'status': 'error', 'message': error_str}, status=400)
+
+        # Xử lý các form POST thông thường (sẽ tải lại trang)
         try:
             with transaction.atomic():
                 if action == 'update_score':
@@ -1263,68 +1287,26 @@ def match_control_view(request, pk):
                         messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
                     else:
                         messages.error(request, "Thêm thẻ phạt thất bại. Vui lòng kiểm tra lại.")
-                
-                elif action == 'delete_goal':
-                    goal_id = request.POST.get('goal_id')
-                    goal_to_delete = get_object_or_404(Goal, pk=goal_id, match=match)
-                    goal_to_delete.delete()
-                    messages.success(request, "Đã xóa bàn thắng.")
-
-                elif action == 'delete_card':
-                    card_id = request.POST.get('card_id')
-                    card_to_delete = get_object_or_404(Card, pk=card_id, match=match)
-                    card_to_delete.delete()
-                    messages.success(request, "Đã xóa thẻ phạt.")
- 
-                # === THÊM LOGIC MỚI CHO THAY NGƯỜI ===
-                elif action == 'add_substitution':
-                    # Lấy danh sách cầu thủ đá chính và dự bị của cả 2 đội
-                    starters_qs = Player.objects.filter(lineups__match=match, lineups__status='STARTER')
-                    subs_qs = Player.objects.filter(lineups__match=match, lineups__status='SUBSTITUTE')
-                    
-                    sub_form = SubstitutionForm(request.POST)
-                    sub_form.fields['player_in'].queryset = subs_qs
-                    sub_form.fields['player_out'].queryset = starters_qs
-
-                    if sub_form.is_valid():
-                        substitution = sub_form.save(commit=False)
-                        substitution.match = match
-                        substitution.save() # clean() sẽ tự động gán team
-                        messages.success(request, f"Đã ghi nhận thay người: {substitution.player_in.full_name} vào thay {substitution.player_out.full_name}.")
-                    else:
-                        # Gộp các lỗi thành một chuỗi để hiển thị
-                        error_str = ". ".join([f"{field}: {err[0]}" for field, err in sub_form.errors.items()])
-                        messages.error(request, f"Thêm lượt thay người thất bại. {error_str}")
-                # === KẾT THÚC LOGIC MỚI ===        
+        
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
         
         return redirect('match_control', pk=match.pk)
 
-    # --- 3. Chuẩn bị dữ liệu cho template (GET) ---
-
-    # Lấy danh sách ID của các cầu thủ đã bị thay ra sân
+    # --- Logic cho GET request (không thay đổi) ---
     substituted_out_player_ids = set(
         Substitution.objects.filter(match=match).values_list('player_out_id', flat=True)
     )
-
-    # Lấy đội hình đã đăng ký
     lineup_entries = Lineup.objects.filter(match=match).select_related('player')
     starters_ids = {entry.player.id for entry in lineup_entries if entry.status == 'STARTER'}
     substitutes_ids = {entry.player.id for entry in lineup_entries if entry.status == 'SUBSTITUTE'}
     lineup_is_set = bool(starters_ids or substitutes_ids)
-
-    # Phân loại cầu thủ cho Đội 1
     players_team1 = Player.objects.filter(team=match.team1).order_by('jersey_number')
     starters_team1 = [p for p in players_team1 if p.id in starters_ids]
     substitutes_team1 = [p for p in players_team1 if p.id in substitutes_ids]
-    
-    # Phân loại cầu thủ cho Đội 2
     players_team2 = Player.objects.filter(team=match.team2).order_by('jersey_number')
     starters_team2 = [p for p in players_team2 if p.id in starters_ids]
     substitutes_team2 = [p for p in players_team2 if p.id in substitutes_ids]
-
-    # Lấy các sự kiện và sắp xếp
     goals = list(match.goals.select_related('player', 'team').all())
     cards = list(match.cards.select_related('player', 'team').all())
     substitutions = list(match.substitutions.select_related('player_in', 'player_out', 'team').all())
