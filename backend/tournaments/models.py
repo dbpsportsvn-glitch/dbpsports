@@ -263,7 +263,7 @@ class Lineup(models.Model):
     STATUS_CHOICES = [('STARTER', 'Đá chính'), ('SUBSTITUTE', 'Dự bị')]
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='lineups')
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='lineups')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='lineups')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='+')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 
     class Meta:
@@ -513,7 +513,7 @@ class Substitution(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-# === THÊM MODEL MỚI NÀY VÀO CUỐI FILE ===
+# === Sự kiện các mốc thời gian ===
 class MatchEvent(models.Model):
     """Lưu trữ các sự kiện mốc thời gian của trận đấu."""
     class EventType(models.TextChoices):
