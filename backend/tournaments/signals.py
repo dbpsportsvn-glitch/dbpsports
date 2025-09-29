@@ -4,7 +4,8 @@ from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
-from .models import HomeBanner, Tournament, Group, Match, Team, Notification, TeamAchievement
+from django.db.models import F
+from .models import HomeBanner, Tournament, Group, Match, Team, Notification, TeamAchievement, Player
 from .utils import send_schedule_notification
 
 @receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group])
@@ -129,35 +130,66 @@ def create_schedule_notification_on_match_creation(sender, instance, created, **
                 'tournament_detail'
             )
 
-# === Tự động lưu thành tích ===
+# === Tự động lưu thành tích và trao thưởng ===
 @receiver(post_save, sender=Match)
 def award_achievements_on_final_match_save(sender, instance, created, **kwargs):
     """
-    Tự động trao danh hiệu khi một trận Chung kết hoặc Tranh Hạng Ba có kết quả.
+    Tự động trao danh hiệu, cộng phiếu bầu VÀ GỬI THÔNG BÁO
+    khi một trận Chung kết hoặc Tranh Hạng Ba có kết quả.
     """
     match = instance
 
     # Chỉ hoạt động khi trận đấu có kết quả và có người thắng/thua
-    if match.winner and match.loser:
-        tournament = match.tournament
+    if not match.winner or not match.loser:
+        return
 
-        # Trường hợp 1: Trận Chung kết
-        if match.match_round == 'FINAL':
-            # Dùng update_or_create để tránh tạo trùng lặp nếu admin có chỉnh sửa lại tỉ số
-            TeamAchievement.objects.update_or_create(
-                team=match.winner, tournament=tournament, achievement_type='CHAMPION',
-                defaults={'description': f'Vô địch giải {tournament.name} {tournament.start_date.year}'}
-            )
-            TeamAchievement.objects.update_or_create(
-                team=match.loser, tournament=tournament, achievement_type='RUNNER_UP',
-                defaults={'description': f'Á quân giải {tournament.name} {tournament.start_date.year}'}
-            )
-            print(f"Đã tự động trao giải Vô địch và Á quân cho giải {tournament.name}.")
+    tournament = match.tournament
 
-        # Trường hợp 2: Trận Tranh Hạng Ba
-        elif match.match_round == 'THIRD_PLACE':
-            TeamAchievement.objects.update_or_create(
-                team=match.winner, tournament=tournament, achievement_type='THIRD_PLACE',
-                defaults={'description': f'Hạng ba giải {tournament.name} {tournament.start_date.year}'}
-            )
-            print(f"Đã tự động trao giải Hạng ba cho giải {tournament.name}.")            
+    # Hàm nội bộ để cộng phiếu và gửi thông báo, tránh lặp code
+    def process_award(team, votes_to_add, rank_name, achievement_type):
+        if not team or votes_to_add <= 0:
+            return
+            
+        # 1. Gán danh hiệu cho đội
+        TeamAchievement.objects.update_or_create(
+            team=team, tournament=tournament, achievement_type=achievement_type,
+            defaults={'description': f'{rank_name} giải {tournament.name} {tournament.start_date.year}'}
+        )
+
+        # 2. Lấy danh sách cầu thủ có tài khoản để gửi thông báo
+        players_with_users = Player.objects.filter(team=team, user__isnull=False)
+        user_ids = list(players_with_users.values_list('user_id', flat=True))
+
+        # 3. Cộng phiếu cho tất cả cầu thủ trong đội
+        updated_count = Player.objects.filter(team=team).update(votes=F('votes') + votes_to_add)
+        print(f"Đã cộng {votes_to_add} phiếu cho {updated_count} thành viên của đội {team.name}.")
+
+        # 4. Chỉ tạo thông báo nếu có người dùng để gửi
+        if user_ids:
+            # Tạo một dict để lấy pk của cầu thủ tương ứng với user_id
+            player_pk_map = {p.user_id: p.pk for p in players_with_users}
+
+            notifications = [
+                Notification(
+                    user_id=user_id,
+                    title=f"Bạn được thưởng {votes_to_add} phiếu bầu!",
+                    message=f"Chúc mừng bạn và đội {team.name} đã đạt thành tích {rank_name} tại giải {tournament.name}. Bạn được hệ thống tặng thưởng {votes_to_add} phiếu.",
+                    notification_type=Notification.NotificationType.VOTE_AWARDED,
+                    related_url=reverse('player_detail', kwargs={'pk': player_pk_map.get(user_id)})
+                )
+                for user_id in user_ids if player_pk_map.get(user_id)
+            ]
+            Notification.objects.bulk_create(notifications)
+            print(f"Đã tạo {len(notifications)} thông báo thưởng phiếu cho đội {team.name}.")
+
+    # Xử lý các trận đấu
+    if match.match_round == 'FINAL':
+        process_award(match.winner, 3, "Vô địch", "CHAMPION")
+        process_award(match.loser, 2, "Á quân", "RUNNER_UP")
+        print(f"Đã tự động trao giải Vô địch, Á quân và cộng phiếu cho giải {tournament.name}.")
+
+    elif match.match_round == 'THIRD_PLACE':
+        process_award(match.winner, 1, "Hạng ba", "THIRD_PLACE")
+        # Không có danh hiệu "Hạng tư", chỉ cộng phiếu
+        process_award(match.loser, 1, "Hạng tư", "OTHER") 
+        print(f"Đã tự động trao giải Hạng ba, Hạng tư và cộng phiếu cho giải {tournament.name}.")            
