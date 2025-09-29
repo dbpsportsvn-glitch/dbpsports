@@ -26,18 +26,18 @@
     </div>
     
     {% if remaining_votes > 0 %}
+    
+    {# === Ô TÌM KIẾM MỚI === #}
+    <div class="mb-3">
+        <input type="text" id="player-search-input" class="form-control" placeholder="🔍 Tìm kiếm theo tên cầu thủ hoặc tên đội...">
+    </div>
+    {# === KẾT THÚC Ô TÌM KIẾM MỚI === #}
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Cầu thủ</th>
-                    <th>Đội</th>
-                    <th class="text-end">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
+            <tbody id="player-list-body">
                 {% for player in players_to_vote %}
-                <tr>
+                <tr class="player-row">
                     <td>
                         <a href="{% url 'player_detail' pk=player.pk %}" class="d-flex align-items-center gap-3 text-decoration-none text-dark">
                             <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -56,6 +56,10 @@
                     </td>
                 </tr>
                 {% endfor %}
+                {# Dòng thông báo khi không có kết quả tìm kiếm #}
+                <tr id="no-results-row" style="display: none;">
+                    <td colspan="3" class="text-center text-muted">Không tìm thấy cầu thủ nào phù hợp.</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -66,4 +70,37 @@
     </div>
     {% endif %}
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('player-search-input');
+    if (!searchInput) return;
+
+    const playerListBody = document.getElementById('player-list-body');
+    const playerRows = playerListBody.querySelectorAll('.player-row');
+    const noResultsRow = document.getElementById('no-results-row');
+
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        playerRows.forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            if (rowText.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (noResultsRow) {
+            noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %}
