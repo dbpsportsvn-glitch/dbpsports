@@ -389,6 +389,7 @@
                                         <a href="{% url 'player_detail' pk=event.player.pk %}" class="text-decoration-none text-dark">
                                             {{ event.player.full_name }}
                                         </a>
+                                        {% if event.is_own_goal %}<span class="text-danger">(OG)</span>{% endif %} {# <-- DÒNG QUAN TRỌNG ĐƯỢC THÊM VÀO #}
                                         {% if event.player.user and event.player.team.captain == event.player.user %}
                                             <span class="captain-indicator">(C)</span>
                                         {% endif %}
