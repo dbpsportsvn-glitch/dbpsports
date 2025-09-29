@@ -161,7 +161,8 @@ class Player(models.Model):
     specialty_position = models.CharField("Vị trí sở trường", max_length=100, blank=True, help_text="Ví dụ: Tiền đạo cắm, Hậu vệ cánh trái...")
     agent_contact = models.CharField("Thông tin liên hệ (đại diện)", max_length=200, blank=True, help_text="Số điện thoại hoặc email của người đại diện.")
     votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)
-    
+    edit_count = models.PositiveIntegerField("Số lần chỉnh sửa", default=0, editable=False)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["team", "jersey_number"], name="uniq_jersey_per_team"),

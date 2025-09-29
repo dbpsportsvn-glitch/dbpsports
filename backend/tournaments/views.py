@@ -25,6 +25,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
 from organizations.forms import GoalForm, CardForm, SubstitutionForm 
+from .utils import get_current_vote_value
 
 # Local Application Imports
 from organizations.models import Organization
@@ -425,17 +426,32 @@ def update_player(request, pk):
     if request.user != team.captain:
         return redirect('home')
 
+    # === LOGIC KIỂM TRA MỚI ===
+    can_edit = player.votes == 0 and player.edit_count < 3
+    if not can_edit:
+        if player.votes > 0:
+            messages.error(request, f"Không thể chỉnh sửa. Cầu thủ {player.full_name} đã có phiếu bầu.")
+        else:
+            messages.error(request, f"Không thể chỉnh sửa. Đã hết số lần cho phép (3 lần) cho cầu thủ {player.full_name}.")
+        return redirect('team_detail', pk=team.pk)
+    # === KẾT THÚC LOGIC MỚI ===
+
     if request.method == 'POST':
         form = PlayerCreationForm(request.POST, request.FILES, instance=player)
         if form.is_valid():
+            # Tăng số lần chỉnh sửa trước khi lưu
+            player.edit_count += 1
             form.save()
+            remaining = 3 - player.edit_count
+            messages.success(request, f"Đã cập nhật thông tin cho cầu thủ {player.full_name}. Số lần sửa còn lại: {remaining}.")
             return redirect('team_detail', pk=team.pk)
     else:
         form = PlayerCreationForm(instance=player)
 
     context = {
         'form': form,
-        'player': player
+        'player': player,
+        'remaining_edits': 3 - player.edit_count, # Gửi số lần sửa còn lại ra template
     }
     return render(request, 'tournaments/update_player.html', context)    
 
@@ -971,6 +987,12 @@ def player_detail(request, pk):
     # (Phần code còn lại của hàm giữ nguyên...)
     teams_played_for_ids = Player.objects.filter(full_name__iexact=player.full_name).values_list('team_id', flat=True)
     player_achievements = TeamAchievement.objects.filter(team_id__in=teams_played_for_ids).select_related('tournament').order_by('-achieved_at')
+
+    # === BẮT ĐẦU KHỐI TÍNH TOÁN GIÁ TRỊ MỚI ===
+    current_vote_value = get_current_vote_value()
+    value_from_votes = player.votes * current_vote_value
+    total_value = player.transfer_value + value_from_votes
+
     total_goals = Goal.objects.filter(player=player, is_own_goal=False).count()
     cards = Card.objects.filter(player=player).aggregate(yellow_cards=Count('id', filter=Q(card_type='YELLOW')), red_cards=Count('id', filter=Q(card_type='RED')))
     matches_played = Match.objects.filter(lineups__player=player).distinct().select_related('tournament', 'team1', 'team2').order_by('-match_time')
@@ -998,7 +1020,9 @@ def player_detail(request, pk):
         'stats': stats,
         'badges': badges,
         'player_achievements': player_achievements,
-        'age': age, # Gửi tuổi ra template
+        'age': age,
+        'value_from_votes': value_from_votes, # Gửi giá trị từ phiếu bầu
+        'total_value': total_value,           # Gửi tổng giá trị
     }
     return render(request, 'tournaments/player_detail.html', context)
 

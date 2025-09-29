@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
+{% load humanize custom_filters %}
 
 {% block title %}{{ player.full_name }}{% endblock %}
 
@@ -67,10 +67,10 @@
             </div>
         </div>
         <div class="ms-auto text-end">
-            <h5 class="fw-light mb-0">Giá trị chuyển nhượng</h5>
-            <h2 class="display-4 text-warning">
-                {% if player.transfer_value > 0 %}
-                    {{ player.transfer_value|vnd_format }}
+            <h5 class="fw-light mb-0">Tổng giá trị</h5>
+            <h2 class="display-4 text-warning" title="Giá trị gốc: {{ player.transfer_value }} + Giá trị từ phiếu bầu: {{ value_from_votes }}">
+                {% if total_value > 0 %}
+                    {{ total_value|vnd_format }}
                 {% else %}
                     <span class="fs-4">Chưa định giá</span>
                 {% endif %}

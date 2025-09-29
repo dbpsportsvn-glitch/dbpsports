@@ -4,6 +4,8 @@ from django.template.loader import render_to_string
 from django.contrib import messages # <--- THÊM DÒNG NÀY
 from .models import Notification
 from django.urls import reverse
+import math
+from django.contrib.auth.models import User  
 
 # === THAY ĐỔI: Thêm "request=None" vào tham số của hàm ===
 def send_notification_email(subject, template_name, context, recipient_list, request=None):
@@ -66,3 +68,26 @@ def send_schedule_notification(tournament, notification_type, title, message, ur
     ]
     if notifications_to_create:
         Notification.objects.bulk_create(notifications_to_create, ignore_conflicts=True)
+        
+
+# Tính giá trị của một phiếu bầu dựa trên công thức logarit để tăng trưởng mượt mà
+def get_current_vote_value():
+    """
+    Tính giá trị của một phiếu bầu dựa trên công thức logarit để tăng trưởng mượt mà.
+    """
+    user_count = User.objects.count()
+
+    # Tránh lỗi log(0) hoặc log(1)
+    if user_count < 2:
+        user_count = 2
+
+    # --- CÔNG THỨC LOGARIT ---
+    # Bạn có thể điều chỉnh 2 con số này để thay đổi "nền kinh tế"
+    base_value = 5000  # Giá trị khởi điểm
+    scaling_factor = 2500  # Hệ số ảnh hưởng, số càng lớn giá trị tăng càng nhanh
+
+    # Công thức: vote = base + factor * log(số người dùng)
+    vote_value = base_value + (scaling_factor * math.log(user_count))
+    
+    # Làm tròn đến hàng trăm gần nhất cho số đẹp
+    return round(vote_value / 100) * 100        
