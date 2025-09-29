@@ -32,7 +32,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement)
 from .utils import send_notification_email, send_schedule_notification
 
 
@@ -959,25 +959,34 @@ def generate_schedule_view(request, tournament_pk):
 
 def player_detail(request, pk):
     player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
+    # Lấy giải đấu hiện tại của cầu thủ và gán vào biến
     tournament = player.team.tournament
 
-    total_goals = Goal.objects.filter(player=player).count()
+    # Lấy tất cả các đội mà cầu thủ đã từng thi đấu
+    teams_played_for_ids = Player.objects.filter(full_name__iexact=player.full_name).values_list('team_id', flat=True)
+
+    # Lấy tất cả danh hiệu của các đội đó
+    player_achievements = TeamAchievement.objects.filter(team_id__in=teams_played_for_ids).select_related('tournament').order_by('-achieved_at')
+
+    # Các thống kê cá nhân
+    total_goals = Goal.objects.filter(player=player, is_own_goal=False).count()
     cards = Card.objects.filter(player=player).aggregate(
         yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
         red_cards=Count('id', filter=Q(card_type='RED'))
     )
-    matches_played = Match.objects.filter(lineups__player=player).distinct()
+    matches_played = Match.objects.filter(lineups__player=player).distinct().select_related('tournament', 'team1', 'team2').order_by('-match_time')
 
     stats = {
         'total_goals': total_goals,
         'yellow_cards': cards.get('yellow_cards', 0),
         'red_cards': cards.get('red_cards', 0),
-        'matches_played': matches_played.select_related('team1', 'team2').order_by('-match_time'),
+        'matches_played': matches_played,
         'matches_played_count': matches_played.count(),
     }
 
+    # Huy hiệu cá nhân (giờ đã có thể dùng biến 'tournament')
     badges = []
-    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals')).order_by('-goal_count').first()
+    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals', filter=Q(goals__is_own_goal=False))).order_by('-goal_count').first()
     if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
         badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
 
@@ -992,6 +1001,7 @@ def player_detail(request, pk):
         'player': player,
         'stats': stats,
         'badges': badges,
+        'player_achievements': player_achievements,
     }
     return render(request, 'tournaments/player_detail.html', context)
 

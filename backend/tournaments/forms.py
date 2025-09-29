@@ -28,12 +28,17 @@ class TeamCreationForm(forms.ModelForm):
 class PlayerCreationForm(forms.ModelForm):
     class Meta:
         model = Player
-        fields = ['full_name', 'jersey_number', 'position', 'avatar']
+        # Thêm các trường mới vào 'fields'
+        fields = ['full_name', 'jersey_number', 'position', 'height', 'weight', 'preferred_foot', 'avatar']
         labels = {
             'full_name': 'Họ và tên cầu thủ',
             'jersey_number': 'Số áo',
             'position': 'Vị trí',
             'avatar': 'Ảnh đại diện / Giấy tờ',
+            # Thêm labels cho các trường mới
+            'height': 'Chiều cao (cm)',
+            'weight': 'Cân nặng (kg)',
+            'preferred_foot': 'Chân thuận',
         }
 
 class PaymentProofForm(forms.ModelForm):

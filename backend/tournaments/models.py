@@ -145,6 +145,7 @@ class Team(models.Model):
         return new_image
 
 class Player(models.Model):
+    FOOT_CHOICES = [('RIGHT', 'Phải'), ('LEFT', 'Trái'), ('BOTH', 'Cả hai')]
     POSITION_CHOICES = [('GK', 'Thủ môn'), ('DF', 'Hậu vệ'), ('MF', 'Tiền vệ'), ('FW', 'Tiền đạo')]
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='player_profile')
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
@@ -152,6 +153,10 @@ class Player(models.Model):
     jersey_number = models.PositiveIntegerField()
     position = models.CharField(max_length=10, choices=POSITION_CHOICES)
     avatar = models.ImageField(upload_to='player_avatars/', null=True, blank=True)
+    transfer_value = models.PositiveIntegerField("Giá trị chuyển nhượng (VNĐ)", default=0, help_text="Để 0 nếu chưa có định giá.")
+    height = models.PositiveIntegerField("Chiều cao (cm)", null=True, blank=True)
+    weight = models.PositiveIntegerField("Cân nặng (kg)", null=True, blank=True)
+    preferred_foot = models.CharField("Chân thuận", max_length=5, choices=FOOT_CHOICES, blank=True)
 
     class Meta:
         constraints = [

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # bắt buộc cho allauth
+    "django.contrib.humanize",
 
     "crispy_forms",
     "crispy_bootstrap5",

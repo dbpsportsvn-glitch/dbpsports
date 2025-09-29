@@ -1,121 +1,168 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}{{ player.full_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('{% if player.team.main_photo %}{{ player.team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');
+        background-size: cover;
+        background-position: center;
+        padding: 2.5rem 1.5rem;
+        border-radius: .75rem;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .stat-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: .75rem;
+        padding: 1rem;
+        text-align: center;
+        height: 100%;
+    }
+    .stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+    .stat-card .stat-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    .achievement-item {
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .achievement-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm sticky-top" style="top: 80px;">
-                <div class="card-body text-center">
-                    {% if player.avatar %}
-                        <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+
+    <div class="profile-header d-flex align-items-center gap-4 mb-4 flex-wrap">
+        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="profile-avatar">
+        <div class="flex-grow-1">
+            <h1 class="display-5 mb-0"><strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}</h1>
+            <h4 class="fw-light mb-2">{{ player.get_position_display }}</h4>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'team_detail' pk=player.team.pk %}" class="text-white text-decoration-none d-flex align-items-center gap-2">
+                    {% if player.team.logo %}
+                        <img src="{{ player.team.logo.url }}" style="width: 28px; height: 28px; object-fit: contain;">
                     {% endif %}
-                    <h3 class="card-title mb-1">{{ player.full_name }}</h3>
-                    <p class="text-muted mb-0">Số áo: {{ player.jersey_number }}</p>
-                    <p class="text-muted">Vị trí: {{ player.get_position_display }}</p>
-                    <hr>
-                    <p class="mb-1"><strong>Đội:</strong> <a href="{% url 'team_detail' pk=player.team.pk %}">{{ player.team.name }}</a></p>
-                    <p><strong>Giải đấu:</strong> <a href="{% url 'tournament_detail' pk=player.team.tournament.pk %}">{{ player.team.tournament.name }}</a></p>
-                    {% if user.is_authenticated and not player.user and not user.player_profile %}
-                    <div class="d-grid gap-2 mt-3">
-                        <form method="POST" action="{% url 'claim_player_profile' pk=player.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-person-check-fill"></i> Đây là tôi
-                            </button>
-                        </form>
-                    </div>
-                    {% elif player.user == user %}
-                    <div class="alert alert-info mt-3" role="alert">
-                        <i class="bi bi-check-circle-fill"></i> Đây là hồ sơ của bạn.
-                    </div>
-                    {% endif %}
-                </div>
+                    <strong>{{ player.team.name }}</strong>
+                </a>
             </div>
         </div>
+        <div class="ms-auto text-end">
+            <h5 class="fw-light mb-0">Giá trị chuyển nhượng</h5>
+            <h2 class="display-4 text-warning">
+                {% if player.transfer_value > 0 %}
+                    {{ player.transfer_value|intcomma }} <small>VNĐ</small>
+                {% else %}
+                    <span class="fs-4">Chưa định giá</span>
+                {% endif %}
+            </h2>
+        </div>
+    </div>
 
-        <div class="col-md-8">
-
-            {% if badges %}
+    <div class="row g-4">
+        <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
-                <div class="card-header">
-                    <h4>Thành tích & Huy hiệu</h4>
-                </div>
-                <div class="card-body">
-                    {% for badge in badges %}
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="bi {{ badge.icon }} fs-4 {{ badge.color }}"></i>
-                        <strong class="ms-2">{{ badge.name }}</strong>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="row mb-4">
-                <div class="col-sm-4">
-                    <div class="card text-center shadow-sm h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Số trận</h5>
-                            <p class="display-4">{{ stats.matches_played_count }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="card text-center shadow-sm h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Bàn thắng</h5>
-                            <p class="display-4">{{ stats.total_goals }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-4">
-                    <div class="card text-center shadow-sm h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Thẻ phạt</h5>
-                            <p class="display-4">
-                                <span class="text-warning">{{ stats.yellow_cards }}</span> / <span class="text-danger">{{ stats.red_cards }}</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h4>Lịch sử thi đấu</h4>
-                </div>
+                <div class="card-header"><h4><i class="bi bi-person-lines-fill"></i> Lịch sử thi đấu</h4></div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Thời gian</th>
-                                <th>Trận đấu</th>
-                                <th>Kết quả</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th>Thời gian</th><th>Giải đấu</th><th>Trận đấu</th><th class="text-center">Kết quả</th></tr></thead>
                         <tbody>
                             {% for match in stats.matches_played %}
                                 <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
                                     <td>{{ match.match_time|date:"d/m/Y" }}</td>
+                                    <td><small>{{ match.tournament.name }}</small></td>
                                     <td>{{ match.team1.name }} vs {{ match.team2.name }}</td>
-                                    <td>
-                                        {% if match.team1_score is not None %}
-                                            {{ match.team1_score }} - {{ match.team2_score }}
-                                        {% else %}
-                                            <span class="text-muted">Chưa đá</span>
-                                        {% endif %}
-                                    </td>
+                                    <td class="text-center"><strong>{{ match.team1_score|default_if_none:'-' }} - {{ match.team2_score|default_if_none:'' }}</strong></td>
                                 </tr>
                             {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">Cầu thủ chưa tham gia trận đấu nào.</td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center text-muted p-4">Cầu thủ chưa tham gia trận đấu nào.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích</h4></div>
+                <div class="list-group list-group-flush">
+                     {% for achievement in player_achievements %}
+                        <a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center achievement-item">
+                            <div>
+                                <h6 class="mb-0"><strong>{{ achievement.get_achievement_type_display }}</strong> - {{ achievement.tournament.name }}</h6>
+                                <small class="text-muted">{{ achievement.team.name }} | Mùa giải {{ achievement.achieved_at|date:"Y" }}</small>
+                            </div>
+                            {% if achievement.achievement_type == 'CHAMPION' %}<i class="bi bi-trophy-fill fs-4 text-warning"></i>
+                            {% elif achievement.achievement_type == 'RUNNER_UP' %}<i class="bi bi-award-fill fs-4 text-secondary"></i>
+                            {% else %}<i class="bi bi-patch-check-fill fs-4 text-success"></i>
+                            {% endif %}
+                        </a>
+                    {% empty %}
+                        <div class="list-group-item text-muted text-center p-4">Cầu thủ chưa có danh hiệu nào.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="row g-4">
+                <div class="col-12">
+                     <div class="card shadow-sm">
+                        <div class="card-header"><h4><i class="bi bi-person-vcard"></i> Thông tin cá nhân</h4></div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between"><span>Chiều cao:</span> <strong>{{ player.height|default:"N/A" }} cm</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Cân nặng:</span> <strong>{{ player.weight|default:"N/A" }} kg</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Chân thuận:</span> <strong>{{ player.get_preferred_foot_display|default:"N/A" }}</strong></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-12">
+                     <div class="card shadow-sm">
+                        <div class="card-header"><h4><i class="bi bi-bar-chart-line-fill"></i> Thống kê sự nghiệp</h4></div>
+                        <div class="card-body">
+                           <div class="row g-3">
+                                <div class="col-6"><div class="stat-card"><div class="stat-value">{{ stats.matches_played_count }}</div><div class="stat-label">Số trận</div></div></div>
+                                <div class="col-6"><div class="stat-card"><div class="stat-value">{{ stats.total_goals }}</div><div class="stat-label">Bàn thắng</div></div></div>
+                                <div class="col-6"><div class="stat-card"><div class="stat-value text-warning">{{ stats.yellow_cards }}</div><div class="stat-label">Thẻ vàng</div></div></div>
+                                <div class="col-6"><div class="stat-card"><div class="stat-value text-danger">{{ stats.red_cards }}</div><div class="stat-label">Thẻ đỏ</div></div></div>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if badges %}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header"><h4><i class="bi bi-award"></i> Huy hiệu cá nhân</h4></div>
+                        <ul class="list-group list-group-flush">
+                            {% for badge in badges %}
+                            <li class="list-group-item d-flex align-items-center">
+                                <i class="bi {{ badge.icon }} fs-4 {{ badge.color }}"></i>
+                                <strong class="ms-3">{{ badge.name }}</strong>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
