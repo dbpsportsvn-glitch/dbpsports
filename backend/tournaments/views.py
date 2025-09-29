@@ -1228,9 +1228,8 @@ def match_control_view(request, pk):
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        
-        # --- XỬ LÝ CÁC YÊU CẦU AJAX (TRẢ VỀ JSON) ---
 
+        # --- XỬ LÝ CÁC YÊU CẦU AJAX (TRẢ VỀ JSON) ---
         if action in ['add_goal', 'add_card', 'add_substitution', 'add_match_event']:
             players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
             
@@ -1238,6 +1237,48 @@ def match_control_view(request, pk):
             if action == 'add_goal':
                 form = GoalForm(request.POST)
                 form.fields['player'].queryset = players_in_match_qs
+                if form.is_valid():
+                    instance = form.save(commit=False)
+                    instance.match = match
+                    instance.save() 
+
+                    match.refresh_from_db()
+                    is_own_goal = form.cleaned_data.get('is_own_goal', False)
+                    goal_scoring_team = instance.player.team
+
+                    match.team1_score = match.team1_score or 0
+                    match.team2_score = match.team2_score or 0
+
+                    if is_own_goal:
+                        if goal_scoring_team == match.team1:
+                            match.team2_score += 1
+                        else:
+                            match.team1_score += 1
+                    else:
+                        if goal_scoring_team == match.team1:
+                            match.team1_score += 1
+                        else:
+                            match.team2_score += 1
+                    
+                    match.save() 
+
+                    response_data = {
+                        'status': 'success',
+                        'event': {
+                            'type': 'goal',
+                            'minute': instance.minute or '-',
+                            'team_name': instance.team.name,
+                            'team_class': 'team1' if instance.team == match.team1 else 'team2',
+                            'player_name': instance.player.full_name,
+                            'is_own_goal': instance.is_own_goal
+                        },
+                        'new_scores': {
+                            'team1_score': match.team1_score,
+                            'team2_score': match.team2_score
+                        }
+                    }
+                    return JsonResponse(response_data)
+
             elif action == 'add_card':
                 form = CardForm(request.POST)
                 form.fields['player'].queryset = players_in_match_qs
@@ -1265,24 +1306,19 @@ def match_control_view(request, pk):
                 instance.match = match
                 instance.save()
                 
-                # Tạo response data chung
                 response_data = {'status': 'success', 'event': {'minute': instance.minute or '-', 'team_name': instance.team.name, 'team_class': 'team1' if instance.team == match.team1 else 'team2'}}
-                if action == 'add_goal':
-                    response_data['event'].update({'type': 'goal', 'player_name': instance.player.full_name, 'is_own_goal': instance.is_own_goal})
-                elif action == 'add_card':
+                if action == 'add_card':
                     response_data['event'].update({'type': 'card', 'player_name': instance.player.full_name, 'card_type': instance.card_type})
                 elif action == 'add_substitution':
                      response_data['event'].update({'type': 'substitution', 'player_in_name': instance.player_in.full_name, 'player_out_name': instance.player_out.full_name})
 
                 return JsonResponse(response_data)
             else:
-                error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()]) if form else "Form không hợp lệ."
+                error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()]) if form and form.errors else "Form không hợp lệ."
                 return JsonResponse({'status': 'error', 'message': error_str}, status=400)
         
-        # --- Xử lý cập nhật tỉ số (trả về JSON cho AJAX) ---
         if action == 'update_score':
             try:
-                # Lấy giá trị, nếu rỗng hoặc không phải số thì mặc định là None
                 score1_str = request.POST.get('team1_score')
                 score2_str = request.POST.get('team2_score')
                 
@@ -1290,13 +1326,10 @@ def match_control_view(request, pk):
                 match.team2_score = int(score2_str) if score2_str.isdigit() else None
                 
                 match.save()
-                # Trả về tín hiệu thành công, không redirect
                 return JsonResponse({'status': 'success', 'message': 'Đã lưu tỉ số.'})
             except (ValueError, TypeError):
                 return JsonResponse({'status': 'error', 'message': 'Giá trị tỉ số không hợp lệ.'}, status=400)
         
-        # Nếu không phải là action 'update_score', các action khác có thể redirect bình thường
-        # (Hiện tại không có action nào khác, nhưng để đây cho an toàn)
         return redirect('match_control', pk=match.pk)
 
     # --- Logic cho GET request (không thay đổi) ---
@@ -1329,4 +1362,4 @@ def match_control_view(request, pk):
         'substitutes_team2': substitutes_team2,
         'substituted_out_player_ids': substituted_out_player_ids,
     }
-    return render(request, 'tournaments/match_control.html', context)    
+    return render(request, 'tournaments/match_control.html', context)   

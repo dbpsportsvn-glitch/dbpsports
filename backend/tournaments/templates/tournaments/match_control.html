@@ -395,7 +395,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 if (modalToHide) modalToHide.hide();
                 updateTimeline(data.event); // Cập nhật timeline với dữ liệu mới
-                
+
+                // === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+                // Nếu backend trả về tỉ số mới, cập nhật nó trên giao diện
+                if (data.new_scores) {
+                    document.querySelector('input[name="team1_score"]').value = data.new_scores.team1_score;
+                    document.querySelector('input[name="team2_score"]').value = data.new_scores.team2_score;
+                }              
+
                 // Xử lý riêng cho việc hoán đổi cầu thủ
                 if (data.event.type === 'substitution') {
                     const teamId = document.getElementById('subTeamId').value;
