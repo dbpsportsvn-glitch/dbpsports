@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load custom_filters %}
 
 {% block title %}{{ player.full_name }}{% endblock %}
 
@@ -70,7 +70,7 @@
             <h5 class="fw-light mb-0">Giá trị chuyển nhượng</h5>
             <h2 class="display-4 text-warning">
                 {% if player.transfer_value > 0 %}
-                    {{ player.transfer_value|intcomma }} <small>VNĐ</small>
+                    {{ player.transfer_value|vnd_format }}
                 {% else %}
                     <span class="fs-4">Chưa định giá</span>
                 {% endif %}
