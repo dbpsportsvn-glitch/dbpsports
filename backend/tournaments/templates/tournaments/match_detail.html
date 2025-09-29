@@ -194,8 +194,8 @@
                 <div class="team-name">{{ match.team1.name }}</div>
             </div>
             <div class="col-md-4">
-                {% if match.team1_score is not None %}
-                    <div class="score">{{ match.team1_score }} - {{ match.team2_score }}</div>
+                {% if match.team1_score is not None and match.team2_score is not None %}
+                    <div class="score">{{ match.team1_score|default:"0" }} - {{ match.team2_score|default:"0" }}</div>
                     {% if match.team1_penalty_score is not None %}
                         <div class="match-info">(Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})</div>
                     {% endif %}
@@ -348,36 +348,57 @@
                     <h4 class="section-title events-title">Diễn biến chính</h4>
                     <ul class="event-timeline">
                         {% for event in events %}
-                        <li class="event-item">
-                            <div class="event-minute">{{ event.minute|default:"-" }}'</div>
-                            <div class="event-icon">
-                                {% if event.is_own_goal %}
-                                    <span title="Phản lưới nhà">⚽️</span>
-                                {% elif event.card_type == 'YELLOW' %}
-                                    <span class="badge bg-warning text-dark" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ vàng"></span>
-                                {% elif event.card_type == 'RED' %}
-                                    <span class="badge bg-danger" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ đỏ"></span>
-                                {% elif event.player_in %} {# <-- DÒNG MỚI ĐỂ KIỂM TRA THAY NGƯỜI #}
-                                    <i class="bi bi-arrow-left-right" title="Thay người"></i>
-                                {% else %}
-                                    <span title="Bàn thắng">⚽️</span>
-                                {% endif %}
-                            </div>
-                            <div class="event-details">
-                                {% if event.player_in %} {# <-- DÒNG MỚI ĐỂ HIỂN THỊ THÔNG TIN THAY NGƯỜI #}
-                                    <strong>{{ event.player_in.full_name }}</strong> vào thay <strong>{{ event.player_out.full_name }}</strong> ({{ event.team.name }})
-                                {% else %}
-                                <strong>
-                                    <a href="{% url 'player_detail' pk=event.player.pk %}" class="text-decoration-none text-dark">
-                                        {{ event.player.full_name }}
-                                    </a>
-                                    {% if event.player.user and event.player.team.captain == event.player.user %}
-                                        <span class="captain-indicator">(C)</span>
+                        
+                        {# === BẮT ĐẦU THAY THẾ TẠI ĐÂY === #}
+                        {% if event.event_type %}
+                            {# Đây là sự kiện mốc thời gian (Bắt đầu, Hết hiệp...) #}
+                            <li class="event-item text-center w-100">
+                                <div class="fw-bold my-1 text-muted">
+                                    <hr>
+                                    {% if event.event_type == 'MATCH_START' %}<i class="bi bi-play-fill"></i>
+                                    {% elif event.event_type == 'HALF_TIME' %}<i class="bi bi-pause-fill"></i>
+                                    {% elif event.event_type == 'MATCH_END' %}<i class="bi bi-stop-fill"></i>
+                                    {% else %}<i class="bi bi-info-circle-fill"></i>
                                     {% endif %}
-                                </strong> ({{ event.team.name }})
-                                {% endif %}
-                            </div>
-                        </li>
+                                    {{ event.text }}
+                                    <hr>
+                                </div>
+                            </li>
+                        {% else %}
+                            {# Đây là sự kiện của cầu thủ (ghi bàn, thẻ, thay người) #}
+                            <li class="event-item">
+                                <div class="event-minute">{{ event.minute|default:"-" }}'</div>
+                                <div class="event-icon">
+                                    {% if event.is_own_goal %}
+                                        <span title="Phản lưới nhà">⚽️</span>
+                                    {% elif event.card_type == 'YELLOW' %}
+                                        <span class="badge bg-warning text-dark" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ vàng"></span>
+                                    {% elif event.card_type == 'RED' %}
+                                        <span class="badge bg-danger" style="width: 1rem; height: 1.2rem; display: inline-block; border: 1px solid #666;" title="Thẻ đỏ"></span>
+                                    {% elif event.player_in %}
+                                        <i class="bi bi-arrow-left-right" title="Thay người"></i>
+                                    {% else %}
+                                        <span title="Bàn thắng">⚽️</span>
+                                    {% endif %}
+                                </div>
+                                <div class="event-details">
+                                    {% if event.player_in %}
+                                        <strong>{{ event.player_in.full_name }}</strong> vào thay <strong>{{ event.player_out.full_name }}</strong> ({{ event.team.name }})
+                                    {% else %}
+                                    <strong>
+                                        <a href="{% url 'player_detail' pk=event.player.pk %}" class="text-decoration-none text-dark">
+                                            {{ event.player.full_name }}
+                                        </a>
+                                        {% if event.player.user and event.player.team.captain == event.player.user %}
+                                            <span class="captain-indicator">(C)</span>
+                                        {% endif %}
+                                    </strong> ({{ event.team.name }})
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endif %}
+                        {# === KẾT THÚC THAY THẾ TẠI ĐÂY === #}
+
                         {% empty %}
                         <li class="text-muted">Chưa có diễn biến nào nổi bật.</li>
                         {% endfor %}

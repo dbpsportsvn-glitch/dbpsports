@@ -420,12 +420,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (noEventsMessage) noEventsMessage.style.display = 'none';
 
         let newEventHtml = '';
+
+        // === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
         if (eventData.type === 'match_event') {
             let icon = 'bi-info-circle-fill';
             if (eventData.event_type === 'MATCH_START') icon = 'bi-play-fill';
             if (eventData.event_type === 'HALF_TIME') icon = 'bi-pause-fill';
             if (eventData.event_type === 'MATCH_END') icon = 'bi-stop-fill';
-            newEventHtml = `<div class="event-item ps-3 mb-3 text-center border-0"><div class="text-muted small">${eventData.created_at}</div><div class="fw-bold my-1"><i class="bi ${icon}"></i> ${eventData.text}</div><hr class="w-50 mx-auto"></div>`;
+            
+            newEventHtml = `
+                <div class="event-item ps-3 mb-3 text-center border-0">
+                    <div class="text-muted small">${eventData.created_at}</div>
+                    <div class="fw-bold my-1">
+                        <i class="bi ${icon}"></i> ${eventData.text}
+                    </div>
+                    <hr class="w-50 mx-auto">
+                </div>`;
         } else {
             let eventIcon = '';
             let eventText = '';
@@ -440,8 +450,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventText = `${eventData.player_in_name} <small>thay</small> ${eventData.player_out_name}`;
             }
             
-            newEventHtml = `<div class="event-item ps-3 mb-3 ${eventData.team_class}"><div class="d-flex justify-content-between"><div class="fw-bold">${eventIcon} ${eventText}</div><small class="text-muted">${eventData.minute}'</small></div><div class="small">${eventData.team_name}</div></div>`;
+            newEventHtml = `
+                <div class="event-item ps-3 mb-3 ${eventData.team_class}">
+                    <div class="d-flex justify-content-between">
+                        <div class="fw-bold">${eventIcon} ${eventText}</div>
+                        <small class="text-muted">${eventData.minute}'</small>
+                    </div>
+                    <div class="small">${eventData.team_name}</div>
+                </div>`;
         }
+        // === KẾT THÚC THAY THẾ TẠI ĐÂY ===
+
         timelineList.insertAdjacentHTML('afterbegin', newEventHtml);
     }
     

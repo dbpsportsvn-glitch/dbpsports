@@ -477,10 +477,16 @@ def match_detail(request, pk):
     all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
     all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
     
-    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
-    # Lấy thêm dữ liệu thay người
+    # --- DÒNG CODE MỚI ---
     all_substitutions_in_match = Substitution.objects.filter(match=match).select_related('player_in', 'player_out', 'team')
-    # === KẾT THÚC THÊM MỚI ===
+    # Lấy thêm các sự kiện mốc thời gian
+    match_events = list(match.events.all())
+
+    # Gộp tất cả các loại sự kiện và sắp xếp theo thời gian tạo
+    events = sorted(
+        list(all_goals_in_match) + list(all_cards_in_match) + list(all_substitutions_in_match) + match_events,
+        key=lambda x: x.created_at
+    )
 
     def get_team_lineup_with_stats(team):
         lineup_entries = Lineup.objects.filter(match=match, team=team).select_related('player')
@@ -507,12 +513,6 @@ def match_detail(request, pk):
     team2_starters = [p for p in team2_lineup_full if p['status'] == 'Đá chính']
     team2_substitutes = [p for p in team2_lineup_full if p['status'] == 'Dự bị']
     
-    # === THAY ĐỔI DÒNG NÀY ĐỂ GỘP CẢ LƯỢT THAY NGƯỜI VÀO DIỄN BIẾN ===
-    events = sorted(
-        list(all_goals_in_match) + list(all_cards_in_match) + list(all_substitutions_in_match),
-        key=lambda x: x.minute or 0
-    )
-
     captain_team = None
     if request.user.is_authenticated:
         if match.team1.captain == request.user:
@@ -1257,7 +1257,7 @@ def match_control_view(request, pk):
                 elif event_type == MatchEvent.EventType.MATCH_END: text = f"Trận đấu kết thúc. Tỉ số chung cuộc là {current_score}."
                 if text:
                     event = MatchEvent.objects.create(match=match, event_type=event_type, text=text)
-                    return JsonResponse({'status': 'success', 'event': {'type': 'match_event', 'text': event.text, 'event_type': event.event_type, 'created_at': timezone.localtime(event.created_at).strftime('%H:%M')}})
+                    return JsonResponse({'status': 'success', 'event': {'type': 'match_event', 'text': event.text, 'event_type': event.event_type, 'created_at': event.created_at.strftime('%H:%M')}})
                 return JsonResponse({'status': 'error', 'message': 'Loại sự kiện không hợp lệ.'}, status=400)
 
             if form and form.is_valid():
@@ -1279,13 +1279,24 @@ def match_control_view(request, pk):
                 error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()]) if form else "Form không hợp lệ."
                 return JsonResponse({'status': 'error', 'message': error_str}, status=400)
         
-        # --- Xử lý POST thông thường ---
+        # --- Xử lý cập nhật tỉ số (trả về JSON cho AJAX) ---
         if action == 'update_score':
-            match.team1_score = request.POST.get('team1_score') or None
-            match.team2_score = request.POST.get('team2_score') or None
-            match.save()
-            messages.success(request, "Đã cập nhật tỉ số!")
+            try:
+                # Lấy giá trị, nếu rỗng hoặc không phải số thì mặc định là None
+                score1_str = request.POST.get('team1_score')
+                score2_str = request.POST.get('team2_score')
+                
+                match.team1_score = int(score1_str) if score1_str.isdigit() else None
+                match.team2_score = int(score2_str) if score2_str.isdigit() else None
+                
+                match.save()
+                # Trả về tín hiệu thành công, không redirect
+                return JsonResponse({'status': 'success', 'message': 'Đã lưu tỉ số.'})
+            except (ValueError, TypeError):
+                return JsonResponse({'status': 'error', 'message': 'Giá trị tỉ số không hợp lệ.'}, status=400)
         
+        # Nếu không phải là action 'update_score', các action khác có thể redirect bình thường
+        # (Hiện tại không có action nào khác, nhưng để đây cho an toàn)
         return redirect('match_control', pk=match.pk)
 
     # --- Logic cho GET request (không thay đổi) ---
