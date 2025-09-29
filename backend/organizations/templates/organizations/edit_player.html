@@ -18,7 +18,35 @@
     <div class="card-body p-4">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form|crispy }}
+            
+            <h5>Thông tin cơ bản</h5>
+            <div class="row">
+                <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.jersey_number|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.date_of_birth|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.avatar|as_crispy_field }}</div>
+            </div>
+
+            <hr class="my-4">
+
+            <h5>Thông số chuyên môn</h5>
+            <div class="row">
+                <div class="col-md-6">{{ form.position|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.specialty_position|as_crispy_field }}</div>
+                <div class="col-md-4">{{ form.height|as_crispy_field }}</div>
+                <div class="col-md-4">{{ form.weight|as_crispy_field }}</div>
+                <div class="col-md-4">{{ form.preferred_foot|as_crispy_field }}</div>
+            </div>
+
+            <hr class="my-4">
+            
+            <h5>Thông tin thị trường & Liên hệ</h5>
+            <div class="row">
+                <div class="col-md-6">{{ form.transfer_value|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.votes|as_crispy_field }}</div>
+                <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
+            </div>
+
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=players" class="btn btn-secondary">Hủy</a>
                 <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
