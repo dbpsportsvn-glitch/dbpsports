@@ -34,9 +34,10 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord)
 from .utils import send_notification_email, send_schedule_notification
-
+from django.db.models import Sum, F
+from django.contrib.auth.models import User
 
 #==================================
 
@@ -1446,4 +1447,140 @@ def delete_match_event(request, event_type, pk):
             return JsonResponse(response_data)
 
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)       
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)     
+
+@login_required
+@never_cache
+def player_voting_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    user = request.user
+    
+    # 1. Xác định vai trò và quyền vote của người dùng
+    user_role = "guest"
+    max_votes = 0
+    
+    is_organizer = tournament.organization and user in tournament.organization.members.all()
+    is_captain = Team.objects.filter(tournament=tournament, captain=user).exists()
+    is_player = Player.objects.filter(team__tournament=tournament, user=user).exists()
+
+    if is_organizer:
+        user_role = "Ban tổ chức"
+        max_votes = 3
+    elif is_captain:
+        user_role = "Đội trưởng"
+        max_votes = 2
+    elif is_player:
+        user_role = "Cầu thủ"
+        max_votes = 1
+
+    # 2. Tính số phiếu đã sử dụng
+    votes_cast_count = VoteRecord.objects.filter(voter=user, tournament=tournament).aggregate(total=Sum('weight'))['total'] or 0
+    remaining_votes = max_votes - votes_cast_count
+
+    progress_percentage = 0
+    if max_votes > 0:
+        progress_percentage = (votes_cast_count / max_votes) * 100
+
+    # 3. Xử lý khi người dùng gửi phiếu bầu
+    if request.method == 'POST':
+        player_id = request.POST.get('player_id')
+        player_to_vote = get_object_or_404(Player, pk=player_id, team__tournament=tournament)
+
+        # === BẮT ĐẦU KHỐI KIỂM TRA MỚI ===
+        already_voted_for_player = VoteRecord.objects.filter(
+            voter=user, 
+            voted_for=player_to_vote, 
+            tournament=tournament
+        ).exists()
+        # === KẾT THÚC KHỐI KIỂM TRA MỚI ===
+
+        # Cập nhật lại logic kiểm tra quy tắc
+        if remaining_votes <= 0:
+            messages.error(request, "Bạn đã hết phiếu bầu cho giải đấu này.")
+        elif player_to_vote.user == user:
+            messages.error(request, "Bạn không thể tự bỏ phiếu cho chính mình.")
+        elif already_voted_for_player: # <-- Thêm điều kiện kiểm tra
+            messages.warning(request, f"Bạn đã bỏ phiếu cho cầu thủ {player_to_vote.full_name} trước đó rồi.")
+        else:
+            try:
+                with transaction.atomic():
+                    VoteRecord.objects.create(
+                        voter=user,
+                        voted_for=player_to_vote,
+                        tournament=tournament,
+                        weight=1
+                    )
+                    player_to_vote.votes = F('votes') + 1
+                    player_to_vote.save()
+                
+                voter_name = user.get_full_name() or user.username
+                # (Phần gửi thông báo giữ nguyên)
+                
+                messages.success(request, f"Bạn đã bỏ phiếu thành công cho {player_to_vote.full_name}!")
+                return redirect('player_voting', tournament_pk=tournament.pk)
+
+            except Exception as e:
+                messages.error(request, f"Đã có lỗi xảy ra: {e}")
+
+    # 4. Lấy danh sách cầu thủ để bầu
+    players_to_vote = Player.objects.filter(team__tournament=tournament).exclude(user=user).select_related('team').order_by('team__name', 'full_name')
+
+    context = {
+        'tournament': tournament,
+        'players_to_vote': players_to_vote,
+        'user_role': user_role,
+        'max_votes': max_votes,
+        'votes_cast_count': votes_cast_count,
+        'remaining_votes': remaining_votes,
+        'progress_percentage': progress_percentage,
+    }
+    return render(request, 'tournaments/player_voting.html', context)     
+
+@login_required
+@require_POST # Chỉ cho phép truy cập bằng phương thức POST
+def cast_vote_view(request, player_pk):
+    player_to_vote = get_object_or_404(Player, pk=player_pk)
+    tournament = player_to_vote.team.tournament
+    user = request.user
+
+    # 1. Xác định vai trò và quyền vote
+    max_votes = 0
+    is_organizer = tournament.organization and user in tournament.organization.members.all()
+    is_captain = Team.objects.filter(tournament=tournament, captain=user).exists()
+    is_player = Player.objects.filter(team__tournament=tournament, user=user).exists()
+
+    if is_organizer: max_votes = 3
+    elif is_captain: max_votes = 2
+    elif is_player: max_votes = 1
+    
+    # 2. Kiểm tra các quy tắc
+    votes_cast_count = VoteRecord.objects.filter(voter=user, tournament=tournament).aggregate(total=Sum('weight'))['total'] or 0
+    if votes_cast_count >= max_votes:
+        return JsonResponse({'status': 'error', 'message': 'Bạn đã hết phiếu bầu cho giải đấu này.'}, status=403)
+    if player_to_vote.user == user:
+        return JsonResponse({'status': 'error', 'message': 'Bạn không thể tự bỏ phiếu cho chính mình.'}, status=403)
+    if VoteRecord.objects.filter(voter=user, voted_for=player_to_vote, tournament=tournament).exists():
+        return JsonResponse({'status': 'error', 'message': f"Bạn đã bỏ phiếu cho cầu thủ {player_to_vote.full_name} trước đó rồi."}, status=403)
+
+    # 3. Xử lý vote hợp lệ
+    try:
+        with transaction.atomic():
+            VoteRecord.objects.create(voter=user, voted_for=player_to_vote, tournament=tournament, weight=1)
+            # Dùng F() để cập nhật và lấy lại giá trị mới ngay lập tức
+            player_to_vote.refresh_from_db(fields=['votes'])
+            player_to_vote.votes = F('votes') + 1
+            player_to_vote.save()
+            player_to_vote.refresh_from_db(fields=['votes']) # Lấy giá trị vote mới nhất
+
+        # Tạo thông báo (giữ nguyên)
+        voter_name = user.get_full_name() or user.username
+        # (Phần gửi thông báo có thể được tối ưu sau, tạm thời giữ nguyên)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Bạn đã bỏ phiếu thành công cho {player_to_vote.full_name}!',
+            'new_vote_count': player_to_vote.votes,
+            'remaining_votes': max_votes - (votes_cast_count + 1)
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Đã có lỗi xảy ra ở server: {e}'}, status=500)         

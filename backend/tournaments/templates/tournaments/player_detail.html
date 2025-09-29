@@ -46,6 +46,8 @@
         transform: translateY(-5px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
     }
+    .vote-area { display: flex; align-items: center; gap: 0.5rem; }
+    .vote-badge { display: inline-flex; align-items: center; gap: 0.25rem;}
 </style>
 {% endblock %}
 
@@ -67,15 +69,27 @@
             </div>
         </div>
         <div class="ms-auto text-end">
-            <h5 class="fw-light mb-0">Tổng giá trị</h5>
+            <h5 class="fw-light mb-0">Giá trị Chuyển nhượng</h5>
             <h2 class="display-4 text-warning" title="Giá trị gốc: {{ player.transfer_value }} + Giá trị từ phiếu bầu: {{ value_from_votes }}">
-                {% if total_value > 0 %}
-                    {{ total_value|vnd_format }}
-                {% else %}
-                    <span class="fs-4">Chưa định giá</span>
-                {% endif %}
+                {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-4">Chưa định giá</span>{% endif %}
             </h2>
-             <span class="badge bg-primary rounded-pill fs-6"><i class="bi bi-hand-thumbs-up-fill"></i> {{ player.votes }} Phiếu</span>
+             
+            <div class="vote-area justify-content-end mt-2">
+                <span id="vote-badge" class="badge bg-primary rounded-pill fs-6 vote-badge">
+                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                    <span id="vote-count">{{ player.votes }}</span>
+                    <span>Phiếu</span>
+                </span>
+                
+                {% if player.team.tournament.status == 'IN_PROGRESS' and user.is_authenticated and user != player.user %}
+                <form id="vote-form" action="{% url 'cast_vote' player_pk=player.pk %}" method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" id="vote-button" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> Bỏ phiếu
+                    </button>
+                </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -171,4 +185,59 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const voteForm = document.getElementById('vote-form');
+    if (!voteForm) return;
+
+    voteForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const form = this;
+        const url = form.action;
+        const voteButton = document.getElementById('vote-button');
+        const voteCountSpan = document.getElementById('vote-count');
+        const voteBadge = document.getElementById('vote-badge');
+
+        if (!confirm('Bạn có chắc chắn muốn dùng 1 phiếu để bầu cho cầu thủ này không?')) {
+            return;
+        }
+
+        voteButton.disabled = true;
+        voteButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                voteCountSpan.textContent = data.new_vote_count;
+                voteButton.innerHTML = '<i class="bi bi-check-lg"></i> Đã vote!';
+                voteBadge.classList.remove('bg-primary');
+                voteBadge.classList.add('bg-success');
+                alert(data.message);
+            } else {
+                voteButton.disabled = false;
+                voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Thử lại';
+                alert('Lỗi: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            voteButton.disabled = false;
+            voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Lỗi';
+            alert('Đã có lỗi kết nối xảy ra.');
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %}

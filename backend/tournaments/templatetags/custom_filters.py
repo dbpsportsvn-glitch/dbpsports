@@ -5,9 +5,11 @@ register = template.Library()
 
 @register.filter
 def get_item(dictionary, key):
+    """
+    Lấy một giá trị từ dictionary bằng key trong template.
+    """
     return dictionary.get(key)
 
-# === THÊM ĐOẠN CODE NÀY VÀO CUỐI FILE ===
 @register.filter(name='vnd_format')
 def vnd_format(value):
     """
@@ -15,9 +17,6 @@ def vnd_format(value):
     Ví dụ: 69000 -> "69.000 VNĐ"
     """
     try:
-        # Chuyển số thành chuỗi, định dạng với dấu phẩy
-        # Sau đó thay thế dấu phẩy bằng dấu chấm
         return f"{int(value):,}".replace(",", ".") + " VNĐ"
     except (ValueError, TypeError):
         return value
-# === KẾT THÚC THÊM MỚI ===    

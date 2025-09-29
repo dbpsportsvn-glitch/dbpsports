@@ -546,3 +546,19 @@ class MatchEvent(models.Model):
 
     def __str__(self):
         return f"{self.get_event_type_display()} - {self.match}"        
+
+class VoteRecord(models.Model):
+    """Lưu lại lịch sử một lượt bỏ phiếu để đảm bảo minh bạch và chống gian lận."""
+    voter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='votes_cast', verbose_name="Người bỏ phiếu")
+    voted_for = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='votes_received', verbose_name="Cầu thủ được vote")
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Giải đấu")
+    weight = models.PositiveIntegerField("Số phiếu", default=1)
+    voted_at = models.DateTimeField("Thời gian vote", auto_now_add=True)
+
+    class Meta:
+        # Mỗi người chỉ được bầu cho 1 cầu thủ trong 1 giải đấu
+        unique_together = ('voter', 'voted_for', 'tournament')
+        ordering = ['-voted_at']
+
+    def __str__(self):
+        return f"{self.voter.username} voted for {self.voted_for.full_name} in {self.tournament.name}"        

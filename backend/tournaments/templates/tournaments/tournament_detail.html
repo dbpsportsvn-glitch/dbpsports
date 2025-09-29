@@ -18,7 +18,6 @@
     </div>
 </div>
 
-
 <div class="sticky-menu-wrapper card shadow-sm mb-4" style="border-top-left-radius: 0; border-top-right-radius: 0;">
     <div class="card-body py-2">
 
@@ -101,6 +100,16 @@
         <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
       {% endif %}
 
+      {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
+    {% if tournament.status == 'IN_PROGRESS' and user.is_authenticated %}
+    <div class="mt-3">
+        <a href="{% url 'player_voting' tournament_pk=tournament.pk %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-hand-thumbs-up-fill"></i> Tới trang Bình chọn
+        </a>
+    </div>
+    {% endif %}
+ 
+    {# === KẾT THÚC THÊM MỚI === #}
       {% if user.is_staff or is_organizer %}
         <div class="mt-3 d-flex flex-wrap gap-2">
             

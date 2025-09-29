@@ -18,6 +18,8 @@ urlpatterns = [
     path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
     path('terms-of-service/', views.terms_of_service_view, name='terms_of_service'),
     path('data-deletion-instructions/', views.data_deletion_view, name='data_deletion'),
+    path('player/<int:player_pk>/cast_vote/', views.cast_vote_view, name='cast_vote'),
+    path('tournament/<int:tournament_pk>/vote/', views.player_voting_view, name='player_voting'),
 
     # === BẮT ĐẦU KHỐI URL THÔNG BÁO ĐÃ CẬP NHẬT ===
     path('notifications/', views.notification_list, name='notification_list'),

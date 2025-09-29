@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Bình chọn Cầu thủ - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-person-check-fill"></i> Bình chọn Cầu thủ Yêu thích</h1>
+        <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+
+    <div class="card card-body bg-light mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="mb-1">Vai trò của bạn: <strong>{{ user_role }}</strong></p>
+                <p class="mb-0">Bạn có tổng cộng <strong>{{ max_votes }}</strong> phiếu bầu cho giải đấu này. Bạn còn lại <strong>{{ remaining_votes }}</strong> phiếu.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ votes_cast_count }}" aria-valuemin="0" aria-valuemax="{{ max_votes }}">
+                        Đã dùng {{ votes_cast_count }}/{{ max_votes }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if remaining_votes > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Cầu thủ</th>
+                    <th>Đội</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players_to_vote %}
+                <tr>
+                    <td>
+                        <a href="{% url 'player_detail' pk=player.pk %}" class="d-flex align-items-center gap-3 text-decoration-none text-dark">
+                            <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <strong>{{ player.full_name }}</strong>
+                        </a>
+                    </td>
+                    <td>{{ player.team.name }}</td>
+                    <td class="text-end">
+                        <form method="post" onsubmit="return confirm('Bạn có chắc muốn dùng 1 phiếu để bầu cho {{ player.full_name }} không?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="player_id" value="{{ player.pk }}">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-hand-thumbs-up-fill"></i> Bỏ phiếu
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-success text-center">
+        <h4><i class="bi bi-check-circle-fill"></i> Cảm ơn bạn đã bỏ phiếu!</h4>
+        <p>Bạn đã sử dụng hết số phiếu của mình cho giải đấu này.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
