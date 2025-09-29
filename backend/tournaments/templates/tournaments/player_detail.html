@@ -75,12 +75,33 @@
                     <span class="fs-4">Chưa định giá</span>
                 {% endif %}
             </h2>
+             <span class="badge bg-primary rounded-pill fs-6"><i class="bi bi-hand-thumbs-up-fill"></i> {{ player.votes }} Phiếu</span>
         </div>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích</h4></div>
+                <div class="list-group list-group-flush">
+                     {% for achievement in player_achievements %}
+                        <a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center achievement-item">
+                            <div>
+                                <h6 class="mb-0"><strong>{{ achievement.get_achievement_type_display }}</strong> - {{ achievement.tournament.name }}</h6>
+                                <small class="text-muted">{{ achievement.team.name }} | Mùa giải {{ achievement.achieved_at|date:"Y" }}</small>
+                            </div>
+                            {% if achievement.achievement_type == 'CHAMPION' %}<i class="bi bi-trophy-fill fs-4 text-warning"></i>
+                            {% elif achievement.achievement_type == 'RUNNER_UP' %}<i class="bi bi-award-fill fs-4 text-secondary"></i>
+                            {% else %}<i class="bi bi-patch-check-fill fs-4 text-success"></i>
+                            {% endif %}
+                        </a>
+                    {% empty %}
+                        <div class="list-group-item text-muted text-center p-4">Cầu thủ chưa có danh hiệu nào.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
                 <div class="card-header"><h4><i class="bi bi-person-lines-fill"></i> Lịch sử thi đấu</h4></div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0">
@@ -100,26 +121,6 @@
                     </table>
                 </div>
             </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích</h4></div>
-                <div class="list-group list-group-flush">
-                     {% for achievement in player_achievements %}
-                        <a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center achievement-item">
-                            <div>
-                                <h6 class="mb-0"><strong>{{ achievement.get_achievement_type_display }}</strong> - {{ achievement.tournament.name }}</h6>
-                                <small class="text-muted">{{ achievement.team.name }} | Mùa giải {{ achievement.achieved_at|date:"Y" }}</small>
-                            </div>
-                            {% if achievement.achievement_type == 'CHAMPION' %}<i class="bi bi-trophy-fill fs-4 text-warning"></i>
-                            {% elif achievement.achievement_type == 'RUNNER_UP' %}<i class="bi bi-award-fill fs-4 text-secondary"></i>
-                            {% else %}<i class="bi bi-patch-check-fill fs-4 text-success"></i>
-                            {% endif %}
-                        </a>
-                    {% empty %}
-                        <div class="list-group-item text-muted text-center p-4">Cầu thủ chưa có danh hiệu nào.</div>
-                    {% endfor %}
-                </div>
-            </div>
         </div>
 
         <div class="col-lg-4">
@@ -128,9 +129,12 @@
                      <div class="card shadow-sm">
                         <div class="card-header"><h4><i class="bi bi-person-vcard"></i> Thông tin cá nhân</h4></div>
                         <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between"><span>Tuổi:</span> <strong>{{ age|default:"N/A" }}</strong></li>
                             <li class="list-group-item d-flex justify-content-between"><span>Chiều cao:</span> <strong>{{ player.height|default:"N/A" }} cm</strong></li>
                             <li class="list-group-item d-flex justify-content-between"><span>Cân nặng:</span> <strong>{{ player.weight|default:"N/A" }} kg</strong></li>
                             <li class="list-group-item d-flex justify-content-between"><span>Chân thuận:</span> <strong>{{ player.get_preferred_foot_display|default:"N/A" }}</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Vị trí sở trường:</span> <strong>{{ player.specialty_position|default:"N/A" }}</strong></li>
+                            <li class="list-group-item d-flex justify-content-between"><span>Liên hệ:</span> <strong>{{ player.agent_contact|default:"N/A" }}</strong></li>
                         </ul>
                     </div>
                 </div>

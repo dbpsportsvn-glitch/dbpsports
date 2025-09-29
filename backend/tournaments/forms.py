@@ -28,17 +28,24 @@ class TeamCreationForm(forms.ModelForm):
 class PlayerCreationForm(forms.ModelForm):
     class Meta:
         model = Player
-        # Thêm các trường mới vào 'fields'
-        fields = ['full_name', 'jersey_number', 'position', 'height', 'weight', 'preferred_foot', 'avatar']
+        fields = ['full_name', 'jersey_number', 'position', 'specialty_position', 
+                  'date_of_birth', 'height', 'weight', 'preferred_foot', 
+                  'agent_contact', 'avatar']
         labels = {
             'full_name': 'Họ và tên cầu thủ',
             'jersey_number': 'Số áo',
-            'position': 'Vị trí',
-            'avatar': 'Ảnh đại diện / Giấy tờ',
-            # Thêm labels cho các trường mới
+            'position': 'Vị trí đăng ký',
+            'specialty_position': 'Vị trí sở trường',
+            'date_of_birth': 'Ngày sinh',
             'height': 'Chiều cao (cm)',
             'weight': 'Cân nặng (kg)',
             'preferred_foot': 'Chân thuận',
+            'agent_contact': 'Thông tin liên hệ (đại diện)',
+            'avatar': 'Ảnh đại diện / Giấy tờ',
+        }
+        # Thêm widget để trình duyệt hiển thị ô chọn ngày
+        widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
         }
 
 class PaymentProofForm(forms.ModelForm):

@@ -157,7 +157,11 @@ class Player(models.Model):
     height = models.PositiveIntegerField("Chiều cao (cm)", null=True, blank=True)
     weight = models.PositiveIntegerField("Cân nặng (kg)", null=True, blank=True)
     preferred_foot = models.CharField("Chân thuận", max_length=5, choices=FOOT_CHOICES, blank=True)
-
+    date_of_birth = models.DateField("Ngày sinh", null=True, blank=True)
+    specialty_position = models.CharField("Vị trí sở trường", max_length=100, blank=True, help_text="Ví dụ: Tiền đạo cắm, Hậu vệ cánh trái...")
+    agent_contact = models.CharField("Thông tin liên hệ (đại diện)", max_length=200, blank=True, help_text="Số điện thoại hoặc email của người đại diện.")
+    votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)
+    
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["team", "jersey_number"], name="uniq_jersey_per_team"),

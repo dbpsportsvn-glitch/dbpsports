@@ -6,6 +6,7 @@ from datetime import datetime, time, timedelta
 from itertools import combinations
 from django.core import serializers
 from django.db import transaction
+from datetime import date
 
 # Django Core
 from django.conf import settings
@@ -959,21 +960,19 @@ def generate_schedule_view(request, tournament_pk):
 
 def player_detail(request, pk):
     player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
-    # Lấy giải đấu hiện tại của cầu thủ và gán vào biến
     tournament = player.team.tournament
+    
+    # Tính tuổi của cầu thủ
+    age = None
+    if player.date_of_birth:
+        today = date.today()
+        age = today.year - player.date_of_birth.year - ((today.month, today.day) < (player.date_of_birth.month, player.date_of_birth.day))
 
-    # Lấy tất cả các đội mà cầu thủ đã từng thi đấu
+    # (Phần code còn lại của hàm giữ nguyên...)
     teams_played_for_ids = Player.objects.filter(full_name__iexact=player.full_name).values_list('team_id', flat=True)
-
-    # Lấy tất cả danh hiệu của các đội đó
     player_achievements = TeamAchievement.objects.filter(team_id__in=teams_played_for_ids).select_related('tournament').order_by('-achieved_at')
-
-    # Các thống kê cá nhân
     total_goals = Goal.objects.filter(player=player, is_own_goal=False).count()
-    cards = Card.objects.filter(player=player).aggregate(
-        yellow_cards=Count('id', filter=Q(card_type='YELLOW')),
-        red_cards=Count('id', filter=Q(card_type='RED'))
-    )
+    cards = Card.objects.filter(player=player).aggregate(yellow_cards=Count('id', filter=Q(card_type='YELLOW')), red_cards=Count('id', filter=Q(card_type='RED')))
     matches_played = Match.objects.filter(lineups__player=player).distinct().select_related('tournament', 'team1', 'team2').order_by('-match_time')
 
     stats = {
@@ -983,16 +982,13 @@ def player_detail(request, pk):
         'matches_played': matches_played,
         'matches_played_count': matches_played.count(),
     }
-
-    # Huy hiệu cá nhân (giờ đã có thể dùng biến 'tournament')
+    
     badges = []
     top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals', filter=Q(goals__is_own_goal=False))).order_by('-goal_count').first()
     if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
         badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
-
     if stats['yellow_cards'] == 0 and stats['red_cards'] == 0 and stats['matches_played_count'] > 0:
         badges.append({'name': 'Cầu thủ Fair-play', 'icon': 'bi-shield-check', 'color': 'text-primary'})
-
     most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
     if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
         badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
@@ -1002,6 +998,7 @@ def player_detail(request, pk):
         'stats': stats,
         'badges': badges,
         'player_achievements': player_achievements,
+        'age': age, # Gửi tuổi ra template
     }
     return render(request, 'tournaments/player_detail.html', context)
 
