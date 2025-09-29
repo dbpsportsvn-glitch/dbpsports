@@ -291,6 +291,7 @@ class Goal(models.Model):
     minute = models.PositiveIntegerField(null=True, blank=True)
     # --- THÊM DÒNG MỚI NÀY VÀO ---
     is_own_goal = models.BooleanField("Bàn phản lưới?", default=False)
+    created_at = models.DateTimeField(default=timezone.now)
     # -----------------------------
     class Meta:
         constraints = [models.CheckConstraint(check=Q(minute__gte=0) & Q(minute__lte=150), name="goal_minute_range")]
@@ -313,6 +314,7 @@ class Card(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='cards')
     card_type = models.CharField(max_length=10, choices=CARD_CHOICES)
     minute = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
     class Meta:
         constraints = [models.CheckConstraint(check=Q(minute__gte=0) & Q(minute__lte=150), name="card_minute_range")]
     def clean(self):
@@ -480,6 +482,7 @@ class Substitution(models.Model):
     player_in = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substitutions_in', verbose_name="Cầu thủ vào sân")
     player_out = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substitutions_out', verbose_name="Cầu thủ ra sân")
     minute = models.PositiveIntegerField("Phút", null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ['minute']
@@ -509,3 +512,26 @@ class Substitution(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+# === THÊM MODEL MỚI NÀY VÀO CUỐI FILE ===
+class MatchEvent(models.Model):
+    """Lưu trữ các sự kiện mốc thời gian của trận đấu."""
+    class EventType(models.TextChoices):
+        MATCH_START = 'MATCH_START', 'Trận đấu bắt đầu'
+        HALF_TIME = 'HALF_TIME', 'Hết hiệp 1'
+        MATCH_END = 'MATCH_END', 'Trận đấu kết thúc'
+        EXTRA_TIME_START = 'EXTRA_TIME_START', 'Hiệp phụ bắt đầu'
+        PENALTY_SHOOTOUT_START = 'PENALTY_SHOOTOUT_START', 'Loạt sút luân lưu'
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='events')
+    event_type = models.CharField("Loại sự kiện", max_length=30, choices=EventType.choices)
+    text = models.CharField("Nội dung hiển thị", max_length=255)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = "Sự kiện trận đấu"
+        verbose_name_plural = "Các sự kiện trận đấu"
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} - {self.match}"        

@@ -121,27 +121,54 @@
         </form>
     </div>
 
+    <div id="timeline-controls" class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+        <button class="btn btn-primary" data-action="add_match_event" data-event-type="MATCH_START">
+            <i class="bi bi-play-circle-fill"></i> Bắt đầu Trận đấu
+        </button>
+        <button class="btn btn-warning" data-action="add_match_event" data-event-type="HALF_TIME">
+            <i class="bi bi-pause-circle-fill"></i> Hết Hiệp 1
+        </button>
+        <button class="btn btn-danger" data-action="add_match_event" data-event-type="MATCH_END">
+            <i class="bi bi-stop-circle-fill"></i> Kết thúc Trận đấu
+        </button>
+    </div>
+
     <div class="control-grid">
         <div class="control-card timeline-col">
             <div class="card-header text-center">Diễn biến</div>
             <div class="card-body">
                 <div id="timeline-list" class="timeline">
                     {% for event in events %}
-                    <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
-                        <div class="d-flex justify-content-between">
-                            <div class="fw-bold">
-                                {% if event.is_own_goal %} ⚽ (OG) {{ event.player.full_name }}
-                                {% elif event.card_type == 'YELLOW' %} 🟨 {{ event.player.full_name }}
-                                {% elif event.card_type == 'RED' %} 🟥 {{ event.player.full_name }}
-                                {% elif event.player_in %}
-                                    🔄 {{ event.player_in.full_name }} <small>thay</small> {{ event.player_out.full_name }}
-                                {% else %} ⚽ {{ event.player.full_name }}
-                                {% endif %}
+                        {% if event.event_type %}
+                            <div class="event-item ps-3 mb-3 text-center border-0">
+                                <div class="text-muted small">{{ event.created_at|date:"H:i" }}</div>
+                                <div class="fw-bold my-1">
+                                    {% if event.event_type == 'MATCH_START' %}<i class="bi bi-play-fill"></i>
+                                    {% elif event.event_type == 'HALF_TIME' %}<i class="bi bi-pause-fill"></i>
+                                    {% elif event.event_type == 'MATCH_END' %}<i class="bi bi-stop-fill"></i>
+                                    {% else %}<i class="bi bi-info-circle-fill"></i>
+                                    {% endif %}
+                                    {{ event.text }}
+                                </div>
+                                <hr class="w-50 mx-auto">
                             </div>
-                            <small class="text-muted">{{ event.minute|default:'-' }}'</small>
-                        </div>
-                        <div class="small">{{ event.team.name }}</div>
-                    </div>
+                        {% else %}
+                            <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
+                                <div class="d-flex justify-content-between">
+                                    <div class="fw-bold">
+                                        {% if event.is_own_goal %} ⚽ (OG) {{ event.player.full_name }}
+                                        {% elif event.card_type == 'YELLOW' %} 🟨 {{ event.player.full_name }}
+                                        {% elif event.card_type == 'RED' %} 🟥 {{ event.player.full_name }}
+                                        {% elif event.player_in %}
+                                            🔄 {{ event.player_in.full_name }} <small>thay</small> {{ event.player_out.full_name }}
+                                        {% else %} ⚽ {{ event.player.full_name }}
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ event.minute|default:'-' }}'</small>
+                                </div>
+                                <div class="small">{{ event.team.name }}</div>
+                            </div>
+                        {% endif %}
                     {% empty %}
                     <p id="no-events-message" class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
                     {% endfor %}
@@ -305,8 +332,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // TỰ ĐỘNG LƯU TỈ SỐ
-    let scoreUpdateTimeout;
     const scoreForm = document.getElementById('score-form');
+    let scoreUpdateTimeout;
     scoreForm.querySelectorAll('.score-input').forEach(input => {
         input.addEventListener('input', () => {
             clearTimeout(scoreUpdateTimeout);
@@ -350,11 +377,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // === BẮT ĐẦU NÂNG CẤP LOGIC THAY NGƯỜI ===
-    subForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(subForm);
-        
+    // === BẮT ĐẦU PHIÊN BẢN HOÀN CHỈNH CỦA LOGIC XỬ LÝ FORM ===
+
+    // Hàm chung để gửi form AJAX và xử lý kết quả
+    function handleFormSubmit(form, modalToHide) {
+        const formData = new FormData(form);
         fetch(window.location.href, {
             method: 'POST',
             body: formData,
@@ -362,65 +389,90 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (response.ok) return response.json();
-            // Ném lỗi để catch xử lý nếu server trả về lỗi
-            return response.json().then(err => { throw new Error(err.error || 'Lỗi không xác định'); });
+            return response.json().then(err => { throw new Error(err.message || 'Lỗi không xác định từ server'); });
         })
         .then(data => {
             if (data.status === 'success') {
-                substitutionModal.hide();
+                if (modalToHide) modalToHide.hide();
+                updateTimeline(data.event); // Cập nhật timeline với dữ liệu mới
                 
-                const teamId = subTeamIdInput.value;
-                const playerOutId = formData.get('player_out');
-                const playerInId = formData.get('player_in');
-
-                const playerOutEl = document.querySelector(`.player-control-item[data-player-id='${playerOutId}']`);
-                const playerInEl = document.querySelector(`.player-control-item[data-player-id='${playerInId}']`);
-                
-                const startersList = document.getElementById(`starters-list-team${teamId}`);
-                const substitutesList = document.getElementById(`substitutes-list-team${teamId}`);
-
-                if (playerOutEl && playerInEl && startersList && substitutesList) {
-                    // Di chuyển cầu thủ
-                    substitutesList.appendChild(playerOutEl);
-                    startersList.appendChild(playerInEl);
-
-                    // Cập nhật giao diện cầu thủ ra sân
-                    playerOutEl.classList.add('player-substituted-out');
-                    const playerInfo = playerOutEl.querySelector('.player-info');
-                    if (!playerInfo.querySelector('.bi-box-arrow-left')) {
-                        playerInfo.insertAdjacentHTML('beforeend', ' <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>');
-                    }
-
-                    // Cập nhật timeline
-                    const timelineList = document.getElementById('timeline-list');
-                    const noEventsMessage = document.getElementById('no-events-message');
-                    if (noEventsMessage) noEventsMessage.style.display = 'none';
-
-                    const newEventHtml = `
-                        <div class="event-item ps-3 mb-3 ${ data.team_class }">
-                            <div class="d-flex justify-content-between">
-                                <div class="fw-bold">
-                                    🔄 ${data.player_in_name} <small>thay</small> ${data.player_out_name}
-                                </div>
-                                <small class="text-muted">${data.minute}'</small>
-                            </div>
-                            <div class="small">${data.team_name}</div>
-                        </div>
-                    `;
-                    timelineList.insertAdjacentHTML('afterbegin', newEventHtml);
+                // Xử lý riêng cho việc hoán đổi cầu thủ
+                if (data.event.type === 'substitution') {
+                    const teamId = document.getElementById('subTeamId').value;
+                    const playerOutId = formData.get('player_out');
+                    const playerInId = formData.get('player_in');
+                    swapPlayerElements(teamId, playerOutId, playerInId);
                 }
             } else {
                 alert('Lỗi: ' + data.message);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Đã có lỗi xảy ra khi gửi yêu cầu. ' + error.message);
+            console.error('Lỗi khi gửi form:', error);
+            alert('Đã có lỗi xảy ra: ' + error.message);
         });
+    }
+
+    // Hàm cập nhật dòng thời gian
+    function updateTimeline(eventData) {
+        const timelineList = document.getElementById('timeline-list');
+        const noEventsMessage = document.getElementById('no-events-message');
+        if (noEventsMessage) noEventsMessage.style.display = 'none';
+
+        let newEventHtml = '';
+        if (eventData.type === 'match_event') {
+            let icon = 'bi-info-circle-fill';
+            if (eventData.event_type === 'MATCH_START') icon = 'bi-play-fill';
+            if (eventData.event_type === 'HALF_TIME') icon = 'bi-pause-fill';
+            if (eventData.event_type === 'MATCH_END') icon = 'bi-stop-fill';
+            newEventHtml = `<div class="event-item ps-3 mb-3 text-center border-0"><div class="text-muted small">${eventData.created_at}</div><div class="fw-bold my-1"><i class="bi ${icon}"></i> ${eventData.text}</div><hr class="w-50 mx-auto"></div>`;
+        } else {
+            let eventIcon = '';
+            let eventText = '';
+            if (eventData.type === 'goal') {
+                eventIcon = eventData.is_own_goal ? '⚽ (OG)' : '⚽';
+                eventText = `${eventData.player_name}`;
+            } else if (eventData.type === 'card') {
+                eventIcon = eventData.card_type === 'YELLOW' ? '🟨' : '🟥';
+                eventText = `${eventData.player_name}`;
+            } else if (eventData.type === 'substitution') {
+                eventIcon = '🔄';
+                eventText = `${eventData.player_in_name} <small>thay</small> ${eventData.player_out_name}`;
+            }
+            
+            newEventHtml = `<div class="event-item ps-3 mb-3 ${eventData.team_class}"><div class="d-flex justify-content-between"><div class="fw-bold">${eventIcon} ${eventText}</div><small class="text-muted">${eventData.minute}'</small></div><div class="small">${eventData.team_name}</div></div>`;
+        }
+        timelineList.insertAdjacentHTML('afterbegin', newEventHtml);
+    }
+    
+    // Hàm hoán đổi vị trí cầu thủ
+    function swapPlayerElements(teamId, playerOutId, playerInId) {
+        const playerOutEl = document.querySelector(`.player-control-item[data-player-id='${playerOutId}']`);
+        const playerInEl = document.querySelector(`.player-control-item[data-player-id='${playerInId}']`);
+        const startersList = document.getElementById(`starters-list-team${teamId}`);
+        const substitutesList = document.getElementById(`substitutes-list-team${teamId}`);
+        if (playerOutEl && playerInEl && startersList && substitutesList) {
+            substitutesList.appendChild(playerOutEl);
+            startersList.appendChild(playerInEl);
+            playerOutEl.classList.add('player-substituted-out');
+            const playerInfo = playerOutEl.querySelector('.player-info');
+            if (!playerInfo.querySelector('.bi-box-arrow-left')) {
+                playerInfo.insertAdjacentHTML('beforeend', ' <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>');
+            }
+        }
+    }
+
+    // Gắn sự kiện submit cho các form
+    eventForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleFormSubmit(this, eventModal);
+    });
+    subForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleFormSubmit(this, substitutionModal);
     });
 
-
-    // HÀM XỬ LÝ SỰ KIỆN CLICK CHUNG CHO TẤT CẢ CÁC NÚT
+    // Gắn sự kiện click cho các nút hành động của cầu thủ
     document.querySelectorAll('.player-actions button').forEach(button => {
         button.addEventListener('click', function() {
             const action = this.dataset.action;
@@ -448,21 +500,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const substitutesList = document.getElementById(`substitutes-list-team${teamId}`);
 
                 const starters = Array.from(startersList.querySelectorAll('.player-control-item:not(.player-substituted-out)')).map(item => ({
-                    id: item.dataset.playerId,
-                    name: item.dataset.playerName,
-                    jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
+                    id: item.dataset.playerId, name: item.dataset.playerName, jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
                 }));
 
                 const substitutes = Array.from(substitutesList.querySelectorAll('.player-control-item:not(.player-substituted-out)')).map(item => ({
-                    id: item.dataset.playerId,
-                    name: item.dataset.playerName,
-                    jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
+                    id: item.dataset.playerId, name: item.dataset.playerName, jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
                 }));
 
                 populatePlayers(playerOutSelect, starters);
                 populatePlayers(playerInSelect, substitutes);
                 
-                // Tự động chọn cầu thủ nếu có thể
                 if (!playerItem.classList.contains('player-substituted-out')) {
                     const playerId = playerItem.dataset.playerId;
                     if (starters.some(p => p.id === playerId)) {
@@ -471,9 +518,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         playerInSelect.value = playerId;
                     }
                 }
-                
                 substitutionModal.show();
             }
+        });
+    });
+
+    // Gắn sự kiện click cho các nút điều khiển timeline
+    const timelineControls = document.getElementById('timeline-controls');
+    timelineControls.addEventListener('click', function(e) {
+        const button = e.target.closest('button[data-action="add_match_event"]');
+        if (!button) return;
+
+        button.disabled = true; // Vô hiệu hóa tạm thời
+        const eventType = button.dataset.eventType;
+        const score1 = document.querySelector('input[name="team1_score"]').value;
+        const score2 = document.querySelector('input[name="team2_score"]').value;
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('action', 'add_match_event');
+        formData.append('event_type', eventType);
+        formData.append('current_score', `${score1} - ${score2}`);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateTimeline(data.event);
+            } else {
+                alert('Lỗi: ' + data.message);
+                button.disabled = false; // Bật lại nút nếu có lỗi
+            }
+        }).catch(err => {
+            console.error(err);
+            button.disabled = false; // Bật lại nút nếu có lỗi
         });
     });
 });

@@ -32,7 +32,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent)
 from .utils import send_notification_email, send_schedule_notification
 
 
@@ -461,6 +461,7 @@ def update_team(request, pk):
     return render(request, 'tournaments/update_team.html', context)    
 
 # === THAY THẾ TOÀN BỘ HÀM NÀY BẰNG PHIÊN BẢN MỚI ===
+@never_cache
 def match_detail(request, pk):
     # Lấy thông tin trận đấu và các đội liên quan để tối ưu
     match = get_object_or_404(
@@ -1228,75 +1229,67 @@ def match_control_view(request, pk):
     if request.method == 'POST':
         action = request.POST.get('action')
         
-        # Xử lý các yêu cầu AJAX (mong muốn nhận lại JSON)
-        if action == 'add_substitution':
-            # Lấy danh sách cầu thủ hợp lệ dựa trên đội hình đã đăng ký
-            starters_qs = Player.objects.filter(lineups__match=match, lineups__status='STARTER')
-            subs_qs = Player.objects.filter(lineups__match=match, lineups__status='SUBSTITUTE')
+        # --- XỬ LÝ CÁC YÊU CẦU AJAX (TRẢ VỀ JSON) ---
+
+        if action in ['add_goal', 'add_card', 'add_substitution', 'add_match_event']:
+            players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
             
-            form = SubstitutionForm(request.POST)
-            # Cung cấp queryset cho form để validation
-            form.fields['player_in'].queryset = subs_qs
-            form.fields['player_out'].queryset = starters_qs
+            form = None
+            if action == 'add_goal':
+                form = GoalForm(request.POST)
+                form.fields['player'].queryset = players_in_match_qs
+            elif action == 'add_card':
+                form = CardForm(request.POST)
+                form.fields['player'].queryset = players_in_match_qs
+            elif action == 'add_substitution':
+                starters_qs = Player.objects.filter(lineups__match=match, lineups__status='STARTER')
+                subs_qs = Player.objects.filter(lineups__match=match, lineups__status='SUBSTITUTE')
+                form = SubstitutionForm(request.POST)
+                form.fields['player_in'].queryset = subs_qs
+                form.fields['player_out'].queryset = starters_qs
 
-            if form.is_valid():
-                sub = form.save(commit=False)
-                sub.match = match
-                sub.save() # clean() sẽ tự động gán team
-                return JsonResponse({
-                    'status': 'success',
-                    'player_in_name': sub.player_in.full_name,
-                    'player_out_name': sub.player_out.full_name,
-                    'minute': sub.minute or '-',
-                    'team_name': sub.team.name,
-                    'team_class': 'team1' if sub.team == match.team1 else 'team2'
-                })
-            else:
-                error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()])
-                return JsonResponse({'status': 'error', 'message': error_str}, status=400)
+            if action == 'add_match_event':
+                event_type = request.POST.get('event_type')
+                current_score = request.POST.get('current_score', '')
+                text = ""
+                if event_type == MatchEvent.EventType.MATCH_START: text = "Trận đấu bắt đầu!"
+                elif event_type == MatchEvent.EventType.HALF_TIME: text = f"Hết hiệp 1. Tỉ số tạm thời là {current_score}."
+                elif event_type == MatchEvent.EventType.MATCH_END: text = f"Trận đấu kết thúc. Tỉ số chung cuộc là {current_score}."
+                if text:
+                    event = MatchEvent.objects.create(match=match, event_type=event_type, text=text)
+                    return JsonResponse({'status': 'success', 'event': {'type': 'match_event', 'text': event.text, 'event_type': event.event_type, 'created_at': timezone.localtime(event.created_at).strftime('%H:%M')}})
+                return JsonResponse({'status': 'error', 'message': 'Loại sự kiện không hợp lệ.'}, status=400)
 
-        # Xử lý các form POST thông thường (sẽ tải lại trang)
-        try:
-            with transaction.atomic():
-                if action == 'update_score':
-                    match.team1_score = request.POST.get('team1_score') or None
-                    match.team2_score = request.POST.get('team2_score') or None
-                    match.save()
-                    messages.success(request, "Đã cập nhật tỉ số!")
+            if form and form.is_valid():
+                instance = form.save(commit=False)
+                instance.match = match
+                instance.save()
                 
-                elif action == 'add_goal':
-                    players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
-                    goal_form = GoalForm(request.POST)
-                    goal_form.fields['player'].queryset = players_in_match_qs
-                    if goal_form.is_valid():
-                        goal = goal_form.save(commit=False)
-                        goal.match = match
-                        goal.save()
-                        messages.success(request, f"Đã thêm bàn thắng cho {goal.player.full_name}.")
-                    else:
-                        messages.error(request, "Thêm bàn thắng thất bại. Vui lòng kiểm tra lại.")
-
+                # Tạo response data chung
+                response_data = {'status': 'success', 'event': {'minute': instance.minute or '-', 'team_name': instance.team.name, 'team_class': 'team1' if instance.team == match.team1 else 'team2'}}
+                if action == 'add_goal':
+                    response_data['event'].update({'type': 'goal', 'player_name': instance.player.full_name, 'is_own_goal': instance.is_own_goal})
                 elif action == 'add_card':
-                    players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
-                    card_form = CardForm(request.POST)
-                    card_form.fields['player'].queryset = players_in_match_qs
-                    if card_form.is_valid():
-                        card = card_form.save(commit=False)
-                        card.match = match
-                        card.save()
-                        messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
-                    else:
-                        messages.error(request, "Thêm thẻ phạt thất bại. Vui lòng kiểm tra lại.")
+                    response_data['event'].update({'type': 'card', 'player_name': instance.player.full_name, 'card_type': instance.card_type})
+                elif action == 'add_substitution':
+                     response_data['event'].update({'type': 'substitution', 'player_in_name': instance.player_in.full_name, 'player_out_name': instance.player_out.full_name})
+
+                return JsonResponse(response_data)
+            else:
+                error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()]) if form else "Form không hợp lệ."
+                return JsonResponse({'status': 'error', 'message': error_str}, status=400)
         
-        except Exception as e:
-            messages.error(request, f"Đã có lỗi xảy ra: {e}")
+        # --- Xử lý POST thông thường ---
+        if action == 'update_score':
+            match.team1_score = request.POST.get('team1_score') or None
+            match.team2_score = request.POST.get('team2_score') or None
+            match.save()
+            messages.success(request, "Đã cập nhật tỉ số!")
         
         return redirect('match_control', pk=match.pk)
 
     # --- Logic cho GET request (không thay đổi) ---
-    substituted_out_player_ids = set(
-        Substitution.objects.filter(match=match).values_list('player_out_id', flat=True)
-    )
+    substituted_out_player_ids = set(Substitution.objects.filter(match=match).values_list('player_out_id', flat=True))
     lineup_entries = Lineup.objects.filter(match=match).select_related('player')
     starters_ids = {entry.player.id for entry in lineup_entries if entry.status == 'STARTER'}
     substitutes_ids = {entry.player.id for entry in lineup_entries if entry.status == 'SUBSTITUTE'}
@@ -1310,11 +1303,12 @@ def match_control_view(request, pk):
     goals = list(match.goals.select_related('player', 'team').all())
     cards = list(match.cards.select_related('player', 'team').all())
     substitutions = list(match.substitutions.select_related('player_in', 'player_out', 'team').all())
-    events = sorted(goals + cards + substitutions, key=lambda x: (x.minute is None, x.minute), reverse=True)
+    match_events = list(match.events.all())
+    all_events = sorted(goals + cards + substitutions + match_events, key=lambda x: x.created_at, reverse=True)
 
     context = {
         'match': match,
-        'events': events,
+        'events': all_events,
         'lineup_is_set': lineup_is_set,
         'players_team1': players_team1,
         'starters_team1': starters_team1,
