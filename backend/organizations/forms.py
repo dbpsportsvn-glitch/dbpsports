@@ -6,6 +6,7 @@ from .models import Organization
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from tournaments.forms import PlayerCreationForm
+from tournaments.models import Substitution 
 
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
@@ -286,3 +287,15 @@ class AnnouncementForm(forms.ModelForm):
         help_texts = {
             'is_published': 'Bỏ chọn nếu đây là bản nháp và bạn muốn gửi sau.'
         }
+
+# === Thay người ===
+class SubstitutionForm(forms.ModelForm):
+    player_in = PlayerChoiceFieldWithCaptain(queryset=Player.objects.none(), label="Cầu thủ vào sân")
+    player_out = PlayerChoiceFieldWithCaptain(queryset=Player.objects.none(), label="Cầu thủ ra sân")
+    
+    class Meta:
+        model = Substitution
+        fields = ['player_in', 'player_out', 'minute']
+        labels = {
+            'minute': 'Phút thay người'
+        }        

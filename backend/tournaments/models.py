@@ -470,4 +470,42 @@ class TeamAchievement(models.Model):
         unique_together = ('team', 'tournament', 'achievement_type') # Đảm bảo mỗi đội chỉ có 1 danh hiệu/giải
 
     def __str__(self):
-        return f"{self.team.name} - {self.get_achievement_type_display()} tại {self.tournament.name}"        
+        return f"{self.team.name} - {self.get_achievement_type_display()} tại {self.tournament.name}"
+
+# === THÊM MODEL MỚI VÀO CUỐI FILE ===
+class Substitution(models.Model):
+    """Lưu trữ một sự kiện thay người trong trận đấu."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='substitutions', verbose_name="Trận đấu")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='substitutions', verbose_name="Đội")
+    player_in = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substitutions_in', verbose_name="Cầu thủ vào sân")
+    player_out = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='substitutions_out', verbose_name="Cầu thủ ra sân")
+    minute = models.PositiveIntegerField("Phút", null=True, blank=True)
+
+    class Meta:
+        ordering = ['minute']
+        verbose_name = "Lượt thay người"
+        verbose_name_plural = "Các lượt thay người"
+
+    def __str__(self):
+        return f"{self.player_in.full_name} vào thay {self.player_out.full_name} ở phút {self.minute}'"
+
+    def clean(self):
+        # Tự động gán đội dựa trên cầu thủ vào sân
+        if self.player_in_id and not self.team_id:
+            self.team = self.player_in.team
+        
+        # Kiểm tra tính hợp lệ
+        if self.player_in and self.player_out and self.player_in.team != self.player_out.team:
+            raise ValidationError("Cầu thủ vào và ra phải cùng một đội.")
+        if self.player_in == self.player_out:
+            raise ValidationError("Cầu thủ vào và ra không được là một.")
+            
+        # === SỬA LỖI TẠI ĐÂY ===
+        # Chỉ kiểm tra khi đối tượng match đã được gán
+        if hasattr(self, 'match'):
+            if self.team_id not in [self.match.team1_id, self.match.team2_id]:
+                raise ValidationError("Đội thay người không thuộc trận đấu này.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

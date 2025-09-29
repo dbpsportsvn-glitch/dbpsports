@@ -121,12 +121,13 @@
                     <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
                         <div class="d-flex justify-content-between">
                             <div class="fw-bold">
-                                {% if event.is_own_goal %} ⚽ (OG)
-                                {% elif event.card_type == 'YELLOW' %} 🟨
-                                {% elif event.card_type == 'RED' %} 🟥
-                                {% else %} ⚽
+                                {% if event.is_own_goal %} ⚽ (OG) {{ event.player.full_name }}
+                                {% elif event.card_type == 'YELLOW' %} 🟨 {{ event.player.full_name }}
+                                {% elif event.card_type == 'RED' %} 🟥 {{ event.player.full_name }}
+                                {% elif event.player_in %}
+                                    🔄 {{ event.player_in.full_name }} <small>thay</small> {{ event.player_out.full_name }}
+                                {% else %} ⚽ {{ event.player.full_name }}
                                 {% endif %}
-                                {{ event.player.full_name }}
                             </div>
                             <small class="text-muted">{{ event.minute|default:'-' }}'</small>
                         </div>
@@ -147,14 +148,22 @@
                     {% for p in starters_team1 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
                     {% for p in substitutes_team1 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
@@ -162,7 +171,11 @@
                     {% for p in players_team1 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                 {% endif %}
@@ -177,14 +190,22 @@
                     {% for p in starters_team2 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
                     {% for p in substitutes_team2 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
@@ -192,10 +213,48 @@
                      {% for p in players_team2 %}
                     <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
                         <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
-                        <div class="player-actions"><button class="btn btn-sm btn-success" data-action="add_goal">⚽</button><button class="btn btn-sm btn-warning" data-action="add_card">🟨</button></div>
+                        <div class="player-actions">
+                            <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
+                            <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
+                            <button class="btn btn-sm btn-info" data-action="add_sub" title="Thay người">🔄</button>
+                        </div>
                     </div>
                     {% endfor %}
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="substitutionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thực hiện Thay người</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Đội: <strong id="subTeamName"></strong></p>
+                <form method="post" id="sub-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_substitution">
+                    <div class="mb-3">
+                        <label class="form-label">Cầu thủ ra sân</label>
+                        <select name="player_out" id="playerOutSelect" class="form-select" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cầu thủ vào sân</label>
+                        <select name="player_in" id="playerInSelect" class="form-select" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phút diễn ra</label>
+                        <input type="number" name="minute" class="form-control" placeholder="Để trống nếu không xác định">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" form="sub-form" class="btn btn-primary">Xác nhận</button>
             </div>
         </div>
     </div>
@@ -256,46 +315,105 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetch(window.location.href, {
                     method: 'POST',
                     body: formData,
-                    headers: {
-                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                    }
-                }).then(response => {
-                    // Có thể thêm thông báo nhỏ 'đã lưu' ở đây
+                    headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
                 });
             }, 2000);
         });
     });
 
-    // XỬ LÝ MODAL THÊM SỰ KIỆN
+    // KHỞI TẠO CÁC MODAL
     const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+    const substitutionModal = new bootstrap.Modal(document.getElementById('substitutionModal'));
+    
+    // LẤY CÁC THÀNH PHẦN DOM CỦA MODAL
     const playerNameEl = document.getElementById('playerName');
     const eventActionInput = document.getElementById('eventAction');
     const eventPlayerIdInput = document.getElementById('eventPlayerId');
     const goalOptions = document.getElementById('goal-options');
     const cardOptions = document.getElementById('card-options');
     const eventForm = document.getElementById('event-form');
+    
+    const subTeamNameEl = document.getElementById('subTeamName');
+    const playerOutSelect = document.getElementById('playerOutSelect');
+    const playerInSelect = document.getElementById('playerInSelect');
 
+    // HÀM HỖ TRỢ ĐỂ ĐIỀN CẦU THỦ VÀO SELECT
+    function populatePlayers(selectElement, players) {
+        selectElement.innerHTML = '<option value="">-- Chọn cầu thủ --</option>';
+        players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player.id;
+            option.textContent = `#${player.jersey} - ${player.name}`;
+            selectElement.appendChild(option);
+        });
+    }
+
+    // HÀM XỬ LÝ SỰ KIỆN CLICK CHUNG CHO TẤT CẢ CÁC NÚT
     document.querySelectorAll('.player-actions button').forEach(button => {
         button.addEventListener('click', function() {
+            const action = this.dataset.action;
             const playerItem = this.closest('.player-control-item');
             const playerId = playerItem.dataset.playerId;
             const playerName = playerItem.dataset.playerName;
-            const action = this.dataset.action;
 
-            playerNameEl.textContent = playerName;
-            eventPlayerIdInput.value = playerId;
-            eventActionInput.value = action;
-            eventForm.reset();
+            if (action === 'add_goal' || action === 'add_card') {
+                playerNameEl.textContent = playerName;
+                eventPlayerIdInput.value = playerId;
+                eventActionInput.value = action;
+                eventForm.reset();
+                goalOptions.style.display = (action === 'add_goal') ? 'block' : 'none';
+                cardOptions.style.display = (action === 'add_card') ? 'block' : 'none';
+                eventModal.show();
+            } else if (action === 'add_sub') {
+                const teamCard = this.closest('.control-card');
+                const teamName = teamCard.querySelector('.card-header').textContent;
+                
+                subTeamNameEl.textContent = teamName;
+                
+                const starters = [];
+                const substitutes = [];
 
-            if (action === 'add_goal') {
-                goalOptions.style.display = 'block';
-                cardOptions.style.display = 'none';
-            } else if (action === 'add_card') {
-                goalOptions.style.display = 'none';
-                cardOptions.style.display = 'block';
+                // Hàm kiểm tra một cầu thủ thuộc nhóm nào (đá chính/dự bị)
+                const getPlayerGroup = (item) => {
+                    let currentElement = item;
+                    while (currentElement && currentElement.previousElementSibling) {
+                        currentElement = currentElement.previousElementSibling;
+                        if (currentElement.classList.contains('list-sub-header')) {
+                            return currentElement.textContent;
+                        }
+                    }
+                    return null;
+                };
+
+                teamCard.querySelectorAll('.list-group-item.player-control-item').forEach(item => {
+                    const playerInfo = {
+                         id: item.dataset.playerId,
+                         name: item.dataset.playerName,
+                         jersey: item.querySelector('.jersey-number').textContent.replace('#', '')
+                    };
+                    const groupName = getPlayerGroup(item);
+                    if (groupName && groupName.includes('Đá chính')) {
+                        starters.push(playerInfo);
+                    } else if (groupName && groupName.includes('Dự bị')) {
+                        substitutes.push(playerInfo);
+                    } else { // Fallback nếu không có đội hình đăng ký
+                        starters.push(playerInfo);
+                    }
+                });
+
+                populatePlayers(playerOutSelect, starters);
+                populatePlayers(playerInSelect, substitutes);
+                
+                // === LOGIC MỚI: TỰ ĐỘNG CHỌN CẦU THỦ ===
+                const clickedPlayerGroup = getPlayerGroup(playerItem);
+                if (clickedPlayerGroup && clickedPlayerGroup.includes('Đá chính')) {
+                    playerOutSelect.value = playerId;
+                } else if (clickedPlayerGroup && clickedPlayerGroup.includes('Dự bị')) {
+                    playerInSelect.value = playerId;
+                }
+                
+                substitutionModal.show();
             }
-            
-            eventModal.show();
         });
     });
 });

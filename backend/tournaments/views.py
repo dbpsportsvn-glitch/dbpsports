@@ -23,7 +23,7 @@ from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
-from organizations.forms import GoalForm, CardForm
+from organizations.forms import GoalForm, CardForm, SubstitutionForm 
 
 # Local Application Imports
 from organizations.models import Organization
@@ -32,7 +32,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution)
 from .utils import send_notification_email, send_schedule_notification
 
 
@@ -460,6 +460,7 @@ def update_team(request, pk):
     }
     return render(request, 'tournaments/update_team.html', context)    
 
+# === THAY THẾ TOÀN BỘ HÀM NÀY BẰNG PHIÊN BẢN MỚI ===
 def match_detail(request, pk):
     # Lấy thông tin trận đấu và các đội liên quan để tối ưu
     match = get_object_or_404(
@@ -468,55 +469,49 @@ def match_detail(request, pk):
     )
 
     weather_data = None
-    if match.match_time and timezone.now() < match.match_time < timezone.now() + timedelta(days=14): # Open-Meteo hỗ trợ 14 ngày
+    if match.match_time and timezone.now() < match.match_time < timezone.now() + timedelta(days=14):
         weather_data = get_weather_for_match(match.location, match.match_time, match.tournament.region)
 
-    # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ (ĐÃ NÂNG CẤP) ---
-    # Lấy tất cả các sự kiện (bàn thắng, thẻ phạt) của trận đấu này
+    # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ ---
     all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
     all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
+    
+    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+    # Lấy thêm dữ liệu thay người
+    all_substitutions_in_match = Substitution.objects.filter(match=match).select_related('player_in', 'player_out', 'team')
+    # === KẾT THÚC THÊM MỚI ===
 
-    # Hàm trợ giúp để xử lý thông tin cho từng đội
     def get_team_lineup_with_stats(team):
         lineup_entries = Lineup.objects.filter(match=match, team=team).select_related('player')
-        
         lineup_with_stats = []
         for entry in lineup_entries:
             player = entry.player
-            
-            # Đếm số bàn thắng của cầu thủ trong trận này
             goals_in_this_match = all_goals_in_match.filter(player=player, is_own_goal=False).count()
-            
-            # Đếm số thẻ của cầu thủ trong trận này
             yellow_cards_in_this_match = all_cards_in_match.filter(player=player, card_type='YELLOW').count()
             red_cards_in_this_match = all_cards_in_match.filter(player=player, card_type='RED').count()
-            
             lineup_with_stats.append({
                 'player': player,
-                'status': entry.get_status_display(), # Lấy tên trạng thái (Đá chính/Dự bị)
+                'status': entry.get_status_display(),
                 'goals': goals_in_this_match,
                 'yellow_cards': yellow_cards_in_this_match,
                 'red_cards': red_cards_in_this_match,
             })
         return lineup_with_stats
 
-    # Lấy toàn bộ đội hình của mỗi đội
     team1_lineup_full = get_team_lineup_with_stats(match.team1)
     team2_lineup_full = get_team_lineup_with_stats(match.team2)
 
-    # Phân loại ra đá chính và dự bị
     team1_starters = [p for p in team1_lineup_full if p['status'] == 'Đá chính']
     team1_substitutes = [p for p in team1_lineup_full if p['status'] == 'Dự bị']
     team2_starters = [p for p in team2_lineup_full if p['status'] == 'Đá chính']
     team2_substitutes = [p for p in team2_lineup_full if p['status'] == 'Dự bị']
     
-    # Lấy danh sách các sự kiện đã sắp xếp theo thời gian để hiển thị
+    # === THAY ĐỔI DÒNG NÀY ĐỂ GỘP CẢ LƯỢT THAY NGƯỜI VÀO DIỄN BIẾN ===
     events = sorted(
-        list(all_goals_in_match) + list(all_cards_in_match),
+        list(all_goals_in_match) + list(all_cards_in_match) + list(all_substitutions_in_match),
         key=lambda x: x.minute or 0
     )
 
-    # Kiểm tra xem người dùng hiện tại có phải đội trưởng của 1 trong 2 đội không
     captain_team = None
     if request.user.is_authenticated:
         if match.team1.captain == request.user:
@@ -526,7 +521,6 @@ def match_detail(request, pk):
 
     context = {
         'match': match,
-        # Gửi các danh sách đã phân loại ra template
         'team1_starters': team1_starters,
         'team1_substitutes': team1_substitutes,
         'team2_starters': team2_starters,
@@ -1281,7 +1275,27 @@ def match_control_view(request, pk):
                     card_to_delete = get_object_or_404(Card, pk=card_id, match=match)
                     card_to_delete.delete()
                     messages.success(request, "Đã xóa thẻ phạt.")
-        
+ 
+                # === THÊM LOGIC MỚI CHO THAY NGƯỜI ===
+                elif action == 'add_substitution':
+                    # Lấy danh sách cầu thủ đá chính và dự bị của cả 2 đội
+                    starters_qs = Player.objects.filter(lineups__match=match, lineups__status='STARTER')
+                    subs_qs = Player.objects.filter(lineups__match=match, lineups__status='SUBSTITUTE')
+                    
+                    sub_form = SubstitutionForm(request.POST)
+                    sub_form.fields['player_in'].queryset = subs_qs
+                    sub_form.fields['player_out'].queryset = starters_qs
+
+                    if sub_form.is_valid():
+                        substitution = sub_form.save(commit=False)
+                        substitution.match = match
+                        substitution.save() # clean() sẽ tự động gán team
+                        messages.success(request, f"Đã ghi nhận thay người: {substitution.player_in.full_name} vào thay {substitution.player_out.full_name}.")
+                    else:
+                        # Gộp các lỗi thành một chuỗi để hiển thị
+                        error_str = ". ".join([f"{field}: {err[0]}" for field, err in sub_form.errors.items()])
+                        messages.error(request, f"Thêm lượt thay người thất bại. {error_str}")
+                # === KẾT THÚC LOGIC MỚI ===        
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
         
@@ -1307,7 +1321,8 @@ def match_control_view(request, pk):
     # Lấy các sự kiện và sắp xếp
     goals = list(match.goals.select_related('player', 'team').all())
     cards = list(match.cards.select_related('player', 'team').all())
-    events = sorted(goals + cards, key=lambda x: (x.minute is None, x.minute), reverse=True)
+    substitutions = list(match.substitutions.select_related('player_in', 'player_out', 'team').all())
+    events = sorted(goals + cards + substitutions, key=lambda x: (x.minute is None, x.minute), reverse=True)
 
     context = {
         'match': match,
