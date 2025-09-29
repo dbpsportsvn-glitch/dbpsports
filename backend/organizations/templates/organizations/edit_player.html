@@ -9,18 +9,32 @@
 
 {% block management_content %}
 <div class="card">
-    <div class="card-header">
-        <h3><i class="bi bi-person-fill-gear"></i> Chỉnh sửa thông tin Cầu thủ</h3>
-        <p class="mb-0 text-muted">
-            Cầu thủ: <strong>{{ player.full_name }}</strong> | Đội: <strong>{{ player.team.name }}</strong>
-        </p>
+    {# === KHỐI HEADER ĐÃ ĐƯỢC CẬP NHẬT === #}
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h3 class="mb-0"><i class="bi bi-person-fill-gear"></i> Chỉnh sửa thông tin Cầu thủ</h3>
+            <p class="mb-0 text-muted">
+                Cầu thủ: <strong>{{ player.full_name }}</strong> | Đội: <strong>{{ player.team.name }}</strong>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=players" class="btn btn-secondary btn-sm">Hủy</a>
+            <button type="submit" form="edit-player-form" class="btn btn-primary btn-sm">
+                <i class="bi bi-save-fill"></i> Lưu thay đổi
+            </button>
+        </div>
     </div>
+    {# === KẾT THÚC CẬP NHẬT HEADER === #}
+
     <div class="card-body p-4">
-        <form method="post" enctype="multipart/form-data">
+        {# Thêm id="edit-player-form" vào thẻ form #}
+        <form method="post" enctype="multipart/form-data" id="edit-player-form">
             {% csrf_token %}
+            
             <div class="alert alert-info small">
                 <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Bạn còn <strong>{{ remaining_edits }}</strong> lần chỉnh sửa cho cầu thủ này. Thông tin sẽ bị khóa khi cầu thủ có phiếu bầu hoặc hết lượt chỉnh sửa.
-            </div>            
+            </div>
+            
             <h5>Thông tin cơ bản</h5>
             <div class="row">
                 <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
@@ -47,10 +61,7 @@
                 <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
-                <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=players" class="btn btn-secondary">Hủy</a>
-                <button type="submit" class="btn btn-primary btn-lg px-5">Lưu thay đổi</button>
-            </div>
+            {# Các nút bấm cũ ở cuối form đã được di chuyển lên trên #}
         </form>
     </div>
 </div>
