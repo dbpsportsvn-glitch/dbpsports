@@ -23,6 +23,7 @@ from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
+from organizations.forms import GoalForm, CardForm
 
 # Local Application Imports
 from organizations.models import Organization
@@ -1215,3 +1216,98 @@ def team_hall_of_fame(request, pk):
         'form': form,
     }
     return render(request, 'tournaments/team_hall_of_fame.html', context)
+
+# === live Room ===
+@login_required
+@never_cache
+def match_control_view(request, pk):
+    """
+    Trang điều khiển trực tiếp diễn biến trận đấu (phiên bản 2 - sửa lỗi).
+    """
+    match = get_object_or_404(
+        Match.objects.select_related('tournament__organization', 'team1', 'team2'),
+        pk=pk
+    )
+    # --- 1. Kiểm tra quyền truy cập ---
+    is_organizer = False
+    if match.tournament.organization and request.user.is_authenticated:
+        is_organizer = match.tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+
+    # --- 2. Xử lý POST request ---
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        try:
+            with transaction.atomic():
+                if action == 'update_score':
+                    match.team1_score = request.POST.get('team1_score') or None
+                    match.team2_score = request.POST.get('team2_score') or None
+                    match.save()
+                    messages.success(request, "Đã cập nhật tỉ số!")
+                
+                elif action == 'add_goal':
+                    players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
+                    goal_form = GoalForm(request.POST)
+                    goal_form.fields['player'].queryset = players_in_match_qs
+                    if goal_form.is_valid():
+                        goal = goal_form.save(commit=False)
+                        goal.match = match
+                        goal.save()
+                        messages.success(request, f"Đã thêm bàn thắng cho {goal.player.full_name}.")
+                    else:
+                        messages.error(request, "Thêm bàn thắng thất bại. Vui lòng kiểm tra lại.")
+
+                elif action == 'add_card':
+                    players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
+                    card_form = CardForm(request.POST)
+                    card_form.fields['player'].queryset = players_in_match_qs
+                    if card_form.is_valid():
+                        card = card_form.save(commit=False)
+                        card.match = match
+                        card.save()
+                        messages.success(request, f"Đã thêm thẻ phạt cho {card.player.full_name}.")
+                    else:
+                        messages.error(request, "Thêm thẻ phạt thất bại. Vui lòng kiểm tra lại.")
+                
+                elif action == 'delete_goal':
+                    goal_id = request.POST.get('goal_id')
+                    goal_to_delete = get_object_or_404(Goal, pk=goal_id, match=match)
+                    goal_to_delete.delete()
+                    messages.success(request, "Đã xóa bàn thắng.")
+
+                elif action == 'delete_card':
+                    card_id = request.POST.get('card_id')
+                    card_to_delete = get_object_or_404(Card, pk=card_id, match=match)
+                    card_to_delete.delete()
+                    messages.success(request, "Đã xóa thẻ phạt.")
+        
+        except Exception as e:
+            messages.error(request, f"Đã có lỗi xảy ra: {e}")
+        
+        return redirect('match_control', pk=match.pk)
+
+    # --- 3. Chuẩn bị dữ liệu cho template (GET) ---
+    players_in_match = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
+    
+    goal_form = GoalForm()
+    goal_form.fields['player'].queryset = players_in_match.order_by('team__name', 'full_name')
+    card_form = CardForm()
+    card_form.fields['player'].queryset = players_in_match.order_by('team__name', 'full_name')
+    
+    goals = list(match.goals.select_related('player', 'team').all())
+    cards = list(match.cards.select_related('player', 'team').all())
+    
+    # Sắp xếp các sự kiện theo phút (phút lớn hơn sẽ ở trên cùng)
+    events = sorted(goals + cards, key=lambda x: (x.minute is None, x.minute), reverse=True)
+
+    context = {
+        'match': match,
+        'goal_form': goal_form,
+        'card_form': card_form,
+        'events': events,
+        # === PHẦN SỬA LỖI NẰM Ở ĐÂY ===
+        'players_team1': players_in_match.filter(team=match.team1).order_by('jersey_number'),
+        'players_team2': players_in_match.filter(team=match.team2).order_by('jersey_number'),
+    }
+    return render(request, 'tournaments/match_control.html', context)    

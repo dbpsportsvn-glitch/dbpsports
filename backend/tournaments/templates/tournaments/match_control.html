@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Live Control: {{ match.team1.name }} vs {{ match.team2.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background-color: #f0f2f5; }
+    .control-room-header {
+        background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url("{% static 'images/hero-1.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    .team-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .team-logo-lg {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+    .team-name-lg { font-size: 1.5rem; font-weight: 700; }
+    .score-input {
+        font-size: 4rem;
+        text-align: center;
+        font-weight: 800;
+        width: 120px;
+        border: none;
+        background: rgba(0,0,0,0.3);
+        color: white;
+        border-radius: 0.5rem;
+    }
+    .control-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr; /* Diễn biến (rộng) | Đội 1 | Đội 2 */
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+    .control-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+    .control-card .card-header { font-weight: 600; background-color: #f8f9fa; }
+    .player-list, .timeline {
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+    .player-control-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .player-info { flex-grow: 1; }
+    .player-actions { display: flex; gap: 0.5rem; }
+    .jersey-number { font-weight: bold; color: #0d6efd; }
+    .event-item { border-left: 3px solid #e9ecef; }
+    .event-item.team1 { border-color: #0d6efd; }
+    .event-item.team2 { border-color: #dc3545; }
+
+    @media (max-width: 991px) {
+        .control-grid { grid-template-columns: 1fr; }
+        .timeline-col { order: 3; } /* Đưa diễn biến xuống cuối trên mobile */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5><i class="bi bi-sliders"></i> Phòng Điều Khiển</h5>
+        <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye-fill"></i> Xem trang trận đấu</a>
+    </div>
+
+    <div class="control-room-header shadow">
+        <form id="score-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_score">
+            <div class="row align-items-center justify-content-center">
+                <div class="col-md-4">
+                    <div class="team-header text-md-end">
+                        {% if match.team1.logo %}<img src="{{ match.team1.logo.url }}" class="team-logo-lg">{% endif %}
+                        <span class="team-name-lg">{{ match.team1.name }}</span>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex justify-content-center align-items-center gap-2 my-3 my-md-0">
+                    <input type="number" class="form-control score-input" name="team1_score" value="{{ match.team1_score|default:0 }}">
+                    <span class="fs-1">-</span>
+                    <input type="number" class="form-control score-input" name="team2_score" value="{{ match.team2_score|default:0 }}">
+                </div>
+                <div class="col-md-4">
+                     <div class="team-header text-md-start">
+                        {% if match.team2.logo %}<img src="{{ match.team2.logo.url }}" class="team-logo-lg">{% endif %}
+                        <span class="team-name-lg">{{ match.team2.name }}</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="control-grid">
+        <div class="control-card timeline-col">
+            <div class="card-header text-center">Diễn biến</div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for event in events %}
+                    <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
+                        <div class="d-flex justify-content-between">
+                            <div class="fw-bold">
+                                {% if event.is_own_goal %} ⚽ (OG)
+                                {% elif event.card_type == 'YELLOW' %} 🟨
+                                {% elif event.card_type == 'RED' %} 🟥
+                                {% else %} ⚽
+                                {% endif %}
+                                {{ event.player.full_name }}
+                            </div>
+                            <small class="text-muted">{{ event.minute|default:'-' }}'</small>
+                        </div>
+                        <div class="small">{{ event.team.name }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-card">
+            <div class="card-header text-center">{{ match.team1.name }}</div>
+            <div class="player-list list-group list-group-flush">
+                {% for p in players_team1 %}
+                <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                    <div class="player-info">
+                        <span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}
+                    </div>
+                    <div class="player-actions">
+                        <button class="btn btn-sm btn-success" data-action="add_goal">⚽</button>
+                        <button class="btn btn-sm btn-warning" data-action="add_card">🟨</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="control-card">
+            <div class="card-header text-center">{{ match.team2.name }}</div>
+            <div class="player-list list-group list-group-flush">
+                {% for p in players_team2 %}
+                 <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                    <div class="player-info">
+                        <span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}
+                    </div>
+                    <div class="player-actions">
+                        <button class="btn btn-sm btn-success" data-action="add_goal">⚽</button>
+                        <button class="btn btn-sm btn-warning" data-action="add_card">🟨</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalLabel">Thêm sự kiện</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Cầu thủ: <strong id="playerName"></strong></p>
+                <form method="post" id="event-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="eventAction">
+                    <input type="hidden" name="player" id="eventPlayerId">
+                    <div class="mb-3">
+                        <label class="form-label">Phút diễn ra</label>
+                        <input type="number" name="minute" class="form-control" placeholder="Để trống nếu không xác định">
+                    </div>
+                    <div id="goal-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_own_goal" id="is_own_goal_modal">
+                            <label class="form-check-label" for="is_own_goal_modal">Đây là bàn phản lưới nhà?</label>
+                        </div>
+                    </div>
+                    <div id="card-options" style="display: none;">
+                         <label class="form-label">Loại thẻ</label>
+                         <select name="card_type" class="form-select">
+                            <option value="YELLOW">Thẻ Vàng</option>
+                            <option value="RED">Thẻ Đỏ</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" form="event-form" class="btn btn-primary">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- TỰ ĐỘNG LƯU TỈ SỐ ---
+    let scoreUpdateTimeout;
+    const scoreForm = document.getElementById('score-form');
+    const scoreInputs = scoreForm.querySelectorAll('.score-input');
+
+    scoreInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            clearTimeout(scoreUpdateTimeout);
+            scoreUpdateTimeout = setTimeout(() => {
+                scoreForm.submit();
+            }, 2000);
+        });
+    });
+
+    // --- XỬ LÝ MODAL THÊM SỰ KIỆN (PHIÊN BẢN SỬA LỖI) ---
+    const eventModalEl = document.getElementById('eventModal');
+    const eventModal = new bootstrap.Modal(eventModalEl);
+    
+    const playerNameEl = document.getElementById('playerName');
+    const eventActionInput = document.getElementById('eventAction');
+    const eventPlayerIdInput = document.getElementById('eventPlayerId');
+    const goalOptions = document.getElementById('goal-options');
+    const cardOptions = document.getElementById('card-options');
+    const eventForm = document.getElementById('event-form');
+
+    // Gán sự kiện cho tất cả các nút hành động của cầu thủ
+    document.querySelectorAll('.player-actions button').forEach(button => {
+        button.addEventListener('click', function() {
+            const playerItem = this.closest('.player-control-item');
+            const playerId = playerItem.dataset.playerId;
+            const playerName = playerItem.dataset.playerName;
+            const action = this.dataset.action;
+
+            // Điền thông tin vào modal
+            playerNameEl.textContent = playerName;
+            eventPlayerIdInput.value = playerId;
+            eventActionInput.value = action;
+            eventForm.reset();
+
+            // Hiển thị/ẩn các tùy chọn dựa trên hành động
+            if (action === 'add_goal') {
+                goalOptions.style.display = 'block';
+                cardOptions.style.display = 'none';
+            } else if (action === 'add_card') {
+                goalOptions.style.display = 'none';
+                cardOptions.style.display = 'block';
+            }
+            
+            eventModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}
