@@ -76,6 +76,16 @@
         .control-grid { grid-template-columns: 1fr; }
         .timeline-col { order: 3; }
     }
+
+    /* Dán vào trong thẻ <style> */
+    .player-substituted-out {
+        opacity: 0.5;
+        background-color: #e9ecef;
+    }
+    .player-substituted-out .player-actions button {
+        pointer-events: none; /* Vô hiệu hóa click chuột */
+        filter: grayscale(100%);
+    }    
 </style>
 {% endblock %}
 
@@ -146,8 +156,14 @@
                 {% if lineup_is_set %}
                     <div class="list-sub-header">Đá chính</div>
                     {% for p in starters_team1 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
@@ -157,8 +173,14 @@
                     {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
                     {% for p in substitutes_team1 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
@@ -169,8 +191,14 @@
                 {% else %}
                     <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
                     {% for p in players_team1 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
@@ -188,8 +216,14 @@
                 {% if lineup_is_set %}
                     <div class="list-sub-header">Đá chính</div>
                     {% for p in starters_team2 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
@@ -199,8 +233,14 @@
                     {% endfor %}
                     <div class="list-sub-header">Dự bị</div>
                     {% for p in substitutes_team2 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>
@@ -211,8 +251,14 @@
                 {% else %}
                     <div class="list-group-item text-muted small">Chưa đăng ký đội hình. Hiển thị tất cả cầu thủ.</div>
                      {% for p in players_team2 %}
-                    <div class="list-group-item player-control-item" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
-                        <div class="player-info"><span class="jersey-number">#{{ p.jersey_number }}</span> {{ p.full_name }}</div>
+                    <div class="list-group-item player-control-item {% if p.pk in substituted_out_player_ids %}player-substituted-out{% endif %}" data-player-id="{{ p.pk }}" data-player-name="{{ p.full_name }}">
+                        <div class="player-info">
+                            <span class="jersey-number">#{{ p.jersey_number }}</span> 
+                            {{ p.full_name }}
+                            {% if p.pk in substituted_out_player_ids %}
+                                <i class="bi bi-box-arrow-left text-danger" title="Đã ra sân"></i>
+                            {% endif %}
+                        </div>
                         <div class="player-actions">
                             <button class="btn btn-sm btn-success" data-action="add_goal" title="Ghi bàn">⚽</button>
                             <button class="btn btn-sm btn-warning" data-action="add_card" title="Nhận thẻ">🟨</button>

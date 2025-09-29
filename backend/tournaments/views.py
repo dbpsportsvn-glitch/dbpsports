@@ -1302,6 +1302,12 @@ def match_control_view(request, pk):
         return redirect('match_control', pk=match.pk)
 
     # --- 3. Chuẩn bị dữ liệu cho template (GET) ---
+
+    # Lấy danh sách ID của các cầu thủ đã bị thay ra sân
+    substituted_out_player_ids = set(
+        Substitution.objects.filter(match=match).values_list('player_out_id', flat=True)
+    )
+
     # Lấy đội hình đã đăng ký
     lineup_entries = Lineup.objects.filter(match=match).select_related('player')
     starters_ids = {entry.player.id for entry in lineup_entries if entry.status == 'STARTER'}
@@ -1334,5 +1340,6 @@ def match_control_view(request, pk):
         'players_team2': players_team2,
         'starters_team2': starters_team2,
         'substitutes_team2': substitutes_team2,
+        'substituted_out_player_ids': substituted_out_player_ids,
     }
     return render(request, 'tournaments/match_control.html', context)    
