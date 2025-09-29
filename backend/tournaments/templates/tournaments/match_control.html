@@ -85,6 +85,15 @@
         .control-grid { grid-template-columns: 1fr; }
         .timeline-col { order: 3; }
     }
+
+    /* === THÊM CSS CHO NÚT XÓA === */
+    .event-item .delete-event-btn {
+        opacity: 0.2;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .event-item:hover .delete-event-btn {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
 
@@ -139,34 +148,45 @@
             <div class="card-body">
                 <div id="timeline-list" class="timeline">
                     {% for event in events %}
-                        {% if event.event_type %}
-                            <div class="event-item ps-3 mb-3 text-center border-0">
-                                <div class="text-muted small">{{ event.created_at|date:"H:i" }}</div>
-                                <div class="fw-bold my-1">
-                                    {% if event.event_type == 'MATCH_START' %}<i class="bi bi-play-fill"></i>
-                                    {% elif event.event_type == 'HALF_TIME' %}<i class="bi bi-pause-fill"></i>
-                                    {% elif event.event_type == 'MATCH_END' %}<i class="bi bi-stop-fill"></i>
-                                    {% else %}<i class="bi bi-info-circle-fill"></i>
-                                    {% endif %}
-                                    {{ event.text }}
-                                </div>
-                                <hr class="w-50 mx-auto">
-                            </div>
-                        {% else %}
-                            <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}">
-                                <div class="d-flex justify-content-between">
-                                    <div class="fw-bold">
-                                        {% if event.is_own_goal %} ⚽ (OG) {{ event.player.full_name }}
-                                        {% elif event.card_type == 'YELLOW' %} 🟨 {{ event.player.full_name }}
-                                        {% elif event.card_type == 'RED' %} 🟥 {{ event.player.full_name }}
-                                        {% elif event.player_in %}
-                                            🔄 {{ event.player_in.full_name }} <small>thay</small> {{ event.player_out.full_name }}
-                                        {% else %} ⚽ {{ event.player.full_name }}
-                                        {% endif %}
+                        {% if event.event_type %} {# Sự kiện mốc thời gian #}
+                            <div class="event-item ps-3 mb-3 text-center border-0" data-event-id="{{ event.pk }}" data-event-type="match_event">
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-muted small">{{ event.created_at|date:"H:i" }}</div>
+                                        <div class="fw-bold my-1">
+                                            {% if event.event_type == 'MATCH_START' %}<i class="bi bi-play-fill"></i>
+                                            {% elif event.event_type == 'HALF_TIME' %}<i class="bi bi-pause-fill"></i>
+                                            {% elif event.event_type == 'MATCH_END' %}<i class="bi bi-stop-fill"></i>
+                                            {% else %}<i class="bi bi-info-circle-fill"></i>
+                                            {% endif %}
+                                            {{ event.text }}
+                                        </div>
                                     </div>
-                                    <small class="text-muted">{{ event.minute|default:'-' }}'</small>
+                                    <button class="btn btn-sm btn-outline-danger delete-event-btn ms-2" title="Xóa sự kiện này"><i class="bi bi-x-lg"></i></button>
                                 </div>
-                                <div class="small">{{ event.team.name }}</div>
+                                <hr class="w-50 mx-auto mt-2">
+                            </div>
+                        {% else %} {# Sự kiện của cầu thủ #}
+                            <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}" data-event-id="{{ event.pk }}" 
+                                 data-event-type="{% if event.is_own_goal is not None %}goal{% elif event.card_type %}card{% elif event.player_in %}substitution{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <div class="fw-bold">
+                                                {% if event.is_own_goal %} ⚽ (OG) {{ event.player.full_name }}
+                                                {% elif event.card_type == 'YELLOW' %} 🟨 {{ event.player.full_name }}
+                                                {% elif event.card_type == 'RED' %} 🟥 {{ event.player.full_name }}
+                                                {% elif event.player_in %}
+                                                    🔄 {{ event.player_in.full_name }} <small>thay</small> {{ event.player_out.full_name }}
+                                                {% else %} ⚽ {{ event.player.full_name }}
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ event.minute|default:'-' }}'</small>
+                                        </div>
+                                        <div class="small">{{ event.team.name }}</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger delete-event-btn ms-2" title="Xóa sự kiện này"><i class="bi bi-x-lg"></i></button>
+                                </div>
                             </div>
                         {% endif %}
                     {% empty %}
@@ -376,8 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
             selectElement.appendChild(option);
         });
     }
-    
-    // === BẮT ĐẦU PHIÊN BẢN HOÀN CHỈNH CỦA LOGIC XỬ LÝ FORM ===
 
     // Hàm chung để gửi form AJAX và xử lý kết quả
     function handleFormSubmit(form, modalToHide) {
@@ -396,14 +414,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (modalToHide) modalToHide.hide();
                 updateTimeline(data.event); // Cập nhật timeline với dữ liệu mới
 
-                // === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
-                // Nếu backend trả về tỉ số mới, cập nhật nó trên giao diện
                 if (data.new_scores) {
                     document.querySelector('input[name="team1_score"]').value = data.new_scores.team1_score;
                     document.querySelector('input[name="team2_score"]').value = data.new_scores.team2_score;
                 }              
 
-                // Xử lý riêng cho việc hoán đổi cầu thủ
                 if (data.event.type === 'substitution') {
                     const teamId = document.getElementById('subTeamId').value;
                     const playerOutId = formData.get('player_out');
@@ -427,47 +442,54 @@ document.addEventListener('DOMContentLoaded', function() {
         if (noEventsMessage) noEventsMessage.style.display = 'none';
 
         let newEventHtml = '';
+        let eventType = eventData.type;
+        let eventId = eventData.id;
 
-        // === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
-        if (eventData.type === 'match_event') {
+        if (eventType === 'match_event') {
             let icon = 'bi-info-circle-fill';
             if (eventData.event_type === 'MATCH_START') icon = 'bi-play-fill';
             if (eventData.event_type === 'HALF_TIME') icon = 'bi-pause-fill';
             if (eventData.event_type === 'MATCH_END') icon = 'bi-stop-fill';
             
             newEventHtml = `
-                <div class="event-item ps-3 mb-3 text-center border-0">
-                    <div class="text-muted small">${eventData.created_at}</div>
-                    <div class="fw-bold my-1">
-                        <i class="bi ${icon}"></i> ${eventData.text}
+                <div class="event-item ps-3 mb-3 text-center border-0" data-event-id="${eventId}" data-event-type="match_event">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-muted small">${eventData.created_at}</div>
+                            <div class="fw-bold my-1"><i class="bi ${icon}"></i> ${eventData.text}</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger delete-event-btn ms-2" title="Xóa sự kiện này"><i class="bi bi-x-lg"></i></button>
                     </div>
-                    <hr class="w-50 mx-auto">
+                    <hr class="w-50 mx-auto mt-2">
                 </div>`;
         } else {
             let eventIcon = '';
             let eventText = '';
-            if (eventData.type === 'goal') {
+            if (eventType === 'goal') {
                 eventIcon = eventData.is_own_goal ? '⚽ (OG)' : '⚽';
                 eventText = `${eventData.player_name}`;
-            } else if (eventData.type === 'card') {
+            } else if (eventType === 'card') {
                 eventIcon = eventData.card_type === 'YELLOW' ? '🟨' : '🟥';
                 eventText = `${eventData.player_name}`;
-            } else if (eventData.type === 'substitution') {
+            } else if (eventType === 'substitution') {
                 eventIcon = '🔄';
                 eventText = `${eventData.player_in_name} <small>thay</small> ${eventData.player_out_name}`;
             }
             
             newEventHtml = `
-                <div class="event-item ps-3 mb-3 ${eventData.team_class}">
-                    <div class="d-flex justify-content-between">
-                        <div class="fw-bold">${eventIcon} ${eventText}</div>
-                        <small class="text-muted">${eventData.minute}'</small>
+                <div class="event-item ps-3 mb-3 ${eventData.team_class}" data-event-id="${eventId}" data-event-type="${eventType}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-bold">${eventIcon} ${eventText}</div>
+                                <small class="text-muted">${eventData.minute}'</small>
+                            </div>
+                            <div class="small">${eventData.team_name}</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger delete-event-btn ms-2" title="Xóa sự kiện này"><i class="bi bi-x-lg"></i></button>
                     </div>
-                    <div class="small">${eventData.team_name}</div>
                 </div>`;
         }
-        // === KẾT THÚC THAY THẾ TẠI ĐÂY ===
-
         timelineList.insertAdjacentHTML('afterbegin', newEventHtml);
     }
     
@@ -576,12 +598,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateTimeline(data.event);
             } else {
                 alert('Lỗi: ' + data.message);
-                button.disabled = false; // Bật lại nút nếu có lỗi
             }
         }).catch(err => {
             console.error(err);
-            button.disabled = false; // Bật lại nút nếu có lỗi
+        }).finally(() => {
+            button.disabled = false; // Luôn bật lại nút sau khi hoàn tất
         });
+    });
+
+    // === THÊM LOGIC MỚI ĐỂ XỬ LÝ SỰ KIỆN XÓA ===
+    const timelineList = document.getElementById('timeline-list');
+    timelineList.addEventListener('click', function(e) {
+        const deleteButton = e.target.closest('.delete-event-btn');
+        if (!deleteButton) return;
+
+        const eventItem = deleteButton.closest('.event-item');
+        const eventType = eventItem.dataset.eventType;
+        const eventId = eventItem.dataset.eventId;
+
+        if (!confirm('Bạn có chắc chắn muốn xóa sự kiện này không?')) {
+            return;
+        }
+
+        const url = `/events/${eventType}/${eventId}/delete/`;
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                eventItem.style.transition = 'opacity 0.3s, transform 0.3s';
+                eventItem.style.opacity = '0';
+                eventItem.style.transform = 'scale(0.9)';
+                setTimeout(() => eventItem.remove(), 300);
+
+                if (data.new_scores) {
+                    document.querySelector('input[name="team1_score"]').value = data.new_scores.team1_score;
+                    document.querySelector('input[name="team2_score"]').value = data.new_scores.team2_score;
+                }
+            } else {
+                alert('Lỗi khi xóa sự kiện: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Lỗi fetch:', error));
     });
 });
 </script>

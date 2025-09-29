@@ -1362,4 +1362,57 @@ def match_control_view(request, pk):
         'substitutes_team2': substitutes_team2,
         'substituted_out_player_ids': substituted_out_player_ids,
     }
-    return render(request, 'tournaments/match_control.html', context)   
+    return render(request, 'tournaments/match_control.html', context)
+    
+# === Xoá dự liệu trận đấu nhập sai ===
+@login_required
+@require_POST
+def delete_match_event(request, event_type, pk):
+    """
+    Xử lý việc xóa một sự kiện (bàn thắng, thẻ phạt, thay người, etc.)
+    và hoàn tác các thay đổi liên quan (ví dụ: tỉ số).
+    """
+    try:
+        with transaction.atomic():
+            response_data = {'status': 'success'}
+            
+            # Xác định model dựa trên event_type
+            if event_type == 'goal':
+                event = get_object_or_404(Goal, pk=pk)
+                match = event.match
+                
+                # Hoàn tác tỉ số
+                is_own_goal = event.is_own_goal
+                scoring_team = event.player.team
+                
+                if (not is_own_goal and scoring_team == match.team1) or \
+                   (is_own_goal and scoring_team == match.team2):
+                    if match.team1_score > 0: match.team1_score -= 1
+                else:
+                    if match.team2_score > 0: match.team2_score -= 1
+                
+                match.save()
+                response_data['new_scores'] = {
+                    'team1_score': match.team1_score,
+                    'team2_score': match.team2_score,
+                }
+
+            elif event_type == 'card':
+                event = get_object_or_404(Card, pk=pk)
+            elif event_type == 'substitution':
+                event = get_object_or_404(Substitution, pk=pk)
+            elif event_type == 'match_event':
+                event = get_object_or_404(MatchEvent, pk=pk)
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Loại sự kiện không hợp lệ'}, status=400)
+            
+            # Kiểm tra quyền (chỉ người của BTC mới được xóa)
+            is_organizer = event.match.tournament.organization and request.user in event.match.tournament.organization.members.all()
+            if not request.user.is_staff and not is_organizer:
+                return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+            event.delete()
+            return JsonResponse(response_data)
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)       

@@ -51,4 +51,5 @@ urlpatterns = [
     path('match/<int:pk>/print/', views.match_print_view, name='match_print'),
     path('match/<int:match_pk>/team/<int:team_pk>/manage_lineup/', views.manage_lineup, name='manage_lineup'),
     path('match/<int:pk>/control/', views.match_control_view, name='match_control'),
+    path('events/<str:event_type>/<int:pk>/delete/', views.delete_match_event, name='delete_match_event'),
 ]
