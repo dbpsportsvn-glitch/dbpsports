@@ -200,18 +200,55 @@ def profile_setup_view(request):
     }
     return render(request, 'users/profile_setup.html', context)
 
-# === VIEW GÂY LỖI TRƯỚC ĐÂY ===
+# === Backen hs ca nhan cong viec ===
 def public_profile_view(request, username):
     profile_user = get_object_or_404(User.objects.select_related('profile'), username=username)
     profile = profile_user.profile
 
+    # Lấy thành tích (giữ nguyên)
     player_profiles = Player.objects.filter(user=profile_user)
     team_ids = player_profiles.values_list('team_id', flat=True)
     achievements = TeamAchievement.objects.filter(team_id__in=team_ids).select_related('tournament', 'team').order_by('-achieved_at')
+
+    # === BẮT ĐẦU NÂNG CẤP: LẤY DỮ LIỆU PORTFOLIO ===
+    
+    # Lấy tất cả các vai trò chuyên môn của người dùng trong các giải đấu
+    staff_assignments = TournamentStaff.objects.filter(
+        user=profile_user
+    ).select_related('tournament', 'role').order_by('-tournament__start_date')
+
+    # Phân loại các công việc đã làm vào từng danh sách riêng
+    commentator_gigs = []
+    media_gigs = []
+
+    for assignment in staff_assignments:
+        # Nếu là Bình luận viên, tìm các trận đấu họ đã bình luận trong giải đó
+        if assignment.role.id == 'COMMENTATOR':
+            matches_commentated = Match.objects.filter(
+                tournament=assignment.tournament, 
+                commentator__icontains=profile_user.get_full_name() or profile_user.username
+            ).exclude(livestream_url__isnull=True).exclude(livestream_url__exact='')
+            
+            if matches_commentated.exists():
+                commentator_gigs.append({
+                    'tournament': assignment.tournament,
+                    'matches': matches_commentated
+                })
+
+        # Nếu là Media hoặc Nhiếp ảnh gia
+        elif assignment.role.id in ['MEDIA', 'PHOTOGRAPHER']:
+            media_gigs.append({
+                'tournament': assignment.tournament,
+                'role_name': assignment.role.name
+            })
+
+    # === KẾT THÚC NÂNG CẤP ===
 
     context = {
         'profile_user': profile_user,
         'profile': profile,
         'achievements': achievements,
+        'commentator_gigs': commentator_gigs, # Gửi dữ liệu BLV ra template
+        'media_gigs': media_gigs,             # Gửi dữ liệu Media ra template
     }
     return render(request, 'users/public_profile.html', context)

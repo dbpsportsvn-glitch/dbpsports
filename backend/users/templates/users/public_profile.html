@@ -24,12 +24,25 @@
         font-size: 0.9rem;
         font-weight: 600;
     }
-    .achievement-item {
+    .achievement-item, .portfolio-item {
         transition: transform .2s ease, box-shadow .2s ease;
     }
-    .achievement-item:hover {
+    .achievement-item:hover, .portfolio-item:hover {
         transform: translateY(-5px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    /* CSS MỚI CHO PORTFOLIO */
+    .section-title {
+        font-weight: 700;
+        color: #0d6efd;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        margin-top: 2.5rem;
+    }
+    .portfolio-card img {
+        height: 180px;
+        object-fit: cover;
     }
 </style>
 {% endblock %}
@@ -63,8 +76,10 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
+            
+            {% if achievements %}
             <div class="card shadow-sm mb-4">
-                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích</h4></div>
+                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích (với vai trò Cầu thủ)</h4></div>
                 <div class="list-group list-group-flush">
                      {% for achievement in achievements %}
                         <a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center achievement-item">
@@ -77,15 +92,56 @@
                             {% else %}<i class="bi bi-patch-check-fill fs-4 text-success"></i>
                             {% endif %}
                         </a>
-                    {% empty %}
-                        <div class="list-group-item text-muted text-center p-4">Người dùng này chưa có thành tích nào.</div>
                     {% endfor %}
                 </div>
             </div>
+            {% endif %}
+
+            {% if commentator_gigs %}
+            <h3 class="section-title"><i class="bi bi-mic-fill"></i> Lịch sử Bình luận</h3>
+            {% for gig in commentator_gigs %}
+                <div class="card shadow-sm mb-4 portfolio-item">
+                    <div class="card-header"><strong>Giải đấu: {{ gig.tournament.name }}</strong></div>
+                    <ul class="list-group list-group-flush">
+                        {% for match in gig.matches %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ match.team1.name }} vs {{ match.team2.name }}</span>
+                            <a href="{{ match.livestream_url }}" target="_blank" rel="noopener" class="btn btn-danger btn-sm">
+                                <i class="bi bi-youtube"></i> Xem lại
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if media_gigs %}
+            <h3 class="section-title"><i class="bi bi-camera-reels-fill"></i> Các dự án Media / Nhiếp ảnh đã tham gia</h3>
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                {% for gig in media_gigs %}
+                <div class="col">
+                    <div class="card shadow-sm h-100 portfolio-item portfolio-card">
+                        {% if gig.tournament.image %}
+                        <img src="{{ gig.tournament.image.url }}" class="card-img-top" alt="{{ gig.tournament.name }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ gig.tournament.name }}</h5>
+                            <p class="card-text">
+                                <span class="badge bg-primary">{{ gig.role_name }}</span>
+                            </p>
+                            <a href="{% url 'tournament_detail' pk=gig.tournament.pk %}" class="btn btn-outline-primary stretched-link">Xem giải đấu</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
         </div>
 
         <div class="col-lg-4">
-             <div class="card shadow-sm">
+             <div class="card shadow-sm position-sticky" style="top: 80px;">
                 <div class="card-header"><h4><i class="bi bi-person-vcard"></i> Thông tin chuyên môn</h4></div>
                 <ul class="list-group list-group-flush">
                     {% if profile.bio %}
@@ -102,6 +158,10 @@
                     {% endif %}
                     {% if profile.equipment %}
                          <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-camera-fill text-info"></i> Thiết bị:</span> <strong>{{ profile.equipment }}</strong></li>
+                    {% endif %}
+                    
+                    {% if not profile.bio and not profile.location and not profile.experience and not profile.equipment %}
+                        <li class="list-group-item text-muted">Người dùng chưa cập nhật thông tin chuyên môn.</li>
                     {% endif %}
                 </ul>
             </div>
