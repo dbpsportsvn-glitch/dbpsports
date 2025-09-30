@@ -94,6 +94,15 @@
     .event-item:hover .delete-event-btn {
         opacity: 1;
     }
+
+    /* === THÊM CSS MỚI CHO THÔNG BÁO GHI CHÚ === */
+    .captain-note-alert {
+        background-color: #fff3cd; /* Màu vàng nhạt của Bootstrap */
+        border-color: #ffc107;
+    }
+    .captain-note-alert .alert-heading {
+        color: #664d03;
+    }    
 </style>
 {% endblock %}
 
@@ -154,7 +163,24 @@
             <div class="card-body">
                 <div id="timeline-list" class="timeline">
                     {% for event in events %}
-                        {% if event.event_type %} {# Sự kiện mốc thời gian #}
+                        {% if event.is_captain_note_alert %}
+                            {# Đây là thông báo ảo về ghi chú của đội trưởng #}
+                            <div class="captain-note-alert event-item alert alert-warning" role="alert">
+                                <h4 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Ghi chú từ Đội trưởng!</h4>
+                                <p>Bình luận viên vui lòng kiểm tra Sổ tay để xem các ghi chú mới từ:</p>
+                                <ul>
+                                    {% for note in event.notes %}
+                                    <li><strong>Đội {{ note.team.name }}</strong></li>
+                                    {% endfor %}
+                                </ul>
+                                <hr>
+                                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-sm btn-warning mb-0">
+                                    <i class="bi bi-files"></i> Mở Sổ tay
+                                </a>
+                            </div>
+
+                        {% elif event.event_type %}
+                            {# Đây là sự kiện mốc thời gian (Bắt đầu, Hết hiệp...) #}
                             <div class="event-item ps-3 mb-3 text-center border-0" data-event-id="{{ event.pk }}" data-event-type="match_event">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <div class="flex-grow-1">
@@ -172,9 +198,10 @@
                                 </div>
                                 <hr class="w-50 mx-auto mt-2">
                             </div>
-                        {% else %} {# Sự kiện của cầu thủ #}
+                        {% else %}
+                            {# Đây là sự kiện của cầu thủ (ghi bàn, thẻ, thay người) #}
                             <div class="event-item ps-3 mb-3 {% if event.team == match.team1 %}team1{% else %}team2{% endif %}" data-event-id="{{ event.pk }}" 
-                                 data-event-type="{% if event.is_own_goal is not None %}goal{% elif event.card_type %}card{% elif event.player_in %}substitution{% endif %}">
+                                data-event-type="{% if event.is_own_goal is not None %}goal{% elif event.card_type %}card{% elif event.player_in %}substitution{% endif %}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between">
@@ -196,7 +223,7 @@
                             </div>
                         {% endif %}
                     {% empty %}
-                    <p id="no-events-message" class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
+                        <p id="no-events-message" class="text-muted text-center pt-3">Chưa có sự kiện nào.</p>
                     {% endfor %}
                 </div>
             </div>
@@ -651,6 +678,25 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Lỗi fetch:', error));
     });
+    // Logic tự động xóa thông báo ghi chú
+    const actionButtons = document.querySelectorAll('.player-actions button, #timeline-controls button');
+    
+    function removeCaptainNoteAlert() {
+        const noteAlert = document.querySelector('.captain-note-alert');
+        if (noteAlert) {
+            noteAlert.style.transition = 'opacity 0.5s, transform 0.5s';
+            noteAlert.style.opacity = '0';
+            noteAlert.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                noteAlert.remove();
+            }, 500);
+        }
+    }
+
+    actionButtons.forEach(button => {
+        button.addEventListener('click', removeCaptainNoteAlert);
+    });
+    // === KẾT THÚC SCRIPT MỚI ===
 });
 </script>
 {% endblock %}

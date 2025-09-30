@@ -1258,14 +1258,13 @@ def match_control_view(request, pk):
         pk=pk
     )
 
-    # === THAY THẾ TOÀN BỘ KHỐI KIỂM TRA QUYỀN CŨ BẰNG HÀM MỚI ===
     if not user_can_control_match(request.user, match):
         return HttpResponseForbidden("Bạn không có quyền truy cập phòng điều khiển trực tiếp này.")
 
     if request.method == 'POST':
+        # ... (toàn bộ logic xử lý POST giữ nguyên, không cần thay đổi) ...
         action = request.POST.get('action')
 
-        # --- XỬ LÝ CÁC YÊU CẦU AJAX (TRẢ VỀ JSON) ---
         if action in ['add_goal', 'add_card', 'add_substitution', 'add_match_event']:
             players_in_match_qs = Player.objects.filter(team__in=[match.team1_id, match.team2_id])
             
@@ -1302,7 +1301,7 @@ def match_control_view(request, pk):
                         'status': 'success',
                         'event': {
                             'type': 'goal',
-                            'id': instance.pk, # Gửi ID để xử lý xóa
+                            'id': instance.pk,
                             'minute': instance.minute or '-',
                             'team_name': instance.team.name,
                             'team_class': 'team1' if instance.team == match.team1 else 'team2',
@@ -1369,7 +1368,8 @@ def match_control_view(request, pk):
         
         return redirect('match_control', pk=match.pk)
 
-    # --- Logic cho GET request (không thay đổi) ---
+
+    # --- Logic cho GET request ---
     substituted_out_player_ids = set(Substitution.objects.filter(match=match).values_list('player_out_id', flat=True))
     lineup_entries = Lineup.objects.filter(match=match).select_related('player')
     starters_ids = {entry.player.id for entry in lineup_entries if entry.status == 'STARTER'}
@@ -1386,6 +1386,23 @@ def match_control_view(request, pk):
     substitutions = list(match.substitutions.select_related('player_in', 'player_out', 'team').all())
     match_events = list(match.events.all())
     all_events = sorted(goals + cards + substitutions + match_events, key=lambda x: x.created_at, reverse=True)
+
+    # === BẮT ĐẦU NÂNG CẤP: TẠO THÔNG BÁO ẢO CHO BLV ===
+    # Chỉ kiểm tra khi chưa có sự kiện nào diễn ra
+    if not all_events:
+        captain_notes = MatchNote.objects.filter(
+            match=match, 
+            note_type=MatchNote.NoteType.CAPTAIN
+        ).select_related('team')
+        
+        if captain_notes.exists():
+            # Tạo một "sự kiện ảo" để chèn vào đầu danh sách
+            note_alert_event = {
+                'is_captain_note_alert': True, # Dùng cờ này để nhận biết trong template
+                'notes': list(captain_notes) # Gửi danh sách ghi chú
+            }
+            all_events.insert(0, note_alert_event)
+    # === KẾT THÚC NÂNG CẤP ===
 
     context = {
         'match': match,
