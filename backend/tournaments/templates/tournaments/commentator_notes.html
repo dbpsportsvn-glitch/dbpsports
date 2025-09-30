@@ -10,7 +10,7 @@
             <h1><i class="bi bi-files text-primary"></i> Sổ tay Bình luận viên</h1>
             <p class="lead mb-0">Trận đấu: <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong></p>
         </div>
-        <div>
+        <div class="d-flex flex-column flex-sm-row gap-2">
             <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Quay lại Live Control
             </a>
