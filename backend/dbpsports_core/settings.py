@@ -175,6 +175,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None # Không dùng trường username
 ACCOUNT_EMAIL_VERIFICATION = "mandatory" # BẮT BUỘC xác thực email
 SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Bắt buộc nhập mật khẩu 2 lần
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 # yêu cầu quyền truy cập email
 SOCIALACCOUNT_PROVIDERS = {
