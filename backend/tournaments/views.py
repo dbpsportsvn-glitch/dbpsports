@@ -1454,66 +1454,85 @@ def player_voting_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     user = request.user
     
-    # 1. Xác định vai trò và quyền vote của người dùng
-    user_role = "guest"
+    # 1. Xác định vai trò và quyền vote của người dùng trong giải đấu này
+    user_role = "Khách"
     max_votes = 0
     
-    is_organizer = tournament.organization and user in tournament.organization.members.all()
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=user.pk).exists()
     is_captain = Team.objects.filter(tournament=tournament, captain=user).exists()
     is_player = Player.objects.filter(team__tournament=tournament, user=user).exists()
+    
+    # === THÊM LOGIC MỚI: KIỂM TRA VAI TRÒ CHUYÊN MÔN ===
+    is_specialist_staff = TournamentStaff.objects.filter(
+        tournament=tournament, 
+        user=user, 
+        role__id__in=['COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'COLLABORATOR', 'TOURNAMENT_MANAGER']
+    ).exists()
 
+    # Xác định số phiếu tối đa dựa trên vai trò (ưu tiên từ cao đến thấp)
     if is_organizer:
         user_role = "Ban tổ chức"
         max_votes = 3
     elif is_captain:
         user_role = "Đội trưởng"
         max_votes = 2
+    # === THÊM ĐIỀU KIỆN MỚI CHO VAI TRÒ CHUYÊN MÔN ===
+    elif is_specialist_staff:
+        # Lấy tên vai trò cụ thể để hiển thị
+        staff_entry = TournamentStaff.objects.get(tournament=tournament, user=user)
+        user_role = staff_entry.role.name
+        max_votes = 2
     elif is_player:
         user_role = "Cầu thủ"
         max_votes = 1
 
-    # 2. Tính số phiếu đã sử dụng
-    votes_cast_count = VoteRecord.objects.filter(voter=user, tournament=tournament).aggregate(total=Sum('weight'))['total'] or 0
-    remaining_votes = max_votes - votes_cast_count
+    # 2. Tính toán số phiếu còn lại (bao gồm cả phiếu quà tặng)
+    votes_cast_in_tournament = VoteRecord.objects.filter(voter=user, tournament=tournament).aggregate(total=Sum('weight'))['total'] or 0
+    gift_votes_qs = VoteRecord.objects.filter(voter=user, tournament__isnull=True, voted_for__isnull=True)
+    gift_votes_count = gift_votes_qs.count()
+
+    total_available_votes = max_votes + gift_votes_count
+    remaining_votes = total_available_votes - votes_cast_in_tournament
 
     progress_percentage = 0
-    if max_votes > 0:
-        progress_percentage = (votes_cast_count / max_votes) * 100
-
-    # 3. Xử lý khi người dùng gửi phiếu bầu
+    if total_available_votes > 0:
+        progress_percentage = (votes_cast_in_tournament / total_available_votes) * 100
+        
+    # 3. Xử lý khi người dùng gửi phiếu bầu (giữ nguyên logic)
     if request.method == 'POST':
         player_id = request.POST.get('player_id')
         player_to_vote = get_object_or_404(Player, pk=player_id, team__tournament=tournament)
 
-        # === BẮT ĐẦU KHỐI KIỂM TRA MỚI ===
         already_voted_for_player = VoteRecord.objects.filter(
             voter=user, 
             voted_for=player_to_vote, 
             tournament=tournament
         ).exists()
-        # === KẾT THÚC KHỐI KIỂM TRA MỚI ===
 
-        # Cập nhật lại logic kiểm tra quy tắc
         if remaining_votes <= 0:
             messages.error(request, "Bạn đã hết phiếu bầu cho giải đấu này.")
         elif player_to_vote.user == user:
             messages.error(request, "Bạn không thể tự bỏ phiếu cho chính mình.")
-        elif already_voted_for_player: # <-- Thêm điều kiện kiểm tra
+        elif already_voted_for_player:
             messages.warning(request, f"Bạn đã bỏ phiếu cho cầu thủ {player_to_vote.full_name} trước đó rồi.")
         else:
             try:
                 with transaction.atomic():
-                    VoteRecord.objects.create(
-                        voter=user,
-                        voted_for=player_to_vote,
-                        tournament=tournament,
-                        weight=1
-                    )
+                    gift_vote_to_use = gift_votes_qs.first()
+                    if gift_vote_to_use:
+                        gift_vote_to_use.tournament = tournament
+                        gift_vote_to_use.voted_for = player_to_vote
+                        gift_vote_to_use.save()
+                    else:
+                        VoteRecord.objects.create(
+                            voter=user,
+                            voted_for=player_to_vote,
+                            tournament=tournament,
+                            weight=1
+                        )
+                    
                     player_to_vote.votes = F('votes') + 1
                     player_to_vote.save()
-                
-                voter_name = user.get_full_name() or user.username
-                # (Phần gửi thông báo giữ nguyên)
                 
                 messages.success(request, f"Bạn đã bỏ phiếu thành công cho {player_to_vote.full_name}!")
                 return redirect('player_voting', tournament_pk=tournament.pk)
@@ -1521,17 +1540,27 @@ def player_voting_view(request, tournament_pk):
             except Exception as e:
                 messages.error(request, f"Đã có lỗi xảy ra: {e}")
 
-    # 4. Lấy danh sách cầu thủ để bầu
+    # === BẮT ĐẦU BỔ SUNG TÍNH TOÁN GIÁ TRỊ CẦU THỦ ===
     players_to_vote = Player.objects.filter(team__tournament=tournament).exclude(user=user).select_related('team').order_by('team__name', 'full_name')
+    
+    # Lấy giá trị hiện tại của một phiếu bầu
+    current_vote_value = get_current_vote_value()
+
+    # Thêm thuộc tính 'market_value' vào mỗi đối tượng cầu thủ
+    for player in players_to_vote:
+        value_from_votes = player.votes * current_vote_value
+        player.market_value = player.transfer_value + value_from_votes
+    # === KẾT THÚC BỔ SUNG ===
 
     context = {
         'tournament': tournament,
         'players_to_vote': players_to_vote,
         'user_role': user_role,
-        'max_votes': max_votes,
-        'votes_cast_count': votes_cast_count,
+        'max_votes': total_available_votes,
+        'votes_cast_count': votes_cast_in_tournament,
         'remaining_votes': remaining_votes,
         'progress_percentage': progress_percentage,
+        'current_vote_value': current_vote_value,  # <— thêm dòng này
     }
     return render(request, 'tournaments/player_voting.html', context)     
 

@@ -2,105 +2,404 @@
 
 {% block title %}Bình chọn Cầu thủ - {{ tournament.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ---------- HERO ---------- */
+.voting-hero {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(2,6,23,.65), rgba(2,6,23,.85)),
+    url('{% if tournament.image %}{{ tournament.image.url }}{% else %}/static/images/hero-1.jpg{% endif %}') center/cover no-repeat;
+}
+.voting-hero .hero-inner { padding: 2.25rem 1.5rem; }
+.hero-badges { display: flex; gap: .5rem; flex-wrap: wrap; }
+.badge-soft {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+/* SỬA LỖI HIỂN THỊ CHO THẺ QUOTA TRONG HERO */
+.voting-hero .card-body {
+    background: rgba(255,255,255,.9) !important;
+    color: #0f172a;
+    backdrop-filter: blur(4px);
+}
+.voting-hero .card-body b {
+    color: #0f172a;
+}
+.voting-hero .card-body .text-warning {
+    color: #f97316 !important;
+}
+
+/* CARD FIFA STYLE - NÂNG CẤP LỚN VỀ THẨM MỸ */
+.card-fut {
+  --accent: #9aa0a6;
+  --glow: rgba(255,255,255,.35);
+  --ring: rgba(255,255,255,.25);
+  --shadow: 0 12px 28px rgba(2, 6, 23, .25);
+  position: relative;
+  border: 0;
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform .2s ease-out, box-shadow .2s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+.card-fut:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(2, 6, 23, .4);
+}
+.card-fut:before {
+  content: "";
+  position: absolute; inset: 0;
+  z-index: 4;
+  padding: 2px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--accent), var(--glow));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+}
+.card-fut:after {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%; right: -50%;
+    z-index: 2;
+    height: 75%;
+    background: radial-gradient(ellipse at center, var(--accent) 0%, transparent 60%);
+    opacity: 0.3;
+    filter: blur(20px);
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+.card-fut:hover:after { opacity: 0.5; }
+.card-fut .plate {
+  position: absolute; inset: 1px;
+  z-index: 1;
+  border-radius: 21px;
+  pointer-events: none;
+  background: linear-gradient(170deg, #475569, #1e293b);
+}
+.t-bronze .plate { background: linear-gradient(170deg, #8c5a2b, #4a2f12); }
+.t-silver .plate { background: linear-gradient(170deg, #a8a8b2, #5f5f6e); }
+.t-gold   .plate { background: linear-gradient(170deg, #d4af37, #8b6f0a); }
+.t-elite  .plate { background: linear-gradient(170deg, #00b8d4, #005a6f); }
+.t-legend .plate { background: linear-gradient(170deg, #9c27b0, #4c005a); }
+.card-fut .topbar,
+.card-fut .head,
+.card-fut .value-sheet,
+.card-fut .tier-progress-wrapper,
+.card-fut .actions {
+    position: relative;
+    z-index: 3;
+    color: #e2e8f0;
+}
+.card-fut .topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem .85rem .25rem;
+}
+.rank-badge, .jersey-chip {
+  font-weight: 700;
+  padding: .25rem .6rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(5px);
+}
+.player-avatar {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid rgba(255,255,255,.4);
+  box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  margin-bottom: .5rem;
+}
+.card-fut .head { text-align: center; padding: .5rem 1rem; }
+.player-name {
+  color: #fff;
+  font-weight: 800; font-size: 1.1rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.team-line { display: inline-flex; gap: .5rem; align-items: center; color: #cbd5e1; font-size: .9rem; }
+.team-line img { width: 22px; height: 22px; object-fit: contain; }
+.value-sheet { display: grid; gap: .35rem; padding: .75rem 1rem 0; font-size: .9rem; }
+.value-row { display: flex; align-items: center; justify-content: space-between; color: #cbd5e1; }
+.value-row b { color: #fff; font-weight: 700; }
+.tier-progress-wrapper { padding: .75rem 1rem; }
+.tier-next-text { color: rgba(255, 255, 255, 0.7) !important; font-size: 0.8rem; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.tier-track {
+  position: relative;
+  height: 10px; border-radius: 999px; overflow: hidden;
+  border: 1px solid rgba(0,0,0,.3);
+  background: rgba(0,0,0,.35);
+}
+.tier-slice { height: 100%; display: inline-block; }
+.tier-marker {
+  position: absolute; top: -3px; width: 3px; height: 16px;
+  background: #fff; border-radius: 2px;
+  box-shadow: 0 0 5px 2px rgba(255,255,255,.5);
+}
+.tier-tag {
+  display: inline-flex; gap: .4rem; align-items: center;
+  font-weight: 800; letter-spacing: .5px;
+  color: #0b1220;
+  padding: .2rem .5rem; border-radius: 8px;
+  background: linear-gradient(180deg, #fff, #e9eef3);
+  border: 1px solid #cfd8e3;
+}
+.card-fut .actions { padding: 0 1rem 1rem; margin-top: auto; }
+.btn-vote {
+  border-radius: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px;
+  padding: .7rem; font-size: .9rem;
+  transition: all .2s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,.2);
+}
+.btn-vote:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.t-bronze { --accent: #CD7F32; }
+.t-silver { --accent: #C0C0C0; }
+.t-gold   { --accent: #FFD700; }
+.t-elite  { --accent: #00BCD4; }
+.t-legend { --accent: #9C27B0; }
+
+/* LEGEND BOX & SEARCH */
+.legend-box {
+  border-radius: 14px; padding: .8rem;
+  border: 1px dashed #cbd5e1; color: #475569;
+  background: #f8fafc;
+}
+.legend-chip {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .25rem .55rem; border-radius: 10px; font-weight: 700;
+  color: #0b1220; border: 1px solid rgba(0,0,0,.08);
+}
+.legend-dot { width: 12px; height: 12px; border-radius: 999px; display: inline-block; }
+#player-search-input {
+  border-radius: 14px; padding: .85rem 1rem;
+  border: 1px solid #d8dee9;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1><i class="bi bi-person-check-fill"></i> Bình chọn Cầu thủ Yêu thích</h1>
-        <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
-    </div>
+<div class="container my-4">
 
-    <div class="card card-body bg-light mb-4">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <p class="mb-1">Vai trò của bạn: <strong>{{ user_role }}</strong></p>
-                <p class="mb-0">Bạn có tổng cộng <strong>{{ max_votes }}</strong> phiếu bầu cho giải đấu này. Bạn còn lại <strong>{{ remaining_votes }}</strong> phiếu.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="progress" style="height: 25px;">
-                    <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ votes_cast_count }}" aria-valuemin="0" aria-valuemax="{{ max_votes }}">
-                        Đã dùng {{ votes_cast_count }}/{{ max_votes }}
-                    </div>
-                </div>
-            </div>
+  <div class="voting-hero mb-4">
+    <div class="hero-inner">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h1 class="mb-1"><i class="bi bi-person-check-fill"></i> Bình chọn Cầu thủ</h1>
+          <div class="hero-badges">
+            <span class="badge badge-soft">Giải đấu: <b>{{ tournament.name }}</b></span>
+            {% if user_role %}<span class="badge badge-soft">Vai trò: <b>{{ user_role }}</b></span>{% endif %}
+            {% if current_vote_value %}<span class="badge badge-soft">1 phiếu = <b id="vote-value">{{ current_vote_value }}</b></span>{% endif %}
+          </div>
         </div>
-    </div>
-    
-    {% if remaining_votes > 0 %}
-    
-    {# === Ô TÌM KIẾM MỚI === #}
-    <div class="mb-3">
-        <input type="text" id="player-search-input" class="form-control" placeholder="🔍 Tìm kiếm theo tên cầu thủ hoặc tên đội...">
-    </div>
-    {# === KẾT THÚC Ô TÌM KIẾM MỚI === #}
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <tbody id="player-list-body">
-                {% for player in players_to_vote %}
-                <tr class="player-row">
-                    <td>
-                        <a href="{% url 'player_detail' pk=player.pk %}" class="d-flex align-items-center gap-3 text-decoration-none text-dark">
-                            <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                            <strong>{{ player.full_name }}</strong>
-                        </a>
-                    </td>
-                    <td>{{ player.team.name }}</td>
-                    <td class="text-end">
-                        <form method="post" onsubmit="return confirm('Bạn có chắc muốn dùng 1 phiếu để bầu cho {{ player.full_name }} không?');">
-                            {% csrf_token %}
-                            <input type="hidden" name="player_id" value="{{ player.pk }}">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="bi bi-hand-thumbs-up-fill"></i> Bỏ phiếu
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-                {# Dòng thông báo khi không có kết quả tìm kiếm #}
-                <tr id="no-results-row" style="display: none;">
-                    <td colspan="3" class="text-center text-muted">Không tìm thấy cầu thủ nào phù hợp.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="card border-0" style="min-width: 320px;">
+          <div class="card-body p-3" style="border-radius: 14px; border:1px solid rgba(255,255,255,.25);">
+            <div class="d-flex justify-content-between mb-1 small">
+              <span>Đã dùng</span>
+              <span>
+                <b>{{ votes_cast_count|default:0 }}</b> /
+                <b>{% firstof total_available_votes max_votes 0 %}</b>
+              </span>
+            </div>
+            <div class="progress" style="height: 12px;">
+              <div class="progress-bar bg-success"
+                role="progressbar"
+                style="width: {{ progress_percentage|default:0 }}%;"
+                aria-valuenow="{{ votes_cast_count|default:0 }}"
+                aria-valuemin="0"
+                aria-valuemax="{% firstof total_available_votes max_votes 0 %}">
+              </div>
+            </div>
+            <div class="mt-2 d-flex justify-content-between small">
+              <span>Quota vai trò: <b>{% firstof role_quota_votes 0 %}</b></span>
+              <span>Còn lại: <b class="text-warning">{{ remaining_votes|default:0 }}</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    {% else %}
-    <div class="alert alert-success text-center">
-        <h4><i class="bi bi-check-circle-fill"></i> Cảm ơn bạn đã bỏ phiếu!</h4>
-        <p>Bạn đã sử dụng hết số phiếu của mình cho giải đấu này.</p>
+  </div>
+
+  <div class="legend-box mb-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <span class="fw-bold me-2">Bậc giá trị:</span>
+      <span class="legend-chip"><i class="legend-dot" style="background:#CD7F32"></i> Bronze</span>
+      <span class="legend-chip"><i class="legend-dot" style="background:#C0C0C0"></i> Silver</span>
+      <span class="legend-chip"><i class="legend-dot" style="background:#FFD700"></i> Gold</span>
+      <span class="legend-chip"><i class="legend-dot" style="background:#00BCD4"></i> Elite</span>
+      <span class="legend-chip"><i class="legend-dot" style="background:#9C27B0"></i> Legend</span>
+      <span class="text-muted small ms-auto">*Giá trị của cầu thủ được tính dựa trên giá trị gốc và tổng số phiếu bầu.</span>
     </div>
-    {% endif %}
+  </div>
+
+  {% if remaining_votes|default:0 > 0 %}
+    <div class="mb-3">
+      <input id="player-search-input" class="form-control form-control-lg" placeholder="🔍 Tìm theo tên cầu thủ, đội, áo số...">
+    </div>
+  {% endif %}
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-wow" id="player-list-container">
+
+    {% for player in players_to_vote %}
+    <div class="col player-card-wrapper"
+         data-player
+         data-name="{{ player.full_name|default:''|lower }}"
+         data-team="{{ player.team.name|default:''|lower }}"
+         data-jersey="{{ player.jersey_number|default:'' }}"
+         data-votes="{{ player.votes|default:0 }}"
+         data-transfer="{{ player.transfer_value|default:0 }}"
+         data-market="{{ player.market_value|default:0 }}"
+    >
+      <div class="card card-fut h-100">
+        <div class="plate"></div>
+
+        <div class="topbar">
+          <span class="rank-badge"><i class="bi bi-trophy"></i> #<span class="rank-number">—</span></span>
+          {% if player.jersey_number %}
+          <span class="jersey-chip">#{{ player.jersey_number }}</span>
+          {% endif %}
+        </div>
+
+        <div class="head">
+          <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" rel="noopener" title="Xem hồ sơ cầu thủ">
+            <img class="player-avatar"
+                 src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}"
+                 alt="{{ player.full_name }}">
+          </a>
+          <div class="player-name">
+            <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-white">{{ player.full_name }}</a>
+          </div>
+          <div class="team-line mt-1">
+            {% if player.team.logo %}
+              <img src="{{ player.team.logo.url }}" alt="{{ player.team.name }}">
+            {% endif %}
+            <span>{{ player.team.name }}</span>
+          </div>
+        </div>
+
+        <div class="value-sheet">
+          <div class="value-row">
+            <span>Transfer</span>
+            <b class="val-transfer">{{ player.transfer_value|default:0 }}</b>
+          </div>
+          <div class="value-row">
+            <span>Votes</span>
+            <b class="val-votes">{{ player.votes|default:0 }}</b>
+          </div>
+          <div class="value-row">
+            <span>Market Value</span>
+            <b class="val-market">{{ player.market_value|default:"—" }}</b>
+          </div>
+        </div>
+
+        <div class="tier-progress-wrapper">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="tier-tag"><i class="bi bi-stars"></i> <span class="tier-label">TIER</span></span>
+            <small><span class="tier-next-text">—</span></small>
+          </div>
+          <div class="tier-track" aria-label="Tiến độ lên bậc">
+            <span class="tier-slice s-bronze" style="background:#CD7F32"></span>
+            <span class="tier-slice s-silver" style="background:#C0C0C0"></span>
+            <span class="tier-slice s-gold"   style="background:#FFD700"></span>
+            <span class="tier-slice s-elite"  style="background:#00BCD4"></span>
+            <span class="tier-slice s-legend" style="background:#9C27B0"></span>
+            <span class="tier-marker" style="left:0%"></span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <form method="post" class="d-grid"
+                onsubmit="return confirm('Dùng 1 phiếu để bầu cho {{ player.full_name }}?');">
+            {% csrf_token %}
+            <input type="hidden" name="player_id" value="{{ player.pk }}">
+            {% if remaining_votes|default:0 > 0 %}
+              <button class="btn btn-primary btn-vote">
+                <i class="bi bi-hand-thumbs-up-fill"></i> Bỏ phiếu
+              </button>
+            {% else %}
+              <button class="btn btn-secondary btn-vote" disabled>
+                <i class="bi bi-lock"></i> Hết phiếu
+              </button>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div id="no-results-message" class="col-12 text-center text-muted mt-4" style="display:none;">
+      <h4>Không tìm thấy cầu thủ phù hợp.</h4>
+    </div>
+  </div>
+
+  {% if not players_to_vote %}
+    <div class="alert alert-info mt-4">Chưa có cầu thủ để bình chọn.</div>
+  {% endif %}
+
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('player-search-input');
-    if (!searchInput) return;
-
-    const playerListBody = document.getElementById('player-list-body');
-    const playerRows = playerListBody.querySelectorAll('.player-row');
-    const noResultsRow = document.getElementById('no-results-row');
-
-    searchInput.addEventListener('keyup', function() {
-        const searchTerm = searchInput.value.toLowerCase().trim();
-        let visibleCount = 0;
-
-        playerRows.forEach(row => {
-            const rowText = row.textContent.toLowerCase();
-            if (rowText.includes(searchTerm)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        if (noResultsRow) {
-            noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
-        }
-    });
+const TIERS = [
+  { key: 'bronze', label: 'BRONZE', color: '#CD7F32', min: 0,         max:  1_000_000 },
+  { key: 'silver', label: 'SILVER', color: '#C0C0C0', min: 1_000_000, max:  5_000_000 },
+  { key: 'gold',   label: 'GOLD',   color: '#FFD700', min: 5_000_000, max: 10_000_000 },
+  { key: 'elite',  label: 'ELITE',  color: '#00BCD4', min:10_000_000, max: 20_000_000 },
+  { key: 'legend', label: 'LEGEND', color: '#9C27B0', min:20_000_000, max:  Infinity  },
+];
+const nf = new Intl.NumberFormat('vi-VN');
+function getTier(v) { for (const t of TIERS) if (v >= t.min && v < t.max) return t; return TIERS[0]; }
+function markerPercent(v) { const span = TIERS[TIERS.length - 2].max; const cap = Math.max(0, Math.min(v, span)); return (cap / span) * 100; }
+function slicePerc(t) { const span = TIERS[TIERS.length - 2].max; const width = (Math.min(t.max, span) - t.min) / span * 100; return Math.max(0, width); }
+document.addEventListener('DOMContentLoaded', () => {
+  const voteValEl = document.getElementById('vote-value');
+  if (voteValEl) { voteValEl.textContent = nf.format(Number(String(voteValEl.textContent).replaceAll(/[^\d.-]/g, '')) || 0); }
+  const cards = Array.from(document.querySelectorAll('[data-player]'));
+  const markets = cards.map(c => Number(c.dataset.market || 0));
+  const sortedUnique = [...new Set(markets)].sort((a,b) => b - a);
+  cards.forEach(card => {
+    let mv = Number(card.dataset.market || 0);
+    const votes = Number(card.dataset.votes || 0);
+    const tf = Number(card.dataset.transfer || 0);
+    if (!mv && voteValEl) { const vv = Number(String(voteValEl.textContent).replaceAll(/[^\d.-]/g,'')); mv = tf + votes * vv; card.dataset.market = String(mv); }
+    const showMV = Number(card.dataset.market || 0);
+    card.querySelector('.val-market').textContent = nf.format(showMV);
+    card.querySelector('.val-transfer').textContent = nf.format(tf);
+    card.querySelector('.val-votes').textContent = nf.format(votes);
+    const rank = sortedUnique.indexOf(showMV) + 1;
+    card.querySelector('.rank-number').textContent = rank > 0 ? rank : '—';
+    const tier = getTier(showMV);
+    const cardBox = card.querySelector('.card-fut');
+    cardBox.classList.add(`t-${tier.key}`);
+    const tierLabel = cardBox.querySelector('.tier-label');
+    const tierNext = cardBox.querySelector('.tier-next-text');
+    if (tierLabel) tierLabel.textContent = tier.label;
+    if (tier.max !== Infinity) { const need = Math.max(0, tier.max - showMV); if (tierNext) tierNext.textContent = `Cần +${nf.format(need)} để lên ${getTier(tier.max).label}`; } else { if (tierNext) tierNext.textContent = `Bậc tối đa`; }
+    const slices = { bronze: cardBox.querySelector('.s-bronze'), silver: cardBox.querySelector('.s-silver'), gold: cardBox.querySelector('.s-gold'), elite: cardBox.querySelector('.s-elite'), legend: cardBox.querySelector('.s-legend') };
+    for (const t of TIERS) { if (slices[t.key]) slices[t.key].style.width = slicePerc(t) + '%'; }
+    const marker = cardBox.querySelector('.tier-marker');
+    if (marker) marker.style.left = Math.min(100, markerPercent(showMV)) + '%';
+  });
+  const searchInput = document.getElementById('player-search-input');
+  if (searchInput) {
+    const noRes = document.getElementById('no-results-message');
+    const filter = () => {
+      const q = searchInput.value.toLowerCase().trim(); let visible = 0;
+      cards.forEach(card => { const hay = `${card.dataset.name} ${card.dataset.team} ${card.dataset.jersey}`; const show = hay.includes(q); card.style.display = show ? '' : 'none'; if (show) visible++; });
+      if (noRes) noRes.style.display = visible === 0 ? 'block' : 'none';
+    };
+    searchInput.addEventListener('input', filter);
+  }
 });
 </script>
-{% endblock %}
-
 {% endblock %}
