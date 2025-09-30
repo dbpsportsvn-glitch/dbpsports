@@ -31,6 +31,10 @@ from .utils import get_current_vote_value
 from .models import TournamentStaff
 from organizations.views import user_can_control_match, user_can_upload_gallery
 from organizations.forms import MatchUpdateForm
+# Thêm import Note BLV
+from .models import MatchNote
+from .forms import CommentatorNoteForm
+from .forms import CaptainNoteForm
 
 # Local Application Imports
 from organizations.models import Organization
@@ -1780,3 +1784,78 @@ def job_detail_view(request, pk):
         'is_organizer': is_organizer,
     }
     return render(request, 'tournaments/job_detail.html', context)    
+
+# === backend Note BLV ===
+@login_required
+@never_cache
+def commentator_notes_view(request, match_pk):
+    match = get_object_or_404(Match.objects.select_related('team1', 'team2'), pk=match_pk)
+    
+    # Kiểm tra quyền: Chỉ BLV hoặc người có quyền control trận đấu mới được vào
+    if not user_can_control_match(request.user, match):
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+
+    # Tìm hoặc tạo ghi chú của BLV cho trận này
+    note_instance, created = MatchNote.objects.get_or_create(
+        match=match,
+        author=request.user,
+        note_type=MatchNote.NoteType.COMMENTATOR,
+        defaults={}
+    )
+
+    if request.method == 'POST':
+        form = CommentatorNoteForm(request.POST, instance=note_instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã lưu ghi chú thành công!")
+            return redirect('commentator_notes', match_pk=match.pk)
+    else:
+        form = CommentatorNoteForm(instance=note_instance)
+    
+    # Lấy ghi chú từ đội trưởng của 2 đội (nếu có)
+    captain_note_team1 = MatchNote.objects.filter(match=match, team=match.team1, note_type=MatchNote.NoteType.CAPTAIN).first()
+    captain_note_team2 = MatchNote.objects.filter(match=match, team=match.team2, note_type=MatchNote.NoteType.CAPTAIN).first()
+
+    context = {
+        'match': match,
+        'form': form,
+        'captain_note_team1': captain_note_team1,
+        'captain_note_team2': captain_note_team2,
+    }
+    return render(request, 'tournaments/commentator_notes.html', context)    
+
+# === Note cho đội trưởng ===
+@login_required
+@never_cache
+def captain_note_view(request, match_pk, team_pk):
+    match = get_object_or_404(Match, pk=match_pk)
+    team = get_object_or_404(Team, pk=team_pk)
+
+    # Kiểm tra quyền: Chỉ đội trưởng của đội đó mới được truy cập
+    if request.user != team.captain:
+        return HttpResponseForbidden("Bạn không phải đội trưởng của đội này.")
+
+    # Tìm hoặc tạo ghi chú của đội trưởng cho trận này
+    note_instance, created = MatchNote.objects.get_or_create(
+        match=match,
+        author=request.user,
+        team=team,
+        note_type=MatchNote.NoteType.CAPTAIN,
+        defaults={}
+    )
+
+    if request.method == 'POST':
+        form = CaptainNoteForm(request.POST, instance=note_instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã gửi ghi chú cho Bình luận viên thành công!")
+            return redirect('manage_lineup', match_pk=match.pk, team_pk=team.pk)
+    else:
+        form = CaptainNoteForm(instance=note_instance)
+
+    context = {
+        'match': match,
+        'team': team,
+        'form': form,
+    }
+    return render(request, 'tournaments/captain_note.html', context)    

@@ -219,6 +219,11 @@
 
     <div class="d-flex gap-2 mt-2">
       <button id="save-lineup-btn" class="btn btn-primary"><i class="bi bi-save-fill"></i> Lưu đội hình</button>
+      {# === THÊM NÚT MỚI VÀO ĐÂY === #}
+      <a href="{% url 'captain_note' match_pk=match.pk team_pk=team.pk %}" class="btn btn-success">
+          <i class="bi bi-chat-right-text-fill"></i> Ghi chú cho BLV
+      </a>
+      
       <button id="clear-lineup" class="btn btn-outline-danger">Xóa đội hình</button>
       <button id="send-to-bench-btn" class="btn btn-outline-secondary" disabled>Trả về ghế</button>
     </div>

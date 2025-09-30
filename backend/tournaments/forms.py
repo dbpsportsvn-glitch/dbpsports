@@ -1,6 +1,7 @@
 # tournaments/forms.py
 from django import forms
 from .models import Team, Player, Comment, Tournament
+from .models import MatchNote
 
 # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class TeamCreationForm(forms.ModelForm):
@@ -178,3 +179,23 @@ class TournamentForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date'}),
             'rules': forms.Textarea(attrs={'rows': 5}),
         }        
+
+class CommentatorNoteForm(forms.ModelForm):
+    class Meta:
+        model = MatchNote
+        fields = ['commentator_notes_team1', 'commentator_notes_team2']
+        widgets = {
+            'commentator_notes_team1': forms.Textarea(attrs={'rows': 15}),
+            'commentator_notes_team2': forms.Textarea(attrs={'rows': 15}),
+        }      
+
+class CaptainNoteForm(forms.ModelForm):
+    class Meta:
+        model = MatchNote
+        fields = ['captain_note']
+        labels = {
+            'captain_note': 'Nội dung ghi chú'
+        }
+        widgets = {
+            'captain_note': forms.Textarea(attrs={'rows': 8}),
+        }          

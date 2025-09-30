@@ -595,3 +595,37 @@ class TournamentStaff(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role.name} for {self.tournament.name}"        
+
+class MatchNote(models.Model):
+    """Lưu trữ các ghi chú chuẩn bị cho trận đấu của BLV và Đội trưởng."""
+    class NoteType(models.TextChoices):
+        COMMENTATOR = 'COMMENTATOR', 'Ghi chú của Bình luận viên'
+        CAPTAIN = 'CAPTAIN', 'Ghi chú của Đội trưởng'
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name='notes', verbose_name="Trận đấu")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Tác giả")
+    note_type = models.CharField("Loại ghi chú", max_length=20, choices=NoteType.choices)
+
+    # Dành riêng cho ghi chú của BLV (chia 2 cột)
+    commentator_notes_team1 = models.TextField("Ghi chú về Đội 1", blank=True)
+    commentator_notes_team2 = models.TextField("Ghi chú về Đội 2", blank=True)
+
+    # Dành riêng cho ghi chú của Đội trưởng (chỉ có 1 nội dung)
+    # Thêm related_name để tránh xung đột
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True, related_name='sent_notes', verbose_name="Đội của Đội trưởng")
+    captain_note = models.TextField("Ghi chú gửi BLV", blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        # Đảm bảo mỗi người chỉ có 1 loại ghi chú cho 1 trận đấu
+        # Ví dụ: 1 BLV chỉ có 1 bộ ghi chú 2 cột cho trận X
+        # 1 Đội trưởng chỉ có 1 ghi chú gửi BLV cho trận X
+        unique_together = ('match', 'author', 'note_type', 'team')
+        verbose_name = "Ghi chú Trận đấu"
+        verbose_name_plural = "Ghi chú Trận đấu"
+
+    def __str__(self):
+        return f"Ghi chú của {self.author.username} cho trận {self.match.pk}"        

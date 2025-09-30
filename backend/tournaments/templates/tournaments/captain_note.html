@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Gửi ghi chú cho BLV{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3><i class="bi bi-chat-right-text-fill text-success"></i> Gửi ghi chú cho Bình Luận Viên</h3>
+        </div>
+        <div class="card-body">
+            <p>
+                <strong>Trận đấu:</strong> {{ match.team1.name }} vs {{ match.team2.name }}<br>
+                <strong>Đội của bạn:</strong> {{ team.name }}
+            </p>
+            <p class="text-muted">
+                Các thông tin bạn cung cấp tại đây (ví dụ: tình hình chấn thương, cầu thủ nổi bật, thông điệp muốn gửi gắm, hoặc yêu cầu quảng cáo...) sẽ được hiển thị cho Bình luận viên trong phòng điều khiển trực tiếp để họ có thể chuẩn bị và bình luận tốt hơn.
+            </p>
+            <hr>
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">Gửi Ghi chú</button>
+                    <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=team.pk %}" class="btn btn-secondary">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
