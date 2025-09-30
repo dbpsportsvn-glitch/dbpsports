@@ -10,7 +10,9 @@ from tournaments.models import Team, Tournament, Player, TeamAchievement, VoteRe
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
-# === KẾT THÚC THAY THẾ ===
+# Thêm import đánh giá công việc
+from organizations.models import ProfessionalReview
+from django.db.models import Avg
 
 @login_required
 def dashboard(request):
@@ -242,13 +244,22 @@ def public_profile_view(request, username):
                 'role_name': assignment.role.name
             })
 
-    # === KẾT THÚC NÂNG CẤP ===
+    # === BẮT ĐẦU NÂNG CẤP: LẤY DỮ LIỆU ĐÁNH GIÁ ===
+    reviews = ProfessionalReview.objects.filter(reviewee=profile_user).select_related('reviewer', 'job_application__job')
+    
+    # Tính toán rating trung bình
+    average_rating = reviews.aggregate(avg=Avg('rating'))['avg']
+    if average_rating:
+        average_rating = round(average_rating, 1) # Làm tròn 1 chữ số thập phân    
 
     context = {
         'profile_user': profile_user,
         'profile': profile,
         'achievements': achievements,
-        'commentator_gigs': commentator_gigs, # Gửi dữ liệu BLV ra template
-        'media_gigs': media_gigs,             # Gửi dữ liệu Media ra template
+        'commentator_gigs': commentator_gigs,
+        'media_gigs': media_gigs,
+        'reviews': reviews,                     # Gửi reviews ra template
+        'average_rating': average_rating,       # Gửi rating trung bình
+        'reviews_count': reviews.count(),       # Gửi tổng số reviews
     }
     return render(request, 'users/public_profile.html', context)

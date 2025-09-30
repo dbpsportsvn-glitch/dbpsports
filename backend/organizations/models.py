@@ -112,4 +112,36 @@ class JobApplication(models.Model):
         verbose_name_plural = "Các Đơn Ứng tuyển"
 
     def __str__(self):
-        return f"{self.applicant.username} ứng tuyển vào {self.job.title}"        
+        return f"{self.applicant.username} ứng tuyển vào {self.job.title}"      
+
+class ProfessionalReview(models.Model):
+    """Lưu một đánh giá của BTC cho một chuyên gia sau khi hoàn thành công việc."""
+    job_application = models.OneToOneField(
+        JobApplication, 
+        on_delete=models.CASCADE, 
+        related_name='review',
+        verbose_name="Đơn ứng tuyển"
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='given_reviews',
+        verbose_name="Người đánh giá (BTC)"
+    )
+    reviewee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='received_reviews',
+        verbose_name="Người được đánh giá (Chuyên gia)"
+    )
+    rating = models.PositiveIntegerField("Số sao", choices=[(i, f"{i} sao") for i in range(1, 6)])
+    comment = models.TextField("Nội dung nhận xét", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Đánh giá Chuyên gia"
+        verbose_name_plural = "Các Đánh giá Chuyên gia"
+
+    def __str__(self):
+        return f"Đánh giá {self.rating} sao cho {self.reviewee.username} từ {self.reviewer.username}"          

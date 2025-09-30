@@ -33,6 +33,8 @@ from .forms import MatchMediaUpdateForm
 from .models import JobPosting, JobApplication
 from .forms import JobPostingForm, JobApplicationUpdateForm
 from django.views.decorators.http import require_POST
+from .models import ProfessionalReview
+from .forms import ProfessionalReviewForm
 
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
@@ -1233,3 +1235,48 @@ def update_application_status_view(request, pk):
         # === KẾT THÚC NÂNG CẤP ===
     
     return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+
+# === Rivew cong viec ===
+@login_required
+@never_cache
+def create_review_view(request, application_pk):
+    application = get_object_or_404(
+        JobApplication.objects.select_related('job__tournament', 'applicant'), 
+        pk=application_pk
+    )
+    tournament = application.job.tournament
+
+    # Kiểm tra quyền
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+    
+    # Kiểm tra điều kiện hợp lệ
+    if application.status != 'APPROVED':
+        messages.error(request, "Bạn chỉ có thể đánh giá các ứng viên đã được 'Chấp thuận'.")
+        return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+    
+    if hasattr(application, 'review'):
+        messages.warning(request, "Bạn đã đánh giá cho công việc này rồi.")
+        return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+
+    if request.method == 'POST':
+        form = ProfessionalReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.job_application = application
+            review.reviewer = request.user
+            review.reviewee = application.applicant
+            review.save()
+            messages.success(request, f"Cảm ơn bạn đã gửi đánh giá cho {application.applicant.username}.")
+            return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+    else:
+        form = ProfessionalReviewForm()
+
+    context = {
+        'form': form,
+        'application': application,
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'active_page': 'jobs',
+    }
+    return render(request, 'organizations/create_review.html', context)    

@@ -2,7 +2,7 @@
 
 from django import forms
 from tournaments.models import Match, Goal, Card, Player, Team, Announcement
-from .models import Organization
+from .models import Organization, ProfessionalReview, JobApplication
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from tournaments.forms import PlayerCreationForm
@@ -388,3 +388,18 @@ class JobApplicationForm(forms.ModelForm):
         widgets = {
             'message': forms.Textarea(attrs={'rows': 4}),
         }            
+
+# === DÁN FORM MỚI NÀY VÀO CUỐI FILE ===
+class ProfessionalReviewForm(forms.ModelForm):
+    class Meta:
+        model = ProfessionalReview
+        fields = ['rating', 'comment']
+        labels = {
+            'rating': 'Bạn đánh giá chất lượng công việc thế nào?',
+            'comment': 'Viết một vài lời nhận xét (tùy chọn)',
+        }
+        widgets = {
+            # Hiển thị các ngôi sao thay vì dropdown số
+            'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
+            'comment': forms.Textarea(attrs={'rows': 4}),
+        }        

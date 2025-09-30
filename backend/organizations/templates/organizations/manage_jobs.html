@@ -38,17 +38,30 @@
                                     </a>
                                     <small class="text-muted d-block">{{ app.message|truncatewords:15 }}</small>
                                 </div>
-                                <form action="{% url 'organizations:update_application_status' pk=app.pk %}" method="post">
-                                    {% csrf_token %}
-                                    <div class="input-group input-group-sm">
-                                        <select name="status" class="form-select">
-                                            <option value="PENDING" {% if app.status == 'PENDING' %}selected{% endif %}>Đang chờ</option>
-                                            <option value="APPROVED" {% if app.status == 'APPROVED' %}selected{% endif %}>Chấp thuận</option>
-                                            <option value="REJECTED" {% if app.status == 'REJECTED' %}selected{% endif %}>Từ chối</option>
-                                        </select>
-                                        <button class="btn btn-outline-primary" type="submit">Lưu</button>
-                                    </div>
-                                </form>
+                                {# === THAY THẾ KHỐI FORM CŨ BẰNG KHỐI CODE NÀY === #}
+                                <div class="d-flex align-items-center gap-2">
+                                    <form action="{% url 'organizations:update_application_status' pk=app.pk %}" method="post" class="d-inline-flex">
+                                        {% csrf_token %}
+                                        <div class="input-group input-group-sm">
+                                            <select name="status" class="form-select">
+                                                <option value="PENDING" {% if app.status == 'PENDING' %}selected{% endif %}>Đang chờ</option>
+                                                <option value="APPROVED" {% if app.status == 'APPROVED' %}selected{% endif %}>Chấp thuận</option>
+                                                <option value="REJECTED" {% if app.status == 'REJECTED' %}selected{% endif %}>Từ chối</option>
+                                            </select>
+                                            <button class="btn btn-outline-primary" type="submit">Lưu</button>
+                                        </div>
+                                    </form>
+
+                                    {% if app.status == 'APPROVED' %}
+                                        {% if app.review %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Đã đánh giá</span>
+                                        {% else %}
+                                            <a href="{% url 'organizations:create_review' application_pk=app.pk %}" class="btn btn-sm btn-warning">
+                                                <i class="bi bi-star-fill"></i> Viết đánh giá
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
                             </li>
                             {% empty %}
                             <li class="list-group-item text-muted">Chưa có ai ứng tuyển.</li>

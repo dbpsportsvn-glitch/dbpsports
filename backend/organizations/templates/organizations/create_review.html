@@ -1,0 +1,39 @@
+{% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Viết đánh giá{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* CSS cho các ngôi sao đánh giá */
+    .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+    .star-rating input { display: none; }
+    .star-rating label { font-size: 2rem; color: #ccc; cursor: pointer; transition: color 0.2s; }
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #f59e0b; }
+</style>
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-star-fill text-warning"></i> Viết đánh giá</h3>
+    </div>
+    <div class="card-body p-4">
+        <p>
+            Bạn đang đánh giá cho: <strong>{{ application.applicant.get_full_name|default:application.applicant.username }}</strong><br>
+            Công việc: <strong>{{ application.job.title }}</strong>
+        </p>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                <a href="{% url 'organizations:manage_jobs' tournament_pk=application.job.tournament.pk %}" class="btn btn-secondary">Quay lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

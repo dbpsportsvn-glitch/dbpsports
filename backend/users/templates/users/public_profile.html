@@ -138,6 +138,42 @@
             </div>
             {% endif %}
 
+            {% if reviews %}
+            <h3 class="section-title"><i class="bi bi-stars"></i> Đánh giá từ Ban Tổ Chức</h3>
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h4 class="display-4 fw-bold">{{ average_rating }}/5</h4>
+                    <div class="text-warning fs-4">
+                        {% for i in "12345" %}
+                            <i class="bi {% if forloop.counter <= average_rating %}bi-star-fill{% elif forloop.counter|add:"-0.5" <= average_rating %}bi-star-half{% else %}bi-star{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <span class="text-muted">Dựa trên {{ reviews_count }} lượt đánh giá</span>
+                </div>
+            </div>
+            
+            {% for review in reviews %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
+                            <small class="text-muted d-block">
+                                {{ review.job_application.job.tournament.name }}
+                            </small>
+                        </div>
+                        <div class="text-warning">
+                            {% for i in "12345" %}<i class="bi {% if forloop.counter <= review.rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>{% endfor %}
+                        </div>
+                    </div>
+                    {% if review.comment %}
+                    <p class="mt-2 mb-0 fst-italic">"{{ review.comment }}"</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
         </div>
 
         <div class="col-lg-4">
