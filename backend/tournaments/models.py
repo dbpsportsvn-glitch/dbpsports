@@ -103,7 +103,7 @@ class Group(models.Model):
 
 class Team(models.Model):
     PAYMENT_STATUS_CHOICES = [('UNPAID', 'Chưa thanh toán'), ('PENDING', 'Chờ xác nhận'), ('PAID', 'Đã thanh toán')]
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams')
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams', null=True, blank=True)
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True)
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')

@@ -82,7 +82,9 @@ def create_new_team_notification(sender, instance, created, **kwargs):
     Tự động tạo thông báo khi có đội mới được duyệt,
     CHỈ gửi cho những người dùng đã bật cài đặt này.
     """
-    if created and instance.payment_status == 'PAID':
+    # === THAY ĐỔI BẮT ĐẦU TẠI ĐÂY ===
+    # Chỉ thực hiện khi đội được tạo, đã "thanh toán" VÀ có liên kết với một giải đấu
+    if created and instance.payment_status == 'PAID' and instance.tournament:
         team = instance
         tournament = team.tournament
         
@@ -109,8 +111,7 @@ def create_new_team_notification(sender, instance, created, **kwargs):
 
         if notifications_to_create:
             Notification.objects.bulk_create(notifications_to_create)
-
-# === KẾT THÚC KHỐI CODE ĐÃ CẬP NHẬT ===
+    # === KẾT THÚC THAY ĐỔI ===
 
 @receiver(post_save, sender=Match)
 def create_schedule_notification_on_match_creation(sender, instance, created, **kwargs):

@@ -11,7 +11,6 @@ from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferenc
 from .models import Profile, Role
 from django.contrib.auth.models import User
 
-
 @login_required
 def dashboard(request):
     profile, created = Profile.objects.get_or_create(user=request.user)
@@ -117,10 +116,6 @@ def select_roles_view(request):
     roles = Role.objects.all()
     return render(request, 'users/select_roles.html', {'roles': roles})    
 
-# backend/users/views.py
-
-# ... (các import và các view khác không thay đổi) ...
-
 @login_required
 def profile_setup_view(request):
     profile = request.user.profile
@@ -129,7 +124,7 @@ def profile_setup_view(request):
     if profile.is_profile_complete:
         return redirect('home')
 
-    # Xử lý các action "bỏ qua" hoặc "tạo đội ngay"
+    # Xử lý các action "bỏ qua" hoặc "tạo đội ngay" từ link GET
     action = request.GET.get('action')
     if action == 'skip':
         profile.is_profile_complete = True
@@ -139,27 +134,31 @@ def profile_setup_view(request):
     elif action == 'create_team':
         profile.is_profile_complete = True
         profile.save()
+        messages.info(request, "Hồ sơ đã được đánh dấu hoàn tất! Bây giờ hãy tạo đội bóng đầu tiên của bạn.")
+        # Chuyển hướng đến trang tạo đội độc lập
         return redirect('create_standalone_team')
 
-    # Xử lý khi người dùng nhấn nút "Lưu và Tiếp tục"
+    # Xử lý khi người dùng nhấn nút "Lưu và Tiếp tục" (POST)
     if request.method == 'POST':
         form = ProfileSetupForm(request.POST, instance=profile, user=request.user)
         if form.is_valid():
             form.save()
             profile.is_profile_complete = True
             profile.save()
-            messages.success(request, "Cảm ơn bạn đã cập nhật hồ sơ!")
             
             # Sau khi lưu, nếu là cầu thủ, chuyển đến trang tạo đội
             if profile.roles.filter(id='PLAYER').exists():
+                 messages.success(request, "Cảm ơn bạn đã cập nhật hồ sơ! Hãy bắt đầu bằng việc tạo đội bóng của bạn.")
+                 # Chuyển hướng đến trang tạo đội độc lập
                  return redirect('create_standalone_team')
             
-            # Nếu không phải, về trang chủ
+            # Nếu không phải cầu thủ, về trang chủ
+            messages.success(request, "Cảm ơn bạn đã cập nhật hồ sơ!")
             return redirect('home')
     else:
         form = ProfileSetupForm(instance=profile, user=request.user)
 
-    # Kiểm tra xem người dùng có vai trò là "Cầu thủ" hay không
+    # Kiểm tra xem người dùng có vai trò là "Cầu thủ" hay không để hiển thị nút phù hợp
     is_player = profile.roles.filter(id='PLAYER').exists()
 
     context = {

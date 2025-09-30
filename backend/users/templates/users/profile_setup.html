@@ -28,17 +28,19 @@
         <div class="card-body p-4 p-md-5">
             <div class="text-center mb-4">
                 <h1 class="h3">Hoàn tất Hồ sơ của bạn</h1>
-                <p class="text-muted">Cập nhật tên hiển thị và các thông tin khác để mọi người biết đến bạn!</p>
+                {# === LỜI DẪN MỚI NHẤN MẠNH TẦM QUAN TRỌNG === #}
+                <p class="lead text-muted">
+                    Hãy dành chút thời gian để cập nhật hồ sơ. Một hồ sơ đầy đủ và chuyên nghiệp sẽ giúp các <strong>Ban tổ chức</strong> chú ý và liên hệ với bạn, cũng như giúp các <strong>đội trưởng</strong> khác dễ dàng tìm thấy và chiêu mộ bạn!
+                </p>
             </div>
 
             <form method="post">
                 {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-6 mb-3">{{ form.first_name|as_crispy_field }}</div>
-                    <div class="col-md-6 mb-3">{{ form.last_name|as_crispy_field }}</div>
-                </div>
                 
-                <hr class="my-3">
+                {# === FORM TÊN MỚI CHỈ CÓ 1 Ô === #}
+                {{ form.display_name|as_crispy_field }}
+                
+                <hr class="my-4">
 
                 <h5 class="mb-3">Thông tin chuyên môn (tùy chọn)</h5>
                 
@@ -52,13 +54,12 @@
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">Lưu và Tiếp tục</button>
                     
-                    {# Nút này chỉ hiện khi người dùng có vai trò là Cầu thủ #}
                     {% if is_player %}
                         <a href="?action=create_team" class="btn btn-success">Tạo đội bóng ngay (Bỏ qua cập nhật hồ sơ)</a>
                     {% endif %}
                 </div>
-                <div class="text-center mt-3">
-                    <a href="?action=skip" class="text-secondary">Bỏ qua tất cả và về trang chủ &raquo;</a>
+                <div class="d-grid gap-2 mt-2">
+                    <a href="?action=skip" class="btn btn-outline-secondary">Bỏ qua và về trang chủ</a>
                 </div>
             </form>
         </div>

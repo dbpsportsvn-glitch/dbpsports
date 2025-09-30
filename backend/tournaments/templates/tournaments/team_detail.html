@@ -5,9 +5,18 @@
 
 {% block content %}
 <div class="container mt-4">
-    <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=teams#teams" class="btn btn-outline-secondary btn-sm mb-3">
-        <i class="bi bi-arrow-left"></i> Về giải đấu
-    </a>
+    {# === THAY ĐỔI BẮT ĐẦU TẠI ĐÂY === #}
+    {% if team.tournament %}
+        <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=teams#teams" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left"></i> Về giải đấu
+        </a>
+    {% else %}
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-sm mb-3">
+            <i class="bi bi-arrow-left"></i> Về trang cá nhân
+        </a>
+    {% endif %}
+    {# === KẾT THÚC THAY ĐỔI === #}
+
     <div class="row">
         <div class="col-md-5">
             <div class="card mb-4">
@@ -17,11 +26,16 @@
                 <div class="card-body d-flex align-items-start gap-3">
                     <div class="flex-grow-1">
                         <h5 class="card-title mb-1">{{ team.name }}</h5>
-                        <div class="text-muted mb-2">Thuộc giải đấu: {{ team.tournament.name }}</div>
+                        <div class="text-muted mb-2">
+                            Giải đấu: {{ team.tournament.name|default:"Đội tự do" }}
+                        </div>
                         <p class="mb-2">
                             {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}<br>{% endif %}
                             <strong>Đội trưởng:</strong> {{ team.captain.username }}
                         </p>
+                        
+                        {# Chỉ hiển thị trạng thái thanh toán cho các đội trong giải #}
+                        {% if team.tournament %}
                         <div class="mt-3 mb-3">
                             <strong>Trạng thái:</strong>
                             {% if team.payment_status == 'UNPAID' %}
@@ -33,11 +47,15 @@
                                 <span class="badge bg-success">Đã thanh toán</span>
                             {% endif %}
                         </div>
+                        {% endif %}
+
                         {% if user == team.captain %}
                         <div class="btn-group">
                             <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning btn-sm">Sửa thông tin đội</a>
                             <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-info btn-sm">🏆 Phòng Truyền thống</a>
+                            {% if team.tournament %}
                             <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=schedule#schedule" class="btn btn-primary btn-sm">Lịch thi đấu</a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -57,7 +75,6 @@
                 <div class="card-header"><h5>Thêm cầu thủ mới</h5></div>
                 <div class="card-body">
                   
-                  {# === KHỐI CẢNH BÁO MỚI === #}
                   <div class="alert alert-info small">
                       <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Hãy nhập thông tin chính xác. Các thông tin này sẽ được sử dụng cho "Thị trường chuyển nhượng" trong tương lai. Mỗi cầu thủ chỉ có thể được chỉnh sửa tối đa <strong>3 lần</strong> và sẽ bị khóa khi đã có phiếu bầu.
                   </div>
@@ -65,7 +82,6 @@
                   <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    {# === BỐ CỤC 2 CỘT MỚI === #}
                     <div class="row">
                         <div class="col-md-6">{{ player_form.full_name|as_crispy_field }}</div>
                         <div class="col-md-6">{{ player_form.jersey_number|as_crispy_field }}</div>
@@ -83,44 +99,40 @@
                   </form>
                 </div>
               </div>
-            {% endif %}
-        </div>
-
-        <div class="col-md-7">
-            {% if team.payment_status == 'PAID' %}
-                <div class="card">
-                    <div class="card-header"><h4>Đội hình hiện tại</h4></div>
-                    <ul class="list-group list-group-flush">
-                        {% for player in team.players.all %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    <strong>#{{ player.jersey_number }}</strong> - 
-                                    <a href="{% url 'player_detail' pk=player.pk %}">{{ player.full_name }}</a>
-                                    {# === THÊM ĐOẠN NÀY VÀO === #}
-                                    {% if player.user and team.captain == player.user %}
-                                        <span class="captain-indicator">(C)</span>
-                                    {% endif %}
-                                    {# === KẾT THÚC === #}
-                                    ({{ player.get_position_display }})
-                                </span>
-                                {% if user == team.captain %}
-                                    <div>
-                                        <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
-                                        <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
-                                    </div>
-                                {% endif %}
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% else %}
+            {% elif team.payment_status != 'PAID' and team.tournament %}
                 <div class="alert alert-warning" role="alert">
                   <h4 class="alert-heading">Tính năng bị khóa!</h4>
                   <p>Các chức năng quản lý đội hình sẽ được mở sau khi Ban tổ chức xác nhận thanh toán lệ phí thành công.</p>
                 </div>
             {% endif %}
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header"><h4>Đội hình hiện tại</h4></div>
+                <ul class="list-group list-group-flush">
+                    {% for player in team.players.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>#{{ player.jersey_number }}</strong> - 
+                                <a href="{% url 'player_detail' pk=player.pk %}">{{ player.full_name }}</a>
+                                {% if player.user and team.captain == player.user %}
+                                    <span class="captain-indicator">(C)</span>
+                                {% endif %}
+                                ({{ player.get_position_display }})
+                            </span>
+                            {% if user == team.captain %}
+                                <div>
+                                    <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                    <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+                                </div>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">Chưa có cầu thủ nào trong đội hình.</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
 </div>

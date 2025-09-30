@@ -148,7 +148,6 @@
             </div>
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link {% if not request.GET.tab or request.GET.tab == 'profile' %}active{% endif %}" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
-                {# === THÊM TAB MỚI VÀO ĐÂY === #}
                 <a class="nav-link {% if request.GET.tab == 'public-profile' %}active{% endif %}" id="public-profile-tab" data-bs-toggle="pill" href="#public-profile" role="tab"><i class="bi bi-person-vcard"></i>Hồ sơ công khai</a>
                 <a class="nav-link {% if request.GET.tab == 'following' %}active{% endif %}" id="following-tab" data-bs-toggle="pill" href="#following" role="tab"><i class="bi bi-bell-fill"></i>Giải đấu theo dõi</a>
                 <a class="nav-link {% if request.GET.tab == 'teams' %}active{% endif %}" id="teams-tab" data-bs-toggle="pill" href="#teams" role="tab"><i class="bi bi-shield-fill"></i>Các đội quản lý</a>
@@ -229,7 +228,9 @@
                             <div class="card shadow-sm h-100">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ team.name }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">Giải đấu: {{ team.tournament.name }}</h6>
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        Giải đấu: {{ team.tournament.name|default:"Đội tự do" }}
+                                    </h6>
                                     <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-primary mt-2">Quản lý đội</a>
                                 </div>
                             </div>
@@ -306,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var avatarModal = new bootstrap.Modal(document.getElementById('avatarModal'));
         avatarModal.show();
     {% endif %}
-    
+
     // Script để giữ lại tab đang active khi tải lại trang
     const urlParams = new URLSearchParams(window.location.search);
     const tab = urlParams.get('tab');

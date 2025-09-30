@@ -73,12 +73,16 @@ class NotificationPreferencesForm(forms.ModelForm):
 
 # === FORM MỚI CHO TRANG SETUP PROFILE ===
 class ProfileSetupForm(forms.ModelForm):
-    first_name = forms.CharField(label="Tên", max_length=150, required=True)
-    last_name = forms.CharField(label="Họ", max_length=150, required=True)
+    display_name = forms.CharField(
+        label="Tên hiển thị của bạn", 
+        max_length=150, 
+        required=True,
+        help_text="Tên này sẽ được sử dụng công khai trên toàn hệ thống."
+    )
 
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'bio', 'location', 'experience', 'equipment']
+        fields = ['display_name', 'bio', 'location', 'experience', 'equipment']
         labels = {
             'bio': 'Giới thiệu bản thân',
             'location': 'Khu vực hoạt động',
@@ -90,23 +94,23 @@ class ProfileSetupForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Lấy 'user' từ view để điền giá trị ban đầu
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Điền tên từ user model vào form
         if self.user:
-            self.fields['first_name'].initial = self.user.first_name
-            self.fields['last_name'].initial = self.user.last_name
+            # Lấy tên đầy đủ hiện tại (nếu có) làm giá trị mặc định
+            initial_name = self.user.get_full_name()
+            if not initial_name:
+                initial_name = self.user.get_username()
+            self.fields['display_name'].initial = initial_name
 
     def save(self, commit=True):
-        # Lưu các trường của Profile model
         profile = super().save(commit=False)
         
-        # Cập nhật first_name và last_name cho User model
         if self.user:
-            self.user.first_name = self.cleaned_data.get('first_name')
-            self.user.last_name = self.cleaned_data.get('last_name')
+            # Lưu toàn bộ tên mới vào trường first_name và xóa last_name
+            self.user.first_name = self.cleaned_data.get('display_name')
+            self.user.last_name = '' # Xóa họ đi
             if commit:
                 self.user.save()
         

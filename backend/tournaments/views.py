@@ -1584,3 +1584,26 @@ def cast_vote_view(request, player_pk):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': f'Đã có lỗi xảy ra ở server: {e}'}, status=500)         
+
+
+#Đội tự do
+@login_required
+@never_cache
+def create_standalone_team(request):
+    if request.method == 'POST':
+        form = TeamCreationForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            team = form.save(commit=False)
+            team.captain = request.user
+            team.payment_status = 'PAID' # Đội tự do được coi là đã "thanh toán" để có thể thêm cầu thủ
+            team.save()
+            messages.success(request, f"Đã tạo thành công đội '{team.name}'!")
+            return redirect('team_detail', pk=team.pk)
+    else:
+        form = TeamCreationForm(user=request.user)
+
+    context = {
+        'form': form,
+        'is_standalone': True
+    }
+    return render(request, 'tournaments/create_team.html', context)
