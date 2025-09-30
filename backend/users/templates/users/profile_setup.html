@@ -3,32 +3,62 @@
 
 {% block title %}Hoàn tất Hồ sơ của bạn{% endblock %}
 
+{% block extra_css %}
+<style>
+    .setup-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+    .setup-card {
+        width: 100%;
+        max-width: 720px;
+        border: none;
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+        border-radius: 0.75rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4" style="max-width: 720px;">
-    <div class="card shadow-sm">
+<div class="setup-container">
+    <div class="card setup-card">
         <div class="card-body p-4 p-md-5">
             <div class="text-center mb-4">
                 <h1 class="h3">Hoàn tất Hồ sơ của bạn</h1>
-                <p class="text-muted">Cập nhật tên hiển thị và thông tin chuyên môn để mọi người biết đến bạn!</p>
+                <p class="text-muted">Cập nhật tên hiển thị và các thông tin khác để mọi người biết đến bạn!</p>
             </div>
 
             <form method="post">
                 {% csrf_token %}
-                <div class.row">
-                    <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">{{ form.first_name|as_crispy_field }}</div>
+                    <div class="col-md-6 mb-3">{{ form.last_name|as_crispy_field }}</div>
                 </div>
-                <hr>
-                <h5>Thông tin chuyên môn (tùy chọn)</h5>
-                <p class="small text-muted">Những thông tin này sẽ xuất hiện trên trang hồ sơ công khai của bạn, giúp các BTC hoặc đội bóng khác dễ dàng tìm thấy bạn hơn.</p>
+                
+                <hr class="my-3">
+
+                <h5 class="mb-3">Thông tin chuyên môn (tùy chọn)</h5>
                 
                 {{ form.bio|as_crispy_field }}
                 {{ form.location|as_crispy_field }}
-                {{ form.experience|as_crispy_field }}
-                {{ form.equipment|as_crispy_field }}
+                <div class="row">
+                    <div class="col-md-6">{{ form.experience|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.equipment|as_crispy_field }}</div>
+                </div>
 
-                <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Lưu và Bắt đầu</button>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Lưu và Tiếp tục</button>
+                    
+                    {# Nút này chỉ hiện khi người dùng có vai trò là Cầu thủ #}
+                    {% if is_player %}
+                        <a href="?action=create_team" class="btn btn-success">Tạo đội bóng ngay (Bỏ qua cập nhật hồ sơ)</a>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="?action=skip" class="text-secondary">Bỏ qua tất cả và về trang chủ &raquo;</a>
                 </div>
             </form>
         </div>

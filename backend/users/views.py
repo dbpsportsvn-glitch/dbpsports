@@ -117,13 +117,31 @@ def select_roles_view(request):
     roles = Role.objects.all()
     return render(request, 'users/select_roles.html', {'roles': roles})    
 
+# backend/users/views.py
+
+# ... (các import và các view khác không thay đổi) ...
+
 @login_required
 def profile_setup_view(request):
     profile = request.user.profile
     
+    # Nếu đã hoàn tất hồ sơ trước đó, chuyển về trang chủ
     if profile.is_profile_complete:
         return redirect('home')
 
+    # Xử lý các action "bỏ qua" hoặc "tạo đội ngay"
+    action = request.GET.get('action')
+    if action == 'skip':
+        profile.is_profile_complete = True
+        profile.save()
+        messages.info(request, "Bạn có thể cập nhật hồ sơ của mình sau tại Khu vực cá nhân.")
+        return redirect('home')
+    elif action == 'create_team':
+        profile.is_profile_complete = True
+        profile.save()
+        return redirect('create_standalone_team')
+
+    # Xử lý khi người dùng nhấn nút "Lưu và Tiếp tục"
     if request.method == 'POST':
         form = ProfileSetupForm(request.POST, instance=profile, user=request.user)
         if form.is_valid():
@@ -131,11 +149,24 @@ def profile_setup_view(request):
             profile.is_profile_complete = True
             profile.save()
             messages.success(request, "Cảm ơn bạn đã cập nhật hồ sơ!")
+            
+            # Sau khi lưu, nếu là cầu thủ, chuyển đến trang tạo đội
+            if profile.roles.filter(id='PLAYER').exists():
+                 return redirect('create_standalone_team')
+            
+            # Nếu không phải, về trang chủ
             return redirect('home')
     else:
         form = ProfileSetupForm(instance=profile, user=request.user)
 
-    return render(request, 'users/profile_setup.html', {'form': form})
+    # Kiểm tra xem người dùng có vai trò là "Cầu thủ" hay không
+    is_player = profile.roles.filter(id='PLAYER').exists()
+
+    context = {
+        'form': form,
+        'is_player': is_player # Gửi biến này ra template
+    }
+    return render(request, 'users/profile_setup.html', context)
 
 # === VIEW GÂY LỖI TRƯỚC ĐÂY ===
 def public_profile_view(request, username):
