@@ -33,6 +33,10 @@ from django.db import transaction
 # === THÊM: KIỂM TRA URL next AN TOÀN ===
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from .forms import TournamentStaffInviteForm
+from tournaments.models import TournamentStaff
+from users.models import Role
+
 #=================================
 # Helper: ưu tiên ?next= nếu hợp lệ, nếu không quay về default_url
 def safe_redirect(request, default_url: str):
@@ -309,8 +313,14 @@ def manage_tournament(request, pk):
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
         context['knockout_matches'] = knockout_matches_list
 
-    elif view_name == 'members':
-        context['members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
+    # === THAY THẾ elif cho 'members' BẰNG 'staff' ===
+    elif view_name == 'staff':
+        context['active_page'] = 'staff' # Đổi tên active_page
+        context['staff_invite_form'] = TournamentStaffInviteForm()
+        # Thành viên của đơn vị tổ chức
+        context['org_members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
+        # Nhân sự chuyên môn cho giải đấu này
+        context['tournament_staff'] = TournamentStaff.objects.filter(tournament=tournament).select_related('user', 'role')
 
     # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
     elif view_name == 'players':
@@ -1036,3 +1046,46 @@ def send_announcement_email(request, pk):
         messages.warning(request, "Không tìm thấy email của đội trưởng nào đã đăng ký thành công để gửi.")
 
     return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
+
+# === THÊM 2 HÀM MỚI NÀY VÀO CUỐI FILE ===
+@login_required
+def add_tournament_staff(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        form = TournamentStaffInviteForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            role = form.cleaned_data['role']
+            user_to_add = User.objects.get(email__iexact=email)
+
+            staff, created = TournamentStaff.objects.get_or_create(
+                tournament=tournament,
+                user=user_to_add,
+                role=role
+            )
+            if created:
+                messages.success(request, f"Đã thêm {user_to_add.get_full_name() or user_to_add.username} với vai trò {role.name} vào giải đấu.")
+            else:
+                messages.warning(request, f"{user_to_add.get_full_name() or user_to_add.username} đã có vai trò này trong giải đấu.")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label}: {error}")
+    
+    return redirect(f"{reverse('organizations:manage_tournament', args=[tournament_pk])}?view=staff")
+
+@login_required
+def remove_tournament_staff(request, pk):
+    staff_entry = get_object_or_404(TournamentStaff, pk=pk)
+    tournament = staff_entry.tournament
+    if not tournament.organization or request.user not in tournament.organization.members.all():
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    if request.method == 'POST':
+        staff_entry.delete()
+        messages.success(request, "Đã xóa thành viên khỏi đội ngũ chuyên môn của giải đấu.")
+    
+    return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=staff")    

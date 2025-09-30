@@ -23,7 +23,12 @@ urlpatterns = [
     path('tournaments/<int:tournament_pk>/create-match/', views.create_match, name='create_match'),
     path('teams/<int:pk>/delete/', views.delete_team, name='delete_team'),
     path('player/<int:pk>/edit/', views.edit_player, name='edit_player'),
-    path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),    
+    path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),   
+    # === thêm xoá blv cho các giải đấu === 
+    path('tournaments/<int:tournament_pk>/staff/add/', views.add_tournament_staff, name='add_tournament_staff'),
+    path('staff/<int:pk>/remove/', views.remove_tournament_staff, name='remove_tournament_staff'),
+
+
     # === THÊM CÁC URL MỚI CHO THÔNG BÁO ===
     path('tournaments/<int:tournament_pk>/announcements/create/', views.create_announcement, name='create_announcement'),
     path('announcements/<int:pk>/edit/', views.edit_announcement, name='edit_announcement'),

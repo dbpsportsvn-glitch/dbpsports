@@ -1,4 +1,5 @@
 {% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
 
 {% block sidebar %}
     {% include 'organizations/_manage_tournament_nav.html' %}
@@ -577,6 +578,58 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+
+            {# === KHỐI MỚI CHO "NHÂN SỰ" (STAFF) ĐƯỢC THÊM VÀO ĐÂY === #}
+            {% elif active_page == 'staff' %}
+                <div class="row">
+                    <div class="col-lg-7">
+                        <h5 class="mb-3">Đội ngũ chuyên môn của giải đấu</h5>
+                        <p class="text-muted small">Đây là danh sách các Bình luận viên, Media... được cấp quyền truy cập các tính năng đặc biệt cho giải đấu <strong>{{ tournament.name }}</strong>.</p>
+                        <ul class="list-group">
+                            {% for staff in tournament_staff %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong>
+                                    <span class="badge bg-info text-dark ms-2">{{ staff.role.name }}</span>
+                                </div>
+                                <form method="post" action="{% url 'organizations:remove_tournament_staff' pk=staff.pk %}" onsubmit="return confirm('Bạn có chắc muốn xóa vai trò này?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                </form>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-muted">Chưa có thành viên chuyên môn nào.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Thành viên Ban Tổ Chức</h5>
+                        <p class="text-muted small">Đây là các thành viên thuộc đơn vị tổ chức <strong>{{ organization.name }}</strong>. Họ có quyền quản lý chung cho tất cả các giải đấu.</p>
+                        <ul class="list-group">
+                            {% for member in org_members %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                                    <span class="badge bg-secondary">{{ member.get_role_display }}</span>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="card card-body bg-light position-sticky" style="top: 80px;">
+                            <h5 class="mb-3">Mời thành viên chuyên môn</h5>
+                            <form method="post" action="{% url 'organizations:add_tournament_staff' tournament_pk=tournament.pk %}">
+                                {% csrf_token %}
+                                {{ staff_invite_form|crispy }}
+                                <div class="d-grid mt-3">
+                                    <button type="submit" class="btn btn-primary">Gửi lời mời</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             {% endif %}
         </div>

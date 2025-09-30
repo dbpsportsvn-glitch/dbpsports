@@ -562,3 +562,35 @@ class VoteRecord(models.Model):
 
     def __str__(self):
         return f"{self.voter.username} voted for {self.voted_for.full_name} in {self.tournament.name}"        
+
+# === THÊM MODEL MỚI VÀO CUỐI FILE ===
+class TournamentStaff(models.Model):
+    """
+    Liên kết một User với vai trò chuyên môn trong một Giải đấu cụ thể.
+    """
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name='staff',
+        verbose_name="Giải đấu"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='staff_assignments',
+        verbose_name="Thành viên"
+    )
+    role = models.ForeignKey(
+        'users.Role', # Dùng chuỗi để tránh lỗi import vòng
+        on_delete=models.CASCADE,
+        verbose_name="Vai trò chuyên môn"
+    )
+
+    class Meta:
+        ordering = ['role']
+        verbose_name = "Thành viên chuyên môn"
+        verbose_name_plural = "Đội ngũ chuyên môn"
+        unique_together = ('tournament', 'user', 'role')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role.name} for {self.tournament.name}"        

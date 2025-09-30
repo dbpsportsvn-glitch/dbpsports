@@ -26,6 +26,7 @@ from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
 from organizations.forms import GoalForm, CardForm, SubstitutionForm 
 from .utils import get_current_vote_value
+from .models import TournamentStaff
 
 # Local Application Imports
 from organizations.models import Organization
@@ -1252,11 +1253,27 @@ def match_control_view(request, pk):
         Match.objects.select_related('tournament__organization', 'team1', 'team2'),
         pk=pk
     )
+
+    # === BẮT ĐẦU THAY THẾ LOGIC KIỂM TRA QUYỀN ===
     is_organizer = False
-    if match.tournament.organization and request.user.is_authenticated:
+    is_commentator = False
+
+    if request.user.is_authenticated and match.tournament.organization:
+        # 1. Kiểm tra xem có phải là thành viên BTC không
         is_organizer = match.tournament.organization.members.filter(pk=request.user.pk).exists()
-    if not request.user.is_staff and not is_organizer:
+        
+        # 2. Nếu không phải BTC, kiểm tra xem có phải là BLV cho giải này không
+        if not is_organizer:
+            is_commentator = TournamentStaff.objects.filter(
+                tournament=match.tournament,
+                user=request.user,
+                role__id='COMMENTATOR'
+            ).exists()
+
+    # Chỉ staff của Django, BTC hoặc BLV được chỉ định mới có quyền vào
+    if not request.user.is_staff and not is_organizer and not is_commentator:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    # === KẾT THÚC THAY THẾ LOGIC ===
 
     if request.method == 'POST':
         action = request.POST.get('action')

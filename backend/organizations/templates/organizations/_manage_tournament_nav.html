@@ -47,12 +47,13 @@
                     <i class="bi bi-megaphone-fill"></i> Gửi Thông báo
                 </a>
             </li>
+            {# === THAY ĐỔI DÒNG BÊN DƯỚI === #}
             <li class="nav-item">
-                <a class="nav-link {% if active_page == 'members' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=members">
-                    <i class="bi bi-person-lines-fill"></i> Thành viên BTC
+                <a class="nav-link {% if active_page == 'staff' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=staff">
+                    <i class="bi bi-person-lines-fill"></i> Nhân sự
                 </a>
             </li>
-
+            {# === KẾT THÚC THAY ĐỔI === #}
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="{% url 'organizations:edit_tournament' pk=tournament.pk %}">
                     <i class="bi bi-gear-fill"></i> Cài đặt Giải đấu

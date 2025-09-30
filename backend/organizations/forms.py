@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from tournaments.forms import PlayerCreationForm
 from tournaments.models import Substitution 
+from users.models import Role
 
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
@@ -320,3 +321,21 @@ class SubstitutionForm(forms.ModelForm):
         labels = {
             'minute': 'Phút thay người'
         }        
+
+# === THÊM FORM MỚI VÀO CUỐI FILE ===
+class TournamentStaffInviteForm(forms.Form):
+    email = forms.EmailField(
+        label="Email thành viên",
+        widget=forms.EmailInput(attrs={'placeholder': 'nhapemail@vidu.com'})
+    )
+    role = forms.ModelChoiceField(
+        # Chỉ cho phép chọn các vai trò chuyên môn, loại bỏ Cầu thủ và BTC
+        queryset=Role.objects.exclude(id__in=['ORGANIZER', 'PLAYER']),
+        label="Vai trò chuyên môn"
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
+        return email        
