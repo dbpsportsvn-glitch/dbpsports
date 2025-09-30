@@ -23,18 +23,14 @@
   backdrop-filter: blur(6px);
 }
 
-/* SỬA LỖI HIỂN THỊ CHO THẺ QUOTA TRONG HERO */
-.voting-hero .card-body {
-    background: rgba(255,255,255,.9) !important;
-    color: #0f172a;
-    backdrop-filter: blur(4px);
+/* BỔ SUNG: CSS cho khu vực thông tin phiếu bầu mới */
+.vote-info-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    max-width: 450px; /* Giới hạn chiều rộng cho đẹp hơn */
 }
-.voting-hero .card-body b {
-    color: #0f172a;
-}
-.voting-hero .card-body .text-warning {
-    color: #f97316 !important;
-}
+
 
 /* CARD FIFA STYLE - NÂNG CẤP LỚN VỀ THẨM MỸ */
 .card-fut {
@@ -190,43 +186,55 @@
 <div class="container my-4">
 
   <div class="voting-hero mb-4">
-    <div class="hero-inner">
-      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-          <h1 class="mb-1"><i class="bi bi-person-check-fill"></i> Bình chọn Cầu thủ</h1>
-          <div class="hero-badges">
-            <span class="badge badge-soft">Giải đấu: <b>{{ tournament.name }}</b></span>
-            {% if user_role %}<span class="badge badge-soft">Vai trò: <b>{{ user_role }}</b></span>{% endif %}
-            {% if current_vote_value %}<span class="badge badge-soft">1 phiếu = <b id="vote-value">{{ current_vote_value }}</b></span>{% endif %}
-          </div>
-        </div>
+      <div class="hero-inner">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-4">
+              
+              <div>
+                  <h1 class="mb-2"><i class="bi bi-person-check-fill"></i> Bình chọn Cầu thủ</h1>
+                  <div class="hero-badges mb-3">
+                      <span class="badge badge-soft">Giải đấu: <b>{{ tournament.name }}</b></span>
+                      {% if user_role %}<span class="badge badge-soft">Vai trò: <b>{{ user_role }}</b></span>{% endif %}
+                      {% if current_vote_value %}<span class="badge badge-soft">1 phiếu = <b id="vote-value">{{ current_vote_value }}</b></span>{% endif %}
+                  </div>
 
-        <div class="card border-0" style="min-width: 320px;">
-          <div class="card-body p-3" style="border-radius: 14px; border:1px solid rgba(255,255,255,.25);">
-            <div class="d-flex justify-content-between mb-1 small">
-              <span>Đã dùng</span>
-              <span>
-                <b>{{ votes_cast_count|default:0 }}</b> /
-                <b>{% firstof total_available_votes max_votes 0 %}</b>
-              </span>
-            </div>
-            <div class="progress" style="height: 12px;">
-              <div class="progress-bar bg-success"
-                role="progressbar"
-                style="width: {{ progress_percentage|default:0 }}%;"
-                aria-valuenow="{{ votes_cast_count|default:0 }}"
-                aria-valuemin="0"
-                aria-valuemax="{% firstof total_available_votes max_votes 0 %}">
+                  <div class="p-3 rounded-3 vote-info-box">
+                      {% with total_votes_denominator=total_available_votes|default:max_votes|default:1 %}
+                      <div class="d-flex justify-content-between align-items-center text-white small mb-1">
+                          <span>Đã dùng: <b>{{ votes_cast_count|default:0 }} / {{ total_votes_denominator }}</b></span>
+                          <span>Còn lại: <b class="text-warning">{{ remaining_votes|default:0 }}</b></span>
+                      </div>
+
+                      <div class="progress" style="height: 10px;">
+                          <div class="progress-bar bg-success"
+                               role="progressbar"
+                               style="width: {% widthratio votes_cast_count total_votes_denominator 100 %}%;"
+                               aria-valuenow="{{ votes_cast_count|default:0 }}"
+                               aria-valuemin="0"
+                               aria-valuemax="{{ total_votes_denominator }}">
+                          </div>
+                      </div>
+
+                      <div class="text-white small mt-2">
+                          Số phiếu bầu: <b>{% firstof role_quota_votes 0 %}</b>
+                      </div>
+                      {% endwith %}
+                  </div>
               </div>
-            </div>
-            <div class="mt-2 d-flex justify-content-between small">
-              <span>Quota vai trò: <b>{% firstof role_quota_votes 0 %}</b></span>
-              <span>Còn lại: <b class="text-warning">{{ remaining_votes|default:0 }}</b></span>
-            </div>
+
+              <div class="text-center">
+                  {% comment %}
+                    THAY ĐỔI TẠI ĐÂY:
+                    - Kiểm tra xem giải đấu có đơn vị tổ chức và logo không.
+                    - Nếu có, hiển thị logo.
+                    - Bỏ chữ "Logo Ban Tổ Chức" trong alt.
+                  {% endcomment %}
+                  {% if tournament.organization and tournament.organization.logo %}
+                      <img src="{{ tournament.organization.logo.url }}" alt="{{ tournament.organization.name }}" style="max-height: 80px; opacity: 0.8;">
+                  {% endif %}
+              </div>
+
           </div>
-        </div>
       </div>
-    </div>
   </div>
 
   <div class="legend-box mb-3">

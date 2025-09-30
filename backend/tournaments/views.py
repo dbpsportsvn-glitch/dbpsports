@@ -1462,23 +1462,19 @@ def player_voting_view(request, tournament_pk):
     is_captain = Team.objects.filter(tournament=tournament, captain=user).exists()
     is_player = Player.objects.filter(team__tournament=tournament, user=user).exists()
     
-    # === THÊM LOGIC MỚI: KIỂM TRA VAI TRÒ CHUYÊN MÔN ===
     is_specialist_staff = TournamentStaff.objects.filter(
         tournament=tournament, 
         user=user, 
         role__id__in=['COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'COLLABORATOR', 'TOURNAMENT_MANAGER']
     ).exists()
 
-    # Xác định số phiếu tối đa dựa trên vai trò (ưu tiên từ cao đến thấp)
     if is_organizer:
         user_role = "Ban tổ chức"
         max_votes = 3
     elif is_captain:
         user_role = "Đội trưởng"
         max_votes = 2
-    # === THÊM ĐIỀU KIỆN MỚI CHO VAI TRÒ CHUYÊN MÔN ===
     elif is_specialist_staff:
-        # Lấy tên vai trò cụ thể để hiển thị
         staff_entry = TournamentStaff.objects.get(tournament=tournament, user=user)
         user_role = staff_entry.role.name
         max_votes = 2
@@ -1540,17 +1536,23 @@ def player_voting_view(request, tournament_pk):
             except Exception as e:
                 messages.error(request, f"Đã có lỗi xảy ra: {e}")
 
-    # === BẮT ĐẦU BỔ SUNG TÍNH TOÁN GIÁ TRỊ CẦU THỦ ===
-    players_to_vote = Player.objects.filter(team__tournament=tournament).exclude(user=user).select_related('team').order_by('team__name', 'full_name')
+    # === BẮT ĐẦU THAY ĐỔI LOGIC SẮP XẾP TẠI ĐÂY ===
+    
+    # Lấy danh sách cầu thủ ban đầu (chưa sắp xếp)
+    players_list = list(Player.objects.filter(team__tournament=tournament).exclude(user=user).select_related('team'))
     
     # Lấy giá trị hiện tại của một phiếu bầu
     current_vote_value = get_current_vote_value()
 
     # Thêm thuộc tính 'market_value' vào mỗi đối tượng cầu thủ
-    for player in players_to_vote:
+    for player in players_list:
         value_from_votes = player.votes * current_vote_value
         player.market_value = player.transfer_value + value_from_votes
-    # === KẾT THÚC BỔ SUNG ===
+        
+    # Sắp xếp danh sách cầu thủ bằng Python dựa trên 'market_value' từ cao đến thấp
+    players_to_vote = sorted(players_list, key=lambda p: p.market_value, reverse=True)
+    
+    # === KẾT THÚC THAY ĐỔI LOGIC SẮP XẾP ===
 
     context = {
         'tournament': tournament,
@@ -1560,9 +1562,9 @@ def player_voting_view(request, tournament_pk):
         'votes_cast_count': votes_cast_in_tournament,
         'remaining_votes': remaining_votes,
         'progress_percentage': progress_percentage,
-        'current_vote_value': current_vote_value,  # <— thêm dòng này
+        'current_vote_value': current_vote_value,
     }
-    return render(request, 'tournaments/player_voting.html', context)     
+    return render(request, 'tournaments/player_voting.html', context)    
 
 @login_required
 @require_POST # Chỉ cho phép truy cập bằng phương thức POST
