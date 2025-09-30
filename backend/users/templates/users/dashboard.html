@@ -221,7 +221,17 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="teams" role="tabpanel">
-                <h5>Các đội bạn đang quản lý</h5>
+                
+                {# === THAY THẾ DÒNG <h5> CŨ BẰNG KHỐI NÀY === #}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Các đội bạn đang quản lý</h5>
+                    {% if is_player_role %}
+                        <a href="{% url 'create_standalone_team' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle-fill"></i> Tạo đội bóng mới
+                        </a>
+                    {% endif %}
+                </div>
+
                 <div class="row mt-3">
                     {% for team in managed_teams %}
                         <div class="col-lg-6 mb-4">
@@ -236,7 +246,7 @@
                             </div>
                         </div>
                     {% empty %}
-                         <div class="col">
+                        <div class="col">
                             <p class="text-muted">Bạn chưa quản lý đội bóng nào.</p>
                         </div>
                     {% endfor %}

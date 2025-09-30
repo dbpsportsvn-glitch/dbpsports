@@ -1,15 +1,16 @@
 # backend/users/views.py
 
-# === THÊM get_object_or_404 VÀO DÒNG NÀY ===
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
-from tournaments.models import Team, Tournament, Player, TeamAchievement
+# Import các model từ đúng ứng dụng của chúng
+from tournaments.models import Team, Tournament, Player, TeamAchievement, VoteRecord 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
+# === KẾT THÚC THAY THẾ ===
 
 @login_required
 def dashboard(request):
@@ -110,7 +111,25 @@ def select_roles_view(request):
             profile.has_selected_roles = True
             profile.save()
             
-            messages.success(request, "Đã lưu vai trò! Vui lòng hoàn tất hồ sơ của bạn.")
+            # === LOGIC PHÂN QUYỀN MỚI ===
+
+            # 1. Tặng phiếu bầu cho vai trò Cầu thủ
+            if len(selected_role_ids) == 1 and selected_role_ids[0] == 'PLAYER':
+                # Tạo một bản ghi vote "ảo" để làm quà tặng
+                # Lưu ý: Đây là một phiếu bầu tượng trưng, không gắn với giải đấu nào
+                VoteRecord.objects.create(
+                    voter=request.user,
+                    weight=1 
+                )
+                messages.success(request, "Chúc mừng bạn đã gia nhập cộng đồng cầu thủ! Bạn được tặng 1 phiếu bầu làm quà khởi đầu.")
+
+            # 2. Điều hướng cho Ban tổ chức
+            if 'ORGANIZER' in selected_role_ids:
+                messages.info(request, "Để bắt đầu, vui lòng hoàn tất thông tin đăng ký Ban tổ chức của bạn.")
+                return redirect('organizations:create')
+            
+            # 3. Điều hướng mặc định cho các vai trò khác
+            messages.success(request, "Đã lưu vai trò! Vui lòng hoàn tất hồ sơ của bạn để mọi người có thể tìm thấy bạn.")
             return redirect('profile_setup') 
 
     roles = Role.objects.all()
