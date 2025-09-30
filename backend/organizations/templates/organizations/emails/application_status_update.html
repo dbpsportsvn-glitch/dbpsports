@@ -1,0 +1,7 @@
+<h3>Cập nhật trạng thái đơn ứng tuyển</h3>
+<p>Chào {{ applicant.get_full_name|default:applicant.username }},</p>
+<p>Đơn ứng tuyển của bạn cho vị trí <strong>{{ job.title }}</strong> tại giải đấu <strong>{{ job.tournament.name }}</strong> đã được cập nhật.</p>
+<ul>
+    <li><strong>Trạng thái mới:</strong> {{ application.get_status_display }}</li>
+</ul>
+<p>Cảm ơn bạn đã quan tâm.<br>Ban Tổ Chức giải đấu.</p>

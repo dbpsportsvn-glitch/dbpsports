@@ -1205,25 +1205,31 @@ def update_application_status_view(request, pk):
         updated_application = form.save()
         messages.success(request, "Đã cập nhật trạng thái đơn ứng tuyển.")
 
-        # === BẮT ĐẦU NÂNG CẤP: GỬI THÔNG BÁO CHO NGƯỜI ỨNG TUYỂN ===
         applicant = updated_application.applicant
         job = updated_application.job
-
         status_display = updated_application.get_status_display()
         notification_title = f"Cập nhật trạng thái ứng tuyển"
         notification_message = f"Đơn ứng tuyển của bạn cho vị trí '{job.title}' đã được cập nhật thành: {status_display}."
-        # URL để người dùng nhấn vào và xem lại công việc
-        notification_url = request.build_absolute_uri(
-            reverse('job_detail', kwargs={'pk': job.pk})
+        notification_url = request.build_absolute_uri(reverse('job_detail', kwargs={'pk': job.pk}))
+
+        # Gửi thông báo trên web (đã có)
+        Notification.objects.create(
+            user=applicant, title=notification_title, message=notification_message, related_url=notification_url
         )
 
-        Notification.objects.create(
-            user=applicant,
-            title=notification_title,
-            message=notification_message,
-            notification_type=Notification.NotificationType.GENERIC,
-            related_url=notification_url
-        )
+        # === BẮT ĐẦU NÂNG CẤP: GỬI EMAIL ===
+        if applicant.email:
+            send_notification_email(
+                subject=f"[DBP Sports] {notification_title}",
+                template_name='organizations/emails/application_status_update.html',
+                context={
+                    'job': job,
+                    'applicant': applicant,
+                    'application': updated_application
+                },
+                recipient_list=[applicant.email],
+                request=request
+            )
         # === KẾT THÚC NÂNG CẤP ===
     
     return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)

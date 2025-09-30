@@ -1734,31 +1734,40 @@ def job_detail_view(request, pk):
             application.save()
             messages.success(request, "Bạn đã ứng tuyển thành công!")
             
-            # === BẮT ĐẦU NÂNG CẤP: GỬI THÔNG BÁO CHO BTC ===
+            # Gửi thông báo trên web và email cho BTC
             organization = job.tournament.organization
             if organization:
                 btc_members = organization.members.all()
                 applicant_name = request.user.get_full_name() or request.user.username
                 notification_title = f"Có đơn ứng tuyển mới cho '{job.title}'"
                 notification_message = f"{applicant_name} vừa ứng tuyển vào vị trí của bạn trong giải đấu '{job.tournament.name}'."
-                # URL để BTC nhấn vào và xem ngay
                 notification_url = request.build_absolute_uri(
                     reverse('organizations:manage_jobs', kwargs={'tournament_pk': job.tournament.pk})
                 )
                 
+                # Gửi thông báo trên web (đã có)
                 notifications_to_create = [
-                    Notification(
-                        user=member,
-                        title=notification_title,
-                        message=notification_message,
-                        notification_type=Notification.NotificationType.GENERIC,
-                        related_url=notification_url
-                    )
+                    Notification(user=member, title=notification_title, message=notification_message, related_url=notification_url)
                     for member in btc_members
                 ]
                 if notifications_to_create:
                     Notification.objects.bulk_create(notifications_to_create)
-            # === KẾT THÚC NÂNG CẤP ===
+
+                # === BẮT ĐẦU NÂNG CẤP: GỬI EMAIL ===
+                btc_emails = [member.email for member in btc_members if member.email]
+                if btc_emails:
+                    send_notification_email(
+                        subject=f"[DBP Sports] {notification_title}",
+                        template_name='organizations/emails/new_job_application.html',
+                        context={
+                            'job': job,
+                            'applicant': request.user,
+                            'application': application
+                        },
+                        recipient_list=btc_emails,
+                        request=request
+                    )
+                # === KẾT THÚC NÂNG CẤP ===
 
             return redirect('job_detail', pk=pk)
     else:

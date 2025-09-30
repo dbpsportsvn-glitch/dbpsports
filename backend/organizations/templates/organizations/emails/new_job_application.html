@@ -1,0 +1,13 @@
+<h3>Có đơn ứng tuyển mới</h3>
+<p>Chào Ban Tổ Chức,</p>
+<p><strong>{{ applicant.get_full_name|default:applicant.username }}</strong> vừa ứng tuyển vào vị trí <strong>{{ job.title }}</strong> cho giải đấu <strong>{{ job.tournament.name }}</strong>.</p>
+
+{% if application.message %}
+<p><strong>Lời nhắn từ ứng viên:</strong></p>
+<blockquote style="border-left: 3px solid #ccc; padding-left: 15px; margin-left: 10px;">
+    {{ application.message|linebreaks }}
+</blockquote>
+{% endif %}
+
+<p>Vui lòng truy cập trang quản lý tuyển dụng để xem xét đơn ứng tuyển này.</p>
+<p>Trân trọng,<br>Hệ thống DBP Sports</p>
