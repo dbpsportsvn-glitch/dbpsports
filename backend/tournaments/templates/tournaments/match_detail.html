@@ -169,17 +169,37 @@
         </a>
         
         <div class="d-flex gap-2">
-            {% if captain_team %}
-            <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
-                <i class="bi bi-list-check"></i>
-                <span>Quản lý Đội hình</span>
-            </a>
-            {% endif %}
+            {% if user.is_staff %}
+                {# 1. QUYỀN CAO NHẤT: Superuser thấy tất cả #}
+                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm">
+                    <i class="bi bi-files"></i> Sổ tay BLV
+                </a>
+                <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-broadcast"></i> Live Control
+                </a>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-list-check"></i> Quản lý Đội hình
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'manage_lineup' match_pk=match.pk team_pk=match.team1.pk %}">Đội: {{ match.team1.name }}</a></li>
+                        <li><a class="dropdown-item" href="{% url 'manage_lineup' match_pk=match.pk team_pk=match.team2.pk %}">Đội: {{ match.team2.name }}</a></li>
+                    </ul>
+                </div>
 
-            {% if can_control_match %}
-                <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm d-flex align-items-center gap-1">
-                    <i class="bi bi-broadcast"></i>
-                    <span>Live Control</span>
+            {% elif can_control_match %}
+                {# 2. QUYỀN CỦA BTC/BLV: Thấy Live Control & Sổ tay, KHÔNG thấy đội hình #}
+                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm">
+                    <i class="bi bi-files"></i> Sổ tay BLV
+                </a>
+                <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-broadcast"></i> Live Control
+                </a>
+
+            {% elif captain_team %}
+                {# 3. QUYỀN CỦA ĐỘI TRƯỞNG: Chỉ thấy đội hình của mình #}
+                <a href="{% url 'manage_lineup' match_pk=match.pk team_pk=captain_team.pk %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-list-check"></i> Quản lý Đội hình
                 </a>
             {% endif %}
         </div>

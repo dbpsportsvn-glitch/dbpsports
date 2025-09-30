@@ -105,13 +105,7 @@
     {# === KHỐI NÚT BÌNH CHỌN ĐÃ ĐƯỢC DI CHUYỂN LÊN TRÊN === #}
 
     {% if user.is_staff or is_organizer or is_tournament_manager or is_media_staff or is_photographer_staff %}
-        <div class="mt-3 d-flex flex-wrap gap-2">
-            
-            {% if is_media_staff or is_photographer_staff or is_tournament_manager or is_organizer or user.is_staff %}
-            <a href="{% url 'media_dashboard' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
-                <i class="bi bi-camera-reels-fill"></i> Tới Khu vực Media
-            </a>
-            {% endif %}
+        <div class="mt-3 d-flex flex-wrap gap-2">            
 
             {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
             <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">

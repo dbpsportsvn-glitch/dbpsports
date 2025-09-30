@@ -5,10 +5,10 @@ from functools import lru_cache
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from django.core.cache import cache
+from typing import Union # <-- THÊM DÒNG NÀY ĐỂ TƯƠNG THÍCH PYTHON 3.9
 
 # --- CÁC BIẾN CẤU HÌNH ---
 TZ = ZoneInfo("Asia/Ho_Chi_Minh")
-# !!! QUAN TRỌNG: Thay đổi thông tin này để phù hợp với trang web của bạn
 HEADERS = {"User-Agent": "DBPSports/1.0 (contact: dbpsportsvn@gmail.com)"}
 
 # --- CÁC HÀM TIỆN ÍCH VÀ BẢN ĐỒ DỮ LIỆU ---
@@ -68,7 +68,8 @@ def geocode_open_meteo_vn(q: str):
     except Exception:
         return None
 
-def resolve_coords_vn(location_name: str, region: str | None = None):
+# === SỬA LỖI TẠI DÒNG NÀY ===
+def resolve_coords_vn(location_name: str, region: Union[str, None] = None):
     if not location_name: return None
     key = ALIASES.get(_normalize(location_name), _normalize(location_name))
 
@@ -108,7 +109,8 @@ def fetch_forecast_day(lat: float, lon: float, date_str: str):
     cache.set(ck, data, timeout=_cache_ttl(date_str))
     return data
 
-def get_weather_for_match(location_name: str, match_datetime: datetime, region: str | None = None):
+# === VÀ SỬA LỖI TẠI DÒNG NÀY ===
+def get_weather_for_match(location_name: str, match_datetime: datetime, region: Union[str, None] = None):
     loc = resolve_coords_vn(location_name, region)
     if not loc: return None
     

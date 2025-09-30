@@ -40,10 +40,17 @@ from .forms import ProfessionalReviewForm
 
 def user_is_org_member(user, organization):
     """Kiểm tra xem user có phải là thành viên (Owner/Admin) của BTC không."""
-    if not user.is_authenticated or not organization:
+    if not user.is_authenticated:
         return False
+    
+    # SỬA LỖI: Luôn cho phép superuser đi qua trước tiên
     if user.is_staff:
         return True
+        
+    # Sau đó mới kiểm tra các điều kiện khác
+    if not organization:
+        return False
+        
     return organization.members.filter(pk=user.pk).exists()
 
 def user_has_tournament_role(user, tournament, role_ids):
