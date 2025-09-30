@@ -124,6 +124,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
+                            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
                             {% if user.organizations.all.first %}
                                 {# Nếu đã có tổ chức, hiện link vào trang quản lý #}
                                 <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Hoàn tất Hồ sơ của bạn{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h1 class="h3">Hoàn tất Hồ sơ của bạn</h1>
+                <p class="text-muted">Cập nhật tên hiển thị và thông tin chuyên môn để mọi người biết đến bạn!</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class.row">
+                    <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
+                    <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
+                </div>
+                <hr>
+                <h5>Thông tin chuyên môn (tùy chọn)</h5>
+                <p class="small text-muted">Những thông tin này sẽ xuất hiện trên trang hồ sơ công khai của bạn, giúp các BTC hoặc đội bóng khác dễ dàng tìm thấy bạn hơn.</p>
+                
+                {{ form.bio|as_crispy_field }}
+                {{ form.location|as_crispy_field }}
+                {{ form.experience|as_crispy_field }}
+                {{ form.equipment|as_crispy_field }}
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Lưu và Bắt đầu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

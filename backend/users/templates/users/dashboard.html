@@ -147,11 +147,13 @@
                 </p>
             </div>
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                <a class="nav-link active" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
-                <a class="nav-link" id="following-tab" data-bs-toggle="pill" href="#following" role="tab"><i class="bi bi-bell-fill"></i>Giải đấu theo dõi</a>
-                <a class="nav-link" id="teams-tab" data-bs-toggle="pill" href="#teams" role="tab"><i class="bi bi-shield-fill"></i>Các đội quản lý</a>
-                <a class="nav-link" id="notifications-tab" data-bs-toggle="pill" href="#notifications" role="tab"><i class="bi bi-gear-wide-connected"></i>Cài đặt Thông báo</a>
-                <a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" role="tab"><i class="bi bi-key-fill"></i>Đổi mật khẩu</a>
+                <a class="nav-link {% if not request.GET.tab or request.GET.tab == 'profile' %}active{% endif %}" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
+                {# === THÊM TAB MỚI VÀO ĐÂY === #}
+                <a class="nav-link {% if request.GET.tab == 'public-profile' %}active{% endif %}" id="public-profile-tab" data-bs-toggle="pill" href="#public-profile" role="tab"><i class="bi bi-person-vcard"></i>Hồ sơ công khai</a>
+                <a class="nav-link {% if request.GET.tab == 'following' %}active{% endif %}" id="following-tab" data-bs-toggle="pill" href="#following" role="tab"><i class="bi bi-bell-fill"></i>Giải đấu theo dõi</a>
+                <a class="nav-link {% if request.GET.tab == 'teams' %}active{% endif %}" id="teams-tab" data-bs-toggle="pill" href="#teams" role="tab"><i class="bi bi-shield-fill"></i>Các đội quản lý</a>
+                <a class="nav-link {% if request.GET.tab == 'notifications' %}active{% endif %}" id="notifications-tab" data-bs-toggle="pill" href="#notifications" role="tab"><i class="bi bi-gear-wide-connected"></i>Cài đặt Thông báo</a>
+                <a class="nav-link {% if request.GET.tab == 'password' %}active{% endif %}" id="password-tab" data-bs-toggle="pill" href="#password" role="tab"><i class="bi bi-key-fill"></i>Đổi mật khẩu</a>
             </div>
         </aside>
 
@@ -172,6 +174,30 @@
                     </div>
                 </div>
             </div>
+
+            {# === THÊM NỘI DUNG TAB MỚI VÀO ĐÂY === #}
+            <div class="tab-pane fade {% if request.GET.tab == 'public-profile' %}show active{% endif %}" id="public-profile" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h4>Chỉnh sửa Hồ sơ Công khai</h4>
+                                <a href="{% url 'public_profile' username=user.username %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-eye-fill"></i> Xem trang của bạn
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    {{ profile_form|crispy }}
+                                    <button type="submit" name="update_public_profile" class="btn btn-primary w-100 mt-3">Lưu thay đổi</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-pane fade" id="following" role="tabpanel">
                 <h5>Các giải đấu bạn đang theo dõi</h5>
                 <div class="row mt-3">
@@ -280,6 +306,27 @@ document.addEventListener('DOMContentLoaded', function() {
         var avatarModal = new bootstrap.Modal(document.getElementById('avatarModal'));
         avatarModal.show();
     {% endif %}
+    
+    // Script để giữ lại tab đang active khi tải lại trang
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+        const triggerEl = document.querySelector(`#v-pills-tab button[data-bs-target="#${tab}"]`);
+        if(triggerEl) {
+            const tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+    // Cập nhật URL khi chuyển tab
+    const tabButtons = document.querySelectorAll('#v-pills-tab button[data-bs-toggle="pill"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const newTabId = event.target.getAttribute('href').substring(1);
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('tab', newTabId);
+            history.pushState({}, '', newUrl);
+        });
+    });
 });
 </script>
 

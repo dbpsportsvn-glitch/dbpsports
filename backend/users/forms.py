@@ -1,3 +1,5 @@
+# backend/users/forms.py
+
 # Improt
 from django import forms
 from allauth.account.forms import SignupForm
@@ -68,3 +70,62 @@ class NotificationPreferencesForm(forms.ModelForm):
             'notify_draw_results': 'Khi giải đấu bốc thăm chia bảng xong',
             'notify_schedule_updates': 'Khi có lịch thi đấu mới được tạo',
         }
+
+# === FORM MỚI CHO TRANG SETUP PROFILE ===
+class ProfileSetupForm(forms.ModelForm):
+    first_name = forms.CharField(label="Tên", max_length=150, required=True)
+    last_name = forms.CharField(label="Họ", max_length=150, required=True)
+
+    class Meta:
+        model = Profile
+        fields = ['first_name', 'last_name', 'bio', 'location', 'experience', 'equipment']
+        labels = {
+            'bio': 'Giới thiệu bản thân',
+            'location': 'Khu vực hoạt động',
+            'experience': 'Số năm kinh nghiệm',
+            'equipment': 'Thiết bị sở hữu',
+        }
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Lấy 'user' từ view để điền giá trị ban đầu
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Điền tên từ user model vào form
+        if self.user:
+            self.fields['first_name'].initial = self.user.first_name
+            self.fields['last_name'].initial = self.user.last_name
+
+    def save(self, commit=True):
+        # Lưu các trường của Profile model
+        profile = super().save(commit=False)
+        
+        # Cập nhật first_name và last_name cho User model
+        if self.user:
+            self.user.first_name = self.cleaned_data.get('first_name')
+            self.user.last_name = self.cleaned_data.get('last_name')
+            if commit:
+                self.user.save()
+        
+        if commit:
+            profile.save()
+            
+        return profile
+
+# === THÊM FORM MỚI VÀO CUỐI FILE ===
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['bio', 'location', 'experience', 'equipment']
+        labels = {
+            'bio': 'Giới thiệu bản thân (hiển thị công khai)',
+            'location': 'Khu vực hoạt động chính',
+            'experience': 'Số năm kinh nghiệm',
+            'equipment': 'Thiết bị chuyên dụng (nếu có)',
+        }
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4}),
+        }        
