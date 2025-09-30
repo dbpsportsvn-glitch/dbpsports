@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
-from tournaments.models import Team, Tournament, Player, TeamAchievement, VoteRecord 
+from tournaments.models import Team, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
@@ -70,6 +70,18 @@ def dashboard(request):
     followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
     player_profile = getattr(request.user, 'player_profile', None)
 
+    # Lấy danh sách các giải đấu mà người dùng được gán vai trò 'Quản lý Giải đấu'
+    managed_tournaments = Tournament.objects.filter(
+        staff__user=request.user,
+        staff__role__id='TOURNAMENT_MANAGER'
+    ).distinct().order_by('-start_date')
+
+    # === THÊM TRUY VẤN MỚI TẠI ĐÂY ===
+    media_tournaments = Tournament.objects.filter(
+        staff__user=request.user,
+        staff__role__id__in=['MEDIA', 'PHOTOGRAPHER']
+    ).distinct().order_by('-start_date')
+
     context = {
         'user_form': user_form,
         'password_form': password_form,
@@ -80,6 +92,8 @@ def dashboard(request):
         'followed_tournaments': followed_tournaments,
         'player_profile': player_profile,
         'avatar_form_has_errors': avatar_form_has_errors,
+        'managed_tournaments': managed_tournaments,
+        'media_tournaments': media_tournaments,
     }
     return render(request, 'users/dashboard.html', context)
 

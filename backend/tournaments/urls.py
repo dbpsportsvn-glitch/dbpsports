@@ -36,7 +36,9 @@ urlpatterns = [
     path('tournament/<int:pk>/toggle_follow/', views.toggle_follow_view, name='toggle_follow'),
     path('team/create_standalone/', views.create_standalone_team, name='create_standalone_team'),
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),    
-    
+    path('tournament/<int:tournament_pk>/media-dashboard/', views.media_dashboard, name='media_dashboard'),
+    path('match/<int:pk>/media-edit/', views.media_edit_match, name='media_edit_match'),    
+
     # --- URL liên quan đến Đội bóng (Team) ---
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),
     path('team/<int:pk>/', views.team_detail, name='team_detail'),

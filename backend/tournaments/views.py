@@ -24,10 +24,11 @@ from django.views.decorators.cache import never_cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
-from organizations.forms import GoalForm, CardForm, SubstitutionForm 
+from organizations.forms import GoalForm, CardForm, SubstitutionForm, MatchMediaUpdateForm 
 from .utils import get_current_vote_value
 from .models import TournamentStaff
 from organizations.views import user_can_control_match, user_can_upload_gallery
+from organizations.forms import MatchUpdateForm
 
 # Local Application Imports
 from organizations.models import Organization
@@ -1605,3 +1606,60 @@ def create_standalone_team(request):
         'is_standalone': True
     }
     return render(request, 'tournaments/create_team.html', context)
+
+@login_required
+@never_cache
+def media_dashboard(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền: Phải là Media hoặc Nhiếp ảnh gia của giải này
+    is_media_staff = TournamentStaff.objects.filter(
+        tournament=tournament, user=request.user, role__id__in=['MEDIA', 'PHOTOGRAPHER', 'TOURNAMENT_MANAGER']
+    ).exists()
+    is_btc_member = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+
+    if not request.user.is_staff and not is_btc_member and not is_media_staff:
+        return HttpResponseForbidden("Bạn không có quyền truy cập khu vực này.")
+
+    matches = tournament.matches.all().order_by('match_time')
+    
+    context = {
+        'tournament': tournament,
+        'matches': matches
+    }
+    return render(request, 'tournaments/media_dashboard.html', context)
+
+
+# khu vực cho tk Media Và nhiếp ảnh
+@login_required
+@never_cache
+def media_edit_match(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    tournament = match.tournament
+
+    # Logic kiểm tra quyền (giữ nguyên)
+    is_media_staff = TournamentStaff.objects.filter(
+        tournament=tournament, user=request.user, role__id__in=['MEDIA', 'PHOTOGRAPHER', 'TOURNAMENT_MANAGER']
+    ).exists()
+    is_btc_member = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+
+    if not request.user.is_staff and not is_btc_member and not is_media_staff:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+
+    # === SỬA LỖI TẠI ĐÂY: SỬ DỤNG FORM MỚI ===
+    if request.method == 'POST':
+        form = MatchMediaUpdateForm(request.POST, request.FILES, instance=match)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Đã cập nhật thông tin media cho trận đấu: {match}.")
+            return redirect('media_edit_match', pk=match.pk)
+    else:
+        form = MatchMediaUpdateForm(instance=match)
+    # === KẾT THÚC SỬA LỖI ===
+
+    context = {
+        'form': form,
+        'match': match,
+        'tournament': tournament
+    }
+    return render(request, 'tournaments/media_edit_match.html', context)

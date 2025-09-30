@@ -27,6 +27,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.utils.http import url_has_allowed_host_and_scheme
 from users.models import Role
+from .forms import MatchMediaUpdateForm
 
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
@@ -470,27 +471,52 @@ def edit_tournament(request, pk):
 @never_cache
 def manage_match(request, pk):
     match = get_object_or_404(Match.objects.select_related('tournament__organization', 'team1', 'team2'), pk=pk)
-    
-    # === DÒNG KIỂM TRA QUYỀN ĐÃ ĐƯỢC CẬP NHẬT ===
-    if not user_can_manage_tournament(request.user, match.tournament):
+    tournament = match.tournament
+
+    # 1. KIỂM TRA QUYỀN HẠN (LOGIC MỚI)
+    # Kiểm tra xem người dùng có phải là Quản lý/BTC không
+    is_manager_or_btc = user_can_manage_tournament(request.user, tournament)
+    # Kiểm tra xem người dùng có phải là Media của giải này không
+    is_media_staff = TournamentStaff.objects.filter(
+        tournament=tournament, user=request.user, role__id='MEDIA'
+    ).exists()
+
+    # Nếu không phải cả hai thì từ chối truy cập
+    if not is_manager_or_btc and not is_media_staff:
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    tournament = match.tournament # Lấy tournament từ match để dùng cho các logic bên dưới
+    # 2. LẤY DỮ LIỆU CHUNG
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
     teams_in_tournament = tournament.teams.all().order_by('name')
-    
+
+    # 3. CHỌN FORM PHÙ HỢP DỰA TRÊN VAI TRÒ (LOGIC MỚI ĐỂ SỬA LỖI)
+    if is_media_staff and not is_manager_or_btc:
+        # Nếu là Media (và không phải BTC/Quản lý), dùng form giới hạn
+        form_class = MatchMediaUpdateForm
+    else:
+        # Ngược lại, dùng form đầy đủ quyền
+        form_class = MatchUpdateForm
+
+    # 4. XỬ LÝ KHI NGƯỜI DÙNG GỬI DỮ LIỆU (POST)
     if request.method == 'POST':
         action = request.POST.get('action')
+        
+        # Xử lý cập nhật thông tin chung/media
         if action == 'update_match':
-            form = MatchUpdateForm(request.POST, request.FILES, instance=match)
-            form.fields['team1'].queryset = teams_in_tournament
-            form.fields['team2'].queryset = teams_in_tournament
+            form = form_class(request.POST, request.FILES, instance=match)
+            # Chỉ gán queryset cho các trường team nếu chúng tồn tại trong form
+            if 'team1' in form.fields:
+                form.fields['team1'].queryset = teams_in_tournament
+            if 'team2' in form.fields:
+                form.fields['team2'].queryset = teams_in_tournament
+            
             if form.is_valid():
                 form.save()
-                messages.success(request, "Đã cập nhật thông tin chung của trận đấu.")
+                messages.success(request, "Đã cập nhật thông tin trận đấu.")
                 return redirect('organizations:manage_match', pk=match.pk)
         
-        elif action == 'add_goal':
+        # Xử lý thêm bàn thắng (chỉ BTC/Quản lý mới có quyền)
+        elif action == 'add_goal' and is_manager_or_btc:
             goal_form = GoalForm(request.POST)
             goal_form.fields['player'].queryset = players_in_match
             if goal_form.is_valid():
@@ -504,7 +530,8 @@ def manage_match(request, pk):
                     messages.error(request, f"Lỗi: {e.messages[0]}")
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=goals')
 
-        elif action == 'add_card':
+        # Xử lý thêm thẻ phạt (chỉ BTC/Quản lý mới có quyền)
+        elif action == 'add_card' and is_manager_or_btc:
             card_form = CardForm(request.POST)
             card_form.fields['player'].queryset = players_in_match
             if card_form.is_valid():
@@ -518,10 +545,13 @@ def manage_match(request, pk):
                     messages.error(request, f"Lỗi: {e.messages[0]}")
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=cards')
 
-    form = MatchUpdateForm(instance=match)
-    form.fields['team1'].queryset = teams_in_tournament
-    form.fields['team2'].queryset = teams_in_tournament
-    
+    # 5. HIỂN THỊ TRANG (GET)
+    form = form_class(instance=match)
+    if 'team1' in form.fields:
+        form.fields['team1'].queryset = teams_in_tournament
+    if 'team2' in form.fields:
+        form.fields['team2'].queryset = teams_in_tournament
+
     goal_form = GoalForm()
     card_form = CardForm()
     goal_form.fields['player'].queryset = players_in_match
@@ -539,7 +569,8 @@ def manage_match(request, pk):
         'organization': tournament.organization,
         'goals': goals,
         'cards': cards,
-        'active_page': 'matches'
+        'active_page': 'matches',
+        'is_manager_or_btc': is_manager_or_btc, # Gửi biến này để template ẩn/hiện tab
     }
     return render(request, 'organizations/manage_match.html', context)
 

@@ -338,4 +338,16 @@ class TournamentStaffInviteForm(forms.Form):
         email = self.cleaned_data.get('email')
         if not User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
-        return email        
+        return email    
+
+# === THÊM FORM MỚI VÀO CUỐI FILE ===
+class MatchMediaUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = ['livestream_url', 'ticker_text', 'cover_photo', 'gallery_url']
+        labels = {
+            'livestream_url': 'Đường dẫn Livestream (YouTube)',
+            'ticker_text': 'Dòng chữ chạy trên Livestream',
+            'cover_photo': 'Ảnh bìa trận đấu',
+            'gallery_url': 'Link Album ảnh của trận đấu'
+        }            

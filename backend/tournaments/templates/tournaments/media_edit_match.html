@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Chỉnh sửa Media - {{ match }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <a href="{% url 'media_dashboard' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+    </a>
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3>Chỉnh sửa Media cho Trận đấu</h3>
+            <p class="mb-0 text-muted">{{ match }}</p>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
