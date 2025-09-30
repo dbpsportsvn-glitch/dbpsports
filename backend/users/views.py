@@ -8,6 +8,7 @@ from django.contrib import messages
 from tournaments.models import Team, Tournament
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm
 from .models import Profile
+from .models import Role
 
 @login_required
 def dashboard(request):
@@ -78,3 +79,45 @@ def dashboard(request):
         'avatar_form_has_errors': avatar_form_has_errors,
     }
     return render(request, 'users/dashboard.html', context)
+
+# === THÊM VIEW MỚI VÀO CUỐI FILE ===
+@login_required
+def select_roles_view(request):
+    # Lấy profile của người dùng
+    profile = request.user.profile
+    
+    # Nếu người dùng đã chọn vai trò rồi thì chuyển hướng họ về trang dashboard
+    if profile.has_selected_roles:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        # Lấy danh sách ID của các vai trò được chọn từ form
+        selected_role_ids = request.POST.getlist('roles')
+
+        # Kiểm tra giới hạn (tối đa 2 vai trò)
+        if len(selected_role_ids) == 0:
+            messages.error(request, "Bạn phải chọn ít nhất một vai trò.")
+        elif len(selected_role_ids) > 2:
+            messages.error(request, "Bạn chỉ được chọn tối đa 2 vai trò.")
+        else:
+            # Xóa các vai trò cũ (nếu có) và thêm các vai trò mới
+            profile.roles.clear()
+            for role_id in selected_role_ids:
+                try:
+                    role = Role.objects.get(pk=role_id)
+                    profile.roles.add(role)
+                except Role.DoesNotExist:
+                    messages.error(request, f"Vai trò không hợp lệ: {role_id}")
+                    # Quay lại trang chọn vai trò nếu có lỗi
+                    return render(request, 'users/select_roles.html', {'roles': Role.objects.all()})
+            
+            # Đánh dấu là đã hoàn tất chọn vai trò và lưu lại
+            profile.has_selected_roles = True
+            profile.save()
+            
+            messages.success(request, "Cảm ơn bạn! Vai trò đã được cập nhật.")
+            return redirect('home') # Chuyển hướng về trang chủ
+
+    # Nếu là GET request, chỉ hiển thị trang
+    roles = Role.objects.all()
+    return render(request, 'users/select_roles.html', {'roles': roles})    

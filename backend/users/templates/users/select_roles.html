@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chọn Vai trò của bạn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-selection-container {
+        max-width: 960px;
+        margin: 2rem auto;
+    }
+    .role-card {
+        display: block;
+        position: relative;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        height: 100%;
+    }
+    .role-card:hover {
+        border-color: #9ca3af;
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .role-card.selected {
+        border-color: #0d6efd;
+        background-color: #e0eaff;
+        box-shadow: 0 0 15px rgba(13, 110, 253, 0.3);
+    }
+    .role-card .form-check-input {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 1.5em;
+        height: 1.5em;
+        pointer-events: none; /* Để người dùng click cả card */
+    }
+    .role-icon {
+        font-size: 3rem;
+        color: #0d6efd;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="role-selection-container text-center">
+    <h1 class="display-5">Chào mừng đến với DBP Sports!</h1>
+    <p class="lead text-muted mb-4">Để bắt đầu, hãy cho chúng tôi biết vai trò của bạn trên sân chơi này là gì. (Chọn tối đa 2)</p>
+    
+    {# === KHỐI NÀY ĐÃ ĐƯỢC XÓA BỎ HOÀN TOÀN === #}
+
+    <form method="post" id="role-form">
+        {% csrf_token %}
+        <div class="row g-4">
+            {% for role in roles %}
+            <div class="col-md-6 col-lg-4">
+                <label class="role-card text-start">
+                    <input class="form-check-input" type="checkbox" name="roles" value="{{ role.pk }}">
+                    <div class="role-icon"><i class="bi {{ role.icon }}"></i></div>
+                    <h5 class="mb-2"><strong>{{ role.name }}</strong></h5>
+                    <p class="text-muted small">{{ role.description }}</p>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-grid gap-2 col-6 mx-auto mt-4">
+            <button type="submit" class="btn btn-primary btn-lg" disabled>Hoàn tất & Bắt đầu</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('role-form');
+    const roleCards = form.querySelectorAll('.role-card');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const maxSelections = 2;
+
+    roleCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            e.preventDefault(); 
+
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            const selectedCount = form.querySelectorAll('input[type="checkbox"]:checked').length;
+
+            if (checkbox.checked) {
+                checkbox.checked = false;
+                this.classList.remove('selected');
+            } else {
+                if (selectedCount < maxSelections) {
+                    checkbox.checked = true;
+                    this.classList.add('selected');
+                } else {
+                    // Hiển thị thông báo lỗi từ view thay vì alert
+                    // Hoặc bạn có thể thêm một thông báo nhỏ ở đây nếu muốn
+                }
+            }
+
+            const newSelectedCount = form.querySelectorAll('input[type="checkbox"]:checked').length;
+            submitButton.disabled = (newSelectedCount === 0);
+        });
+    });
+
+    // Xử lý khi form được gửi đi mà không chọn gì
+    form.addEventListener('submit', function(e) {
+        const selectedCount = form.querySelectorAll('input[type="checkbox"]:checked').length;
+        if (selectedCount === 0) {
+            e.preventDefault();
+            alert('Bạn phải chọn ít nhất một vai trò.');
+        }
+    });
+});
+</script>
+{% endblock %}
