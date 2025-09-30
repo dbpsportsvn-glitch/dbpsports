@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Xác nhận Email" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 520px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 mb-3 text-center">{% trans "Xác nhận địa chỉ Email" %}</h1>
+
+            {% if confirmation %}
+                <p>{% blocktrans with confirmation.email_address.email as email %}Bạn có chắc chắn muốn xác nhận <strong>{{ email }}</strong> là email cho tài khoản của bạn không?{% endblocktrans %}</p>
+
+                <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                    {% csrf_token %}
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">{% trans 'Xác nhận' %}</button>
+                    </div>
+                </form>
+            {% else %}
+                {% url 'account_email' as email_url %}
+                <p class="text-danger">{% blocktrans %}Link xác nhận này không hợp lệ hoặc đã hết hạn. Vui lòng <a href="{{ email_url }}">yêu cầu một link xác nhận mới</a>.{% endblocktrans %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Xác nhận Email thành công" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center" style="max-width: 520px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 mb-3">{% trans "Xác nhận thành công!" %}</h1>
+            <p class="lead">{% blocktrans with email=email %}Tài khoản của bạn với email <strong>{{ email }}</strong> đã được kích hoạt.{% endblocktrans %}</p>
+            <div class="d-grid mt-4">
+                <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg">Đi đến trang Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

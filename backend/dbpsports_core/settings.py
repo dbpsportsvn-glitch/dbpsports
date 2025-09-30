@@ -172,7 +172,7 @@ ACCOUNT_AUTHENTICATION_METHOD = "email" # Đăng nhập bằng email
 ACCOUNT_EMAIL_REQUIRED = True           # Bắt buộc phải có email
 ACCOUNT_USERNAME_REQUIRED = False       # Không yêu cầu username
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None # Không dùng trường username
-ACCOUNT_EMAIL_VERIFICATION = "none"     # Tạm thời không cần xác thực email
+ACCOUNT_EMAIL_VERIFICATION = "mandatory" # BẮT BUỘC xác thực email
 SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Bắt buộc nhập mật khẩu 2 lần
 

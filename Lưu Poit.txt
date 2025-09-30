@@ -11,7 +11,7 @@ cd ..
 python manage.py runserver
 
 git add .
-git commit -m "Cap nhat gui thong bao cho BTC 3"
+git commit -m "Nang cap xac thuc email"
 git push
 
 
@@ -24,9 +24,12 @@ python manage.py migrate
 git checkout main
 git pull origin main
 
-git reset --hard (phien ban)
-
+git reset --hard 31ccff9
+git fetch origin
 git push origin main --force-with-lease
+
+#Lệnh này sẽ không kiểm tra gì cả và ghi đè trực tiếp lịch sử trên server bằng lịch sử ở máy bạn.
+git push origin main --force
 
 
 

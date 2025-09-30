@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Vui lòng xác thực Email" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 mb-3">{% trans "Vui lòng xác thực địa chỉ Email của bạn" %}</h1>
+            <p class="lead">
+                {% blocktrans %}Chúng tôi đã gửi một email xác thực đến địa chỉ email bạn đã đăng ký.
+                Vui lòng nhấp vào đường link trong email đó để hoàn tất quá trình đăng ký.{% endblocktrans %}
+            </p>
+            <div class="alert alert-warning mt-4">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {% blocktrans %}Nếu bạn không thấy email trong hộp thư chính, vui lòng kiểm tra thư mục Spam (Thư rác).{% endblocktrans %}
+            </div>
+            <div class="d-grid mt-4">
+                <a href="{% url 'home' %}" class="btn btn-secondary">Quay về Trang chủ</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
