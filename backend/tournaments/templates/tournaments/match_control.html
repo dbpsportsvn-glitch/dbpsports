@@ -111,8 +111,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5><i class="bi bi-sliders"></i> Phòng Điều Khiển</h5>
         <div class="d-flex gap-2">
-            {# === THÊM NÚT MỚI VÀO ĐÂY === #}
-            <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm">
+            <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm js-open-notes" id="open-notes-btn">
                 <i class="bi bi-files"></i> Sổ tay BLV
             </a>
             <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye-fill"></i> Xem trang trận đấu</a>
@@ -174,7 +173,7 @@
                                     {% endfor %}
                                 </ul>
                                 <hr>
-                                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-sm btn-warning mb-0">
+                                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-sm btn-warning mb-0 js-open-notes">
                                     <i class="bi bi-files"></i> Mở Sổ tay
                                 </a>
                             </div>
@@ -678,11 +677,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Lỗi fetch:', error));
     });
-    // Logic tự động xóa thông báo ghi chú
-    const actionButtons = document.querySelectorAll('.player-actions button, #timeline-controls button');
-    
-    function removeCaptainNoteAlert() {
-        const noteAlert = document.querySelector('.captain-note-alert');
+    // === BẮT ĐẦU KHỐI LOGIC MỚI ĐỂ XỬ LÝ THÔNG BÁO GHI CHÚ ===
+    const noteAlertKey = `captainNoteAcknowledged_{{ match.pk }}`;
+    const noteAlert = document.querySelector('.captain-note-alert');
+
+    // Hàm để ẩn thông báo và lưu trạng thái
+    function acknowledgeCaptainNote() {
         if (noteAlert) {
             noteAlert.style.transition = 'opacity 0.5s, transform 0.5s';
             noteAlert.style.opacity = '0';
@@ -691,12 +691,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 noteAlert.remove();
             }, 500);
         }
+        // Lưu trạng thái vào sessionStorage để không hiện lại khi tải lại trang
+        sessionStorage.setItem(noteAlertKey, 'true');
     }
 
-    actionButtons.forEach(button => {
-        button.addEventListener('click', removeCaptainNoteAlert);
+    // 1. Kiểm tra ngay khi tải trang: Nếu đã xem rồi thì ẩn đi
+    if (sessionStorage.getItem(noteAlertKey) === 'true' && noteAlert) {
+        noteAlert.style.display = 'none';
+    }
+
+    // 2. Gắn sự kiện click cho toàn bộ document (Event Delegation)
+    document.addEventListener('click', function(event) {
+        // Kiểm tra xem phần tử được click có phải là một trong các nút trigger không
+        const isPlayerActionButton = event.target.closest('.player-actions button');
+        const isTimelineControlButton = event.target.closest('#timeline-controls button');
+        const isOpenNotesButton = event.target.closest('.js-open-notes');
+
+        if (isPlayerActionButton || isTimelineControlButton || isOpenNotesButton) {
+            acknowledgeCaptainNote();
+        }
     });
-    // === KẾT THÚC SCRIPT MỚI ===
+    // === KẾT THÚC KHỐI LOGIC MỚI ===
+
 });
 </script>
 {% endblock %}
