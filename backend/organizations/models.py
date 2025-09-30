@@ -68,3 +68,47 @@ class Membership(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.get_role_display()} tại {self.organization.name}"
+
+class JobPosting(models.Model):
+    """Lưu một tin đăng tuyển nhân sự của BTC cho một giải đấu."""
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Đang mở'
+        CLOSED = 'CLOSED', 'Đã đóng'
+
+    tournament = models.ForeignKey("tournaments.Tournament", on_delete=models.CASCADE, related_name='job_postings', verbose_name="Giải đấu")
+    role_required = models.ForeignKey("users.Role", on_delete=models.CASCADE, verbose_name="Vai trò cần tuyển")
+    title = models.CharField("Tiêu đề công việc", max_length=200)
+    description = models.TextField("Mô tả chi tiết")
+    budget = models.CharField("Mức kinh phí", max_length=150, blank=True, help_text="Ví dụ: 500.000 VNĐ/trận, hoặc 'Thỏa thuận'")
+    status = models.CharField("Trạng thái", max_length=10, choices=Status.choices, default=Status.OPEN)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Tin Tuyển dụng"
+        verbose_name_plural = "Các Tin Tuyển dụng"
+
+    def __str__(self):
+        return f"{self.title} cho giải {self.tournament.name}"
+
+class JobApplication(models.Model):
+    """Lưu một đơn ứng tuyển của người dùng vào một tin tuyển dụng."""
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Đang chờ'
+        APPROVED = 'APPROVED', 'Đã chấp thuận'
+        REJECTED = 'REJECTED', 'Đã từ chối'
+
+    job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications', verbose_name="Công việc")
+    applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_applications', verbose_name="Người ứng tuyển")
+    message = models.TextField("Lời nhắn (tùy chọn)", blank=True, help_text="Gửi một vài lời giới thiệu về kỹ năng và kinh nghiệm của bạn cho BTC.")
+    status = models.CharField("Trạng thái", max_length=10, choices=Status.choices, default=Status.PENDING)
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+        unique_together = ('job', 'applicant') # Mỗi người chỉ được ứng tuyển 1 lần/công việc
+        verbose_name = "Đơn Ứng tuyển"
+        verbose_name_plural = "Các Đơn Ứng tuyển"
+
+    def __str__(self):
+        return f"{self.applicant.username} ứng tuyển vào {self.job.title}"        

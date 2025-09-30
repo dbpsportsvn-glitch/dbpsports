@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 800px;">
+    <a href="{% url 'job_market' %}" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left"></i> Quay lại Thị trường Việc làm
+    </a>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h1>{{ job.title }}</h1>
+            <h5 class="text-muted">
+                <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+            </h5>
+        </div>
+        <div class="card-body">
+            <p>
+                <span class="badge text-bg-info fs-6"><i class="bi {{ job.role_required.icon }}"></i> {{ job.role_required.name }}</span>
+                <span class="badge text-bg-success fs-6"><i class="bi bi-cash-coin"></i> {{ job.budget|default:"Thỏa thuận" }}</span>
+            </p>
+            <hr>
+            <h5>Mô tả công việc</h5>
+            <p>{{ job.description|linebreaks }}</p>
+            <hr>
+
+            {% if user.is_authenticated %}
+                {% if user_has_applied %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill"></i> Bạn đã ứng tuyển vào vị trí này.
+                    </div>
+                {% elif user.is_staff or is_organizer %}
+                    <div class="alert alert-warning">
+                         Là thành viên BTC, bạn không thể ứng tuyển.
+                    </div>
+                {% else %}
+                    <h5>Ứng tuyển ngay</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary btn-lg">Gửi đơn ứng tuyển</button>
+                        </div>
+                    </form>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info text-center">
+                    Vui lòng <a href="{% url 'account_login' %}?next={{ request.path }}">đăng nhập</a> để ứng tuyển.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

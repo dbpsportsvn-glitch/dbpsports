@@ -1,0 +1,78 @@
+{% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Quản lý Tuyển dụng - {{ tournament.name }}{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-briefcase-fill"></i> Quản lý Tuyển dụng Nhân sự</h3>
+        <p class="mb-0 text-muted">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <h5 class="mb-3">Các tin đã đăng</h5>
+                {% for job in jobs %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ job.title }}</h6>
+                                <span class="badge text-bg-info">{{ job.role_required.name }}</span>
+                            </div>
+                            <a href="{% url 'organizations:edit_job' pk=job.pk %}" class="btn btn-sm btn-outline-secondary">Chỉnh sửa</a>
+                        </div>
+                        <hr>
+                        <h6>Đơn ứng tuyển ({{ job.applications.count }})</h6>
+                        <ul class="list-group">
+                            {% for app in job.applications.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'public_profile' username=app.applicant.username %}" target="_blank">
+                                        <strong>{{ app.applicant.get_full_name|default:app.applicant.username }}</strong>
+                                    </a>
+                                    <small class="text-muted d-block">{{ app.message|truncatewords:15 }}</small>
+                                </div>
+                                <form action="{% url 'organizations:update_application_status' pk=app.pk %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="input-group input-group-sm">
+                                        <select name="status" class="form-select">
+                                            <option value="PENDING" {% if app.status == 'PENDING' %}selected{% endif %}>Đang chờ</option>
+                                            <option value="APPROVED" {% if app.status == 'APPROVED' %}selected{% endif %}>Chấp thuận</option>
+                                            <option value="REJECTED" {% if app.status == 'REJECTED' %}selected{% endif %}>Từ chối</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary" type="submit">Lưu</button>
+                                    </div>
+                                </form>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-muted">Chưa có ai ứng tuyển.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">Chưa có tin tuyển dụng nào.</p>
+                {% endfor %}
+            </div>
+            <div class="col-lg-5">
+                <div class="card card-body bg-light position-sticky" style="top: 80px;">
+                    <h5 class="mb-3">Đăng tin tuyển dụng mới</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary">Đăng tin</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

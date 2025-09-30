@@ -28,6 +28,10 @@ urlpatterns = [
     path('tournaments/<int:tournament_pk>/staff/add/', views.add_tournament_staff, name='add_tournament_staff'),
     path('staff/<int:pk>/remove/', views.remove_tournament_staff, name='remove_tournament_staff'),
 
+    # === thị trương công việc ===
+    path('tournaments/<int:tournament_pk>/jobs/', views.manage_jobs_view, name='manage_jobs'),
+    path('jobs/<int:pk>/edit/', views.edit_job_view, name='edit_job'),
+    path('applications/<int:pk>/update/', views.update_application_status_view, name='update_application_status'),
 
     # === THÊM CÁC URL MỚI CHO THÔNG BÁO ===
     path('tournaments/<int:tournament_pk>/announcements/create/', views.create_announcement, name='create_announcement'),

@@ -9,6 +9,11 @@ from tournaments.forms import PlayerCreationForm
 from tournaments.models import Substitution 
 from users.models import Role
 
+from .models import JobPosting, JobApplication 
+from users.models import Role 
+
+#==============================================
+
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
         model = Organization
@@ -350,4 +355,35 @@ class MatchMediaUpdateForm(forms.ModelForm):
             'ticker_text': 'Dòng chữ chạy trên Livestream',
             'cover_photo': 'Ảnh bìa trận đấu',
             'gallery_url': 'Link Album ảnh của trận đấu'
+        }            
+
+# === From thi truong cong viec ===
+class JobPostingForm(forms.ModelForm):
+    class Meta:
+        model = JobPosting
+        fields = ['title', 'role_required', 'budget', 'description']
+        labels = {
+            'title': 'Tiêu đề công việc',
+            'role_required': 'Vai trò cần tuyển',
+            'budget': 'Mức kinh phí (tùy chọn)',
+            'description': 'Mô tả chi tiết công việc',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Giới hạn chỉ cho phép tuyển các vai trò chuyên môn
+        self.fields['role_required'].queryset = Role.objects.exclude(id__in=['ORGANIZER', 'PLAYER'])
+
+class JobApplicationUpdateForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ['status']
+        labels = {'status': 'Cập nhật trạng thái'}    
+
+class JobApplicationForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ['message']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 4}),
         }            

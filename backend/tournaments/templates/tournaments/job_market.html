@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Việc làm ngành bóng đá{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-briefcase-fill text-primary"></i> Thị trường Việc làm</h1>
+        <p class="lead">Cơ hội dành cho các Bình luận viên, Nhiếp ảnh gia, Media và các vai trò khác.</p>
+    </div>
+
+    <div class="card card-body mb-4">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-md-10">
+                <label for="regionFilter" class="form-label">Lọc theo Khu vực</label>
+                <select name="region" id="regionFilter" class="form-select">
+                    <option value="">Tất cả khu vực</option>
+                    {% for region_value, region_name in all_regions %}
+                    <option value="{{ region_value }}" {% if region_value == current_region %}selected{% endif %}>{{ region_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 mt-auto">
+                <button type="submit" class="btn btn-primary w-100">Lọc</button>
+            </div>
+        </form>
+    </div>
+    <div class="row g-4">
+        {% for job in jobs %}
+        <div class="col-lg-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                    </h6>
+                    <p>
+                        <span class="badge text-bg-secondary"><i class="bi bi-geo-alt-fill"></i> {{ job.tournament.get_region_display }}</span>
+                        <span class="badge text-bg-info"><i class="bi {{ job.role_required.icon }}"></i> {{ job.role_required.name }}</span>
+                        <span class="badge text-bg-light">Đăng {{ job.created_at|naturaltime }}</span>
+                    </p>
+                    <a href="{% url 'job_detail' pk=job.pk %}" class="btn btn-primary stretched-link">Xem chi tiết & Ứng tuyển</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">Hiện chưa có tin tuyển dụng nào phù hợp với bộ lọc của bạn.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

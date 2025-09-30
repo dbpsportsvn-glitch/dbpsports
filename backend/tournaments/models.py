@@ -41,6 +41,7 @@ class Tournament(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REGISTRATION_OPEN)
     image = models.ImageField(upload_to='tournament_banners/', null=True, blank=True)
     region = models.CharField("Khu vực", max_length=20, choices=Region.choices, default=Region.KHAC)
+    location_detail = models.CharField("Tỉnh/Thành phố", max_length=100, blank=True, help_text="Ví dụ: Hà Nội, Điện Biên, TP.HCM...")
     bank_name = models.CharField("Tên ngân hàng", max_length=100, blank=True)
     bank_account_number = models.CharField("Số tài khoản", max_length=50, blank=True)
     bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)

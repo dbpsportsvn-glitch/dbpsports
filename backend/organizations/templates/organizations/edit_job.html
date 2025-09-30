@@ -1,0 +1,26 @@
+{% extends 'organizations/organization_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Chỉnh sửa Tin Tuyển dụng{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='jobs' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="bi bi-pencil-square"></i> Chỉnh sửa Tin Tuyển dụng</h3>
+    </div>
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                <a href="{% url 'organizations:manage_jobs' tournament_pk=tournament.pk %}" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

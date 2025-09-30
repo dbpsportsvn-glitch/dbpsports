@@ -29,6 +29,11 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from users.models import Role
 from .forms import MatchMediaUpdateForm
 
+# import cho thị trường công việc
+from .models import JobPosting, JobApplication
+from .forms import JobPostingForm, JobApplicationUpdateForm
+from django.views.decorators.http import require_POST
+
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
 def user_is_org_member(user, organization):
@@ -1129,3 +1134,96 @@ def remove_tournament_staff(request, pk):
         messages.success(request, "Đã xóa thành viên khỏi đội ngũ chuyên môn của giải đấu.")
     
     return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=staff")    
+
+
+# === 3 HÀM VIEW CHO THỊ TRƯỜNG CÔNG VIỆC ===
+@login_required
+@never_cache
+def manage_jobs_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = JobPostingForm(request.POST)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.tournament = tournament
+            job.save()
+            messages.success(request, "Đã đăng tin tuyển dụng mới thành công!")
+            return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+    else:
+        form = JobPostingForm()
+
+    jobs = JobPosting.objects.filter(tournament=tournament).prefetch_related('applications')
+    context = {
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'jobs': jobs,
+        'form': form,
+        'active_page': 'jobs', # Để highlight menu
+    }
+    return render(request, 'organizations/manage_jobs.html', context)
+
+@login_required
+@never_cache
+def edit_job_view(request, pk):
+    job = get_object_or_404(JobPosting, pk=pk)
+    tournament = job.tournament
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = JobPostingForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đã cập nhật tin tuyển dụng.")
+            return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
+    else:
+        form = JobPostingForm(instance=job)
+    
+    context = {
+        'form': form,
+        'job': job,
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'active_page': 'jobs',
+    }
+    return render(request, 'organizations/edit_job.html', context)
+
+
+@login_required
+@require_POST
+def update_application_status_view(request, pk):
+    application = get_object_or_404(JobApplication.objects.select_related('applicant', 'job__tournament'), pk=pk)
+    tournament = application.job.tournament
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+    
+    form = JobApplicationUpdateForm(request.POST, instance=application)
+    if form.is_valid():
+        updated_application = form.save()
+        messages.success(request, "Đã cập nhật trạng thái đơn ứng tuyển.")
+
+        # === BẮT ĐẦU NÂNG CẤP: GỬI THÔNG BÁO CHO NGƯỜI ỨNG TUYỂN ===
+        applicant = updated_application.applicant
+        job = updated_application.job
+
+        status_display = updated_application.get_status_display()
+        notification_title = f"Cập nhật trạng thái ứng tuyển"
+        notification_message = f"Đơn ứng tuyển của bạn cho vị trí '{job.title}' đã được cập nhật thành: {status_display}."
+        # URL để người dùng nhấn vào và xem lại công việc
+        notification_url = request.build_absolute_uri(
+            reverse('job_detail', kwargs={'pk': job.pk})
+        )
+
+        Notification.objects.create(
+            user=applicant,
+            title=notification_title,
+            message=notification_message,
+            notification_type=Notification.NotificationType.GENERIC,
+            related_url=notification_url
+        )
+        # === KẾT THÚC NÂNG CẤP ===
+    
+    return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)

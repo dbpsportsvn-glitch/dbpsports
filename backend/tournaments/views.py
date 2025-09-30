@@ -7,6 +7,8 @@ from itertools import combinations
 from django.core import serializers
 from django.db import transaction
 from datetime import date
+from organizations.models import JobPosting, JobApplication
+from organizations.forms import JobApplicationForm
 
 # Django Core
 from django.conf import settings
@@ -1694,3 +1696,78 @@ def media_edit_match(request, pk):
         'tournament': tournament
     }
     return render(request, 'tournaments/media_edit_match.html', context)
+
+# === Thị trường công việc ===
+def job_market_view(request):
+    # Lấy tham số lọc khu vực từ URL
+    region_filter = request.GET.get('region', '')
+
+    # Bắt đầu với việc lấy tất cả các tin đang mở
+    jobs = JobPosting.objects.filter(status=JobPosting.Status.OPEN).select_related('tournament', 'role_required')
+
+    # Áp dụng bộ lọc nếu có
+    if region_filter:
+        jobs = jobs.filter(tournament__region=region_filter)
+
+    context = {
+        'jobs': jobs,
+        'all_regions': Tournament.Region.choices, # Gửi danh sách khu vực ra template
+        'current_region': region_filter,           # Gửi khu vực đang được chọn
+    }
+    return render(request, 'tournaments/job_market.html', context)
+
+def job_detail_view(request, pk):
+    job = get_object_or_404(JobPosting, pk=pk)
+    user_has_applied = False
+    is_organizer = False
+
+    if request.user.is_authenticated:
+        user_has_applied = JobApplication.objects.filter(job=job, applicant=request.user).exists()
+        is_organizer = job.tournament.organization and job.tournament.organization.members.filter(pk=request.user.pk).exists()
+
+    if request.method == 'POST' and request.user.is_authenticated and not user_has_applied and not is_organizer:
+        form = JobApplicationForm(request.POST)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.job = job
+            application.applicant = request.user
+            application.save()
+            messages.success(request, "Bạn đã ứng tuyển thành công!")
+            
+            # === BẮT ĐẦU NÂNG CẤP: GỬI THÔNG BÁO CHO BTC ===
+            organization = job.tournament.organization
+            if organization:
+                btc_members = organization.members.all()
+                applicant_name = request.user.get_full_name() or request.user.username
+                notification_title = f"Có đơn ứng tuyển mới cho '{job.title}'"
+                notification_message = f"{applicant_name} vừa ứng tuyển vào vị trí của bạn trong giải đấu '{job.tournament.name}'."
+                # URL để BTC nhấn vào và xem ngay
+                notification_url = request.build_absolute_uri(
+                    reverse('organizations:manage_jobs', kwargs={'tournament_pk': job.tournament.pk})
+                )
+                
+                notifications_to_create = [
+                    Notification(
+                        user=member,
+                        title=notification_title,
+                        message=notification_message,
+                        notification_type=Notification.NotificationType.GENERIC,
+                        related_url=notification_url
+                    )
+                    for member in btc_members
+                ]
+                if notifications_to_create:
+                    Notification.objects.bulk_create(notifications_to_create)
+            # === KẾT THÚC NÂNG CẤP ===
+
+            return redirect('job_detail', pk=pk)
+    else:
+        form = JobApplicationForm()
+
+    context = {
+        'job': job,
+        'form': form,
+        'user_has_applied': user_has_applied,
+        'is_organizer': is_organizer,
+    }
+    return render(request, 'tournaments/job_detail.html', context)    
