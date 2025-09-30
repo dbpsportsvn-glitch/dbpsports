@@ -145,6 +145,11 @@
                         Thành viên
                     {% endif %}
                 </p>
+                <div class="d-flex justify-content-center gap-3 mt-2 fs-4 text-primary">
+                    {% for role in user.profile.roles.all %}
+                        <i class="bi {{ role.icon }}" title="{{ role.name }}"></i>
+                    {% endfor %}
+                </div>
             </div>
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link {% if not request.GET.tab or request.GET.tab == 'profile' %}active{% endif %}" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>

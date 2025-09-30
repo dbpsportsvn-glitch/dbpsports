@@ -87,14 +87,17 @@
         <div class="nav-right">
             {% if user.is_authenticated %}
                 <div class="d-flex align-items-center gap-3">
-                    {% if user.organizations.all.first %}
-                        <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
-                            <i class="bi bi-shield-check"></i> <span>. BTC</span>
-                        </a>
-                    {% else %}
-                        <a href="{% url 'organizations:create' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Trở thành Ban tổ chức">
-                            <i class="bi bi-shield-plus"></i> <span>. Đăng ký BTC</span>
-                        </a>
+                    {# === THÊM ĐIỀU KIỆN IF BÊN NGOÀI KHỐI NÀY === #}
+                    {% if is_organizer_role %}
+                        {% if user.organizations.all.first %}
+                            <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đön vị Tổ chức">
+                                <i class="bi bi-shield-check"></i> <span>. BTC</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'organizations:create' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Trở thành Ban tổ chức">
+                                <i class="bi bi-shield-plus"></i> <span>. Đăng ký BTC</span>
+                            </a>
+                        {% endif %}
                     {% endif %}
                     <a href="{% url 'announcement_dashboard' %}" class="notification-icon" title="Bảng tin từ BTC">
                         <i class="bi bi-megaphone-fill"></i>
@@ -128,14 +131,14 @@
                 
                             {% if is_player_role %}
                                 <li><a class="dropdown-item" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus"></i> Tạo Đội bóng</a></li>
-                            {% endif %}               
-                
-                            {% if user.organizations.all.first %}
-                                {# Nếu đã có tổ chức, hiện link vào trang quản lý #}
-                                <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
-                            {% else %}
-                                {# Nếu chưa có, hiện link đến trang tạo mới #}
-                                <li><a class="dropdown-item" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký làm BTC</a></li>
+                            {% endif %}                               
+                            {# === THÊM ĐIỀU KIỆN IF BÊN NGOÀI KHỐI NÀY === #}
+                            {% if is_organizer_role %}
+                                {% if user.organizations.all.first %}
+                                    <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
+                                {% else %}
+                                    <li><a class="dropdown-item" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký làm BTC</a></li>
+                                {% endif %}
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Quản lý Email</a></li>
