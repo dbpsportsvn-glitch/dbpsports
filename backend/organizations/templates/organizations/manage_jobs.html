@@ -16,18 +16,37 @@
     <div class="card-body p-4">
         <div class="row g-5">
             <div class="col-lg-7">
-                <h5 class="mb-3">Các tin đã đăng</h5>
+
+                {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Các tin đã đăng</h5>
+                    <form action="{% url 'organizations:delete_closed_jobs' tournament_pk=tournament.pk %}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả các tin tuyển dụng đã đóng không?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash3-fill"></i> Xóa các tin đã đóng
+                        </button>
+                    </form>
+                </div>
+                {# === KẾT THÚC THÊM MỚI === #}
+
                 {% for job in jobs %}
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <h6 class="mb-1">{{ job.title }}</h6>
+                                {# Thêm hiển thị trạng thái #}
                                 <span class="badge text-bg-info">{{ job.role_required.name }}</span>
+                                {% if job.status == 'CLOSED' %}
+                                    <span class="badge text-bg-secondary">Đã đóng</span>
+                                {% else %}
+                                    <span class="badge text-bg-success">Đang mở</span>
+                                {% endif %}
                             </div>
                             <a href="{% url 'organizations:edit_job' pk=job.pk %}" class="btn btn-sm btn-outline-secondary">Chỉnh sửa</a>
                         </div>
                         <hr>
+
                         <h6>Đơn ứng tuyển ({{ job.applications.count }})</h6>
                         <ul class="list-group">
                             {% for app in job.applications.all %}

@@ -33,6 +33,7 @@ urlpatterns = [
     path('jobs/<int:pk>/edit/', views.edit_job_view, name='edit_job'),
     path('applications/<int:pk>/update/', views.update_application_status_view, name='update_application_status'),
     path('applications/<int:application_pk>/review/', views.create_review_view, name='create_review'),
+    path('tournaments/<int:tournament_pk>/jobs/delete-closed/', views.delete_closed_jobs_view, name='delete_closed_jobs'),
 
     # === THÊM CÁC URL MỚI CHO THÔNG BÁO ===
     path('tournaments/<int:tournament_pk>/announcements/create/', views.create_announcement, name='create_announcement'),

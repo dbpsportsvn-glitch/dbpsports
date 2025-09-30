@@ -1209,17 +1209,30 @@ def update_application_status_view(request, pk):
 
         applicant = updated_application.applicant
         job = updated_application.job
+
+        # === BẮT ĐẦU NÂNG CẤP LOGIC ===
+        # 1. Tự động đóng tin tuyển dụng khi một ứng viên được "Chấp thuận"
+        if updated_application.status == 'APPROVED' and job.status == 'OPEN':
+            job.status = JobPosting.Status.CLOSED
+            job.save()
+            messages.info(request, f"Tin tuyển dụng '{job.title}' đã được tự động đóng lại.")
+        # === KẾT THÚC NÂNG CẤP ===
+
+        # 2. Gửi thông báo cho người ứng tuyển (giữ nguyên)
         status_display = updated_application.get_status_display()
-        notification_title = f"Cập nhật trạng thái ứng tuyển"
+        notification_title = "Cập nhật trạng thái ứng tuyển"
         notification_message = f"Đơn ứng tuyển của bạn cho vị trí '{job.title}' đã được cập nhật thành: {status_display}."
         notification_url = request.build_absolute_uri(reverse('job_detail', kwargs={'pk': job.pk}))
 
-        # Gửi thông báo trên web (đã có)
         Notification.objects.create(
-            user=applicant, title=notification_title, message=notification_message, related_url=notification_url
+            user=applicant,
+            title=notification_title,
+            message=notification_message,
+            notification_type=Notification.NotificationType.GENERIC,
+            related_url=notification_url
         )
-
-        # === BẮT ĐẦU NÂNG CẤP: GỬI EMAIL ===
+        
+        # 3. Gửi email cho người ứng tuyển (giữ nguyên)
         if applicant.email:
             send_notification_email(
                 subject=f"[DBP Sports] {notification_title}",
@@ -1232,7 +1245,6 @@ def update_application_status_view(request, pk):
                 recipient_list=[applicant.email],
                 request=request
             )
-        # === KẾT THÚC NÂNG CẤP ===
     
     return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
 
@@ -1268,6 +1280,16 @@ def create_review_view(request, application_pk):
             review.reviewee = application.applicant
             review.save()
             messages.success(request, f"Cảm ơn bạn đã gửi đánh giá cho {application.applicant.username}.")
+
+            # === BẮT ĐẦU NÂNG CẤP: TỰ ĐỘNG ĐÓNG TIN TUYỂN DỤNG ===
+            job_posting = application.job
+            if job_posting.status == JobPosting.Status.OPEN:
+                job_posting.status = JobPosting.Status.CLOSED
+                job_posting.save()
+                # Thêm một thông báo nhỏ để BTC biết
+                messages.info(request, f"Tin tuyển dụng '{job_posting.title}' đã được tự động đóng lại.")
+            # === KẾT THÚC NÂNG CẤP ===
+
             return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)
     else:
         form = ProfessionalReviewForm()
@@ -1280,3 +1302,22 @@ def create_review_view(request, application_pk):
         'active_page': 'jobs',
     }
     return render(request, 'organizations/create_review.html', context)    
+
+@login_required
+@require_POST # Chỉ cho phép truy cập bằng phương thức POST để đảm bảo an toàn
+def delete_closed_jobs_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    # Tìm và xóa tất cả các tin tuyển dụng có trạng thái 'CLOSED' của giải đấu này
+    closed_jobs = JobPosting.objects.filter(tournament=tournament, status=JobPosting.Status.CLOSED)
+    count = closed_jobs.count()
+    
+    if count > 0:
+        closed_jobs.delete()
+        messages.success(request, f"Đã xóa thành công {count} tin tuyển dụng đã đóng.")
+    else:
+        messages.info(request, "Không có tin tuyển dụng nào đã đóng để xóa.")
+    
+    return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)    

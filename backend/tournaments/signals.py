@@ -7,8 +7,9 @@ from django.urls import reverse
 from django.db.models import F
 from .models import HomeBanner, Tournament, Group, Match, Team, Notification, TeamAchievement, Player
 from .utils import send_schedule_notification
+from organizations.models import JobPosting
 
-@receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group])
+@receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group, JobPosting])
 def clear_cache_on_data_change(sender, instance, **kwargs):
     cache.clear()
     print(f"Cache đã được xóa do có thay đổi trong model: {sender.__name__}")
