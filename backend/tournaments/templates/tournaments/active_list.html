@@ -54,7 +54,13 @@
           <div class="card-body flex-grow-1">
             <h5 class="card-title mb-2 text-start">{{ t.name }}</h5>
             <p class="mb-2 text-muted">
-              <span class="badge bg-info text-dark me-2">{{ t.get_region_display }}</span>
+              <span class="badge bg-info text-dark me-2">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  {{ t.get_region_display }}
+                  {% if t.location_detail %}
+                      - {{ t.location_detail }}
+                  {% endif %}
+              </span>
               <span class="d-inline-flex align-items-center gap-2">
                 {% if t.organization and t.organization.logo %}
                   <img src="{{ t.organization.logo.url }}" alt="{{ t.organization.name }}" style="width: 20px; height: 20px; object-fit: contain; border-radius: 4px;">

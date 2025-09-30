@@ -36,7 +36,11 @@
                         <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
                     </h6>
                     <p>
-                        <span class="badge text-bg-secondary"><i class="bi bi-geo-alt-fill"></i> {{ job.tournament.get_region_display }}</span>
+                        <span class="badge text-bg-secondary">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            {# Ưu tiên hiển thị địa điểm của job, nếu không có thì lấy của giải đấu #}
+                            {{ job.location_detail|default:job.tournament.location_detail|default:job.tournament.get_region_display }}
+                        </span>
                         <span class="badge text-bg-info"><i class="bi {{ job.role_required.icon }}"></i> {{ job.role_required.name }}</span>
                         <span class="badge text-bg-light">Đăng {{ job.created_at|naturaltime }}</span>
                     </p>

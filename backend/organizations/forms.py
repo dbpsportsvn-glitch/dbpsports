@@ -361,10 +361,11 @@ class MatchMediaUpdateForm(forms.ModelForm):
 class JobPostingForm(forms.ModelForm):
     class Meta:
         model = JobPosting
-        fields = ['title', 'role_required', 'budget', 'description']
+        fields = ['title', 'role_required', 'location_detail', 'budget', 'description']
         labels = {
             'title': 'Tiêu đề công việc',
             'role_required': 'Vai trò cần tuyển',
+            'location_detail': 'Tỉnh / Thành phố', # <-- Thêm label mới
             'budget': 'Mức kinh phí (tùy chọn)',
             'description': 'Mô tả chi tiết công việc',
         }

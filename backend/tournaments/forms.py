@@ -156,7 +156,7 @@ class TournamentForm(forms.ModelForm):
     class Meta:
         model = Tournament
         fields = [
-            'name', 'status', 'region', 'start_date', 'end_date', 'image', 'rules',
+            'name', 'status', 'region', 'location_detail', 'start_date', 'end_date', 'image', 'rules',
             'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
@@ -164,6 +164,7 @@ class TournamentForm(forms.ModelForm):
             'status': 'Trạng thái giải đấu',
             'region': 'Khu vực tổ chức',
             'start_date': 'Ngày bắt đầu',
+            'location_detail': 'Tỉnh / Thành phố',
             'end_date': 'Ngày kết thúc',
             'image': 'Ảnh bìa / Banner giải đấu',
             'rules': 'Điều lệ & Quy định',

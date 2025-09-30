@@ -77,6 +77,7 @@ class JobPosting(models.Model):
 
     tournament = models.ForeignKey("tournaments.Tournament", on_delete=models.CASCADE, related_name='job_postings', verbose_name="Giải đấu")
     role_required = models.ForeignKey("users.Role", on_delete=models.CASCADE, verbose_name="Vai trò cần tuyển")
+    location_detail = models.CharField("Tỉnh/Thành phố (tùy chọn)", max_length=100, blank=True, help_text="Nếu bỏ trống, sẽ lấy theo địa điểm của giải đấu.")
     title = models.CharField("Tiêu đề công việc", max_length=200)
     description = models.TextField("Mô tả chi tiết")
     budget = models.CharField("Mức kinh phí", max_length=150, blank=True, help_text="Ví dụ: 500.000 VNĐ/trận, hoặc 'Thỏa thuận'")
