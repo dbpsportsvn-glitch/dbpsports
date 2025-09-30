@@ -176,7 +176,7 @@
             </a>
             {% endif %}
 
-            {% if user.is_staff or match.tournament.organization and user in match.tournament.organization.members.all %}
+            {% if can_control_match %}
                 <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm d-flex align-items-center gap-1">
                     <i class="bi bi-broadcast"></i>
                     <span>Live Control</span>

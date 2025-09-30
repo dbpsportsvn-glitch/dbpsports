@@ -28,31 +28,51 @@ from django.db import transaction
 from django.utils.http import url_has_allowed_host_and_scheme
 from users.models import Role
 
-# === HÀM HỖ TRỢ KIỂM TRA QUYỀN MỚI ===
-def user_can_manage_tournament(user, tournament):
-    """
-    Kiểm tra xem người dùng có quyền quản lý một giải đấu cụ thể không.
-    Quyền được cấp nếu:
-    1. Là superuser (staff).
-    2. Là thành viên của BTC (Organization) sở hữu giải đấu.
-    3. Được gán vai trò 'Quản lý Giải đấu' cho chính giải đấu đó.
-    """
-    if not user.is_authenticated:
+# === HÀM KIỂM TRA QUYỀN MỚI ===
+
+def user_is_org_member(user, organization):
+    """Kiểm tra xem user có phải là thành viên (Owner/Admin) của BTC không."""
+    if not user.is_authenticated or not organization:
         return False
     if user.is_staff:
         return True
-    
-    if tournament.organization and tournament.organization.members.filter(pk=user.pk).exists():
-        return True
-    
-    if TournamentStaff.objects.filter(
-        tournament=tournament, 
-        user=user, 
-        role__id='TOURNAMENT_MANAGER'
-    ).exists():
-        return True
-        
-    return False
+    return organization.members.filter(pk=user.pk).exists()
+
+def user_has_tournament_role(user, tournament, role_ids):
+    """Kiểm tra xem user có vai trò cụ thể nào trong giải đấu không."""
+    if not user.is_authenticated:
+        return False
+    # Đảm bảo role_ids luôn là một list/tuple để truy vấn an toàn
+    if isinstance(role_ids, str):
+        role_ids = [role_ids]
+    return TournamentStaff.objects.filter(
+        tournament=tournament,
+        user=user,
+        role_id__in=role_ids
+    ).exists()
+
+# === CẬP NHẬT CÁC HÀM KIỂM TRA CHỨC NĂNG ===
+
+def user_can_manage_tournament(user, tournament):
+    """Quyền quản lý toàn bộ giải đấu (Sửa cài đặt, tạo trận, duyệt đội...)."""
+    # Chỉ Superuser, thành viên BTC, hoặc Quản lý Giải đấu mới có quyền này.
+    return user_is_org_member(user, tournament.organization) or \
+           user_has_tournament_role(user, tournament, ['TOURNAMENT_MANAGER'])
+
+def user_can_control_match(user, match):
+    """Quyền truy cập phòng Live Control (cập nhật tỉ số, sự kiện)."""
+    # Bao gồm BTC, Quản lý giải, và cả Bình Luận Viên.
+    allowed_roles = ['TOURNAMENT_MANAGER', 'COMMENTATOR']
+    return user_is_org_member(user, match.tournament.organization) or \
+           user_has_tournament_role(user, match.tournament, allowed_roles)
+
+def user_can_upload_gallery(user, tournament):
+    """Quyền tải ảnh và quản lý thư viện ảnh."""
+    # Bao gồm BTC, Quản lý giải, Media và Nhiếp ảnh gia.
+    allowed_roles = ['TOURNAMENT_MANAGER', 'MEDIA', 'PHOTOGRAPHER']
+    return user_is_org_member(user, tournament.organization) or \
+           user_has_tournament_role(user, tournament, allowed_roles)
+
 
 def safe_redirect(request, default_url: str):
     next_url = request.GET.get('next')
@@ -155,12 +175,14 @@ def create_tournament(request):
 @never_cache
 def manage_tournament(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
-    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
-        return redirect('organizations:dashboard')
+    
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang quản lý này.")
+
     view_name = request.GET.get('view', 'overview')
 
     if request.method == 'POST':
-        # === lưu nhanh ===
+        # (Toàn bộ logic xử lý POST không thay đổi, giữ nguyên như cũ)
         if 'quick_save_match' in request.POST:
             match_id = request.POST.get('quick_save_match')
             try:
@@ -179,7 +201,6 @@ def manage_tournament(request, pk):
                 messages.error(request, "Có lỗi xảy ra khi lưu nhanh trận đấu.")
             return redirect(request.path_info + '?view=matches')
     
-        # --- BẮT ĐẦU LOGIC MỚI: LƯU TẤT CẢ TỈ SỐ ---
         if 'save_all_scores' in request.POST:
             match_ids = request.POST.getlist('match_ids')
             try:
@@ -199,7 +220,6 @@ def manage_tournament(request, pk):
             except (Match.DoesNotExist, ValueError):
                 messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
             return redirect(request.path_info + '?view=matches')
-        # --- KẾT THÚC LOGIC MỚI ---
 
         if 'quick_update_score' in request.POST:
             match_id = request.POST.get('match_id')
@@ -265,128 +285,90 @@ def manage_tournament(request, pk):
     }
     if view_name == 'overview':
         all_teams = tournament.teams.all()
-
-        # Lấy danh sách các đội đã thanh toán nhưng chưa có bảng
         unassigned_teams = all_teams.filter(payment_status='PAID', group__isnull=True)
-        # Kiểm tra xem có tồn tại ít nhất một đội đã thanh toán chưa
         has_paid_teams = all_teams.filter(payment_status='PAID').exists()
-
-        # Thêm các biến vừa tạo vào context để template có thể sử dụng
         context['unassigned_teams'] = unassigned_teams
         context['has_paid_teams'] = has_paid_teams
-
         context['stats'] = {
             'total_teams': all_teams.count(),
             'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),
             'total_matches': tournament.matches.count(),
         }
-    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
+    
     elif view_name == 'teams':
-        # Lấy tất cả giải đấu của BTC để làm bộ lọc
         all_tournaments = tournament.organization.tournaments.all().order_by('-start_date')
         context['all_tournaments'] = all_tournaments
-
-        # Lấy các giá trị lọc từ URL
         search_query = request.GET.get('q', '')
         tournament_filter_id = request.GET.get('tournament_filter')
         context['search_query'] = search_query
-        
-        # Bắt đầu với tất cả các đội của BTC
         base_teams_qs = Team.objects.filter(tournament__organization=tournament.organization)
-
-        # Áp dụng bộ lọc giải đấu nếu được chọn
         if tournament_filter_id and tournament_filter_id.isdigit():
             base_teams_qs = base_teams_qs.filter(tournament_id=int(tournament_filter_id))
             context['selected_tournament_id'] = int(tournament_filter_id)
-
-        # Áp dụng bộ lọc tìm kiếm theo tên
         if search_query:
             base_teams_qs = base_teams_qs.filter(name__icontains=search_query)
-
-        # Phân loại các đội sau khi đã lọc
         context['unpaid_teams'] = base_teams_qs.filter(payment_status='UNPAID').select_related('captain', 'tournament')
         context['pending_teams'] = base_teams_qs.filter(payment_status='PENDING').select_related('captain', 'tournament')
         context['paid_teams'] = base_teams_qs.filter(payment_status='PAID').select_related('captain', 'tournament')
 
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
-        
-        # Thêm logic tính toán bảng xếp hạng giống như trang knockout
         standings_by_group = {}
         for group in context['groups']:
             standings = group.get_standings()
             standings_by_group[group.id] = {'name': group.name, 'standings': standings}
-        
         context['standings_by_group'] = standings_by_group
  
-    # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
     elif view_name == 'matches':
         all_matches = tournament.matches.select_related('team1__group', 'team2__group').order_by('match_time')
-
-        # Nhóm các trận đấu vòng bảng theo bảng đấu
         group_matches = all_matches.filter(match_round='GROUP')
         matches_by_group = defaultdict(list)
         for match in group_matches:
-            # Giả định đội 1 thuộc 1 bảng thì trận đấu đó thuộc bảng đó
             if match.team1.group:
                 matches_by_group[match.team1.group].append(match)
-
-        # Sắp xếp các bảng theo tên để hiển thị nhất quán
         sorted_matches_by_group = sorted(matches_by_group.items(), key=lambda item: item[0].name)
         context['sorted_matches_by_group'] = sorted_matches_by_group
-
-        # Giữ nguyên logic cho các trận knockout
         knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
         round_order = {'QUARTER': 1, 'SEMI': 2, 'THIRD_PLACE': 3, 'FINAL': 4}
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
         context['knockout_matches'] = knockout_matches_list
 
-    # === THAY THẾ elif cho 'members' BẰNG 'staff' ===
+    # === PHẦN CẬP NHẬT CHÍNH NẰM Ở ĐÂY ===
     elif view_name == 'staff':
-        context['active_page'] = 'staff' # Đổi tên active_page
+        context['active_page'] = 'staff'
         context['staff_invite_form'] = TournamentStaffInviteForm()
-        # Thành viên của đơn vị tổ chức
-        context['org_members'] = Membership.objects.filter(organization=tournament.organization).select_related('user').order_by('role')
-        # Nhân sự chuyên môn cho giải đấu này
-        context['tournament_staff'] = TournamentStaff.objects.filter(tournament=tournament).select_related('user', 'role')
+        # Lấy thêm `user__profile` để có thể truy cập avatar
+        context['org_members'] = Membership.objects.filter(
+            organization=tournament.organization
+        ).select_related('user', 'user__profile').order_by('role')
+        
+        context['tournament_staff'] = TournamentStaff.objects.filter(
+            tournament=tournament
+        ).select_related('user', 'user__profile', 'role')
+    # === KẾT THÚC CẬP NHẬT ===
 
-    # === BẮT ĐẦU THAY THẾ TẠI ĐÂY ===
     elif view_name == 'players':
-        # Lấy tất cả giải đấu của BTC để làm bộ lọc
         all_tournaments_in_org = tournament.organization.tournaments.all().order_by('-start_date')
         context['all_tournaments_in_org'] = all_tournaments_in_org
-
-        # Bắt đầu với tất cả cầu thủ của BTC
         players_qs = Player.objects.filter(team__tournament__organization=tournament.organization).select_related('team').order_by('team__tournament__name', 'team__name', 'full_name')
-
-        # Lọc theo giải đấu được chọn
         tournament_filter_id = request.GET.get('tournament_filter')
         if tournament_filter_id and tournament_filter_id.isdigit():
             players_qs = players_qs.filter(team__tournament_id=int(tournament_filter_id))
             context['selected_tournament_id'] = int(tournament_filter_id)
         else:
-            # Mặc định, chỉ hiển thị cầu thủ của giải đấu hiện tại
             players_qs = players_qs.filter(team__tournament=tournament)
             context['selected_tournament_id'] = tournament.pk
-
-
-        # Lọc theo đội
         team_filter_id = request.GET.get('team_filter')
         if team_filter_id and team_filter_id.isdigit():
             players_qs = players_qs.filter(team_id=int(team_filter_id))
             context['selected_team_id'] = int(team_filter_id)
-
-        # Tìm kiếm theo tên
         search_query = request.GET.get('q', '')
         if search_query:
             players_qs = players_qs.filter(full_name__icontains=search_query)
             context['search_query'] = search_query
-        
         context['players_list'] = players_qs
-        # Lấy các đội thuộc giải đấu đã được lọc (hoặc giải hiện tại)
         selected_tourn_id = context.get('selected_tournament_id', tournament.pk)
         context['teams_in_tournament'] = Team.objects.filter(tournament_id=selected_tourn_id).order_by('name')
-    # === KẾT THÚC THAY THẾ TẠI ĐÂY ===
 
     elif view_name == 'announcements':
         context['announcements'] = Announcement.objects.filter(tournament=tournament).order_by('-created_at')
@@ -462,6 +444,8 @@ def remove_member(request, pk):
 @never_cache
 def edit_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
+    
+    # === DÒNG KIỂM TRA QUYỀN ĐÃ ĐƯỢC CẬP NHẬT ===
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
     
@@ -486,8 +470,12 @@ def edit_tournament(request, pk):
 @never_cache
 def manage_match(request, pk):
     match = get_object_or_404(Match.objects.select_related('tournament__organization', 'team1', 'team2'), pk=pk)
+    
+    # === DÒNG KIỂM TRA QUYỀN ĐÃ ĐƯỢC CẬP NHẬT ===
     if not user_can_manage_tournament(request.user, match.tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+
+    tournament = match.tournament # Lấy tournament từ match để dùng cho các logic bên dưới
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
     teams_in_tournament = tournament.teams.all().order_by('name')
     
@@ -495,7 +483,6 @@ def manage_match(request, pk):
         action = request.POST.get('action')
         if action == 'update_match':
             form = MatchUpdateForm(request.POST, request.FILES, instance=match)
-            # === THÊM 2 DÒNG NÀY VÀO ===
             form.fields['team1'].queryset = teams_in_tournament
             form.fields['team2'].queryset = teams_in_tournament
             if form.is_valid():
@@ -503,7 +490,6 @@ def manage_match(request, pk):
                 messages.success(request, "Đã cập nhật thông tin chung của trận đấu.")
                 return redirect('organizations:manage_match', pk=match.pk)
         
-        # === PHẦN SỬA LỖI CHO BÀN THẮNG ===
         elif action == 'add_goal':
             goal_form = GoalForm(request.POST)
             goal_form.fields['player'].queryset = players_in_match
@@ -518,7 +504,6 @@ def manage_match(request, pk):
                     messages.error(request, f"Lỗi: {e.messages[0]}")
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=goals')
 
-        # === PHẦN SỬA LỖI CHO THẺ PHẠT ===
         elif action == 'add_card':
             card_form = CardForm(request.POST)
             card_form.fields['player'].queryset = players_in_match
@@ -534,15 +519,17 @@ def manage_match(request, pk):
                 return redirect(reverse('organizations:manage_match', args=[pk]) + '?tab=cards')
 
     form = MatchUpdateForm(instance=match)
-    # === THÊM 2 DÒNG NÀY VÀO ===
     form.fields['team1'].queryset = teams_in_tournament
     form.fields['team2'].queryset = teams_in_tournament
+    
     goal_form = GoalForm()
     card_form = CardForm()
     goal_form.fields['player'].queryset = players_in_match
     card_form.fields['player'].queryset = players_in_match
+    
     goals = match.goals.select_related('player', 'team').order_by('-minute')
     cards = match.cards.select_related('player', 'team').order_by('-minute')
+
     context = {
         'form': form,
         'goal_form': goal_form,
@@ -583,17 +570,18 @@ def delete_card(request, pk):
     return safe_redirect(request, default_url)
 
 
+# backend/organizations/views.py
+
 @login_required
 @never_cache
 def manage_knockout(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
+    
+    # === DÒNG KIỂM TRA QUYỀN ĐÃ ĐƯỢC CẬP NHẬT ===
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    groups = tournament.groups.prefetch_related('teams').all().order_by('name') # Thêm order_by('name') để đảm bảo thứ tự
-    #if not groups.exists():
-    #    messages.warning(request, "Giải đấu chưa có bảng nào được tạo.")
-    #    return redirect('organizations:manage_tournament', pk=pk)
+    groups = tournament.groups.prefetch_related('teams').all().order_by('name')
 
     # --- Lấy dữ liệu các đội và các vòng đấu ---
     standings_by_group = {}
@@ -761,7 +749,6 @@ def manage_knockout(request, pk):
         'third_place_form': third_place_form,
     }
     return render(request, 'organizations/manage_knockout.html', context)
-# === KẾT THÚC HÀM MANAGE_KNOCKOUT ===
 
 @login_required
 def delete_photo(request, pk):

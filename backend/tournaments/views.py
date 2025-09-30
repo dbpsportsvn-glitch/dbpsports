@@ -27,6 +27,7 @@ from services.weather import get_weather_for_match
 from organizations.forms import GoalForm, CardForm, SubstitutionForm 
 from .utils import get_current_vote_value
 from .models import TournamentStaff
+from organizations.views import user_can_control_match, user_can_upload_gallery
 
 # Local Application Imports
 from organizations.models import Organization
@@ -495,13 +496,9 @@ def match_detail(request, pk):
     # --- PHẦN LẤY DỮ LIỆU ĐỘI HÌNH VÀ THỐNG KÊ ---
     all_goals_in_match = Goal.objects.filter(match=match).select_related('player', 'team')
     all_cards_in_match = Card.objects.filter(match=match).select_related('player', 'team')
-    
-    # --- DÒNG CODE MỚI ---
     all_substitutions_in_match = Substitution.objects.filter(match=match).select_related('player_in', 'player_out', 'team')
-    # Lấy thêm các sự kiện mốc thời gian
     match_events = list(match.events.all())
 
-    # Gộp tất cả các loại sự kiện và sắp xếp theo thời gian tạo
     events = sorted(
         list(all_goals_in_match) + list(all_cards_in_match) + list(all_substitutions_in_match) + match_events,
         key=lambda x: x.created_at
@@ -539,6 +536,9 @@ def match_detail(request, pk):
         elif match.team2.captain == request.user:
             captain_team = match.team2
 
+    # === DÒNG QUAN TRỌNG ĐƯỢC THÊM VÀO ===
+    can_control_match = user_can_control_match(request.user, match)
+    
     context = {
         'match': match,
         'team1_starters': team1_starters,
@@ -548,6 +548,7 @@ def match_detail(request, pk):
         'events': events,
         'captain_team': captain_team,
         'weather_data': weather_data,
+        'can_control_match': can_control_match, # Gửi biến quyền ra template
     }
     return render(request, 'tournaments/match_detail.html', context)
 
@@ -1050,12 +1051,8 @@ def claim_player_profile(request, pk):
 def tournament_bulk_upload(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     
-    # Kiểm tra quyền truy cập
-    is_organizer = False
-    if request.user.is_authenticated and tournament.organization:
-        if tournament.organization.members.filter(pk=request.user.pk).exists():
-            is_organizer = True
-    if not request.user.is_superuser and not is_organizer:
+    # === DÒNG KIỂM TRA QUYỀN ĐÃ ĐƯỢC CẬP NHẬT ===
+    if not user_can_upload_gallery(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
     if request.method == 'POST':
@@ -1254,26 +1251,9 @@ def match_control_view(request, pk):
         pk=pk
     )
 
-    # === BẮT ĐẦU THAY THẾ LOGIC KIỂM TRA QUYỀN ===
-    is_organizer = False
-    is_commentator = False
-
-    if request.user.is_authenticated and match.tournament.organization:
-        # 1. Kiểm tra xem có phải là thành viên BTC không
-        is_organizer = match.tournament.organization.members.filter(pk=request.user.pk).exists()
-        
-        # 2. Nếu không phải BTC, kiểm tra xem có phải là BLV cho giải này không
-        if not is_organizer:
-            is_commentator = TournamentStaff.objects.filter(
-                tournament=match.tournament,
-                user=request.user,
-                role__id='COMMENTATOR'
-            ).exists()
-
-    # Chỉ staff của Django, BTC hoặc BLV được chỉ định mới có quyền vào
-    if not request.user.is_staff and not is_organizer and not is_commentator:
-        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
-    # === KẾT THÚC THAY THẾ LOGIC ===
+    # === THAY THẾ TOÀN BỘ KHỐI KIỂM TRA QUYỀN CŨ BẰNG HÀM MỚI ===
+    if not user_can_control_match(request.user, match):
+        return HttpResponseForbidden("Bạn không có quyền truy cập phòng điều khiển trực tiếp này.")
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1315,6 +1295,7 @@ def match_control_view(request, pk):
                         'status': 'success',
                         'event': {
                             'type': 'goal',
+                            'id': instance.pk, # Gửi ID để xử lý xóa
                             'minute': instance.minute or '-',
                             'team_name': instance.team.name,
                             'team_class': 'team1' if instance.team == match.team1 else 'team2',
@@ -1347,7 +1328,7 @@ def match_control_view(request, pk):
                 elif event_type == MatchEvent.EventType.MATCH_END: text = f"Trận đấu kết thúc. Tỉ số chung cuộc là {current_score}."
                 if text:
                     event = MatchEvent.objects.create(match=match, event_type=event_type, text=text)
-                    return JsonResponse({'status': 'success', 'event': {'type': 'match_event', 'text': event.text, 'event_type': event.event_type, 'created_at': event.created_at.strftime('%H:%M')}})
+                    return JsonResponse({'status': 'success', 'event': {'type': 'match_event', 'id': event.pk, 'text': event.text, 'event_type': event.event_type, 'created_at': event.created_at.strftime('%H:%M')}})
                 return JsonResponse({'status': 'error', 'message': 'Loại sự kiện không hợp lệ.'}, status=400)
 
             if form and form.is_valid():
@@ -1355,7 +1336,7 @@ def match_control_view(request, pk):
                 instance.match = match
                 instance.save()
                 
-                response_data = {'status': 'success', 'event': {'minute': instance.minute or '-', 'team_name': instance.team.name, 'team_class': 'team1' if instance.team == match.team1 else 'team2'}}
+                response_data = {'status': 'success', 'event': {'id': instance.pk, 'minute': instance.minute or '-', 'team_name': instance.team.name, 'team_class': 'team1' if instance.team == match.team1 else 'team2'}}
                 if action == 'add_card':
                     response_data['event'].update({'type': 'card', 'player_name': instance.player.full_name, 'card_type': instance.card_type})
                 elif action == 'add_substitution':
