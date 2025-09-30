@@ -13,6 +13,7 @@ class Role(models.Model):
         ('MEDIA', 'Đơn Vị Truyền Thông'),
         ('PHOTOGRAPHER', 'Nhiếp Ảnh Gia'),
         ('COLLABORATOR', 'Cộng Tác Viên'),
+        ('TOURNAMENT_MANAGER', 'Quản lý Giải đấu'),
     ]
     id = models.CharField(max_length=20, primary_key=True, choices=ROLE_CHOICES)
     name = models.CharField("Tên vai trò", max_length=50)

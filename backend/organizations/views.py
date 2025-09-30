@@ -1,4 +1,4 @@
-# File: backend/organizations/views.py
+# backend/organizations/views.py
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -13,31 +13,57 @@ from django.contrib import messages
 from django.db.models import Q
 from collections import defaultdict
 from tournaments.forms import TournamentForm
-
-from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification # Thêm Notification
-from tournaments.utils import send_notification_email, send_schedule_notification # Thêm send_schedule_notification
-# THÊM IMPORT MỚI
+from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification, TournamentStaff
+from tournaments.utils import send_notification_email, send_schedule_notification
 from .forms import AnnouncementForm
 from tournaments.models import Announcement
-
-
-# === THAY ĐỔI: IMPORT THÊM QUARTERFINALCREATIONFORM ===
 from .forms import (
     OrganizationCreationForm, MemberInviteForm, 
     MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, 
     SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, 
-    MatchCreationForm, PlayerUpdateForm # <-- Thêm PlayerUpdateForm vào đây
+    MatchCreationForm, PlayerUpdateForm, TournamentStaffInviteForm
 )
 from django.utils import timezone
 from django.db import transaction
-# === THÊM: KIỂM TRA URL next AN TOÀN ===
 from django.utils.http import url_has_allowed_host_and_scheme
-
-from .forms import TournamentStaffInviteForm
-from tournaments.models import TournamentStaff
 from users.models import Role
 
-#=================================
+# === HÀM HỖ TRỢ KIỂM TRA QUYỀN MỚI ===
+def user_can_manage_tournament(user, tournament):
+    """
+    Kiểm tra xem người dùng có quyền quản lý một giải đấu cụ thể không.
+    Quyền được cấp nếu:
+    1. Là superuser (staff).
+    2. Là thành viên của BTC (Organization) sở hữu giải đấu.
+    3. Được gán vai trò 'Quản lý Giải đấu' cho chính giải đấu đó.
+    """
+    if not user.is_authenticated:
+        return False
+    if user.is_staff:
+        return True
+    
+    if tournament.organization and tournament.organization.members.filter(pk=user.pk).exists():
+        return True
+    
+    if TournamentStaff.objects.filter(
+        tournament=tournament, 
+        user=user, 
+        role__id='TOURNAMENT_MANAGER'
+    ).exists():
+        return True
+        
+    return False
+
+def safe_redirect(request, default_url: str):
+    next_url = request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return redirect(next_url)
+    return redirect(default_url)
+
 # Helper: ưu tiên ?next= nếu hợp lệ, nếu không quay về default_url
 def safe_redirect(request, default_url: str):
     next_url = request.GET.get('next')
@@ -48,6 +74,8 @@ def safe_redirect(request, default_url: str):
     ):
         return redirect(next_url)
     return redirect(default_url)
+
+#=================================
 
 # === THAY THẾ TOÀN BỘ HÀM NÀY ===
 @login_required
@@ -369,7 +397,7 @@ def manage_tournament(request, pk):
 def delete_group(request, pk):
     group = get_object_or_404(Group, pk=pk)
     tournament = group.tournament
-    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
     default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=groups"
     if request.method == 'POST':
@@ -381,8 +409,9 @@ def delete_group(request, pk):
 @login_required
 def delete_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
+    # QUYỀN HẠN CAO NHẤT: Chỉ thành viên BTC gốc mới được xóa giải đấu
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
-        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+        return HttpResponseForbidden("Chỉ thành viên Ban Tổ Chức gốc mới có quyền xóa giải đấu.")
     default_url = reverse('organizations:dashboard')
     if request.method == 'POST':
         tournament.delete()
@@ -430,10 +459,10 @@ def remove_member(request, pk):
     return safe_redirect(request, default_url)
 
 @login_required
-@never_cache # <-- THÊM DÒNG NÀY
+@never_cache
 def edit_tournament(request, pk):
     tournament = get_object_or_404(Tournament, pk=pk)
-    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
     
     if request.method == 'POST':
@@ -457,9 +486,7 @@ def edit_tournament(request, pk):
 @never_cache
 def manage_match(request, pk):
     match = get_object_or_404(Match.objects.select_related('tournament__organization', 'team1', 'team2'), pk=pk)
-    tournament = match.tournament
-    organization = tournament.organization
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, match.tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
     teams_in_tournament = tournament.teams.all().order_by('name')
@@ -532,9 +559,7 @@ def manage_match(request, pk):
 @login_required
 def delete_goal(request, pk):
     goal = get_object_or_404(Goal, pk=pk)
-    match = goal.match
-    organization = match.tournament.organization
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, goal.match.tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
     default_url = reverse('organizations:manage_match', args=[match.pk]) + '?tab=goals'
     if request.method == 'POST':
@@ -547,9 +572,7 @@ def delete_goal(request, pk):
 @login_required
 def delete_card(request, pk):
     card = get_object_or_404(Card, pk=pk)
-    match = card.match
-    organization = match.tournament.organization
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, card.match.tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
     default_url = reverse('organizations:manage_match', args=[match.pk]) + '?tab=cards'
     if request.method == 'POST':
@@ -560,14 +583,11 @@ def delete_card(request, pk):
     return safe_redirect(request, default_url)
 
 
-# === BẮT ĐẦU HÀM MANAGE_KNOCKOUT ĐÃ CẬP NHẬT ===
 @login_required
 @never_cache
 def manage_knockout(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
-    organization = tournament.organization
-
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
     groups = tournament.groups.prefetch_related('teams').all().order_by('name') # Thêm order_by('name') để đảm bảo thứ tự
@@ -1047,10 +1067,11 @@ def send_announcement_email(request, pk):
 
     return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
 
-# === THÊM 2 HÀM MỚI NÀY VÀO CUỐI FILE ===
+# === CÁC HÀM MỚI ĐỂ QUẢN LÝ NHÂN SỰ CHUYÊN MÔN ===
 @login_required
 def add_tournament_staff(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    # Chỉ BTC gốc mới có quyền thêm/xóa nhân sự
     if not tournament.organization or request.user not in tournament.organization.members.all():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
@@ -1081,6 +1102,7 @@ def add_tournament_staff(request, tournament_pk):
 def remove_tournament_staff(request, pk):
     staff_entry = get_object_or_404(TournamentStaff, pk=pk)
     tournament = staff_entry.tournament
+    # Chỉ BTC gốc mới có quyền thêm/xóa nhân sự
     if not tournament.organization or request.user not in tournament.organization.members.all():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
