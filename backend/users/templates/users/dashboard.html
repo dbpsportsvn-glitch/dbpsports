@@ -12,31 +12,45 @@
         gap: 2rem;
         align-items: flex-start;
     }
+
+    /* === BẮT ĐẦU CÁC THAY ĐỔI CHÍNH === */
     .profile-card {
-        background-color: #f8f9fa;
+        background: linear-gradient(145deg, #ffffff, #f0f2f5); /* Nền chuyển sắc tinh tế */
         border: 1px solid #dee2e6;
         border-radius: 0.75rem;
-        padding: 1.5rem;
+        padding: 2rem 1.5rem 1.5rem 1.5rem; /* Tăng padding-top để đẩy nội dung xuống */
         text-align: center;
         margin-bottom: 1.5rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08); /* Đổ bóng nổi bật hơn */
+        transition: all 0.3s ease; /* Hiệu ứng khi di chuột */
     }
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+    /* === KẾT THÚC CÁC THAY ĐỔI CHÍNH === */
+
     .profile-avatar {
-        width: 80px;
-        height: 80px;
+        width: 100px;
+        height: 100px;
         border-radius: 50%;
         object-fit: cover;
         border: 3px solid #fff;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* Thêm bóng cho avatar */
         margin-bottom: 1rem;
     }
     .profile-avatar-ph {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
+        width: 100px;
+        height: 100px;
+        font-size: 3rem;
         font-weight: bold;
         color: #fff;
         background-color: #0d6efd;
+        border-radius: 50%;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     }
     .profile-name {
         font-weight: 600;
@@ -139,13 +153,21 @@
                 </h5>
                 <p class="profile-info">
                     {% if player_profile %}
-                        <i class="bi bi-person-badge-fill"></i> {{ player_profile.team.name }}<br>
-                        <small>Giải: {{ player_profile.team.tournament.name }}</small>
+                        {# Hiển thị tên đội, nếu không có đội thì hiển thị "Cầu thủ tự do" #}
+                        {{ player_profile.team.name|default:"Cầu thủ tự do" }}<br>
+                        <small>
+                            {# Kiểm tra nếu có giải đấu thì mới hiển thị #}
+                            {% if player_profile.team and player_profile.team.tournament %}
+                                Giải: {{ player_profile.team.tournament.name }}
+                            {% else %}
+                                &nbsp; {# Giữ khoảng trống để không bị lệch layout #}
+                            {% endif %}
+                        </small>
                     {% else %}
                         Thành viên
                     {% endif %}
                 </p>
-                <div class="d-flex justify-content-center gap-3 mt-2 fs-4 text-primary">
+                <div class="d-flex justify-content-center gap-2 mt-2 fs-4 text-primary">
                     {% for role in user.profile.roles.all %}
                         <i class="bi {{ role.icon }}" title="{{ role.name }}"></i>
                     {% endfor %}
@@ -153,6 +175,11 @@
             </div>
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link {% if not request.GET.tab or request.GET.tab == 'profile' %}active{% endif %}" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
+                {% if player_profile %}
+                <a class="nav-link" href="{% url 'player_detail' pk=player_profile.pk %}">
+                    <i class="bi bi-person-bounding-box"></i>Hồ sơ Cầu thủ của tôi
+                </a>
+                {% endif %}                
                 <a class="nav-link {% if request.GET.tab == 'public-profile' %}active{% endif %}" id="public-profile-tab" data-bs-toggle="pill" href="#public-profile" role="tab"><i class="bi bi-person-vcard"></i>Hồ sơ công khai</a>
                 
                 {# === SỬA LỖI TẠI ĐÂY: Thêm điều kiện if === #}

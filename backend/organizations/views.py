@@ -76,7 +76,13 @@ def user_can_manage_tournament(user, tournament):
 
 def user_can_control_match(user, match):
     """Quyền truy cập phòng Live Control (cập nhật tỉ số, sự kiện)."""
-    # Bao gồm BTC, Quản lý giải, và cả Bình Luận Viên.
+    # SỬA LỖI: Luôn cho phép admin cao nhất (is_staff) truy cập ngay từ đầu.
+    if not user.is_authenticated:
+        return False
+    if user.is_staff:
+        return True
+    
+    # Giữ lại logic kiểm tra cũ cho các người dùng khác
     allowed_roles = ['TOURNAMENT_MANAGER', 'COMMENTATOR']
     return user_is_org_member(user, match.tournament.organization) or \
            user_has_tournament_role(user, match.tournament, allowed_roles)

@@ -6,13 +6,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
-from tournaments.models import Team, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff 
+from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
 from organizations.models import ProfessionalReview
 from django.db.models import Avg
+# Thêm các import cần thiết ở đầu file
+from django.db import transaction
 
 @login_required
 def dashboard(request):
@@ -70,6 +72,15 @@ def dashboard(request):
 
     managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
     followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
+
+    # === THÊM DÒNG NÀY ĐỂ LẤY HỒ SƠ CẦU THỦ ===
+    # Sử dụng try-except để tránh lỗi nếu người dùng không phải là cầu thủ
+    try:
+        player_profile = request.user.player_profile
+    except Player.DoesNotExist:
+        player_profile = None
+    # === KẾT THÚC THÊM MỚI ===
+        
     player_profile = getattr(request.user, 'player_profile', None)
 
     # Lấy danh sách các giải đấu mà người dùng được gán vai trò 'Quản lý Giải đấu'
@@ -115,36 +126,40 @@ def select_roles_view(request):
         elif len(selected_role_ids) > 2:
             messages.error(request, "Bạn chỉ được chọn tối đa 2 vai trò.")
         else:
-            profile.roles.clear()
-            for role_id in selected_role_ids:
-                try:
-                    role = Role.objects.get(pk=role_id)
-                    profile.roles.add(role)
-                except Role.DoesNotExist:
-                    messages.error(request, f"Vai trò không hợp lệ: {role_id}")
-                    return render(request, 'users/select_roles.html', {'roles': Role.objects.all()})
-            
-            profile.has_selected_roles = True
-            profile.save()
-            
-            # === LOGIC PHÂN QUYỀN MỚI ===
+            # Bắt đầu một transaction để đảm bảo tất cả các thao tác cùng thành công hoặc thất bại
+            with transaction.atomic():
+                profile.roles.clear()
+                for role_id in selected_role_ids:
+                    try:
+                        role = Role.objects.get(pk=role_id)
+                        profile.roles.add(role)
+                    except Role.DoesNotExist:
+                        messages.error(request, f"Vai trò không hợp lệ: {role_id}")
+                        return render(request, 'users/select_roles.html', {'roles': Role.objects.all()})
+                
+                profile.has_selected_roles = True
+                profile.save()
 
-            # 1. Tặng phiếu bầu cho vai trò Cầu thủ
-            if len(selected_role_ids) == 1 and selected_role_ids[0] == 'PLAYER':
-                # Tạo một bản ghi vote "ảo" để làm quà tặng
-                # Lưu ý: Đây là một phiếu bầu tượng trưng, không gắn với giải đấu nào
-                VoteRecord.objects.create(
-                    voter=request.user,
-                    weight=1 
-                )
-                messages.success(request, "Chúc mừng bạn đã gia nhập cộng đồng cầu thủ! Bạn được tặng 1 phiếu bầu làm quà khởi đầu.")
+                # === LOGIC MỚI: TỰ ĐỘNG TẠO HỒ SƠ CẦU THỦ & THƯỞNG PHIẾU (PHIÊN BẢN 2.0) ===
+                if 'PLAYER' in selected_role_ids:
+                    # Tạo hồ sơ cầu thủ tự do (team=None) và cộng thưởng 1 phiếu bầu
+                    Player.objects.get_or_create(
+                        user=request.user,
+                        defaults={
+                            'team': None, # Cầu thủ tự do, không thuộc đội nào
+                            'full_name': request.user.get_full_name() or request.user.username,
+                            'jersey_number': 99,
+                            'position': 'MF',
+                            'votes': 1  # Cộng thưởng trực tiếp
+                        }
+                    )
+                    messages.success(request, "Chào mừng bạn! Một hồ sơ cầu thủ tự do đã được tạo và bạn được tặng 1 phiếu bầu.")
 
-            # 2. Điều hướng cho Ban tổ chức
+            # === Logic chuyển hướng sau khi xử lý ===
             if 'ORGANIZER' in selected_role_ids:
                 messages.info(request, "Để bắt đầu, vui lòng hoàn tất thông tin đăng ký Ban tổ chức của bạn.")
                 return redirect('organizations:create')
             
-            # 3. Điều hướng mặc định cho các vai trò khác
             messages.success(request, "Đã lưu vai trò! Vui lòng hoàn tất hồ sơ của bạn để mọi người có thể tìm thấy bạn.")
             return redirect('profile_setup') 
 

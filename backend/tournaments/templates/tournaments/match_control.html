@@ -111,9 +111,11 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5><i class="bi bi-sliders"></i> Phòng Điều Khiển</h5>
         <div class="d-flex gap-2">
-            <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm js-open-notes" id="open-notes-btn">
-                <i class="bi bi-files"></i> Sổ tay BLV
-            </a>
+            {% if user.is_staff %}
+                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm js-open-notes" id="open-notes-btn">
+                    <i class="bi bi-files"></i> Sổ tay BLV
+                </a>
+            {% endif %}
             <a href="{% url 'match_detail' pk=match.pk %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye-fill"></i> Xem trang trận đấu</a>
         </div>
     </div>

@@ -1,0 +1,12 @@
+{% load i18n %}{% autoescape off %}
+Chào bạn,
+
+Bạn (hoặc ai đó) đã cố gắng đăng ký một tài khoản tại {{ site_name }} bằng địa chỉ email của bạn.
+
+Tuy nhiên, một tài khoản sử dụng email này đã tồn tại. Trong trường hợp bạn đã quên, vui lòng sử dụng chức năng khôi phục mật khẩu để lấy lại tài khoản của mình:
+
+{{ password_reset_url }}
+
+Trân trọng,
+Đội ngũ {{ site_name }}
+{% endautoescape %}

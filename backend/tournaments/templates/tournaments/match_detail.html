@@ -170,10 +170,7 @@
         
         <div class="d-flex gap-2">
             {% if user.is_staff %}
-                {# 1. QUYỀN CAO NHẤT: Superuser thấy tất cả #}
-                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm">
-                    <i class="bi bi-files"></i> Sổ tay BLV
-                </a>
+                {# 1. QUYỀN CAO NHẤT: Superuser thấy Live Control & Quản lý đội hình #}
                 <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm">
                     <i class="bi bi-broadcast"></i> Live Control
                 </a>
@@ -188,10 +185,7 @@
                 </div>
 
             {% elif can_control_match %}
-                {# 2. QUYỀN CỦA BTC/BLV: Thấy Live Control & Sổ tay, KHÔNG thấy đội hình #}
-                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm">
-                    <i class="bi bi-files"></i> Sổ tay BLV
-                </a>
+                {# 2. QUYỀN CỦA BTC/BLV: Chỉ thấy Live Control #}
                 <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm">
                     <i class="bi bi-broadcast"></i> Live Control
                 </a>

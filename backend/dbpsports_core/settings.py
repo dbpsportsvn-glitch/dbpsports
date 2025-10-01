@@ -165,6 +165,7 @@ LOGIN_URL = "account_login" # Sử dụng URL chuẩn của allauth
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SESSION_REMEMBER = None
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 ACCOUNT_FORMS = {'signup': 'users.forms.CustomSignupForm'}
