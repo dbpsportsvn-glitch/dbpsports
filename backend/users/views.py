@@ -15,6 +15,9 @@ from organizations.models import ProfessionalReview
 from django.db.models import Avg
 # Thêm các import cần thiết ở đầu file
 from django.db import transaction
+from tournaments.forms import PlayerCreationForm
+from tournaments.models import Player
+
 
 @login_required
 def dashboard(request):
@@ -26,6 +29,23 @@ def dashboard(request):
     avatar_form = AvatarUpdateForm(instance=profile)
     preferences_form = NotificationPreferencesForm(instance=profile)
     profile_form = ProfileUpdateForm(instance=profile)
+
+    # === BẮT ĐẦU LOGIC MỚI CHO HỒ SƠ CẦU THỦ ===
+    player_profile = None
+    player_profile_form = None
+    can_edit_player_profile = False
+    remaining_edits = 0
+
+    try:
+        player_profile = request.user.player_profile
+    except Player.DoesNotExist:
+        pass
+
+    if player_profile:
+        # Sửa lại logic: khóa khi có 3 phiếu bầu hoặc 3 lần sửa
+        can_edit_player_profile = player_profile.votes < 3 and player_profile.edit_count < 3
+        remaining_edits = 3 - player_profile.edit_count
+    # === KẾT THÚC LOGIC MỚI ===
 
     if request.method == 'POST':
         if 'update_profile' in request.POST:
@@ -44,7 +64,7 @@ def dashboard(request):
                 update_session_auth_hash(request, user)
                 messages.success(request, 'Mật khẩu của bạn đã được thay đổi thành công!')
                 return redirect('dashboard')
-        
+
         elif 'update_avatar' in request.POST:
             avatar_form = AvatarUpdateForm(request.POST, request.FILES, instance=profile)
             if avatar_form.is_valid():
@@ -55,45 +75,43 @@ def dashboard(request):
                 avatar_form_has_errors = True
                 messages.error(request, 'Cập nhật ảnh đại diện thất bại. Vui lòng xem chi tiết trong popup.')
 
-        if 'update_preferences' in request.POST:
+        elif 'update_preferences' in request.POST:
             preferences_form = NotificationPreferencesForm(request.POST, instance=profile)
             if preferences_form.is_valid():
                 preferences_form.save()
                 messages.success(request, 'Đã cập nhật cài đặt thông báo của bạn!')
                 return redirect(request.path_info + '?tab=notifications')
 
-        # === ĐẢM BẢO KHỐI NÀY ĐÚNG ===
-        if 'update_public_profile' in request.POST:
+        elif 'update_public_profile' in request.POST:
             profile_form = ProfileUpdateForm(request.POST, instance=profile)
             if profile_form.is_valid():
                 profile_form.save()
                 messages.success(request, 'Đã cập nhật hồ sơ công khai của bạn!')
                 return redirect(request.path_info + '?tab=public-profile')
 
+        # === BẮT ĐẦU KHỐI XỬ LÝ LƯU HỒ SƠ CẦU THỦ ===
+        elif 'update_player_profile' in request.POST and player_profile and can_edit_player_profile:
+            # Dùng lại PlayerCreationForm để chỉnh sửa
+            player_profile_form = PlayerCreationForm(request.POST, request.FILES, instance=player_profile)
+            if player_profile_form.is_valid():
+                player_to_save = player_profile_form.save(commit=False)
+                player_to_save.edit_count += 1 # Tăng số lần chỉnh sửa
+                player_to_save.save()
+
+                messages.success(request, f'Đã cập nhật hồ sơ cầu thủ. Bạn còn {3 - player_to_save.edit_count} lần sửa đổi.')
+                return redirect(request.path_info + '?tab=player-profile')
+            else:
+                messages.error(request, 'Cập nhật hồ sơ cầu thủ thất bại. Vui lòng kiểm tra lại các trường thông tin.')
+        # === KẾT THÚC KHỐI XỬ LÝ ===
+
+    # Khởi tạo form cho GET request
+    if player_profile and not player_profile_form:
+        player_profile_form = PlayerCreationForm(instance=player_profile)
+
     managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
     followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
-
-    # === THÊM DÒNG NÀY ĐỂ LẤY HỒ SƠ CẦU THỦ ===
-    # Sử dụng try-except để tránh lỗi nếu người dùng không phải là cầu thủ
-    try:
-        player_profile = request.user.player_profile
-    except Player.DoesNotExist:
-        player_profile = None
-    # === KẾT THÚC THÊM MỚI ===
-        
-    player_profile = getattr(request.user, 'player_profile', None)
-
-    # Lấy danh sách các giải đấu mà người dùng được gán vai trò 'Quản lý Giải đấu'
-    managed_tournaments = Tournament.objects.filter(
-        staff__user=request.user,
-        staff__role__id='TOURNAMENT_MANAGER'
-    ).distinct().order_by('-start_date')
-
-    # === THÊM TRUY VẤN MỚI TẠI ĐÂY ===
-    media_tournaments = Tournament.objects.filter(
-        staff__user=request.user,
-        staff__role__id__in=['MEDIA', 'PHOTOGRAPHER']
-    ).distinct().order_by('-start_date')
+    managed_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id='TOURNAMENT_MANAGER').distinct().order_by('-start_date')
+    media_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id__in=['MEDIA', 'PHOTOGRAPHER']).distinct().order_by('-start_date')
 
     context = {
         'user_form': user_form,
@@ -103,10 +121,14 @@ def dashboard(request):
         'profile_form': profile_form,
         'managed_teams': managed_teams,
         'followed_tournaments': followed_tournaments,
-        'player_profile': player_profile,
         'avatar_form_has_errors': avatar_form_has_errors,
         'managed_tournaments': managed_tournaments,
         'media_tournaments': media_tournaments,
+        'player_profile': player_profile,
+        # === GỬI CÁC BIẾN MỚI RA TEMPLATE ===
+        'player_profile_form': player_profile_form,
+        'can_edit_player_profile': can_edit_player_profile,
+        'remaining_edits': remaining_edits,
     }
     return render(request, 'users/dashboard.html', context)
 
