@@ -58,14 +58,28 @@
         <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="profile-avatar">
         <div class="flex-grow-1">
             <h1 class="display-5 mb-0"><strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}</h1>
+            {% if user.is_authenticated and not player.user and not user.player_profile %}
+                <form action="{% url 'claim_player_profile' pk=player.pk %}" method="POST" class="mt-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-circle-fill"></i> Đây là tôi, nhận hồ sơ này
+                    </button>
+                </form>
+            {% endif %}
             <h4 class="fw-light mb-2">{{ player.get_position_display }}</h4>
             <div class="d-flex align-items-center gap-3">
+                {% if player.team %}
                 <a href="{% url 'team_detail' pk=player.team.pk %}" class="text-white text-decoration-none d-flex align-items-center gap-2">
                     {% if player.team.logo %}
                         <img src="{{ player.team.logo.url }}" style="width: 28px; height: 28px; object-fit: contain;">
                     {% endif %}
                     <strong>{{ player.team.name }}</strong>
                 </a>
+                {% else %}
+                <span class="badge bg-secondary fs-6">
+                    <i class="bi bi-person-check-fill"></i> Cầu thủ tự do
+                </span>
+                {% endif %}
             </div>
         </div>
         <div class="ms-auto text-end">
@@ -81,7 +95,7 @@
                     <span>Phiếu</span>
                 </span>
                 
-                {% if player.team.tournament.status == 'IN_PROGRESS' and user.is_authenticated and user != player.user %}
+                {% if player.team and player.team.tournament and player.team.tournament.status == 'IN_PROGRESS' and user.is_authenticated and user != player.user %}
                 <form id="vote-form" action="{% url 'cast_vote' player_pk=player.pk %}" method="POST" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" id="vote-button" class="btn btn-sm btn-light">

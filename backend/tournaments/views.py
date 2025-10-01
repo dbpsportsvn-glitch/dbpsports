@@ -986,19 +986,19 @@ def generate_schedule_view(request, tournament_pk):
 
 def player_detail(request, pk):
     player = get_object_or_404(Player.objects.select_related('team__tournament'), pk=pk)
-    tournament = player.team.tournament
-    
-    # Tính tuổi của cầu thủ
+
+    # === BẮT ĐẦU SỬA LỖI: Lấy tournament một cách an toàn ===
+    tournament = player.team.tournament if player.team else None
+    # === KẾT THÚC SỬA LỖI ===
+
     age = None
     if player.date_of_birth:
         today = date.today()
         age = today.year - player.date_of_birth.year - ((today.month, today.day) < (player.date_of_birth.month, player.date_of_birth.day))
 
-    # (Phần code còn lại của hàm giữ nguyên...)
     teams_played_for_ids = Player.objects.filter(full_name__iexact=player.full_name).values_list('team_id', flat=True)
     player_achievements = TeamAchievement.objects.filter(team_id__in=teams_played_for_ids).select_related('tournament').order_by('-achieved_at')
 
-    # === BẮT ĐẦU KHỐI TÍNH TOÁN GIÁ TRỊ MỚI ===
     current_vote_value = get_current_vote_value()
     value_from_votes = player.votes * current_vote_value
     total_value = player.transfer_value + value_from_votes
@@ -1016,14 +1016,19 @@ def player_detail(request, pk):
     }
     
     badges = []
-    top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals', filter=Q(goals__is_own_goal=False))).order_by('-goal_count').first()
-    if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
-        badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
+    # === BẮT ĐẦU SỬA LỖI: Chỉ tính huy hiệu nếu có giải đấu ===
+    if tournament:
+        top_scorer = Player.objects.filter(team__tournament=tournament).annotate(goal_count=Count('goals', filter=Q(goals__is_own_goal=False))).order_by('-goal_count').first()
+        if top_scorer and top_scorer.pk == player.pk and stats['total_goals'] > 0:
+            badges.append({'name': 'Vua phá lưới', 'icon': 'bi-trophy-fill', 'color': 'text-warning'})
+        
+        most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
+        if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
+            badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
+    # === KẾT THÚC SỬA LỖI ===
+            
     if stats['yellow_cards'] == 0 and stats['red_cards'] == 0 and stats['matches_played_count'] > 0:
         badges.append({'name': 'Cầu thủ Fair-play', 'icon': 'bi-shield-check', 'color': 'text-primary'})
-    most_played = Player.objects.filter(team__tournament=tournament).annotate(match_count=Count('lineups')).order_by('-match_count').first()
-    if most_played and most_played.pk == player.pk and stats['matches_played_count'] > 0:
-        badges.append({'name': 'Cột trụ đội bóng', 'icon': 'bi-gem', 'color': 'text-info'})
 
     context = {
         'player': player,
@@ -1031,8 +1036,8 @@ def player_detail(request, pk):
         'badges': badges,
         'player_achievements': player_achievements,
         'age': age,
-        'value_from_votes': value_from_votes, # Gửi giá trị từ phiếu bầu
-        'total_value': total_value,           # Gửi tổng giá trị
+        'value_from_votes': value_from_votes,
+        'total_value': total_value,
     }
     return render(request, 'tournaments/player_detail.html', context)
 
@@ -1876,3 +1881,24 @@ def captain_note_view(request, match_pk, team_pk):
         'form': form,
     }
     return render(request, 'tournaments/captain_note.html', context)    
+
+
+@login_required
+def claim_player_profile(request, pk):
+    player_to_claim = get_object_or_404(Player, pk=pk)
+
+    # Kiểm tra xem tài khoản này đã có hồ sơ cầu thủ chưa
+    if hasattr(request.user, 'player_profile') and request.user.player_profile is not None:
+        messages.error(request, "Tài khoản của bạn đã được liên kết với một hồ sơ cầu thủ khác.")
+        return redirect('player_detail', pk=pk)
+
+    # Kiểm tra xem hồ sơ này đã bị ai nhận chưa
+    if player_to_claim.user is not None:
+        messages.error(request, "Hồ sơ này đã được một tài khoản khác liên kết.")
+        return redirect('player_detail', pk=pk)
+
+    # Nếu mọi thứ hợp lệ, tiến hành liên kết
+    player_to_claim.user = request.user
+    player_to_claim.save()
+    messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
+    return redirect('player_detail', pk=pk)    

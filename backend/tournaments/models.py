@@ -149,7 +149,7 @@ class Player(models.Model):
     FOOT_CHOICES = [('RIGHT', 'Phải'), ('LEFT', 'Trái'), ('BOTH', 'Cả hai')]
     POSITION_CHOICES = [('GK', 'Thủ môn'), ('DF', 'Hậu vệ'), ('MF', 'Tiền vệ'), ('FW', 'Tiền đạo')]
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='player_profile')
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, related_name='players', null=True, blank=True)
     full_name = models.CharField(max_length=100)
     jersey_number = models.PositiveIntegerField()
     position = models.CharField(max_length=10, choices=POSITION_CHOICES)
