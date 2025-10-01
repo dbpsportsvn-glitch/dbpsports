@@ -129,7 +129,9 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
                             <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
-                
+                            {% if user.player_profile %}
+                            <li><a class="dropdown-item" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Xem Hồ sơ Cầu thủ</a></li>
+                            {% endif %}                
                             {% if is_player_role %}
                                 <li><a class="dropdown-item" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus"></i> Tạo Đội bóng</a></li>
                             {% endif %}                               

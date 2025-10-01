@@ -437,14 +437,13 @@ def update_player(request, pk):
         return redirect('home')
 
     # === LOGIC KIỂM TRA MỚI ===
-    can_edit = player.votes == 0 and player.edit_count < 3
+    can_edit = player.votes < 3 and player.edit_count < 3
     if not can_edit:
-        if player.votes > 0:
-            messages.error(request, f"Không thể chỉnh sửa. Cầu thủ {player.full_name} đã có phiếu bầu.")
-        else:
+        if player.votes >= 3:
+            messages.error(request, f"Không thể chỉnh sửa. Cầu thủ {player.full_name} đã có 3 phiếu bầu trở lên.")
+        else: # edit_count >= 3
             messages.error(request, f"Không thể chỉnh sửa. Đã hết số lần cho phép (3 lần) cho cầu thủ {player.full_name}.")
         return redirect('team_detail', pk=team.pk)
-    # === KẾT THÚC LOGIC MỚI ===
 
     if request.method == 'POST':
         form = PlayerCreationForm(request.POST, request.FILES, instance=player)
