@@ -314,12 +314,27 @@ class TeamAdmin(ModelAdmin):
         
 @admin.register(Player)
 class PlayerAdmin(ModelAdmin):
-    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar"); list_filter = ("team__tournament", "position", "team"); search_fields = ("full_name", "team__name", "jersey_number"); list_editable = ("position",); ordering = ("team", "jersey_number"); autocomplete_fields = ("team",); list_select_related = ("team",); list_per_page = 50
+    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar")
+    list_filter = ("team__tournament", "position", "team")
+    search_fields = ("full_name", "team__name", "jersey_number")
+    list_editable = ("position",)
+    ordering = ("team", "jersey_number")
+    autocomplete_fields = ("team",)
+    list_select_related = ("team",)
+    list_per_page = 50
+
+    # === THAY THẾ TOÀN BỘ HÀM NÀY ===
     @admin.display(description='Đội', ordering='team__name')
     def link_to_team(self, obj):
-        link = reverse("admin:tournaments_team_change", args=[obj.team.id]); return format_html('<a href="{}">{}</a>', link, obj.team.name)
+        if obj.team:  # Kiểm tra xem cầu thủ có đội hay không
+            link = reverse("admin:tournaments_team_change", args=[obj.team.id])
+            return format_html('<a href="{}">{}</a>', link, obj.team.name)
+        return "Cầu thủ tự do" # Hiển thị nếu không có đội
+    # === KẾT THÚC THAY THẾ ===
+
     def display_avatar(self, obj):
-        if obj.avatar: return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />', obj.avatar.url)
+        if obj.avatar:
+            return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />', obj.avatar.url)
         return "Chưa có ảnh"
     display_avatar.short_description = 'Ảnh đại diện'
 

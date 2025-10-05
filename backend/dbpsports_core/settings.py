@@ -61,6 +61,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "dbpsports_core.urls"
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 # === Templates ===
 TEMPLATES = [
     {
