@@ -46,7 +46,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord, PlayerTransfer)
 from .utils import send_notification_email, send_schedule_notification
 from django.db.models import Sum, F
 from django.contrib.auth.models import User
@@ -414,14 +414,17 @@ def team_detail(request, pk):
                         for field, errors in e.message_dict.items():
                             player_form.add_error(field if field != '__all__' else None, errors[0])
                         messages.error(request, 'Thêm cầu thủ thất bại, vui lòng kiểm tra lại.')
+
     elif search_query:
         active_tab = 'search'
-        # === DÒNG CODE ĐÃ ĐƯỢC SỬA LỖI TẠI ĐÂY ===
-        # Bỏ điều kiện .exclude(user__isnull=False) để tìm được các cầu thủ tự do đã có tài khoản
+        # === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY ===
+        # Giờ đây, chúng ta sẽ tìm kiếm tất cả cầu thủ phù hợp với tên,
+        # loại bỏ chính các cầu thủ đã ở trong đội của bạn.
         search_results = Player.objects.filter(
-            Q(full_name__icontains=search_query) & Q(team__isnull=True)
-        )
-        # === KẾT THÚC SỬA LỖI ===
+            full_name__icontains=search_query
+        ).exclude(
+            team=team
+        ).select_related('team') # Thêm select_related để tối ưu truy vấn
 
     context = {
         'team': team,
@@ -2002,3 +2005,65 @@ def cast_team_vote_view(request, team_pk):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': f'Đã có lỗi xảy ra ở server: {e}'}, status=500)    
+
+@login_required
+@require_POST # Chỉ cho phép truy cập bằng phương thức POST
+def invite_player_view(request, player_pk, team_pk):
+    """
+    Xử lý việc đội trưởng của `team_pk` gửi lời mời đến `player_pk`.
+    """
+    inviting_team = get_object_or_404(Team, pk=team_pk)
+    target_player = get_object_or_404(Player.objects.select_related('team__captain'), pk=player_pk)
+
+    # --- Các bước kiểm tra quyền và điều kiện ---
+    if inviting_team.captain != request.user:
+        messages.error(request, "Bạn không phải là đội trưởng của đội này.")
+        return redirect('player_detail', pk=player_pk)
+
+    if not target_player.team:
+        messages.error(request, "Cầu thủ này là cầu thủ tự do, bạn có thể 'Chiêu mộ' trực tiếp.")
+        return redirect('team_detail', pk=inviting_team.pk)
+
+    if target_player.team == inviting_team:
+        messages.error(request, "Bạn không thể mời một cầu thủ đã ở trong đội của mình.")
+        return redirect('team_detail', pk=inviting_team.pk)
+        
+    if PlayerTransfer.objects.filter(inviting_team=inviting_team, player=target_player, status='PENDING').exists():
+        messages.warning(request, f"Bạn đã gửi lời mời đến cầu thủ {target_player.full_name} rồi. Vui lòng chờ phản hồi.")
+        return redirect('team_detail', pk=inviting_team.pk)
+
+    # --- Tạo lời mời và gửi thông báo ---
+    try:
+        with transaction.atomic():
+            # Tạo bản ghi chuyển nhượng
+            transfer = PlayerTransfer.objects.create(
+                inviting_team=inviting_team,
+                current_team=target_player.team,
+                player=target_player,
+                status=PlayerTransfer.Status.PENDING
+            )
+
+            # Gửi thông báo đến đội trưởng của đội hiện tại
+            captain_to_notify = target_player.team.captain
+            notification_title = "Bạn có lời mời chuyển nhượng mới"
+            notification_message = (
+                f"Đội '{inviting_team.name}' đã gửi lời mời chuyển nhượng cho cầu thủ "
+                f"'{target_player.full_name}' của bạn."
+            )
+            # Tạm thời chưa có trang quản lý lời mời nên để link về dashboard
+            notification_url = reverse('dashboard')
+
+            Notification.objects.create(
+                user=captain_to_notify,
+                title=notification_title,
+                message=notification_message,
+                notification_type=Notification.NotificationType.GENERIC, # Sẽ tạo loại mới sau
+                related_url=notification_url
+            )
+        
+        messages.success(request, f"Đã gửi lời mời chuyển nhượng đến cầu thủ {target_player.full_name} thành công!")
+    
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra: {e}")
+
+    return redirect('team_detail', pk=inviting_team.pk)        

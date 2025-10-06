@@ -689,3 +689,48 @@ class TeamVoteRecord(models.Model):
 
     def __str__(self):
         return f"{self.voter.username} voted for {self.voted_for.name} in {self.tournament.name}"        
+
+# Chuyển nhượng
+class PlayerTransfer(models.Model):
+    """Lưu trữ một lời mời chuyển nhượng cầu thủ giữa hai đội."""
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Đang chờ'
+        ACCEPTED = 'ACCEPTED', 'Đã chấp nhận'
+        REJECTED = 'REJECTED', 'Đã từ chối'
+        CANCELED = 'CANCELED', 'Đã hủy'
+
+    inviting_team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='sent_transfers',
+        verbose_name="Đội mời"
+    )
+    current_team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='received_transfers',
+        verbose_name="Đội hiện tại"
+    )
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='transfer_requests',
+        verbose_name="Cầu thủ"
+    )
+    status = models.CharField(
+        "Trạng thái",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('inviting_team', 'player') # Mỗi đội chỉ được mời 1 cầu thủ một lần
+        verbose_name = "Lời mời Chuyển nhượng"
+        verbose_name_plural = "Các lời mời Chuyển nhượng"
+
+    def __str__(self):
+        return f"{self.inviting_team.name} mời {self.player.full_name} từ {self.current_team.name}"

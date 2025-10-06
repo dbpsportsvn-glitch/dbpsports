@@ -156,17 +156,33 @@
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <a href="{% url 'player_detail' pk=player.pk %}" target="_blank"><strong>{{ player.full_name }}</strong></a>
-                                                    <small class="text-muted d-block">{{ player.get_position_display }} | #{{ player.jersey_number }}</small>
+                                                    <small class="text-muted d-block">
+                                                        {% if player.team %}
+                                                            Đang ở đội: <strong>{{ player.team.name }}</strong>
+                                                        {% else %}
+                                                            <span class="text-success">Cầu thủ tự do</span>
+                                                        {% endif %}
+                                                    </small>
                                                 </div>
-                                                <form method="post" action="{% url 'add_free_agent' team_pk=team.pk player_pk=player.pk %}">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-success btn-sm">Chiêu mộ</button>
-                                                </form>
+                                                
+                                                {% if player.team %}
+                                                    {# Cầu thủ đã có đội -> Form "Mời" #}
+                                                    <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-info btn-sm">Mời</button>
+                                                    </form>
+                                                {% else %}
+                                                    {# Cầu thủ tự do -> Form "Chiêu mộ" #}
+                                                    <form method="post" action="{% url 'add_free_agent' team_pk=team.pk player_pk=player.pk %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-success btn-sm">Chiêu mộ</button>
+                                                    </form>
+                                                {% endif %}
                                             </li>
                                             {% endfor %}
                                         </ul>
                                     {% elif search_query %}
-                                        <p class="text-muted mt-3">Không tìm thấy cầu thủ tự do nào có tên '{{ search_query }}'.</p>
+                                        <p class="text-muted mt-3">Không tìm thấy cầu thủ nào có tên '{{ search_query }}'.</p>
                                     {% endif %}
                                 </div>
                                 <div class="tab-pane fade {% if active_tab == 'new' or not active_tab %}show active{% endif %}" id="pills-new" role="tabpanel">
