@@ -234,12 +234,16 @@ class CaptainNoteForm(forms.ModelForm):
 class PlayerTransferForm(forms.ModelForm):
     class Meta:
         model = PlayerTransfer
-        fields = ['transfer_type', 'loan_end_date']
+        # === THÊM 'offer_amount' VÀO ĐÂY ===
+        fields = ['transfer_type', 'loan_end_date', 'offer_amount']
         labels = {
             'transfer_type': 'Loại hình đề nghị',
             'loan_end_date': 'Ngày kết thúc cho mượn',
+            'offer_amount': 'Phí đề nghị (VNĐ)',
         }
         widgets = {
             'transfer_type': forms.RadioSelect,
             'loan_end_date': forms.DateInput(attrs={'type': 'date'}),
+            # === THÊM WIDGET CHO TRƯỜNG MỚI ===
+            'offer_amount': forms.NumberInput(attrs={'placeholder': 'Nhập số tiền bạn đề nghị'}),
         }             

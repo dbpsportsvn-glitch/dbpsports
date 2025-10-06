@@ -2021,29 +2021,30 @@ def invite_player_view(request, player_pk, team_pk):
     # --- Các bước kiểm tra quyền và điều kiện ---
     if inviting_team.captain != request.user:
         messages.error(request, "Bạn không phải là đội trưởng của đội này.")
-        return redirect('player_detail', pk=player_pk)
+        return redirect('transfer_market') # Chuyển về chợ chuyển nhượng
 
     if not target_player.team:
         messages.error(request, "Cầu thủ này là cầu thủ tự do, bạn có thể 'Chiêu mộ' trực tiếp.")
-        return redirect('team_detail', pk=inviting_team.pk)
+        return redirect('transfer_market')
 
     if target_player.team == inviting_team:
         messages.error(request, "Bạn không thể mời một cầu thủ đã ở trong đội của mình.")
-        return redirect('team_detail', pk=inviting_team.pk)
-        
+        return redirect('transfer_market')
+
     if PlayerTransfer.objects.filter(inviting_team=inviting_team, player=target_player, status='PENDING').exists():
         messages.warning(request, f"Bạn đã gửi lời mời đến cầu thủ {target_player.full_name} rồi. Vui lòng chờ phản hồi.")
-        return redirect('team_detail', pk=inviting_team.pk)
+        return redirect('transfer_market')
 
+    # === BẮT ĐẦU CẬP NHẬT LOGIC XỬ LÝ FORM ===
     form = PlayerTransferForm(request.POST)
     if form.is_valid():
         transfer_type = form.cleaned_data['transfer_type']
         loan_end_date = form.cleaned_data.get('loan_end_date')
+        offer_amount = form.cleaned_data.get('offer_amount', 0)
 
-        # Kiểm tra logic cho mượn
         if transfer_type == PlayerTransfer.TransferType.LOAN and not loan_end_date:
             messages.error(request, "Bạn phải chọn ngày kết thúc hợp đồng cho mượn.")
-            return redirect('team_detail', pk=inviting_team.pk)
+            return redirect('transfer_market')
 
         try:
             with transaction.atomic():
@@ -2053,7 +2054,8 @@ def invite_player_view(request, player_pk, team_pk):
                     player=target_player,
                     status=PlayerTransfer.Status.PENDING,
                     transfer_type=transfer_type,
-                    loan_end_date=loan_end_date
+                    loan_end_date=loan_end_date,
+                    offer_amount=offer_amount
                 )
 
             # Lấy thông tin đội trưởng của đội bị mời
@@ -2088,14 +2090,16 @@ def invite_player_view(request, player_pk, team_pk):
                     request=request
                 )        
 
-            messages.success(request, f"Đã gửi lời mời {transfer.get_transfer_type_display()} đến cầu thủ {target_player.full_name} thành công!")
+            messages.success(request, f"Đã gửi lời mời {transfer.get_transfer_type_display()} trị giá {offer_amount:,.0f} VNĐ đến cầu thủ {target_player.full_name} thành công!")
 
         except Exception as e:
             messages.error(request, f"Đã có lỗi xảy ra: {e}")
     else:
-        messages.error(request, "Dữ liệu lời mời không hợp lệ.")
+        error_str = ". ".join([f"{field}: {err[0]}" for field, err in form.errors.items()])
+        messages.error(request, f"Dữ liệu lời mời không hợp lệ: {error_str}")
+    # === KẾT THÚC CẬP NHẬT LOGIC ===
 
-    return redirect('team_detail', pk=inviting_team.pk)       
+    return redirect('transfer_market')       
 
 
 # LOGIC CHUYỂN NHƯỢNG
@@ -2124,34 +2128,41 @@ def respond_to_transfer_view(request, transfer_pk):
                 player = transfer.player
                 inviting_team = transfer.inviting_team
                 current_team = transfer.current_team
+                offer_amount = transfer.offer_amount
 
-                # === BẮT ĐẦU LOGIC ĐÃ SỬA LỖI ===
-                if transfer.transfer_type == PlayerTransfer.TransferType.PERMANENT:
-                    # Logic MUA ĐỨT (chỉ xử lý ngân sách ở đây)
-                    market_value = player.transfer_value + (player.votes * get_current_vote_value())
-
-                    if inviting_team.budget < market_value:
-                        messages.error(request, f"Không thể hoàn tất chuyển nhượng. Đội '{inviting_team.name}' không đủ ngân sách (cần {market_value:,.0f} VNĐ, chỉ có {inviting_team.budget:,.0f} VNĐ).")
-                        transfer.status = PlayerTransfer.Status.CANCELED
-                        transfer.save()
-                        Notification.objects.create(
-                            user=inviting_team.captain,
-                            title="Chuyển nhượng thất bại do không đủ ngân sách",
-                            message=f"Lời mời của bạn cho cầu thủ '{player.full_name}' đã bị hủy do đội của bạn không đủ ngân sách."
-                        )
-                        return redirect(reverse('dashboard') + '?tab=transfers')
-
-                    # Trừ tiền đội mua, cộng tiền cho đội bán
-                    inviting_team.budget -= market_value
-                    current_team.budget += market_value
-                    inviting_team.save()
-                    current_team.save()
-                    messages.success(request, f"Đã đồng ý bán đứt cầu thủ {player.full_name} sang đội {inviting_team.name} với giá {market_value:,.0f} VNĐ.")
+                # === BƯỚC 1: KIỂM TRA XUNG ĐỘT SỐ ÁO TRƯỚC KHI LÀM GÌ KHÁC ===
+                if Player.objects.filter(team=inviting_team, jersey_number=player.jersey_number).exists():
+                    messages.error(request, f"Thất bại! Số áo {player.jersey_number} đã có người sử dụng trong đội '{inviting_team.name}'. Vui lòng yêu cầu đội bạn đổi số áo trước.")
+                    # Tự động hủy lời mời này để tránh lỗi lặp lại
+                    transfer.status = PlayerTransfer.Status.CANCELED
+                    transfer.save()
+                    # Gửi thông báo cho đội mời biết lý do
+                    Notification.objects.create(
+                        user=inviting_team.captain,
+                        title=f"Chuyển nhượng cầu thủ {player.full_name} thất bại",
+                        message=f"Lời mời của bạn đã bị hủy do xung đột số áo ({player.jersey_number}) trong đội hình của bạn."
+                    )
+                    return redirect(reverse('dashboard') + '?tab=transfers')
                 
-                else: # Đây là trường hợp CHO MƯỢN
-                    messages.success(request, f"Đã đồng ý cho mượn cầu thủ {player.full_name} đến hết ngày {transfer.loan_end_date.strftime('%d/%m/%Y')}.")
-                # === KẾT THÚC LOGIC ĐÃ SỬA LỖI ===
+                # === BƯỚC 2: KIỂM TRA VÀ XỬ LÝ NGÂN SÁCH ===
+                if inviting_team.budget < offer_amount:
+                    messages.error(request, f"Thất bại! Đội '{inviting_team.name}' không đủ ngân sách (cần {offer_amount:,.0f} VNĐ, chỉ có {inviting_team.budget:,.0f} VNĐ).")
+                    transfer.status = PlayerTransfer.Status.CANCELED
+                    transfer.save()
+                    Notification.objects.create(
+                        user=inviting_team.captain,
+                        title="Chuyển nhượng thất bại do không đủ ngân sách",
+                        message=f"Lời mời của bạn cho cầu thủ '{player.full_name}' đã bị hủy."
+                    )
+                    return redirect(reverse('dashboard') + '?tab=transfers')
 
+                # Trừ tiền đội mua, cộng tiền cho đội bán
+                inviting_team.budget -= offer_amount
+                current_team.budget += offer_amount
+                inviting_team.save()
+                current_team.save()
+                
+                # === BƯỚC 3: HOÀN TẤT CHUYỂN NHƯỢNG VÀ GỬI THÔNG BÁO ===
                 transfer.status = PlayerTransfer.Status.ACCEPTED
                 transfer.save()
                 
@@ -2159,10 +2170,16 @@ def respond_to_transfer_view(request, transfer_pk):
                 player.team = inviting_team
                 player.save()
                 
-                PlayerTransfer.objects.filter(
-                    player=player, status=PlayerTransfer.Status.PENDING
-                ).update(status=PlayerTransfer.Status.CANCELED)
+                PlayerTransfer.objects.filter(player=player, status=PlayerTransfer.Status.PENDING).update(status=PlayerTransfer.Status.CANCELED)
 
+                # Tạo thông báo thành công
+                if transfer.transfer_type == PlayerTransfer.TransferType.PERMANENT:
+                    success_message = f"Đã đồng ý bán đứt cầu thủ {player.full_name} sang đội {inviting_team.name} với giá {offer_amount:,.0f} VNĐ."
+                else:
+                    success_message = f"Đã đồng ý cho mượn cầu thủ {player.full_name} đến hết ngày {transfer.loan_end_date.strftime('%d/%m/%Y')} với phí {offer_amount:,.0f} VNĐ."
+                messages.success(request, success_message)
+                
+                # ... (Phần gửi notification và email cho các bên liên quan giữ nguyên)
                 Notification.objects.create(
                     user=transfer.inviting_team.captain,
                     title="Lời mời chuyển nhượng được chấp nhận!",
@@ -2174,16 +2191,11 @@ def respond_to_transfer_view(request, transfer_pk):
                         title="Bạn đã được chuyển sang đội mới!",
                         message=f"Bạn đã chính thức chuyển từ đội '{old_team_name}' sang đội '{transfer.inviting_team.name}'."
                     )
-                
                 if transfer.inviting_team.captain.email:
                     send_notification_email(
                         subject=f"[DBP Sports] Lời mời chuyển nhượng cho {player.full_name} được chấp nhận",
                         template_name='organizations/emails/transfer_accepted_notification.html',
-                        context={
-                            'inviting_team': transfer.inviting_team,
-                            'current_team': transfer.current_team,
-                            'player': player
-                        },
+                        context={'inviting_team': inviting_team, 'current_team': current_team, 'player': player},
                         recipient_list=[transfer.inviting_team.captain.email],
                         request=request
                     )
@@ -2201,11 +2213,7 @@ def respond_to_transfer_view(request, transfer_pk):
                     send_notification_email(
                         subject=f"[DBP Sports] Lời mời chuyển nhượng cho {transfer.player.full_name} bị từ chối",
                         template_name='organizations/emails/transfer_rejected_notification.html',
-                        context={
-                            'inviting_team': transfer.inviting_team,
-                            'current_team': transfer.current_team,
-                            'player': transfer.player
-                        },
+                        context={'inviting_team': transfer.inviting_team, 'current_team': transfer.current_team, 'player': transfer.player},
                         recipient_list=[transfer.inviting_team.captain.email],
                         request=request
                     )

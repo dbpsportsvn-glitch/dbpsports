@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
-{% load humanize custom_filters %} {# Tải cả hai bộ lọc #}
+{% load humanize custom_filters %}
 
 {% block title %}Thị trường Chuyển nhượng{% endblock %}
 
 {% block extra_css %}
-{# Sao chép toàn bộ khối <style> từ file player_voting.html vào đây #}
 <style>
 /* ... (toàn bộ CSS của thẻ FIFA giữ nguyên không đổi) ... */
 .card-fut {
@@ -196,24 +195,23 @@
             </ul>
         </div>
     </div>
-  
+
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="player-list-container">
-  
-      {% for player in players %}
-      <div class="col player-card-wrapper"
+        {% for player in players %}
+        <div class="col player-card-wrapper"
            data-player
            data-market="{{ player.market_value|default:0 }}"
-      >
+        >
         <div class="card card-fut h-100">
           <div class="plate"></div>
-  
+
           <div class="topbar">
             <span class="rank-badge"><i class="bi bi-trophy"></i> #<span class="rank-number">{{ forloop.counter }}</span></span>
             {% if player.jersey_number %}
             <span class="jersey-chip">#{{ player.jersey_number }}</span>
             {% endif %}
           </div>
-  
+
           <div class="head">
             <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" rel="noopener" title="Xem hồ sơ cầu thủ">
               <img class="player-avatar"
@@ -230,7 +228,7 @@
               <span>{{ player.team.name|default:"Cầu thủ tự do" }}</span>
             </div>
           </div>
-  
+
           <div class="value-sheet">
             <div class="value-row">
               <span>Giá trị gốc</span>
@@ -245,7 +243,7 @@
               <b class="val-market">{{ player.market_value|vnd_format }}</b>
             </div>
           </div>
-  
+
           <div class="tier-progress-wrapper">
             <div class="d-flex align-items-center justify-content-between mb-1">
               <span class="tier-tag"><i class="bi bi-stars"></i> <span class="tier-label">TIER</span></span>
@@ -260,7 +258,7 @@
               <span class="tier-marker" style="left:0%"></span>
             </div>
           </div>
-  
+
             <div class="actions">
                 <div class="d-grid gap-2">
                     {% if captained_teams and player.team and player.team not in captained_teams %}
@@ -276,22 +274,22 @@
         </div>
       </div>
       {% endfor %}
-  
+
       <div id="no-results-message" class="col-12 text-center text-muted mt-4" style="display:none;">
         <h4>Không tìm thấy cầu thủ phù hợp.</h4>
       </div>
     </div>
-  
+
     {% if not players %}
       <div class="alert alert-info mt-4">Không tìm thấy cầu thủ nào phù hợp với bộ lọc của bạn.</div>
     {% endif %}
-  
+
 </div>
 
-{# === MODALS CHO LỜI MỜI (ĐẶT Ở NGOÀI VÒNG LẶP) === #}
+{# MODALS CHO LỜI MỜI #}
 {% for player in players %}
     {% if captained_teams and player.team and player.team not in captained_teams %}
-    <div class="modal fade" id="inviteModal-{{ player.pk }}" tabindex="-1">
+    <div class="modal fade" id="inviteModal-{{ player.pk }}" tabindex="-1" data-market-value="{{ player.market_value|floatformat:'0' }}">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -299,57 +297,50 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    {% if captained_teams|length > 1 %}
-                        <p>Chọn đội bạn muốn dùng để gửi lời mời:</p>
-                        {% for team_to_invite_with in captained_teams %}
-                            <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=team_to_invite_with.pk %}" class="mb-3 p-2 border rounded">
-                                {% csrf_token %}
-                                <h6>Đội: {{ team_to_invite_with.name }}</h6>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="transfer_type" id="permanent-{{ player.pk }}-{{ team_to_invite_with.pk }}" value="PERMANENT" checked>
-                                    <label class="form-check-label" for="permanent-{{ player.pk }}-{{ team_to_invite_with.pk }}">
-                                        Mua đứt (Giá: {{ player.market_value|vnd_format }})
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="transfer_type" id="loan-{{ player.pk }}-{{ team_to_invite_with.pk }}" value="LOAN">
-                                    <label class="form-check-label" for="loan-{{ player.pk }}-{{ team_to_invite_with.pk }}">
-                                        Cho mượn (Phí: 20% giá trị)
-                                    </label>
-                                </div>
-                                <div class="mt-2 loan-options" style="display: none;">
-                                    <label for="loan_end_date-{{ player.pk }}-{{ team_to_invite_with.pk }}" class="form-label small">Ngày kết thúc hợp đồng</label>
-                                    <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}-{{ team_to_invite_with.pk }}" class="form-control form-control-sm">
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-primary mt-2">Gửi lời mời từ đội này</button>
-                            </form>
-                        {% endfor %}
-                    {% else %}
-                        <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}">
-                            {% csrf_token %}
-                            <p>Chọn loại hình chuyển nhượng:</p>
+                    <form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% endif %}">
+                        {% csrf_token %}
+
+                        {% if captained_teams|length > 1 %}
+                        <div class="mb-3">
+                            <label for="team-select-{{ player.pk }}" class="form-label">Mời từ đội</label>
+                            <select id="team-select-{{ player.pk }}" class="form-select" required>
+                                <option value="">-- Chọn đội của bạn --</option>
+                                {% for team in captained_teams %}
+                                <option value="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">{{ team.name }} (Ngân sách: {{ team.budget|intcomma }} VNĐ)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <p><strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span></p>
+
+                        <div class="mb-3">
+                            <label class="form-label">Chọn loại hình đề nghị:</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="transfer_type" id="permanent-{{ player.pk }}" value="PERMANENT" checked>
-                                <label class="form-check-label" for="permanent-{{ player.pk }}">
-                                    Mua đứt (Giá: {{ player.market_value|vnd_format }})
-                                </label>
+                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="permanent-{{ player.pk }}" value="PERMANENT" data-player-id="{{ player.pk }}" checked>
+                                <label class="form-check-label" for="permanent-{{ player.pk }}">Mua đứt</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="transfer_type" id="loan-{{ player.pk }}" value="LOAN">
-                                <label class="form-check-label" for="loan-{{ player.pk }}">
-                                    Cho mượn (Phí: 20% giá trị)
-                                </label>
+                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="loan-{{ player.pk }}" value="LOAN" data-player-id="{{ player.pk }}">
+                                <label class="form-check-label" for="loan-{{ player.pk }}">Cho mượn</label>
                             </div>
-                            <div class="mt-3 loan-options" style="display: none;">
-                                <label for="loan_end_date-{{ player.pk }}" class="form-label">Ngày kết thúc hợp đồng</label>
-                                <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}" class="form-control">
-                            </div>
-                            <hr>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary">Xác nhận gửi</button>
-                            </div>
-                        </form>
-                    {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="offer-amount-{{ player.pk }}" class="form-label">Phí đề nghị (VNĐ)</label>
+                            <input type="number" name="offer_amount" id="offer-amount-{{ player.pk }}" class="form-control" value="{{ player.market_value|floatformat:'0' }}" required>
+                            <small class="form-text text-muted" id="fee-suggestion-{{ player.pk }}">Giá đề nghị bằng giá trị thị trường.</small>
+                        </div>
+
+                        <div class="mb-3 loan-options" style="display: none;">
+                            <label for="loan_end_date-{{ player.pk }}" class="form-label">Ngày kết thúc cho mượn</label>
+                            <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}" class="form-control">
+                        </div>
+                        <hr>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Xác nhận gửi lời mời</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -368,8 +359,8 @@ const TIERS = [
   { key: 'elite',  label: 'ELITE',  color: '#00BCD4', min:10_000_000, max: 20_000_000 },
   { key: 'legend', label: 'LEGEND', color: '#9C27B0', min:20_000_000, max:  Infinity  },
 ];
-// Sử dụng hàm format của Intl.NumberFormat thay vì custom filter
 const nf = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+const plain_nf = new Intl.NumberFormat('vi-VN');
 
 function getTier(v) { for (const t of TIERS) if (v >= t.min && v < t.max) return t; return TIERS[0]; }
 function markerPercent(v) { const span = TIERS[TIERS.length - 2].max; const cap = Math.max(0, Math.min(v, span)); return (cap / span) * 100; }
@@ -377,15 +368,14 @@ function slicePerc(t) { const span = TIERS[TIERS.length - 2].max; const width = 
 
 document.addEventListener('DOMContentLoaded', () => {
   const cards = Array.from(document.querySelectorAll('[data-player]'));
-  
+
   cards.forEach((card, index) => {
     let mv = Number(card.dataset.market || 0);
-    
-    // Xử lý bậc giá trị
+
     const tier = getTier(mv);
     const cardBox = card.querySelector('.card-fut');
     cardBox.classList.add(`t-${tier.key}`);
-    
+
     const tierLabel = cardBox.querySelector('.tier-label');
     const tierNext = cardBox.querySelector('.tier-next-text');
     if (tierLabel) tierLabel.textContent = tier.label;
@@ -395,34 +385,52 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { 
         if (tierNext) tierNext.textContent = `Bậc tối đa`; 
     }
-    
+
     const slices = { bronze: cardBox.querySelector('.s-bronze'), silver: cardBox.querySelector('.s-silver'), gold: cardBox.querySelector('.s-gold'), elite: cardBox.querySelector('.s-elite'), legend: cardBox.querySelector('.s-legend') };
     for (const t of TIERS) { if (slices[t.key]) slices[t.key].style.width = slicePerc(t) + '%'; }
-    
+
     const marker = cardBox.querySelector('.tier-marker');
     if (marker) marker.style.left = Math.min(100, markerPercent(mv)) + '%';
   });
 
-  // Gỡ bỏ script tìm kiếm phía client vì backend đã xử lý
+  // SCRIPT CHO MODAL LỜI MỜI
+  document.querySelectorAll('.modal').forEach(modal => {
+      const form = modal.querySelector('form');
+      const teamSelect = modal.querySelector('select[id^="team-select-"]');
 
-  // === THÊM CODE MỚI NÀY VÀO ===
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('change', function(e) {
-            if (e.target.name === 'transfer_type') {
-                const form = e.target.closest('form');
-                const loanOptions = form.querySelector('.loan-options');
-                const loanDateInput = form.querySelector('input[name="loan_end_date"]');
-                const isLoan = e.target.value === 'LOAN' && e.target.checked;
-                
-                if (loanOptions) {
-                    loanOptions.style.display = isLoan ? 'block' : 'none';
-                }
-                if (loanDateInput) {
-                    loanDateInput.required = isLoan;
-                }
-            }
-        });
-    });
+      // Cập nhật action của form khi chọn đội (cho trường hợp có nhiều đội)
+      if(teamSelect) {
+          teamSelect.addEventListener('change', function() {
+              form.action = this.value;
+          });
+      }
+
+      // Xử lý logic hiển thị các tùy chọn khi radio button thay đổi
+      modal.addEventListener('change', function(e) {
+          if (e.target.classList.contains('transfer-type-radio')) {
+              const playerId = e.target.dataset.playerId;
+              const loanOptions = modal.querySelector('.loan-options');
+              const loanDateInput = modal.querySelector('input[name="loan_end_date"]');
+              const offerInput = modal.querySelector(`#offer-amount-${playerId}`);
+              const feeSuggestion = modal.querySelector(`#fee-suggestion-${playerId}`);
+
+              const marketValue = parseFloat(modal.dataset.marketValue || '0');
+              const isLoan = e.target.value === 'LOAN' && e.target.checked;
+
+              if (loanOptions) loanOptions.style.display = isLoan ? 'block' : 'none';
+              if (loanDateInput) loanDateInput.required = isLoan;
+
+              if (isLoan) {
+                  const loanFee = Math.round(marketValue * 0.2);
+                  offerInput.value = loanFee;
+                  feeSuggestion.textContent = `Phí gợi ý: 20% giá trị TT (${plain_nf.format(loanFee)} VNĐ).`;
+              } else {
+                  offerInput.value = marketValue;
+                  feeSuggestion.textContent = 'Giá đề nghị bằng giá trị thị trường.';
+              }
+          }
+      });
+  });
 });
 </script>
 {% endblock %}

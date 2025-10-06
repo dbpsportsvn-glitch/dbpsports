@@ -472,58 +472,68 @@
 
             <hr>
             
-            <h5><i class="bi bi-arrow-down-square-fill text-success"></i> Lời mời nhận được</h5>
-            {% if incoming_transfers %}
-                <ul class="list-group">
-                    {% for transfer in incoming_transfers %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div>
-                            Đội <strong>{{ transfer.inviting_team.name }}</strong> muốn chiêu mộ cầu thủ <strong>{{ transfer.player.full_name }}</strong>.
-                        </div>
-                        <div class="d-flex gap-2">
-                            {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
-                            <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="accept">
-                                <button type="submit" class="btn btn-success btn-sm">Đồng ý</button>
-                            </form>
-                            <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="reject">
-                                <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
-                            </form>
-                            {# === KẾT THÚC THAY ĐỔI === #}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Bạn không có lời mời nào đang chờ xử lý.</p>
-            {% endif %}
-            
-            <h5 class="mt-4"><i class="bi bi-arrow-up-square-fill text-info"></i> Lời mời đã gửi</h5>
-            {% if outgoing_transfers %}
-                <ul class="list-group">
-                    {% for transfer in outgoing_transfers %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            Bạn đã gửi lời mời đến <strong>{{ transfer.player.full_name }}</strong> (Đội {{ transfer.current_team.name }}).
-                        </div>
-                        {% if transfer.status == 'PENDING' %}
-                            <span class="badge bg-warning text-dark">Đang chờ</span>
-                        {% elif transfer.status == 'ACCEPTED' %}
-                            <span class="badge bg-success">Đã chấp nhận</span>
-                        {% elif transfer.status == 'REJECTED' %}
-                            <span class="badge bg-danger">Đã từ chối</span>
-                        {% else %}
-                            <span class="badge bg-secondary">{{ transfer.get_status_display }}</span>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Bạn chưa gửi lời mời nào.</p>
-            {% endif %}
+                <h5><i class="bi bi-arrow-down-square-fill text-success"></i> Lời mời nhận được</h5>
+                {% if incoming_transfers %}
+                    <ul class="list-group">
+                        {% for transfer in incoming_transfers %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                Đội <strong>{{ transfer.inviting_team.name }}</strong> 
+                                {% if transfer.transfer_type == 'LOAN' %}
+                                    muốn mượn
+                                {% else %}
+                                    muốn chiêu mộ
+                                {% endif %}
+                                cầu thủ <strong>{{ transfer.player.full_name }}</strong> với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="accept">
+                                    <button type="submit" class="btn btn-success btn-sm">Đồng ý</button>
+                                </form>
+                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
+                                </form>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Bạn không có lời mời nào đang chờ xử lý.</p>
+                {% endif %}
+                
+                <h5 class="mt-4"><i class="bi bi-arrow-up-square-fill text-info"></i> Lời mời đã gửi</h5>
+                {% if outgoing_transfers %}
+                    <ul class="list-group">
+                        {% for transfer in outgoing_transfers %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                Bạn đã gửi lời mời 
+                                {% if transfer.transfer_type == 'LOAN' %}
+                                    mượn
+                                {% else %}
+                                    mua
+                                {% endif %}
+                                <strong>{{ transfer.player.full_name }}</strong> (Đội {{ transfer.current_team.name }}) với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
+                            </div>
+                            {% if transfer.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark">Đang chờ</span>
+                            {% elif transfer.status == 'ACCEPTED' %}
+                                <span class="badge bg-success">Đã chấp nhận</span>
+                            {% elif transfer.status == 'REJECTED' %}
+                                <span class="badge bg-danger">Đã từ chối</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ transfer.get_status_display }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Bạn chưa gửi lời mời nào.</p>
+                {% endif %}
         </div>
 
         </main>

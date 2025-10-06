@@ -735,13 +735,14 @@ class PlayerTransfer(models.Model):
         default=TransferType.PERMANENT
     )
     loan_end_date = models.DateField("Ngày hết hạn cho mượn", null=True, blank=True)
+    
+    offer_amount = models.BigIntegerField("Số tiền đề nghị (VNĐ)", default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        #unique_together = ('inviting_team', 'player') # Mỗi đội chỉ được mời 1 cầu thủ một lần
         verbose_name = "Lời mời Chuyển nhượng"
         verbose_name_plural = "Các lời mời Chuyển nhượng"
 
