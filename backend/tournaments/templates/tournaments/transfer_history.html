@@ -5,9 +5,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1><i class="bi bi-clock-history text-primary"></i> Lịch sử Chuyển nhượng</h1>
-        <p class="lead">Tổng hợp các thương vụ đã hoàn tất trên hệ thống.</p>
+    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1><i class="bi bi-clock-history text-primary"></i> Lịch sử Chuyển nhượng</h1>
+            <p class="lead mb-0">Tổng hợp các thương vụ đã hoàn tất trên hệ thống.</p>
+        </div>
+        <a href="{% url 'transfer_market' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại Thị trường
+        </a>
     </div>
 
     <div class="card shadow-sm">
@@ -35,20 +40,24 @@
                             </a>
                         </td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
+                            {# === BẮT ĐẦU CẬP NHẬT LIÊN KẾT ĐỘI BÓNG === #}
+                            <a href="{% url 'public_team_detail' pk=transfer.current_team.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
                                 {% if transfer.current_team.logo %}
                                     <img src="{{ transfer.current_team.logo.url }}" alt="{{ transfer.current_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
                                 {% endif %}
                                 <span>{{ transfer.current_team.name }}</span>
-                            </div>
+                            </a>
+                            {# === KẾT THÚC CẬP NHẬT === #}
                         </td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
+                            {# === BẮT ĐẦU CẬP NHẬT LIÊN KẾT ĐỘI BÓNG === #}
+                            <a href="{% url 'public_team_detail' pk=transfer.inviting_team.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
                                 {% if transfer.inviting_team.logo %}
                                     <img src="{{ transfer.inviting_team.logo.url }}" alt="{{ transfer.inviting_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
                                 {% endif %}
                                 <span>{{ transfer.inviting_team.name }}</span>
-                            </div>
+                            </a>
+                            {# === KẾT THÚC CẬP NHẬT === #}
                         </td>
                         <td class="text-end text-success fw-bold">{{ transfer.offer_amount|intcomma }} VNĐ</td>
                         <td class="text-center">

@@ -193,7 +193,9 @@ class Player(models.Model):
         default=False, 
         help_text="Đánh dấu nếu cầu thủ này là cầu thủ tự do hoặc muốn tìm một bến đỗ mới."
     )
-
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    
     donation_qr_code = models.ImageField(
         "Mã QR ủng hộ", 
         upload_to='player_qrcodes/', 

@@ -1,557 +1,338 @@
 {% extends 'base.html' %}
-{% load humanize custom_filters %}
+{% load static humanize custom_filters %}
 
 {% block title %}Thị trường Chuyển nhượng{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ... (toàn bộ CSS của thẻ FIFA giữ nguyên không đổi) ... */
-.card-fut {
-  --accent: #9aa0a6;
-  --glow: rgba(255,255,255,.35);
-  --ring: rgba(255,255,255,.25);
-  --shadow: 0 12px 28px rgba(2, 6, 23, .25);
-  position: relative;
-  border: 0;
-  border-radius: 22px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  transition: transform .2s ease-out, box-shadow .2s ease-out;
-  display: flex;
-  flex-direction: column;
-}
-.card-fut:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(2, 6, 23, .4);
-}
-.card-fut:before {
-  content: "";
-  position: absolute; inset: 0;
-  z-index: 4;
-  padding: 2px; border-radius: 24px;
-  background: linear-gradient(135deg, var(--accent), var(--glow));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  pointer-events: none;
-}
-.card-fut:after {
-    content: "";
-    position: absolute;
-    top: -50%; left: -50%; right: -50%;
-    z-index: 2;
-    height: 75%;
-    background: radial-gradient(ellipse at center, var(--accent) 0%, transparent 60%);
-    opacity: 0.3;
-    filter: blur(20px);
-    pointer-events: none;
-    transition: opacity .3s ease;
-}
-.card-fut:hover:after { opacity: 0.5; }
-.card-fut .plate {
-  position: absolute; inset: 1px;
-  z-index: 1;
-  border-radius: 21px;
-  pointer-events: none;
-  background: linear-gradient(170deg, #475569, #1e293b);
-}
-.t-bronze .plate { background: linear-gradient(170deg, #8c5a2b, #4a2f12); }
-.t-silver .plate { background: linear-gradient(170deg, #a8a8b2, #5f5f6e); }
-.t-gold   .plate { background: linear-gradient(170deg, #d4af37, #8b6f0a); }
-.t-elite  .plate { background: linear-gradient(170deg, #00b8d4, #005a6f); }
-.t-legend .plate { background: linear-gradient(170deg, #9c27b0, #4c005a); }
-.card-fut .topbar,
-.card-fut .head,
-.card-fut .value-sheet,
-.card-fut .tier-progress-wrapper,
-.card-fut .actions {
-    position: relative;
-    z-index: 3;
-    color: #e2e8f0;
-}
-.card-fut .topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .75rem .85rem .25rem;
-}
-.rank-badge, .jersey-chip {
-  font-weight: 700;
-  padding: .25rem .6rem;
-  border-radius: 999px;
-  background: rgba(0,0,0,.2);
-  border: 1px solid rgba(255,255,255,.2);
-  backdrop-filter: blur(5px);
-}
-.player-avatar {
-  width: 96px; height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid rgba(255,255,255,.4);
-  box-shadow: 0 8px 20px rgba(0,0,0,.4);
-  margin-bottom: .5rem;
-}
-.card-fut .head { text-align: center; padding: .5rem 1rem; }
-.player-name {
-  color: #fff;
-  font-weight: 800; font-size: 1.1rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,.5);
-}
-.team-line { display: inline-flex; gap: .5rem; align-items: center; color: #cbd5e1; font-size: .9rem; }
-.team-line img { width: 22px; height: 22px; object-fit: contain; }
-.value-sheet { display: grid; gap: .35rem; padding: .75rem 1rem 0; font-size: .9rem; }
-.value-row { display: flex; align-items: center; justify-content: space-between; color: #cbd5e1; }
-.value-row b { color: #fff; font-weight: 700; }
-.tier-progress-wrapper { padding: .75rem 1rem; }
-.tier-next-text { color: rgba(255, 255, 255, 0.7) !important; font-size: 0.8rem; text-shadow: 0 1px 2px rgba(0,0,0,.7); }
-.tier-track {
-  position: relative;
-  height: 10px; border-radius: 999px; overflow: hidden;
-  border: 1px solid rgba(0,0,0,.3);
-  background: rgba(0,0,0,.35);
-}
-.tier-slice { height: 100%; display: inline-block; }
-.tier-marker {
-  position: absolute; top: -3px; width: 3px; height: 16px;
-  background: #fff; border-radius: 2px;
-  box-shadow: 0 0 5px 2px rgba(255,255,255,.5);
-}
-.tier-tag {
-  display: inline-flex; gap: .4rem; align-items: center;
-  font-weight: 800; letter-spacing: .5px;
-  color: #0b1220;
-  padding: .2rem .5rem; border-radius: 8px;
-  background: linear-gradient(180deg, #fff, #e9eef3);
-  border: 1px solid #cfd8e3;
-}
-.card-fut .actions { padding: 0 1rem 1rem; margin-top: auto; }
-.btn-action {
-  border-radius: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  padding: .7rem; font-size: .9rem;
-  transition: all .2s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,.2);
-}
-.btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
-.t-bronze { --accent: #CD7F32; }
-.t-silver { --accent: #C0C0C0; }
-.t-gold   { --accent: #FFD700; }
-.t-elite  { --accent: #00BCD4; }
-.t-legend { --accent: #9C27B0; }
+  /* ====== CARD FUT & THEME ====== */
+  .card-fut{position:relative;border-radius:24px;overflow:hidden;background:rgba(2,6,23,.6);border:1px solid rgba(148,163,184,.18);transition:transform .25s ease, box-shadow .25s ease}
+  .card-fut:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(2,6,23,.4)}
+  .card-fut:before{content:"";position:absolute;inset:0;z-index:4;padding:2px;border-radius:24px;background:linear-gradient(135deg,var(--accent),var(--glow));-webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+  .card-fut:after{content:"";position:absolute;top:-50%;left:-50%;right:-50%;z-index:2;height:75%;background:radial-gradient(ellipse at center,var(--accent) 0%,transparent 60%);opacity:.3;filter:blur(20px);pointer-events:none;transition:opacity .3s ease}
+  .card-fut:hover:after{opacity:.5}
+  .card-fut .plate{position:absolute;inset:1px;z-index:1;border-radius:21px;pointer-events:none;background:linear-gradient(170deg,#475569,#1e293b)}
+  .t-bronze .plate{background:linear-gradient(170deg,#8c5a2b,#4a2f12)}
+  .t-silver .plate{background:linear-gradient(170deg,#a8a8b2,#5f5f6e)}
+  .t-gold .plate{background:linear-gradient(170deg,#d4af37,#8b6f0a)}
+  .t-elite .plate{background:linear-gradient(170deg,#00b8d4,#005a6f)}
+  .t-legend .plate{background:linear-gradient(170deg,#9c27b0,#4c005a)}
+  .t-bronze{--accent:#CD7F32}
+  .t-silver{--accent:#C0C0C0}
+  .t-gold{--accent:#FFD700}
+  .t-elite{--accent:#00BCD4}
+  .t-legend{--accent:#9C27B0}
 
+  .card-fut .topbar,.card-fut .head,.card-fut .value-sheet,.card-fut .tier-progress-wrapper,.card-fut .actions{position:relative;z-index:3;color:#e2e8f0}
+  .card-fut .topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem .85rem .25rem}
+  .rank-badge,.jersey-chip{font-weight:700;padding:.25rem .6rem;border-radius:999px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(5px)}
+  .player-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.4);box-shadow:0 8px 20px rgba(0,0,0,.4);margin-bottom:.5rem}
+  .card-fut .head{text-align:center;padding:.5rem 1rem}
+  .player-name{color:#fff;font-weight:800;font-size:1.1rem;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .team-line{display:inline-flex;gap:.5rem;align-items:center;color:#cbd5e1;font-size:.9rem}
+  .team-line img{width:22px;height:22px;object-fit:contain}
+  .value-sheet{display:grid;gap:.35rem;padding:.75rem 1rem 0;font-size:.9rem}
+  .value-row{display:flex;align-items:center;justify-content:space-between;color:#cbd5e1}
+  .value-row b{color:#fff;font-weight:700}
 
-    /* === THÊM CSS MỚI CHO BẢNG XẾP HẠNG === */
-    .leaderboard-section {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
-        padding: 2rem;
-        border-radius: 1rem;
-        margin-bottom: 2rem;
-        border: 1px solid #334155;
-    }
-    .leaderboard-title {
-        color: #f59e0b;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 1.5rem;
-    }
-    .leaderboard-item {
-        display: flex;
-        align-items: center;
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.75rem;
-        transition: background-color 0.2s ease;
-    }
-    .leaderboard-item:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-    .leaderboard-rank {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #94a3b8;
-        width: 40px;
-        text-align: center;
-    }
-    .leaderboard-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-left: 1rem;
-        margin-right: 1rem;
-    }
-    .leaderboard-info {
-        flex-grow: 1;
-        min-width: 0;
-    }
-    .leaderboard-name {
-        font-weight: 600;
-        color: #e2e8f0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .leaderboard-team {
-        font-size: 0.8rem;
-        color: #94a3b8;
-    }
-    .leaderboard-value {
-        font-weight: 700;
-        font-size: 1.1rem;
-        color: #f59e0b;
-        text-align: right;
-        min-width: 120px;
-    }
+  /* ====== TIER PROGRESS ====== */
+  .tier-progress-wrapper{padding:.75rem 1rem}
+  .tier-next-text{color:rgba(255,255,255,.7)!important;font-size:.8rem;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+  .tier-track{position:relative;height:10px;border-radius:999px;overflow:hidden;border:1px solid rgba(0,0,0,.3);background:rgba(0,0,0,.35)}
+  .tier-slice{height:100%;display:inline-block;background:repeating-linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,.08) 6px, rgba(255,255,255,.02) 6px, rgba(255,255,255,.02) 12px)}
+  .tier-marker{position:absolute;top:-3px;width:3px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 5px 2px rgba(255,255,255,.5)}
+  .tier-tag{display:inline-flex;gap:.4rem;align-items:center;font-weight:800;letter-spacing:.5px;color:#0b1220;padding:.2rem .5rem;border-radius:8px;background:linear-gradient(180deg,#fff,#e9eef3);border:1px solid #cfd8e3}
+
+  .card-fut .actions{padding:0 1rem 1rem;margin-top:auto}
+  .btn-action{border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:.7rem;font-size:.9rem;transition:all .2s ease;box-shadow:0 4px 15px rgba(0,0,0,.2)}
+  .btn-action:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+
+  /* ====== HIGHLIGHT SECTIONS ====== */
+  .highlight-section{background:linear-gradient(135deg,#1e293b,#0f172a);padding:2rem;border-radius:1rem;margin-bottom:2rem;border:1px solid #334155}
+  .highlight-title{color:#f59e0b;font-weight:700;text-align:center;margin-bottom:1.5rem}
+  .highlight-item{display:flex;align-items:center;background-color:rgba(255,255,255,.05);padding:.75rem;border-radius:.5rem;margin-bottom:.75rem;transition:background-color .2s ease}
+  .highlight-item:hover{background-color:rgba(255,255,255,.1)}
+  .highlight-rank{font-size:1.5rem;font-weight:800;color:#94a3b8;width:40px;text-align:center}
+  .highlight-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;margin-left:1rem;margin-right:1rem}
+  .highlight-info{flex-grow:1;min-width:0}
+  .highlight-name{font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .highlight-team{font-size:.8rem;color:#94a3b8}
+  .highlight-value{font-weight:700;font-size:1.1rem;color:#f59e0b;text-align:right;min-width:120px}
+
+  /* ====== A11Y / PREFERS REDUCED MOTION ====== */
+  @media (prefers-reduced-motion: reduce){
+    .card-fut:hover{transform:none}
+    .card-fut:after{opacity:.15;filter:none}
+    .btn-action:hover:not(:disabled){transform:none}
+  }
+  /* === no-wrap & spacing for tier header === */
+  .tier-progress-wrapper .d-flex{flex-wrap:nowrap}
+  .tier-tag{margin-right:.5rem}
+  .tier-next-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* === force same-line & spacing for tier header (override) === */
+  .tier-progress-wrapper .d-flex{flex-wrap:nowrap !important; align-items:flex-start}
+  .tier-tag{margin-right:.5rem; flex:0 0 auto}
+  .tier-next-text{white-space:normal; overflow:visible; text-overflow:clip; flex:1 1 auto; margin-left:.5rem; line-height:1.25}
+  /* === restore hover lift effect (strong override) === */
+  .card-fut{will-change: transform}
+  .card-fut:hover{transform: translateY(-8px) !important; box-shadow: 0 20px 40px rgba(2,6,23,.4) !important}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container my-4">
+  <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1><i class="bi bi-shop"></i> Thị trường Chuyển nhượng</h1>
+      <p class="lead mb-0">Khám phá và tìm kiếm những tài năng hàng đầu từ tất cả các giải đấu.</p>
+    </div>
+    <a href="{% url 'transfer_history' %}" class="btn btn-outline-primary">
+      <i class="bi bi-clock-history"></i> Xem Lịch sử
+    </a>
+  </div>
 
-    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <h1><i class="bi bi-shop"></i> Thị trường Chuyển nhượng</h1>
-            <p class="lead mb-0">Khám phá và tìm kiếm những tài năng hàng đầu từ tất cả các giải đấu.</p>
-        </div>
-        <a href="{% url 'transfer_history' %}" class="btn btn-outline-primary">
-            <i class="bi bi-clock-history"></i> Xem Lịch sử
-        </a>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="highlight-section h-100">
+        <h3 class="highlight-title"><i class="bi bi-stars"></i> Top Cầu Thủ</h3>
+        {% if top_players %}
+          <ol class="list-unstyled m-0">
+            {% for player in top_players %}
+            <li>
+              <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none d-block">
+                <div class="highlight-item">
+                  <div class="highlight-rank">#{{ forloop.counter }}</div>
+                  <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}"
+                       alt="{{ player.full_name }}" class="highlight-avatar" loading="lazy" width="40" height="40">
+                  <div class="highlight-info">
+                    <div class="highlight-name">{{ player.full_name }}</div>
+                    <div class="highlight-team">{{ player.team.name|default:"Tự do" }}</div>
+                  </div>
+                  <div class="highlight-value">{{ player.market_value|vnd_format }}</div>
+                </div>
+              </a>
+            </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="text-center text-muted">Không có cầu thủ nào trong bảng xếp hạng.</p>
+        {% endif %}
+      </div>
     </div>
 
-    {# === BXH === #}
-    {% if top_players %}
-    <div class="leaderboard-section">
-        <h3 class="leaderboard-title"><i class="bi bi-stars"></i> Bảng Xếp Hạng Cầu Thủ</h3>
-        <div>
-            {% for player in top_players %}
-            <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none">
-                <div class="leaderboard-item">
-                    <div class="leaderboard-rank">#{{ forloop.counter }}</div>
-                    <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="leaderboard-avatar">
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">{{ player.full_name }}</div>
-                        <div class="leaderboard-team">{{ player.team.name|default:"Tự do" }}</div>
-                    </div>
-                    <div class="leaderboard-value">{{ player.market_value|vnd_format }}</div>
+    <div class="col-lg-6">
+      <div class="highlight-section h-100">
+        <h3 class="highlight-title"><i class="bi bi-person-plus-fill"></i> Đang Tìm CLB</h3>
+        {% if looking_for_club_players %}
+          <div>
+            {% for player in looking_for_club_players %}
+            <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none d-block">
+              <div class="highlight-item">
+                <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}"
+                     alt="{{ player.full_name }}" class="highlight-avatar" loading="lazy" width="40" height="40">
+                <div class="highlight-info">
+                  <div class="highlight-name">{{ player.full_name }}</div>
+                  <div class="highlight-team">{{ player.team.name|default:"Tự do" }} - {{ player.location_detail|default:player.get_region_display }}</div>
                 </div>
+                <div class="highlight-value">{{ player.market_value|vnd_format }}</div>
+              </div>
             </a>
             {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-center text-muted">Hiện không có cầu thủ nào đang tìm CLB mới trong khu vực này.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-body mb-4">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label for="region-filter" class="form-label">Khu vực</label>
+        <select name="region" id="region-filter" class="form-select">
+          <option value="">Tất cả khu vực</option>
+          {% for value, name in all_regions %}
+            <option value="{{ value }}" {% if value == current_filters.region %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="location-filter" class="form-label">Tỉnh/Thành phố</label>
+        <input type="text" name="location" id="location-filter" class="form-control" placeholder="VD: Hà Nội, Điện Biên..." value="{{ current_filters.location|default:'' }}">
+      </div>
+      <div class="col-md-3">
+        <label for="position-filter" class="form-label">Vị trí</label>
+        <select name="position" id="position-filter" class="form-select">
+          <option value="">Tất cả vị trí</option>
+          {% for value, name in position_choices %}
+            <option value="{{ value }}" {% if value == current_filters.position %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">&nbsp;</label>
+        <button type="submit" class="btn btn-primary w-100">Lọc Cầu thủ</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="text-muted" aria-live="polite">Tìm thấy <strong>{{ players|length }}</strong> kết quả phù hợp.</span>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="player-list-container">
+    {% for player in players %}
+    <div class="col player-card-wrapper" data-player data-market="{{ player.market_value|default:0 }}">
+      <div class="card card-fut h-100">
+        <div class="plate"></div>
+        <div class="topbar">
+          <span class="rank-badge"><i class="bi bi-trophy"></i> #<span class="rank-number">{{ forloop.counter }}</span></span>
+          {% if player.jersey_number %}<span class="jersey-chip">#{{ player.jersey_number }}</span>{% endif %}
         </div>
-    </div>
-    {% endif %}
-    
-    <div class="card card-body mb-4">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label for="search-input" class="form-label">Tìm theo tên cầu thủ</label>
-                <input type="text" name="q" id="search-input" class="form-control" placeholder="Nhập tên..." value="{{ current_filters.q|default:'' }}">
-            </div>
-            <div class="col-md-3">
-                <label for="position-filter" class="form-label">Lọc theo Vị trí</label>
-                <select name="position" id="position-filter" class="form-select">
-                    <option value="">Tất cả vị trí</option>
-                    {% for value, name in position_choices %}
-                        <option value="{{ value }}" {% if value == current_filters.position %}selected{% endif %}>{{ name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="team-filter" class="form-label">Lọc theo Đội</label>
-                <select name="team" id="team-filter" class="form-select">
-                    <option value="">Tất cả các đội</option>
-                    {% for team in all_teams %}
-                        <option value="{{ team.pk }}" {% if team.pk|stringformat:"s" == current_filters.team %}selected{% endif %}>{{ team.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
-            </div>
-        </form>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted">Tìm thấy <strong>{{ players|length }}</strong> kết quả.</span>
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
-                Sắp xếp theo: 
-                {% if current_filters.sort == '-market_value' %}Giá trị cao nhất
-                {% elif current_filters.sort == 'market_value' %}Giá trị thấp nhất
-                {% elif current_filters.sort == 'full_name' %}Tên A-Z
-                {% elif current_filters.sort == '-votes' %}Nhiều phiếu bầu nhất
-                {% endif %}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="?sort=-market_value&q={{current_filters.q}}&position={{current_filters.position}}&team={{current_filters.team}}">Giá trị cao nhất</a></li>
-                <li><a class="dropdown-item" href="?sort=market_value&q={{current_filters.q}}&position={{current_filters.position}}&team={{current_filters.team}}">Giá trị thấp nhất</a></li>
-                <li><a class="dropdown-item" href="?sort=full_name&q={{current_filters.q}}&position={{current_filters.position}}&team={{current_filters.team}}">Tên A-Z</a></li>
-                <li><a class="dropdown-item" href="?sort=-votes&q={{current_filters.q}}&position={{current_filters.position}}&team={{current_filters.team}}">Nhiều phiếu bầu nhất</a></li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="player-list-container">
-        {% for player in players %}
-        <div class="col player-card-wrapper"
-           data-player
-           data-market="{{ player.market_value|default:0 }}"
-        >
-        <div class="card card-fut h-100">
-          <div class="plate"></div>
-
-          <div class="topbar">
-            <span class="rank-badge"><i class="bi bi-trophy"></i> #<span class="rank-number">{{ forloop.counter }}</span></span>
-            {% if player.jersey_number %}
-            <span class="jersey-chip">#{{ player.jersey_number }}</span>
+        <div class="head">
+          <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" rel="noopener noreferrer">
+            <img class="player-avatar" src="{% if player.avatar %}{{ player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}" alt="{{ player.full_name }}" loading="lazy" width="96" height="96">
+          </a>
+          <div class="player-name"><a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-white">{{ player.full_name }}</a></div>
+          <div class="team-line mt-1">
+            {% if player.team and player.team.logo %}
+              <img src="{{ player.team.logo.url }}" alt="{{ player.team.name }}" loading="lazy" width="22" height="22">
             {% endif %}
+            <span>{{ player.team.name|default:"Cầu thủ tự do" }}</span>
           </div>
-
-          <div class="head">
-            <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" rel="noopener" title="Xem hồ sơ cầu thủ">
-              <img class="player-avatar"
-                   src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}"
-                   alt="{{ player.full_name }}">
-            </a>
-            <div class="player-name">
-              <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-white">{{ player.full_name }}</a>
-            </div>
-            <div class="team-line mt-1">
-              {% if player.team.logo %}
-                <img src="{{ player.team.logo.url }}" alt="{{ player.team.name }}">
-              {% endif %}
-              <span>{{ player.team.name|default:"Cầu thủ tự do" }}</span>
-            </div>
-          </div>
-
-          <div class="value-sheet">
-            <div class="value-row">
-              <span>Giá trị gốc</span>
-              <b class="val-transfer">{{ player.transfer_value|vnd_format }}</b>
-            </div>
-            <div class="value-row">
-              <span>Phiếu bầu</span>
-              <b class="val-votes">{{ player.votes|intcomma }}</b>
-            </div>
-            <div class="value-row">
-              <span>Giá trị TT</span>
-              <b class="val-market">{{ player.market_value|vnd_format }}</b>
-            </div>
-          </div>
-
-          <div class="tier-progress-wrapper">
-            <div class="d-flex align-items-center justify-content-between mb-1">
-              <span class="tier-tag"><i class="bi bi-stars"></i> <span class="tier-label">TIER</span></span>
-              <small><span class="tier-next-text">—</span></small>
-            </div>
-            <div class="tier-track" aria-label="Tiến độ lên bậc">
-              <span class="tier-slice s-bronze" style="background:#CD7F32"></span>
-              <span class="tier-slice s-silver" style="background:#C0C0C0"></span>
-              <span class="tier-slice s-gold"   style="background:#FFD700"></span>
-              <span class="tier-slice s-elite"  style="background:#00BCD4"></span>
-              <span class="tier-slice s-legend" style="background:#9C27B0"></span>
-              <span class="tier-marker" style="left:0%"></span>
-            </div>
-          </div>
-
-            <div class="actions">
-                <div class="d-grid gap-2">
-                    {% if captained_teams and player.team and player.team not in captained_teams %}
-                        <button type="button" class="btn btn-info btn-action" data-bs-toggle="modal" data-bs-target="#inviteModal-{{ player.pk }}">
-                            <i class="bi bi-send-plus"></i> Gửi lời mời
-                        </button>
-                    {% endif %}
-
-                    {# === THÊM KHỐI NÚT MỚI NÀY VÀO === #}
-                    {% if captained_teams and player.team not in captained_teams %}
-                        {% if captained_teams|length == 1 %}
-                            <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=captained_teams.0.pk %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-outline-light btn-action w-100">
-                                    <i class="bi bi-binoculars-fill"></i> Theo dõi
-                                </button>
-                            </form>
-                        {% else %}
-                            <div class="btn-group w-100">
-                                <button type="button" class="btn btn-outline-light btn-action dropdown-toggle" data-bs-toggle="dropdown">
-                                    <i class="bi bi-binoculars-fill"></i> Theo dõi
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-dark">
-                                    {% for team_to_scout_with in captained_teams %}
-                                    <li>
-                                        <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=team_to_scout_with.pk %}" class="d-grid">
-                                            {% csrf_token %}
-                                            <button type="submit" class="dropdown-item">Cho đội {{ team_to_scout_with.name }}</button>
-                                        </form>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-                    {% endif %}
-
-                    <a href="{% url 'player_detail' pk=player.pk %}" class="btn btn-light btn-action">
-                        <i class="bi bi-eye-fill"></i> Xem Hồ sơ
-                    </a>
-                </div>
-            </div>
         </div>
-      </div>
-      {% endfor %}
+        <div class="value-sheet">
+          <div class="value-row"><span>Giá trị gốc</span><b>{{ player.transfer_value|vnd_format }}</b></div>
+          <div class="value-row"><span>Phiếu bầu</span><b>{{ player.votes|intcomma }}</b></div>
+          <div class="value-row"><span>Giá trị TT</span><b>{{ player.market_value|vnd_format }}</b></div>
+        </div>
+        <div class="tier-progress-wrapper"></div>
 
-      <div id="no-results-message" class="col-12 text-center text-muted mt-4" style="display:none;">
-        <h4>Không tìm thấy cầu thủ phù hợp.</h4>
+        {% include "tournaments/partials/_player_card_actions.html" %}
       </div>
     </div>
+    {% endfor %}
+  </div>
 
-    {% if not players %}
-      <div class="alert alert-info mt-4">Không tìm thấy cầu thủ nào phù hợp với bộ lọc của bạn.</div>
-    {% endif %}
-
+  {% if not players %}
+    <div class="alert alert-info mt-4">Không tìm thấy cầu thủ nào phù hợp với bộ lọc của bạn.</div>
+  {% endif %}
 </div>
 
-{# MODALS CHO LỜI MỜI #}
+{# Giữ nguyên modal mỗi cầu thủ để không thay đổi logic của _invite_form #}
 {% for player in players %}
-    {% if captained_teams and player.team and player.team not in captained_teams %}
-    <div class="modal fade" id="inviteModal-{{ player.pk }}" tabindex="-1" data-market-value="{{ player.market_value|floatformat:'0' }}">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Gửi lời mời cho {{ player.full_name }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% endif %}">
-                        {% csrf_token %}
-
-                        {% if captained_teams|length > 1 %}
-                        <div class="mb-3">
-                            <label for="team-select-{{ player.pk }}" class="form-label">Mời từ đội</label>
-                            <select id="team-select-{{ player.pk }}" class="form-select" required>
-                                <option value="">-- Chọn đội của bạn --</option>
-                                {% for team in captained_teams %}
-                                <option value="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">{{ team.name }} (Ngân sách: {{ team.budget|intcomma }} VNĐ)</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-
-                        <p><strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span></p>
-
-                        <div class="mb-3">
-                            <label class="form-label">Chọn loại hình đề nghị:</label>
-                            <div class="form-check">
-                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="permanent-{{ player.pk }}" value="PERMANENT" data-player-id="{{ player.pk }}" checked>
-                                <label class="form-check-label" for="permanent-{{ player.pk }}">Mua đứt</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="loan-{{ player.pk }}" value="LOAN" data-player-id="{{ player.pk }}">
-                                <label class="form-check-label" for="loan-{{ player.pk }}">Cho mượn</label>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="offer-amount-{{ player.pk }}" class="form-label">Phí đề nghị (VNĐ)</label>
-                            <input type="number" name="offer_amount" id="offer-amount-{{ player.pk }}" class="form-control" value="{{ player.market_value|floatformat:'0' }}" required>
-                            <small class="form-text text-muted" id="fee-suggestion-{{ player.pk }}">Giá đề nghị bằng giá trị thị trường.</small>
-                        </div>
-
-                        <div class="mb-3 loan-options" style="display: none;">
-                            <label for="loan_end_date-{{ player.pk }}" class="form-label">Ngày kết thúc cho mượn</label>
-                            <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}" class="form-control">
-                        </div>
-                        <hr>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Xác nhận gửi lời mời</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+  {% if captained_teams and player.team and player.team not in captained_teams %}
+  <div class="modal fade" id="inviteModal-{{ player.pk }}" tabindex="-1" aria-labelledby="inviteModalLabel-{{ player.pk }}" data-market-value="{{ player.market_value|floatformat:'0' }}">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="inviteModalLabel-{{ player.pk }}">Gửi lời mời cho {{ player.full_name }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
         </div>
+        <div class="modal-body">
+          {% include "tournaments/partials/_invite_form.html" %}
+        </div>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
 {% endfor %}
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const TIERS = [
-  { key: 'bronze', label: 'BRONZE', color: '#CD7F32', min: 0,         max:  1_000_000 },
-  { key: 'silver', label: 'SILVER', color: '#C0C0C0', min: 1_000_000, max:  5_000_000 },
-  { key: 'gold',   label: 'GOLD',   color: '#FFD700', min: 5_000_000, max: 10_000_000 },
-  { key: 'elite',  label: 'ELITE',  color: '#00BCD4', min:10_000_000, max: 20_000_000 },
-  { key: 'legend', label: 'LEGEND', color: '#9C27B0', min:20_000_000, max:  Infinity  },
-];
-const nf = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
-const plain_nf = new Intl.NumberFormat('vi-VN');
+  // ====== CONSTANTS & HELPERS ======
+  const TIERS = [
+    { key:'bronze', label:'BRONZE', color:'#CD7F32', min:0, max:1_000_000 },
+    { key:'silver', label:'SILVER', color:'#C0C0C0', min:1_000_000, max:5_000_000 },
+    { key:'gold',   label:'GOLD',   color:'#FFD700', min:5_000_000, max:10_000_000 },
+    { key:'elite',  label:'ELITE',  color:'#00BCD4', min:10_000_000, max:20_000_000 },
+    { key:'legend', label:'LEGEND', color:'#9C27B0', min:20_000_000, max:Infinity },
+  ];
+  const plainNF = new Intl.NumberFormat('vi-VN');
 
-function getTier(v) { for (const t of TIERS) if (v >= t.min && v < t.max) return t; return TIERS[0]; }
-function markerPercent(v) { const span = TIERS[TIERS.length - 2].max; const cap = Math.max(0, Math.min(v, span)); return (cap / span) * 100; }
-function slicePerc(t) { const span = TIERS[TIERS.length - 2].max; const width = (Math.min(t.max, span) - t.min) / span * 100; return Math.max(0, width); }
+  function getTier(v){
+    for(const t of TIERS){ if(v >= t.min && v < t.max) return t; }
+    return TIERS[0];
+  }
+  function markerPercent(v){
+    const span = TIERS[TIERS.length-2].max; // cap ở ngưỡng ELITE
+    const cap = Math.max(0, Math.min(v, span));
+    return (cap / span) * 100;
+  }
+  function slicePerc(t){
+    const span = TIERS[TIERS.length-2].max;
+    const width = (Math.min(t.max, span) - t.min) / span * 100;
+    return Math.max(0, width);
+  }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const cards = Array.from(document.querySelectorAll('[data-player]'));
+  document.addEventListener('DOMContentLoaded', () => {
+    // Decorate each card by tier + build progress bar
+    document.querySelectorAll('[data-player]').forEach(card => {
+      const mv = Number(card.dataset.market || 0);
+      const tier = getTier(mv);
+      const fut = card.querySelector('.card-fut');
+      fut.classList.add(`t-${tier.key}`);
 
-  cards.forEach((card, index) => {
-    let mv = Number(card.dataset.market || 0);
+      const wrap = card.querySelector('.tier-progress-wrapper');
+      if(wrap){
+        const idx  = TIERS.findIndex(t => t.key === tier.key);
+        const next = TIERS[idx + 1];
+        const topText = next
+          ? `Tiến tới ${next.label}:<br>còn ${plainNF.format(Math.max(0, next.min - mv))} VNĐ`
+          : `Đã đạt cấp cao nhất`;
 
-    const tier = getTier(mv);
-    const cardBox = card.querySelector('.card-fut');
-    cardBox.classList.add(`t-${tier.key}`);
+        wrap.innerHTML = `
+          <div class=\"d-flex align-items-center gap-2 flex-wrap mb-2\">
+            <span class=\"tier-tag me-1\"><i class=\"bi bi-gem\"></i> ${tier.label}</span>
+            <span class=\"tier-next-text\">${topText}</span>
+          </div>
+          <div class="tier-track">
+            ${TIERS.slice(0, TIERS.length-1).map(t => `<span class=\"tier-slice\" style=\"width:${slicePerc(t)}%\"></span>`).join('')}
+            <span class="tier-marker" style="left:${markerPercent(mv)}%"></span>
+          </div>`;
+      }
+    });
 
-    const tierLabel = cardBox.querySelector('.tier-label');
-    const tierNext = cardBox.querySelector('.tier-next-text');
-    if (tierLabel) tierLabel.textContent = tier.label;
-    if (tier.max !== Infinity) { 
-        const need = Math.max(0, tier.max - mv); 
-        if (tierNext) tierNext.textContent = `Cần +${nf.format(need)} để lên ${getTier(tier.max).label}`; 
-    } else { 
-        if (tierNext) tierNext.textContent = `Bậc tối đa`; 
-    }
-
-    const slices = { bronze: cardBox.querySelector('.s-bronze'), silver: cardBox.querySelector('.s-silver'), gold: cardBox.querySelector('.s-gold'), elite: cardBox.querySelector('.s-elite'), legend: cardBox.querySelector('.s-legend') };
-    for (const t of TIERS) { if (slices[t.key]) slices[t.key].style.width = slicePerc(t) + '%'; }
-
-    const marker = cardBox.querySelector('.tier-marker');
-    if (marker) marker.style.left = Math.min(100, markerPercent(mv)) + '%';
-  });
-
-  // SCRIPT CHO MODAL LỜI MỜI
-  document.querySelectorAll('.modal').forEach(modal => {
+    // Modal handlers: tự động gợi ý phí theo loại chuyển nhượng
+    document.querySelectorAll('.modal').forEach(modal => {
       const form = modal.querySelector('form');
       const teamSelect = modal.querySelector('select[id^="team-select-"]');
 
-      // Cập nhật action của form khi chọn đội (cho trường hợp có nhiều đội)
-      if(teamSelect) {
-          teamSelect.addEventListener('change', function() {
-              form.action = this.value;
-          });
+      if(teamSelect){
+        teamSelect.addEventListener('change', function(){
+          if(form) form.action = this.value;
+        });
       }
 
-      // Xử lý logic hiển thị các tùy chọn khi radio button thay đổi
-      modal.addEventListener('change', function(e) {
-          if (e.target.classList.contains('transfer-type-radio')) {
-              const playerId = e.target.dataset.playerId;
-              const loanOptions = modal.querySelector('.loan-options');
-              const loanDateInput = modal.querySelector('input[name="loan_end_date"]');
-              const offerInput = modal.querySelector(`#offer-amount-${playerId}`);
-              const feeSuggestion = modal.querySelector(`#fee-suggestion-${playerId}`);
+      modal.addEventListener('change', e => {
+        if(!e.target.classList.contains('transfer-type-radio')) return;
+        const containerForm = e.target.closest('form');
+        const loanOptions   = containerForm?.querySelector('.loan-options');
+        const loanDateInput = containerForm?.querySelector('input[name="loan_end_date"]');
+        const offerInput    = containerForm?.querySelector('input[name="offer_amount"]');
+        const feeSuggestion = containerForm?.querySelector('small[id^="fee-suggestion-"]');
 
-              const marketValue = parseFloat(modal.dataset.marketValue || '0');
-              const isLoan = e.target.value === 'LOAN' && e.target.checked;
+        const marketValue = parseFloat(modal.dataset.marketValue || '0');
+        const isLoan = e.target.value === 'LOAN' && e.target.checked;
 
-              if (loanOptions) loanOptions.style.display = isLoan ? 'block' : 'none';
-              if (loanDateInput) loanDateInput.required = isLoan;
+        if(loanOptions) loanOptions.style.display = isLoan ? 'block' : 'none';
+        if(loanDateInput) loanDateInput.required = isLoan;
 
-              if (isLoan) {
-                  const loanFee = Math.round(marketValue * 0.2);
-                  offerInput.value = loanFee;
-                  feeSuggestion.textContent = `Phí gợi ý: 20% giá trị TT (${plain_nf.format(loanFee)} VNĐ).`;
-              } else {
-                  offerInput.value = marketValue;
-                  feeSuggestion.textContent = 'Giá đề nghị bằng giá trị thị trường.';
-              }
+        if(offerInput){
+          if(isLoan){
+            const loanFee = Math.round(marketValue * 0.2);
+            offerInput.value = loanFee;
+            if(feeSuggestion) feeSuggestion.textContent = `Phí gợi ý: 20% giá trị TT (${plainNF.format(loanFee)} VNĐ).`;
+          } else {
+            offerInput.value = marketValue;
+            if(feeSuggestion) feeSuggestion.textContent = 'Giá đề nghị bằng giá trị thị trường.';
           }
+        }
       });
+    });
   });
-});
 </script>
 {% endblock %}

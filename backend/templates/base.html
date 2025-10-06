@@ -78,7 +78,7 @@
             <div class="main-menu">
                 <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'transfer_market' %}active{% endif %}" href="{% url 'transfer_market' %}">Thị trường CĐ</a>
+                <a class="nav-link {% if 'transfer' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
                 <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
@@ -171,7 +171,7 @@
     <nav class="mobile-nav">
         <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
         <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'transfer_market' %}active{% endif %}" href="{% url 'transfer_market' %}">Thị trường CĐ</a>
+        <a class="nav-link {% if 'transfer' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
         <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
         <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
         <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>

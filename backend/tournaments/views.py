@@ -2232,59 +2232,69 @@ def respond_to_transfer_view(request, transfer_pk):
 @never_cache
 def transfer_market_view(request):
     """
-    Hiển thị trang Thị trường chuyển nhượng với các chức năng lọc và sắp xếp.
+    Hiển thị trang Thị trường chuyển nhượng với các chức năng lọc và sắp xếp nâng cao.
     """
     current_vote_value = get_current_vote_value()
 
-    # Bắt đầu với việc lấy tất cả cầu thủ
     players_qs = Player.objects.select_related('team').annotate(
         market_value=F('transfer_value') + (F('votes') * Value(current_vote_value))
     )
 
-    # Lấy 5 cầu thủ có giá trị thị trường cao nhất để làm bảng xếp hạng
-    top_players = players_qs.order_by('-market_value')[:5]
-
-    # Lấy các tham số lọc từ URL
+    region_filter = request.GET.get('region', '')
+    location_filter = request.GET.get('location', '')
     position_filter = request.GET.get('position', '')
     team_filter = request.GET.get('team', '')
     search_query = request.GET.get('q', '')
-    sort_by = request.GET.get('sort', '-market_value') # Mặc định sắp xếp theo giá trị
+    sort_by = request.GET.get('sort', '-market_value')
 
-    # Áp dụng bộ lọc
+    filtered_qs_for_top = players_qs
+    if region_filter:
+        filtered_qs_for_top = filtered_qs_for_top.filter(region=region_filter)
+    if location_filter:
+        filtered_qs_for_top = filtered_qs_for_top.filter(location_detail__icontains=location_filter)
+        
+    top_players = filtered_qs_for_top.order_by('-market_value')[:5]
+    
+    # Dòng này bây giờ sẽ hoạt động chính xác
+    looking_for_club_players = filtered_qs_for_top.filter(is_looking_for_club=True).order_by('-updated_at')[:5]
+
+    if region_filter:
+        players_qs = players_qs.filter(region=region_filter)
+    if location_filter:
+        players_qs = players_qs.filter(location_detail__icontains=location_filter)
     if position_filter:
         players_qs = players_qs.filter(position=position_filter)
-    
     if team_filter:
         players_qs = players_qs.filter(team_id=team_filter)
-
     if search_query:
         players_qs = players_qs.filter(full_name__icontains=search_query)
 
-    # Áp dụng sắp xếp
     valid_sorts = ['market_value', '-market_value', 'full_name', '-votes']
     if sort_by in valid_sorts:
         players_qs = players_qs.order_by(sort_by)
 
-    # Lấy danh sách các đội có cầu thủ để đưa vào bộ lọc
     all_teams_with_players = Team.objects.filter(players__isnull=False).distinct().order_by('name')
-
     captained_teams = []
     if request.user.is_authenticated:
         captained_teams = Team.objects.filter(captain=request.user)
 
     context = {
         'players': players_qs,
+        'top_players': top_players,
+        'looking_for_club_players': looking_for_club_players,
         'current_vote_value': current_vote_value,
         'position_choices': Player.POSITION_CHOICES,
         'all_teams': all_teams_with_players,
+        'all_regions': Tournament.Region.choices,
         'current_filters': {
+            'region': region_filter,
+            'location': location_filter,
             'position': position_filter,
             'team': team_filter,
             'q': search_query,
             'sort': sort_by,
         },
         'captained_teams': captained_teams,
-        'top_players': top_players,
     }
     return render(request, 'tournaments/transfer_market.html', context)
 
