@@ -283,7 +283,7 @@ class TeamRegistrationAdmin(ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(ModelAdmin):
-    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar")
+    list_display = ("full_name", "link_to_team", "jersey_number", "position", "display_avatar", "display_qr_code")
     list_filter = ("team__tournaments", "position", "team")
     search_fields = ("full_name", "team__name", "jersey_number")
     list_editable = ("position",)
@@ -304,6 +304,13 @@ class PlayerAdmin(ModelAdmin):
             return format_html('<img src="{}" width="40" height="40" style="object-fit: cover; border-radius: 50%;" />', obj.avatar.url)
         return "Chưa có ảnh"
     display_avatar.short_description = 'Ảnh đại diện'
+
+    # === THÊM HÀM MỚI NÀY VÀO CUỐI CLASS ===
+    @admin.display(description='Mã QR ủng hộ')
+    def display_qr_code(self, obj):
+        if obj.donation_qr_code:
+            return format_html(f'<a href="{obj.donation_qr_code.url}" target="_blank">Xem ảnh</a>')
+        return "Chưa có"
 
 
 @admin.register(Match)

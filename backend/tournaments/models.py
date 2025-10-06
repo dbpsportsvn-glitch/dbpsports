@@ -173,6 +173,14 @@ class Player(models.Model):
     votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)
     edit_count = models.PositiveIntegerField("Số lần chỉnh sửa", default=0, editable=False)
 
+    donation_qr_code = models.ImageField(
+        "Mã QR ủng hộ", 
+        upload_to='player_qrcodes/', 
+        null=True, 
+        blank=True, 
+        help_text="Tải lên ảnh mã QR cá nhân (Momo, VNPAY,...) để nhận donate từ người hâm mộ."
+    )
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["team", "jersey_number"], name="uniq_jersey_per_team"),

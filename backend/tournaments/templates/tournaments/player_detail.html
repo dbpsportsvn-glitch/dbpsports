@@ -180,6 +180,18 @@
                     </div>
                 </div>
 
+                {% if player.donation_qr_code %}
+                <div class="col-12">
+                    <div class="card shadow-sm text-center">
+                        <div class="card-header"><h4><i class="bi bi-gift-fill text-danger"></i> Ủng hộ cầu thủ</h4></div>
+                        <div class="card-body">
+                            <p class="text-muted">Quét mã QR dưới đây để donate trực tiếp cho cầu thủ bạn yêu thích!</p>
+                            <img src="{{ player.donation_qr_code.url }}" class="img-fluid rounded" alt="Mã QR donate cho {{ player.full_name }}">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if badges %}
                 <div class="col-12">
                     <div class="card shadow-sm">

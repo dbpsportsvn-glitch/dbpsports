@@ -434,6 +434,12 @@
                                             </div>
                                             {{ player_profile_form.preferred_foot|as_crispy_field }}
                                             {{ player_profile_form.agent_contact|as_crispy_field }}
+
+                                            {# === THÊM KHỐI CODE MỚI VÀO ĐÂY === #}
+                                            <hr>
+                                            <h5>Ủng hộ (Donate)</h5>
+                                            {{ player_profile_form.donation_qr_code|as_crispy_field }}
+                                            {# === KẾT THÚC KHỐI CODE MỚI === #}
                                         </div>
                                     </div>
                                     <button type="submit" name="update_player_profile" class="btn btn-primary w-100 mt-4">Lưu thay đổi Hồ sơ Cầu thủ</button>
