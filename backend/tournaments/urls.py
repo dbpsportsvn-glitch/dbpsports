@@ -51,6 +51,7 @@ urlpatterns = [
     path('tournament/<int:tournament_pk>/register_team/<int:team_pk>/', views.register_existing_team, name='register_existing_team'),
     path('team/<int:pk>/profile/', views.public_team_detail, name='public_team_detail'),
     path('team/<int:team_pk>/cast_vote/', views.cast_team_vote_view, name='cast_team_vote'),
+    path('team/<int:pk>/delete/', views.delete_team, name='delete_team'),
 
     # --- URL liên quan đến Cầu thủ (Player) ---
     path('player/<int:pk>/claim/', views.claim_player_profile, name='claim_player_profile'),

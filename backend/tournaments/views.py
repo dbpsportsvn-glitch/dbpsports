@@ -434,13 +434,17 @@ def team_detail(request, pk):
 @login_required
 @never_cache
 def create_team(request, tournament_pk):
-    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    # --- THÊM LOGIC GIỚI HẠN ---
+    TEAM_LIMIT = 3
+    if Team.objects.filter(captain=request.user).count() >= TEAM_LIMIT:
+        messages.error(request, f"Bạn đã đạt đến giới hạn tối đa ({TEAM_LIMIT}) đội bóng được phép tạo.")
+        return redirect('tournament_detail', pk=tournament_pk)
+    # --- KẾT THÚC LOGIC GIỚI HẠN ---
 
-    # Lấy danh sách các đội mà người dùng làm đội trưởng và CHƯA đăng ký vào giải này
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
     existing_teams = Team.objects.filter(captain=request.user).exclude(registrations__tournament=tournament)
 
     if request.method == 'POST':
-        # Xử lý khi người dùng nhấn nút "Tạo đội mới"
         form = TeamCreationForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             try:
@@ -448,25 +452,15 @@ def create_team(request, tournament_pk):
                     team = form.save(commit=False)
                     team.captain = request.user
                     team.save()
-                    # Ngay lập tức tạo một bản ghi đăng ký cho đội mới này
                     TeamRegistration.objects.create(team=team, tournament=tournament)
-
                 messages.success(request, f"Đã tạo và đăng ký thành công đội '{team.name}'!")
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
-                 # Lỗi này xảy ra nếu tên đội đã tồn tại (do constraint trong model)
                  form.add_error('name', "Bạn đã có một đội với tên này. Vui lòng chọn một tên khác.")
     else:
-        # Khi trang được tải lần đầu (GET request)
         form = TeamCreationForm(user=request.user)
 
-    context = {
-        'form': form,
-        'tournament': tournament,
-        'existing_teams': existing_teams, # Gửi danh sách các đội đã có ra template
-        'is_registration_page': True # Một biến cờ để template biết đây là trang đăng ký tổng hợp
-    }
-    # Sửa lại để trỏ đến một template mới mà chúng ta sẽ tạo ở bước sau
+    context = { 'form': form, 'tournament': tournament, 'existing_teams': existing_teams }
     return render(request, 'tournaments/register_options.html', context)
 
 @login_required
@@ -476,17 +470,37 @@ def delete_player(request, pk):
     team = player.team
 
     if request.user != team.captain:
-        return redirect('home')
+        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
     if request.method == 'POST':
         player.delete()
+        messages.success(request, f"Đã xóa cầu thủ {player.full_name} khỏi đội.")
         return redirect('team_detail', pk=team.pk)
 
-    context = {
-        'player': player,
-        'team': team,
-    }
+    context = {'player': player, 'team': team}
     return render(request, 'tournaments/player_confirm_delete.html', context)
+
+@login_required
+def delete_team(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+
+    # Kiểm tra quyền sở hữu
+    if request.user != team.captain:
+        return HttpResponseForbidden("Bạn không có quyền xóa đội bóng này.")
+
+    # Ngăn xóa đội nếu đang tham gia giải
+    if team.registrations.exists():
+        messages.error(request, f"Không thể xóa đội '{team.name}' vì đội đang được đăng ký tham gia ít nhất một giải đấu. Vui lòng liên hệ BTC để gỡ đội khỏi các giải trước khi xóa.")
+        return redirect('team_detail', pk=team.pk)
+
+    if request.method == 'POST':
+        team_name = team.name
+        team.delete()
+        messages.success(request, f"Đã xóa thành công đội bóng '{team_name}'.")
+        return redirect('dashboard') # Chuyển về trang cá nhân sau khi xóa
+
+    context = {'team': team}
+    return render(request, 'tournaments/team_confirm_delete.html', context)
 
 @login_required
 @never_cache
@@ -1601,6 +1615,13 @@ def cast_vote_view(request, player_pk):
 @login_required
 @never_cache
 def create_standalone_team(request):
+    # --- THÊM LOGIC GIỚI HẠN ---
+    TEAM_LIMIT = 3
+    if Team.objects.filter(captain=request.user).count() >= TEAM_LIMIT:
+        messages.error(request, f"Bạn đã đạt đến giới hạn tối đa ({TEAM_LIMIT}) đội bóng được phép tạo.")
+        return redirect('dashboard')
+    # --- KẾT THÚC LOGIC GIỚI HẠN ---
+
     if request.method == 'POST':
         form = TeamCreationForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
@@ -1615,9 +1636,8 @@ def create_standalone_team(request):
     context = {
         'form': form,
         'is_standalone': True,
-        'tournament': None, # Báo cho template biết đây là tạo đội tự do
+        'tournament': None,
     }
-    # Sửa tên template ở đây
     return render(request, 'tournaments/register_options.html', context)
 
 @login_required
