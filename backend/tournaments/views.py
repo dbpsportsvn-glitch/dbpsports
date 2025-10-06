@@ -1824,3 +1824,58 @@ def register_existing_team(request, tournament_pk, team_pk):
 
     messages.success(request, f"Đã đăng ký thành công đội '{team.name}' vào giải đấu. Vui lòng hoàn tất lệ phí.")
     return redirect('team_detail', pk=team.pk)
+
+
+# Chi tiết đội bóng
+@never_cache
+def public_team_detail(request, pk):
+    team = get_object_or_404(Team.objects.select_related('captain'), pk=pk)
+
+    # Lịch sử tham gia giải đấu
+    registrations = TeamRegistration.objects.filter(team=team).select_related('tournament').order_by('-tournament__start_date')
+
+    # Thành tích
+    achievements = team.achievements.select_related('tournament').order_by('-achieved_at')
+
+    # Lịch sử thi đấu
+    matches_played = Match.objects.filter(
+        Q(team1=team) | Q(team2=team),
+        team1_score__isnull=False
+    ).select_related('tournament', 'team1', 'team2').order_by('-match_time')
+
+    # Tính toán thống kê
+    stats = {
+        'played': matches_played.count(),
+        'wins': 0,
+        'draws': 0,
+        'losses': 0,
+        'goals_for': 0,
+        'goals_against': 0,
+    }
+    for match in matches_played:
+        if match.winner == team:
+            stats['wins'] += 1
+        elif match.loser == team:
+            stats['losses'] += 1
+        else: # Hòa
+            stats['draws'] += 1
+        
+        if match.team1 == team:
+            stats['goals_for'] += match.team1_score if match.team1_score is not None else 0
+            stats['goals_against'] += match.team2_score if match.team2_score is not None else 0
+        else:
+            stats['goals_for'] += match.team2_score if match.team2_score is not None else 0
+            stats['goals_against'] += match.team1_score if match.team1_score is not None else 0
+            
+    # Tính toán giá trị (tạm thời, sẽ mở rộng với logic vote sau)
+    total_value = team.transfer_value + (team.votes * 10000) # Giả sử 1 vote = 10,000 VNĐ
+
+    context = {
+        'team': team,
+        'registrations': registrations,
+        'achievements': achievements,
+        'matches_played': matches_played,
+        'stats': stats,
+        'total_value': total_value,
+    }
+    return render(request, 'tournaments/public_team_detail.html', context)    

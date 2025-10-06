@@ -109,6 +109,9 @@
                     {% endif %}
 
                     <div class="d-grid gap-2 mt-3">
+                        {# === THÊM NÚT NÀY VÀO ĐÂY === #}
+                        <a href="{% url 'public_team_detail' pk=team.pk %}" class="btn btn-info" target="_blank"><i class="bi bi-eye-fill"></i> Xem Hồ sơ công khai</a>
+
                         {% if user == team.captain %}
                             <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning"><i class="bi bi-pencil-fill"></i> Sửa thông tin đội</a>
                             <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-info"><i class="bi bi-trophy-fill"></i> Phòng Truyền thống</a>

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load humanize custom_filters %}
+
+{% block title %}{{ team.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('{% if team.main_photo %}{{ team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');
+        background-size: cover;
+        background-position: center;
+        padding: 2.5rem 1.5rem;
+        border-radius: .75rem;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .profile-avatar { /* This is the team logo now */
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        background-color: rgba(255,255,255,0.1);
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        border-radius: .75rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .stat-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: .75rem;
+        padding: 1rem;
+        text-align: center;
+        height: 100%;
+    }
+    .stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+    .stat-card .stat-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    .achievement-item {
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .achievement-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="profile-header d-flex align-items-center gap-4 mb-4 flex-wrap">
+        {% if team.logo %}
+        <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="profile-avatar">
+        {% endif %}
+        <div class="flex-grow-1">
+            <h1 class="display-5 mb-0"><strong>{{ team.name }}</strong></h1>
+            <h4 class="fw-light mb-2">Đội trưởng: {{ team.captain.get_full_name|default:team.captain.username }}</h4>
+        </div>
+        <div class="ms-auto text-end">
+            <h5 class="fw-light mb-0">Giá trị Đội bóng</h5>
+            <h2 class="display-4 text-warning">
+                {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-4">Chưa định giá</span>{% endif %}
+            </h2>
+            <span class="badge bg-primary rounded-pill fs-6">
+                <i class="bi bi-hand-thumbs-up-fill"></i>
+                <span>{{ team.votes }} Phiếu</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích</h4></div>
+                <div class="list-group list-group-flush">
+                     {% for achievement in achievements %}
+                        <a href="{% url 'tournament_detail' pk=achievement.tournament.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center achievement-item">
+                            <div>
+                                <h6 class="mb-0"><strong>{{ achievement.get_achievement_type_display }}</strong> - {{ achievement.tournament.name }}</h6>
+                                <small class="text-muted">Mùa giải {{ achievement.achieved_at|date:"Y" }}</small>
+                            </div>
+                            {% if achievement.achievement_type == 'CHAMPION' %}<i class="bi bi-trophy-fill fs-4 text-warning"></i>
+                            {% elif achievement.achievement_type == 'RUNNER_UP' %}<i class="bi bi-award-fill fs-4 text-secondary"></i>
+                            {% else %}<i class="bi bi-patch-check-fill fs-4 text-success"></i>
+                            {% endif %}
+                        </a>
+                    {% empty %}
+                        <div class="list-group-item text-muted text-center p-4">Đội bóng chưa có danh hiệu nào.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header"><h4><i class="bi bi-person-lines-fill"></i> Lịch sử thi đấu</h4></div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead><tr><th>Thời gian</th><th>Giải đấu</th><th>Trận đấu</th><th class="text-center">Kết quả</th></tr></thead>
+                        <tbody>
+                            {% for match in matches_played %}
+                                <tr style="cursor: pointer;" onclick="window.location='{% url 'match_detail' pk=match.pk %}';">
+                                    <td>{{ match.match_time|date:"d/m/Y" }}</td>
+                                    <td><small>{{ match.tournament.name }}</small></td>
+                                    <td>{{ match.team1.name }} vs {{ match.team2.name }}</td>
+                                    <td class="text-center">
+                                        {% if match.winner == team %}
+                                            <span class="badge bg-success">Thắng</span>
+                                        {% elif match.loser == team %}
+                                            <span class="badge bg-danger">Thua</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Hòa</span>
+                                        {% endif %}
+                                        <strong>{{ match.team1_score }} - {{ match.team2_score }}</strong>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted p-4">Đội bóng chưa tham gia trận đấu nào.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+             <div class="card shadow-sm position-sticky" style="top: 80px;">
+                <div class="card-header"><h4><i class="bi bi-bar-chart-line-fill"></i> Thống kê tổng quan</h4></div>
+                <div class="card-body">
+                   <div class="row g-3">
+                        <div class="col-6"><div class="stat-card"><div class="stat-value">{{ stats.played }}</div><div class="stat-label">Số trận</div></div></div>
+                        <div class="col-6"><div class="stat-card"><div class="stat-value text-success">{{ stats.wins }}</div><div class="stat-label">Thắng</div></div></div>
+                        <div class="col-6"><div class="stat-card"><div class="stat-value text-secondary">{{ stats.draws }}</div><div class="stat-label">Hòa</div></div></div>
+                        <div class="col-6"><div class="stat-card"><div class="stat-value text-danger">{{ stats.losses }}</div><div class="stat-label">Thua</div></div></div>
+                        <div class="col-6"><div class="stat-card"><div class="stat-value text-primary">{{ stats.goals_for }}</div><div class="stat-label">Bàn thắng</div></div></div>
+                        <div class="col-6"><div class="stat-card"><div class="stat-value text-warning">{{ stats.goals_against }}</div><div class="stat-label">Bàn thua</div></div></div>
+                   </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

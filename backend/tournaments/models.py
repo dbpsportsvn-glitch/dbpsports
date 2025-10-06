@@ -109,6 +109,8 @@ class Team(models.Model):
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
     main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
+    transfer_value = models.PositiveIntegerField("Giá trị đội bóng (VNĐ)", default=0, help_text="Giá trị nền của đội bóng, không bao gồm phiếu bầu.")
+    votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)    
 
     # Trường mới: liên kết tới nhiều giải đấu thông qua "Sổ Đăng Ký"
     tournaments = models.ManyToManyField(Tournament, through='TeamRegistration', related_name='teams_registered', blank=True)
