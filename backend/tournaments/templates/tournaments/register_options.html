@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{# === CHỈNH MÀU ÁO === #}
+{% block extra_css %}
+    {{ form.media }}
+{% endblock %}
+
 {% block title %}
     {% if is_standalone %}
         Tạo Đội bóng Mới

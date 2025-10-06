@@ -8,11 +8,12 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from organizations.models import Organization
 from django.utils import timezone
+from colorfield.fields import ColorField
 
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
-import os # <-- Thêm import này
+import os
 
 MAX_STARTERS = 11
 
@@ -109,6 +110,8 @@ class Team(models.Model):
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
     main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
+    kit_home_color = ColorField(verbose_name="Màu áo sân nhà", default='#FFFFFF')
+    kit_away_color = ColorField(verbose_name="Màu áo sân khách", default='#1E293B')
     transfer_value = models.PositiveIntegerField("Giá trị đội bóng (VNĐ)", default=0, help_text="Giá trị nền của đội bóng, không bao gồm phiếu bầu.")
     votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)    
 

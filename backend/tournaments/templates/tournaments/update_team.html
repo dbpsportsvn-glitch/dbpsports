@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{# === SỬA MÀU ÁO ĐỘI === #}
+{% block extra_css %}
+    {{ form.media }}
+{% endblock %}
+
 {% block content %}
 <div class="form-container">
     <h3 class="mb-4">Chỉnh sửa thông tin Đội</h3>

@@ -2,6 +2,7 @@
 from django import forms
 from .models import Team, Player, Comment, Tournament, TeamRegistration
 from .models import MatchNote
+from colorfield.widgets import ColorWidget
 
 # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class TeamCreationForm(forms.ModelForm):
@@ -12,11 +13,18 @@ class TeamCreationForm(forms.ModelForm):
 
     class Meta:
         model = Team
-        fields = ['name', 'coach_name', 'logo']
+        fields = ['name', 'coach_name', 'logo', 'kit_home_color', 'kit_away_color']
         labels = {
             'name': 'Tên đội bóng',
             'coach_name': 'Tên huấn luyện viên (không bắt buộc)',
             'logo': 'Logo đội bóng',
+            'kit_home_color': 'Màu áo sân nhà',
+            'kit_away_color': 'Màu áo sân khách',
+        }
+        # === THÊM KHỐI WIDGETS NÀY VÀO ===
+        widgets = {
+            'kit_home_color': ColorWidget,
+            'kit_away_color': ColorWidget,
         }
     
     def clean_name(self):
