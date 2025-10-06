@@ -44,10 +44,29 @@ class PlayerCreationForm(forms.ModelForm):
             'agent_contact': 'Thông tin liên hệ (đại diện)',
             'avatar': 'Ảnh đại diện / Giấy tờ',
         }
-        # Thêm widget để trình duyệt hiển thị ô chọn ngày
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    # === THÊM PHƯƠNG THỨC NÀY VÀO ĐỂ KIỂM TRA SỐ ÁO ===
+    def clean_jersey_number(self):
+        """
+        Đây là một phương thức đặc biệt của Django Form.
+        Nó sẽ tự động được gọi để kiểm tra riêng cho trường 'jersey_number'.
+        """
+        # Lấy dữ liệu số áo mà người dùng đã nhập
+        number = self.cleaned_data.get('jersey_number')
+        
+        # Kiểm tra nếu số áo tồn tại (người dùng có nhập)
+        if number is not None:
+            # Nếu số áo không nằm trong khoảng 1-99
+            if not (1 <= number <= 99):
+                # Gửi trả về một lỗi xác thực với thông báo thân thiện
+                raise forms.ValidationError("Số áo phải là một số trong khoảng từ 1 đến 99.")
+        
+        # Nếu không có lỗi, trả về dữ liệu đã được làm sạch
+        return number
+
 
 class PaymentProofForm(forms.ModelForm):
     class Meta:

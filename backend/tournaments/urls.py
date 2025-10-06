@@ -54,6 +54,7 @@ urlpatterns = [
     path('player/<int:pk>/', views.player_detail, name='player_detail'),
     path('player/<int:pk>/update/', views.update_player, name='update_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),
+    path('team/<int:team_pk>/add_free_agent/<int:player_pk>/', views.add_free_agent, name='add_free_agent'),
 
     # --- URL liên quan đến Trận đấu (Match) ---
     path('match/<int:pk>/', views.match_detail, name='match_detail'),

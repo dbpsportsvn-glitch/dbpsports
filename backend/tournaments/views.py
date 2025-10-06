@@ -9,6 +9,7 @@ from django.db import transaction
 from datetime import date
 from organizations.models import JobPosting, JobApplication
 from organizations.forms import JobApplicationForm
+from django.db.models import Q
 
 # Django Core
 from django.conf import settings
@@ -349,34 +350,99 @@ def tournament_detail(request, pk):
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
+
+@login_required
+def add_free_agent(request, team_pk, player_pk):
+    team = get_object_or_404(Team, pk=team_pk)
+    # Đảm bảo chỉ đội trưởng của đội mới có quyền thêm cầu thủ
+    if request.user != team.captain:
+        messages.error(request, "Bạn không có quyền thực hiện hành động này.")
+        return redirect('team_detail', pk=team_pk)
+
+    player = get_object_or_404(Player, pk=player_pk, team__isnull=True) # Chỉ tìm cầu thủ tự do
+
+    if request.method == 'POST':
+        # Kiểm tra xem số áo đã tồn tại trong đội chưa
+        if team.players.filter(jersey_number=player.jersey_number).exists():
+            messages.error(request, f"Số áo {player.jersey_number} đã có người sử dụng trong đội của bạn.")
+            return redirect('team_detail', pk=team_pk)
+        
+        # Gán cầu thủ vào đội và lưu lại
+        player.team = team
+        player.save()
+        messages.success(request, f"Đã chiêu mộ thành công cầu thủ {player.full_name} vào đội!")
+        return redirect('team_detail', pk=team_pk)
+
+    # Nếu không phải POST, chỉ hiển thị trang xác nhận (tùy chọn) hoặc redirect
+    return redirect('team_detail', pk=team_pk)
+
 @login_required
 @never_cache
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
     achievements = team.achievements.select_related('tournament').all()
+    
+    player_form = PlayerCreationForm()
+    search_query = request.GET.get('q', '')
+    search_results = []
+    active_tab = ''
 
     if request.method == 'POST':
-        if request.user == team.captain:
-            player_form = PlayerCreationForm(request.POST, request.FILES)
-            if player_form.is_valid():
-                player = player_form.save(commit=False)
-                player.team = team
-                try:
-                    player.full_clean()
-                    player.save()
-                    return redirect('team_detail', pk=team.pk)
-                except ValidationError as e:
-                    player_form.add_error('jersey_number', 'Số áo đã tồn tại trong đội.')
-    
-    if request.method != 'POST':
-        player_form = PlayerCreationForm()
-    
+        action = request.POST.get('action')
+        
+        if action == 'create_new_player':
+            active_tab = 'new'
+            
+            if request.user != team.captain:
+                messages.error(request, "Bạn không có quyền thực hiện hành động này.")
+            else:
+                player_form = PlayerCreationForm(request.POST, request.FILES)
+                if player_form.is_valid():
+                    player = player_form.save(commit=False)
+                    player.team = team
+                    try:
+                        player.full_clean()
+                        player.save()
+                        messages.success(request, f"Đã thêm cầu thủ {player.full_name} thành công!")
+                        return redirect('team_detail', pk=team.pk)
+                    
+                    except ValidationError as e:
+                        # --- BẮT ĐẦU NÂNG CẤP XỬ LÝ LỖI ---
+                        # Vòng lặp qua các lỗi mà model trả về
+                        for field, errors in e.message_dict.items():
+                            user_friendly_message = ""
+                            # Dịch các lỗi phổ biến sang tiếng Việt
+                            if field == 'jersey_number' and 'unique' in errors[0]:
+                                user_friendly_message = "Số áo này đã có người sử dụng trong đội."
+                            else:
+                                user_friendly_message = errors[0] # Giữ lại lỗi gốc nếu chưa dịch
+
+                            # Gắn lỗi vào đúng trường của form
+                            # Nếu lỗi không thuộc trường nào, nó sẽ được hiển thị ở đầu form
+                            player_form.add_error(field if field != '__all__' else None, user_friendly_message)
+                        
+                        messages.error(request, 'Thêm cầu thủ thất bại, vui lòng kiểm tra lại.')
+                        # --- KẾT THÚC NÂNG CẤP ---
+
+                else:
+                    messages.error(request, 'Thêm cầu thủ thất bại. Vui lòng kiểm tra các lỗi được đánh dấu màu đỏ.')
+
+    elif search_query:
+        active_tab = 'search'
+        search_results = Player.objects.filter(
+            Q(full_name__icontains=search_query) & Q(team__isnull=True)
+        ).exclude(user__isnull=False)
+
     context = {
         'team': team,
         'player_form': player_form,
         'achievements': achievements,
+        'search_results': search_results,
+        'search_query': search_query,
+        'active_tab': active_tab,
     }
     return render(request, 'tournaments/team_detail.html', context)
+
 
 @login_required
 @never_cache
