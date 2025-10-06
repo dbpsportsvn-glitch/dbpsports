@@ -11,7 +11,7 @@ from django.db import transaction
 from datetime import date
 from organizations.models import JobPosting, JobApplication
 from organizations.forms import JobApplicationForm
-from django.db.models import Q
+from django.db.models import F, Value
 
 # Django Core
 from django.conf import settings
@@ -2183,3 +2183,54 @@ def respond_to_transfer_view(request, transfer_pk):
         messages.error(request, f"Đã có lỗi xảy ra trong quá trình xử lý: {e}")
 
     return redirect(reverse('dashboard') + '?tab=transfers')     
+
+# === THỊ TRƯỜNG CHUYỂN NHƯỢNG ===
+@never_cache
+def transfer_market_view(request):
+    """
+    Hiển thị trang Thị trường chuyển nhượng với các chức năng lọc và sắp xếp.
+    """
+    current_vote_value = get_current_vote_value()
+
+    # Bắt đầu với việc lấy tất cả cầu thủ
+    players_qs = Player.objects.select_related('team').annotate(
+        market_value=F('transfer_value') + (F('votes') * Value(current_vote_value))
+    )
+
+    # Lấy các tham số lọc từ URL
+    position_filter = request.GET.get('position', '')
+    team_filter = request.GET.get('team', '')
+    search_query = request.GET.get('q', '')
+    sort_by = request.GET.get('sort', '-market_value') # Mặc định sắp xếp theo giá trị
+
+    # Áp dụng bộ lọc
+    if position_filter:
+        players_qs = players_qs.filter(position=position_filter)
+    
+    if team_filter:
+        players_qs = players_qs.filter(team_id=team_filter)
+
+    if search_query:
+        players_qs = players_qs.filter(full_name__icontains=search_query)
+
+    # Áp dụng sắp xếp
+    valid_sorts = ['market_value', '-market_value', 'full_name', '-votes']
+    if sort_by in valid_sorts:
+        players_qs = players_qs.order_by(sort_by)
+
+    # Lấy danh sách các đội có cầu thủ để đưa vào bộ lọc
+    all_teams_with_players = Team.objects.filter(players__isnull=False).distinct().order_by('name')
+
+    context = {
+        'players': players_qs,
+        'current_vote_value': current_vote_value,
+        'position_choices': Player.POSITION_CHOICES,
+        'all_teams': all_teams_with_players,
+        'current_filters': {
+            'position': position_filter,
+            'team': team_filter,
+            'q': search_query,
+            'sort': sort_by,
+        }
+    }
+    return render(request, 'tournaments/transfer_market.html', context)    
