@@ -26,6 +26,18 @@
         font-weight: 700;
         color: #0d6efd;
     }
+    .nav-pills .nav-link {
+        color: #495057; 
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        font-weight: 500;
+    }
+    .nav-pills .nav-link.active {
+        font-weight: 600;
+    }
+    .nav-pills .nav-link:not(.active):hover {
+        background-color: #e9ecef;
+    }
 </style>
 {% endblock %}
 
@@ -51,10 +63,11 @@
         </a>
     {% endif %}
 
-    <div class="row g-4">
-        {# --- CỘT BÊN TRÁI --- #}
+    {# SỬ DỤNG align-items-start ĐỂ CÁC CỘT BẮT ĐẦU NGANG HÀNG TỪ TRÊN XUỐNG #}
+    <div class="row g-4 align-items-start"> 
+        {# --- CỘT BÊN TRÁI: THÔNG TIN & HÀNH ĐỘNG --- #}
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-4 position-sticky" style="top: 80px;">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Thông tin Đội</h5>
                     {% if team.logo %}
@@ -94,49 +107,44 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        {# --- CỘT BÊN PHẢI --- #}
-        <div class="col-lg-8">
-            <h4><i class="bi bi-people-fill"></i> Quản lý Đội hình</h4>
-            
             {% if team.payment_status == 'PAID' and user == team.captain %}
-            {# --- KHU VỰC TÌM KIẾM VÀ THÊM CẦU THỦ --- #}
             <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Quản lý Cầu thủ</h5>
+                </div>
                 <div class="card-body">
-                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <ul class="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link {% if active_tab == 'search' %}active{% endif %}" id="pills-search-tab" data-bs-toggle="pill" data-bs-target="#pills-search" type="button">
-                                <i class="bi bi-search"></i> Tìm & Chiêu mộ Cầu thủ
+                                <i class="bi bi-search"></i> Chiêu mộ
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link {% if active_tab == 'new' or not active_tab %}active{% endif %}" id="pills-new-tab" data-bs-toggle="pill" data-bs-target="#pills-new" type="button">
-                                <i class="bi bi-person-plus-fill"></i> Tạo Cầu thủ mới
+                                <i class="bi bi-plus-circle"></i> Tạo mới
                             </button>
                         </li>
                     </ul>
                     <div class="tab-content" id="pills-tabContent">
                         <div class="tab-pane fade {% if active_tab == 'search' %}show active{% endif %}" id="pills-search" role="tabpanel">
-                            <p class="small text-muted">Tìm kiếm các cầu thủ tự do trên hệ thống để thêm vào đội của bạn.</p>
+                            <p class="small text-muted">Tìm kiếm các cầu thủ tự do trên hệ thống.</p>
                             <form method="get">
                                 <div class="input-group">
-                                    <input type="text" name="q" class="form-control" placeholder="Nhập tên cầu thủ cần tìm..." value="{{ search_query|default:'' }}">
+                                    <input type="text" name="q" class="form-control" placeholder="Nhập tên cầu thủ..." value="{{ search_query|default:'' }}">
                                     <button class="btn btn-primary" type="submit">Tìm</button>
                                 </div>
                             </form>
 
                             {% if search_results %}
                                 <hr>
-                                <h5>Kết quả tìm kiếm cho "{{ search_query }}"</h5>
                                 <ul class="list-group mt-3">
                                     {% for player in search_results %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <a href="{% url 'player_detail' pk=player.pk %}" target="_blank"><strong>{{ player.full_name }}</strong></a>
-                                            <small class="text-muted d-block">Vị trí: {{ player.get_position_display }} | Số áo đề xuất: #{{ player.jersey_number }}</small>
+                                            <small class="text-muted d-block">{{ player.get_position_display }} | #{{ player.jersey_number }}</small>
                                         </div>
-                                        {# SỬA LỖI URL: Sửa tên url thành add_free_agent #}
                                         <form method="post" action="{% url 'add_free_agent' team_pk=team.pk player_pk=player.pk %}">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-success btn-sm">Chiêu mộ</button>
@@ -149,13 +157,9 @@
                             {% endif %}
                         </div>
                         <div class="tab-pane fade {% if active_tab == 'new' or not active_tab %}show active{% endif %}" id="pills-new" role="tabpanel">
-                            <form method="post" enctype="multipart/form-data">
+                             <form method="post" enctype="multipart/form-data">
                                 {% csrf_token %}
-                                
-                                {# THÊM INPUT ẨN ĐỂ ĐỊNH DANH FORM #}
                                 <input type="hidden" name="action" value="create_new_player">
-                                
-                                {# THÊM KHỐI HIỂN THỊ LỖI CHUNG #}
                                 {% if player_form.non_field_errors %}
                                     <div class="alert alert-danger">
                                         {% for error in player_form.non_field_errors %}
@@ -163,57 +167,64 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-
                                 {{ player_form|crispy }}
                                 <button type="submit" class="btn btn-primary mt-3 w-100">Thêm vào đội hình</button>
-                            </form>
+                              </form>
                         </div>
                     </div>
                 </div>
-            </div>
-            {% elif team.tournament %}
-            <div class="alert alert-warning">
-                <h5 class="alert-heading">Tính năng bị khóa</h5>
-                <p>Bạn cần hoàn tất thanh toán lệ phí để có thể quản lý đội hình.</p>
             </div>
             {% endif %}
+        </div>
 
-            {# --- DANH SÁCH CẦU THỦ HIỆN TẠI --- #}
-            <h5>Đội hình hiện tại ({{ team.players.all.count }})</h5>
-            <div class="row row-cols-1 row-cols-md-2 g-3">
-                {% for player in team.players.all %}
-                <div class="col">
-                    <div class="card h-100 shadow-sm player-card" style="border-left-color: {% cycle '#0d6efd' '#198754' '#ffc107' '#dc3545' %};">
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="player-avatar">
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between">
-                                    <h6 class="mb-0">
-                                        <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-dark stretched-link">
-                                            {{ player.full_name }}
-                                        </a>
-                                        {% if player.user and team.captain == player.user %}
-                                            <span class="captain-indicator" title="Đội trưởng">(C)</span>
-                                        {% endif %}
-                                    </h6>
-                                    <span class="jersey-number-lg">#{{ player.jersey_number }}</span>
+        {# --- CỘT BÊN PHẢI: DANH SÁCH CẦU THỦ (ĐÃ ĐƯỢC BỌC TRONG CARD) --- #}
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Đội hình hiện tại ({{ team.players.all.count }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        {% for player in team.players.all %}
+                        <div class="col">
+                            <div class="card h-100 shadow-sm player-card" style="border-left-color: {% cycle '#0d6efd' '#198754' '#ffc107' '#dc3545' %};">
+                                
+                                {# --- BẮT ĐẦU THAY ĐỔI --- #}
+                                {# Bọc toàn bộ card-body trong thẻ <a> #}
+                                <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-dark">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="player-avatar">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between">
+                                                <h6 class="mb-0">
+                                                    {# Không cần thẻ <a> ở đây nữa #}
+                                                    {{ player.full_name }}
+                                                    {% if player.user and team.captain == player.user %}
+                                                        <span class="captain-indicator" title="Đội trưởng">(C)</span>
+                                                    {% endif %}
+                                                </h6>
+                                                <span class="jersey-number-lg">#{{ player.jersey_number }}</span>
+                                            </div>
+                                            <small class="text-muted">{{ player.get_position_display }}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                                {# --- KẾT THÚC THAY ĐỔI --- #}
+                                {% if user == team.captain %}
+                                <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                                    <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                    <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
                                 </div>
-                                <small class="text-muted">{{ player.get_position_display }}</small>
+                                {% endif %}
                             </div>
                         </div>
-                        {% if user == team.captain %}
-                        <div class="card-footer bg-light d-flex justify-content-end gap-2">
-                            <a href="{% url 'update_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
-                            <a href="{% url 'delete_player' pk=player.pk %}" class="btn btn-danger btn-sm">Xóa</a>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted p-3">Chưa có cầu thủ nào trong đội hình.</p>
                         </div>
-                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
-                {% empty %}
-                <div class="col-12">
-                    <p class="text-muted">Chưa có cầu thủ nào trong đội hình.</p>
-                </div>
-                {% endfor %}
             </div>
         </div>
     </div>
