@@ -315,16 +315,20 @@ def tournament_detail(request, pk):
     # Sắp xếp danh sách thống kê đội
     team_goal_stats.sort(key=lambda x: (x['gd'], x['gf']), reverse=True)
     team_card_stats.sort(key=lambda x: (x['red_cards'], x['yellow_cards']), reverse=True)
-
-
     # === KẾT THÚC KHỐI THỐNG KÊ MỚI ===
 
     # Kiểm tra xem có ít nhất một đội đã thanh toán trong giải đấu chưa
     has_paid_teams = tournament.teams.filter(payment_status='PAID').exists()
     
+    # THÊM MỚI: Lấy danh sách các đội tự do của người dùng để họ đăng ký
+    registerable_teams = []
+    if request.user.is_authenticated:
+        registerable_teams = Team.objects.filter(captain=request.user, tournament__isnull=True)
+
     context = {
         'tournament': tournament,
         'is_organizer': is_organizer,
+        'registerable_teams': registerable_teams,
         'group_matches': group_matches,
         'knockout_matches': all_knockout_matches,
         'knockout_data': knockout_data, 
@@ -1718,7 +1722,7 @@ def create_standalone_team(request):
         if form.is_valid():
             team = form.save(commit=False)
             team.captain = request.user
-            team.payment_status = 'PAID' # Đội tự do được coi là đã "thanh toán" để có thể thêm cầu thủ
+            # XÓA DÒNG NÀY ĐI: team.payment_status = 'PAID' 
             team.save()
             messages.success(request, f"Đã tạo thành công đội '{team.name}'!")
             return redirect('team_detail', pk=team.pk)
@@ -1967,3 +1971,27 @@ def claim_player_profile(request, pk):
     player_to_claim.save()
     messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
     return redirect('player_detail', pk=pk)    
+
+
+# Đăng ký đội bóng tự do tham gia giải
+@login_required
+@require_POST 
+def register_existing_team(request, tournament_pk, team_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    team = get_object_or_404(Team, pk=team_pk, tournament__isnull=True)
+
+    if team.captain != request.user:
+        messages.error(request, "Bạn không phải là đội trưởng của đội này.")
+        return redirect('tournament_detail', pk=tournament_pk)
+
+    if Team.objects.filter(tournament=tournament, name__iexact=team.name).exists():
+        messages.error(request, f"Một đội có tên '{team.name}' đã tồn tại trong giải đấu này. Vui lòng đổi tên đội của bạn trước khi đăng ký.")
+        return redirect('team_detail', pk=team.pk)
+
+    team.tournament = tournament
+    # THÊM DÒNG NÀY ĐỂ RESET TRẠNG THÁI THANH TOÁN
+    team.payment_status = 'UNPAID'
+    team.save()
+    
+    messages.success(request, f"Đã đăng ký thành công đội '{team.name}' vào giải đấu. Vui lòng hoàn tất lệ phí để mở khóa các tính năng.")
+    return redirect('team_detail', pk=team.pk)

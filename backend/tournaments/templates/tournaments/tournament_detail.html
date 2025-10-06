@@ -97,12 +97,38 @@
         </div>
       {% endif %}
       {% if tournament.status == 'REGISTRATION_OPEN' %}
-        <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-success btn-lg mt-2">Đăng ký tham gia giải đấu</a>
+          <div class="card mt-3 shadow-sm">
+              <div class="card-header">
+                  <h5><i class="bi bi-person-check-fill"></i> Tùy chọn Đăng ký</h5>
+              </div>
+              <div class="card-body">
+                  {% if user.is_authenticated %}
+                      {% if registerable_teams %}
+                          <p>Bạn có thể đăng ký bằng một đội có sẵn hoặc tạo một đội mới.</p>
+                          <div class="list-group mb-3">
+                              {% for team in registerable_teams %}
+                                  <div class="list-group-item d-flex justify-content-between align-items-center">
+                                      <strong>{{ team.name }}</strong>
+                                      <form method="POST" action="{% url 'register_existing_team' tournament_pk=tournament.pk team_pk=team.pk %}">
+                                          {% csrf_token %}
+                                          <button type="submit" class="btn btn-sm btn-success">Đăng ký đội này</button>
+                                      </form>
+                                  </div>
+                              {% endfor %}
+                          </div>
+                          <div class="text-center text-muted my-2">— hoặc —</div>
+                      {% endif %}
+                      <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-primary w-100">
+                          <i class="bi bi-shield-plus"></i> Tạo đội bóng mới để tham gia
+                      </a>
+                  {% else %}
+                      <p class="text-muted">Vui lòng <a href="{% url 'account_login' %}?next={{ request.path }}">đăng nhập</a> để đăng ký tham gia giải đấu.</p>
+                  {% endif %}
+              </div>
+          </div>
       {% else %}
-        <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
+          <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
       {% endif %}
-
-    {# === KHỐI NÚT BÌNH CHỌN ĐÃ ĐƯỢC DI CHUYỂN LÊN TRÊN === #}
 
     {% if user.is_staff or is_organizer or is_tournament_manager or is_media_staff or is_photographer_staff %}
         <div class="mt-3 d-flex flex-wrap gap-2">            
