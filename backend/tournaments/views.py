@@ -2332,3 +2332,24 @@ def transfer_history_view(request):
         'transfers': completed_transfers,
     }
     return render(request, 'tournaments/transfer_history.html', context)    
+
+@login_required
+@require_POST
+def toggle_looking_for_club_view(request):
+    """
+    Xử lý việc cầu thủ bật/tắt trạng thái "Đang tìm CLB".
+    """
+    try:
+        player_profile = request.user.player_profile
+        player_profile.is_looking_for_club = not player_profile.is_looking_for_club
+        player_profile.save(update_fields=['is_looking_for_club'])
+
+        new_status_text = "BẬT" if player_profile.is_looking_for_club else "TẮT"
+        messages.success(request, f"Đã {new_status_text} trạng thái 'Đang tìm CLB'.")
+
+    except Player.DoesNotExist:
+        messages.error(request, "Bạn không có hồ sơ cầu thủ để thực hiện hành động này.")
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra: {e}")
+
+    return redirect(reverse('dashboard') + '?tab=player-profile')    

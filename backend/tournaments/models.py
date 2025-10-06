@@ -174,6 +174,26 @@ class Player(models.Model):
     votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)
     edit_count = models.PositiveIntegerField("Số lần chỉnh sửa", default=0, editable=False)
 
+    # === THÊM 2 TRƯỜNG MỚI VÀO ĐÂY ===
+    region = models.CharField(
+        "Khu vực", 
+        max_length=20, 
+        choices=Tournament.Region.choices, 
+        default=Tournament.Region.KHAC,
+        help_text="Khu vực hoạt động chính của cầu thủ."
+    )
+    location_detail = models.CharField(
+        "Tỉnh / Thành phố", 
+        max_length=100, 
+        blank=True, 
+        help_text="Ví dụ: Hà Nội, Điện Biên, TP.HCM..."
+    )
+    is_looking_for_club = models.BooleanField(
+        "Đang tìm CLB", 
+        default=False, 
+        help_text="Đánh dấu nếu cầu thủ này là cầu thủ tự do hoặc muốn tìm một bến đỗ mới."
+    )
+
     donation_qr_code = models.ImageField(
         "Mã QR ủng hộ", 
         upload_to='player_qrcodes/', 

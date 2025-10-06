@@ -418,40 +418,63 @@
                         </div>
                         <div class="card-body">
                             {% if can_edit_player_profile %}
+
+                                {# === BẮT ĐẦU THÊM KHỐI CODE MỚI VÀO ĐÂY === #}
+                                <div class="card mb-4">
+                                    <div class="card-body d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Trạng thái "Tìm CLB"</h6>
+                                            <small class="text-muted">Bật để hiển thị hồ sơ của bạn cho các đội trưởng đang tuyển quân.</small>
+                                        </div>
+                                        <form method="post" action="{% url 'toggle_looking_for_club' %}">
+                                            {% csrf_token %}
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" id="lookingForClubSwitch" 
+                                                    {% if player_profile.is_looking_for_club %}checked{% endif %} onchange="this.form.submit()">
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
                                 <div class="alert alert-info small">
                                     <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Bạn còn <strong>{{ remaining_edits }}</strong> lần chỉnh sửa. Thông tin sẽ bị khóa khi bạn có 3 phiếu bầu hoặc hết 3 lượt chỉnh sửa.
                                 </div>
                                 <form method="post" enctype="multipart/form-data" class="no-compress">
                                     {% csrf_token %}
                                     <div class="row g-3">
-                                        {# --- CỘT BÊN TRÁI: THÔNG TIN CƠ BẢN --- #}
+                                        {# --- CỘT BÊN TRÁI: THÔNG TIN CƠ BẢN & THỂ CHẤT --- #}
                                         <div class="col-md-6">
                                             <h5>Thông tin cơ bản</h5>
                                             <hr>
                                             {{ player_profile_form.full_name|as_crispy_field }}
                                             {{ player_profile_form.jersey_number|as_crispy_field }}
                                             {{ player_profile_form.date_of_birth|as_crispy_field }}
+                                            
+                                            <div class="row">
+                                                <div class="col-sm-6">{{ player_profile_form.region|as_crispy_field }}</div>
+                                                <div class="col-sm-6">{{ player_profile_form.location_detail|as_crispy_field }}</div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-sm-6">{{ player_profile_form.height|as_crispy_field }}</div>
+                                                <div class="col-sm-6">{{ player_profile_form.weight|as_crispy_field }}</div>
+                                            </div>
+                                            
                                             {{ player_profile_form.avatar|as_crispy_field }}
                                         </div>
 
-                                        {# --- CỘT BÊN PHẢI: THÔNG SỐ CHUYÊN MÔN --- #}
+                                        {# --- CỘT BÊN PHẢI: THÔNG SỐ CHUYÊN MÔN & LIÊN HỆ --- #}
                                         <div class="col-md-6">
                                             <h5>Thông số chuyên môn</h5>
                                             <hr>
                                             {{ player_profile_form.position|as_crispy_field }}
                                             {{ player_profile_form.specialty_position|as_crispy_field }}
-                                            <div class="row">
-                                                <div class="col-sm-6">{{ player_profile_form.height|as_crispy_field }}</div>
-                                                <div class="col-sm-6">{{ player_profile_form.weight|as_crispy_field }}</div>
-                                            </div>
                                             {{ player_profile_form.preferred_foot|as_crispy_field }}
                                             {{ player_profile_form.agent_contact|as_crispy_field }}
 
-                                            {# === THÊM KHỐI CODE MỚI VÀO ĐÂY === #}
                                             <hr>
                                             <h5>Ủng hộ (Donate)</h5>
                                             {{ player_profile_form.donation_qr_code|as_crispy_field }}
-                                            {# === KẾT THÚC KHỐI CODE MỚI === #}
                                         </div>
                                     </div>
                                     <button type="submit" name="update_player_profile" class="btn btn-primary w-100 mt-4">Lưu thay đổi Hồ sơ Cầu thủ</button>

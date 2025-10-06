@@ -280,7 +280,7 @@ class PlayerUpdateForm(forms.ModelForm):
         fields = [
             'full_name', 'jersey_number', 'position', 'specialty_position', 
             'date_of_birth', 'height', 'weight', 'preferred_foot', 
-            'agent_contact', 'avatar' # <-- Chỉ giữ lại các trường thông tin cơ bản
+            'agent_contact', 'avatar', 'region', 'location_detail'
         ]
         labels = {
             'full_name': 'Họ và tên cầu thủ',
@@ -293,6 +293,8 @@ class PlayerUpdateForm(forms.ModelForm):
             'preferred_foot': 'Chân thuận',
             'agent_contact': 'Thông tin liên hệ (đại diện)',
             'avatar': 'Ảnh đại diện / Giấy tờ',
+            'region': 'Khu vực hoạt động chính',
+            'location_detail': 'Tỉnh / Thành phố',
         }
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),

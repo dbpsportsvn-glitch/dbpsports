@@ -38,10 +38,10 @@ class TeamCreationForm(forms.ModelForm):
 class PlayerCreationForm(forms.ModelForm):
     class Meta:
         model = Player
-        # Thêm 'donation_qr_code' vào danh sách fields
         fields = ['full_name', 'jersey_number', 'position', 'specialty_position', 
                   'date_of_birth', 'height', 'weight', 'preferred_foot', 
-                  'agent_contact', 'avatar', 'donation_qr_code']
+                  'agent_contact', 'avatar', 'donation_qr_code', 'region', 
+                  'location_detail'] # << Thêm 'location_detail'
         labels = {
             'full_name': 'Họ và tên cầu thủ',
             'jersey_number': 'Số áo',
@@ -54,6 +54,8 @@ class PlayerCreationForm(forms.ModelForm):
             'agent_contact': 'Thông tin liên hệ (đại diện)',
             'avatar': 'Ảnh đại diện / Giấy tờ',
             'donation_qr_code': 'Mã QR nhận ủng hộ (tùy chọn)',
+            'region': 'Khu vực',
+            'location_detail': 'Tỉnh / Thành phố',
         }
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
