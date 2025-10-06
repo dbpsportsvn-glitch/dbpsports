@@ -141,9 +141,14 @@
 {% block content %}
 <div class="container my-4">
 
-    <div class="pb-3 mb-4 border-bottom">
-        <h1><i class="bi bi-shop"></i> Thị trường Chuyển nhượng</h1>
-        <p class="lead">Khám phá và tìm kiếm những tài năng hàng đầu từ tất cả các giải đấu.</p>
+    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1><i class="bi bi-shop"></i> Thị trường Chuyển nhượng</h1>
+            <p class="lead mb-0">Khám phá và tìm kiếm những tài năng hàng đầu từ tất cả các giải đấu.</p>
+        </div>
+        <a href="{% url 'transfer_history' %}" class="btn btn-outline-primary">
+            <i class="bi bi-clock-history"></i> Xem Lịch sử
+        </a>
     </div>
 
     <div class="card card-body mb-4">

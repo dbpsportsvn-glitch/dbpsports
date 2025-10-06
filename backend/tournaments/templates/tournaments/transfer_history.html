@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Lịch sử Chuyển nhượng{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="pb-3 mb-4 border-bottom">
+        <h1><i class="bi bi-clock-history text-primary"></i> Lịch sử Chuyển nhượng</h1>
+        <p class="lead">Tổng hợp các thương vụ đã hoàn tất trên hệ thống.</p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Cầu thủ</th>
+                        <th scope="col">Từ đội</th>
+                        <th scope="col">Đến đội</th>
+                        <th scope="col" class="text-end">Phí</th>
+                        <th scope="col" class="text-center">Loại hình</th>
+                        <th scope="col" class="text-center">Ngày hoàn tất</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transfer in transfers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'player_detail' pk=transfer.player.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark fw-bold">
+                                {% if transfer.player.avatar %}
+                                    <img src="{{ transfer.player.avatar.url }}" alt="{{ transfer.player.full_name }}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;">
+                                {% endif %}
+                                <span>{{ transfer.player.full_name }}</span>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if transfer.current_team.logo %}
+                                    <img src="{{ transfer.current_team.logo.url }}" alt="{{ transfer.current_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
+                                {% endif %}
+                                <span>{{ transfer.current_team.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if transfer.inviting_team.logo %}
+                                    <img src="{{ transfer.inviting_team.logo.url }}" alt="{{ transfer.inviting_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
+                                {% endif %}
+                                <span>{{ transfer.inviting_team.name }}</span>
+                            </div>
+                        </td>
+                        <td class="text-end text-success fw-bold">{{ transfer.offer_amount|intcomma }} VNĐ</td>
+                        <td class="text-center">
+                            {% if transfer.transfer_type == 'LOAN' %}
+                                <span class="badge bg-info text-dark">Cho mượn</span>
+                            {% else %}
+                                <span class="badge bg-primary">Mua đứt</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center text-muted small">{{ transfer.updated_at|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center p-4 text-muted">Chưa có thương vụ nào được hoàn tất.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
     path('livestream/', views.livestream_view, name='livestream'),
     path('livestream/match/<int:pk>/', views.livestream_view, name='livestream_match'),
     path('transfer-market/', views.transfer_market_view, name='transfer_market'),
+    path('transfer-history/', views.transfer_history_view, name='transfer_history'),
 
     path('jobs/', views.job_market_view, name='job_market'),
     path('jobs/<int:pk>/', views.job_detail_view, name='job_detail'),

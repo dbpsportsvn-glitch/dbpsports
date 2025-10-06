@@ -2312,3 +2312,19 @@ def remove_from_scouting_list(request, scout_pk):
     scouted_player.delete()
     messages.success(request, f"Đã xóa {player_name} khỏi danh sách theo dõi.")
     return redirect(reverse('dashboard') + '?tab=scouting')    
+
+# === lịch sử chuyển nhượng ===
+def transfer_history_view(request):
+    """
+    Hiển thị trang lịch sử các vụ chuyển nhượng đã hoàn tất.
+    """
+    completed_transfers = PlayerTransfer.objects.filter(
+        status=PlayerTransfer.Status.ACCEPTED
+    ).select_related(
+        'player', 'inviting_team', 'current_team'
+    ).order_by('-updated_at')
+
+    context = {
+        'transfers': completed_transfers,
+    }
+    return render(request, 'tournaments/transfer_history.html', context)    
