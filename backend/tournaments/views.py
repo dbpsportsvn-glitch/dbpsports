@@ -1239,11 +1239,13 @@ def mark_all_notifications_as_read(request):
     return redirect('home')
 
 @login_required
-@require_POST
+@require_POST # Yêu cầu phương thức POST để xóa
 def delete_notification(request, pk):
+    # Tìm thông báo theo id (pk) VÀ đảm bảo nó thuộc về người dùng đang đăng nhập
     notification = get_object_or_404(Notification, pk=pk, user=request.user)
     notification.delete()
     messages.success(request, "Đã xóa thông báo.")
+    # Sau khi xóa, quay trở lại trang danh sách thông báo
     return redirect('notification_list')
 
 @login_required

@@ -27,8 +27,8 @@ urlpatterns = [
     # === BẮT ĐẦU KHỐI URL THÔNG BÁO ĐÃ CẬP NHẬT ===
     path('notifications/', views.notification_list, name='notification_list'),
     path('notifications/mark-all-as-read/', views.mark_all_notifications_as_read, name='mark_all_notifications_as_read'),
-    path('notifications/<int:pk>/delete/', views.delete_notification, name='delete_notification'), # <-- Dòng mới
-    path('notifications/delete-all/', views.delete_all_notifications, name='delete_all_notifications'), # <-- Dòng mới  
+    path('notifications/<int:pk>/delete/', views.delete_notification, name='delete_notification'), # <-- Dòng quan trọng
+    path('notifications/delete-all/', views.delete_all_notifications, name='delete_all_notifications'),
     
     # --- URL liên quan đến Giải đấu (Tournament) ---
     path('tournament/<int:pk>/', views.tournament_detail, name='tournament_detail'),
