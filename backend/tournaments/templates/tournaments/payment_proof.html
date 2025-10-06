@@ -5,28 +5,34 @@
 <div class="form-container">
     <h3 class="mb-4">Xác nhận Thanh toán Lệ phí</h3>
     <p><strong>Đội:</strong> {{ team.name }}</p>
-    <p><strong>Giải đấu:</strong> {{ team.tournament.name }}</p>
+    {# SỬA LỖI: Lấy tên giải đấu từ `registration` object #}
+    <p><strong>Giải đấu:</strong> {{ registration.tournament.name }}</p>
     <hr>
 
     <h4>Thông tin chuyển khoản</h4>
     <p>Vui lòng chuyển khoản lệ phí đến tài khoản sau:</p>
     <ul>
-        <li><strong>Ngân hàng:</strong> {{ team.tournament.bank_name|default:"Chưa cập nhật" }}</li>
-        <li><strong>Số tài khoản:</strong> {{ team.tournament.bank_account_number|default:"Chưa cập nhật" }}</li>
-        <li><strong>Chủ tài khoản:</strong> {{ team.tournament.bank_account_name|default:"Chưa cập nhật" }}</li>
-        <li><strong>Nội dung:</strong> {{ team.name }} Nộp Lệ Phí Giải</li>
+        {# SỬA LỖI: Lấy thông tin ngân hàng từ `registration` object #}
+        <li><strong>Ngân hàng:</strong> {{ registration.tournament.bank_name|default:"Chưa cập nhật" }}</li>
+        <li><strong>Số tài khoản:</strong> {{ registration.tournament.bank_account_number|default:"Chưa cập nhật" }}</li>
+        <li><strong>Chủ tài khoản:</strong> {{ registration.tournament.bank_account_name|default:"Chưa cập nhật" }}</li>
+        <li><strong>Nội dung:</strong> {{ team.name }} Nop Le Phi Giai {{ registration.tournament.name }}</li>
     </ul>
 
-    {% if team.tournament.payment_qr_code %}
-        <img src="{{ team.tournament.payment_qr_code.url }}" alt="Mã QR thanh toán" class="img-fluid mb-4" style="max-width: 200px;">
+    {% if registration.tournament.payment_qr_code %}
+        <img src="{{ registration.tournament.payment_qr_code.url }}" alt="Mã QR thanh toán" class="img-fluid mb-4" style="max-width: 200px;">
     {% endif %}
 
     <hr>
     <h4>Tải lên bằng chứng thanh toán</h4>
+    <p class="text-muted small">Sau khi gửi, trạng thái thanh toán của bạn cho giải đấu này sẽ chuyển thành "Chờ xác nhận".</p>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form|crispy }}
-        <button type="submit" class="btn btn-primary w-100 mt-3">Gửi xác nhận</button>
+        <div class="d-grid gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Gửi xác nhận</button>
+            <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-secondary">Quay lại</a>
+        </div>
     </form>
 </div>
 {% endblock %}

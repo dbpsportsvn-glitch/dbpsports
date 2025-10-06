@@ -108,7 +108,7 @@ def dashboard(request):
     if player_profile and not player_profile_form:
         player_profile_form = PlayerCreationForm(instance=player_profile)
 
-    managed_teams = Team.objects.filter(captain=request.user).select_related('tournament')
+    managed_teams = Team.objects.filter(captain=request.user)
     followed_tournaments = request.user.followed_tournaments.all().exclude(status='FINISHED').order_by('start_date')
     managed_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id='TOURNAMENT_MANAGER').distinct().order_by('-start_date')
     media_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id__in=['MEDIA', 'PHOTOGRAPHER']).distinct().order_by('-start_date')

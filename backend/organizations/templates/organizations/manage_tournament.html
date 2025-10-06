@@ -9,7 +9,6 @@
     <div class="card">
         <div class="card-body p-4">
             {% if active_page == 'overview' %}
-                {# Thêm style cho các thẻ thống kê #}
                 <style>
                     .stat-card {
                         border-left: 5px solid;
@@ -24,7 +23,6 @@
                     .stat-card-matches { border-color: #198754; }
                 </style>
 
-                {# --- BẮT ĐẦU NỘI DUNG MỚI --- #}
                 <div class="row">
                     <div class="col-md-4 mb-4">
                         <div class="card stat-card stat-card-teams h-100">
@@ -71,20 +69,18 @@
 
                 <h5>Các thao tác nhanh</h5>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    {# Nút Bốc thăm: Chỉ hiện khi giải đang diễn ra VÀ có đội chờ xếp bảng #}
                     {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
                     <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
                         <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
                     </a>
                     {% endif %}
 
-                    {# Nút Xếp lịch: Chỉ hiện khi giải đang diễn ra, có đội đã đăng ký, đã bốc thăm xong VÀ chưa có trận đấu #}
                     {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not unassigned_teams and not tournament.matches.exists %}
                     <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
                         <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                     </a>
                     {% endif %}
-                    
+
                     <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
                         <i class="bi bi-images"></i> Tải ảnh hàng loạt
                     </a>
@@ -92,7 +88,7 @@
 
             {% elif active_page == 'teams' %}
                 <h5>Duyệt Đội đăng ký</h5>
-                
+
                 <div class="card card-body mb-3">
                     <form method="get" class="row g-3 align-items-end">
                         <input type="hidden" name="view" value="teams">
@@ -117,15 +113,15 @@
                 <hr>
 
                 <h6><i class="bi bi-exclamation-triangle-fill text-danger"></i> Các đội chưa thanh toán</h6>
-                {% if unpaid_teams %}
+                {% if unpaid_regs %}
                     <ul class="list-group mb-4">
-                        {% for team in unpaid_teams %}
+                        {% for reg in unpaid_regs %}
                         <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
                             <div>
-                                <strong><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
-                                <br><small>Đội trưởng: {{ team.captain.username }}</small>
+                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
+                                <br><small>Đội trưởng: {{ reg.team.captain.username }}</small>
                             </div>
-                            <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                            <form method="post" action="{% url 'organizations:delete_team_registration' pk=reg.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA đội {{ reg.team.name }} khỏi giải đấu này không?');" class="mb-0">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-dark btn-sm">Xóa</button>
                             </form>
@@ -137,21 +133,21 @@
                 {% endif %}
 
                 <h6>Các đội chờ xác nhận thanh toán</h6>
-                {% if pending_teams %}
+                {% if pending_regs %}
                     <ul class="list-group">
-                        {% for team in pending_teams %}
+                        {% for reg in pending_regs %}
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <strong><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></strong> <span class="badge bg-secondary">{{ team.tournament.name }}</span>
-                                <br><small>Đội trưởng: {{ team.captain.username }} {% if team.payment_proof %}<a href="{{ team.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}</small>
+                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
+                                <br><small>Đội trưởng: {{ reg.team.captain.username }} {% if reg.payment_proof %}<a href="{{ reg.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}</small>
                             </div>
                             <div class="d-flex gap-2">
                                 <form method="post" class="mb-0">
                                     {% csrf_token %}
-                                    <input type="hidden" name="team_id" value="{{ team.id }}">
+                                    <input type="hidden" name="registration_id" value="{{ reg.id }}">
                                     <button type="submit" name="approve_payment" class="btn btn-success btn-sm">Duyệt</button>
                                 </form>
-                                <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                                <form method="post" action="{% url 'organizations:delete_team_registration' pk=reg.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA đội {{ reg.team.name }} khỏi giải đấu này không?');" class="mb-0">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                                 </form>
@@ -162,29 +158,29 @@
                 {% else %}
                     <p class="text-muted">Không có đội nào đang chờ duyệt.</p>
                 {% endif %}
-                
+
                 <hr>
                 <h6>Các đội đã được duyệt</h6>
-                {% if paid_teams %}
+                {% if paid_regs %}
                     <div class="row">
-                        {% for team in paid_teams %}
+                        {% for reg in paid_regs %}
                         <div class="col-md-6 mb-2">
                             <div class="d-flex justify-content-between align-items-center p-2 border rounded">
                                 <div>
-                                    <span><a href="{% url 'team_detail' pk=team.pk %}" target="_blank">{{ team.name }}</a></span>
-                                    <small class="d-block text-muted">{{ team.tournament.name }}</small>
+                                    <span><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></span>
+                                    <small class="d-block text-muted">{{ reg.tournament.name }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    {% if not team.group %}
+                                    {% if not reg.group %}
                                     <form method="post" class="mb-0">
                                         {% csrf_token %}
-                                        <input type="hidden" name="team_id" value="{{ team.id }}">
+                                        <input type="hidden" name="registration_id" value="{{ reg.id }}">
                                         <button type="submit" name="revoke_payment" class="btn btn-warning btn-sm">Thu hồi</button>
                                     </form>
                                     {% else %}
-                                        <span class="badge bg-secondary">Đã xếp bảng</span>
+                                        <span class="badge bg-secondary">Đã xếp vào: {{ reg.group.name }}</span>
                                     {% endif %}
-                                    <form method="post" action="{% url 'organizations:delete_team' pk=team.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN đội {{ team.name }}?');" class="mb-0">
+                                    <form method="post" action="{% url 'organizations:delete_team_registration' pk=reg.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA đội {{ reg.team.name }} khỏi giải đấu này không?');" class="mb-0">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                                     </form>
@@ -298,7 +294,7 @@
                     <p class="text-muted mb-3">
                     Nhập tỉ số bên dưới rồi nhấn “Lưu nhanh tất cả” hoặc lưu từng trận.
                     </p>
-                    
+
                     {% for group, matches_in_group in sorted_matches_by_group %}
                         <h6 class="mt-4">{{ group.name }}</h6>
                         <div class="list-group">
@@ -317,7 +313,7 @@
                                             <span>-</span>
                                             <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                         </div>
-                                        
+
                                         <div class="btn-group">
                                             <button
                                             type="submit"
@@ -370,7 +366,7 @@
                                         <span>-</span>
                                         <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
                                     </div>
-                                    
+
                                     <div class="btn-group">
                                         <button
                                         type="submit"
@@ -442,7 +438,7 @@
                         </ul>
                     </div>
                 </div>
-            
+
             {% elif active_page == 'players' %}
                 <h5>Quản lý Cầu thủ</h5>
                 <p class="text-muted">Xem, tìm kiếm và chỉnh sửa thông tin cầu thủ trong các giải đấu.</p>
@@ -450,7 +446,7 @@
                 <div class="card card-body mb-3">
                     <form method="get" class="row g-3 align-items-end">
                         <input type="hidden" name="view" value="players">
-                        
+
                         <div class="col-md-4">
                             <label for="tournamentFilter" class="form-label">Lọc theo Giải đấu</label>
                             <select name="tournament_filter" id="tournamentFilter" class="form-select" onchange="this.form.submit()">
@@ -478,7 +474,7 @@
                         </div>
                     </form>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
@@ -500,11 +496,9 @@
                                     {% endif %}
                                 </td>
                                 <td><strong>{{ player.full_name }}</strong>
-                                {# === THÊM ĐOẠN NÀY VÀO === #}
                                 {% if player.user and player.team.captain == player.user %}
                                     <span class="captain-indicator">(C)</span>
                                 {% endif %}
-                                {# === KẾT THÚC === #}                                
                                 </td>
                                 <td>{{ player.team.name }}</td>
                                 <td>{{ player.jersey_number }}</td>
@@ -580,80 +574,79 @@
                     </table>
                 </div>
 
-            {# === KHỐI MỚI CHO "NHÂN SỰ" (STAFF) ĐƯỢC THÊM VÀO ĐÂY === #}
-{% elif active_page == 'staff' %}
-    <div class="row">
-        <div class="col-lg-7">
-            <h5 class="mb-3">Đội ngũ chuyên môn của giải đấu</h5>
-            <p class="text-muted small">Đây là danh sách các Bình luận viên, Media... được cấp quyền truy cập các tính năng đặc biệt cho giải đấu <strong>{{ tournament.name }}</strong>.</p>
-            <ul class="list-group">
-                {% for staff in tournament_staff %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-3">
-                        {# --- HIỂN THỊ AVATAR --- #}
-                        <a href="{% url 'public_profile' username=staff.user.username %}" target="_blank">
-                            {% if staff.user.profile.avatar %}
-                                <img src="{{ staff.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                            {% else %}
-                                <div class="bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; font-weight: bold;">
-                                    {{ staff.user.username|first|upper }}
+            {% elif active_page == 'staff' %}
+                <div class="row">
+                    <div class="col-lg-7">
+                        <h5 class="mb-3">Đội ngũ chuyên môn của giải đấu</h5>
+                        <p class="text-muted small">Đây là danh sách các Bình luận viên, Media... được cấp quyền truy cập các tính năng đặc biệt cho giải đấu <strong>{{ tournament.name }}</strong>.</p>
+                        <ul class="list-group">
+                            {% for staff in tournament_staff %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <a href="{% url 'public_profile' username=staff.user.username %}" target="_blank">
+                                        {% if staff.user.profile.avatar %}
+                                            <img src="{{ staff.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; font-weight: bold;">
+                                                {{ staff.user.username|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </a>
+                                    <div>
+                                        <strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong>
+                                        <span class="badge bg-info text-dark ms-2">{{ staff.role.name }}</span>
+                                    </div>
                                 </div>
-                            {% endif %}
-                        </a>
-                        <div>
-                            <strong>{{ staff.user.get_full_name|default:staff.user.username }}</strong>
-                            <span class="badge bg-info text-dark ms-2">{{ staff.role.name }}</span>
+                                <form method="post" action="{% url 'organizations:remove_tournament_staff' pk=staff.pk %}" onsubmit="return confirm('Bạn có chắc muốn xóa vai trò này?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                </form>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-muted">Chưa có thành viên chuyên môn nào.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Thành viên Ban Tổ Chức</h5>
+                        <p class="text-muted small">Đây là các thành viên thuộc đơn vị tổ chức <strong>{{ organization.name }}</strong>. Họ có quyền quản lý chung cho tất cả các giải đấu.</p>
+                        <ul class="list-group">
+                            {% for member in org_members %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <a href="{% url 'public_profile' username=member.user.username %}" target="_blank">
+                                         {% if member.user.profile.avatar %}
+                                            <img src="{{ member.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; font-weight: bold;">
+                                                {{ member.user.username|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                    </a>
+                                    <div>
+                                        <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                                        <span class="badge bg-secondary">{{ member.get_role_display }}</span>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="card card-body bg-light position-sticky" style="top: 80px;">
+                            <h5 class="mb-3">Mời thành viên chuyên môn</h5>
+                            <form method="post" action="{% url 'organizations:add_tournament_staff' tournament_pk=tournament.pk %}">
+                                {% csrf_token %}
+                                {{ staff_invite_form|crispy }}
+                                <div class="d-grid mt-3">
+                                    <button type="submit" class="btn btn-primary">Thêm vai trò</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <form method="post" action="{% url 'organizations:remove_tournament_staff' pk=staff.pk %}" onsubmit="return confirm('Bạn có chắc muốn xóa vai trò này?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                    </form>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-muted">Chưa có thành viên chuyên môn nào.</li>
-                {% endfor %}
-            </ul>
-
-            <hr class="my-4">
-
-            <h5 class="mb-3">Thành viên Ban Tổ Chức</h5>
-            <p class="text-muted small">Đây là các thành viên thuộc đơn vị tổ chức <strong>{{ organization.name }}</strong>. Họ có quyền quản lý chung cho tất cả các giải đấu.</p>
-            <ul class="list-group">
-                {% for member in org_members %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-3">
-                        {# --- HIỂN THỊ AVATAR --- #}
-                        <a href="{% url 'public_profile' username=member.user.username %}" target="_blank">
-                             {% if member.user.profile.avatar %}
-                                <img src="{{ member.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                            {% else %}
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 50%; font-weight: bold;">
-                                    {{ member.user.username|first|upper }}
-                                </div>
-                            {% endif %}
-                        </a>
-                        <div>
-                            <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
-                            <span class="badge bg-secondary">{{ member.get_role_display }}</span>
-                        </div>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="col-lg-5">
-            <div class="card card-body bg-light position-sticky" style="top: 80px;">
-                <h5 class="mb-3">Mời thành viên chuyên môn</h5>
-                <form method="post" action="{% url 'organizations:add_tournament_staff' tournament_pk=tournament.pk %}">
-                    {% csrf_token %}
-                    {{ staff_invite_form|crispy }}
-                    <div class="d-grid mt-3">
-                        <button type="submit" class="btn btn-primary">Thêm vai trò</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+            {% endif %}
         </div>
     </div>
-{% endif %}
 {% endblock %}

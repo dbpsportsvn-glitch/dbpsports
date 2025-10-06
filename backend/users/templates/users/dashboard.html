@@ -306,7 +306,11 @@
                                 <div class="card-body">
                                     <h5 class="card-title">{{ team.name }}</h5>
                                     <h6 class="card-subtitle mb-2 text-muted">
-                                        Giải đấu: {{ team.tournament.name|default:"Đội tự do" }}
+                                        {% if team.registrations.exists %}
+                                            Đã đăng ký giải
+                                        {% else %}
+                                            Đội tự do
+                                        {% endif %}
                                     </h6>
                                     <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-primary mt-2">Quản lý đội</a>
                                 </div>

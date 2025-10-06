@@ -46,7 +46,7 @@ urlpatterns = [
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),
     path('team/<int:pk>/', views.team_detail, name='team_detail'),
     path('team/<int:pk>/update/', views.update_team, name='update_team'),
-    path('team/<int:pk>/payment/', views.team_payment, name='team_payment'), # Dòng mới
+    path('registration/<int:pk>/payment/', views.team_payment, name='team_payment'),
     path('team/<int:pk>/hall_of_fame/', views.team_hall_of_fame, name='team_hall_of_fame'),
     path('tournament/<int:tournament_pk>/register_team/<int:team_pk>/', views.register_existing_team, name='register_existing_team'),
 

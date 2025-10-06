@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.db.models import Q
 from collections import defaultdict
 from tournaments.forms import TournamentForm
-from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification, TournamentStaff
+from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification, TournamentStaff, TeamRegistration
 from tournaments.utils import send_notification_email, send_schedule_notification
 from .forms import AnnouncementForm
 from tournaments.models import Announcement
@@ -196,24 +196,48 @@ def create_tournament(request):
 @never_cache
 def manage_tournament(request, pk):
     tournament = get_object_or_404(Tournament.objects.select_related('organization'), pk=pk)
-    
+
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập trang quản lý này.")
 
     view_name = request.GET.get('view', 'overview')
 
     if request.method == 'POST':
-        # (Toàn bộ logic xử lý POST không thay đổi, giữ nguyên như cũ)
+        # --- PHẦN LOGIC THANH TOÁN ĐÃ ĐƯỢC CẬP NHẬT ---
+        if 'approve_payment' in request.POST:
+            reg_id = request.POST.get('registration_id')
+            if reg_id:
+                registration = get_object_or_404(TeamRegistration, id=reg_id, tournament=tournament)
+                if registration.payment_status == 'PENDING':
+                    registration.payment_status = 'PAID'
+                    registration.save()
+                    if registration.team.captain.email:
+                        send_notification_email(
+                            subject=f"Thanh toán thành công cho đội {registration.team.name}",
+                            template_name='tournaments/emails/payment_confirmed.html',
+                            context={'team': registration.team, 'tournament': tournament},
+                            recipient_list=[registration.team.captain.email]
+                        )
+            return redirect(request.path_info + '?view=teams')
+
+        if 'revoke_payment' in request.POST:
+            reg_id = request.POST.get('registration_id')
+            if reg_id:
+                registration = get_object_or_404(TeamRegistration, id=reg_id, tournament=tournament)
+                if registration.payment_status == 'PAID' and registration.group is None:
+                    registration.payment_status = 'PENDING'
+                    registration.save()
+            return redirect(request.path_info + '?view=teams')
+
+        # --- CÁC LOGIC POST KHÁC GIỮ NGUYÊN ---
         if 'quick_save_match' in request.POST:
             match_id = request.POST.get('quick_save_match')
             try:
                 match = Match.objects.get(pk=match_id, tournament=tournament)
                 score1_str = request.POST.get(f'score_team1_{match_id}')
                 score2_str = request.POST.get(f'score_team2_{match_id}')
-                
                 s1 = int(score1_str) if score1_str and score1_str.isdigit() else None
                 s2 = int(score2_str) if score2_str and score2_str.isdigit() else None
-
                 match.team1_score = s1
                 match.team2_score = s2
                 match.save()
@@ -221,7 +245,7 @@ def manage_tournament(request, pk):
             except (Match.DoesNotExist, ValueError):
                 messages.error(request, "Có lỗi xảy ra khi lưu nhanh trận đấu.")
             return redirect(request.path_info + '?view=matches')
-    
+
         if 'save_all_scores' in request.POST:
             match_ids = request.POST.getlist('match_ids')
             try:
@@ -230,10 +254,8 @@ def manage_tournament(request, pk):
                         match = Match.objects.get(pk=match_id, tournament=tournament)
                         score1_str = request.POST.get(f'score_team1_{match_id}')
                         score2_str = request.POST.get(f'score_team2_{match_id}')
-                        
                         s1 = int(score1_str) if score1_str and score1_str.isdigit() else None
                         s2 = int(score2_str) if score2_str and score2_str.isdigit() else None
-
                         match.team1_score = s1
                         match.team2_score = s2
                         match.save()
@@ -242,46 +264,12 @@ def manage_tournament(request, pk):
                 messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
             return redirect(request.path_info + '?view=matches')
 
-        if 'quick_update_score' in request.POST:
-            match_id = request.POST.get('match_id')
-            try:
-                match = Match.objects.get(pk=match_id, tournament=tournament)
-                score1_str = request.POST.get(f'score_team1_{match_id}')
-                score2_str = request.POST.get(f'score_team2_{match_id}')
-                match.team1_score = int(score1_str) if score1_str else None
-                match.team2_score = int(score2_str) if score2_str else None
-                match.save()
-                messages.success(request, f"Đã cập nhật tỉ số cho trận đấu: {match.team1.name} vs {match.team2.name}.")
-            except (Match.DoesNotExist, ValueError):
-                messages.error(request, "Có lỗi xảy ra khi cập nhật tỉ số.")
-            return redirect(request.path_info + '?view=matches')
         if 'create_group' in request.POST:
             group_name = request.POST.get('group_name', '').strip()
             if group_name:
                 Group.objects.create(tournament=tournament, name=group_name)
             return redirect(request.path_info + '?view=groups')
-        if 'approve_payment' in request.POST:
-            team_id = request.POST.get('team_id')
-            if team_id:
-                team = get_object_or_404(Team, id=team_id, tournament=tournament)
-                if team.payment_status == 'PENDING':
-                    team.payment_status = 'PAID'
-                    team.save()
-                    if team.captain.email:
-                        send_notification_email(
-                            subject=f"Thanh toán thành công cho đội {team.name}",
-                            template_name='tournaments/emails/payment_confirmed.html',
-                            context={'team': team}, recipient_list=[team.captain.email]
-                        )
-            return redirect(request.path_info + '?view=teams')
-        if 'revoke_payment' in request.POST:
-            team_id = request.POST.get('team_id')
-            if team_id:
-                team = get_object_or_404(Team, id=team_id, tournament=tournament)
-                if team.payment_status == 'PAID' and team.group is None:
-                    team.payment_status = 'PENDING'
-                    team.save()
-            return redirect(request.path_info + '?view=teams')
+
         if 'invite_member' in request.POST:
             if request.user == tournament.organization.owner:
                 invite_form = MemberInviteForm(request.POST)
@@ -299,39 +287,48 @@ def manage_tournament(request, pk):
                         for error in errors: messages.error(request, error)
             return redirect(request.path_info + '?view=members')
 
+    # --- XỬ LÝ HIỂN THỊ DỮ LIỆU (GET) ---
     context = {
         'tournament': tournament,
         'organization': tournament.organization,
         'active_page': view_name,
     }
+
     if view_name == 'overview':
-        all_teams = tournament.teams.all()
-        unassigned_teams = all_teams.filter(payment_status='PAID', group__isnull=True)
-        has_paid_teams = all_teams.filter(payment_status='PAID').exists()
+        # Thay đổi logic đếm dựa trên TeamRegistration
+        all_registrations = tournament.registrations.all()
+        unassigned_teams = all_registrations.filter(payment_status='PAID', group__isnull=True)
+        has_paid_teams = all_registrations.filter(payment_status='PAID').exists()
         context['unassigned_teams'] = unassigned_teams
         context['has_paid_teams'] = has_paid_teams
         context['stats'] = {
-            'total_teams': all_teams.count(),
-            'pending_teams_count': all_teams.filter(payment_status='PENDING').count(),
+            'total_teams': all_registrations.count(),
+            'pending_teams_count': all_registrations.filter(payment_status='PENDING').count(),
             'total_matches': tournament.matches.count(),
         }
-    
+
+    # --- PHẦN TRUY VẤN ĐỘI ĐÃ ĐƯỢC CẬP NHẬT ---
     elif view_name == 'teams':
         all_tournaments = tournament.organization.tournaments.all().order_by('-start_date')
         context['all_tournaments'] = all_tournaments
         search_query = request.GET.get('q', '')
         tournament_filter_id = request.GET.get('tournament_filter')
         context['search_query'] = search_query
-        base_teams_qs = Team.objects.filter(tournament__organization=tournament.organization)
+
+        base_regs_qs = TeamRegistration.objects.filter(tournament__organization=tournament.organization).select_related('team__captain', 'tournament')
+
         if tournament_filter_id and tournament_filter_id.isdigit():
-            base_teams_qs = base_teams_qs.filter(tournament_id=int(tournament_filter_id))
+            base_regs_qs = base_regs_qs.filter(tournament_id=int(tournament_filter_id))
             context['selected_tournament_id'] = int(tournament_filter_id)
         if search_query:
-            base_teams_qs = base_teams_qs.filter(name__icontains=search_query)
-        context['unpaid_teams'] = base_teams_qs.filter(payment_status='UNPAID').select_related('captain', 'tournament')
-        context['pending_teams'] = base_teams_qs.filter(payment_status='PENDING').select_related('captain', 'tournament')
-        context['paid_teams'] = base_teams_qs.filter(payment_status='PAID').select_related('captain', 'tournament')
+            base_regs_qs = base_regs_qs.filter(team__name__icontains=search_query)
 
+        # Đổi tên biến context để template dễ hiểu hơn
+        context['unpaid_regs'] = base_regs_qs.filter(payment_status='UNPAID')
+        context['pending_regs'] = base_regs_qs.filter(payment_status='PENDING')
+        context['paid_regs'] = base_regs_qs.filter(payment_status='PAID')
+
+    # --- CÁC KHỐI ELIF KHÁC GIỮ NGUYÊN ---
     elif view_name == 'groups':
         context['groups'] = tournament.groups.all().order_by('name')
         standings_by_group = {}
@@ -339,14 +336,19 @@ def manage_tournament(request, pk):
             standings = group.get_standings()
             standings_by_group[group.id] = {'name': group.name, 'standings': standings}
         context['standings_by_group'] = standings_by_group
- 
+
     elif view_name == 'matches':
-        all_matches = tournament.matches.select_related('team1__group', 'team2__group').order_by('match_time')
+        all_matches = tournament.matches.select_related('team1__registrations__group', 'team2__registrations__group').order_by('match_time')
         group_matches = all_matches.filter(match_round='GROUP')
         matches_by_group = defaultdict(list)
+
+        # Cập nhật logic lấy group của team thông qua registration
+        group_map = {reg.team_id: reg.group for reg in TeamRegistration.objects.filter(tournament=tournament)}
         for match in group_matches:
-            if match.team1.group:
-                matches_by_group[match.team1.group].append(match)
+            group = group_map.get(match.team1_id)
+            if group:
+                matches_by_group[group].append(match)
+
         sorted_matches_by_group = sorted(matches_by_group.items(), key=lambda item: item[0].name)
         context['sorted_matches_by_group'] = sorted_matches_by_group
         knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
@@ -354,42 +356,47 @@ def manage_tournament(request, pk):
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
         context['knockout_matches'] = knockout_matches_list
 
-    # === PHẦN CẬP NHẬT CHÍNH NẰM Ở ĐÂY ===
     elif view_name == 'staff':
         context['active_page'] = 'staff'
         context['staff_invite_form'] = TournamentStaffInviteForm()
-        # Lấy thêm `user__profile` để có thể truy cập avatar
         context['org_members'] = Membership.objects.filter(
             organization=tournament.organization
         ).select_related('user', 'user__profile').order_by('role')
-        
         context['tournament_staff'] = TournamentStaff.objects.filter(
             tournament=tournament
         ).select_related('user', 'user__profile', 'role')
-    # === KẾT THÚC CẬP NHẬT ===
 
     elif view_name == 'players':
+        # Logic này cũng cần cập nhật để lấy team từ registration, nhưng để đơn giản, ta giữ lại
+        # và chấp nhận nó có thể không hoàn toàn chính xác nếu 1 đội tham gia nhiều giải
         all_tournaments_in_org = tournament.organization.tournaments.all().order_by('-start_date')
         context['all_tournaments_in_org'] = all_tournaments_in_org
-        players_qs = Player.objects.filter(team__tournament__organization=tournament.organization).select_related('team').order_by('team__tournament__name', 'team__name', 'full_name')
+
+        # Lấy player thông qua registration để đảm bảo đúng giải đấu
+        regs_in_org = TeamRegistration.objects.filter(tournament__organization=tournament.organization)
+        players_qs = Player.objects.filter(team__registrations__in=regs_in_org).select_related('team').distinct().order_by('team__name', 'full_name')
+
         tournament_filter_id = request.GET.get('tournament_filter')
         if tournament_filter_id and tournament_filter_id.isdigit():
-            players_qs = players_qs.filter(team__tournament_id=int(tournament_filter_id))
+            players_qs = players_qs.filter(team__registrations__tournament_id=int(tournament_filter_id))
             context['selected_tournament_id'] = int(tournament_filter_id)
         else:
-            players_qs = players_qs.filter(team__tournament=tournament)
+            players_qs = players_qs.filter(team__registrations__tournament=tournament)
             context['selected_tournament_id'] = tournament.pk
+
         team_filter_id = request.GET.get('team_filter')
         if team_filter_id and team_filter_id.isdigit():
             players_qs = players_qs.filter(team_id=int(team_filter_id))
             context['selected_team_id'] = int(team_filter_id)
+
         search_query = request.GET.get('q', '')
         if search_query:
             players_qs = players_qs.filter(full_name__icontains=search_query)
             context['search_query'] = search_query
+
         context['players_list'] = players_qs
         selected_tourn_id = context.get('selected_tournament_id', tournament.pk)
-        context['teams_in_tournament'] = Team.objects.filter(tournament_id=selected_tourn_id).order_by('name')
+        context['teams_in_tournament'] = Team.objects.filter(registrations__tournament_id=selected_tourn_id).distinct().order_by('name')
 
     elif view_name == 'announcements':
         context['announcements'] = Announcement.objects.filter(tournament=tournament).order_by('-created_at')
@@ -919,23 +926,21 @@ def create_match(request, tournament_pk):
 # === XOÁ ĐỘI ĐĂNG KÝ ===
 @login_required
 def delete_team(request, pk):
-    team = get_object_or_404(Team, pk=pk)
-    tournament = team.tournament
-    
-    # Kiểm tra quyền của người dùng (phải là thành viên BTC của giải đấu đó)
-    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+    # pk bây giờ là của TeamRegistration
+    registration = get_object_or_404(TeamRegistration, pk=pk)
+    tournament = registration.tournament
+
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    # URL để quay lại trang quản lý đội
     default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=teams"
-    
+
     if request.method == 'POST':
-        team_name = team.name
-        team.delete()
-        messages.success(request, f"Đã xóa thành công đội: {team_name}.")
+        team_name = registration.team.name
+        registration.delete()
+        messages.success(request, f"Đã xóa đội '{team_name}' khỏi giải đấu.")
         return safe_redirect(request, default_url)
 
-    # Nếu không phải POST request, chỉ đơn giản là quay về trang trước
     return safe_redirect(request, default_url)
 
 @login_required

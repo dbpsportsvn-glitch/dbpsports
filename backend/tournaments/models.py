@@ -104,20 +104,18 @@ class Group(models.Model):
 
 class Team(models.Model):
     PAYMENT_STATUS_CHOICES = [('UNPAID', 'Chưa thanh toán'), ('PENDING', 'Chờ xác nhận'), ('PAID', 'Đã thanh toán')]
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='teams', null=True, blank=True)
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True)
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
     main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='UNPAID')
-    payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True)
+
+    # Trường mới: liên kết tới nhiều giải đấu thông qua "Sổ Đăng Ký"
+    tournaments = models.ManyToManyField(Tournament, through='TeamRegistration', related_name='teams_registered', blank=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["tournament", "name"], name="uniq_team_name_in_tournament"),
-            # === THÊM DÒNG NÀY VÀO ===
+            # Xóa ràng buộc cũ liên quan đến tournament
             models.UniqueConstraint(fields=["captain", "name"], name="unique_team_name_per_captain"),
         ]
 
@@ -126,11 +124,10 @@ class Team(models.Model):
 
     def save(self, *args, **kwargs):
         if self.logo: self.logo = self.compress_image(self.logo)
-        if self.payment_proof: self.payment_proof = self.compress_image(self.payment_proof)
+        # Dòng payment_proof đã được chuyển sang TeamRegistration
         super().save(*args, **kwargs)
 
     def compress_image(self, image_field):
-        # Tránh xử lý lại nếu file không thay đổi
         if not image_field._file: return image_field
         img = Image.open(image_field)
         if img.format == 'GIF': return image_field
@@ -139,8 +136,7 @@ class Team(models.Model):
         if img.height > 1280 or img.width > 1280:
             img.thumbnail((1280, 1280))
         img.save(buffer, format='JPEG', quality=85, optimize=True)
-        
-        # === SỬA LỖI TẠI ĐÂY ===
+
         file_name = os.path.basename(image_field.name)
         new_image = ContentFile(buffer.getvalue(), name=file_name)
         return new_image
@@ -629,3 +625,28 @@ class MatchNote(models.Model):
 
     def __str__(self):
         return f"Ghi chú của {self.author.username} cho trận {self.match.pk}"        
+
+class TeamRegistration(models.Model):
+    """Lưu trữ một bản ghi đăng ký của một Đội vào một Giải đấu."""
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='registrations', verbose_name="Đội")
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='registrations', verbose_name="Giải đấu")
+    payment_status = models.CharField("Trạng thái thanh toán", max_length=10, choices=Team.PAYMENT_STATUS_CHOICES, default='UNPAID')
+    payment_proof = models.ImageField("Bằng chứng thanh toán", upload_to='payment_proofs/', null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations', verbose_name="Bảng đấu")
+    registered_at = models.DateTimeField("Ngày đăng ký", auto_now_add=True)
+
+    class Meta:
+        unique_together = ('team', 'tournament') # Đảm bảo một đội chỉ đăng ký 1 lần/giải
+        verbose_name = "Đơn đăng ký của Đội"
+        verbose_name_plural = "Các đơn đăng ký của Đội"
+
+    def __str__(self):
+        return f"{self.team.name} @ {self.tournament.name}"
+
+    def save(self, *args, **kwargs):
+        # Tái sử dụng logic nén ảnh từ model Team
+        if self.payment_proof and hasattr(self.payment_proof, 'file'):
+            # Cần một instance tạm thời của Team để gọi hàm compress_image
+            temp_team_instance = Team()
+            self.payment_proof = temp_team_instance.compress_image(self.payment_proof)
+        super().save(*args, **kwargs)        

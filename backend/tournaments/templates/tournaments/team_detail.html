@@ -27,7 +27,7 @@
         color: #0d6efd;
     }
     .nav-pills .nav-link {
-        color: #495057; 
+        color: #495057;
         background-color: #f8f9fa;
         border: 1px solid #dee2e6;
         font-weight: 500;
@@ -53,8 +53,9 @@
         {% endfor %}
     {% endif %}
 
-    {% if team.tournament %}
-        <a href="{% url 'tournament_detail' pk=team.tournament.pk %}?tab=teams#teams" class="btn btn-outline-secondary btn-sm mb-3">
+    {# Nút quay lại chỉ hiển thị một lựa chọn duy nhất, ưu tiên về giải đấu nếu có #}
+    {% if registrations.first.tournament %}
+        <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-outline-secondary btn-sm mb-3">
             <i class="bi bi-arrow-left"></i> Về giải đấu
         </a>
     {% else %}
@@ -63,7 +64,7 @@
         </a>
     {% endif %}
 
-    <div class="row g-4 align-items-start"> 
+    <div class="row g-4 align-items-start">
         {# --- CỘT BÊN TRÁI: THÔNG TIN & HÀNH ĐỘNG --- #}
         <div class="col-lg-4">
             <div class="card shadow-sm mb-4">
@@ -77,28 +78,37 @@
                     <h4 class="card-title">{{ team.name }}</h4>
                     <p class="text-muted">
                         {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}<br>{% endif %}
-                        <strong>Đội trưởng:</strong> {{ team.captain.username }}<br>
-                        <strong>Giải đấu:</strong> {{ team.tournament.name|default:"Đội tự do" }}
+                        <strong>Đội trưởng:</strong> {{ team.captain.username }}
                     </p>
 
-                    {% if team.tournament %}
-                    <div class="mb-3">
-                        <strong>Trạng thái:</strong>
-                        {% if team.payment_status == 'UNPAID' %}
-                            <span class="badge bg-danger">Chưa thanh toán</span>
-                        {% elif team.payment_status == 'PENDING' %}
-                            <span class="badge bg-warning text-dark">Chờ xác nhận</span>
-                        {% elif team.payment_status == 'PAID' %}
-                            <span class="badge bg-success">Đã duyệt</span>
-                        {% endif %}
-                    </div>
+                    <h6 class="mt-3">Các giải đấu đã đăng ký:</h6>
+                    {% if registrations %}
+                        <div class="list-group list-group-flush">
+                        {% for reg in registrations %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'tournament_detail' pk=reg.tournament.pk %}"><strong>{{ reg.tournament.name }}</strong></a>
+                                    {% if reg.payment_status == 'UNPAID' %}
+                                        <span class="badge bg-danger">Chưa thanh toán</span>
+                                    {% elif reg.payment_status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                                    {% elif reg.payment_status == 'PAID' %}
+                                        <span class="badge bg-success">Đã duyệt</span>
+                                    {% endif %}
+                                </div>
+                                {% if reg.payment_status == 'UNPAID' and user == team.captain %}
+                                    <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-success mt-2 w-100">
+                                        <i class="bi bi-credit-card-fill"></i> Thanh toán lệ phí giải này
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <span class="badge bg-secondary">Đội tự do</span>
                     {% endif %}
-                    
-                    <div class="d-grid gap-2">
-                        {% if team.payment_status == 'UNPAID' and team.tournament %}
-                            <a href="{% url 'team_payment' pk=team.pk %}" class="btn btn-success"><i class="bi bi-credit-card-fill"></i> Thanh toán Lệ phí</a>
-                        {% endif %}
 
+                    <div class="d-grid gap-2 mt-3">
                         {% if user == team.captain %}
                             <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-warning"><i class="bi bi-pencil-fill"></i> Sửa thông tin đội</a>
                             <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-info"><i class="bi bi-trophy-fill"></i> Phòng Truyền thống</a>
@@ -108,8 +118,7 @@
             </div>
 
             {% if user == team.captain %}
-                {# Mở khóa chức năng NẾU (đội đã trả phí) HOẶC (đây là đội tự do) #}
-                {% if team.payment_status == 'PAID' or not team.tournament %}
+                {% if can_manage_players %}
                     <div class="card shadow-sm mb-4">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="bi bi-person-plus-fill"></i> Quản lý Cầu thủ</h5>
@@ -175,18 +184,13 @@
                             </div>
                         </div>
                     </div>
-                
-                {# Ngược lại, nếu đội CHƯA trả phí VÀ đang tham gia một giải đấu, thì hiển thị thông báo khóa #}
-                {% elif team.tournament %}
+                {% else %}
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-warning">
-                            <h5 class="mb-0"><i class="bi bi-lock-fill"></i> Tính năng bị khóa</h5>
+                            <h5 class="mb-0"><i class="bi bi-lock-fill"></i> Tính năng quản lý cầu thủ bị khóa</h5>
                         </div>
                         <div class="card-body text-center">
-                            <p>Chức năng thêm và chiêu mộ cầu thủ sẽ được mở sau khi bạn hoàn tất thanh toán lệ phí cho giải đấu.</p>
-                            <a href="{% url 'team_payment' pk=team.pk %}" class="btn btn-success">
-                                <i class="bi bi-credit-card-fill"></i> Tới trang thanh toán
-                            </a>
+                            <p>Chức năng này sẽ được mở sau khi bạn hoàn tất thanh toán lệ phí cho ít nhất một giải đấu.</p>
                         </div>
                     </div>
                 {% endif %}

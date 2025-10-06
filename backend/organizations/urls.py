@@ -21,7 +21,7 @@ urlpatterns = [
     path('tournaments/<int:tournament_pk>/photos/delete-all/', views.delete_all_photos, name='delete_all_photos'),
     path('match/<int:pk>/delete/', views.delete_match, name='delete_match'),
     path('tournaments/<int:tournament_pk>/create-match/', views.create_match, name='create_match'),
-    path('teams/<int:pk>/delete/', views.delete_team, name='delete_team'),
+    path('registrations/<int:pk>/delete/', views.delete_team, name='delete_team_registration'),
     path('player/<int:pk>/edit/', views.edit_player, name='edit_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),   
     # === thêm xoá blv cho các giải đấu === 

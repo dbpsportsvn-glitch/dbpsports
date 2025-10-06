@@ -1,6 +1,6 @@
 # tournaments/forms.py
 from django import forms
-from .models import Team, Player, Comment, Tournament
+from .models import Team, Player, Comment, Tournament, TeamRegistration
 from .models import MatchNote
 
 # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
@@ -70,7 +70,7 @@ class PlayerCreationForm(forms.ModelForm):
 
 class PaymentProofForm(forms.ModelForm):
     class Meta:
-        model = Team
+        model = TeamRegistration  # <-- THAY ĐỔI QUAN TRỌNG NHẤT
         fields = ['payment_proof']
         labels = {
             'payment_proof': 'Tải lên ảnh chụp màn hình hóa đơn chuyển khoản',

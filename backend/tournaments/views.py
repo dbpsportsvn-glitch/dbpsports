@@ -44,7 +44,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration)
 from .utils import send_notification_email, send_schedule_notification
 from django.db.models import Sum, F
 from django.contrib.auth.models import User
@@ -384,20 +384,24 @@ def add_free_agent(request, team_pk, player_pk):
 @never_cache
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
-    achievements = team.achievements.select_related('tournament').all()
-    
+
+    registrations = TeamRegistration.objects.filter(team=team).select_related('tournament').order_by('-tournament__start_date')
+
     player_form = PlayerCreationForm()
     search_query = request.GET.get('q', '')
     search_results = []
     active_tab = ''
 
+    # Quyền quản lý cầu thủ: là đội tự do HOẶC đã thanh toán ít nhất 1 giải
+    can_manage_players = not registrations.exists() or registrations.filter(payment_status='PAID').exists()
+
     if request.method == 'POST':
         action = request.POST.get('action')
-        
         if action == 'create_new_player':
             active_tab = 'new'
-            
-            if request.user != team.captain:
+            if not can_manage_players:
+                messages.error(request, "Bạn cần hoàn tất lệ phí cho ít nhất một giải đấu để thêm cầu thủ.")
+            elif request.user != team.captain:
                 messages.error(request, "Bạn không có quyền thực hiện hành động này.")
             else:
                 player_form = PlayerCreationForm(request.POST, request.FILES)
@@ -409,38 +413,20 @@ def team_detail(request, pk):
                         player.save()
                         messages.success(request, f"Đã thêm cầu thủ {player.full_name} thành công!")
                         return redirect('team_detail', pk=team.pk)
-                    
                     except ValidationError as e:
-                        # --- BẮT ĐẦU NÂNG CẤP XỬ LÝ LỖI ---
-                        # Vòng lặp qua các lỗi mà model trả về
                         for field, errors in e.message_dict.items():
-                            user_friendly_message = ""
-                            # Dịch các lỗi phổ biến sang tiếng Việt
-                            if field == 'jersey_number' and 'unique' in errors[0]:
-                                user_friendly_message = "Số áo này đã có người sử dụng trong đội."
-                            else:
-                                user_friendly_message = errors[0] # Giữ lại lỗi gốc nếu chưa dịch
-
-                            # Gắn lỗi vào đúng trường của form
-                            # Nếu lỗi không thuộc trường nào, nó sẽ được hiển thị ở đầu form
-                            player_form.add_error(field if field != '__all__' else None, user_friendly_message)
-                        
+                            player_form.add_error(field if field != '__all__' else None, errors[0])
                         messages.error(request, 'Thêm cầu thủ thất bại, vui lòng kiểm tra lại.')
-                        # --- KẾT THÚC NÂNG CẤP ---
-
-                else:
-                    messages.error(request, 'Thêm cầu thủ thất bại. Vui lòng kiểm tra các lỗi được đánh dấu màu đỏ.')
-
     elif search_query:
         active_tab = 'search'
-        search_results = Player.objects.filter(
-            Q(full_name__icontains=search_query) & Q(team__isnull=True)
-        ).exclude(user__isnull=False)
+        search_results = Player.objects.filter(Q(full_name__icontains=search_query) & Q(team__isnull=True)).exclude(user__isnull=False)
 
     context = {
         'team': team,
+        'registrations': registrations,
+        'can_manage_players': can_manage_players,
         'player_form': player_form,
-        'achievements': achievements,
+        'achievements': team.achievements.select_related('tournament').all(),
         'search_results': search_results,
         'search_query': search_query,
         'active_tab': active_tab,
@@ -453,29 +439,23 @@ def team_detail(request, pk):
 def create_team(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     if request.method == 'POST':
-        # === THAY ĐỔI DÒNG NÀY ===
         form = TeamCreationForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            # Bỏ try-except vì form đã xử lý lỗi trùng tên của captain
-            team = form.save(commit=False)
-            team.tournament = tournament
-            team.captain = request.user
-            
-            # Chỉ cần bắt lỗi trùng tên trong cùng giải đấu
             try:
-                team.save()
+                with transaction.atomic():
+                    team = form.save(commit=False)
+                    team.captain = request.user
+                    team.save()
+                    TeamRegistration.objects.create(team=team, tournament=tournament)
+
+                messages.success(request, "Tạo và đăng ký đội thành công!")
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
                  form.add_error('name', "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
-
     else:
-        # === VÀ THAY ĐỔI DÒNG NÀY ===
         form = TeamCreationForm(user=request.user)
-        
-    context = {
-        'form': form,
-        'tournament': tournament
-    }
+
+    context = { 'form': form, 'tournament': tournament }
     return render(request, 'tournaments/create_team.html', context)
 
 @login_required
@@ -692,17 +672,19 @@ def match_print_view(request, pk):
 @login_required
 @never_cache
 def team_payment(request, pk):
-    team = get_object_or_404(Team, pk=pk)
+    # pk bây giờ là của TeamRegistration
+    registration = get_object_or_404(TeamRegistration, pk=pk)
+    team = registration.team
 
     if request.user != team.captain:
         return redirect('home')
 
     if request.method == 'POST':
-        form = PaymentProofForm(request.POST, request.FILES, instance=team)
+        form = PaymentProofForm(request.POST, request.FILES, instance=registration)
         if form.is_valid():
-            team = form.save(commit=False)
-            team.payment_status = 'PENDING'
-            team.save()
+            reg = form.save(commit=False)
+            reg.payment_status = 'PENDING'
+            reg.save()
 
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
@@ -723,11 +705,12 @@ def team_payment(request, pk):
             
             return redirect('team_detail', pk=team.pk)
     else:
-        form = PaymentProofForm(instance=team)
+        form = PaymentProofForm(instance=registration)
 
     context = {
         'form': form,
-        'team': team
+        'team': team,
+        'registration': registration # Gửi registration ra template
     }
     return render(request, 'tournaments/payment_proof.html', context)
 
@@ -1978,20 +1961,13 @@ def claim_player_profile(request, pk):
 @require_POST 
 def register_existing_team(request, tournament_pk, team_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
-    team = get_object_or_404(Team, pk=team_pk, tournament__isnull=True)
+    team = get_object_or_404(Team, pk=team_pk, captain=request.user)
 
-    if team.captain != request.user:
-        messages.error(request, "Bạn không phải là đội trưởng của đội này.")
+    if TeamRegistration.objects.filter(tournament=tournament, team=team).exists():
+        messages.warning(request, f"Đội '{team.name}' đã được đăng ký vào giải này rồi.")
         return redirect('tournament_detail', pk=tournament_pk)
 
-    if Team.objects.filter(tournament=tournament, name__iexact=team.name).exists():
-        messages.error(request, f"Một đội có tên '{team.name}' đã tồn tại trong giải đấu này. Vui lòng đổi tên đội của bạn trước khi đăng ký.")
-        return redirect('team_detail', pk=team.pk)
+    TeamRegistration.objects.create(team=team, tournament=tournament)
 
-    team.tournament = tournament
-    # THÊM DÒNG NÀY ĐỂ RESET TRẠNG THÁI THANH TOÁN
-    team.payment_status = 'UNPAID'
-    team.save()
-    
-    messages.success(request, f"Đã đăng ký thành công đội '{team.name}' vào giải đấu. Vui lòng hoàn tất lệ phí để mở khóa các tính năng.")
+    messages.success(request, f"Đã đăng ký thành công đội '{team.name}' vào giải đấu. Vui lòng hoàn tất lệ phí.")
     return redirect('team_detail', pk=team.pk)
