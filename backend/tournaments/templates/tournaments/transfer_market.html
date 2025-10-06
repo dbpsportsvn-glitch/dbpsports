@@ -266,6 +266,35 @@
                             <i class="bi bi-send-plus"></i> Gửi lời mời
                         </button>
                     {% endif %}
+
+                    {# === THÊM KHỐI NÚT MỚI NÀY VÀO === #}
+                    {% if captained_teams and player.team not in captained_teams %}
+                        {% if captained_teams|length == 1 %}
+                            <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=captained_teams.0.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-light btn-action w-100">
+                                    <i class="bi bi-binoculars-fill"></i> Theo dõi
+                                </button>
+                            </form>
+                        {% else %}
+                            <div class="btn-group w-100">
+                                <button type="button" class="btn btn-outline-light btn-action dropdown-toggle" data-bs-toggle="dropdown">
+                                    <i class="bi bi-binoculars-fill"></i> Theo dõi
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    {% for team_to_scout_with in captained_teams %}
+                                    <li>
+                                        <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=team_to_scout_with.pk %}" class="d-grid">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">Cho đội {{ team_to_scout_with.name }}</button>
+                                        </form>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
                     <a href="{% url 'player_detail' pk=player.pk %}" class="btn btn-light btn-action">
                         <i class="bi bi-eye-fill"></i> Xem Hồ sơ
                     </a>

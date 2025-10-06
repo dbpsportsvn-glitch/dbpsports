@@ -62,6 +62,8 @@ urlpatterns = [
     path('team/<int:team_pk>/add_free_agent/<int:player_pk>/', views.add_free_agent, name='add_free_agent'),
     path('player/<int:player_pk>/invite_from/<int:team_pk>/', views.invite_player_view, name='invite_player'),
     path('transfers/<int:transfer_pk>/respond/', views.respond_to_transfer_view, name='respond_to_transfer'),
+    path('scout/add/<int:player_pk>/from/<int:team_pk>/', views.add_to_scouting_list, name='add_to_scouting_list'),
+    path('scout/remove/<int:scout_pk>/', views.remove_from_scouting_list, name='remove_from_scouting_list'),    
 
     # --- URL liên quan đến Trận đấu (Match) ---
     path('match/<int:pk>/', views.match_detail, name='match_detail'),

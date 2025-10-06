@@ -748,3 +748,31 @@ class PlayerTransfer(models.Model):
 
     def __str__(self):
         return f"{self.inviting_team.name} mời {self.player.full_name} từ {self.current_team.name}"
+
+
+# === THÊM MODEL MỚI VÀO CUỐI TỆP ===
+class ScoutingList(models.Model):
+    """Lưu trữ một bản ghi khi một đội theo dõi một cầu thủ."""
+    team = models.ForeignKey(
+        Team, 
+        on_delete=models.CASCADE, 
+        related_name='scouting_list',
+        verbose_name="Đội bóng theo dõi"
+    )
+    player = models.ForeignKey(
+        Player, 
+        on_delete=models.CASCADE, 
+        related_name='scouted_by',
+        verbose_name="Cầu thủ được theo dõi"
+    )
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-added_at']
+        # Đảm bảo một đội không thể theo dõi cùng một cầu thủ nhiều lần
+        unique_together = ('team', 'player')
+        verbose_name = "Danh sách Theo dõi"
+        verbose_name_plural = "Danh sách Theo dõi"
+
+    def __str__(self):
+        return f"Đội {self.team.name} đang theo dõi {self.player.full_name}"        

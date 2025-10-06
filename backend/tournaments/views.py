@@ -47,7 +47,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord, PlayerTransfer)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord, PlayerTransfer, ScoutingList)
 from .utils import send_notification_email, send_schedule_notification
 from django.db.models import Sum, F
 from django.contrib.auth.models import User
@@ -2283,3 +2283,32 @@ def transfer_market_view(request):
         'captained_teams': captained_teams,
     }
     return render(request, 'tournaments/transfer_market.html', context)
+
+
+# === THÊM 2 HÀM MỚI VÀO CUỐI TỆP ===
+@login_required
+@require_POST
+def add_to_scouting_list(request, player_pk, team_pk):
+    team = get_object_or_404(Team, pk=team_pk, captain=request.user)
+    player = get_object_or_404(Player, pk=player_pk)
+
+    if player.team == team:
+        messages.warning(request, "Không thể theo dõi cầu thủ đã ở trong đội của bạn.")
+    else:
+        _, created = ScoutingList.objects.get_or_create(team=team, player=player)
+        if created:
+            messages.success(request, f"Đã thêm {player.full_name} vào danh sách theo dõi của đội {team.name}.")
+        else:
+            messages.info(request, f"{player.full_name} đã có trong danh sách theo dõi của bạn.")
+
+    return redirect('transfer_market')
+
+
+@login_required
+@require_POST
+def remove_from_scouting_list(request, scout_pk):
+    scouted_player = get_object_or_404(ScoutingList, pk=scout_pk, team__captain=request.user)
+    player_name = scouted_player.player.full_name
+    scouted_player.delete()
+    messages.success(request, f"Đã xóa {player_name} khỏi danh sách theo dõi.")
+    return redirect(reverse('dashboard') + '?tab=scouting')    
