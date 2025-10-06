@@ -40,12 +40,25 @@
         font-weight: 500;
         color: #6c757d;
     }
-    .achievement-item {
+    .achievement-item, .player-card {
         transition: transform .2s ease, box-shadow .2s ease;
     }
-    .achievement-item:hover {
+    .achievement-item:hover, .player-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .player-avatar {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    }
+    .jersey-number-lg {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0d6efd;
     }
 </style>
 {% endblock %}
@@ -143,7 +156,7 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm">
+            <div class="card shadow-sm mb-4">
                 <div class="card-header"><h4><i class="bi bi-person-lines-fill"></i> Lịch sử thi đấu</h4></div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0">
@@ -170,6 +183,36 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4><i class="bi bi-person-badge-fill"></i> Đội hình</h4></div>
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        {% for player in players %}
+                        <div class="col">
+                            <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-dark">
+                                <div class="card h-100 player-card shadow-sm" style="border-left-color: {% cycle '#0d6efd' '#198754' '#ffc107' '#dc3545' %}; border-left-width: 4px;">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="player-avatar" style="width: 50px; height: 50px;">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between">
+                                                <h6 class="mb-0">{{ player.full_name }}</h6>
+                                                <span class="jersey-number-lg" style="font-size: 1.2rem;">#{{ player.jersey_number }}</span>
+                                            </div>
+                                            <small class="text-muted">{{ player.get_position_display }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted">Đội bóng này chưa có cầu thủ nào.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

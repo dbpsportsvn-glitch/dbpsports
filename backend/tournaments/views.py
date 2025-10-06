@@ -416,7 +416,12 @@ def team_detail(request, pk):
                         messages.error(request, 'Thêm cầu thủ thất bại, vui lòng kiểm tra lại.')
     elif search_query:
         active_tab = 'search'
-        search_results = Player.objects.filter(Q(full_name__icontains=search_query) & Q(team__isnull=True)).exclude(user__isnull=False)
+        # === DÒNG CODE ĐÃ ĐƯỢC SỬA LỖI TẠI ĐÂY ===
+        # Bỏ điều kiện .exclude(user__isnull=False) để tìm được các cầu thủ tự do đã có tài khoản
+        search_results = Player.objects.filter(
+            Q(full_name__icontains=search_query) & Q(team__isnull=True)
+        )
+        # === KẾT THÚC SỬA LỖI ===
 
     context = {
         'team': team,
@@ -1043,6 +1048,19 @@ def player_detail(request, pk):
     cards = Card.objects.filter(player=player).aggregate(yellow_cards=Count('id', filter=Q(card_type='YELLOW')), red_cards=Count('id', filter=Q(card_type='RED')))
     matches_played = Match.objects.filter(lineups__player=player).distinct().select_related('tournament', 'team1', 'team2').order_by('-match_time')
 
+    # === BẮT ĐẦU KHỐI CODE MỚI ĐỂ KIỂM TRA QUYỀN VOTE ===
+    can_vote = False
+    if request.user.is_authenticated and player.team:
+        # Kiểm tra xem cầu thủ có đang tham gia một giải đấu nào đang diễn ra không
+        is_in_active_tournament = TeamRegistration.objects.filter(
+            team=player.team, 
+            tournament__status='IN_PROGRESS'
+        ).exists()
+        
+        # Người dùng có thể vote nếu: đang ở giải đấu active VÀ không phải là chính mình
+        if is_in_active_tournament and request.user != player.user:
+            can_vote = True
+
     stats = {
         'total_goals': total_goals,
         'yellow_cards': cards.get('yellow_cards', 0),
@@ -1076,6 +1094,7 @@ def player_detail(request, pk):
         'age': age,
         'value_from_votes': value_from_votes,
         'total_value': total_value,
+        'can_vote': can_vote,
     }
     return render(request, 'tournaments/player_detail.html', context)
 
@@ -1856,6 +1875,9 @@ def public_team_detail(request, pk):
     # Lịch sử tham gia giải đấu
     registrations = TeamRegistration.objects.filter(team=team).select_related('tournament').order_by('-tournament__start_date')
 
+    # Lấy danh sách cầu thủ trong đội
+    players = team.players.all().order_by('jersey_number')
+
     # Thành tích
     achievements = team.achievements.select_related('tournament').order_by('-achieved_at')
 
@@ -1927,6 +1949,7 @@ def public_team_detail(request, pk):
         'stats': stats,
         'total_value': total_value,
         'can_vote': can_vote,
+        'players': players,
         'value_breakdown': {
             'base_value': base_value,
             'squad_value': squad_value,

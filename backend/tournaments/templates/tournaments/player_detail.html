@@ -58,6 +58,7 @@
         <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="profile-avatar">
         <div class="flex-grow-1">
             <h1 class="display-5 mb-0"><strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}</h1>
+            
             {% if user.is_authenticated and not player.user and not user.player_profile %}
                 <form action="{% url 'claim_player_profile' pk=player.pk %}" method="POST" class="mt-2">
                     {% csrf_token %}
@@ -66,6 +67,7 @@
                     </button>
                 </form>
             {% endif %}
+            
             <h4 class="fw-light mb-2">{{ player.get_position_display }}</h4>
             <div class="d-flex align-items-center gap-3">
                 {% if player.team %}
@@ -95,7 +97,8 @@
                     <span>Phiếu</span>
                 </span>
                 
-                {% if player.team and player.team.tournament and player.team.tournament.status == 'IN_PROGRESS' and user.is_authenticated and user != player.user %}
+                {# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
+                {% if can_vote %}
                 <form id="vote-form" action="{% url 'cast_vote' player_pk=player.pk %}" method="POST" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" id="vote-button" class="btn btn-sm btn-light">
@@ -103,6 +106,11 @@
                     </button>
                 </form>
                 {% endif %}
+                {# === KẾT THÚC THAY ĐỔI === #}
+
+                <button class="btn btn-sm btn-info" id="shareBtn">
+                    <i class="bi bi-share-fill"></i> Chia sẻ
+                </button>
             </div>
         </div>
     </div>
@@ -185,7 +193,7 @@
                     <div class="card shadow-sm text-center">
                         <div class="card-header"><h4><i class="bi bi-gift-fill text-danger"></i> Ủng hộ cầu thủ</h4></div>
                         <div class="card-body">
-                            <p class="text-muted">Quét mã QR dưới đây để donate trực tiếp cho cầu thủ bạn yêu thích!</p>
+                            <p class="text-muted">Quét mã QR dưới đây để donate trực tiếp cho <strong>{{ player.full_name }}</strong>!</p>
                             <img src="{{ player.donation_qr_code.url }}" class="img-fluid rounded" alt="Mã QR donate cho {{ player.full_name }}">
                         </div>
                     </div>
@@ -215,53 +223,79 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Voting form logic (giữ nguyên)
     const voteForm = document.getElementById('vote-form');
-    if (!voteForm) return;
+    if (voteForm) {
+        voteForm.addEventListener('submit', function(event) {
+            event.preventDefault();
 
-    voteForm.addEventListener('submit', function(event) {
-        event.preventDefault();
+            const form = this;
+            const url = form.action;
+            const voteButton = document.getElementById('vote-button');
+            const voteCountSpan = document.getElementById('vote-count');
+            const voteBadge = document.getElementById('vote-badge');
 
-        const form = this;
-        const url = form.action;
-        const voteButton = document.getElementById('vote-button');
-        const voteCountSpan = document.getElementById('vote-count');
-        const voteBadge = document.getElementById('vote-badge');
-
-        if (!confirm('Bạn có chắc chắn muốn dùng 1 phiếu để bầu cho cầu thủ này không?')) {
-            return;
-        }
-
-        voteButton.disabled = true;
-        voteButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                voteCountSpan.textContent = data.new_vote_count;
-                voteButton.innerHTML = '<i class="bi bi-check-lg"></i> Đã vote!';
-                voteBadge.classList.remove('bg-primary');
-                voteBadge.classList.add('bg-success');
-                alert(data.message);
-            } else {
-                voteButton.disabled = false;
-                voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Thử lại';
-                alert('Lỗi: ' + data.message);
+            if (!confirm('Bạn có chắc chắn muốn dùng 1 phiếu để bầu cho cầu thủ này không?')) {
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            voteButton.disabled = false;
-            voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Lỗi';
-            alert('Đã có lỗi kết nối xảy ra.');
+
+            voteButton.disabled = true;
+            voteButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    voteCountSpan.textContent = data.new_vote_count;
+                    voteButton.innerHTML = '<i class="bi bi-check-lg"></i> Đã vote!';
+                    voteBadge.classList.remove('bg-primary');
+                    voteBadge.classList.add('bg-success');
+                    alert(data.message);
+                } else {
+                    voteButton.disabled = false;
+                    voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Thử lại';
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                voteButton.disabled = false;
+                voteButton.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Lỗi';
+                alert('Đã có lỗi kết nối xảy ra.');
+            });
         });
-    });
+    }
+
+    // Script cho nút chia sẻ (giữ nguyên)
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const url = window.location.href;
+            const title = document.title;
+            const text = `Xem hồ sơ cầu thủ ${'{{ player.full_name|escapejs }}'} trên DBP Sports!`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title, text, url });
+                } catch (err) { console.error('Lỗi khi chia sẻ:', err); }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
+                    setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
+                } catch (err) {
+                    alert('Không thể tự động sao chép link. Vui lòng sao chép thủ công.');
+                }
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
