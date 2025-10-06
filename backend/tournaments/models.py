@@ -700,6 +700,10 @@ class PlayerTransfer(models.Model):
         REJECTED = 'REJECTED', 'Đã từ chối'
         CANCELED = 'CANCELED', 'Đã hủy'
 
+    class TransferType(models.TextChoices):
+        PERMANENT = 'PERMANENT', 'Mua đứt'
+        LOAN = 'LOAN', 'Cho mượn'
+
     inviting_team = models.ForeignKey(
         Team,
         on_delete=models.CASCADE,
@@ -724,12 +728,20 @@ class PlayerTransfer(models.Model):
         choices=Status.choices,
         default=Status.PENDING
     )
+    transfer_type = models.CharField(
+        "Loại hình chuyển nhượng",
+        max_length=10,
+        choices=TransferType.choices,
+        default=TransferType.PERMANENT
+    )
+    loan_end_date = models.DateField("Ngày hết hạn cho mượn", null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
-        unique_together = ('inviting_team', 'player') # Mỗi đội chỉ được mời 1 cầu thủ một lần
+        #unique_together = ('inviting_team', 'player') # Mỗi đội chỉ được mời 1 cầu thủ một lần
         verbose_name = "Lời mời Chuyển nhượng"
         verbose_name_plural = "Các lời mời Chuyển nhượng"
 

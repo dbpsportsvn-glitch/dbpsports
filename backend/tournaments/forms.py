@@ -3,6 +3,7 @@ from django import forms
 from .models import Team, Player, Comment, Tournament, TeamRegistration
 from .models import MatchNote
 from colorfield.widgets import ColorWidget
+from .models import PlayerTransfer
 
 # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class TeamCreationForm(forms.ModelForm):
@@ -227,4 +228,18 @@ class CaptainNoteForm(forms.ModelForm):
         }
         widgets = {
             'captain_note': forms.Textarea(attrs={'rows': 8}),
-        }          
+        }     
+
+# === THÊM FORM MỚI NÀY VÀO CUỐI TỆP ===
+class PlayerTransferForm(forms.ModelForm):
+    class Meta:
+        model = PlayerTransfer
+        fields = ['transfer_type', 'loan_end_date']
+        labels = {
+            'transfer_type': 'Loại hình đề nghị',
+            'loan_end_date': 'Ngày kết thúc cho mượn',
+        }
+        widgets = {
+            'transfer_type': forms.RadioSelect,
+            'loan_end_date': forms.DateInput(attrs={'type': 'date'}),
+        }             
