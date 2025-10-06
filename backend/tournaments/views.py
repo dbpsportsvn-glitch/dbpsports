@@ -2221,6 +2221,10 @@ def transfer_market_view(request):
     # Lấy danh sách các đội có cầu thủ để đưa vào bộ lọc
     all_teams_with_players = Team.objects.filter(players__isnull=False).distinct().order_by('name')
 
+    captained_teams = []
+    if request.user.is_authenticated:
+        captained_teams = Team.objects.filter(captain=request.user)
+
     context = {
         'players': players_qs,
         'current_vote_value': current_vote_value,
@@ -2231,6 +2235,7 @@ def transfer_market_view(request):
             'team': team_filter,
             'q': search_query,
             'sort': sort_by,
-        }
+        },
+        'captained_teams': captained_teams,
     }
-    return render(request, 'tournaments/transfer_market.html', context)    
+    return render(request, 'tournaments/transfer_market.html', context)

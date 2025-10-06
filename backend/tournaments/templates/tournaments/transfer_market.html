@@ -262,13 +262,45 @@
             </div>
           </div>
   
-          <div class="actions">
-            <div class="d-grid">
-                <a href="{% url 'player_detail' pk=player.pk %}" class="btn btn-light btn-action">
-                    <i class="bi bi-eye-fill"></i> Xem Hồ sơ
-                </a>
+            <div class="actions">
+                <div class="d-grid gap-2">
+                    {# Nếu người xem là đội trưởng, có đội để mời, và cầu thủ này đang ở đội khác #}
+                    {% if captained_teams and player.team and player.team not in captained_teams %}
+                        
+                        {% if captained_teams|length == 1 %}
+                            {# Nếu chỉ có 1 đội, hiển thị nút Mời trực tiếp #}
+                            <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-info btn-action w-100">
+                                    <i class="bi bi-send-plus"></i> Gửi lời mời
+                                </button>
+                            </form>
+                        {% else %}
+                            {# Nếu có nhiều đội, hiển thị dropdown để chọn #}
+                            <div class="btn-group w-100">
+                                <button type="button" class="btn btn-info btn-action dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-send-plus"></i> Gửi lời mời
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    {% for team_to_invite_with in captained_teams %}
+                                    <li>
+                                        <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=team_to_invite_with.pk %}" class="d-grid">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">Từ đội {{ team_to_invite_with.name }}</button>
+                                        </form>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                    {% endif %}
+                    
+                    <a href="{% url 'player_detail' pk=player.pk %}" class="btn btn-light btn-action">
+                        <i class="bi bi-eye-fill"></i> Xem Hồ sơ
+                    </a>
+                </div>
             </div>
-          </div>
         </div>
       </div>
       {% endfor %}
