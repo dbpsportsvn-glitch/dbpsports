@@ -13,173 +13,180 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
 
   <style>
-
     /* === CSS MỚI CHO KÝ HIỆU ĐỘI TRƯỞNG === */
-    .captain-indicator {
-        color: #f59e0b; /* Màu vàng */
-        font-weight: bold;
-        margin-left: 4px;
-    }
-        
-    /* Style này chỉ để hiển thị avatar chữ cái cho người dùng chưa có ảnh đại diện */
-    .avatar-ph{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;
-               background:#6f42c1;color:#fff;font-weight:700;font-size:.9rem}
-    
-    /* === BẮT ĐẦU CSS MỚI CHO ICON THÔNG BÁO === */
-    .notification-icon {
-        position: relative;
-        color: #cbd5e1;
-        font-size: 1.4rem; /* Kích thước icon chuông & loa */
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        padding: 0 0.5rem;
-        transition: color 0.2s ease;
-    }
-    .notification-icon:hover {
-        color: #fff;
-    }
-    .notification-badge {
-        position: absolute;
-        top: -5px;
-        right: 0px;
-        font-size: 0.65rem;
-        font-weight: bold;
-        background-color: #ef4444; /* Màu đỏ cho thông báo */
-        color: white;
-        border-radius: 50%;
-        padding: 2px 5px;
-        line-height: 1;
-        border: 2px solid #0f172a; /* Màu nền header để tạo viền */
-    }
-    .notification-badge.info {
-        background-color: #3b82f6; /* Màu xanh cho bảng tin */
-    }
-    /* === KẾT THÚC CSS MỚI === */
+    .captain-indicator{color:#f59e0b;font-weight:700;margin-left:4px}
+
+    /* Avatar chữ cái khi chưa có ảnh */
+    .avatar-ph{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#6f42c1;color:#fff;font-weight:700;font-size:.9rem}
+
+    /* === ICON THÔNG BÁO === */
+    .notification-icon{position:relative;color:#cbd5e1;font-size:1.4rem;text-decoration:none;display:flex;align-items:center;padding:0 .5rem;transition:color .2s ease}
+    .notification-icon:hover{color:#fff}
+    .notification-badge{position:absolute;top:-5px;right:0;font-size:.65rem;font-weight:700;background:#ef4444;color:#fff;border-radius:50%;padding:2px 5px;line-height:1;border:2px solid #0f172a}
+    .notification-badge.info{background:#3b82f6}
+
+    /* === NAV / DROPDOWN TINH CHỈNH === */
+    .main-menu .nav-link{display:inline-flex;align-items:center}
+    .main-menu .dropdown>.nav-link{gap:.35rem}
+    .main-menu .dropdown-menu{min-width:14rem}
+    /* Nếu header là nền tối, dùng menu tối cho đồng nhất */
+    .main-menu .dropdown-menu{--bs-dropdown-bg:#0b1220;--bs-dropdown-color:#e2e8f0;--bs-dropdown-link-color:#e2e8f0;--bs-dropdown-link-hover-bg:#111827;--bs-dropdown-link-hover-color:#fff;--bs-dropdown-border-color:#243044}
+    .main-menu .dropdown-item.active{background:linear-gradient(90deg,#0ea5e9,#6366f1);color:#fff}
+
+    /* Mobile nested list */
+    .mobile-submenu{padding-left:1rem}
+    .mobile-submenu .nav-link{padding:.35rem 0}
   </style>
   {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-
 <header class="site-header sticky-top">
-    <nav class="navbar container">
-        <div class="nav-left">
-            <a class="brand" href="{% url 'home' %}">
-                <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
-                <span class="brand-text">DBP Sports</span>
+  <nav class="navbar container" data-bs-theme="dark">
+    <div class="nav-left">
+      <a class="brand" href="{% url 'home' %}">
+        <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+        <span class="brand-text">DBP Sports</span>
+      </a>
+      <button class="mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu" aria-label="Mở menu">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+
+    <div class="nav-center">
+      <div class="main-menu d-flex align-items-center gap-2">
+        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+
+        {# === DROPDOWN BÓNG ĐÁ === #}
+        {% with urln=request.resolver_match.url_name %}
+                <div class="dropdown">
+          <a href="#" class="nav-link dropdown-toggle {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}active{% endif %}" id="soccerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-trophy"></i> Bóng Đá
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="soccerDropdown">
+            <li><a class="dropdown-item {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}"><i class="bi bi-flag"></i> Giải đấu</a></li>
+            <li><a class="dropdown-item {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}"><i class="bi bi-arrow-left-right"></i> Chuyển nhượng</a></li>
+            <li><a class="dropdown-item {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}"><i class="bi bi-broadcast"></i> Livestream</a></li>
+            <li><a class="dropdown-item {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}"><i class="bi bi-archive"></i> Lưu trữ</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-3 text-secondary small">Sắp có: Pickleball, Fifa Online…</li>
+          </ul>
+        </div>
+        {% endwith %}
+
+        <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      {% if user.is_authenticated %}
+      <div class="d-flex align-items-center gap-3">
+        {% if is_organizer_role %}
+          {% if user.organizations.all.first %}
+            <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
+              <i class="bi bi-shield-check"></i> <span>. BTC</span>
             </a>
-            <button class="mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
-                <i class="bi bi-list"></i>
-            </button>
-        </div>
+          {% else %}
+            <a href="{% url 'organizations:create' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Trở thành Ban tổ chức">
+              <i class="bi bi-shield-plus"></i> <span>. Đăng ký BTC</span>
+            </a>
+          {% endif %}
+        {% endif %}
 
-        <div class="nav-center">
-            <div class="main-menu">
-                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-                <a class="nav-link {% if 'transfer' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
-                <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
-            </div>
-        </div>
+        <a href="{% url 'announcement_dashboard' %}" class="notification-icon" title="Bảng tin từ BTC">
+          <i class="bi bi-megaphone-fill"></i>
+          {% if unread_announcements_count > 0 %}
+            <span class="notification-badge info">{{ unread_announcements_count }}</span>
+          {% endif %}
+        </a>
 
-        <div class="nav-right">
-            {% if user.is_authenticated %}
-                <div class="d-flex align-items-center gap-3">
-                    {# === THÊM ĐIỀU KIỆN IF BÊN NGOÀI KHỐI NÀY === #}
-                    {% if is_organizer_role %}
-                        {% if user.organizations.all.first %}
-                            <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đön vị Tổ chức">
-                                <i class="bi bi-shield-check"></i> <span>. BTC</span>
-                            </a>
-                        {% else %}
-                            <a href="{% url 'organizations:create' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Trở thành Ban tổ chức">
-                                <i class="bi bi-shield-plus"></i> <span>. Đăng ký BTC</span>
-                            </a>
-                        {% endif %}
-                    {% endif %}
-                    <a href="{% url 'announcement_dashboard' %}" class="notification-icon" title="Bảng tin từ BTC">
-                        <i class="bi bi-megaphone-fill"></i>
-                        {% if unread_announcements_count > 0 %}
-                        <span class="notification-badge info">{{ unread_announcements_count }}</span>
-                        {% endif %}
-                    </a>
+        <a href="{% url 'notification_list' %}" class="notification-icon" title="Thông báo của bạn">
+          <i class="bi bi-bell-fill"></i>
+          {% if unread_notifications_count > 0 %}
+            <span class="notification-badge">{{ unread_notifications_count }}</span>
+          {% endif %}
+        </a>
 
-                    <a href="{% url 'notification_list' %}" class="notification-icon" title="Thông báo của bạn">
-                        <i class="bi bi-bell-fill"></i>
-                        {% if unread_notifications_count > 0 %}
-                        <span class="notification-badge">{{ unread_notifications_count }}</span>
-                        {% endif %}
-                    </a>
-    
-                    <div class="dropdown user-dropdown">
-                        <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                             {% with acct=user.socialaccount_set.first %}
-                                {% if user.profile.avatar %}
-                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar">
-                                {% elif acct and acct.get_avatar_url %}
-                                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="avatar">
-                                {% else %}
-                                <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
-                                {% endif %}
-                            {% endwith %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
-                            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
-                            {% if user.player_profile %}
-                            <li><a class="dropdown-item" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Xem Hồ sơ Cầu thủ</a></li>
-                            {% endif %}                
-                            {% if is_player_role %}
-                                <li><a class="dropdown-item" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus"></i> Tạo Đội bóng</a></li>
-                            {% endif %}                               
-                            {# === THÊM ĐIỀU KIỆN IF BÊN NGOÀI KHỐI NÀY === #}
-                            {% if is_organizer_role %}
-                                {% if user.organizations.all.first %}
-                                    <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
-                                {% else %}
-                                    <li><a class="dropdown-item" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký làm BTC</a></li>
-                                {% endif %}
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Quản lý Email</a></li>
-                            <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
-                        </ul>
-                    </div>
-                </div>
-                {% else %}
-                <div class="d-flex align-items-center gap-2">
-                    <a class="btn btn-outline-light btn-sm" href="{% url 'account_login' %}">Đăng nhập</a>
-                    <a class="btn btn-warning btn-sm d-none d-md-inline-block" href="{% url 'account_signup' %}">Đăng ký</a>
-                </div>
+        <div class="dropdown user-dropdown">
+          <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {% with acct=user.socialaccount_set.first %}
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar">
+              {% elif acct and acct.get_avatar_url %}
+                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="avatar">
+              {% else %}
+                <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
+              {% endif %}
+            {% endwith %}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
+            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
+            {% if user.player_profile %}
+            <li><a class="dropdown-item" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Xem Hồ sơ Cầu thủ</a></li>
             {% endif %}
+            {% if is_player_role %}
+            <li><a class="dropdown-item" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus"></i> Tạo Đội bóng</a></li>
+            {% endif %}
+            {% if is_organizer_role %}
+              {% if user.organizations.all.first %}
+                <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
+              {% else %}
+                <li><a class="dropdown-item" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký làm BTC</a></li>
+              {% endif %}
+            {% endif %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Quản lý Email</a></li>
+            <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+          </ul>
         </div>
-    </nav>
+      </div>
+      {% else %}
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-light btn-sm" href="{% url 'account_login' %}">Đăng nhập</a>
+        <a class="btn btn-warning btn-sm d-none d-md-inline-block" href="{% url 'account_signup' %}">Đăng ký</a>
+      </div>
+      {% endif %}
+    </div>
+  </nav>
 </header>
 
-<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu">
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
   <div class="offcanvas-header">
-    <h5 class="offcanvas-title">Menu</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <h5 class="offcanvas-title" id="mobileMenuLabel">Menu</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
   </div>
   <div class="offcanvas-body">
     <nav class="mobile-nav">
-        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-        <a class="nav-link {% if 'transfer' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
-        {% if not user.is_authenticated %}
-        <hr class="border-light">
-        <a class="nav-link" href="{% url 'account_signup' %}">Đăng ký</a>
-        {% endif %}
+      <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+
+      {# --- Mobile: Bóng Đá (collapse) --- #}
+      {% with urln=request.resolver_match.url_name %}
+            <a class="nav-link d-flex justify-content-between align-items-center {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}active{% endif %}"
+         data-bs-toggle="collapse" href="#mobileSoccerMenu" role="button" aria-expanded="{% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}true{% else %}false{% endif %}" aria-controls="mobileSoccerMenu">
+        <span><i class="bi bi-trophy"></i> Bóng Đá</span>
+        <i class="bi bi-caret-down-fill small"></i>
+      </a>
+      <div class="collapse {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}show{% endif %}" id="mobileSoccerMenu">
+        <div class="mobile-submenu">
+          <a class="nav-link {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
+          <a class="nav-link {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
+          <a class="nav-link {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
+          <a class="nav-link {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
+        </div>
+      </div>
+      {% endwith %}
+
+      <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
+
+      {% if not user.is_authenticated %}
+      <hr class="border-light">
+      <a class="nav-link" href="{% url 'account_signup' %}">Đăng ký</a>
+      {% endif %}
     </nav>
   </div>
 </div>
@@ -193,51 +200,50 @@
 </div>
 
 <footer class="site-footer">
-    <div class="container">
-        <div class="footer-content">
-            <div class="footer-about">
-                <a href="{% url 'home' %}" class="footer-brand">
-                    <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
-                    <span>DBP Sports</span>
-                </a>
-                <p class="text-muted">Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào độc quyền Phủi Điện Biên.</p>
-                
-                <p class="footer-copyright">&copy; {% now "Y" %} DBP Sports. All Rights Reserved.</p>
-            </div>
-            <div class="footer-links">
-                <h6>Về DBP Sports</h6>
-                <ul>
-                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
-                    <li><a href="{% url 'tournaments_active' %}">Giải đấu</a></li>
-                    <li><a href="{% url 'faq' %}">Hướng dẫn</a></li>
-                </ul>
-            </div>
-            <div class="footer-links">
-                <h6>Pháp lý</h6>
-                <ul>
-                    <li><a href="{% url 'terms_of_service' %}">Điều khoản dịch vụ</a></li>
-                    <li><a href="{% url 'privacy_policy' %}">Chính sách bảo mật</a></li>
-                    <li><a href="{% url 'data_deletion' %}">Xóa dữ liệu</a></li>
-                </ul>
-            </div>
-            <div class="footer-links">
-                <h6>Theo dõi chúng tôi</h6>
-                <div class="social-icons">
-                    <a href="https://www.facebook.com/Phuidienbien/" title="Facebook" target="_blank"><i class="bi bi-facebook"></i></a>
-                    <a href="https://www.youtube.com/@PhuiDienBien" title="YouTube" target="_blank"><i class="bi bi-youtube"></i></a>
-                    <a href="#" title="TikTok"><i class="bi bi-tiktok"></i></a>
-                </div>
-            </div>
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-about">
+        <a href="{% url 'home' %}" class="footer-brand">
+          <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
+          <span>DBP Sports</span>
+        </a>
+        <p class="text-muted">Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào độc quyền Phủi Điện Biên.</p>
+        <p class="footer-copyright">&copy; {% now "Y" %} DBP Sports. All Rights Reserved.</p>
+      </div>
+      <div class="footer-links">
+        <h6>Về DBP Sports</h6>
+        <ul>
+          <li><a href="{% url 'home' %}">Trang chủ</a></li>
+          <li><a href="{% url 'tournaments_active' %}">Giải đấu</a></li>
+          <li><a href="{% url 'faq' %}">Hướng dẫn</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h6>Pháp lý</h6>
+        <ul>
+          <li><a href="{% url 'terms_of_service' %}">Điều khoản dịch vụ</a></li>
+          <li><a href="{% url 'privacy_policy' %}">Chính sách bảo mật</a></li>
+          <li><a href="{% url 'data_deletion' %}">Xóa dữ liệu</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h6>Theo dõi chúng tôi</h6>
+        <div class="social-icons">
+          <a href="https://www.facebook.com/Phuidienbien/" title="Facebook" target="_blank" rel="noopener"><i class="bi bi-facebook"></i></a>
+          <a href="https://www.youtube.com/@PhuiDienBien" title="YouTube" target="_blank" rel="noopener"><i class="bi bi-youtube"></i></a>
+          <a href="#" title="TikTok"><i class="bi bi-tiktok"></i></a>
         </div>
-        </div>
+      </div>
+    </div>
+  </div>
 </footer>
 
-{# VÙNG THÔNG BÁO TOAST #}
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+{# TOAST ZONE #}
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
   <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header">
       <strong class="me-auto">Thông báo</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Đóng"></button>
     </div>
     <div class="toast-body"></div>
   </div>
@@ -249,109 +255,50 @@
 
 <script>
   // --- BẮT ĐẦU KHỐI SCRIPT TỔNG HỢP ---
-
-  // Hàm tái sử dụng để hiển thị thông báo toast
-  function showToast(message, type = 'info') {
-      const toastTemplate = document.getElementById('toastTemplate');
-      const toastContainer = document.querySelector('.toast-container');
-      if (!toastTemplate || !toastContainer) {
-          console.error('Toast elements not found!');
-          alert(message); // Dùng alert() nếu không tìm thấy element
-          return;
-      }
-
-      const newToastEl = toastTemplate.cloneNode(true);
-      newToastEl.removeAttribute('id');
-      newToastEl.querySelector('.toast-body').innerHTML = message;
-
-      const header = newToastEl.querySelector('.toast-header');
-      header.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
-
-      if (type.includes('success')) {
-          header.classList.add('bg-success', 'text-white');
-      } else if (type.includes('error')) {
-          header.classList.add('bg-danger', 'text-white');
-      } else if (type.includes('warning')) {
-          header.classList.add('bg-warning', 'text-dark');
-      }
-
-      toastContainer.appendChild(newToastEl);
-      const newToast = new bootstrap.Toast(newToastEl, { delay: 5000 });
-      newToast.show();
-      newToastEl.addEventListener('hidden.bs.toast', () => newToastEl.remove());
+  function showToast(message, type='info'){
+    const toastTemplate=document.getElementById('toastTemplate');
+    const toastContainer=document.querySelector('.toast-container');
+    if(!toastTemplate||!toastContainer){console.error('Toast elements not found!');alert(message);return}
+    const el=toastTemplate.cloneNode(true);el.removeAttribute('id');el.querySelector('.toast-body').innerHTML=message;const header=el.querySelector('.toast-header');header.classList.remove('bg-success','bg-danger','bg-warning','text-white','text-dark');
+    if(type.includes('success')) header.classList.add('bg-success','text-white');
+    else if(type.includes('error')) header.classList.add('bg-danger','text-white');
+    else if(type.includes('warning')) header.classList.add('bg-warning','text-dark');
+    toastContainer.appendChild(el);const t=new bootstrap.Toast(el,{delay:5000});t.show();el.addEventListener('hidden.bs.toast',()=>el.remove());
   }
 
-  // Hàm nén ảnh
-  function attachImageCompression(form) {
-      if (!form || form.classList.contains('no-compress')) {
-          return;
-      }
-      const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
-      if (!inputFile) return;
-      form.addEventListener('submit', function(event) {
-          event.preventDefault();
-          const file = inputFile.files[0];
-          if (!file) {
-              form.submit();
-              return;
-          }
-          new Compressor(file, {
-              quality: 0.8, maxWidth: 1280, maxHeight: 1280,
-              success(result) {
-                  const dataTransfer = new DataTransfer();
-                  dataTransfer.items.add(new File([result], result.name, { type: result.type }));
-                  inputFile.files = dataTransfer.files;
-                  form.submit();
-              },
-              error(err) {
-                  console.error(err.message);
-                  form.submit();
-              },
-          });
-      });
+  function attachImageCompression(form){
+    if(!form||form.classList.contains('no-compress')) return;
+    const inputFile=form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
+    if(!inputFile) return;
+    form.addEventListener('submit',function(event){
+      event.preventDefault();
+      const file=inputFile.files[0];
+      if(!file){form.submit();return}
+      new Compressor(file,{quality:.8,maxWidth:1280,maxHeight:1280,success(result){
+        const dt=new DataTransfer();dt.items.add(new File([result],result.name,{type:result.type}));inputFile.files=dt.files;form.submit();},error(err){console.error(err.message);form.submit();}});
+    });
   }
 
-  // Hàm bật/tắt hiển thị mật khẩu
-  function setupPasswordToggle(buttonId, inputName) {
-      const toggleButton = document.getElementById(buttonId);
-      if (!toggleButton) return;
-      const passwordInput = document.querySelector(`input[name="${inputName}"]`);
-      if (!passwordInput) return;
-      toggleButton.addEventListener('click', function () {
-          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-          passwordInput.setAttribute('type', type);
-          const icon = this.querySelector('i');
-          icon.classList.toggle('bi-eye');
-          icon.classList.toggle('bi-eye-slash');
-      });
+  function setupPasswordToggle(buttonId,inputName){
+    const btn=document.getElementById(buttonId);if(!btn) return;const input=document.querySelector(`input[name="${inputName}"]`);if(!input) return;
+    btn.addEventListener('click',function(){const type=input.getAttribute('type')==='password'?'text':'password';input.setAttribute('type',type);const icon=this.querySelector('i');icon.classList.toggle('bi-eye');icon.classList.toggle('bi-eye-slash');});
   }
 
-  // Chạy các hàm cần thiết khi trang đã tải xong
-  document.addEventListener('DOMContentLoaded', function() {
-      // 1. Xử lý các message từ Django
-      {% if messages %}
-          {% for message in messages %}
-              // Dùng escapejs để truyền message an toàn vào hàm JavaScript
-              showToast('{{ message|escapejs }}', '{{ message.tags }}');
-          {% endfor %}
-      {% endif %}
-
-      // 2. Kích hoạt nén ảnh cho các form
-      document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
-
-      // 3. Kích hoạt nút xem mật khẩu
-      setupPasswordToggle('togglePassword', 'password');
-      setupPasswordToggle('togglePassword1', 'password1');
-      setupPasswordToggle('togglePassword2', 'password2');
-
-      // 4. Kích hoạt thư viện ảnh Fancybox
-      Fancybox.bind("[data-fancybox]", {});
+  document.addEventListener('DOMContentLoaded',function(){
+    {% if messages %}
+      {% for message in messages %}
+        showToast('{{ message|escapejs }}','{{ message.tags }}');
+      {% endfor %}
+    {% endif %}
+    document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
+    setupPasswordToggle('togglePassword','password');
+    setupPasswordToggle('togglePassword1','password1');
+    setupPasswordToggle('togglePassword2','password2');
+    Fancybox.bind('[data-fancybox]',{});
   });
   // --- KẾT THÚC KHỐI SCRIPT TỔNG HỢP ---
 </script>
 
-{# Dòng này để các template con có thể chèn thêm JS nếu cần #}
 {% block extra_js %}{% endblock %}
-
 </body>
 </html>
