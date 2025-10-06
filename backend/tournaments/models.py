@@ -114,6 +114,7 @@ class Team(models.Model):
     kit_away_color = ColorField(verbose_name="Màu áo sân khách", default='#1E293B')
     transfer_value = models.PositiveIntegerField("Giá trị đội bóng (VNĐ)", default=0, help_text="Giá trị nền của đội bóng, không bao gồm phiếu bầu.")
     votes = models.PositiveIntegerField("Số phiếu bình chọn", default=0)    
+    budget = models.BigIntegerField("Ngân sách (VNĐ)", default=50000000, help_text="Ngân sách dùng để thực hiện chuyển nhượng.")
 
     # Trường mới: liên kết tới nhiều giải đấu thông qua "Sổ Đăng Ký"
     tournaments = models.ManyToManyField(Tournament, through='TeamRegistration', related_name='teams_registered', blank=True)

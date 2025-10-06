@@ -2087,7 +2087,7 @@ def invite_player_view(request, player_pk, team_pk):
 
 # LOGIC CHUYỂN NHƯỢNG
 @login_required
-@require_POST # Chỉ cho phép truy cập bằng phương thức POST
+@require_POST
 def respond_to_transfer_view(request, transfer_pk):
     """
     Xử lý việc đội trưởng đồng ý hoặc từ chối một lời mời chuyển nhượng.
@@ -2098,7 +2098,7 @@ def respond_to_transfer_view(request, transfer_pk):
         ), 
         pk=transfer_pk
     )
-    
+
     if transfer.current_team.captain != request.user:
         messages.error(request, "Bạn không có quyền phản hồi lời mời này.")
         return redirect('dashboard')
@@ -2108,18 +2108,46 @@ def respond_to_transfer_view(request, transfer_pk):
     try:
         with transaction.atomic():
             if action == 'accept':
-                # ... (code cập nhật status, chuyển cầu thủ, hủy lời mời khác giữ nguyên) ...
+                player = transfer.player
+                inviting_team = transfer.inviting_team
+                current_team = transfer.current_team
+
+                # === BẮT ĐẦU LOGIC TÍNH TOÁN VÀ KIỂM TRA NGÂN SÁCH ===
+                market_value = player.transfer_value + (player.votes * get_current_vote_value())
+
+                if inviting_team.budget < market_value:
+                    messages.error(request, f"Không thể hoàn tất chuyển nhượng. Đội '{inviting_team.name}' không đủ ngân sách (cần {market_value:,.0f} VNĐ, chỉ có {inviting_team.budget:,.0f} VNĐ).")
+
+                    # Cập nhật trạng thái lời mời thành "Hủy" do không đủ tiền
+                    transfer.status = PlayerTransfer.Status.CANCELED
+                    transfer.save()
+
+                    # Gửi thông báo cho đội mời
+                    Notification.objects.create(
+                        user=inviting_team.captain,
+                        title="Chuyển nhượng thất bại do không đủ ngân sách",
+                        message=f"Lời mời của bạn cho cầu thủ '{player.full_name}' đã bị hủy do đội của bạn không đủ ngân sách."
+                    )
+                    return redirect(reverse('dashboard') + '?tab=transfers')
+
+                # Trừ tiền đội mua, cộng tiền cho đội bán
+                inviting_team.budget -= market_value
+                current_team.budget += market_value
+                inviting_team.save()
+                current_team.save()
+                # === KẾT THÚC LOGIC NGÂN SÁCH ===
+
                 transfer.status = PlayerTransfer.Status.ACCEPTED
                 transfer.save()
-                player = transfer.player
+
                 old_team_name = player.team.name
-                player.team = transfer.inviting_team
+                player.team = inviting_team
                 player.save()
+
                 PlayerTransfer.objects.filter(
                     player=player, status=PlayerTransfer.Status.PENDING
                 ).update(status=PlayerTransfer.Status.CANCELED)
 
-                # ... (code tạo Notification trong app giữ nguyên) ...
                 Notification.objects.create(
                     user=transfer.inviting_team.captain,
                     title="Lời mời chuyển nhượng được chấp nhận!",

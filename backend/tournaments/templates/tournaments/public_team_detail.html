@@ -81,6 +81,8 @@
             <h1 class="display-5 mb-0"><strong>{{ team.name }}</strong></h1>
             <h4 class="fw-light mb-2">Đội trưởng: {{ team.captain.get_full_name|default:team.captain.username }}</h4>
             
+            <h5 class="mt-2">Ngân sách: <span class="badge bg-success fs-6">{{ team.budget|vnd_format }}</span></h5>
+
             <div class="mt-3">
                 <div class="d-flex align-items-center gap-4 mt-2">
                     <div class="text-center">
