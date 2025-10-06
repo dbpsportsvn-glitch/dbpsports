@@ -2,7 +2,11 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    Đăng ký tham gia {{ tournament.name }}
+    {% if is_standalone %}
+        Tạo Đội bóng Mới
+    {% else %}
+        Đăng ký tham gia {{ tournament.name }}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -11,12 +15,20 @@
         <div class="card-header bg-primary text-white">
             <h3 class="mb-0">
                 <i class="bi bi-shield-check"></i>
-                Đăng ký tham gia giải đấu
+                {% if is_standalone %}
+                    Tạo Đội bóng của riêng bạn
+                {% else %}
+                    Đăng ký tham gia giải đấu
+                {% endif %}
             </h3>
         </div>
         <div class="card-body p-4">
-            <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
-            <hr class="my-4">
+            {% if tournament %}
+                <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+                <hr class="my-4">
+            {% else %}
+                 <p class="text-muted">Tạo một đội bóng tự do để quản lý cầu thủ và sẵn sàng tham gia các giải đấu trong tương lai.</p>
+            {% endif %}
 
             {% if existing_teams %}
                 <h5 class="mb-3">1. Đăng ký bằng đội đã có</h5>
@@ -40,7 +52,13 @@
                 <div class="text-center text-muted my-3">— hoặc —</div>
             {% endif %}
 
-            <h5 class="mb-3">2. Tạo một đội bóng hoàn toàn mới</h5>
+            <h5 class="mb-3">
+                {% if existing_teams %}
+                    2. Tạo một đội bóng hoàn toàn mới
+                {% else %}
+                    Điền thông tin đội bóng
+                {% endif %}
+            </h5>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
@@ -54,9 +72,18 @@
 
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-plus-circle-fill"></i> Tạo đội mới và Đăng ký
+                        <i class="bi bi-plus-circle-fill"></i> 
+                        {% if is_standalone %}
+                            Tạo đội
+                        {% else %}
+                            Tạo đội mới và Đăng ký
+                        {% endif %}
                     </button>
-                    <a href="{{ tournament.get_absolute_url }}" class="btn btn-secondary">Hủy bỏ</a>
+                    {% if tournament %}
+                        <a href="{{ tournament.get_absolute_url }}" class="btn btn-secondary">Hủy bỏ</a>
+                    {% else %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Quay lại</a>
+                    {% endif %}
                 </div>
             </form>
         </div>

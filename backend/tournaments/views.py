@@ -1614,9 +1614,11 @@ def create_standalone_team(request):
 
     context = {
         'form': form,
-        'is_standalone': True
+        'is_standalone': True,
+        'tournament': None, # Báo cho template biết đây là tạo đội tự do
     }
-    return render(request, 'tournaments/create_team.html', context)
+    # Sửa tên template ở đây
+    return render(request, 'tournaments/register_options.html', context)
 
 @login_required
 @never_cache
@@ -1844,21 +1846,11 @@ def public_team_detail(request, pk):
     ).select_related('tournament', 'team1', 'team2').order_by('-match_time')
 
     # Tính toán thống kê
-    stats = {
-        'played': matches_played.count(),
-        'wins': 0,
-        'draws': 0,
-        'losses': 0,
-        'goals_for': 0,
-        'goals_against': 0,
-    }
+    stats = {'played': matches_played.count(), 'wins': 0, 'draws': 0, 'losses': 0, 'goals_for': 0, 'goals_against': 0}
     for match in matches_played:
-        if match.winner == team:
-            stats['wins'] += 1
-        elif match.loser == team:
-            stats['losses'] += 1
-        else: # Hòa
-            stats['draws'] += 1
+        if match.winner == team: stats['wins'] += 1
+        elif match.loser == team: stats['losses'] += 1
+        else: stats['draws'] += 1
         
         if match.team1 == team:
             stats['goals_for'] += match.team1_score if match.team1_score is not None else 0
@@ -1867,18 +1859,45 @@ def public_team_detail(request, pk):
             stats['goals_for'] += match.team2_score if match.team2_score is not None else 0
             stats['goals_against'] += match.team1_score if match.team1_score is not None else 0
             
-    # Tính toán giá trị (tạm thời, sẽ mở rộng với logic vote sau)
-    total_value = team.transfer_value + (team.votes * 10000) # Giả sử 1 vote = 10,000 VNĐ
+    # --- BẮT ĐẦU LOGIC TÍNH GIÁ TRỊ NÂNG CẤP ---
+    
+    # Lấy hệ số nhân động từ hàm tiện ích
+    dynamic_multiplier = get_current_vote_value() / 5000 # Lấy hệ số gốc (ví dụ: 5000) làm mốc để có tỉ lệ nhân hợp lý
 
-    # === PHẦN CẬP NHẬT LOGIC ===
-    # Kiểm tra xem có thể bỏ phiếu không
+    # 1. Giá trị Nền (không đổi)
+    base_value = team.transfer_value
+
+    # 2. Giá trị Đội hình (không đổi)
+    squad_value = 0
+    players_in_team = Player.objects.filter(team=team)
+    for player in players_in_team:
+        squad_value += player.transfer_value + (player.votes * get_current_vote_value())
+
+    # 3. Thưởng Thành tích (nhân với hệ số)
+    achievement_bonus_base = 0
+    for achievement in achievements:
+        if achievement.achievement_type == 'CHAMPION': achievement_bonus_base += 2000000
+        elif achievement.achievement_type == 'RUNNER_UP': achievement_bonus_base += 1000000
+        elif achievement.achievement_type == 'THIRD_PLACE': achievement_bonus_base += 500000
+        else: achievement_bonus_base += 200000
+    achievement_bonus = achievement_bonus_base * dynamic_multiplier
+
+    # 4. Thưởng Phong độ (nhân với hệ số)
+    performance_bonus_base = (stats['wins'] - stats['losses']) * 50000
+    performance_bonus = performance_bonus_base * dynamic_multiplier
+
+    # 5. Giá trị Phiếu bầu của Đội (nhân với hệ số)
+    team_vote_value_base = team.votes * 20000
+    team_vote_value = team_vote_value_base * dynamic_multiplier
+
+    # Tổng giá trị
+    total_value = base_value + squad_value + achievement_bonus + performance_bonus + team_vote_value
+    
     can_vote = False
     if request.user.is_authenticated:
-        # Kiểm tra xem đội có đang tham gia giải nào đang diễn ra không
         is_in_active_tournament = registrations.filter(tournament__status='IN_PROGRESS').exists()
         if request.user != team.captain and is_in_active_tournament:
             can_vote = True
-    # ============================
 
     context = {
         'team': team,
@@ -1887,7 +1906,14 @@ def public_team_detail(request, pk):
         'matches_played': matches_played,
         'stats': stats,
         'total_value': total_value,
-        'can_vote': can_vote, # <-- Gửi biến mới này ra template
+        'can_vote': can_vote,
+        'value_breakdown': {
+            'base_value': base_value,
+            'squad_value': squad_value,
+            'achievement_bonus': achievement_bonus,
+            'performance_bonus': performance_bonus,
+            'team_vote_value': team_vote_value,
+        }
     }
     return render(request, 'tournaments/public_team_detail.html', context)  
 

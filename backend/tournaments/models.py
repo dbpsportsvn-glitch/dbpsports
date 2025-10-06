@@ -125,8 +125,16 @@ class Team(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        if self.logo: self.logo = self.compress_image(self.logo)
-        # Dòng payment_proof đã được chuyển sang TeamRegistration
+        from .utils import get_current_vote_value 
+        # Tự động tính toán giá trị nền khi tạo đội mới và giá trị chưa được đặt
+        if self._state.adding and self.transfer_value == 0:
+            # Giá trị nền = 10 lần giá trị 1 phiếu bầu của cầu thủ tại thời điểm hiện tại
+            self.transfer_value = get_current_vote_value() * 10
+
+        # Giữ nguyên logic nén ảnh
+        if self.logo:
+            self.logo = self.compress_image(self.logo)
+        
         super().save(*args, **kwargs)
 
     def compress_image(self, image_field):

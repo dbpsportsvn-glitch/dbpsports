@@ -62,11 +62,24 @@
             <h4 class="fw-light mb-2">Đội trưởng: {{ team.captain.get_full_name|default:team.captain.username }}</h4>
         </div>
         <div class="ms-auto text-end">
-            <h5 class="fw-light mb-0">Giá trị Đội bóng</h5>
+            <h5 class="fw-light mb-0">Giá trị Đội bóng
+                <i class="bi bi-info-circle-fill"
+                data-bs-toggle="popover"
+                data-bs-trigger="hover"
+                title="Chi tiết Giá trị Đội bóng"
+                data-bs-html="true"
+                data-bs-content="
+                    Giá trị Nền: {{ value_breakdown.base_value|vnd_format }} <br>
+                    Giá trị Đội hình: {{ value_breakdown.squad_value|vnd_format }} <br>
+                    Thưởng Thành tích: {{ value_breakdown.achievement_bonus|vnd_format }} <br>
+                    Thưởng Phong độ: {{ value_breakdown.performance_bonus|vnd_format }} <br>
+                    Giá trị Phiếu bầu: {{ value_breakdown.team_vote_value|vnd_format }}
+                "></i>
+            </h5>
             <h2 class="display-4 text-warning">
                 {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-4">Chưa định giá</span>{% endif %}
             </h2>
-            
+
             <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
                 <span id="vote-badge" class="badge bg-primary rounded-pill fs-6">
                     <i class="bi bi-hand-thumbs-up-fill"></i>
@@ -217,6 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
             voteButton.innerHTML = `<i class="bi bi-plus-circle"></i> Bỏ phiếu`;
         });
     });
+    // === THÊM ĐOẠN NÀY VÀO ĐỂ KÍCH HOẠT POP-UP ===
+    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+    [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+    // ===========================================
 });
 </script>
 {% endblock %}
