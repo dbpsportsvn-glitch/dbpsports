@@ -30,7 +30,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from services.weather import get_weather_for_match
 from organizations.forms import GoalForm, CardForm, SubstitutionForm, MatchMediaUpdateForm
-from .utils import get_current_vote_value
+from .utils import get_current_vote_value, send_notification_email
 from .models import TournamentStaff
 from organizations.views import user_can_control_match, user_can_upload_gallery
 from organizations.forms import MatchUpdateForm
@@ -2043,24 +2043,38 @@ def invite_player_view(request, player_pk, team_pk):
                 status=PlayerTransfer.Status.PENDING
             )
 
-            # Gửi thông báo đến đội trưởng của đội hiện tại
+            # Lấy thông tin đội trưởng của đội bị mời
             captain_to_notify = target_player.team.captain
-            notification_title = "Bạn có lời mời chuyển nhượng mới"
-            notification_message = (
-                f"Đội '{inviting_team.name}' đã gửi lời mời chuyển nhượng cho cầu thủ "
-                f"'{target_player.full_name}' của bạn."
-            )
-            # Tạm thời chưa có trang quản lý lời mời nên để link về dashboard
-            notification_url = reverse('dashboard')
+            
+            # Cập nhật URL thông báo trong app để trỏ thẳng đến tab chuyển nhượng
+            notification_url = request.build_absolute_uri(reverse('dashboard') + '?tab=transfers')
 
+            # Gửi thông báo trong app (in-app notification)
             Notification.objects.create(
                 user=captain_to_notify,
-                title=notification_title,
-                message=notification_message,
-                notification_type=Notification.NotificationType.GENERIC, # Sẽ tạo loại mới sau
+                title="Bạn có lời mời chuyển nhượng mới",
+                message=(
+                    f"Đội '{inviting_team.name}' đã gửi lời mời chuyển nhượng cho cầu thủ "
+                    f"'{target_player.full_name}' của bạn."
+                ),
+                notification_type=Notification.NotificationType.GENERIC,
                 related_url=notification_url
             )
-        
+
+            # === BẮT ĐẦU THÊM MỚI: GỬI EMAIL THÔNG BÁO ===
+            if captain_to_notify.email:
+                send_notification_email(
+                    subject=f"[DBP Sports] Lời mời chuyển nhượng cho cầu thủ {target_player.full_name}",
+                    template_name='organizations/emails/new_transfer_invitation.html',
+                    context={
+                        'inviting_team': inviting_team,
+                        'current_team': target_player.team,
+                        'player': target_player
+                    },
+                    recipient_list=[captain_to_notify.email],
+                    request=request
+                )        
+
         messages.success(request, f"Đã gửi lời mời chuyển nhượng đến cầu thủ {target_player.full_name} thành công!")
     
     except Exception as e:
@@ -2083,7 +2097,6 @@ def respond_to_transfer_view(request, transfer_pk):
         pk=transfer_pk
     )
     
-    # 1. Kiểm tra quyền hạn: Chỉ đội trưởng của đội hiện tại mới có quyền phản hồi
     if transfer.current_team.captain != request.user:
         messages.error(request, "Bạn không có quyền phản hồi lời mời này.")
         return redirect('dashboard')
@@ -2093,49 +2106,72 @@ def respond_to_transfer_view(request, transfer_pk):
     try:
         with transaction.atomic():
             if action == 'accept':
-                # Cập nhật trạng thái lời mời
+                # ... (code cập nhật status, chuyển cầu thủ, hủy lời mời khác giữ nguyên) ...
                 transfer.status = PlayerTransfer.Status.ACCEPTED
                 transfer.save()
-
-                # Chuyển cầu thủ sang đội mới
                 player = transfer.player
                 old_team_name = player.team.name
                 player.team = transfer.inviting_team
                 player.save()
-
-                # Hủy tất cả các lời mời đang chờ khác cho cầu thủ này
                 PlayerTransfer.objects.filter(
                     player=player, status=PlayerTransfer.Status.PENDING
                 ).update(status=PlayerTransfer.Status.CANCELED)
 
-                # Gửi thông báo cho đội trưởng đội đã mời
+                # ... (code tạo Notification trong app giữ nguyên) ...
                 Notification.objects.create(
                     user=transfer.inviting_team.captain,
                     title="Lời mời chuyển nhượng được chấp nhận!",
                     message=f"Đội '{transfer.current_team.name}' đã đồng ý cho cầu thủ '{player.full_name}' chuyển sang đội của bạn."
                 )
-                
-                # Gửi thông báo cho chính cầu thủ (nếu họ có tài khoản)
                 if player.user:
                     Notification.objects.create(
                         user=player.user,
                         title="Bạn đã được chuyển sang đội mới!",
                         message=f"Bạn đã chính thức chuyển từ đội '{old_team_name}' sang đội '{transfer.inviting_team.name}'."
                     )
+                
+                # === BẮT ĐẦU THÊM MỚI: GỬI EMAIL CHẤP NHẬN ===
+                if transfer.inviting_team.captain.email:
+                    send_notification_email(
+                        subject=f"[DBP Sports] Lời mời chuyển nhượng cho {player.full_name} được chấp nhận",
+                        template_name='organizations/emails/transfer_accepted_notification.html',
+                        context={
+                            'inviting_team': transfer.inviting_team,
+                            'current_team': transfer.current_team,
+                            'player': player
+                        },
+                        recipient_list=[transfer.inviting_team.captain.email],
+                        request=request
+                    )
+                # === KẾT THÚC THÊM MỚI ===
 
                 messages.success(request, f"Đã đồng ý chuyển nhượng cầu thủ {player.full_name} sang đội {transfer.inviting_team.name}.")
 
             elif action == 'reject':
-                # Cập nhật trạng thái lời mời
+                # ... (code cập nhật status và tạo Notification trong app giữ nguyên) ...
                 transfer.status = PlayerTransfer.Status.REJECTED
                 transfer.save()
-
-                # Gửi thông báo cho đội trưởng đội đã mời
                 Notification.objects.create(
                     user=transfer.inviting_team.captain,
                     title="Lời mời chuyển nhượng bị từ chối",
                     message=f"Đội '{transfer.current_team.name}' đã từ chối lời mời chuyển nhượng cho cầu thủ '{transfer.player.full_name}'."
                 )
+
+                # === BẮT ĐẦU THÊM MỚI: GỬI EMAIL TỪ CHỐI ===
+                if transfer.inviting_team.captain.email:
+                    send_notification_email(
+                        subject=f"[DBP Sports] Lời mời chuyển nhượng cho {transfer.player.full_name} bị từ chối",
+                        template_name='organizations/emails/transfer_rejected_notification.html',
+                        context={
+                            'inviting_team': transfer.inviting_team,
+                            'current_team': transfer.current_team,
+                            'player': transfer.player
+                        },
+                        recipient_list=[transfer.inviting_team.captain.email],
+                        request=request
+                    )
+                # === KẾT THÚC THÊM MỚI ===
+                
                 messages.info(request, "Bạn đã từ chối lời mời chuyển nhượng.")
             
             else:
