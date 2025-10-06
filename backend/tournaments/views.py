@@ -2241,6 +2241,9 @@ def transfer_market_view(request):
         market_value=F('transfer_value') + (F('votes') * Value(current_vote_value))
     )
 
+    # Lấy 5 cầu thủ có giá trị thị trường cao nhất để làm bảng xếp hạng
+    top_players = players_qs.order_by('-market_value')[:5]
+
     # Lấy các tham số lọc từ URL
     position_filter = request.GET.get('position', '')
     team_filter = request.GET.get('team', '')
@@ -2281,6 +2284,7 @@ def transfer_market_view(request):
             'sort': sort_by,
         },
         'captained_teams': captained_teams,
+        'top_players': top_players,
     }
     return render(request, 'tournaments/transfer_market.html', context)
 
