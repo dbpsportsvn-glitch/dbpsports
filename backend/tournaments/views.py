@@ -2066,4 +2066,82 @@ def invite_player_view(request, player_pk, team_pk):
     except Exception as e:
         messages.error(request, f"Đã có lỗi xảy ra: {e}")
 
-    return redirect('team_detail', pk=inviting_team.pk)        
+    return redirect('team_detail', pk=inviting_team.pk)       
+
+
+# LOGIC CHUYỂN NHƯỢNG
+@login_required
+@require_POST # Chỉ cho phép truy cập bằng phương thức POST
+def respond_to_transfer_view(request, transfer_pk):
+    """
+    Xử lý việc đội trưởng đồng ý hoặc từ chối một lời mời chuyển nhượng.
+    """
+    transfer = get_object_or_404(
+        PlayerTransfer.objects.select_related(
+            'player', 'inviting_team__captain', 'current_team__captain'
+        ), 
+        pk=transfer_pk
+    )
+    
+    # 1. Kiểm tra quyền hạn: Chỉ đội trưởng của đội hiện tại mới có quyền phản hồi
+    if transfer.current_team.captain != request.user:
+        messages.error(request, "Bạn không có quyền phản hồi lời mời này.")
+        return redirect('dashboard')
+
+    action = request.POST.get('action')
+
+    try:
+        with transaction.atomic():
+            if action == 'accept':
+                # Cập nhật trạng thái lời mời
+                transfer.status = PlayerTransfer.Status.ACCEPTED
+                transfer.save()
+
+                # Chuyển cầu thủ sang đội mới
+                player = transfer.player
+                old_team_name = player.team.name
+                player.team = transfer.inviting_team
+                player.save()
+
+                # Hủy tất cả các lời mời đang chờ khác cho cầu thủ này
+                PlayerTransfer.objects.filter(
+                    player=player, status=PlayerTransfer.Status.PENDING
+                ).update(status=PlayerTransfer.Status.CANCELED)
+
+                # Gửi thông báo cho đội trưởng đội đã mời
+                Notification.objects.create(
+                    user=transfer.inviting_team.captain,
+                    title="Lời mời chuyển nhượng được chấp nhận!",
+                    message=f"Đội '{transfer.current_team.name}' đã đồng ý cho cầu thủ '{player.full_name}' chuyển sang đội của bạn."
+                )
+                
+                # Gửi thông báo cho chính cầu thủ (nếu họ có tài khoản)
+                if player.user:
+                    Notification.objects.create(
+                        user=player.user,
+                        title="Bạn đã được chuyển sang đội mới!",
+                        message=f"Bạn đã chính thức chuyển từ đội '{old_team_name}' sang đội '{transfer.inviting_team.name}'."
+                    )
+
+                messages.success(request, f"Đã đồng ý chuyển nhượng cầu thủ {player.full_name} sang đội {transfer.inviting_team.name}.")
+
+            elif action == 'reject':
+                # Cập nhật trạng thái lời mời
+                transfer.status = PlayerTransfer.Status.REJECTED
+                transfer.save()
+
+                # Gửi thông báo cho đội trưởng đội đã mời
+                Notification.objects.create(
+                    user=transfer.inviting_team.captain,
+                    title="Lời mời chuyển nhượng bị từ chối",
+                    message=f"Đội '{transfer.current_team.name}' đã từ chối lời mời chuyển nhượng cho cầu thủ '{transfer.player.full_name}'."
+                )
+                messages.info(request, "Bạn đã từ chối lời mời chuyển nhượng.")
+            
+            else:
+                messages.error(request, "Hành động không hợp lệ.")
+
+    except Exception as e:
+        messages.error(request, f"Đã có lỗi xảy ra trong quá trình xử lý: {e}")
+
+    return redirect(reverse('dashboard') + '?tab=transfers')     

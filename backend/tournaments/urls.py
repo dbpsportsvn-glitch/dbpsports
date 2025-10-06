@@ -60,6 +60,7 @@ urlpatterns = [
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),
     path('team/<int:team_pk>/add_free_agent/<int:player_pk>/', views.add_free_agent, name='add_free_agent'),
     path('player/<int:player_pk>/invite_from/<int:team_pk>/', views.invite_player_view, name='invite_player'),
+    path('transfers/<int:transfer_pk>/respond/', views.respond_to_transfer_view, name='respond_to_transfer'),
 
     # --- URL liên quan đến Trận đấu (Match) ---
     path('match/<int:pk>/', views.match_detail, name='match_detail'),

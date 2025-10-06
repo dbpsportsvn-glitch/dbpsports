@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
-from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff 
+from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
@@ -113,6 +113,16 @@ def dashboard(request):
     managed_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id='TOURNAMENT_MANAGER').distinct().order_by('-start_date')
     media_tournaments = Tournament.objects.filter(staff__user=request.user, staff__role__id__in=['MEDIA', 'PHOTOGRAPHER']).distinct().order_by('-start_date')
 
+    # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
+    # 2. Lấy danh sách lời mời
+    incoming_transfers = PlayerTransfer.objects.filter(
+        current_team__in=managed_teams, status='PENDING'
+    ).select_related('inviting_team', 'player')
+
+    outgoing_transfers = PlayerTransfer.objects.filter(
+        inviting_team__in=managed_teams
+    ).select_related('current_team', 'player').order_by('-created_at')
+
     context = {
         'user_form': user_form,
         'password_form': password_form,
@@ -129,9 +139,11 @@ def dashboard(request):
         'player_profile_form': player_profile_form,
         'can_edit_player_profile': can_edit_player_profile,
         'remaining_edits': remaining_edits,
+        # 3. Thêm vào context để gửi ra template
+        'incoming_transfers': incoming_transfers,
+        'outgoing_transfers': outgoing_transfers,
     }
     return render(request, 'users/dashboard.html', context)
-
 
 @login_required
 def select_roles_view(request):
