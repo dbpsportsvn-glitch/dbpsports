@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Đăng ký tham gia {{ tournament.name }}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-shield-check"></i>
+                Đăng ký tham gia giải đấu
+            </h3>
+        </div>
+        <div class="card-body p-4">
+            <p class="lead">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+            <hr class="my-4">
+
+            {% if existing_teams %}
+                <h5 class="mb-3">1. Đăng ký bằng đội đã có</h5>
+                <p class="text-muted small">Chọn một trong các đội bạn đang quản lý để đăng ký tham gia giải đấu này.</p>
+                <div class="list-group mb-4">
+                    {% for team in existing_teams %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3">
+                                {% if team.logo %}
+                                    <img src="{{ team.logo.url }}" alt="{{ team.name }}" style="width: 40px; height: 40px; object-fit: contain;">
+                                {% endif %}
+                                <strong>{{ team.name }}</strong>
+                            </div>
+                            <form method="POST" action="{% url 'register_existing_team' tournament_pk=tournament.pk team_pk=team.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Đăng ký đội này</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center text-muted my-3">— hoặc —</div>
+            {% endif %}
+
+            <h5 class="mb-3">2. Tạo một đội bóng hoàn toàn mới</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors|join:", " }}
+                    </div>
+                {% endif %}
+
+                {{ form|crispy }}
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle-fill"></i> Tạo đội mới và Đăng ký
+                    </button>
+                    <a href="{{ tournament.get_absolute_url }}" class="btn btn-secondary">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

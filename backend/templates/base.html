@@ -311,7 +311,7 @@
       {% for message in messages %}
         const newToastEl = toastTemplate.cloneNode(true);
         newToastEl.removeAttribute('id');
-        newToastEl.querySelector('.toast-body').textContent = '{{ message }}';
+        newToastEl.querySelector('.toast-body').innerHTML = `{{ message|safe }}`;
         const header = newToastEl.querySelector('.toast-header');
         if ('{{ message.tags }}'.includes('success')) {
             header.classList.add('bg-success', 'text-white');

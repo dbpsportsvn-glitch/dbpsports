@@ -435,7 +435,12 @@ def team_detail(request, pk):
 @never_cache
 def create_team(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
+
+    # Lấy danh sách các đội mà người dùng làm đội trưởng và CHƯA đăng ký vào giải này
+    existing_teams = Team.objects.filter(captain=request.user).exclude(registrations__tournament=tournament)
+
     if request.method == 'POST':
+        # Xử lý khi người dùng nhấn nút "Tạo đội mới"
         form = TeamCreationForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             try:
@@ -443,17 +448,26 @@ def create_team(request, tournament_pk):
                     team = form.save(commit=False)
                     team.captain = request.user
                     team.save()
+                    # Ngay lập tức tạo một bản ghi đăng ký cho đội mới này
                     TeamRegistration.objects.create(team=team, tournament=tournament)
 
-                messages.success(request, "Tạo và đăng ký đội thành công!")
+                messages.success(request, f"Đã tạo và đăng ký thành công đội '{team.name}'!")
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
-                 form.add_error('name', "Tên đội này đã tồn tại trong giải đấu. Vui lòng chọn một tên khác.")
+                 # Lỗi này xảy ra nếu tên đội đã tồn tại (do constraint trong model)
+                 form.add_error('name', "Bạn đã có một đội với tên này. Vui lòng chọn một tên khác.")
     else:
+        # Khi trang được tải lần đầu (GET request)
         form = TeamCreationForm(user=request.user)
 
-    context = { 'form': form, 'tournament': tournament }
-    return render(request, 'tournaments/create_team.html', context)
+    context = {
+        'form': form,
+        'tournament': tournament,
+        'existing_teams': existing_teams, # Gửi danh sách các đội đã có ra template
+        'is_registration_page': True # Một biến cờ để template biết đây là trang đăng ký tổng hợp
+    }
+    # Sửa lại để trỏ đến một template mới mà chúng ta sẽ tạo ở bước sau
+    return render(request, 'tournaments/register_options.html', context)
 
 @login_required
 @never_cache
