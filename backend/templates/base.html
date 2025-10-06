@@ -231,7 +231,7 @@
 </footer>
 
 {# VÙNG THÔNG BÁO TOAST #}
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
   <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header">
       <strong class="me-auto">Thông báo</strong>
@@ -244,98 +244,111 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressor.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
 <script>
-  (function(){
-    function attachImageCompression(form) {
-        if (!form || form.classList.contains('no-compress')) {
-            return;
-        }
+  // --- BẮT ĐẦU KHỐI SCRIPT TỔNG HỢP ---
 
-        const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
-        if (!inputFile) return;
+  // Hàm tái sử dụng để hiển thị thông báo toast
+  function showToast(message, type = 'info') {
+      const toastTemplate = document.getElementById('toastTemplate');
+      const toastContainer = document.querySelector('.toast-container');
+      if (!toastTemplate || !toastContainer) {
+          console.error('Toast elements not found!');
+          alert(message); // Dùng alert() nếu không tìm thấy element
+          return;
+      }
 
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const file = inputFile.files[0];
-            if (!file) {
-                form.submit();
-                return;
-            }
-            new Compressor(file, {
-                quality: 0.8, maxWidth: 1280, maxHeight: 1280,
-                success(result) {
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(new File([result], result.name, { type: result.type }));
-                    inputFile.files = dataTransfer.files;
-                    form.submit();
-                },
-                error(err) {
-                    console.error(err.message);
-                    form.submit();
-                },
-            });
-        });
-    }
+      const newToastEl = toastTemplate.cloneNode(true);
+      newToastEl.removeAttribute('id');
+      newToastEl.querySelector('.toast-body').innerHTML = message;
 
-    document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
+      const header = newToastEl.querySelector('.toast-header');
+      header.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'text-white', 'text-dark');
 
-  function setupPasswordToggle(buttonId, inputName) {
-    const toggleButton = document.getElementById(buttonId);
-    if (!toggleButton) return;
-    const passwordInput = document.querySelector(`input[name="${inputName}"]`);
-    if (!passwordInput) return;
-    toggleButton.addEventListener('click', function () {
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
-      const icon = this.querySelector('i');
-      icon.classList.toggle('bi-eye');
-      icon.classList.toggle('bi-eye-slash');
-    });
+      if (type.includes('success')) {
+          header.classList.add('bg-success', 'text-white');
+      } else if (type.includes('error')) {
+          header.classList.add('bg-danger', 'text-white');
+      } else if (type.includes('warning')) {
+          header.classList.add('bg-warning', 'text-dark');
+      }
+
+      toastContainer.appendChild(newToastEl);
+      const newToast = new bootstrap.Toast(newToastEl, { delay: 5000 });
+      newToast.show();
+      newToastEl.addEventListener('hidden.bs.toast', () => newToastEl.remove());
   }
 
+  // Hàm nén ảnh
+  function attachImageCompression(form) {
+      if (!form || form.classList.contains('no-compress')) {
+          return;
+      }
+      const inputFile = form.querySelector('input[type="file"][name="logo"], input[type="file"][name="avatar"], input[type="file"][name="payment_proof"]');
+      if (!inputFile) return;
+      form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          const file = inputFile.files[0];
+          if (!file) {
+              form.submit();
+              return;
+          }
+          new Compressor(file, {
+              quality: 0.8, maxWidth: 1280, maxHeight: 1280,
+              success(result) {
+                  const dataTransfer = new DataTransfer();
+                  dataTransfer.items.add(new File([result], result.name, { type: result.type }));
+                  inputFile.files = dataTransfer.files;
+                  form.submit();
+              },
+              error(err) {
+                  console.error(err.message);
+                  form.submit();
+              },
+          });
+      });
+  }
+
+  // Hàm bật/tắt hiển thị mật khẩu
+  function setupPasswordToggle(buttonId, inputName) {
+      const toggleButton = document.getElementById(buttonId);
+      if (!toggleButton) return;
+      const passwordInput = document.querySelector(`input[name="${inputName}"]`);
+      if (!passwordInput) return;
+      toggleButton.addEventListener('click', function () {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          const icon = this.querySelector('i');
+          icon.classList.toggle('bi-eye');
+          icon.classList.toggle('bi-eye-slash');
+      });
+  }
+
+  // Chạy các hàm cần thiết khi trang đã tải xong
   document.addEventListener('DOMContentLoaded', function() {
-    setupPasswordToggle('togglePassword', 'password');
-    setupPasswordToggle('togglePassword1', 'password1');
-    setupPasswordToggle('togglePassword2', 'password2');
-  });
+      // 1. Xử lý các message từ Django
+      {% if messages %}
+          {% for message in messages %}
+              // Dùng escapejs để truyền message an toàn vào hàm JavaScript
+              showToast('{{ message|escapejs }}', '{{ message.tags }}');
+          {% endfor %}
+      {% endif %}
 
-  })();
-</script>
+      // 2. Kích hoạt nén ảnh cho các form
+      document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(attachImageCompression);
 
-{% if messages %}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const toastTemplate = document.getElementById('toastTemplate');
-    const toastContainer = document.querySelector('.toast-container');
-    if (toastTemplate && toastContainer) {
-      {% for message in messages %}
-        const newToastEl = toastTemplate.cloneNode(true);
-        newToastEl.removeAttribute('id');
-        newToastEl.querySelector('.toast-body').innerHTML = `{{ message|safe }}`;
-        const header = newToastEl.querySelector('.toast-header');
-        if ('{{ message.tags }}'.includes('success')) {
-            header.classList.add('bg-success', 'text-white');
-        } else if ('{{ message.tags }}'.includes('error')) {
-            header.classList.add('bg-danger', 'text-white');
-        } else if ('{{ message.tags }}'.includes('warning')) {
-            header.classList.add('bg-warning', 'text-dark');
-        }
-        toastContainer.appendChild(newToastEl);
-        const newToast = new bootstrap.Toast(newToastEl);
-        newToast.show();
-      {% endfor %}
-    }
-  });
-</script>
-{% endif %}
+      // 3. Kích hoạt nút xem mật khẩu
+      setupPasswordToggle('togglePassword', 'password');
+      setupPasswordToggle('togglePassword1', 'password1');
+      setupPasswordToggle('togglePassword2', 'password2');
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
+      // 4. Kích hoạt thư viện ảnh Fancybox
       Fancybox.bind("[data-fancybox]", {});
-    });
-  </script>
+  });
+  // --- KẾT THÚC KHỐI SCRIPT TỔNG HỢP ---
+</script>
 
-{# === DÒNG QUAN TRỌNG CẦN THÊM VÀO ĐÂY === #}
+{# Dòng này để các template con có thể chèn thêm JS nếu cần #}
 {% block extra_js %}{% endblock %}
 
 </body>

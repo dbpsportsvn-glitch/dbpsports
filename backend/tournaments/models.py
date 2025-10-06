@@ -652,3 +652,21 @@ class TeamRegistration(models.Model):
             temp_team_instance = Team()
             self.payment_proof = temp_team_instance.compress_image(self.payment_proof)
         super().save(*args, **kwargs)        
+
+class TeamVoteRecord(models.Model):
+    """Lưu lại lịch sử một lượt bỏ phiếu cho ĐỘI BÓNG."""
+    voter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='team_votes_cast', verbose_name="Người bỏ phiếu")
+    voted_for = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='votes_received', verbose_name="Đội được vote")
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Giải đấu")
+    weight = models.PositiveIntegerField("Số phiếu", default=1)
+    voted_at = models.DateTimeField("Thời gian vote", auto_now_add=True)
+
+    class Meta:
+        # Mỗi người chỉ được bầu cho 1 đội trong 1 giải đấu
+        unique_together = ('voter', 'voted_for', 'tournament')
+        ordering = ['-voted_at']
+        verbose_name = "Phiếu bầu cho Đội"
+        verbose_name_plural = "Các phiếu bầu cho Đội"
+
+    def __str__(self):
+        return f"{self.voter.username} voted for {self.voted_for.name} in {self.tournament.name}"        

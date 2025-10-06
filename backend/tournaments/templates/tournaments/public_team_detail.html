@@ -66,10 +66,23 @@
             <h2 class="display-4 text-warning">
                 {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-4">Chưa định giá</span>{% endif %}
             </h2>
-            <span class="badge bg-primary rounded-pill fs-6">
-                <i class="bi bi-hand-thumbs-up-fill"></i>
-                <span>{{ team.votes }} Phiếu</span>
-            </span>
+            
+            <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
+                <span id="vote-badge" class="badge bg-primary rounded-pill fs-6">
+                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                    <span id="vote-count">{{ team.votes }}</span>
+                    <span>Phiếu</span>
+                </span>
+
+                {% if can_vote %}
+                <form id="vote-form" action="{% url 'cast_team_vote' team_pk=team.pk %}" method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" id="vote-button" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> Bỏ phiếu
+                    </button>
+                </form>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -143,4 +156,67 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const voteForm = document.getElementById('vote-form');
+    if (!voteForm) return;
+
+    voteForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const form = this;
+        const url = form.action;
+        const voteButton = document.getElementById('vote-button');
+        const voteCountSpan = document.getElementById('vote-count');
+        const voteBadge = document.getElementById('vote-badge');
+
+        if (!confirm('Bạn có chắc chắn muốn dùng phiếu bầu của mình cho đội này không?')) {
+            return;
+        }
+
+        voteButton.disabled = true;
+        voteButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Vui lòng chờ...`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message || 'Lỗi không xác định từ máy chủ'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Cập nhật giao diện khi thành công
+                voteCountSpan.textContent = data.new_vote_count;
+                voteBadge.classList.remove('bg-primary');
+                voteBadge.classList.add('bg-success');
+                
+                // Hiển thị thông báo toast thành công
+                showToast(data.message, 'success');
+
+                // Xóa luôn form và nút bấm để người dùng không thể bấm lại
+                form.remove();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Hiển thị thông báo toast lỗi
+            showToast('Lỗi: ' + error.message, 'error');
+            
+            // Kích hoạt lại nút để người dùng có thể thử lại
+            voteButton.disabled = false;
+            voteButton.innerHTML = `<i class="bi bi-plus-circle"></i> Bỏ phiếu`;
+        });
+    });
+});
+</script>
 {% endblock %}

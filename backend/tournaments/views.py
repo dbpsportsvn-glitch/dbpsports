@@ -46,7 +46,7 @@ from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
                     PlayerCreationForm, ScheduleGenerationForm,
                     TeamCreationForm)
 from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration)
+                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord)
 from .utils import send_notification_email, send_schedule_notification
 from django.db.models import Sum, F
 from django.contrib.auth.models import User
@@ -1870,6 +1870,16 @@ def public_team_detail(request, pk):
     # Tính toán giá trị (tạm thời, sẽ mở rộng với logic vote sau)
     total_value = team.transfer_value + (team.votes * 10000) # Giả sử 1 vote = 10,000 VNĐ
 
+    # === PHẦN CẬP NHẬT LOGIC ===
+    # Kiểm tra xem có thể bỏ phiếu không
+    can_vote = False
+    if request.user.is_authenticated:
+        # Kiểm tra xem đội có đang tham gia giải nào đang diễn ra không
+        is_in_active_tournament = registrations.filter(tournament__status='IN_PROGRESS').exists()
+        if request.user != team.captain and is_in_active_tournament:
+            can_vote = True
+    # ============================
+
     context = {
         'team': team,
         'registrations': registrations,
@@ -1877,5 +1887,49 @@ def public_team_detail(request, pk):
         'matches_played': matches_played,
         'stats': stats,
         'total_value': total_value,
+        'can_vote': can_vote, # <-- Gửi biến mới này ra template
     }
-    return render(request, 'tournaments/public_team_detail.html', context)    
+    return render(request, 'tournaments/public_team_detail.html', context)  
+
+@login_required
+@require_POST
+def cast_team_vote_view(request, team_pk):
+    team_to_vote = get_object_or_404(Team, pk=team_pk)
+
+    # Tìm một giải đấu mà đội này đang tham gia và còn đang diễn ra
+    active_registration = TeamRegistration.objects.filter(
+        team=team_to_vote, 
+        tournament__status='IN_PROGRESS'
+    ).first()
+
+    if not active_registration:
+        return JsonResponse({'status': 'error', 'message': 'Không thể bỏ phiếu cho đội không tham gia giải đấu nào đang diễn ra.'}, status=400)
+
+    tournament = active_registration.tournament
+    user = request.user
+
+    # Logic kiểm tra quyền và số phiếu còn lại (tương tự player)
+    max_votes = 1 # Tạm thời cho mỗi người 1 phiếu/đội/giải
+    votes_cast_count = TeamVoteRecord.objects.filter(voter=user, tournament=tournament).count()
+
+    if votes_cast_count >= max_votes:
+        return JsonResponse({'status': 'error', 'message': 'Bạn đã hết phiếu bầu cho các đội trong giải đấu này.'}, status=403)
+    if team_to_vote.captain == user:
+        return JsonResponse({'status': 'error', 'message': 'Bạn không thể tự bỏ phiếu cho đội của mình.'}, status=403)
+    if TeamVoteRecord.objects.filter(voter=user, voted_for=team_to_vote, tournament=tournament).exists():
+        return JsonResponse({'status': 'error', 'message': f"Bạn đã bỏ phiếu cho đội {team_to_vote.name} trước đó rồi."}, status=403)
+
+    try:
+        with transaction.atomic():
+            TeamVoteRecord.objects.create(voter=user, voted_for=team_to_vote, tournament=tournament, weight=1)
+            team_to_vote.votes = F('votes') + 1
+            team_to_vote.save()
+            team_to_vote.refresh_from_db(fields=['votes'])
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Bạn đã bỏ phiếu thành công cho {team_to_vote.name}!',
+            'new_vote_count': team_to_vote.votes,
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Đã có lỗi xảy ra ở server: {e}'}, status=500)    
