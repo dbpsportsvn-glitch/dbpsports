@@ -13,6 +13,7 @@ from organizations.models import JobPosting, JobApplication
 from organizations.forms import JobApplicationForm
 from django.db.models import F, Value
 from .forms import PlayerTransferForm
+from .models import Sponsorship, SponsorClick
 
 # Django Core
 from django.conf import settings
@@ -169,7 +170,8 @@ def tournament_detail(request, pk):
             Prefetch('groups', queryset=Group.objects.order_by('name').prefetch_related(
                 Prefetch('registrations__team', queryset=Team.objects.select_related('captain'))
             )),
-            'photos'
+            'photos',  # <<-- SỬA LỖI Ở ĐÂY
+            'sponsorships__sponsor__profile'  # <<-- SỬA LỖI Ở ĐÂY
         ),
         pk=pk
     )
@@ -357,6 +359,7 @@ def tournament_detail(request, pk):
         'team_goal_stats': team_goal_stats,
         'team_card_stats': team_card_stats,
         'matches_with_galleries': matches_with_galleries,
+        'sponsorships': tournament.sponsorships.filter(is_active=True),
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
@@ -2363,3 +2366,18 @@ def toggle_looking_for_club_view(request):
         messages.error(request, f"Đã có lỗi xảy ra: {e}")
 
     return redirect(reverse('dashboard') + '?tab=player-profile')    
+
+
+# Ghi lại thông tin lượt click baner tài trợ
+def record_sponsor_click_view(request, pk):
+    sponsorship = get_object_or_404(Sponsorship, pk=pk)
+
+    # Ghi lại thông tin lượt click
+    SponsorClick.objects.create(
+        sponsorship=sponsorship,
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT', '')
+    )
+
+    # Chuyển hướng người dùng đến trang của nhà tài trợ
+    return redirect(sponsorship.website_url)

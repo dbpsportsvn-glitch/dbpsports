@@ -37,6 +37,8 @@ from django.views.decorators.http import require_POST
 from .models import ProfessionalReview
 from .forms import ProfessionalReviewForm
 
+from .forms import SponsorshipForm
+from tournaments.models import Sponsorship
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
 def user_is_org_member(user, organization):
@@ -1385,3 +1387,45 @@ def delete_closed_jobs_view(request, tournament_pk):
         messages.info(request, "Không có tin tuyển dụng nào đã đóng để xóa.")
     
     return redirect('organizations:manage_jobs', tournament_pk=tournament.pk)    
+
+
+# Nhà Tài Trợ
+@login_required
+@never_cache
+def manage_sponsors_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = SponsorshipForm(request.POST, request.FILES)
+        if form.is_valid():
+            sponsorship = form.save(commit=False)
+            sponsorship.tournament = tournament
+            sponsorship.save()
+            messages.success(request, "Đã thêm nhà tài trợ mới thành công!")
+            return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
+    else:
+        form = SponsorshipForm()
+
+    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor')
+    context = {
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'sponsorships': sponsorships,
+        'form': form,
+        'active_page': 'sponsors',
+    }
+    return render(request, 'organizations/manage_sponsors.html', context)
+
+@login_required
+def delete_sponsorship_view(request, pk):
+    sponsorship = get_object_or_404(Sponsorship, pk=pk)
+    tournament = sponsorship.tournament
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        sponsorship.delete()
+        messages.success(request, "Đã xóa nhà tài trợ khỏi giải đấu.")
+    return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)

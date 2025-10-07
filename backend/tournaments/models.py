@@ -803,3 +803,45 @@ class ScoutingList(models.Model):
 
     def __str__(self):
         return f"Đội {self.team.name} đang theo dõi {self.player.full_name}"        
+
+
+# nhà tài trợ
+class Sponsorship(models.Model):
+    """Liên kết một Nhà tài trợ (User có vai trò SPONSOR) với một Giải đấu."""
+    class Meta:
+        verbose_name = "Nhà tài trợ Giải đấu"
+        verbose_name_plural = "Các nhà tài trợ Giải đấu"
+        ordering = ['order']
+        unique_together = ('tournament', 'sponsor')
+
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='sponsorships', verbose_name="Giải đấu")
+    sponsor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sponsorships',
+        verbose_name="Nhà tài trợ",
+        limit_choices_to={'profile__roles__id': 'SPONSOR'}
+    )
+    package_name = models.CharField("Tên gói tài trợ", max_length=100, help_text="Ví dụ: Tài trợ Vàng, Đồng hành cùng giải đấu...")
+    logo = models.ImageField("Logo nhà tài trợ", upload_to='sponsor_logos/')
+    website_url = models.URLField("Link trang web", help_text="Link sẽ được gắn vào logo/banner của nhà tài trợ.")
+    order = models.PositiveIntegerField("Thứ tự hiển thị", default=0, help_text="Số nhỏ hơn sẽ được hiển thị trước.")
+    is_active = models.BooleanField("Hiển thị công khai", default=True)
+
+    def __str__(self):
+        return f"{self.sponsor.username} tài trợ cho {self.tournament.name}"
+
+class SponsorClick(models.Model):
+    """Ghi lại mỗi lượt click vào link của nhà tài trợ."""
+    class Meta:
+        verbose_name = "Lượt click của Nhà tài trợ"
+        verbose_name_plural = "Các lượt click của Nhà tài trợ"
+        ordering = ['-timestamp']
+
+    sponsorship = models.ForeignKey(Sponsorship, on_delete=models.CASCADE, related_name='clicks')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return f"Click for {self.sponsorship.sponsor.username} at {self.timestamp}"        

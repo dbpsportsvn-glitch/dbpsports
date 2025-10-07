@@ -24,6 +24,11 @@ urlpatterns = [
     path('registrations/<int:pk>/delete/', views.delete_team, name='delete_team_registration'),
     path('player/<int:pk>/edit/', views.edit_player, name='edit_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),   
+
+    # nhà tài trợ
+    path('tournaments/<int:tournament_pk>/sponsors/', views.manage_sponsors_view, name='manage_sponsors'),
+    path('sponsorships/<int:pk>/delete/', views.delete_sponsorship_view, name='delete_sponsorship'),
+
     # === thêm xoá blv cho các giải đấu === 
     path('tournaments/<int:tournament_pk>/staff/add/', views.add_tournament_staff, name='add_tournament_staff'),
     path('staff/<int:pk>/remove/', views.remove_tournament_staff, name='remove_tournament_staff'),

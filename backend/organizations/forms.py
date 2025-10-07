@@ -9,6 +9,7 @@ from tournaments.forms import PlayerCreationForm
 from tournaments.models import Substitution 
 from users.models import Role
 
+from tournaments.models import Sponsorship
 from .models import JobPosting, JobApplication 
 from users.models import Role 
 
@@ -405,4 +406,26 @@ class ProfessionalReviewForm(forms.ModelForm):
             'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
             'comment': forms.Textarea(attrs={'rows': 4}),
         }
-        
+
+
+class SponsorshipForm(forms.ModelForm):
+    class Meta:
+        model = Sponsorship
+        fields = ['sponsor', 'package_name', 'logo', 'website_url', 'order', 'is_active']
+        labels = {
+            'sponsor': 'Chọn Nhà tài trợ',
+            'package_name': 'Tên gói tài trợ',
+            'logo': 'Logo/Banner của Nhà tài trợ',
+            'website_url': 'Đường dẫn trang web',
+            'order': 'Thứ tự ưu tiên hiển thị',
+            'is_active': 'Hiển thị công khai',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Lọc danh sách người dùng chỉ bao gồm những ai có vai trò "Nhà tài trợ"
+        try:
+            sponsor_role = Role.objects.get(id='SPONSOR')
+            self.fields['sponsor'].queryset = User.objects.filter(profile__roles=sponsor_role).order_by('username')
+        except Role.DoesNotExist:
+            self.fields['sponsor'].queryset = User.objects.none()        

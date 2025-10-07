@@ -48,20 +48,24 @@
                 </a>
             </li>
 
-            {# === THÊM MỤC MỚI VÀO ĐÂY === #}
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'sponsors' %}active{% endif %}" href="{% url 'organizations:manage_sponsors' tournament_pk=tournament.pk %}">
+                    <i class="bi bi-gem"></i> Nhà tài trợ
+                </a>
+            </li>
+
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'jobs' %}active{% endif %}" href="{% url 'organizations:manage_jobs' tournament_pk=tournament.pk %}">
                     <i class="bi bi-briefcase-fill"></i> Tuyển dụng
                 </a>
             </li>
 
-            {# === THAY ĐỔI DÒNG BÊN DƯỚI === #}
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'staff' %}active{% endif %}" href="{% url 'organizations:manage_tournament' pk=tournament.pk %}?view=staff">
                     <i class="bi bi-person-lines-fill"></i> Nhân sự
                 </a>
             </li>
-            {# === KẾT THÚC THAY ĐỔI === #}
+
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="{% url 'organizations:edit_tournament' pk=tournament.pk %}">
                     <i class="bi bi-gear-fill"></i> Cài đặt Giải đấu
