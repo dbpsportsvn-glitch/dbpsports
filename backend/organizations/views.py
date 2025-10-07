@@ -342,16 +342,26 @@ def manage_tournament(request, pk):
         all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
         group_matches = all_matches.filter(match_round='GROUP')
         matches_by_group = defaultdict(list)
-
-        # Cập nhật logic lấy group của team thông qua registration
-        group_map = {reg.team_id: reg.group for reg in TeamRegistration.objects.filter(tournament=tournament)}
+        
+        # Tìm các trận đấu đã được gán vào bảng
+        assigned_match_ids = set()
+        group_map = {reg.team_id: reg.group for reg in TeamRegistration.objects.filter(tournament=tournament, group__isnull=False)}
         for match in group_matches:
+            # Trận đấu được coi là đã xếp nếu đội 1 của nó có trong một bảng
             group = group_map.get(match.team1_id)
             if group:
                 matches_by_group[group].append(match)
+                assigned_match_ids.add(match.pk)
 
+        # Sắp xếp các trận trong bảng
         sorted_matches_by_group = sorted(matches_by_group.items(), key=lambda item: item[0].name)
         context['sorted_matches_by_group'] = sorted_matches_by_group
+        
+        # *** LOGIC MỚI: Lấy các trận vòng bảng nhưng CHƯA được gán vào bảng nào ***
+        unassigned_group_matches = group_matches.exclude(pk__in=assigned_match_ids)
+        context['unassigned_group_matches'] = unassigned_group_matches
+
+        # Lấy các trận vòng loại trực tiếp
         knockout_matches_list = list(all_matches.exclude(match_round='GROUP'))
         round_order = {'QUARTER': 1, 'SEMI': 2, 'THIRD_PLACE': 3, 'FINAL': 4}
         knockout_matches_list.sort(key=lambda m: round_order.get(m.match_round, 99))
@@ -892,14 +902,15 @@ def create_match(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     
     # Kiểm tra quyền
-    if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
     teams_in_tournament = Team.objects.filter(registrations__tournament=tournament).order_by('name')
 
     if request.method == 'POST':
+        # Truyền request.POST vào form
         form = MatchCreationForm(request.POST)
-        # Cung cấp queryset cho form trước khi validate
+        # Gán queryset cho các trường team ngay sau khi khởi tạo
         form.fields['team1'].queryset = teams_in_tournament
         form.fields['team2'].queryset = teams_in_tournament
 
@@ -908,11 +919,16 @@ def create_match(request, tournament_pk):
             match.tournament = tournament
             match.save()
             messages.success(request, "Đã tạo trận đấu mới thành công!")
+            # Chuyển hướng về trang quản lý trận đấu
             default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=matches"
             return safe_redirect(request, default_url)
-    else:
+        else:
+            # THÊM MỚI: Gửi thông báo lỗi nếu form không hợp lệ
+            messages.error(request, "Tạo trận đấu thất bại. Vui lòng kiểm tra lại các thông tin đã nhập.")
+
+    else: # Nếu là GET request
         form = MatchCreationForm()
-        # Cung cấp queryset cho form khi hiển thị lần đầu
+        # Gán queryset cho form khi hiển thị lần đầu
         form.fields['team1'].queryset = teams_in_tournament
         form.fields['team2'].queryset = teams_in_tournament
 
@@ -920,7 +936,7 @@ def create_match(request, tournament_pk):
         'form': form,
         'tournament': tournament,
         'organization': tournament.organization,
-        'active_page': 'matches' # Để giữ cho menu được highlight đúng
+        'active_page': 'matches'
     }
     return render(request, 'organizations/create_match.html', context)
 

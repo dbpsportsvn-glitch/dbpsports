@@ -296,6 +296,55 @@
                     Nhập tỉ số bên dưới rồi nhấn “Lưu nhanh tất cả” hoặc lưu từng trận.
                     </p>
 
+                    {% comment %} BẮT ĐẦU DÁN KHỐI CODE MỚI TẠI ĐÂY {% endcomment %}
+                    {% if unassigned_group_matches %}
+                    <h6 class="mt-4">Trận đấu Vòng bảng (Chưa xếp lịch)</h6>
+                    <div class="list-group">
+                        {% for match in unassigned_group_matches %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                    <input type="hidden" name="match_ids" value="{{ match.pk }}">
+                                    <div class="flex-grow-1">
+                                        <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
+                                            <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
+                                        </a>
+                                        <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="number" min="0" name="score_team1_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 1" value="{{ match.team1_score|default_if_none:'' }}">
+                                        <span>-</span>
+                                        <input type="number" min="0" name="score_team2_{{ match.pk }}" class="form-control form-control-sm" style="width: 75px;" placeholder="Tỉ số 2" value="{{ match.team2_score|default_if_none:'' }}">
+                                    </div>
+
+                                    <div class="btn-group">
+                                        <button
+                                        type="submit"
+                                        name="quick_save_match"
+                                        value="{{ match.pk }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Lưu nhanh trận này">
+                                            <i class="bi bi-save"></i>
+                                        </button>
+                                        <a href="{% url 'organizations:manage_match' pk=match.pk %}" class="btn btn-outline-warning" title="Quản lý chi tiết">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                            formmethod="post"
+                                            formaction="{% url 'organizations:delete_match' pk=match.pk %}"
+                                            formnovalidate
+                                            title="Xóa trận đấu">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% comment %} KẾT THÚC KHỐI CODE MỚI {% endcomment %}
+
                     {% for group, matches_in_group in sorted_matches_by_group %}
                         <h6 class="mt-4">{{ group.name }}</h6>
                         <div class="list-group">
