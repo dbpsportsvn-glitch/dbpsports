@@ -1,8 +1,9 @@
 {% extends 'organizations/organization_base.html' %}
 {% load crispy_forms_tags %}
+{% load custom_filters %}
 
 {% block sidebar %}
-    {% include 'organizations/_manage_tournament_nav.html' %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page=active_page %}
 {% endblock %}
 
 {% block management_content %}
@@ -479,36 +480,40 @@
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>Ảnh</th>
-                                <th>Tên Cầu thủ</th>
+                                <th>Cầu thủ</th>
                                 <th>Đội</th>
                                 <th>Số áo</th>
                                 <th>Vị trí</th>
-                                <th>Hành động</th>
+                                <th class="text-center">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for player in players_list %}
                             <tr>
                                 <td>
-                                    {% if player.avatar %}
-                                        <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
-                                    {% endif %}
-                                </td>
-                                <td><strong>{{ player.full_name }}</strong>
-                                {% if player.user and player.team.captain == player.user %}
-                                    <span class="captain-indicator">(C)</span>
-                                {% endif %}
+                                    <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center gap-2">
+                                        <img src="{{ player.avatar.url|default_if_none:'/static/images/placeholder_avatar.png' }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                                        <div>
+                                            <span class="fw-bold">{{ player.full_name }}</span>
+                                            {% if player.user and player.team.captain == player.user %}
+                                                <span class="captain-indicator" title="Đội trưởng">(C)</span>
+                                            {% endif %}
+                                        </div>
+                                    </a>
                                 </td>
                                 <td>{{ player.team.name }}</td>
                                 <td>{{ player.jersey_number }}</td>
                                 <td>{{ player.get_position_display }}</td>
                                 <td>
-                                    <div class="btn-group">
-                                        <a href="{% url 'organizations:edit_player' pk=player.pk %}" class="btn btn-warning btn-sm">Sửa</a>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{% url 'organizations:edit_player' pk=player.pk %}" class="btn btn-warning btn-sm" title="Sửa">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
                                         <form method="post" action="{% url 'organizations:delete_player' pk=player.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa cầu thủ {{ player.full_name }}?');" class="mb-0">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Xóa">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
