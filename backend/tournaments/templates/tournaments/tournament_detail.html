@@ -7,6 +7,37 @@
 {% if tournament.image %}
 <div class="card shadow-sm mb-4">
     <img src="{{ tournament.image.url }}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
+
+    {# --- KHỐI NHÀ TÀI TRỢ CHUYỂN ĐỘNG (OVERLAY) --- #}
+    {% if sponsorships %}
+    <div class="sponsor-ticker-overlay"> {# Đổi tên class để dễ nhận biết #}
+        <div class="sponsor-ticker-wrap">
+            <div class="sponsor-ticker">
+                {# Vòng lặp thứ nhất #}
+                {% for sponsorship in sponsorships %}
+                <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
+                    <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor.username }}">
+                </a>
+                {% endfor %}
+
+                {# Vòng lặp thứ hai #}
+                {% for sponsorship in sponsorships %}
+                <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
+                    <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor.username }}">
+                </a>
+                {% endfor %}
+
+                {# THÊM VÒNG LẶP THỨ BA VÀO ĐÂY #}
+                {% for sponsorship in sponsorships %}
+                <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
+                    <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor.username }}">
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {# --- KẾT THÚC KHỐI NHÀ TÀI TRỢ --- #}
 </div>
 {% endif %}
 
@@ -358,24 +389,6 @@
     </div>
     {% endif %}
 </div>
-
-{# Thêm vào file tournament_detail.html, trước thẻ <script> #}
-{% if sponsorships %}
-<div class="card shadow-sm mt-4">
-    <div class="card-header">
-        <h5 class="mb-0">Nhà tài trợ</h5>
-    </div>
-    <div class="card-body text-center">
-        <div class="d-flex flex-wrap justify-content-center align-items-center gap-4">
-            {% for sponsorship in sponsorships %}
-            <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}">
-                <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor.username }}" style="max-height: 80px; max-width: 150px; object-fit: contain;">
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

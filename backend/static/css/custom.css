@@ -279,3 +279,66 @@
     background-color: #f59e0b;
     border-radius: 2px;
 }
+
+/* ===== Sponsor Ticker Styles (NO BACKGROUND - FINAL) ===== */
+.tournament-hero {
+    position: relative;
+}
+
+.sponsor-ticker-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    /* THAY ĐỔI: Bỏ hoàn toàn màu nền */
+    background-color: transparent;
+    z-index: 10;
+}
+
+.sponsor-ticker-wrap {
+    padding: 0.75rem 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Bỏ hiệu ứng mờ dần ở 2 bên vì không còn nền */
+.sponsor-ticker-wrap:before,
+.sponsor-ticker-wrap:after {
+    display: none;
+}
+
+.sponsor-ticker {
+    display: flex;
+    width: fit-content;
+    animation: scroll-infinite 20s linear infinite;
+}
+
+.sponsor-ticker__item {
+    display: flex;
+    align-items: center;
+    padding: 0 50px;
+    flex-shrink: 0;
+}
+
+.sponsor-ticker__item img {
+    max-height: 70px;
+    max-width: 160px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    /* THAY ĐỔI: Thêm bóng đổ để logo nổi bật trên mọi ảnh nền */
+    filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+.sponsor-ticker__item:hover img {
+    transform: scale(1.1);
+}
+
+@keyframes scroll-infinite {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-33.3333%);
+    }
+}
