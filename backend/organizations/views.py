@@ -338,7 +338,7 @@ def manage_tournament(request, pk):
         context['standings_by_group'] = standings_by_group
 
     elif view_name == 'matches':
-        all_matches = tournament.matches.select_related('team1__registrations__group', 'team2__registrations__group').order_by('match_time')
+        all_matches = tournament.matches.select_related('team1', 'team2').order_by('match_time')
         group_matches = all_matches.filter(match_round='GROUP')
         matches_by_group = defaultdict(list)
 
@@ -514,7 +514,7 @@ def manage_match(request, pk):
 
     # 2. LẤY DỮ LIỆU CHUNG
     players_in_match = Player.objects.filter(team__in=[match.team1, match.team2]).select_related('team').order_by('team__name', 'full_name')
-    teams_in_tournament = tournament.teams.all().order_by('name')
+    teams_in_tournament = Team.objects.filter(registrations__tournament=tournament).order_by('name')
 
     # 3. CHỌN FORM PHÙ HỢP DỰA TRÊN VAI TRÒ (LOGIC MỚI ĐỂ SỬA LỖI)
     if is_media_staff and not is_manager_or_btc:
@@ -894,7 +894,7 @@ def create_match(request, tournament_pk):
     if not tournament.organization or not tournament.organization.members.filter(pk=request.user.pk).exists():
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    teams_in_tournament = tournament.teams.all().order_by('name')
+    teams_in_tournament = Team.objects.filter(registrations__tournament=tournament).order_by('name')
 
     if request.method == 'POST':
         form = MatchCreationForm(request.POST)
@@ -946,12 +946,29 @@ def delete_team(request, pk):
 @login_required
 @never_cache
 def edit_player(request, pk):
-    player = get_object_or_404(Player.objects.select_related('team__tournament__organization'), pk=pk)
-    tournament = player.team.tournament
-    organization = tournament.organization
+    player = get_object_or_404(Player.objects.select_related('team'), pk=pk)
 
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
-        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    try:
+        # Lấy bản đăng ký (registration) của đội trong một giải đấu nào đó.
+        # Dùng .select_related() để tối ưu, lấy luôn thông tin giải đấu và ban tổ chức.
+        # Dùng .first() vì một đội có thể tham gia nhiều giải, ta chỉ cần một để xác thực.
+        registration = player.team.registrations.select_related('tournament__organization').first()
+
+        # Nếu không tìm thấy bản đăng ký nào
+        if not registration:
+            return HttpResponseForbidden("Đội của cầu thủ này chưa đăng ký tham gia giải đấu nào.")
+
+        # Lấy thông tin giải đấu và ban tổ chức từ bản đăng ký
+        tournament = registration.tournament
+        organization = tournament.organization
+
+        # Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu ban tổ chức không
+        if organization.owner != request.user:
+            return HttpResponseForbidden("Bạn không phải là người quản lý của ban tổ chức này.")
+
+    except AttributeError:
+        # Bắt lỗi nếu cầu thủ không thuộc về đội nào (player.team là None)
+        return HttpResponseForbidden("Cầu thủ này không thuộc về đội nào.")
 
     # === LOGIC KIỂM TRA MỚI CHO BTC ===
     can_edit = player.votes < 3 and player.edit_count < 3
@@ -986,13 +1003,29 @@ def edit_player(request, pk):
 
 @login_required
 def delete_player(request, pk):
-    player = get_object_or_404(Player.objects.select_related('team__tournament__organization'), pk=pk)
-    tournament = player.team.tournament
-    organization = tournament.organization
+    player = get_object_or_404(Player.objects.select_related('team'), pk=pk)
 
-    # Kiểm tra quyền
-    if not organization or not organization.members.filter(pk=request.user.pk).exists():
-        return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
+    try:
+        # Lấy bản đăng ký (registration) của đội trong một giải đấu nào đó.
+        # Dùng .select_related() để tối ưu, lấy luôn thông tin giải đấu và ban tổ chức.
+        # Dùng .first() vì một đội có thể tham gia nhiều giải, ta chỉ cần một để xác thực.
+        registration = player.team.registrations.select_related('tournament__organization').first()
+
+        # Nếu không tìm thấy bản đăng ký nào
+        if not registration:
+            return HttpResponseForbidden("Đội của cầu thủ này chưa đăng ký tham gia giải đấu nào.")
+
+        # Lấy thông tin giải đấu và ban tổ chức từ bản đăng ký
+        tournament = registration.tournament
+        organization = tournament.organization
+
+        # Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu ban tổ chức không
+        if organization.owner != request.user:
+            return HttpResponseForbidden("Bạn không phải là người quản lý của ban tổ chức này.")
+
+    except AttributeError:
+        # Bắt lỗi nếu cầu thủ không thuộc về đội nào (player.team là None)
+        return HttpResponseForbidden("Cầu thủ này không thuộc về đội nào.")
 
     default_url = f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players"
     if request.method == 'POST':
@@ -1091,7 +1124,10 @@ def send_announcement_email(request, pk):
         return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=announcements")
     
     # Lấy danh sách email đội trưởng
-    captains = Team.objects.filter(tournament=tournament, payment_status='PAID').select_related('captain')
+    captains = Team.objects.filter(
+        registrations__tournament=tournament,
+        registrations__payment_status='PAID'
+    ).select_related('captain')
     recipient_list = {c.captain.email for c in captains if c.captain.email}
 
     if recipient_list:

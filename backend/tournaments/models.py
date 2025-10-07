@@ -74,8 +74,13 @@ class Group(models.Model):
         return f"{self.name} - {self.tournament.name}"
 
     def get_standings(self):
+        """
+        Tính toán và trả về bảng xếp hạng cho bảng đấu này.
+        """
+        from .models import Team  # Import model Team để tránh lỗi circular import
         standings = {}
-        teams_in_group = self.teams.all()
+        # Lấy danh sách các đội thuộc bảng đấu này thông qua model TeamRegistration
+        teams_in_group = Team.objects.filter(registrations__group=self)
         for team in teams_in_group:
             standings[team.id] = {'played': 0, 'wins': 0, 'draws': 0, 'losses': 0, 'gf': 0, 'ga': 0, 'gd': 0, 'points': 0, 'team_obj': team}
         matches_in_group = self.tournament.matches.filter(
