@@ -1,35 +1,79 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Chỉnh sửa Cầu thủ - {{ player.full_name }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 800px;">
+<div class="container my-4" style="max-width: 960px;">
     <div class="card shadow-sm">
-        <div class="card-header">
-            <h3>Chỉnh sửa thông tin Cầu thủ</h3>
-            <p class="mb-0 text-muted">Cầu thủ: <strong>{{ player.full_name }}</strong></p>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info small">
-                <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Bạn còn <strong>{{ remaining_edits }}</strong> lần chỉnh sửa cho cầu thủ này. Thông tin sẽ bị khóa khi cầu thủ có phiếu bầu hoặc hết lượt chỉnh sửa.
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+             <div>
+                <h3 class="mb-0"><i class="bi bi-person-fill-gear"></i> Chỉnh sửa thông tin Cầu thủ</h3>
+                <p class="mb-0 text-muted">Cầu thủ: <strong>{{ player.full_name }}</strong></p>
             </div>
-
+        </div>
+        <div class="card-body p-4">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="row g-3">
-                    <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.jersey_number|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.position|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.specialty_position|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.date_of_birth|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.preferred_foot|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.height|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.weight|as_crispy_field }}</div>
-                    <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
-                    <div class="col-12">{{ form.avatar|as_crispy_field }}</div>
+
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Bạn còn <strong>{{ remaining_edits }}</strong> lần chỉnh sửa cho cầu thủ này. Thông tin sẽ bị khóa khi cầu thủ có phiếu bầu hoặc hết lượt chỉnh sửa.
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h5>Thông tin cơ bản</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.jersey_number|as_crispy_field }}</div>
+                            <div class="col-md-12">{{ form.date_of_birth|as_crispy_field }}</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5>Thông số chuyên môn</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form.position|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.specialty_position|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.height|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.weight|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.preferred_foot|as_crispy_field }}</div>
+                        </div>
+
+                        <hr class="my-4">
+                        
+                        <h5>Vị trí & Liên hệ</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">{{ form.region|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.location_detail|as_crispy_field }}</div>
+                            <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="mb-3">
+                            <h5>Ảnh đại diện</h5>
+                             {% if player.avatar %}
+                                <img src="{{ player.avatar.url }}" alt="Avatar của {{ player.full_name }}" class="img-fluid rounded mb-2" style="max-height: 250px; object-fit: cover; width: 100%;">
+                            {% else %}
+                                <img src="{% static 'images/placeholder_avatar.png' %}" alt="Avatar mặc định" class="img-fluid rounded mb-2">
+                            {% endif %}
+                            {{ form.avatar|as_crispy_field }}
+                        </div>
+                        <hr class="my-4">
+                        <div class="mb-3">
+                            <h5>Mã QR Donate</h5>
+                            {% if player.donation_qr_code %}
+                                <img src="{{ player.donation_qr_code.url }}" alt="QR Code" class="img-fluid rounded mb-2" style="max-height: 250px; object-fit: cover; width: 100%;">
+                            {% endif %}
+                            {{ form.donation_qr_code|as_crispy_field }}
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save-fill"></i> Lưu thay đổi</button>
                     <a href="{% url 'team_detail' pk=player.team.pk %}" class="btn btn-secondary">Hủy</a>
                 </div>
             </form>

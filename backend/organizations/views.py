@@ -23,6 +23,7 @@ from .forms import (
     SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, 
     MatchCreationForm, PlayerUpdateForm, TournamentStaffInviteForm
 )
+from tournaments.forms import PlayerCreationForm
 from django.utils import timezone
 from django.db import transaction
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -948,48 +949,42 @@ def delete_team(request, pk):
 def edit_player(request, pk):
     player = get_object_or_404(Player.objects.select_related('team'), pk=pk)
 
+    # Lấy thông tin giải đấu và ban tổ chức để kiểm tra quyền
     try:
-        # Lấy bản đăng ký (registration) của đội trong một giải đấu nào đó.
-        # Dùng .select_related() để tối ưu, lấy luôn thông tin giải đấu và ban tổ chức.
-        # Dùng .first() vì một đội có thể tham gia nhiều giải, ta chỉ cần một để xác thực.
         registration = player.team.registrations.select_related('tournament__organization').first()
-
-        # Nếu không tìm thấy bản đăng ký nào
         if not registration:
             return HttpResponseForbidden("Đội của cầu thủ này chưa đăng ký tham gia giải đấu nào.")
-
-        # Lấy thông tin giải đấu và ban tổ chức từ bản đăng ký
         tournament = registration.tournament
         organization = tournament.organization
+        if not user_can_manage_tournament(request.user, tournament):
+             return HttpResponseForbidden("Bạn không có quyền quản lý cầu thủ trong giải đấu này.")
+    except (AttributeError, TypeError):
+        return HttpResponseForbidden("Không thể xác định quyền truy cập cho cầu thủ này.")
 
-        # Kiểm tra xem người dùng hiện tại có phải là chủ sở hữu ban tổ chức không
-        if organization.owner != request.user:
-            return HttpResponseForbidden("Bạn không phải là người quản lý của ban tổ chức này.")
 
-    except AttributeError:
-        # Bắt lỗi nếu cầu thủ không thuộc về đội nào (player.team là None)
-        return HttpResponseForbidden("Cầu thủ này không thuộc về đội nào.")
-
-    # === LOGIC KIỂM TRA MỚI CHO BTC ===
+    # Logic kiểm tra quyền sửa (giữ nguyên)
     can_edit = player.votes < 3 and player.edit_count < 3
     if not can_edit:
         if player.votes >= 3:
             messages.error(request, f"Không thể chỉnh sửa. Cầu thủ {player.full_name} đã có 3 phiếu bầu trở lên.")
-        else: # edit_count >= 3
+        else:
             messages.error(request, f"Không thể chỉnh sửa. Đã hết số lần cho phép (3 lần) cho cầu thủ {player.full_name}.")
         return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players")
 
     if request.method == 'POST':
-        form = PlayerUpdateForm(request.POST, request.FILES, instance=player)
+        # *** SỬA DÒNG NÀY: Dùng PlayerCreationForm thay vì PlayerUpdateForm ***
+        form = PlayerCreationForm(request.POST, request.FILES, instance=player)
         if form.is_valid():
-            # Tăng số lần chỉnh sửa trước khi lưu
-            player.edit_count += 1
-            form.save()
-            remaining = 3 - player.edit_count
+            player_to_save = form.save(commit=False)
+            player_to_save.edit_count += 1
+            player_to_save.save()
+            
+            remaining = 3 - player_to_save.edit_count
             messages.success(request, f"Đã cập nhật thành công thông tin cho cầu thủ {player.full_name}. Số lần sửa còn lại: {remaining}.")
             return redirect(f"{reverse('organizations:manage_tournament', args=[tournament.pk])}?view=players")
     else:
-        form = PlayerUpdateForm(instance=player)
+        # *** VÀ SỬA DÒNG NÀY ***
+        form = PlayerCreationForm(instance=player)
 
     context = {
         'form': form,
@@ -997,7 +992,7 @@ def edit_player(request, pk):
         'tournament': tournament,
         'organization': organization,
         'active_page': 'players',
-        'remaining_edits': 3 - player.edit_count, # Gửi số lần sửa còn lại
+        'remaining_edits': 3 - player.edit_count,
     }
     return render(request, 'organizations/edit_player.html', context)
 
