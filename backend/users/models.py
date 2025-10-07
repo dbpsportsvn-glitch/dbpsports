@@ -14,11 +14,16 @@ class Role(models.Model):
         ('PHOTOGRAPHER', 'Nhiếp Ảnh Gia'),
         ('COLLABORATOR', 'Cộng Tác Viên'),
         ('TOURNAMENT_MANAGER', 'Quản lý Giải đấu'),
+        ('REFEREE', 'Trọng tài'),
     ]
     id = models.CharField(max_length=20, primary_key=True, choices=ROLE_CHOICES)
     name = models.CharField("Tên vai trò", max_length=50)
     icon = models.CharField("Tên icon (Bootstrap Icons)", max_length=50, help_text="Ví dụ: bi-shield-check")
     description = models.TextField("Mô tả vai trò")
+    order = models.PositiveIntegerField("Thứ tự hiển thị", default=0, help_text="Số nhỏ hơn sẽ được hiển thị trước.")
+
+    class Meta:
+        ordering = ['order']
 
     def __str__(self):
         return self.name
@@ -31,10 +36,8 @@ class Profile(models.Model):
     roles = models.ManyToManyField(Role, blank=True, verbose_name="Các vai trò đã chọn")
     has_selected_roles = models.BooleanField("Đã chọn vai trò lần đầu", default=False)
     
-    # === THÊM TRƯỜNG MỚI ĐỂ SỬA LỖI ===
     is_profile_complete = models.BooleanField("Đã hoàn tất hồ sơ lần đầu", default=False)
     
-    # --- CÁC TRƯỜNG MỚI CHO HỒ SƠ CHUYÊN MÔN ---
     bio = models.TextField("Giới thiệu bản thân", blank=True, help_text="Một vài dòng về kỹ năng, đam mê hoặc thành tích của bạn.")
     location = models.CharField("Khu vực hoạt động", max_length=100, blank=True, help_text="Ví dụ: Hà Nội, TP.HCM, Điện Biên...")
     experience = models.PositiveIntegerField("Số năm kinh nghiệm", null=True, blank=True, help_text="Để trống nếu không áp dụng.")

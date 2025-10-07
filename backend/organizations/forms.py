@@ -1,4 +1,4 @@
-# File: backend/organizations/forms.py
+# backend/organizations/forms.py
 
 from django import forms
 from tournaments.models import Match, Goal, Card, Player, Team, Announcement
@@ -404,4 +404,4 @@ class ProfessionalReviewForm(forms.ModelForm):
             # Hiển thị các ngôi sao thay vì dropdown số
             'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
             'comment': forms.Textarea(attrs={'rows': 4}),
-        }        
+        }

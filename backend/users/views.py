@@ -203,7 +203,7 @@ def select_roles_view(request):
             messages.success(request, "Đã lưu vai trò! Vui lòng hoàn tất hồ sơ của bạn để mọi người có thể tìm thấy bạn.")
             return redirect('profile_setup') 
 
-    roles = Role.objects.all()
+    roles = Role.objects.all().order_by('order')
     return render(request, 'users/select_roles.html', {'roles': roles})    
 
 @login_required

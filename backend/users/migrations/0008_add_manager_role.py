@@ -6,7 +6,8 @@ MANAGER_ROLE_DATA = {
     "id": "TOURNAMENT_MANAGER",
     "name": "Quản lý Giải đấu",
     "icon": "bi-person-workspace",
-    "description": "Được BTC cấp quyền để quản lý vận hành một giải đấu cụ thể, bao gồm xếp lịch, cập nhật tỉ số, và quản lý các vai trò chuyên môn khác."
+    "description": "Được BTC cấp quyền để quản lý vận hành một giải đấu cụ thể, bao gồm xếp lịch, cập nhật tỉ số, và quản lý các vai trò chuyên môn khác.",
+    "order": 70
 }
 
 def create_manager_role(apps, schema_editor):
