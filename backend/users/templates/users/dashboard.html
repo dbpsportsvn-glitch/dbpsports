@@ -226,6 +226,7 @@
                 </div>
             </div>
 
+            {# Tab Hồ sơ công khai #}
             <div class="tab-pane fade {% if request.GET.tab == 'public-profile' %}show active{% endif %}" id="public-profile" role="tabpanel">
                 <div class="row justify-content-center">
                     <div class="col-lg-10">
@@ -239,7 +240,43 @@
                             <div class="card-body">
                                 <form method="post">
                                     {% csrf_token %}
-                                    {{ profile_form|crispy }}
+                                    
+                                    {# === BẮT ĐẦU VÙNG THAY ĐỔI: ÁP DỤNG LAYOUT 2 CỘT === #}
+                                    <div class="row">
+                                        {# CỘT TRÁI: THÔNG TIN CƠ BẢN #}
+                                        <div class="col-md-6">
+                                            {{ profile_form.bio|as_crispy_field }}
+                                            {{ profile_form.location|as_crispy_field }}
+                                            {{ profile_form.experience|as_crispy_field }}
+                                        </div>
+
+                                        {# CỘT PHẢI: THÔNG TIN THEO VAI TRÒ #}
+                                        <div class="col-md-6">
+                                            {% if 'REFEREE' in user_role_ids %}
+                                                <div class="mb-3">
+                                                    <h5 class="form-label">Thông tin Trọng tài</h5>
+                                                    {{ profile_form.referee_level|as_crispy_field }}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if 'SPONSOR' in user_role_ids %}
+                                                <div class="mb-3">
+                                                    <h5 class="form-label">Thông tin Nhà tài trợ</h5>
+                                                    {{ profile_form.brand_website|as_crispy_field }}
+                                                    {{ profile_form.sponsorship_interests|as_crispy_field }}
+                                                </div>
+                                            {% endif %}
+                    
+                                            {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
+                                                <div class="mb-3">
+                                                    <h5 class="form-label">Thông tin Media/Nhiếp ảnh</h5>
+                                                    {{ profile_form.equipment|as_crispy_field }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {# === KẾT THÚC VÙNG THAY ĐỔI === #}
+                                    
                                     <button type="submit" name="update_public_profile" class="btn btn-primary w-100 mt-3">Lưu thay đổi</button>
                                 </form>
                             </div>

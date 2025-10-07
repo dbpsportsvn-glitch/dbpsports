@@ -336,8 +336,8 @@ class TournamentStaffInviteForm(forms.Form):
         widget=forms.EmailInput(attrs={'placeholder': 'nhapemail@vidu.com'})
     )
     role = forms.ModelChoiceField(
-        # Chỉ cho phép chọn các vai trò chuyên môn, loại bỏ Cầu thủ và BTC
-        queryset=Role.objects.exclude(id__in=['ORGANIZER', 'PLAYER']),
+        # Loại bỏ các vai trò không phải chuyên môn
+        queryset=Role.objects.exclude(id__in=['ORGANIZER', 'PLAYER', 'SPONSOR']),
         label="Vai trò chuyên môn"
     )
 
@@ -345,7 +345,7 @@ class TournamentStaffInviteForm(forms.Form):
         email = self.cleaned_data.get('email')
         if not User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Không tìm thấy người dùng nào với email này.")
-        return email    
+        return email        
 
 # === THÊM FORM MỚI VÀO CUỐI FILE ===
 class MatchMediaUpdateForm(forms.ModelForm):
@@ -405,3 +405,4 @@ class ProfessionalReviewForm(forms.ModelForm):
             'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
             'comment': forms.Textarea(attrs={'rows': 4}),
         }
+        

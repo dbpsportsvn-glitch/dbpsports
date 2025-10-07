@@ -28,7 +28,6 @@
         <div class="card-body p-4 p-md-5">
             <div class="text-center mb-4">
                 <h1 class="h3">Hoàn tất Hồ sơ của bạn</h1>
-                {# === LỜI DẪN MỚI NHẤN MẠNH TẦM QUAN TRỌNG === #}
                 <p class="lead text-muted">
                     Hãy dành chút thời gian để cập nhật hồ sơ. Một hồ sơ đầy đủ và chuyên nghiệp sẽ giúp các <strong>Ban tổ chức</strong> chú ý và liên hệ với bạn, cũng như giúp các <strong>đội trưởng</strong> khác dễ dàng tìm thấy và chiêu mộ bạn!
                 </p>
@@ -37,19 +36,32 @@
             <form method="post">
                 {% csrf_token %}
                 
-                {# === FORM TÊN MỚI CHỈ CÓ 1 Ô === #}
                 {{ form.display_name|as_crispy_field }}
                 
                 <hr class="my-4">
 
-                <h5 class="mb-3">Thông tin chuyên môn (tùy chọn)</h5>
-                
+                <h5 class="mb-3">Thông tin chung (tùy chọn)</h5>
                 {{ form.bio|as_crispy_field }}
                 {{ form.location|as_crispy_field }}
-                <div class="row">
-                    <div class="col-md-6">{{ form.experience|as_crispy_field }}</div>
-                    <div class="col-md-6">{{ form.equipment|as_crispy_field }}</div>
-                </div>
+                {{ form.experience|as_crispy_field }}
+
+                {# === BẮT ĐẦU VÙNG LOGIC HIỂN THỊ CÓ ĐIỀU KIỆN === #}
+                {% if 'REFEREE' in user_role_ids %}
+                    <hr><h5 class="mt-3">Thông tin Trọng tài</h5>
+                    {{ form.referee_level|as_crispy_field }}
+                {% endif %}
+
+                {% if 'SPONSOR' in user_role_ids %}
+                    <hr><h5 class="mt-3">Thông tin Nhà tài trợ</h5>
+                    {{ form.brand_website|as_crispy_field }}
+                    {{ form.sponsorship_interests|as_crispy_field }}
+                {% endif %}
+
+                {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
+                    <hr><h5 class="mt-3">Thông tin Media/Nhiếp ảnh</h5>
+                    {{ form.equipment|as_crispy_field }}
+                {% endif %}
+                {# === KẾT THÚC VÙNG LOGIC === #}
 
                 <div class="d-grid gap-2 mt-4">
                     <button type="submit" class="btn btn-primary btn-lg">Lưu và Tiếp tục</button>

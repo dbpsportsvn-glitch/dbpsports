@@ -77,6 +77,17 @@
     <div class="row g-4">
         <div class="col-lg-8">
             
+            {# === BẮT ĐẦU VÙNG HIỂN THỊ BIO === #}
+            {% if profile.bio %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4><i class="bi bi-person-lines-fill"></i> Giới thiệu</h4></div>
+                <div class="card-body">
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ profile.bio }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {# === KẾT THÚC VÙNG HIỂN THỊ BIO === #}
+
             {% if achievements %}
             <div class="card shadow-sm mb-4">
                 <div class="card-header"><h4><i class="bi bi-trophy-fill"></i> Bảng vàng thành tích (với vai trò Cầu thủ)</h4></div>
@@ -180,12 +191,6 @@
              <div class="card shadow-sm position-sticky" style="top: 80px;">
                 <div class="card-header"><h4><i class="bi bi-person-vcard"></i> Thông tin chuyên môn</h4></div>
                 <ul class="list-group list-group-flush">
-                    {% if profile.bio %}
-                        <li class="list-group-item">
-                            <small class="text-muted d-block">Giới thiệu</small>
-                            <p class="mb-0">{{ profile.bio|linebreaksbr }}</p>
-                        </li>
-                    {% endif %}
                     {% if profile.location %}
                         <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-geo-alt-fill text-primary"></i> Khu vực:</span> <strong>{{ profile.location }}</strong></li>
                     {% endif %}
@@ -196,9 +201,20 @@
                          <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-camera-fill text-info"></i> Thiết bị:</span> <strong>{{ profile.equipment }}</strong></li>
                     {% endif %}
                     
-                    {% if not profile.bio and not profile.location and not profile.experience and not profile.equipment %}
-                        <li class="list-group-item text-muted">Người dùng chưa cập nhật thông tin chuyên môn.</li>
+                    {# === BẮT ĐẦU VÙNG HIỂN THỊ THÔNG TIN MỚI === #}
+                    {% if profile.referee_level %}
+                        <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-person-fill-check text-danger"></i> Cấp độ Trọng tài:</span> <strong>{{ profile.referee_level }}</strong></li>
                     {% endif %}
+                    {% if profile.brand_website %}
+                        <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-gem text-purple"></i> Website:</span> <strong><a href="{{ profile.brand_website }}" target="_blank" rel="noopener">{{ profile.brand_website|truncatechars:25 }}</a></strong></li>
+                    {% endif %}
+                    {% if profile.sponsorship_interests %}
+                        <li class="list-group-item">
+                            <small class="text-muted d-block"><i class="bi bi-cash-coin text-success"></i> Lĩnh vực tài trợ</small>
+                            <p class="mb-0"><strong>{{ profile.sponsorship_interests }}</strong></p>
+                        </li>
+                    {% endif %}
+                    {# === KẾT THÚC VÙNG HIỂN THỊ THÔNG TIN MỚI === #}
                 </ul>
             </div>
         </div>

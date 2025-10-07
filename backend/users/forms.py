@@ -82,12 +82,16 @@ class ProfileSetupForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['display_name', 'bio', 'location', 'experience', 'equipment']
+        fields = ['display_name', 'bio', 'location', 'experience', 'equipment', 
+                  'referee_level', 'brand_website', 'sponsorship_interests']
         labels = {
             'bio': 'Giới thiệu bản thân',
             'location': 'Khu vực hoạt động',
             'experience': 'Số năm kinh nghiệm',
             'equipment': 'Thiết bị sở hữu',
+            'referee_level': 'Cấp độ Trọng tài (nếu có)',
+            'brand_website': 'Website Thương hiệu (nếu có)',
+            'sponsorship_interests': 'Lĩnh vực quan tâm tài trợ (nếu có)',
         }
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 3}),
@@ -119,16 +123,21 @@ class ProfileSetupForm(forms.ModelForm):
             
         return profile
 
+
 # === THÊM FORM MỚI VÀO CUỐI FILE ===
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['bio', 'location', 'experience', 'equipment']
+        fields = ['bio', 'location', 'experience', 'equipment',
+                  'referee_level', 'brand_website', 'sponsorship_interests']
         labels = {
             'bio': 'Giới thiệu bản thân (hiển thị công khai)',
             'location': 'Khu vực hoạt động chính',
             'experience': 'Số năm kinh nghiệm',
             'equipment': 'Thiết bị chuyên dụng (nếu có)',
+            'referee_level': 'Cấp độ Trọng tài',
+            'brand_website': 'Website Thương hiệu',
+            'sponsorship_interests': 'Lĩnh vực quan tâm tài trợ',
         }
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4}),

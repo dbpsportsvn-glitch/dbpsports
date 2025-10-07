@@ -15,6 +15,7 @@ class Role(models.Model):
         ('COLLABORATOR', 'Cộng Tác Viên'),
         ('TOURNAMENT_MANAGER', 'Quản lý Giải đấu'),
         ('REFEREE', 'Trọng tài'),
+        ('SPONSOR', 'Nhà tài trợ'),
     ]
     id = models.CharField(max_length=20, primary_key=True, choices=ROLE_CHOICES)
     name = models.CharField("Tên vai trò", max_length=50)
@@ -42,6 +43,13 @@ class Profile(models.Model):
     location = models.CharField("Khu vực hoạt động", max_length=100, blank=True, help_text="Ví dụ: Hà Nội, TP.HCM, Điện Biên...")
     experience = models.PositiveIntegerField("Số năm kinh nghiệm", null=True, blank=True, help_text="Để trống nếu không áp dụng.")
     equipment = models.CharField("Thiết bị sở hữu", max_length=255, blank=True, help_text="Liệt kê các thiết bị chuyên dụng nếu có (máy ảnh, flycam, micro...).")
+    
+    # Dành cho Trọng tài
+    referee_level = models.CharField("Cấp độ Trọng tài", max_length=100, blank=True, help_text="Ví dụ: Chứng chỉ Futsal, Trọng tài Quận, v.v.")
+    
+    # Dành cho Nhà tài trợ
+    brand_website = models.URLField("Website Thương hiệu", max_length=255, blank=True)
+    sponsorship_interests = models.CharField("Lĩnh vực quan tâm tài trợ", max_length=255, blank=True, help_text="Ví dụ: Giải đấu U21, Đội bóng doanh nghiệp, Cầu thủ trẻ...")
 
     notify_match_results = models.BooleanField("Nhận thông báo kết quả trận đấu", default=True)
     notify_new_teams = models.BooleanField("Nhận thông báo khi có đội mới", default=True)
