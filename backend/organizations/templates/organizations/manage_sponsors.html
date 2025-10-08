@@ -115,32 +115,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoInput = document.querySelector('#id_logo');
     const websiteInput = document.querySelector('#id_website_url');
 
-    // Hàm để ẩn/hiện các trường nhập tay
-    function toggleManualFields(shouldHide) {
-        const fieldsToToggle = [
-            sponsorNameInput,
-            logoInput,
-            websiteInput
-        ];
-        fieldsToToggle.forEach(field => {
-            if (field) {
-                // Sử dụng .closest('.mb-3') để tương thích với crispy-forms bootstrap 5
-                const wrapper = field.closest('.mb-3'); 
-                if (wrapper) {
-                    wrapper.style.display = shouldHide ? 'none' : 'block';
-                }
-            }
-        });
+    // --- ĐÃ SỬA LOGIC Ở ĐÂY ---
+    // Hàm để KHOÁ hoặc MỞ KHOÁ các trường nhập tay
+    function toggleManualFields(shouldDisable) {
+        if (sponsorNameInput) sponsorNameInput.disabled = shouldDisable;
+        if (logoInput) logoInput.disabled = shouldDisable;
+        if (websiteInput) websiteInput.disabled = shouldDisable;
+
+        // Xóa giá trị cũ khi người dùng bỏ chọn nhà tài trợ
+        if (!shouldDisable) {
+            if (sponsorNameInput) sponsorNameInput.value = '';
+            if (logoInput) logoInput.value = '';
+            if (websiteInput) websiteInput.value = '';
+        }
     }
 
     // Lắng nghe sự kiện khi lựa chọn nhà tài trợ thay đổi
     if (sponsorSelect) {
-        sponsorSelect.addEventListener('change', function() {
+        // Sử dụng event của Select2 nếu có, nếu không thì dùng event 'change' mặc định
+        const eventName = window.jQuery ? 'change.select2' : 'change';
+        
+        $(sponsorSelect).on(eventName, function() {
             const isSponsorSelected = this.value !== '';
             toggleManualFields(isSponsorSelected);
         });
 
-        // Kích hoạt kiểm tra ngay khi tải trang
+        // Kích hoạt kiểm tra ngay khi tải trang, phòng trường hợp form load lại với giá trị đã chọn
         const isSponsorSelectedInitially = sponsorSelect.value !== '';
         toggleManualFields(isSponsorSelectedInitially);
     }
