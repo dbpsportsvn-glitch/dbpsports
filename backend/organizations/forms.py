@@ -411,9 +411,11 @@ class ProfessionalReviewForm(forms.ModelForm):
 class SponsorshipForm(forms.ModelForm):
     class Meta:
         model = Sponsorship
-        fields = ['sponsor', 'package_name', 'logo', 'website_url', 'order', 'is_active']
+        # --- THÊM 'sponsor_name' VÀO ĐÂY ---
+        fields = ['sponsor', 'sponsor_name', 'package_name', 'logo', 'website_url', 'order', 'is_active']
         labels = {
-            'sponsor': 'Chọn Nhà tài trợ',
+            'sponsor': 'Chọn Nhà tài trợ (nếu có tài khoản)',
+            'sponsor_name': 'Tên Nhà tài trợ (nếu không có tài khoản)', # <-- Label mới
             'package_name': 'Tên gói tài trợ',
             'logo': 'Logo/Banner của Nhà tài trợ',
             'website_url': 'Đường dẫn trang web',
@@ -423,9 +425,32 @@ class SponsorshipForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # --- THAY ĐỔI: CHO PHÉP TRƯỜNG sponsor KHÔNG BẮT BUỘC ---
+        self.fields['sponsor'].required = False
+        
         # Lọc danh sách người dùng chỉ bao gồm những ai có vai trò "Nhà tài trợ"
         try:
             sponsor_role = Role.objects.get(id='SPONSOR')
             self.fields['sponsor'].queryset = User.objects.filter(profile__roles=sponsor_role).order_by('username')
         except Role.DoesNotExist:
-            self.fields['sponsor'].queryset = User.objects.none()        
+            self.fields['sponsor'].queryset = User.objects.none()
+
+    # --- THÊM PHƯƠNG THỨC clean NÀY ĐỂ VALIDATE ---
+    def clean(self):
+        cleaned_data = super().clean()
+        sponsor_account = cleaned_data.get('sponsor')
+        sponsor_manual_name = cleaned_data.get('sponsor_name')
+
+        if sponsor_account and sponsor_manual_name:
+            raise ValidationError(
+                "Lỗi: Bạn chỉ được chọn Nhà tài trợ có sẵn hoặc nhập tên thủ công, không được chọn cả hai.",
+                code='invalid_sponsor_choice'
+            )
+        
+        if not sponsor_account and not sponsor_manual_name:
+            raise ValidationError(
+                "Lỗi: Bạn phải chọn một Nhà tài trợ có sẵn hoặc nhập tên thủ công.",
+                code='sponsor_required'
+            )
+        
+        return cleaned_data        

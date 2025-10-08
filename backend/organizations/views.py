@@ -39,6 +39,7 @@ from .forms import ProfessionalReviewForm
 
 from .forms import SponsorshipForm
 from tournaments.models import Sponsorship
+from django.db import IntegrityError
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
 def user_is_org_member(user, organization):
@@ -1402,8 +1403,15 @@ def manage_sponsors_view(request, tournament_pk):
         if form.is_valid():
             sponsorship = form.save(commit=False)
             sponsorship.tournament = tournament
-            sponsorship.save()
-            messages.success(request, "Đã thêm nhà tài trợ mới thành công!")
+            try:
+                # Cố gắng lưu nhà tài trợ
+                sponsorship.save()
+                messages.success(request, "Đã thêm nhà tài trợ mới thành công!")
+            except IntegrityError:
+                # Nếu bị lỗi trùng lặp, hiển thị thông báo thân thiện
+                sponsor_name = form.cleaned_data['sponsor'].username
+                messages.error(request, f"Nhà tài trợ '{sponsor_name}' đã tồn tại trong giải đấu này. Vui lòng chọn nhà tài trợ khác.")
+
             return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
     else:
         form = SponsorshipForm()

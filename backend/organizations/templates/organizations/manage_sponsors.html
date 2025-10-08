@@ -1,3 +1,6 @@
+{# Mở file: backend/organizations/templates/organizations/manage_sponsors.html #}
+{# Dán toàn bộ nội dung này để thay thế file cũ #}
+
 {% extends 'organizations/organization_base.html' %}
 {% load crispy_forms_tags %}
 
@@ -21,9 +24,19 @@
                 <div class="card mb-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor.username }}" style="width: 80px; height: 80px; object-fit: contain;">
+                            {# --- BẮT ĐẦU SỬA LỖI --- #}
+                            <img src="{{ sponsorship.logo.url }}" 
+                                 alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}" 
+                                 style="width: 80px; height: 80px; object-fit: contain;">
                             <div>
-                                <strong>{{ sponsorship.sponsor.profile.sponsorship_interests|default:sponsorship.sponsor.username }}</strong>
+                                <strong>
+                                    {% if sponsorship.sponsor_name %}
+                                        {{ sponsorship.sponsor_name }}
+                                    {% elif sponsorship.sponsor %}
+                                        {{ sponsorship.sponsor.profile.sponsorship_interests|default:sponsorship.sponsor.username }}
+                                    {% endif %}
+                                </strong>
+                                {# --- KẾT THÚC SỬA LỖI --- #}
                                 <span class="d-block badge bg-info text-dark">{{ sponsorship.package_name }}</span>
                             </div>
                         </div>

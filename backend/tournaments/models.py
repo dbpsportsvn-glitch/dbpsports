@@ -812,16 +812,29 @@ class Sponsorship(models.Model):
         verbose_name = "Nhà tài trợ Giải đấu"
         verbose_name_plural = "Các nhà tài trợ Giải đấu"
         ordering = ['order']
-        unique_together = ('tournament', 'sponsor')
+        # Bỏ unique_together cũ đi vì sponsor có thể là null
+        # unique_together = ('tournament', 'sponsor')
 
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='sponsorships', verbose_name="Giải đấu")
+    
+    # --- BẮT ĐẦU THAY ĐỔI ---
     sponsor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='sponsorships',
-        verbose_name="Nhà tài trợ",
-        limit_choices_to={'profile__roles__id': 'SPONSOR'}
+        verbose_name="Tài khoản Nhà tài trợ (nếu có)",
+        limit_choices_to={'profile__roles__id': 'SPONSOR'},
+        null=True,  # Cho phép trường này trống
+        blank=True  # Cho phép trống trong form admin
     )
+    sponsor_name = models.CharField(
+        "Tên Nhà tài trợ (nhập tay)",
+        max_length=150,
+        blank=True,
+        help_text="Chỉ điền vào đây nếu nhà tài trợ không có tài khoản trên hệ thống."
+    )
+    # --- KẾT THÚC THAY ĐỔI ---
+
     package_name = models.CharField("Tên gói tài trợ", max_length=100, help_text="Ví dụ: Tài trợ Vàng, Đồng hành cùng giải đấu...")
     logo = models.ImageField("Logo nhà tài trợ", upload_to='sponsor_logos/')
     website_url = models.URLField("Link trang web", help_text="Link sẽ được gắn vào logo/banner của nhà tài trợ.")
@@ -829,7 +842,17 @@ class Sponsorship(models.Model):
     is_active = models.BooleanField("Hiển thị công khai", default=True)
 
     def __str__(self):
-        return f"{self.sponsor.username} tài trợ cho {self.tournament.name}"
+        # Cập nhật để hiển thị tên cho đúng
+        display_name = self.sponsor_name if self.sponsor_name else (self.sponsor.username if self.sponsor else "N/A")
+        return f"{display_name} tài trợ cho {self.tournament.name}"
+
+    def clean(self):
+        # Đảm bảo rằng chỉ một trong hai trường sponsor được điền
+        if self.sponsor and self.sponsor_name:
+            raise ValidationError("Chỉ có thể chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)', không được cả hai.")
+        if not self.sponsor and not self.sponsor_name:
+            raise ValidationError("Bạn phải chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)'.")
+            
 
 class SponsorClick(models.Model):
     """Ghi lại mỗi lượt click vào link của nhà tài trợ."""
