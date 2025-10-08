@@ -227,7 +227,6 @@
                 </div>
             </div>
 
-            {# Tab Hồ sơ công khai #}
             <div class="tab-pane fade {% if request.GET.tab == 'public-profile' %}show active{% endif %}" id="public-profile" role="tabpanel">
                 <div class="row justify-content-center">
                     <div class="col-lg-10">
@@ -239,19 +238,49 @@
                                 </a>
                             </div>
                             <div class="card-body">
-                                <form method="post">
+                                <form method="post" enctype="multipart/form-data">
                                     {% csrf_token %}
                                     
-                                    {# === BẮT ĐẦU VÙNG THAY ĐỔI: ÁP DỤNG LAYOUT 2 CỘT === #}
                                     <div class="row">
                                         {# CỘT TRÁI: THÔNG TIN CƠ BẢN #}
                                         <div class="col-md-6">
+                                            
+                                            {% comment %} Bắt đầu logic kiểm tra số lần đổi vai trò {% endcomment %}
+                                            {% if request.user.profile.role_change_count < 3 %}
+                                                {# Phần này không đổi: Hiển thị ô chọn vai trò như bình thường #}
+                                                {{ profile_form.roles|as_crispy_field }}
+                                                <div class="form-text text-muted mb-3">
+                                                    Bạn còn <strong>{{ remaining_role_changes }}</strong> lần thay đổi vai trò.
+                                                </div>
+                                            {% else %}
+                                                {# Phần này được sửa lỗi #}
+                                                
+                                                {# 1. Hiển thị thông tin cho người dùng thấy (dạng chỉ đọc) #}
+                                                <div class="mb-3">
+                                                    <label class="form-label">Vai trò</label>
+                                                    <div class="form-control bg-light" readonly>
+                                                        {% for role in request.user.profile.roles.all %}
+                                                            {{ role.name }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="form-text text-danger">
+                                                        Bạn đã hết số lần đổi vai trò. Vui lòng liên hệ Admin để được hỗ trợ.
+                                                    </div>
+                                                </div>
+
+                                                {# 2. Thêm trường input bị ẩn để gửi dữ liệu vai trò hiện tại đi #}
+                                                <div style="display: none;">
+                                                    {{ profile_form.roles }}
+                                                </div>
+                                            {% endif %}
+                                            {% comment %} Kết thúc logic vai trò {% endcomment %}
+
                                             {{ profile_form.bio|as_crispy_field }}
                                             {{ profile_form.location|as_crispy_field }}
                                             {{ profile_form.experience|as_crispy_field }}
                                         </div>
 
-                                        {# CỘT PHẢI: THÔNG TIN THEO VAI TRÒ #}
+                                        {# CỘT PHẢI: THÔNG TIN THEO VAI TRÒ (GIỮ NGUYÊN) #}
                                         <div class="col-md-6">
                                             {% if 'REFEREE' in user_role_ids %}
                                                 <div class="mb-3">
@@ -267,7 +296,7 @@
                                                     {{ profile_form.sponsorship_interests|as_crispy_field }}
                                                 </div>
                                             {% endif %}
-                    
+                                    
                                             {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
                                                 <div class="mb-3">
                                                     <h5 class="form-label">Thông tin Media/Nhiếp ảnh</h5>
@@ -276,7 +305,6 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                    {# === KẾT THÚC VÙNG THAY ĐỔI === #}
                                     
                                     <button type="submit" name="update_public_profile" class="btn btn-primary w-100 mt-3">Lưu thay đổi</button>
                                 </form>

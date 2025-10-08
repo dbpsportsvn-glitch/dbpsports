@@ -36,8 +36,8 @@ class Profile(models.Model):
     
     roles = models.ManyToManyField(Role, blank=True, verbose_name="Các vai trò đã chọn")
     has_selected_roles = models.BooleanField("Đã chọn vai trò lần đầu", default=False)
-    
     is_profile_complete = models.BooleanField("Đã hoàn tất hồ sơ lần đầu", default=False)
+    role_change_count = models.PositiveIntegerField(default=0, help_text="Số lần người dùng đã thay đổi vai trò.")
     
     bio = models.TextField("Giới thiệu bản thân", blank=True, help_text="Một vài dòng về kỹ năng, đam mê hoặc thành tích của bạn.")
     location = models.CharField("Khu vực hoạt động", max_length=100, blank=True, help_text="Ví dụ: Hà Nội, TP.HCM, Điện Biên...")

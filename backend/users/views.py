@@ -7,7 +7,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
 from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
-from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm
+from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, ProfileUpdateForm
 from .models import Profile, Role
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
@@ -17,7 +17,6 @@ from django.db.models import Avg
 from django.db import transaction
 from tournaments.forms import PlayerCreationForm
 from tournaments.models import Player
-
 
 @login_required
 def dashboard(request):
@@ -83,8 +82,17 @@ def dashboard(request):
                 return redirect(request.path_info + '?tab=notifications')
 
         elif 'update_public_profile' in request.POST:
-            profile_form = ProfileUpdateForm(request.POST, instance=profile)
+            # Sửa lại dòng này để có request.FILES
+            profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
             if profile_form.is_valid():
+                # === THÊM LOGIC ĐẾM VÀO ĐÂY TRƯỚC KHI LƯU ===
+                if 'roles' in profile_form.changed_data:
+                    # Form đã valid, nghĩa là người dùng còn lượt đổi
+                    # nên ta chỉ cần tăng biến đếm
+                    if profile.role_change_count < 3:
+                        profile.role_change_count += 1
+                        # Không cần save ở đây, form.save() bên dưới sẽ lưu cả thay đổi này
+                
                 profile_form.save()
                 messages.success(request, 'Đã cập nhật hồ sơ công khai của bạn!')
                 return redirect(request.path_info + '?tab=public-profile')
@@ -130,6 +138,11 @@ def dashboard(request):
 
     user_role_ids = set(profile.roles.values_list('id', flat=True))
 
+    # === BẮT ĐẦU LOGIC MỚI: TÍNH SỐ LẦN ĐỔI VAI TRÒ CÒN LẠI ===
+    remaining_role_changes = 3 - profile.role_change_count
+    if remaining_role_changes < 0:
+        remaining_role_changes = 0
+
     context = {
         'user_form': user_form,
         'password_form': password_form,
@@ -151,6 +164,7 @@ def dashboard(request):
         'outgoing_transfers': outgoing_transfers,
         'scouting_list': scouting_list,
         'user_role_ids': user_role_ids,
+        'remaining_role_changes': remaining_role_changes,
     }
     return render(request, 'users/dashboard.html', context)
 

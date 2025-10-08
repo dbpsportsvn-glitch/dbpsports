@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from .models import Profile # <-- Thêm import này
 from django.utils.safestring import mark_safe  # <-- THÊM DÒNG NÀY
 from django.urls import reverse_lazy         # <-- THÊM DÒNG NÀY
+from .models import Profile, Role
 
 # ===============================
 
@@ -126,9 +127,18 @@ class ProfileSetupForm(forms.ModelForm):
 
 # === THÊM FORM MỚI VÀO CUỐI FILE ===
 class ProfileUpdateForm(forms.ModelForm):
+    # === THÊM TRƯỜNG ROLES VÀO ĐÂY ===
+    roles = forms.ModelMultipleChoiceField(
+        queryset=Role.objects.all().order_by('order'),
+        widget=forms.CheckboxSelectMultiple,
+        label="Vai trò của bạn",
+        required=True,
+    )
+
     class Meta:
         model = Profile
-        fields = ['bio', 'location', 'experience', 'equipment',
+        # === THÊM 'roles' VÀO ĐẦU DANH SÁCH fields ===
+        fields = ['roles', 'bio', 'location', 'experience', 'equipment',
                   'referee_level', 'brand_website', 'sponsorship_interests']
         labels = {
             'bio': 'Giới thiệu bản thân (hiển thị công khai)',
@@ -142,3 +152,20 @@ class ProfileUpdateForm(forms.ModelForm):
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4}),
         }        
+
+    def clean_roles(self):
+        roles = self.cleaned_data.get('roles')
+
+        # === THÊM ĐOẠN KIỂM TRA NÀY VÀO ĐẦU PHƯƠNG THỨC ===
+        if len(roles) > 2:
+            raise forms.ValidationError("Bạn chỉ được chọn tối đa 2 vai trò.")
+        # === KẾT THÚC THAY ĐỔI ===
+
+        # Giữ lại logic kiểm tra số lần thay đổi vai trò
+        if self.instance and self.instance.pk and self.instance.role_change_count >= 3:
+            if set(self.instance.roles.all()) != set(roles):
+                raise forms.ValidationError(
+                    "Bạn đã hết số lần đổi vai trò. Vui lòng liên hệ Admin để được hỗ trợ."
+                )
+        
+        return roles        
