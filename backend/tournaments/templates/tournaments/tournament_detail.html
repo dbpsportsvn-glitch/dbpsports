@@ -425,15 +425,18 @@
                 <div class="card-body text-center d-flex flex-column">
                 <!-- LOGO: to hơn + không bị crop -->
                 <div class="sponsor-logo-wrapper rounded-3 mb-3">
-                    {% if sponsorship.logo %}
-                    <img src="{{ sponsorship.logo.url }}" class="sponsor-logo"
-                        alt="Logo {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}"
-                        loading="lazy" decoding="async">
-                    {% else %}
-                    <div class="logo-placeholder rounded-3">
-                        <i class="bi bi-gem fs-1"></i>
-                    </div>
-                    {% endif %}
+                    {# Logic mới: Ưu tiên logo từ profile, nếu không có mới dùng logo cũ #}
+                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
+                        {% if logo_url %}
+                            <img src="{{ logo_url }}" class="sponsor-logo"
+                                alt="Logo {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}"
+                                loading="lazy" decoding="async">
+                        {% else %}
+                            <div class="logo-placeholder rounded-3">
+                                <i class="bi bi-gem fs-1"></i>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
                 </div>
 
                 <!-- Tên nhà tài trợ -->
