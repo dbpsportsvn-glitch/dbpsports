@@ -76,8 +76,8 @@
                 <li class="nav-item"><button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
                 <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
                 <li class="nav-item"><button class="nav-link" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery" type="button">🖼️ Thư viện ảnh</button></li>
-                {% if sponsorships %}
-                <li class="nav-item"><button class="nav-link" id="sponsors-tab" data-bs-toggle="tab" data-bs-target="#sponsors" type="button">💎 Nhà tài trợ</button></li>
+                {% if sorted_sponsorships %}
+                    <li class="nav-item"><button class="nav-link" id="sponsors-tab" data-bs-toggle="tab" data-bs-target="#sponsors" type="button">💎 Nhà tài trợ</button></li>
                 {% endif %}
                 {% if knockout_matches %}
                 <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
@@ -400,46 +400,94 @@
     </div>
     {% endif %}
 
-    {# --- DÁN TOÀN BỘ KHỐI CODE NÀY VÀO --- #}
-    {% if sponsorships %}
-    <div class="tab-pane fade card-pane" id="sponsors" role="tabpanel">
-        <h4 class="section-title mb-3">Đơn vị Đồng hành & Tài trợ</h4>
-        <div class="list-group">
-            {% for sponsorship in sponsorships %}
-                <div class="list-group-item">
-                    <div class="d-flex align-items-center gap-3">
-                        {% if sponsorship.logo %}
-                            <img src="{{ sponsorship.logo.url }}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain;">
-                        {% endif %}
-                        <div class="flex-grow-1">
-                            {# Hiển thị tên NTT và link đến trang hồ sơ nếu có #}
-                            <h5 class="mb-1">
-                                {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
-                                    <a href="{% url 'sponsors:profile_detail' pk=sponsorship.sponsor.sponsor_profile.pk %}" class="text-decoration-none">
-                                        {{ sponsorship.sponsor.sponsor_profile.brand_name }}
-                                    </a>
-                                {% else %}
-                                    {{ sponsorship.sponsor_name }}
+    {# Thêm thẻ div cho tab Nhà tài trợ và bọc toàn bộ nội dung vào trong #}
+    <div class="tab-pane fade" id="sponsors" role="tabpanel" aria-labelledby="sponsors-tab">
+        {% if sorted_sponsorships %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for sponsorship in sorted_sponsorships %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm sponsor-card">
+                            <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener noreferrer" class="stretched-link" title="Ghé thăm trang của {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}"></a>
+                            
+                            <div class="card-body text-center">
+                                <div class="sponsor-logo-wrapper mb-3">
+                                    {% if sponsorship.logo %}
+                                        <img src="{{ sponsorship.logo.url }}" class="img-fluid rounded" alt="Logo {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
+                                    {% else %}
+                                        <div class="logo-placeholder">
+                                            <i class="bi bi-gem fs-1"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <h5 class="card-title mb-1">
+                                    {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}
+                                </h5>
+                                
+                                {% if sponsorship.package %}
+                                <p class="mb-2">
+                                    <span class="badge" style="background-color: #0dcaf0; color: #000;">{{ sponsorship.package.name }}</span>
+                                </p>
                                 {% endif %}
-                            </h5>
-
-                            <p class="mb-1 text-muted">{{ sponsorship.package_name|default:"Nhà tài trợ" }}</p>
-
-                            {# Hiển thị link website ngoài #}
-                            {% if sponsorship.website_url %}
-                                <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                    Xem trang web
-                                </a>
-                            {% endif %}
+                                
+                                <div class="star-rating">
+                                    {% with rating=sponsorship.avg_rating|default:0 %}
+                                        {% for i in "12345" %}
+                                            {% if i|add:0 <= rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% elif i|add:0 > rating and i|add:"-0.5" <= rating %}
+                                                <i class="bi bi-star-half text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
+                                    {% endwith %}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
-        </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Giải đấu hiện chưa có thông tin về nhà tài trợ.
+            </div>
+        {% endif %}
+
+        {# CSS để làm cho card đẹp hơn #}
+        <style>
+            .sponsor-card {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .sponsor-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+            }
+            .sponsor-logo-wrapper {
+                height: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .sponsor-logo-wrapper img {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: contain;
+            }
+            .logo-placeholder {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #f8f9fa;
+                border-radius: .25rem;
+                color: #6c757d;
+            }
+        </style>
     </div>
-    {% endif %}
-    {# --- KẾT THÚC KHỐI CODE MỚI --- #}
+
 </div>
 
 <script>

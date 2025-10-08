@@ -1,57 +1,87 @@
 # backend/tournaments/views.py
 
-# Python Standard Library
+# Standard library
 import json
 import random
 from collections import defaultdict
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from itertools import combinations
-from django.core import serializers
-from django.db import transaction
-from datetime import date
-from organizations.models import JobPosting, JobApplication
-from organizations.forms import JobApplicationForm
-from django.db.models import F, Value
-from .forms import PlayerTransferForm
-from .models import Sponsorship, SponsorClick
 
-# Django Core
+# Django
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Prefetch, Q, Sum
+from django.db.models import Avg, Count, F, Prefetch, Q, Sum, Value
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from services.weather import get_weather_for_match
-from organizations.forms import GoalForm, CardForm, SubstitutionForm, MatchMediaUpdateForm
-from .utils import get_current_vote_value, send_notification_email
-from .models import TournamentStaff
+
+# Project apps
+from organizations.forms import (
+    CardForm,
+    GoalForm,
+    JobApplicationForm,
+    MatchMediaUpdateForm,
+    MatchUpdateForm,
+    SubstitutionForm,
+)
+from organizations.models import JobApplication, JobPosting, Organization
 from organizations.views import user_can_control_match, user_can_upload_gallery
-from organizations.forms import MatchUpdateForm
-# Thêm import Note BLV
-from .models import MatchNote
-from .forms import CommentatorNoteForm
-from .forms import CaptainNoteForm
+from services.weather import get_weather_for_match
+from sponsors.models import Testimonial
 
-# Local Application Imports
-from organizations.models import Organization
-
-from .forms import (CommentForm, GalleryURLForm, PaymentProofForm,
-                    PlayerCreationForm, ScheduleGenerationForm,
-                    TeamCreationForm)
-from .models import (Announcement, Card, Goal, Group, HomeBanner, Lineup, Match,
-                     Player, Team, Tournament, TournamentPhoto, MAX_STARTERS, Notification, Substitution, MatchEvent, TeamAchievement, VoteRecord, TeamRegistration, TeamVoteRecord, PlayerTransfer, ScoutingList)
-from .utils import send_notification_email, send_schedule_notification
-from django.db.models import Sum, F
-from django.contrib.auth.models import User
+# Current app
+from .forms import (
+    CaptainNoteForm,
+    CommentatorNoteForm,
+    CommentForm,
+    GalleryURLForm,
+    PaymentProofForm,
+    PlayerCreationForm,
+    PlayerTransferForm,
+    ScheduleGenerationForm,
+    TeamCreationForm,
+)
+from .models import (
+    Announcement,
+    Card,
+    Goal,
+    Group,
+    HomeBanner,
+    Lineup,
+    Match,
+    MatchEvent,
+    MatchNote,
+    MAX_STARTERS,
+    Notification,
+    Player,
+    PlayerTransfer,
+    ScoutingList,
+    SponsorClick,
+    Sponsorship,
+    Substitution,
+    Team,
+    TeamAchievement,
+    TeamRegistration,
+    TeamVoteRecord,
+    Tournament,
+    TournamentPhoto,
+    TournamentStaff,
+    VoteRecord,
+)
+from .utils import (
+    get_current_vote_value,
+    send_notification_email,
+    send_schedule_notification,
+)
 
 #==================================
 
@@ -170,8 +200,9 @@ def tournament_detail(request, pk):
             Prefetch('groups', queryset=Group.objects.order_by('name').prefetch_related(
                 Prefetch('registrations__team', queryset=Team.objects.select_related('captain'))
             )),
-            'photos',  # <<-- SỬA LỖI Ở ĐÂY
-            'sponsorships__sponsor__profile'  # <<-- SỬA LỖI Ở ĐÂY
+            'photos',
+            # Sửa dòng này để tối ưu hơn
+            Prefetch('sponsorships', queryset=Sponsorship.objects.filter(is_active=True).select_related('package', 'sponsor__sponsor_profile'))
         ),
         pk=pk
     )
@@ -333,7 +364,29 @@ def tournament_detail(request, pk):
         registered_team_ids = tournament.registrations.values_list('team_id', flat=True)
         registerable_teams = Team.objects.filter(captain=request.user).exclude(id__in=registered_team_ids)
 
+    # === LOGIC CHO NHÀ TÀI TRỢ  ===
+    # Lấy danh sách nhà tài trợ đã được prefetch ở trên
+    sponsorships_list = list(tournament.sponsorships.all())
 
+    # Tính toán rating trung bình cho từng nhà tài trợ
+    for sponsorship in sponsorships_list:
+        if sponsorship.sponsor and hasattr(sponsorship.sponsor, 'sponsor_profile'):
+            # Tính rating trung bình và gán trực tiếp vào đối tượng sponsorship
+            avg_rating = Testimonial.objects.filter(
+                sponsor_profile=sponsorship.sponsor.sponsor_profile
+            ).aggregate(avg_rating=Avg('rating'))['avg_rating']
+            sponsorship.avg_rating = avg_rating if avg_rating is not None else 0
+        else:
+            sponsorship.avg_rating = 0 # Mặc định là 0 nếu không có profile
+
+    # Sắp xếp danh sách nhà tài trợ bằng Python
+    # Ưu tiên 1: Thứ tự của gói (order nhỏ hơn lên trước)
+    # Ưu tiên 2: Điểm đánh giá trung bình (avg_rating cao hơn lên trước)
+    sorted_sponsorships = sorted(
+        sponsorships_list,
+        key=lambda s: (s.package.order, -s.avg_rating),
+    )
+    # === KẾT THÚC PHẦN LOGIC MỚI ===
     context = {
         'tournament': tournament,
         'is_organizer': is_organizer,
@@ -359,7 +412,7 @@ def tournament_detail(request, pk):
         'team_goal_stats': team_goal_stats,
         'team_card_stats': team_card_stats,
         'matches_with_galleries': matches_with_galleries,
-        'sponsorships': tournament.sponsorships.filter(is_active=True),
+        'sorted_sponsorships': sorted_sponsorships,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 
