@@ -25,6 +25,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 # Apps khác
 from users.models import Role
+from sponsors.models import SponsorProfile
 
 from tournaments.forms import PlayerCreationForm, TournamentForm
 from tournaments.models import (
@@ -1428,14 +1429,26 @@ def delete_closed_jobs_view(request, tournament_pk):
 @never_cache
 def manage_sponsors_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
-    if not user_can_manage_tournament(request.user, tournament): # <--- SỬA THÀNH request.user
+    if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập.")
 
     if request.method == 'POST':
-        # SỬA Ở ĐÂY: Thêm tournament=tournament vào khi khởi tạo form
         form = SponsorshipForm(request.POST, request.FILES, tournament=tournament)
         if form.is_valid():
             sponsorship = form.save(commit=False)
+            
+            # =================== LOGIC TỰ ĐỘNG CẬP NHẬT (THÊM MỚI) ===================
+            if sponsorship.sponsor: # Nếu BTC chọn một user nhà tài trợ có sẵn
+                try:
+                    profile = sponsorship.sponsor.sponsor_profile
+                    # Tự động điền thông tin từ profile, bỏ qua dữ liệu nhập tay
+                    sponsorship.sponsor_name = profile.brand_name
+                    sponsorship.logo = profile.brand_logo
+                    sponsorship.website_url = profile.website_url
+                except SponsorProfile.DoesNotExist:
+                    messages.warning(request, f"Lưu ý: Nhà tài trợ '{sponsorship.sponsor.username}' chưa cập nhật hồ sơ cá nhân.")
+            # =================== KẾT THÚC LOGIC MỚI ===================
+
             sponsorship.tournament = tournament
             try:
                 sponsorship.save()
@@ -1446,7 +1459,6 @@ def manage_sponsors_view(request, tournament_pk):
 
             return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
     else:
-        # VÀ SỬA Ở ĐÂY NỮA
         form = SponsorshipForm(tournament=tournament)
 
     sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor', 'package')
@@ -1458,6 +1470,7 @@ def manage_sponsors_view(request, tournament_pk):
         'active_page': 'sponsors',
     }
     return render(request, 'organizations/manage_sponsors.html', context)
+
 
 @login_required
 def delete_sponsorship_view(request, pk):
@@ -1712,18 +1725,29 @@ def edit_sponsorship_view(request, pk):
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập.")
 
-    # --- BẮT ĐẦU NÂNG CẤP ---
-    # Chủ động lấy số điện thoại và gửi ra context
     sponsor_phone_number = None
     if sponsorship.sponsor and hasattr(sponsorship.sponsor, 'sponsor_profile'):
         sponsor_phone_number = sponsorship.sponsor.sponsor_profile.phone_number
-    # --- KẾT THÚC NÂNG CẤP ---
 
     if request.method == 'POST':
         form = SponsorshipForm(request.POST, request.FILES, instance=sponsorship, tournament=tournament)
         if form.is_valid():
-            form.save()
-            messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ '{sponsorship}'.")
+            sponsorship_instance = form.save(commit=False)
+
+            # =================== LOGIC TỰ ĐỘNG CẬP NHẬT (CHỈNH SỬA) ===================
+            if sponsorship_instance.sponsor:
+                try:
+                    profile = sponsorship_instance.sponsor.sponsor_profile
+                    # Ghi đè thông tin bằng dữ liệu từ profile
+                    sponsorship_instance.sponsor_name = profile.brand_name
+                    sponsorship_instance.logo = profile.brand_logo
+                    sponsorship_instance.website_url = profile.website_url
+                except SponsorProfile.DoesNotExist:
+                    messages.warning(request, f"Lưu ý: Nhà tài trợ '{sponsorship_instance.sponsor.username}' chưa cập nhật hồ sơ cá nhân.")
+            # =================== KẾT THÚC LOGIC MỚI ===================
+
+            sponsorship_instance.save()
+            messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ '{sponsorship_instance}'.")
             return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
     else:
         form = SponsorshipForm(instance=sponsorship, tournament=tournament)
@@ -1734,6 +1758,29 @@ def edit_sponsorship_view(request, pk):
         'tournament': tournament,
         'organization': tournament.organization,
         'active_page': 'sponsors_dashboard',
-        'sponsor_phone_number': sponsor_phone_number, # <-- Gửi SĐT ra template
+        'sponsor_phone_number': sponsor_phone_number,
     }
     return render(request, 'organizations/edit_sponsorship.html', context)     
+
+
+def get_sponsor_details_api(request, user_id):
+    """
+    API endpoint để lấy thông tin chi tiết của một nhà tài trợ.
+    """
+    # Di chuyển import vào trong hàm để tránh circular import
+    from sponsors.models import SponsorProfile 
+
+    try:
+        # Truy vấn thẳng vào SponsorProfile thông qua user_id
+        sponsor_profile = SponsorProfile.objects.get(user_id=user_id)
+
+        logo_url = sponsor_profile.brand_logo.url if sponsor_profile.brand_logo else None
+
+        data = {
+            'brand_name': sponsor_profile.brand_name,
+            'website_url': sponsor_profile.website_url,
+            'logo_url': logo_url,
+        }
+        return JsonResponse(data)
+    except SponsorProfile.DoesNotExist:
+        return JsonResponse({'error': 'Sponsor profile not found'}, status=404)    

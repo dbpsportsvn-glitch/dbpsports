@@ -16,6 +16,7 @@ class SponsorProfile(models.Model):
         verbose_name="Tài khoản Nhà tài trợ"
     )
     brand_name = models.CharField("Tên thương hiệu", max_length=200, help_text="Tên công khai của nhà tài trợ.")
+    brand_logo = models.ImageField(upload_to='sponsor_logos/', blank=True, null=True, verbose_name="Logo thương hiệu") # <-- THÊM DÒNG NÀY
     tagline = models.CharField("Slogan/Khẩu hiệu", max_length=255, blank=True, help_text="Một câu giới thiệu ngắn gọn.")
     description = models.TextField("Giới thiệu chi tiết", blank=True, help_text="Mô tả về thương hiệu, lĩnh vực hoạt động...")
     website_url = models.URLField("Link trang web", blank=True)

@@ -10,15 +10,28 @@
 {% block management_content %}
 <div class="card shadow-sm">
     <div class="card-header">
-        <h3>Chỉnh sửa Nhà tài trợ: {{ sponsorship }}</h3>
+        <h3>
+            {% if form.instance.pk %}Chỉnh sửa{% else %}Thêm mới{% endif %} Nhà tài trợ: {{ sponsorship }}
+        </h3>
     </div>
     <div class="card-body">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
-            {# This single line renders the whole form correctly. #}
-            {# It will automatically disable fields based on our logic in forms.py #}
-            {{ form|crispy }}
+            <div id="sponsor-profile-preview" class="mb-3" style="display: none; border: 1px dashed #ccc; padding: 15px; border-radius: 5px;">
+                <h5>Thông tin từ Profile Nhà tài trợ</h5>
+                <p><strong>Tên thương hiệu:</strong> <span id="preview-name"></span></p>
+                <p><strong>Website:</strong> <a id="preview-website" href="#" target="_blank"></a></p>
+                <div>
+                    <strong>Logo:</strong><br>
+                    <img id="preview-logo" src="" alt="Sponsor Logo" style="max-height: 80px; margin-top: 10px;"/>
+                </div>
+                <small class="text-success">Các thông tin này được lấy tự động và sẽ được lưu lại.</small>
+            </div>
+
+            <div id="sponsorship-form-fields">
+                {{ form|crispy }}
+            </div>
             
             <button type="submit" class="btn btn-primary mt-3">Lưu thay đổi</button>
         </form>
@@ -26,14 +39,74 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.jQuery && window.jQuery.fn.select2) {
-            $('.select2-search').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Tìm kiếm theo tên hoặc email...',
-                allowClear: true
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    const sponsorSelect = document.querySelector('#id_sponsor');
+    const sponsorNameInput = document.querySelector('#id_sponsor_name');
+    const logoInput = document.querySelector('#id_logo');
+    const websiteInput = document.querySelector('#id_website_url');
+    const previewDiv = document.querySelector('#sponsor-profile-preview');
+
+    function toggleFields(disabled) {
+        if (sponsorNameInput) sponsorNameInput.disabled = disabled;
+        if (logoInput) logoInput.disabled = disabled;
+        if (websiteInput) websiteInput.disabled = disabled;
+
+        sponsorNameInput?.closest('.mb-3').style.display = disabled ? 'none' : 'block';
+        logoInput?.closest('.mb-3').style.display = disabled ? 'none' : 'block';
+        websiteInput?.closest('.mb-3').style.display = disabled ? 'none' : 'block';
+    }
+
+    function updateSponsorInfo(sponsorId) {
+        if (!sponsorId) {
+            toggleFields(false);
+            previewDiv.style.display = 'none';
+            return;
         }
-    });
+
+        fetch(`/orgs/api/sponsor-details/${sponsorId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    toggleFields(false);
+                    previewDiv.style.display = 'none';
+                    return;
+                }
+                
+                toggleFields(true);
+                
+                document.querySelector('#preview-name').textContent = data.brand_name || 'Chưa có';
+                const websiteLink = document.querySelector('#preview-website');
+                websiteLink.href = data.website_url || '#';
+                websiteLink.textContent = data.website_url || 'Chưa có';
+                
+                const logoImg = document.querySelector('#preview-logo');
+                if (data.logo_url) {
+                    logoImg.src = data.logo_url;
+                    logoImg.style.display = 'block';
+                } else {
+                    logoImg.style.display = 'none';
+                    logoImg.insertAdjacentHTML('afterend', '<span>Chưa có logo.</span>');
+                }
+                
+                previewDiv.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching sponsor details:', error);
+                toggleFields(false);
+                previewDiv.style.display = 'none';
+            });
+    }
+
+    if (sponsorSelect) {
+        sponsorSelect.addEventListener('change', function() {
+            updateSponsorInfo(this.value);
+        });
+
+        if (sponsorSelect.value) {
+            updateSponsorInfo(sponsorSelect.value);
+        }
+    }
+});
 </script>
 {% endblock %}
