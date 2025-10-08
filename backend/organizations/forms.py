@@ -443,6 +443,10 @@ class SponsorshipForm(forms.ModelForm):
             'order': 'Số nhỏ hơn sẽ được hiển thị trước trong cùng một gói tài trợ.'
         }
 
+        widgets = {
+            'sponsor': forms.Select(attrs={'class': 'select2-search'})
+        }
+
     def __init__(self, *args, **kwargs):
         # Lấy tournament từ view truyền vào để lọc các gói tài trợ
         self.tournament = kwargs.pop('tournament', None)

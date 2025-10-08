@@ -6,7 +6,7 @@ from .models import SponsorProfile, Testimonial
 class SponsorProfileForm(forms.ModelForm):
     class Meta:
         model = SponsorProfile
-        fields = ['brand_name', 'tagline', 'description', 'website_url', 'cover_image']
+        fields = ['brand_name', 'tagline', 'description', 'website_url', 'phone_number', 'cover_image']
         labels = {
             'brand_name': 'Tên thương hiệu',
             'tagline': 'Slogan/Khẩu hiệu',

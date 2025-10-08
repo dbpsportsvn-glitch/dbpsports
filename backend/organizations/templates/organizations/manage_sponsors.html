@@ -1,13 +1,10 @@
-{# Mở file: backend/organizations/templates/organizations/manage_sponsors.html #}
-{# Dán toàn bộ nội dung này để thay thế file cũ #}
-
 {% extends 'organizations/organization_base.html' %}
 {% load crispy_forms_tags %}
 
 {% block title %}Quản lý Nhà tài trợ - {{ tournament.name }}{% endblock %}
 
 {% block sidebar %}
-    {% include 'organizations/_manage_tournament_nav.html' %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsors' %}
 {% endblock %}
 
 {% block management_content %}
@@ -24,28 +21,26 @@
                 <div class="card mb-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-3">
-                            {# --- BẮT ĐẦU THAY ĐỔI --- #}
                             {% if sponsorship.logo %}
                                 <img src="{{ sponsorship.logo.url }}" 
                                     alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}" 
                                     style="width: 80px; height: 80px; object-fit: contain;">
                             {% else %}
-                                {# Hiển thị một ảnh placeholder hoặc một icon nếu không có logo #}
                                 <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                                     <i class="bi bi-gem fs-2 text-muted"></i>
                                 </div>
                             {% endif %}
-                            {# --- KẾT THÚC THAY ĐỔI --- #}
                             <div>
                                 <strong>
                                     {% if sponsorship.sponsor_name %}
                                         {{ sponsorship.sponsor_name }}
                                     {% elif sponsorship.sponsor %}
-                                        {{ sponsorship.sponsor.profile.sponsorship_interests|default:sponsorship.sponsor.username }}
+                                        {{ sponsorship.sponsor.sponsor_profile.brand_name|default:sponsorship.sponsor.username }}
                                     {% endif %}
                                 </strong>
-                                {# Thêm 'Chưa có' nếu tên gói trống #}
-                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package.name|default:"Chưa có gói" }}</span>
+                                {% if sponsorship.package %}
+                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package.name }}</span>
+                                {% endif %}
                             </div>
                         </div>
                         <form method="post" action="{% url 'organizations:delete_sponsorship' pk=sponsorship.pk %}" onsubmit="return confirm('Xóa nhà tài trợ này?');">
@@ -73,4 +68,21 @@
         </div>
     </div>
 </div>
+
+{# === DÁN SCRIPT KÍCH HOẠT TÌM KIẾM VÀO ĐÂY === #}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.jQuery && window.jQuery.fn.select2) {
+            $('.select2-search').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Tìm kiếm theo tên hoặc email...',
+                allowClear: true,
+                // Giúp ô tìm kiếm hoạt động tốt hơn khi nằm trong cột hẹp
+                dropdownParent: $('.select2-search').parent()
+            });
+        } else {
+            console.error('jQuery hoặc Select2 chưa được tải. Vui lòng kiểm tra file base.html.');
+        }
+    });
+</script>
 {% endblock %}

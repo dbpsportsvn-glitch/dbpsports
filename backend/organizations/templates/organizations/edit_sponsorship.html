@@ -4,7 +4,7 @@
 {% block title %}Chỉnh sửa Nhà tài trợ - {{ tournament.name }}{% endblock %}
 
 {% block sidebar %}
-    {% include 'organizations/_manage_tournament_nav.html' %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsors_dashboard' %}
 {% endblock %}
 
 {% block management_content %}
@@ -22,6 +22,16 @@
                     {{ form.package|as_crispy_field }}
                     {{ form.status|as_crispy_field }}
                     {{ form.sponsor|as_crispy_field }}
+
+                    {# === SỬA LẠI ĐOẠN CODE HIỂN THỊ SĐT === #}
+                    {% if sponsor_phone_number %}
+                        <div class="alert alert-info py-2 small">
+                            <i class="bi bi-telephone-fill"></i> 
+                            SĐT liên hệ: <strong>{{ sponsor_phone_number }}</strong>
+                        </div>
+                    {% endif %}
+                    {# ======================================= #}
+
                     {{ form.sponsor_name|as_crispy_field }}
                 </div>
 
@@ -43,4 +53,16 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.jQuery && window.jQuery.fn.select2) {
+            $('.select2-search').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Tìm kiếm theo tên hoặc email...',
+                allowClear: true
+            });
+        }
+    });
+</script>
 {% endblock %}

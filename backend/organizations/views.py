@@ -1704,17 +1704,26 @@ def send_sponsor_announcement(request, tournament_pk):
 @login_required
 @never_cache
 def edit_sponsorship_view(request, pk):
-    sponsorship = get_object_or_404(Sponsorship, pk=pk)
+    sponsorship = get_object_or_404(
+        Sponsorship.objects.select_related('tournament', 'sponsor__sponsor_profile'), 
+        pk=pk
+    )
     tournament = sponsorship.tournament
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    # --- BẮT ĐẦU NÂNG CẤP ---
+    # Chủ động lấy số điện thoại và gửi ra context
+    sponsor_phone_number = None
+    if sponsorship.sponsor and hasattr(sponsorship.sponsor, 'sponsor_profile'):
+        sponsor_phone_number = sponsorship.sponsor.sponsor_profile.phone_number
+    # --- KẾT THÚC NÂNG CẤP ---
 
     if request.method == 'POST':
         form = SponsorshipForm(request.POST, request.FILES, instance=sponsorship, tournament=tournament)
         if form.is_valid():
             form.save()
             messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ '{sponsorship}'.")
-            # Quay trở lại dashboard sau khi sửa
             return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
     else:
         form = SponsorshipForm(instance=sponsorship, tournament=tournament)
@@ -1724,6 +1733,7 @@ def edit_sponsorship_view(request, pk):
         'sponsorship': sponsorship,
         'tournament': tournament,
         'organization': tournament.organization,
-        'active_page': 'sponsors_dashboard' # Giữ cho menu sáng đúng chỗ
+        'active_page': 'sponsors_dashboard',
+        'sponsor_phone_number': sponsor_phone_number, # <-- Gửi SĐT ra template
     }
     return render(request, 'organizations/edit_sponsorship.html', context)     
