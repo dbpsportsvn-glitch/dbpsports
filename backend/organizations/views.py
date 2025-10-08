@@ -1403,28 +1403,28 @@ def delete_closed_jobs_view(request, tournament_pk):
 @never_cache
 def manage_sponsors_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
-    if not user_can_manage_tournament(request.user, tournament):
+    if not user_can_manage_tournament(request.user, tournament): # <--- SỬA THÀNH request.user
         return HttpResponseForbidden("Bạn không có quyền truy cập.")
 
     if request.method == 'POST':
-        form = SponsorshipForm(request.POST, request.FILES)
+        # SỬA Ở ĐÂY: Thêm tournament=tournament vào khi khởi tạo form
+        form = SponsorshipForm(request.POST, request.FILES, tournament=tournament)
         if form.is_valid():
             sponsorship = form.save(commit=False)
             sponsorship.tournament = tournament
             try:
-                # Cố gắng lưu nhà tài trợ
                 sponsorship.save()
                 messages.success(request, "Đã thêm nhà tài trợ mới thành công!")
             except IntegrityError:
-                # Nếu bị lỗi trùng lặp, hiển thị thông báo thân thiện
-                sponsor_name = form.cleaned_data['sponsor'].username
+                sponsor_name = form.cleaned_data.get('sponsor_name') or form.cleaned_data.get('sponsor').username
                 messages.error(request, f"Nhà tài trợ '{sponsor_name}' đã tồn tại trong giải đấu này. Vui lòng chọn nhà tài trợ khác.")
 
             return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
     else:
-        form = SponsorshipForm()
+        # VÀ SỬA Ở ĐÂY NỮA
+        form = SponsorshipForm(tournament=tournament)
 
-    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor')
+    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor', 'package')
     context = {
         'tournament': tournament,
         'organization': tournament.organization,

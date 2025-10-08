@@ -1,10 +1,9 @@
-{% raw %}{# backend/organizations/templates/organizations/manage_sponsorship_packages.html #}
+{# backend/organizations/templates/organizations/manage_sponsorship_packages.html #}
 
 {% extends "organizations/organization_base.html" %}
 
 {% block title %}Quản lý Gói Tài Trợ - {{ tournament.name }}{% endblock %}
 
-{# SỬA DÒNG NÀY #}
 {% block management_content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -62,4 +61,3 @@
 {% block sidebar %}
     {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsorship_packages' %}
 {% endblock %}
-{% endraw %}
