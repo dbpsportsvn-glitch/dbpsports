@@ -36,9 +36,15 @@
                 {% for sponsorship in sponsors_by_status|get_item:status_key %}
                 <div class="kanban-card card card-body shadow-sm mb-2">
                     <div class="d-flex align-items-start">
-                        {% if sponsorship.logo %}
-                            <img src="{{ sponsorship.logo.url }}" alt="logo" class="me-2" style="width: 40px; height: 40px; object-fit: contain;">
-                        {% endif %}
+                        {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
+                            {% if logo_url %}
+                                <img src="{{ logo_url }}" alt="logo" class="me-2" style="width: 40px; height: 40px; object-fit: contain;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-gem fs-4 text-muted"></i>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
                         <div class="flex-grow-1">
                             <h6 class="mb-1">{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}</h6>
                             {% if sponsorship.package %}
