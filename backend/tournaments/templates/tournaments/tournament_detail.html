@@ -13,32 +13,37 @@
     <div class="sponsor-ticker-overlay">
         <div class="sponsor-ticker-wrap">
             <div class="sponsor-ticker">
-                {# SỬA LẠI BIẾN Ở ĐÂY #}
+                {# --- BẮT ĐẦU THAY THẾ TỪ ĐÂY (LẶP LẠI 3 LẦN) --- #}
                 {% for sponsorship in sorted_sponsorships %}
-                    {% if sponsorship.logo %}
-                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                        <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
-                    </a>
-                    {% endif %}
+                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
+                        {% if logo_url %}
+                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
+                        </a>
+                        {% endif %}
+                    {% endwith %}
                 {% endfor %}
 
-                {# Lặp lại để tạo hiệu ứng chạy vô tận #}
                 {% for sponsorship in sorted_sponsorships %}
-                    {% if sponsorship.logo %}
-                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                        <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
-                    </a>
-                    {% endif %}
+                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
+                        {% if logo_url %}
+                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
+                        </a>
+                        {% endif %}
+                    {% endwith %}
                 {% endfor %}
-                
-                {# Lặp lại lần nữa cho mượt hơn #}
+
                 {% for sponsorship in sorted_sponsorships %}
-                    {% if sponsorship.logo %}
-                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                        <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
-                    </a>
-                    {% endif %}
+                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
+                        {% if logo_url %}
+                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
+                        </a>
+                        {% endif %}
+                    {% endwith %}
                 {% endfor %}
+                {# --- KẾT THÚC THAY THẾ --- #}
             </div>
         </div>
     </div>
