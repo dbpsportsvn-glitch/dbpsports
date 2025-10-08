@@ -76,6 +76,9 @@
                 <li class="nav-item"><button class="nav-link" id="standings-tab" data-bs-toggle="tab" data-bs-target="#standings"type="button">🏆 Bảng xếp hạng</button></li>
                 <li class="nav-item"><button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">📊 Thống kê</button></li>
                 <li class="nav-item"><button class="nav-link" id="gallery-tab" data-bs-toggle="tab" data-bs-target="#gallery" type="button">🖼️ Thư viện ảnh</button></li>
+                {% if sponsorships %}
+                <li class="nav-item"><button class="nav-link" id="sponsors-tab" data-bs-toggle="tab" data-bs-target="#sponsors" type="button">💎 Nhà tài trợ</button></li>
+                {% endif %}
                 {% if knockout_matches %}
                 <li class="nav-item"><button class="nav-link" id="bracket-tab" data-bs-toggle="tab" data-bs-target="#bracket" type="button">🏆 Nhánh đấu</button></li>
                 {% endif %}
@@ -396,6 +399,47 @@
         {% include 'tournaments/partials/knockout_bracket.html' %}
     </div>
     {% endif %}
+
+    {# --- DÁN TOÀN BỘ KHỐI CODE NÀY VÀO --- #}
+    {% if sponsorships %}
+    <div class="tab-pane fade card-pane" id="sponsors" role="tabpanel">
+        <h4 class="section-title mb-3">Đơn vị Đồng hành & Tài trợ</h4>
+        <div class="list-group">
+            {% for sponsorship in sponsorships %}
+                <div class="list-group-item">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if sponsorship.logo %}
+                            <img src="{{ sponsorship.logo.url }}" alt="Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            {# Hiển thị tên NTT và link đến trang hồ sơ nếu có #}
+                            <h5 class="mb-1">
+                                {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
+                                    <a href="{% url 'sponsors:profile_detail' pk=sponsorship.sponsor.sponsor_profile.pk %}" class="text-decoration-none">
+                                        {{ sponsorship.sponsor.sponsor_profile.brand_name }}
+                                    </a>
+                                {% else %}
+                                    {{ sponsorship.sponsor_name }}
+                                {% endif %}
+                            </h5>
+
+                            <p class="mb-1 text-muted">{{ sponsorship.package_name|default:"Nhà tài trợ" }}</p>
+
+                            {# Hiển thị link website ngoài #}
+                            {% if sponsorship.website_url %}
+                                <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    Xem trang web
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {# --- KẾT THÚC KHỐI CODE MỚI --- #}
 </div>
 
 <script>

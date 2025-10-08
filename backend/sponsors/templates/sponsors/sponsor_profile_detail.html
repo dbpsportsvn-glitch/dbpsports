@@ -1,0 +1,81 @@
+{# backend/sponsors/templates/sponsors/sponsor_profile_detail.html #}
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ profile.brand_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card bg-dark text-white border-0 rounded-3 mb-4" style="height: 300px;">
+                {% if profile.cover_image %}
+                    <img src="{{ profile.cover_image.url }}" class="card-img" alt="Ảnh bìa của {{ profile.brand_name }}" style="object-fit: cover; height: 100%;">
+                {% else %}
+                    <div class="card-img d-flex align-items-center justify-content-center" style="background-color: #343a40; height: 100%;">
+                        <h2 class="text-muted">{{ profile.brand_name }}</h2>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if profile.user.profile.avatar %}
+                        <img src="{{ profile.user.profile.avatar.url }}" alt="Logo của {{ profile.brand_name }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; border: 4px solid #fff; margin-top: -75px;">
+                    {% else %}
+                         <img src="{% static 'images/placeholder_avatar.png' %}" alt="Logo của {{ profile.brand_name }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; border: 4px solid #fff; margin-top: -75px;">
+                    {% endif %}
+                    <h4 class="card-title">{{ profile.brand_name }}</h4>
+                    <p class="text-muted">{{ profile.tagline|default:"" }}</p>
+                    {% if profile.website_url %}
+                        <a href="{{ profile.website_url }}" target="_blank" class="btn btn-primary btn-sm">
+                            <i class="bi bi-box-arrow-up-right"></i> Tới trang web
+                        </a>
+                    {% endif %}
+
+                    {% if request.user == profile.user %}
+                    <a href="{% url 'sponsors:profile_edit' %}" class="btn btn-outline-secondary btn-sm ms-2">
+                        <i class="bi bi-pencil-square"></i> Chỉnh sửa Hồ sơ
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Giới thiệu</h5>
+                    <p>{{ profile.description|linebreaks|default:"Nhà tài trợ này chưa có mô tả." }}</p>
+                    <hr>
+
+                    <h5 class="card-title">Các giải đấu đã tài trợ</h5>
+                    {% if sponsorships %}
+                        <ul class="list-group list-group-flush">
+                        {% for sponsorship in sponsorships %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{{ sponsorship.tournament.get_absolute_url }}">{{ sponsorship.tournament.name }}</a>
+                                <span class="badge bg-info rounded-pill">{{ sponsorship.package_name }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Chưa có lịch sử tài trợ nào được ghi nhận.</p>
+                    {% endif %}
+
+                    <hr>
+                    <h5 class="card-title">Nhận xét từ cộng đồng</h5>
+                    <p class="text-muted">Tính năng này sẽ sớm được ra mắt.</p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

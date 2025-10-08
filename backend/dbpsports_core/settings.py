@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "organizations",
     "users",
     "tournaments",
+    'sponsors',
 
     "django.contrib.admin",
     "django.contrib.auth",

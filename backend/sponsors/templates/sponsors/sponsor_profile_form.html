@@ -1,0 +1,30 @@
+{# backend/sponsors/templates/sponsors/sponsor_profile_form.html #}
+
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Chỉnh sửa Hồ sơ Nhà tài trợ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Chỉnh sửa Hồ sơ Nhà tài trợ</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{{ object.get_absolute_url }}" class="btn btn-secondary me-md-2">Hủy</a>
+                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
