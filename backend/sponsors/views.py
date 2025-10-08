@@ -78,8 +78,7 @@ class ManageTestimonialsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['profile'] = self.request.user.sponsor_profile
         return context
 
-# --- BẮT ĐẦU SỬA LẠI TỪ ĐÂY ---
-
+# --- Kiểm soát nhận xét của ntt ---
 class ToggleTestimonialView(LoginRequiredMixin, View):
     """
     View chuyên dụng để Ẩn/Hiện Testimonial bằng phương pháp update trực tiếp.
@@ -87,7 +86,7 @@ class ToggleTestimonialView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         messages.warning(request, "Hành động không hợp lệ.")
         return redirect('sponsors:manage_testimonials')
-            
+
     def post(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
         profile = request.user.sponsor_profile
@@ -106,7 +105,7 @@ class ToggleTestimonialView(LoginRequiredMixin, View):
             messages.success(request, "Đã cập nhật trạng thái nhận xét thành công.")
         else:
             messages.error(request, "Không tìm thấy nhận xét hoặc bạn không có quyền thay đổi.")
-            
+
         return redirect('sponsors:manage_testimonials')
 
 class DeleteTestimonialView(LoginRequiredMixin, View):
@@ -122,13 +121,11 @@ class DeleteTestimonialView(LoginRequiredMixin, View):
 
         if not hasattr(request.user, 'sponsor_profile') or testimonial.sponsor_profile != request.user.sponsor_profile:
             return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
-        
+
         try:
             testimonial.delete()
             messages.success(request, "Đã xóa nhận xét vĩnh viễn.")
         except Exception as e:
             messages.error(request, f"Không thể xóa nhận xét. Lỗi: {e}")
-        
-        return redirect('sponsors:manage_testimonials')
 
-# --- KẾT THÚC SỬA LẠI ---
+        return redirect('sponsors:manage_testimonials')
