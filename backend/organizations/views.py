@@ -48,6 +48,8 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from tournaments.models import SponsorshipPackage # <-- Import model
 from .forms import SponsorshipPackageForm # <-- Import form vừa tạo
+from django.http import JsonResponse
+import json
 
 
 def user_is_org_member(user, organization):
@@ -1576,3 +1578,41 @@ def sponsorship_dashboard_view(request, tournament_pk):
         'active_page': 'sponsors_dashboard',
     }
     return render(request, 'organizations/sponsorship_dashboard.html', context)        
+
+# === DÁN VIEW MỚI VÀO CUỐI FILE ===
+@login_required
+@require_POST
+def toggle_sponsorship_benefit(request, sponsorship_pk):
+    try:
+        sponsorship = get_object_or_404(Sponsorship, pk=sponsorship_pk)
+
+        # Kiểm tra quyền
+        if not user_can_manage_tournament(request.user, sponsorship.tournament):
+            return JsonResponse({'status': 'error', 'message': 'Không có quyền.'}, status=403)
+
+        data = json.loads(request.body)
+        benefit_text = data.get('benefit_text')
+        is_checked = data.get('is_checked')
+
+        if benefit_text is None or is_checked is None:
+            return JsonResponse({'status': 'error', 'message': 'Dữ liệu không hợp lệ.'}, status=400)
+
+        # Tìm và cập nhật quyền lợi trong checklist
+        checklist = sponsorship.benefits_checklist
+        benefit_found = False
+        for item in checklist:
+            if item.get('text') == benefit_text:
+                item['checked'] = is_checked
+                benefit_found = True
+                break
+
+        if benefit_found:
+            sponsorship.save(update_fields=['benefits_checklist'])
+            return JsonResponse({'status': 'success', 'message': 'Đã cập nhật.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Không tìm thấy quyền lợi.'}, status=404)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Lỗi định dạng JSON.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)    

@@ -14,7 +14,7 @@ from .views import (
     
     # Views mới cho Gói tài trợ
     SponsorshipPackageListView, SponsorshipPackageCreateView, 
-    SponsorshipPackageUpdateView, sponsorship_dashboard_view, SponsorshipPackageDeleteView,
+    SponsorshipPackageUpdateView, sponsorship_dashboard_view, SponsorshipPackageDeleteView, toggle_sponsorship_benefit,
 )
 
 app_name = 'organizations'
@@ -51,6 +51,7 @@ urlpatterns = [
     path('player/<int:pk>/delete/', delete_player, name='delete_player'),
 
     # === QUẢN LÝ NHÀ TÀI TRỢ & GÓI TÀI TRỢ ===
+    path('sponsorships/<int:sponsorship_pk>/toggle-benefit/', toggle_sponsorship_benefit, name='toggle_sponsorship_benefit'),
     path('tournaments/<int:tournament_pk>/sponsors-dashboard/', sponsorship_dashboard_view, name='sponsorship_dashboard'),
     # URLs cho quản lý Nhà tài trợ (Sponsorship)
     path('tournaments/<int:tournament_pk>/sponsors/', manage_sponsors_view, name='manage_sponsors'),

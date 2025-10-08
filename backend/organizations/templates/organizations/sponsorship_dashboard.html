@@ -1,5 +1,5 @@
 {% extends 'organizations/organization_base.html' %}
-{% load custom_filters %} {# <-- THÊM DÒNG NÀY ĐỂ DÙNG get_item #}
+{% load custom_filters %}
 
 {% block title %}Dashboard Nhà tài trợ - {{ tournament.name }}{% endblock %}
 
@@ -42,11 +42,33 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {# === PHẦN CHECKLIST MỚI === #}
+                    {% if sponsorship.benefits_checklist %}
+                    <hr class="my-2">
+                    <ul class="list-unstyled mb-0 benefit-checklist">
+                        {% for item in sponsorship.benefits_checklist %}
+                        <li>
+                            <div class="form-check">
+                                <input class="form-check-input benefit-checkbox" 
+                                       type="checkbox" 
+                                       id="benefit-{{ sponsorship.pk }}-{{ forloop.counter }}"
+                                       data-sponsorship-id="{{ sponsorship.pk }}"
+                                       data-benefit-text="{{ item.text }}"
+                                       {% if item.checked %}checked{% endif %}>
+                                <label class="form-check-label {% if item.checked %}text-muted text-decoration-line-through{% endif %}" 
+                                       for="benefit-{{ sponsorship.pk }}-{{ forloop.counter }}">
+                                    {{ item.text }}
+                                </label>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {# === KẾT THÚC PHẦN CHECKLIST === #}
                 </div>
                 {% empty %}
-                <div class="text-center text-muted p-3 small">
-                    Chưa có NTT nào
-                </div>
+                <div class="text-center text-muted p-3 small">Chưa có NTT nào</div>
                 {% endfor %}
             </div>
         </div>
@@ -55,11 +77,162 @@
 </div>
 
 <style>
-.kanban-board-wrapper { overflow-x: auto; padding-bottom: 1rem; }
-.kanban-board { display: flex; gap: 1.5rem; min-width: fit-content; }
-.kanban-column { flex: 1 0 300px; max-width: 320px; background-color: #f4f5f7; border-radius: 8px; }
-.kanban-column-header { padding: 1rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
-.kanban-column-body { padding: 0.5rem; height: 60vh; overflow-y: auto; }
-.kanban-card { cursor: grab; }
+    /* ----- Bố cục chung ----- */
+    .kanban-board-wrapper {
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        cursor: grab; /* Con trỏ chuột mặc định là "nắm" */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Quan trọng: Thay đổi con trỏ khi đang nhấn giữ chuột */
+    .kanban-board-wrapper.active-drag {
+        cursor: grabbing;
+        cursor: -webkit-grabbing;
+        user-select: none; /* Ngăn bôi đen chữ khi kéo */
+    }
+
+    .kanban-board {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 1.5rem;
+        min-width: fit-content;
+    }
+
+    .kanban-column {
+        width: 320px;
+        flex-shrink: 0;
+        background-color: #f4f5f7;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .kanban-column-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .kanban-column-body {
+        padding: 0.5rem;
+        height: 60vh;
+        overflow-y: auto;
+    }
+    
+    /* ----- Kiểu dáng Card & Checklist ----- */
+    .kanban-card {
+        cursor: default; /* Trả lại con trỏ mặc định cho card */
+    }
+
+    .benefit-checklist {
+        font-size: 0.9rem;
+    }
+
+    .benefit-checklist .form-check {
+        padding-left: 1.8em;
+    }
+
+    .benefit-checklist .form-check-label,
+    .benefit-checklist .form-check-input {
+        cursor: pointer; /* Đổi con trỏ thành "pointer" cho dễ bấm */
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- Bắt đầu: Code xử lý Kéo-để-cuộn ---
+    const slider = document.querySelector('.kanban-board-wrapper');
+    if (slider) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            // Chỉ kích hoạt kéo nếu người dùng không bấm vào thanh cuộn, checkbox, hoặc link
+            if (e.target.closest('.kanban-card') || e.offsetX > slider.clientWidth) {
+                return;
+            }
+            isDown = true;
+            slider.classList.add('active-drag');
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            if (!isDown) return;
+            isDown = false;
+            slider.classList.remove('active-drag');
+        });
+
+        slider.addEventListener('mouseup', () => {
+            if (!isDown) return;
+            isDown = false;
+            slider.classList.remove('active-drag');
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // Tăng tốc độ cuộn
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    }
+    // --- Kết thúc: Code xử lý Kéo-để-cuộn ---
+
+
+    // --- Bắt đầu: Code xử lý Checklist (giữ nguyên như cũ) ---
+    const benefitCheckboxes = document.querySelectorAll('.benefit-checkbox');
+    benefitCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const sponsorshipId = this.dataset.sponsorshipId;
+            const benefitText = this.dataset.benefitText;
+            const isChecked = this.checked;
+            const label = this.nextElementSibling;
+
+            label.classList.toggle('text-muted', isChecked);
+            label.classList.toggle('text-decoration-line-through', isChecked);
+
+            const url = `/orgs/sponsorships/${sponsorshipId}/toggle-benefit/`;
+            const csrfToken = '{{ csrf_token }}';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    benefit_text: benefitText,
+                    is_checked: isChecked
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    this.checked = !isChecked;
+                    label.classList.toggle('text-muted', !isChecked);
+                    label.classList.toggle('text-decoration-line-through', !isChecked);
+                    console.error('Có lỗi xảy ra khi cập nhật.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => {
+                this.checked = !isChecked;
+                label.classList.toggle('text-muted', !isChecked);
+                label.classList.toggle('text-decoration-line-through', !isChecked);
+                console.error('Lỗi:', error);
+            });
+        });
+    });
+    // --- Kết thúc: Code xử lý Checklist ---
+});
+</script>
 {% endblock %}

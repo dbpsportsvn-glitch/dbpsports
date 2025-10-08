@@ -3,6 +3,36 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/management.css' %}">
+<style>
+    /* BẮT ĐẦU CSS SỬA LỖI */
+    .management-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 2rem;
+        align-items: flex-start;
+    }
+
+    .management-sidebar {
+        position: sticky;
+        top: 80px;
+    }
+    
+    /* QUAN TRỌNG: Cho phép nội dung chính có thể tự cuộn ngang */
+    .management-content {
+        overflow-x: auto; /* Bật thanh cuộn ngang CHỈ cho khu vực nội dung */
+    }
+    /* KẾT THÚC CSS SỬA LỖI */
+
+    @media (max-width: 991px) {
+        .management-layout {
+            grid-template-columns: 1fr;
+        }
+        .management-sidebar {
+            position: static;
+            margin-bottom: 1.5rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
