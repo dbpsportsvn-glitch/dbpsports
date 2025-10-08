@@ -54,8 +54,13 @@ class Testimonial(models.Model):
         blank=True,
         verbose_name="Giải đấu liên quan"
     )
+    rating = models.PositiveSmallIntegerField(
+        "Xếp hạng (sao)",
+        choices=[(i, f"{i} sao") for i in range(1, 6)], # Lựa chọn từ 1 đến 5
+        default=5
+    )
     text = models.TextField("Nội dung nhận xét", max_length=1000)
-    is_approved = models.BooleanField("Được hiển thị", default=False, help_text="Nhà tài trợ có thể chọn ẩn/hiện nhận xét này trên hồ sơ của họ.")
+    is_approved = models.BooleanField("Được hiển thị", default=True, help_text="Nhà tài trợ có thể chọn ẩn/hiện nhận xét này trên hồ sơ của họ.")
     
     created_at = models.DateTimeField(auto_now_add=True)
 

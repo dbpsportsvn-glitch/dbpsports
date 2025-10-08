@@ -2,6 +2,7 @@
 
 {% extends "base.html" %}
 {% load static %}
+{% load crispy_forms_tags %}
 
 {% block title %}{{ profile.brand_name }}{% endblock %}
 
@@ -71,11 +72,88 @@
 
                     <hr>
                     <h5 class="card-title">Nhận xét từ cộng đồng</h5>
-                    <p class="text-muted">Tính năng này sẽ sớm được ra mắt.</p>
+                    {% if user.is_authenticated %}
+                    <div class="card bg-light my-3">
+                        <div class="card-body">
+                            <h6>Để lại đánh giá của bạn</h6>
+                            <form method="POST" action="{% url 'sponsors:profile_detail' pk=profile.pk %}">
+                                {% csrf_token %}
+
+                                {# --- SỬA LẠI CÁCH HIỂN THỊ FORM RATING --- #}
+                                <div class="star-rating-form mb-2">
+                                    <fieldset>
+                                        <legend class="form-label pt-0">{{ testimonial_form.rating.label }}</legend>
+                                        <div class="rate">
+                                            <input type="radio" id="rating5" name="rating" value="5" /><label for="rating5" title="5 sao"></label>
+                                            <input type="radio" id="rating4" name="rating" value="4" /><label for="rating4" title="4 sao"></label>
+                                            <input type="radio" id="rating3" name="rating" value="3" /><label for="rating3" title="3 sao"></label>
+                                            <input type="radio" id="rating2" name="rating" value="2" /><label for="rating2" title="2 sao"></label>
+                                            <input type="radio" id="rating1" name="rating" value="1" /><label for="rating1" title="1 sao"></label>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                                {{ testimonial_form.text|as_crispy_field }}
+                                {# --- Mẫu nhận xét --- #}
+                                <div class="mt-2">
+                                    <small class="text-muted">Hoặc chọn nhanh một mẫu:</small>
+                                    <div class="d-flex flex-wrap gap-2 mt-1">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm suggestion-btn">Nhà tài trợ rất chuyên nghiệp!</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm suggestion-btn">Cảm ơn sự đồng hành của quý đơn vị.</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm suggestion-btn">Hỗ trợ nhiệt tình, thủ tục nhanh gọn.</button>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm mt-2">Gửi nhận xét</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% for testimonial in testimonials %}
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            {# ... avatar ... #}
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <strong>{{ testimonial.author.profile.display_name|default:testimonial.author.username }}</strong>
+
+                            {# --- HIỂN THỊ SAO ĐÃ ĐÁNH GIÁ --- #}
+                            <span class="ms-2 static-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= testimonial.rating %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+
+                            <small class="text-muted"> - {{ testimonial.created_at|date:"d/m/Y" }}</small>
+                            <p class="mb-0">{{ testimonial.text|linebreaks }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Chưa có nhận xét nào.</p>
+                    {% endfor %}
 
                 </div>
             </div>
         </div>
     </div>
+{# --- BẮT ĐẦU DI CHUYỂN SCRIPT VÀO ĐÂY --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const suggestionBtns = document.querySelectorAll('.suggestion-btn');
+    const testimonialTextarea = document.querySelector('#id_text');
+
+    if (suggestionBtns.length > 0 && testimonialTextarea) {
+        suggestionBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                testimonialTextarea.value = this.textContent;
+            });
+        });
+    }
+});
+</script>
+{# --- KẾT THÚC DI CHUYỂN SCRIPT --- #}    
 </div>
 {% endblock %}
