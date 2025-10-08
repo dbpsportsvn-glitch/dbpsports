@@ -1,0 +1,35 @@
+{% raw %}{# backend/organizations/templates/organizations/sponsorship_package_confirm_delete.html #}
+
+{% extends "organizations/organization_base.html" %}
+
+{% block title %}Xác nhận Xóa Gói Tài Trợ{% endblock %}
+
+{# SỬA DÒNG NÀY #}
+{% block management_content %}
+<div class="card border-danger shadow">
+    <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Xác nhận Xóa Gói Tài Trợ</h4>
+    </div>
+    <div class="card-body">
+        <p>Bạn có chắc chắn muốn xóa gói tài trợ <strong>"{{ package.name }}"</strong> của giải đấu <strong>"{{ tournament.name }}"</strong> không?</p>
+        <p class="text-danger font-weight-bold">Hành động này không thể hoàn tác.</p>
+        <form method="post">
+            {% csrf_token %}
+            <hr>
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'organizations:manage_sponsorship_packages' tournament_id=tournament.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Vâng, tôi chắc chắn
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsorship_packages' %}
+{% endblock %}
+{% endraw %}

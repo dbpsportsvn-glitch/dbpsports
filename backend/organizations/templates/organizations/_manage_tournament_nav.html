@@ -53,6 +53,13 @@
                     <i class="bi bi-gem"></i> Nhà tài trợ
                 </a>
             </li>
+            
+            {# THÊM MỤC NÀY VÀO #}
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'sponsorship_packages' %}active{% endif %}" href="{% url 'organizations:manage_sponsorship_packages' tournament_id=tournament.pk %}">
+                    <i class="bi bi-box-seam-fill"></i> Gói tài trợ
+                </a>
+            </li>
 
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'jobs' %}active{% endif %}" href="{% url 'organizations:manage_jobs' tournament_pk=tournament.pk %}">

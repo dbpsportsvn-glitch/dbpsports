@@ -42,6 +42,14 @@ from tournaments.models import Sponsorship
 from django.db import IntegrityError
 # === HÀM KIỂM TRA QUYỀN MỚI ===
 
+# tài trợ
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from tournaments.models import SponsorshipPackage # <-- Import model
+from .forms import SponsorshipPackageForm # <-- Import form vừa tạo
+
+
 def user_is_org_member(user, organization):
     """Kiểm tra xem user có phải là thành viên (Owner/Admin) của BTC không."""
     if not user.is_authenticated:
@@ -1437,3 +1445,109 @@ def delete_sponsorship_view(request, pk):
         sponsorship.delete()
         messages.success(request, "Đã xóa nhà tài trợ khỏi giải đấu.")
     return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
+
+# TÀI TRỢ
+# Một Mixin nhỏ để kiểm tra quyền của BTC, giúp tái sử dụng code
+class OrganizerPermissionMixin(LoginRequiredMixin):
+    """
+    Mixin để xác thực người dùng có phải là thành viên
+    của BTC giải đấu hay không.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        tournament_id = self.kwargs.get('tournament_id')
+
+        # Xử lý trường hợp view là Update/Delete nơi pk là của package
+        if 'pk' in self.kwargs and not tournament_id:
+             # Dùng try-except để tránh lỗi nếu object không phải là SponsorshipPackage
+            try:
+                # get_object() là phương thức của các DetailView, UpdateView, DeleteView
+                obj = self.get_object()
+                if isinstance(obj, SponsorshipPackage):
+                    tournament_id = obj.tournament.pk
+            except (AttributeError, SponsorshipPackage.DoesNotExist):
+                 # Nếu không phải view cần get_object hoặc object không tìm thấy, pk có thể là của tournament
+                 tournament_id = self.kwargs.get('pk')
+
+        if not tournament_id:
+            return HttpResponseForbidden("Không thể xác định giải đấu.")
+
+        tournament = get_object_or_404(Tournament, pk=tournament_id)
+        
+        # --- ĐÂY LÀ DÒNG SỬA LỖI QUAN TRỌNG NHẤT ---
+        # Kiểm tra sự tồn tại của user trong danh sách members của organization
+        is_organizer = (
+            request.user.is_authenticated and
+            tournament.organization and
+            tournament.organization.members.filter(pk=request.user.pk).exists()
+        )
+        
+        if not is_organizer:
+            return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+        
+        self.tournament = tournament
+        return super().dispatch(request, *args, **kwargs)
+
+# View 1: Liệt kê các gói tài trợ
+class SponsorshipPackageListView(OrganizerPermissionMixin, ListView):
+    model = SponsorshipPackage
+    template_name = 'organizations/manage_sponsorship_packages.html'
+    context_object_name = 'packages'
+
+    def get_queryset(self):
+        # Chỉ lấy các gói của giải đấu này
+        return SponsorshipPackage.objects.filter(tournament=self.tournament)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tournament'] = self.tournament
+        return context
+
+# View 2: Tạo gói tài trợ mới
+class SponsorshipPackageCreateView(OrganizerPermissionMixin, CreateView):
+    model = SponsorshipPackage
+    form_class = SponsorshipPackageForm
+    template_name = 'organizations/sponsorship_package_form.html'
+
+    def form_valid(self, form):
+        # Tự động gán giải đấu cho gói tài trợ mới
+        form.instance.tournament = self.tournament
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('organizations:manage_sponsorship_packages', kwargs={'tournament_id': self.tournament.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tournament'] = self.tournament
+        context['page_title'] = 'Tạo Gói Tài Trợ Mới'
+        return context
+
+# View 3: Cập nhật gói tài trợ
+class SponsorshipPackageUpdateView(OrganizerPermissionMixin, UpdateView):
+    model = SponsorshipPackage
+    form_class = SponsorshipPackageForm
+    template_name = 'organizations/sponsorship_package_form.html'
+    context_object_name = 'package'
+
+    def get_success_url(self):
+        return reverse_lazy('organizations:manage_sponsorship_packages', kwargs={'tournament_id': self.object.tournament.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tournament'] = self.object.tournament
+        context['page_title'] = f'Chỉnh Sửa Gói: {self.object.name}'
+        return context
+
+# View 4: Xóa gói tài trợ
+class SponsorshipPackageDeleteView(OrganizerPermissionMixin, DeleteView):
+    model = SponsorshipPackage
+    template_name = 'organizations/sponsorship_package_confirm_delete.html'
+    context_object_name = 'package'
+    
+    def get_success_url(self):
+        return reverse_lazy('organizations:manage_sponsorship_packages', kwargs={'tournament_id': self.object.tournament.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tournament'] = self.object.tournament
+        return context    

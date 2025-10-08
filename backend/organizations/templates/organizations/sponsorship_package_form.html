@@ -1,0 +1,36 @@
+{% raw %}{# backend/organizations/templates/organizations/sponsorship_package_form.html #}
+
+{% extends "organizations/organization_base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} - {{ tournament.name }}{% endblock %}
+
+{# SỬA DÒNG NÀY #}
+{% block management_content %}
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="mb-0">{{ page_title }}</h3>
+        <p class="text-muted mb-0">Cho giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <hr>
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'organizations:manage_sponsorship_packages' tournament_id=tournament.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Lưu lại
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsorship_packages' %}
+{% endblock %}
+{% endraw %}

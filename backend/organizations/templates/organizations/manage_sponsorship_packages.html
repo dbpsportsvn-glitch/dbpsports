@@ -1,0 +1,65 @@
+{% raw %}{# backend/organizations/templates/organizations/manage_sponsorship_packages.html #}
+
+{% extends "organizations/organization_base.html" %}
+
+{% block title %}Quản lý Gói Tài Trợ - {{ tournament.name }}{% endblock %}
+
+{# SỬA DÒNG NÀY #}
+{% block management_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Quản lý Gói Tài Trợ</h2>
+        <p class="text-muted mb-0">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+    <a href="{% url 'organizations:create_sponsorship_package' tournament_id=tournament.pk %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Thêm Gói Mới
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Danh sách các gói tài trợ</h5>
+    </div>
+    <div class="card-body">
+        {% if packages %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Thứ tự</th>
+                            <th>Tên Gói</th>
+                            <th>Mức Tài Trợ</th>
+                            <th>Mô tả</th>
+                            <th class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for package in packages %}
+                        <tr>
+                            <td>{{ package.order }}</td>
+                            <td><strong>{{ package.name }}</strong></td>
+                            <td>{{ package.price|floatformat:"0" }} VNĐ</td>
+                            <td>{{ package.description|truncatewords:15 }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'organizations:update_sponsorship_package' package.pk %}" class="btn btn-sm btn-outline-info" title="Sửa"><i class="fas fa-edit"></i></a>
+                                <a href="{% url 'organizations:delete_sponsorship_package' package.pk %}" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                Chưa có gói tài trợ nào được tạo cho giải đấu này. <br>
+                <a href="{% url 'organizations:create_sponsorship_package' tournament_id=tournament.pk %}" class="btn btn-success mt-2">Bắt đầu tạo gói đầu tiên</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' with active_page='sponsorship_packages' %}
+{% endblock %}
+{% endraw %}

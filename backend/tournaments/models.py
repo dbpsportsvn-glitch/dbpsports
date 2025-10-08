@@ -806,65 +806,100 @@ class ScoutingList(models.Model):
 
 
 # nhà tài trợ
+# Model 1: Để BTC quản lý các gói tài trợ (như đã đề xuất)
+class SponsorshipPackage(models.Model):
+    """
+    Đại diện cho một gói tài trợ mà BTC có thể định nghĩa cho giải đấu.
+    Ví dụ: 'Nhà tài trợ Vàng', 'Nhà tài trợ Bạc'...
+    """
+    tournament = models.ForeignKey(
+        'Tournament', # Giữ lại 'Tournament' nếu class Tournament ở dưới
+        on_delete=models.CASCADE,
+        related_name='sponsorship_packages',
+        verbose_name="Giải đấu"
+    )
+    name = models.CharField("Tên gói", max_length=100)
+    price = models.DecimalField("Mức tài trợ (VNĐ)", max_digits=12, decimal_places=0)
+    description = models.TextField("Mô tả quyền lợi", blank=True)
+    order = models.PositiveIntegerField(
+        "Thứ tự ưu tiên",
+        default=0,
+        help_text="Số nhỏ hơn sẽ hiển thị trước (Vàng: 0, Bạc: 1, ...)."
+    )
+
+    class Meta:
+        verbose_name = "Gói tài trợ"
+        verbose_name_plural = "Các gói tài trợ"
+        ordering = ['order', '-price'] # Sắp xếp theo thứ tự ưu tiên, rồi đến giá
+
+    def __str__(self):
+        return f"{self.name} ({self.tournament.name})"
+
+
+# Model 2: Liên kết Nhà tài trợ với Giải đấu (đã sửa đổi)
 class Sponsorship(models.Model):
-    """Liên kết một Nhà tài trợ (User có vai trò SPONSOR) với một Giải đấu."""
+    """Liên kết một Nhà tài trợ với một Giải đấu thông qua một Gói tài trợ."""
     class Meta:
         verbose_name = "Nhà tài trợ Giải đấu"
         verbose_name_plural = "Các nhà tài trợ Giải đấu"
-        ordering = ['order']
-        # Bỏ unique_together cũ đi vì sponsor có thể là null
-        # unique_together = ('tournament', 'sponsor')
+        # Sắp xếp theo thứ tự gói, rồi đến thứ tự tùy chỉnh của NTT
+        ordering = ['package__order', 'order']
 
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='sponsorships', verbose_name="Giải đấu")
-    
-    # --- BẮT ĐẦU THAY ĐỔI ---
+    tournament = models.ForeignKey(
+        'Tournament', # Giữ lại 'Tournament' nếu class Tournament ở dưới
+        on_delete=models.CASCADE,
+        related_name='sponsorships',
+        verbose_name="Giải đấu"
+    )
+
+    # --- PHẦN KẾT HỢP ---
+    # Thay 'package_name' bằng ForeignKey đến model SponsorshipPackage
+    package = models.ForeignKey(
+        SponsorshipPackage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False, # Yêu cầu BTC phải chọn một gói
+        verbose_name="Gói tài trợ"
+    )
+
+    # Giữ nguyên phần linh hoạt của bạn
     sponsor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='sponsorships',
         verbose_name="Tài khoản Nhà tài trợ (nếu có)",
         limit_choices_to={'profile__roles__id': 'SPONSOR'},
-        null=True,  # Cho phép trường này trống
-        blank=True  # Cho phép trống trong form admin
+        null=True,
+        blank=True
     )
     sponsor_name = models.CharField(
         "Tên Nhà tài trợ (nhập tay)",
         max_length=150,
         blank=True,
-        help_text="Chỉ điền vào đây nếu nhà tài trợ không có tài khoản trên hệ thống."
-    )
-    # --- BẮT ĐẦU THAY ĐỔI ---
-    package_name = models.CharField(
-        "Tên gói tài trợ", 
-        max_length=100, 
-        help_text="Ví dụ: Tài trợ Vàng, Đồng hành cùng giải đấu...",
-        blank=True # Cho phép để trống
+        help_text="Chỉ điền nếu NTT không có tài khoản trên hệ thống."
     )
     logo = models.ImageField(
-        "Logo nhà tài trợ", 
+        "Logo",
         upload_to='sponsor_logos/',
-        blank=True, # Cho phép để trống
-        null=True   # Cho phép giá trị NULL trong database
+        blank=True,
+        null=True
     )
     website_url = models.URLField(
-        "Link trang web", 
-        help_text="Link sẽ được gắn vào logo/banner của nhà tài trợ.",
-        blank=True # Cho phép để trống
+        "Link trang web",
+        blank=True
     )
-    order = models.PositiveIntegerField("Thứ tự hiển thị", default=0, help_text="Số nhỏ hơn sẽ được hiển thị trước.")
+    order = models.PositiveIntegerField("Thứ tự trong gói", default=0, help_text="Số nhỏ hơn hiển thị trước.")
     is_active = models.BooleanField("Hiển thị công khai", default=True)
 
     def __str__(self):
-        # Cập nhật để hiển thị tên cho đúng
-        display_name = self.sponsor_name if self.sponsor_name else (self.sponsor.username if self.sponsor else "N/A")
+        display_name = self.sponsor_name or (self.sponsor.username if self.sponsor else "Chưa xác định")
         return f"{display_name} tài trợ cho {self.tournament.name}"
 
     def clean(self):
-        # Đảm bảo rằng chỉ một trong hai trường sponsor được điền
         if self.sponsor and self.sponsor_name:
-            raise ValidationError("Chỉ có thể chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)', không được cả hai.")
+            raise ValidationError("Chỉ chọn 'Tài khoản' hoặc điền 'Tên nhập tay', không được cả hai.")
         if not self.sponsor and not self.sponsor_name:
-            raise ValidationError("Bạn phải chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)'.")
+            raise ValidationError("Phải chọn 'Tài khoản' hoặc điền 'Tên nhập tay'.")
 
 
 class SponsorClick(models.Model):

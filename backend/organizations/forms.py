@@ -1,17 +1,23 @@
-# backend/organizations/forms.py
-
+# 1. Import từ thư viện chuẩn & bên thứ ba (Django)
 from django import forms
-from tournaments.models import Match, Goal, Card, Player, Team, Announcement
-from .models import Organization, ProfessionalReview, JobApplication
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+
+# 2. Import từ các ứng dụng khác trong dự án
 from tournaments.forms import PlayerCreationForm
-from tournaments.models import Substitution 
+from tournaments.models import (
+    Announcement, Card, Goal, Match, Player, Sponsorship, SponsorshipPackage,
+    Substitution, Team
+)
 from users.models import Role
 
-from tournaments.models import Sponsorship
-from .models import JobPosting, JobApplication 
-from users.models import Role 
+# 3. Import từ chính ứng dụng hiện tại (organizations)
+from .models import (
+    JobApplication, JobPosting, Organization, ProfessionalReview
+)
+
+# Lấy User model một cách an toàn
+User = get_user_model()
 
 #==============================================
 
@@ -411,51 +417,96 @@ class ProfessionalReviewForm(forms.ModelForm):
 class SponsorshipForm(forms.ModelForm):
     class Meta:
         model = Sponsorship
-        # --- THÊM 'sponsor_name' VÀO ĐÂY ---
-        fields = ['sponsor', 'sponsor_name', 'package_name', 'logo', 'website_url', 'order', 'is_active']
+        # --- SỬA Ở ĐÂY ---
+        # Đổi 'package_name' thành 'package'
+        fields = [
+            'package',
+            'sponsor',
+            'sponsor_name',
+            'logo',
+            'website_url',
+            'order',
+            'is_active'
+        ]
         labels = {
+            'package': 'Chọn gói tài trợ', # <-- Sửa label
             'sponsor': 'Chọn Nhà tài trợ (nếu có tài khoản)',
-            'sponsor_name': 'Tên Nhà tài trợ (nếu không có tài khoản)', # <-- Label mới
-            'package_name': 'Tên gói tài trợ',
+            'sponsor_name': 'Tên Nhà tài trợ (nếu không có tài khoản)',
             'logo': 'Logo/Banner của Nhà tài trợ',
             'website_url': 'Đường dẫn trang web',
-            'order': 'Thứ tự ưu tiên hiển thị',
+            'order': 'Thứ tự ưu tiên trong gói',
             'is_active': 'Hiển thị công khai',
+        }
+        help_texts = {
+            'order': 'Số nhỏ hơn sẽ được hiển thị trước trong cùng một gói tài trợ.'
         }
 
     def __init__(self, *args, **kwargs):
+        # Lấy tournament từ view truyền vào để lọc các gói tài trợ
+        self.tournament = kwargs.pop('tournament', None)
         super().__init__(*args, **kwargs)
-        # --- BẮT ĐẦU THAY ĐỔI ---
-        # Cho phép các trường này không bắt buộc
+
+        # Yêu cầu trường 'package' là bắt buộc
+        self.fields['package'].required = True
+        self.fields['package'].empty_label = "--- Chọn một gói ---"
+        
+        # Cho phép các trường này không bắt buộc trong form
+        # Logic validate sẽ được xử lý trong hàm clean()
         self.fields['sponsor'].required = False
-        self.fields['package_name'].required = False
+        self.fields['sponsor_name'].required = False
         self.fields['logo'].required = False
         self.fields['website_url'].required = False
-        # --- KẾT THÚC THAY ĐỔI ---
         
+        # Lọc danh sách gói tài trợ chỉ thuộc về giải đấu này
+        if self.tournament:
+            self.fields['package'].queryset = SponsorshipPackage.objects.filter(
+                tournament=self.tournament
+            )
+        else:
+            self.fields['package'].queryset = SponsorshipPackage.objects.none()
+
         # Lọc danh sách người dùng chỉ bao gồm những ai có vai trò "Nhà tài trợ"
         try:
             sponsor_role = Role.objects.get(id='SPONSOR')
-            self.fields['sponsor'].queryset = User.objects.filter(profile__roles=sponsor_role).order_by('username')
+            self.fields['sponsor'].queryset = User.objects.filter(
+                profile__roles=sponsor_role
+            ).order_by('username')
+            self.fields['sponsor'].empty_label = "--- Chọn tài khoản có sẵn ---"
         except Role.DoesNotExist:
             self.fields['sponsor'].queryset = User.objects.none()
 
-    # --- THÊM PHƯƠNG THỨC clean NÀY ĐỂ VALIDATE ---
+    # --- GIỮ NGUYÊN PHƯƠNG THỨC clean TUYỆT VỜI CỦA BẠN ---
     def clean(self):
         cleaned_data = super().clean()
         sponsor_account = cleaned_data.get('sponsor')
         sponsor_manual_name = cleaned_data.get('sponsor_name')
 
         if sponsor_account and sponsor_manual_name:
-            raise ValidationError(
-                "Lỗi: Bạn chỉ được chọn Nhà tài trợ có sẵn hoặc nhập tên thủ công, không được chọn cả hai.",
-                code='invalid_sponsor_choice'
-            )
+            self.add_error(None, ValidationError(
+                "Lỗi: Bạn chỉ được chọn Nhà tài trợ có sẵn hoặc nhập tên thủ công, không được chọn cả hai."
+            ))
         
         if not sponsor_account and not sponsor_manual_name:
-            raise ValidationError(
-                "Lỗi: Bạn phải chọn một Nhà tài trợ có sẵn hoặc nhập tên thủ công.",
-                code='sponsor_required'
-            )
+            self.add_error(None, ValidationError(
+                "Lỗi: Bạn phải chọn một Nhà tài trợ có sẵn hoặc nhập tên thủ công."
+            ))
         
-        return cleaned_data        
+        return cleaned_data    
+
+
+class SponsorshipPackageForm(forms.ModelForm):
+    class Meta:
+        model = SponsorshipPackage
+        fields = ['name', 'price', 'description', 'order']
+        labels = {
+            'name': 'Tên gói (ví dụ: Tài trợ Vàng)',
+            'price': 'Mức tài trợ (VNĐ)',
+            'description': 'Mô tả quyền lợi (ví dụ: Logo trên banner, bài đăng MXH...)',
+            'order': 'Thứ tự ưu tiên (số nhỏ hiển thị trước)',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'order': forms.NumberInput(attrs={'class': 'form-control'}),
+        }            
