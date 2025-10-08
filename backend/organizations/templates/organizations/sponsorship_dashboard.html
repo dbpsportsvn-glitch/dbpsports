@@ -36,26 +36,36 @@
                 {% for sponsorship in sponsors_by_status|get_item:status_key %}
                 <div class="kanban-card card card-body shadow-sm mb-2">
                     <div class="d-flex align-items-start">
-                        {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
-                            {% if logo_url %}
-                                <img src="{{ logo_url }}" alt="logo" class="me-2" style="width: 40px; height: 40px; object-fit: contain;">
+                        
+                        {# === BẮT ĐẦU VÙNG SỬA LỖI: KIỂM TRA FILE TRƯỚC KHI LẤY URL === #}
+                        <div class="me-2" style="width: 40px; height: 40px; flex-shrink: 0;">
+                            {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                                <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: .25rem;">
+                            {% elif sponsorship.logo %}
+                                <img src="{{ sponsorship.logo.url }}" alt="logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: .25rem;">
                             {% else %}
-                                <div class="bg-light d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
-                                    <i class="bi bi-gem fs-4 text-muted"></i>
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="width: 100%; height: 100%; border-radius: .25rem;">
+                                    <i class="bi bi-gem fs-5 text-muted"></i>
                                 </div>
                             {% endif %}
-                        {% endwith %}
+                        </div>
+                        {# === KẾT THÚC VÙNG SỬA LỖI === #}
+
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}</h6>
+                            <h6 class="mb-1">
+                                {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_name %}
+                                    {{ sponsorship.sponsor.sponsor_profile.brand_name }}
+                                {% else %}
+                                    {{ sponsorship.sponsor_name }}
+                                {% endif %}
+                            </h6>
                             {% if sponsorship.package %}
                             <small class="text-muted">{{ sponsorship.package.name }}</small>
                             {% endif %}
                         </div>
-                        {# === THÊM NÚT SỬA VÀO ĐÂY === #}
                         <a href="{% url 'organizations:edit_sponsorship' pk=sponsorship.pk %}" class="btn btn-sm btn-outline-secondary ms-2">
                             <i class="bi bi-pencil-fill"></i>
                         </a>
-                        {# =========================== #}
                     </div>
                     {% if sponsorship.benefits_checklist %}
                     <hr class="my-2">

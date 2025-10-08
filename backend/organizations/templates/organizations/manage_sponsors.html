@@ -18,64 +18,100 @@
             <div class="col-lg-7">
                 <h5 class="mb-3">Danh sách nhà tài trợ hiện tại</h5>
                 {% if sponsorships %}
-                    <div class="list-group">
-                        {% for sponsorship in sponsorships %}
-                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-3">
-                                    {# LOGIC HIỂN THỊ LOGO ĐÃ SỬA #}
-                                    {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
-                                        <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="Logo" class="me-2" style="width: 80px; height: 80px; object-fit: contain;">
-                                    {% elif sponsorship.logo %}
-                                        <img src="{{ sponsorship.logo.url }}" alt="Logo" class="me-2" style="width: 80px; height: 80px; object-fit: contain;">
-                                    {% else %}
-                                        <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                                            <i class="bi bi-gem fs-2 text-muted"></i>
-                                        </div>
-                                    {% endif %}
-                                    <div>
-                                        <strong>
-                                            {% if sponsorship.sponsor %}
-                                                {{ sponsorship.sponsor.sponsor_profile.brand_name }} (Tài khoản)
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 80px;">Logo</th>
+                                    <th scope="col">Tên Nhà tài trợ</th>
+                                    <th scope="col" class="d-none d-md-table-cell">Gói tài trợ</th>
+                                    <th scope="col" class="d-none d-lg-table-cell">Trạng thái</th>
+                                    <th scope="col" class="text-end">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sponsorship in sponsorships %}
+                                <tr>
+                                    <td>
+                                        {# === BẮT ĐẦU VÙNG SỬA LỖI: KIỂM TRA FILE TRƯỚC KHI LẤY URL === #}
+                                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                                            <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="logo" style="width: 60px; height: 60px; object-fit: contain; border-radius: .25rem;" class="bg-light p-1">
+                                        {% elif sponsorship.logo %}
+                                            <img src="{{ sponsorship.logo.url }}" alt="logo" style="width: 60px; height: 60px; object-fit: contain; border-radius: .25rem;" class="bg-light p-1">
+                                        {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: .25rem;">
+                                                <i class="bi bi-gem fs-4 text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        {# === KẾT THÚC VÙNG SỬA LỖI === #}
+                                    </td>
+                                    <td>
+                                        <strong class="d-block">
+                                            {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_name %}
+                                                {{ sponsorship.sponsor.sponsor_profile.brand_name }}
                                             {% else %}
                                                 {{ sponsorship.sponsor_name }}
                                             {% endif %}
                                         </strong>
-                                        {% if sponsorship.package %}
-                                        <span class="d-block badge bg-info text-dark">{{ sponsorship.package.name }}</span>
+                                        {% if sponsorship.sponsor %}
+                                            <small class="text-muted">(Tài khoản: {{ sponsorship.sponsor.username }})</small>
                                         {% endif %}
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        {% if sponsorship.package %}
+                                            <span class="badge bg-info text-dark">{{ sponsorship.package.name }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Chưa có gói</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="d-none d-lg-table-cell">
+                                        <span class="badge bg-primary">{{ sponsorship.get_status_display }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <a href="{% url 'organizations:edit_sponsorship' sponsorship.id %}" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteSponsorshipModal-{{ sponsorship.id }}" title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {# Modal xác nhận xóa được giữ lại cho mỗi nhà tài trợ #}
+                                <div class="modal fade" id="deleteSponsorshipModal-{{ sponsorship.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ sponsorship.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel-{{ sponsorship.id }}">Xác nhận Xóa</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Bạn có chắc chắn muốn xóa nhà tài trợ "
+                                                {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_name %}
+                                                    {{ sponsorship.sponsor.sponsor_profile.brand_name }}
+                                                {% else %}
+                                                    {{ sponsorship.sponsor_name }}
+                                                {% endif %}
+                                                "?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <form method="post" action="{% url 'organizations:delete_sponsorship' sponsorship.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Xóa</button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <a href="{% url 'organizations:edit_sponsorship' sponsorship.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Sửa
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteSponsorshipModal-{{ sponsorship.id }}">
-                                        <i class="bi bi-trash"></i> Xóa
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="modal fade" id="deleteSponsorshipModal-{{ sponsorship.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ sponsorship.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteModalLabel-{{ sponsorship.id }}">Xác nhận Xóa</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Bạn có chắc chắn muốn xóa nhà tài trợ "{{ sponsorship.sponsor_name }}"?
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                            <form method="post" action="{% url 'organizations:delete_sponsorship' sponsorship.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger">Xóa</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
+
                 {% else %}
                     <div class="alert alert-info" role="alert">
                         Chưa có nhà tài trợ nào được thêm vào giải đấu này.

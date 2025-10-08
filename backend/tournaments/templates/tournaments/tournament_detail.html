@@ -8,42 +8,50 @@
 <div class="card shadow-sm mb-4">
     <img src="{{ tournament.image.url }}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
 
-    {# --- BẮT ĐẦU THAY THẾ TỪ ĐÂY --- #}
     {% if sorted_sponsorships %}
     <div class="sponsor-ticker-overlay">
         <div class="sponsor-ticker-wrap">
             <div class="sponsor-ticker">
-                {# --- BẮT ĐẦU THAY THẾ TỪ ĐÂY (LẶP LẠI 3 LẦN) --- #}
+
+                {# Vòng lặp 1 #}
                 {% for sponsorship in sorted_sponsorships %}
-                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
-                        {% if logo_url %}
-                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
-                        </a>
+                    <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                            <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="{{ sponsorship.sponsor.sponsor_profile.brand_name }}">
+                        {% elif sponsorship.logo %}
+                            <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor_name }}">
+                        {% else %}
+                            {# Hiển thị ảnh thay thế nếu không có logo #}
+                            <img src="{% static 'images/placeholder_logo.png' %}" alt="Sponsor">
                         {% endif %}
-                    {% endwith %}
+                    </a>
                 {% endfor %}
 
+                {# Vòng lặp 2 (để tạo hiệu ứng cuộn vô tận) #}
                 {% for sponsorship in sorted_sponsorships %}
-                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
-                        {% if logo_url %}
-                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
-                        </a>
+                    <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                            <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="{{ sponsorship.sponsor.sponsor_profile.brand_name }}">
+                        {% elif sponsorship.logo %}
+                            <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor_name }}">
+                        {% else %}
+                            <img src="{% static 'images/placeholder_logo.png' %}" alt="Sponsor">
                         {% endif %}
-                    {% endwith %}
+                    </a>
                 {% endfor %}
 
+                {# Vòng lặp 3 #}
                 {% for sponsorship in sorted_sponsorships %}
-                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
-                        {% if logo_url %}
-                        <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
-                            <img src="{{ logo_url }}" alt="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
-                        </a>
+                    <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                            <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" alt="{{ sponsorship.sponsor.sponsor_profile.brand_name }}">
+                        {% elif sponsorship.logo %}
+                            <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor_name }}">
+                        {% else %}
+                            <img src="{% static 'images/placeholder_logo.png' %}" alt="Sponsor">
                         {% endif %}
-                    {% endwith %}
+                    </a>
                 {% endfor %}
-                {# --- KẾT THÚC THAY THẾ --- #}
             </div>
         </div>
     </div>
@@ -426,17 +434,19 @@
                 <!-- LOGO: to hơn + không bị crop -->
                 <div class="sponsor-logo-wrapper rounded-3 mb-3">
                     {# Logic mới: Ưu tiên logo từ profile, nếu không có mới dùng logo cũ #}
-                    {% with logo_url=sponsorship.sponsor.sponsor_profile.brand_logo.url|default:sponsorship.logo.url %}
-                        {% if logo_url %}
-                            <img src="{{ logo_url }}" class="sponsor-logo"
-                                alt="Logo {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}"
-                                loading="lazy" decoding="async">
-                        {% else %}
-                            <div class="logo-placeholder rounded-3">
-                                <i class="bi bi-gem fs-1"></i>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
+                    {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
+                        <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" class="sponsor-logo"
+                            alt="Logo {{ sponsorship.sponsor.sponsor_profile.brand_name }}"
+                            loading="lazy" decoding="async">
+                    {% elif sponsorship.logo %}
+                        <img src="{{ sponsorship.logo.url }}" class="sponsor-logo"
+                            alt="Logo {{ sponsorship.sponsor_name }}"
+                            loading="lazy" decoding="async">
+                    {% else %}
+                        <div class="logo-placeholder rounded-3">
+                            <i class="bi bi-gem fs-1"></i>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Tên nhà tài trợ -->
