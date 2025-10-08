@@ -1697,4 +1697,33 @@ def send_sponsor_announcement(request, tournament_pk):
     else:
         messages.error(request, "Vui lòng điền đầy đủ tiêu đề và nội dung.")
 
-    return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)           
+    return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)          
+
+
+# === CẬP NHẬT STT NHÀ TÀI TRỢ ===
+@login_required
+@never_cache
+def edit_sponsorship_view(request, pk):
+    sponsorship = get_object_or_404(Sponsorship, pk=pk)
+    tournament = sponsorship.tournament
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    if request.method == 'POST':
+        form = SponsorshipForm(request.POST, request.FILES, instance=sponsorship, tournament=tournament)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ '{sponsorship}'.")
+            # Quay trở lại dashboard sau khi sửa
+            return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
+    else:
+        form = SponsorshipForm(instance=sponsorship, tournament=tournament)
+
+    context = {
+        'form': form,
+        'sponsorship': sponsorship,
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'active_page': 'sponsors_dashboard' # Giữ cho menu sáng đúng chỗ
+    }
+    return render(request, 'organizations/edit_sponsorship.html', context)     

@@ -419,10 +419,9 @@ class ProfessionalReviewForm(forms.ModelForm):
 class SponsorshipForm(forms.ModelForm):
     class Meta:
         model = Sponsorship
-        # --- SỬA Ở ĐÂY ---
-        # Đổi 'package_name' thành 'package'
         fields = [
             'package',
+            'status',
             'sponsor',
             'sponsor_name',
             'logo',
@@ -431,7 +430,8 @@ class SponsorshipForm(forms.ModelForm):
             'is_active'
         ]
         labels = {
-            'package': 'Chọn gói tài trợ', # <-- Sửa label
+            'package': 'Chọn gói tài trợ',
+            'status': 'Trạng thái',
             'sponsor': 'Chọn Nhà tài trợ (nếu có tài khoản)',
             'sponsor_name': 'Tên Nhà tài trợ (nếu không có tài khoản)',
             'logo': 'Logo/Banner của Nhà tài trợ',
