@@ -1,0 +1,78 @@
+{# backend/sponsors/templates/sponsors/manage_testimonials.html #}
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quản lý Nhận xét{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Quản lý Nhận xét</h3>
+                    <a href="{% url 'sponsors:profile_detail' pk=profile.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại Hồ sơ
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Tại đây, bạn có thể xem tất cả nhận xét và quyết định cho phép hiển thị hoặc ẩn chúng trên trang hồ sơ công khai của mình.</p>
+
+                    <div class="list-group">
+                    {% for testimonial in testimonials %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div>
+                                    <strong>{{ testimonial.author.profile.display_name|default:testimonial.author.username }}</strong>
+                                    <span class="ms-2 static-stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= testimonial.rating %}
+                                                <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                                <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                <small>{{ testimonial.created_at|date:"d/m/Y, H:i" }}</small>
+                            </div>
+                            <p class="mb-2 mt-1">{{ testimonial.text|linebreaks }}</p>
+                            
+                            <div class="d-flex gap-2">
+                                {% if testimonial.is_approved %}
+                                    {# --- SỬA LỖI ACTION TẠI ĐÂY --- #}
+                                    <form method="POST" action="{% url 'sponsors:toggle_testimonial' pk=testimonial.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-eye-slash"></i> Ẩn nhận xét
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    {# --- SỬA LỖI ACTION TẠI ĐÂY --- #}
+                                    <form method="POST" action="{% url 'sponsors:toggle_testimonial' pk=testimonial.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle"></i> Cho phép hiển thị
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {# --- SỬA LỖI ACTION TẠI ĐÂY --- #}
+                                <form method="POST" action="{% url 'sponsors:delete_testimonial' pk=testimonial.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn nhận xét này?');">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-center p-4 text-muted">Bạn chưa nhận được nhận xét nào.</p>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
