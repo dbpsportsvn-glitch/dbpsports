@@ -425,8 +425,13 @@ class SponsorshipForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # --- THAY ĐỔI: CHO PHÉP TRƯỜNG sponsor KHÔNG BẮT BUỘC ---
+        # --- BẮT ĐẦU THAY ĐỔI ---
+        # Cho phép các trường này không bắt buộc
         self.fields['sponsor'].required = False
+        self.fields['package_name'].required = False
+        self.fields['logo'].required = False
+        self.fields['website_url'].required = False
+        # --- KẾT THÚC THAY ĐỔI ---
         
         # Lọc danh sách người dùng chỉ bao gồm những ai có vai trò "Nhà tài trợ"
         try:

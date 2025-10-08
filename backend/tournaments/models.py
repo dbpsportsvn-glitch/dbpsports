@@ -833,11 +833,24 @@ class Sponsorship(models.Model):
         blank=True,
         help_text="Chỉ điền vào đây nếu nhà tài trợ không có tài khoản trên hệ thống."
     )
-    # --- KẾT THÚC THAY ĐỔI ---
-
-    package_name = models.CharField("Tên gói tài trợ", max_length=100, help_text="Ví dụ: Tài trợ Vàng, Đồng hành cùng giải đấu...")
-    logo = models.ImageField("Logo nhà tài trợ", upload_to='sponsor_logos/')
-    website_url = models.URLField("Link trang web", help_text="Link sẽ được gắn vào logo/banner của nhà tài trợ.")
+    # --- BẮT ĐẦU THAY ĐỔI ---
+    package_name = models.CharField(
+        "Tên gói tài trợ", 
+        max_length=100, 
+        help_text="Ví dụ: Tài trợ Vàng, Đồng hành cùng giải đấu...",
+        blank=True # Cho phép để trống
+    )
+    logo = models.ImageField(
+        "Logo nhà tài trợ", 
+        upload_to='sponsor_logos/',
+        blank=True, # Cho phép để trống
+        null=True   # Cho phép giá trị NULL trong database
+    )
+    website_url = models.URLField(
+        "Link trang web", 
+        help_text="Link sẽ được gắn vào logo/banner của nhà tài trợ.",
+        blank=True # Cho phép để trống
+    )
     order = models.PositiveIntegerField("Thứ tự hiển thị", default=0, help_text="Số nhỏ hơn sẽ được hiển thị trước.")
     is_active = models.BooleanField("Hiển thị công khai", default=True)
 
@@ -852,7 +865,7 @@ class Sponsorship(models.Model):
             raise ValidationError("Chỉ có thể chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)', không được cả hai.")
         if not self.sponsor and not self.sponsor_name:
             raise ValidationError("Bạn phải chọn một 'Tài khoản Nhà tài trợ' hoặc điền 'Tên Nhà tài trợ (nhập tay)'.")
-            
+
 
 class SponsorClick(models.Model):
     """Ghi lại mỗi lượt click vào link của nhà tài trợ."""

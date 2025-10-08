@@ -24,10 +24,18 @@
                 <div class="card mb-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-3">
-                            {# --- BẮT ĐẦU SỬA LỖI --- #}
-                            <img src="{{ sponsorship.logo.url }}" 
-                                 alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}" 
-                                 style="width: 80px; height: 80px; object-fit: contain;">
+                            {# --- BẮT ĐẦU THAY ĐỔI --- #}
+                            {% if sponsorship.logo %}
+                                <img src="{{ sponsorship.logo.url }}" 
+                                    alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}" 
+                                    style="width: 80px; height: 80px; object-fit: contain;">
+                            {% else %}
+                                {# Hiển thị một ảnh placeholder hoặc một icon nếu không có logo #}
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-gem fs-2 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            {# --- KẾT THÚC THAY ĐỔI --- #}
                             <div>
                                 <strong>
                                     {% if sponsorship.sponsor_name %}
@@ -36,8 +44,8 @@
                                         {{ sponsorship.sponsor.profile.sponsorship_interests|default:sponsorship.sponsor.username }}
                                     {% endif %}
                                 </strong>
-                                {# --- KẾT THÚC SỬA LỖI --- #}
-                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package_name }}</span>
+                                {# Thêm 'Chưa có' nếu tên gói trống #}
+                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package_name|default:"Chưa có gói" }}</span>
                             </div>
                         </div>
                         <form method="post" action="{% url 'organizations:delete_sponsorship' pk=sponsorship.pk %}" onsubmit="return confirm('Xóa nhà tài trợ này?');">
