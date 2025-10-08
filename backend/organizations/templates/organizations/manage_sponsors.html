@@ -45,7 +45,7 @@
                                     {% endif %}
                                 </strong>
                                 {# Thêm 'Chưa có' nếu tên gói trống #}
-                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package_name|default:"Chưa có gói" }}</span>
+                                <span class="d-block badge bg-info text-dark">{{ sponsorship.package.name|default:"Chưa có gói" }}</span>
                             </div>
                         </div>
                         <form method="post" action="{% url 'organizations:delete_sponsorship' pk=sponsorship.pk %}" onsubmit="return confirm('Xóa nhà tài trợ này?');">

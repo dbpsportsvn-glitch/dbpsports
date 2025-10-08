@@ -9,34 +9,32 @@
     <img src="{{ tournament.image.url }}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
 
     {# --- BẮT ĐẦU THAY THẾ TỪ ĐÂY --- #}
-    {% if sponsorships %}
+    {% if sorted_sponsorships %}
     <div class="sponsor-ticker-overlay">
         <div class="sponsor-ticker-wrap">
             <div class="sponsor-ticker">
-                {# Vòng lặp thứ nhất #}
-                {% for sponsorship in sponsorships %}
-                    {# Chỉ hiển thị thẻ <a> nếu nhà tài trợ có logo #}
+                {# SỬA LẠI BIẾN Ở ĐÂY #}
+                {% for sponsorship in sorted_sponsorships %}
                     {% if sponsorship.logo %}
-                    <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
-                        {# Sửa lại alt để không bị lỗi khi sponsor là None #}
+                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
                         <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
                     </a>
                     {% endif %}
                 {% endfor %}
 
-                {# Vòng lặp thứ hai #}
-                {% for sponsorship in sponsorships %}
+                {# Lặp lại để tạo hiệu ứng chạy vô tận #}
+                {% for sponsorship in sorted_sponsorships %}
                     {% if sponsorship.logo %}
-                    <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
+                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
                         <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
                     </a>
                     {% endif %}
                 {% endfor %}
                 
-                {# Vòng lặp thứ ba #}
-                {% for sponsorship in sponsorships %}
+                {# Lặp lại lần nữa cho mượt hơn #}
+                {% for sponsorship in sorted_sponsorships %}
                     {% if sponsorship.logo %}
-                    <a href="{% url 'sponsor_click' pk=sponsorship.pk %}" target="_blank" rel="noopener" title="{{ sponsorship.package_name }}" class="sponsor-ticker__item">
+                    <a href="{{ sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
                         <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor_name %}{{ sponsorship.sponsor_name }}{% elif sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% endif %}">
                     </a>
                     {% endif %}
@@ -45,7 +43,6 @@
         </div>
     </div>
     {% endif %}
-    {# --- KẾT THÚC THAY THẾ TẠI ĐÂY --- #}
 </div>
 {% endif %}
 
