@@ -442,28 +442,46 @@ class SponsorshipForm(forms.ModelForm):
         help_texts = {
             'order': 'Số nhỏ hơn sẽ được hiển thị trước trong cùng một gói tài trợ.'
         }
-
         widgets = {
             'sponsor': forms.Select(attrs={'class': 'select2-search'})
         }
 
     def __init__(self, *args, **kwargs):
-        # Lấy tournament từ view truyền vào để lọc các gói tài trợ
         self.tournament = kwargs.pop('tournament', None)
         super().__init__(*args, **kwargs)
 
-        # Yêu cầu trường 'package' là bắt buộc
+        # =================== LOGIC PHÂN QUYỀN MỚI ===================
+        #
+        # Nếu đang chỉnh sửa một nhà tài trợ đã được liên kết với tài khoản,
+        # BTC không được phép sửa thông tin của nhà tài trợ đó nữa.
+        #
+        if self.instance and self.instance.pk and self.instance.sponsor:
+            # Vô hiệu hóa việc chọn tài khoản khác
+            self.fields['sponsor'].disabled = True
+            self.fields['sponsor'].help_text = "Đã liên kết với tài khoản, không thể thay đổi."
+            
+            # Vô hiệu hóa việc nhập tên thủ công
+            self.fields['sponsor_name'].disabled = True
+            self.fields['sponsor_name'].help_text = "Thông tin này được quản lý bởi tài khoản Nhà tài trợ."
+            
+            # Vô hiệu hóa việc thay đổi logo
+            self.fields['logo'].disabled = True
+            self.fields['logo'].help_text = "Thông tin này được quản lý bởi tài khoản Nhà tài trợ."
+            
+            # Vô hiệu hóa việc thay đổi link web
+            self.fields['website_url'].disabled = True
+            self.fields['website_url'].help_text = "Thông tin này được quản lý bởi tài khoản Nhà tài trợ."
+        # =================== KẾT THÚC LOGIC MỚI ===================
+
+        # --- Phần code còn lại của bạn được giữ nguyên ---
         self.fields['package'].required = True
         self.fields['package'].empty_label = "--- Chọn một gói ---"
         
-        # Cho phép các trường này không bắt buộc trong form
-        # Logic validate sẽ được xử lý trong hàm clean()
         self.fields['sponsor'].required = False
         self.fields['sponsor_name'].required = False
         self.fields['logo'].required = False
         self.fields['website_url'].required = False
         
-        # Lọc danh sách gói tài trợ chỉ thuộc về giải đấu này
         if self.tournament:
             self.fields['package'].queryset = SponsorshipPackage.objects.filter(
                 tournament=self.tournament
@@ -471,7 +489,6 @@ class SponsorshipForm(forms.ModelForm):
         else:
             self.fields['package'].queryset = SponsorshipPackage.objects.none()
 
-        # Lọc danh sách người dùng chỉ bao gồm những ai có vai trò "Nhà tài trợ"
         try:
             sponsor_role = Role.objects.get(id='SPONSOR')
             self.fields['sponsor'].queryset = User.objects.filter(
@@ -481,11 +498,14 @@ class SponsorshipForm(forms.ModelForm):
         except Role.DoesNotExist:
             self.fields['sponsor'].queryset = User.objects.none()
 
-    # --- GIỮ NGUYÊN PHƯƠNG THỨC clean TUYỆT VỜI CỦA BẠN ---
     def clean(self):
         cleaned_data = super().clean()
         sponsor_account = cleaned_data.get('sponsor')
         sponsor_manual_name = cleaned_data.get('sponsor_name')
+
+        # Bỏ qua validation nếu các trường đã bị vô hiệu hóa
+        if self.instance and self.instance.pk and self.instance.sponsor:
+            return cleaned_data
 
         if sponsor_account and sponsor_manual_name:
             self.add_error(None, ValidationError(

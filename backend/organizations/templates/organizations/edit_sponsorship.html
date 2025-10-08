@@ -16,40 +16,11 @@
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <div class="row">
-                {# --- CỘT BÊN TRÁI --- #}
-                <div class="col-md-6">
-                    {{ form.package|as_crispy_field }}
-                    {{ form.status|as_crispy_field }}
-                    {{ form.sponsor|as_crispy_field }}
-
-                    {# === SỬA LẠI ĐOẠN CODE HIỂN THỊ SĐT === #}
-                    {% if sponsor_phone_number %}
-                        <div class="alert alert-info py-2 small">
-                            <i class="bi bi-telephone-fill"></i> 
-                            SĐT liên hệ: <strong>{{ sponsor_phone_number }}</strong>
-                        </div>
-                    {% endif %}
-                    {# ======================================= #}
-
-                    {{ form.sponsor_name|as_crispy_field }}
-                </div>
-
-                {# --- CỘT BÊN PHẢI --- #}
-                <div class="col-md-6">
-                    {{ form.logo|as_crispy_field }}
-                    {{ form.website_url|as_crispy_field }}
-                    {{ form.order|as_crispy_field }}
-                    <div class="mt-4">
-                        {{ form.is_active|as_crispy_field }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
-                <a href="{% url 'organizations:sponsorship_dashboard' tournament_pk=tournament.pk %}" class="btn btn-secondary">Hủy</a>
-                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-            </div>
+            {# This single line renders the whole form correctly. #}
+            {# It will automatically disable fields based on our logic in forms.py #}
+            {{ form|crispy }}
+            
+            <button type="submit" class="btn btn-primary mt-3">Lưu thay đổi</button>
         </form>
     </div>
 </div>
