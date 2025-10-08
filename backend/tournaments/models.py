@@ -827,6 +827,12 @@ class SponsorshipPackage(models.Model):
         help_text="Số nhỏ hơn sẽ hiển thị trước (Vàng: 0, Bạc: 1, ...)."
     )
 
+    benefits = models.TextField(
+        "Danh sách quyền lợi",
+        blank=True,
+        help_text="Nhập mỗi quyền lợi trên một dòng. Ví dụ: Treo banner tại sân, Nhắc tên trên livestream..."
+    )
+
     class Meta:
         verbose_name = "Gói tài trợ"
         verbose_name_plural = "Các gói tài trợ"
@@ -839,6 +845,14 @@ class SponsorshipPackage(models.Model):
 # Model 2: Liên kết Nhà tài trợ với Giải đấu (đã sửa đổi)
 class Sponsorship(models.Model):
     """Liên kết một Nhà tài trợ với một Giải đấu thông qua một Gói tài trợ."""
+
+    class SponsorshipStatus(models.TextChoices):
+        POTENTIAL = 'POTENTIAL', 'Tiềm năng'
+        CONTACTED = 'CONTACTED', 'Đã liên hệ'
+        CONFIRMED = 'CONFIRMED', 'Đã chốt'
+        PAID = 'PAID', 'Đã thanh toán'
+        COMPLETED = 'COMPLETED', 'Hoàn thành'
+
     class Meta:
         verbose_name = "Nhà tài trợ Giải đấu"
         verbose_name_plural = "Các nhà tài trợ Giải đấu"
@@ -851,7 +865,6 @@ class Sponsorship(models.Model):
         related_name='sponsorships',
         verbose_name="Giải đấu"
     )
-
     # --- PHẦN KẾT HỢP ---
     # Thay 'package_name' bằng ForeignKey đến model SponsorshipPackage
     package = models.ForeignKey(
@@ -861,7 +874,20 @@ class Sponsorship(models.Model):
         blank=False, # Yêu cầu BTC phải chọn một gói
         verbose_name="Gói tài trợ"
     )
-
+    # === THÊM TRƯỜNG MỚI VÀO ĐÂY ===
+    status = models.CharField(
+        "Trạng thái",
+        max_length=20,
+        choices=SponsorshipStatus.choices,
+        default=SponsorshipStatus.POTENTIAL,
+        db_index=True
+    )
+    # === THÊM TRƯỜNG JSONFIELD VÀO ĐÂY ===
+    benefits_checklist = models.JSONField(
+        "Checklist Quyền lợi",
+        default=list, # Mặc định là một danh sách rỗng
+        blank=True
+    )
     # Giữ nguyên phần linh hoạt của bạn
     sponsor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -888,6 +914,7 @@ class Sponsorship(models.Model):
         "Link trang web",
         blank=True
     )
+    
     order = models.PositiveIntegerField("Thứ tự trong gói", default=0, help_text="Số nhỏ hơn hiển thị trước.")
     is_active = models.BooleanField("Hiển thị công khai", default=True)
 

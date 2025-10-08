@@ -60,6 +60,12 @@
                     <i class="bi bi-box-seam-fill"></i> Gói tài trợ
                 </a>
             </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if active_page == 'sponsors_dashboard' %}active{% endif %}" href="{% url 'organizations:sponsorship_dashboard' tournament_pk=tournament.pk %}">
+                    <i class="bi bi-bar-chart-steps"></i> Dashboard NTT
+                </a>
+            </li>
 
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'jobs' %}active{% endif %}" href="{% url 'organizations:manage_jobs' tournament_pk=tournament.pk %}">

@@ -1,0 +1,65 @@
+{% extends 'organizations/organization_base.html' %}
+{% load custom_filters %} {# <-- THÊM DÒNG NÀY ĐỂ DÙNG get_item #}
+
+{% block title %}Dashboard Nhà tài trợ - {{ tournament.name }}{% endblock %}
+
+{% block sidebar %}
+    {% include 'organizations/_manage_tournament_nav.html' %}
+{% endblock %}
+
+{% block management_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">Dashboard Nhà tài trợ</h2>
+        <p class="text-muted mb-0">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+    </div>
+    <a href="{% url 'organizations:manage_sponsors' tournament_pk=tournament.pk %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Thêm/Sửa Nhà tài trợ
+    </a>
+</div>
+
+<div class="kanban-board-wrapper">
+    <div class="kanban-board">
+        {% for status_key, status_name in status_choices %}
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <h5 class="mb-0">{{ status_name }}</h5>
+                <span class="badge bg-secondary rounded-pill">
+                    {{ sponsors_by_status|get_item:status_key|length|default:0 }}
+                </span>
+            </div>
+            <div class="kanban-column-body">
+                {% for sponsorship in sponsors_by_status|get_item:status_key %}
+                <div class="kanban-card card card-body shadow-sm mb-2">
+                    <div class="d-flex align-items-start">
+                        {% if sponsorship.logo %}
+                            <img src="{{ sponsorship.logo.url }}" alt="logo" class="me-2" style="width: 40px; height: 40px; object-fit: contain;">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}</h6>
+                            {% if sponsorship.package %}
+                            <small class="text-muted">{{ sponsorship.package.name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted p-3 small">
+                    Chưa có NTT nào
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.kanban-board-wrapper { overflow-x: auto; padding-bottom: 1rem; }
+.kanban-board { display: flex; gap: 1.5rem; min-width: fit-content; }
+.kanban-column { flex: 1 0 300px; max-width: 320px; background-color: #f4f5f7; border-radius: 8px; }
+.kanban-column-header { padding: 1rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+.kanban-column-body { padding: 0.5rem; height: 60vh; overflow-y: auto; }
+.kanban-card { cursor: grab; }
+</style>
+{% endblock %}

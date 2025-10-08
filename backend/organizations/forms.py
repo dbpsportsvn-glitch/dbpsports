@@ -497,16 +497,19 @@ class SponsorshipForm(forms.ModelForm):
 class SponsorshipPackageForm(forms.ModelForm):
     class Meta:
         model = SponsorshipPackage
-        fields = ['name', 'price', 'description', 'order']
+        # THÊM 'benefits' VÀO CUỐI DANH SÁCH NÀY
+        fields = ['name', 'price', 'description', 'order', 'benefits'] 
         labels = {
             'name': 'Tên gói (ví dụ: Tài trợ Vàng)',
             'price': 'Mức tài trợ (VNĐ)',
             'description': 'Mô tả quyền lợi (ví dụ: Logo trên banner, bài đăng MXH...)',
             'order': 'Thứ tự ưu tiên (số nhỏ hiển thị trước)',
+            'benefits': 'Danh sách quyền lợi (mỗi quyền lợi một dòng)', # <-- Thêm label
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'price': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
+            'benefits': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
         }            

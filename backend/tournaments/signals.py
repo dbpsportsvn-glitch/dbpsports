@@ -8,6 +8,7 @@ from django.db.models import F
 from .models import HomeBanner, Tournament, Group, Match, Team, Notification, TeamAchievement, Player, TeamRegistration
 from .utils import send_schedule_notification
 from organizations.models import JobPosting
+from .models import Sponsorship
 
 @receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group, JobPosting])
 def clear_cache_on_data_change(sender, instance, **kwargs):
@@ -183,3 +184,47 @@ def award_achievements_on_final_match_save(sender, instance, created, **kwargs):
         process_award(match.winner, 1, "Hạng ba", "THIRD_PLACE")
         process_award(match.loser, 1, "Hạng tư", "OTHER") 
         print(f"Đã tự động trao giải Hạng ba, Hạng tư và cộng phiếu cho giải {tournament.name}.")
+
+
+# Tự động tạo hoặc cập nhật checklist quyền lợi khi một Sponsorship được lưu
+@receiver(post_save, sender=Sponsorship)
+def create_or_update_sponsorship_checklist(sender, instance, created, **kwargs):
+    """
+    Tự động tạo hoặc cập nhật checklist quyền lợi khi một Sponsorship được lưu.
+    """
+    sponsorship = instance
+    package = sponsorship.package
+
+    # Nếu không có gói hoặc gói không có quyền lợi thì không làm gì
+    if not package or not package.benefits:
+        # Nếu checklist cũ có dữ liệu thì xóa đi
+        if sponsorship.benefits_checklist:
+            sponsorship.benefits_checklist = []
+            sponsorship.save(update_fields=['benefits_checklist'])
+        return
+
+    # Tách các quyền lợi từ text field thành một danh sách
+    # Dùng list comprehension để loại bỏ các dòng trống
+    new_benefits_list = [benefit.strip() for benefit in package.benefits.splitlines() if benefit.strip()]
+
+    # Lấy checklist hiện tại
+    current_checklist = sponsorship.benefits_checklist or []
+    current_benefits_texts = {item['text'] for item in current_checklist}
+
+    # So sánh và quyết định có cần cập nhật không
+    # Dùng set để so sánh không phụ thuộc thứ tự
+    if set(new_benefits_list) != current_benefits_texts:
+        # Tạo checklist mới, giữ lại trạng thái 'checked' nếu quyền lợi đã tồn tại
+        new_checklist = []
+        for benefit_text in new_benefits_list:
+            # Tìm trạng thái cũ của quyền lợi này
+            existing_item = next((item for item in current_checklist if item['text'] == benefit_text), None)
+            is_checked = existing_item['checked'] if existing_item else False
+
+            new_checklist.append({
+                'text': benefit_text,
+                'checked': is_checked
+            })
+
+        # Cập nhật checklist và lưu lại mà không trigger signal lần nữa
+        Sponsorship.objects.filter(pk=sponsorship.pk).update(benefits_checklist=new_checklist)        

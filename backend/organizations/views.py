@@ -1551,3 +1551,28 @@ class SponsorshipPackageDeleteView(OrganizerPermissionMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context['tournament'] = self.object.tournament
         return context    
+
+# === NTT ===
+@login_required
+@never_cache
+def sponsorship_dashboard_view(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not user_can_manage_tournament(request.user, tournament):
+        return HttpResponseForbidden("Bạn không có quyền truy cập.")
+
+    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('package', 'sponsor')
+
+    sponsors_by_status = defaultdict(list)
+    for sponsor in sponsorships:
+        sponsors_by_status[sponsor.status].append(sponsor)
+
+    status_choices = Sponsorship.SponsorshipStatus.choices
+
+    context = {
+        'tournament': tournament,
+        'organization': tournament.organization,
+        'sponsors_by_status': dict(sponsors_by_status),
+        'status_choices': status_choices,
+        'active_page': 'sponsors_dashboard',
+    }
+    return render(request, 'organizations/sponsorship_dashboard.html', context)        
