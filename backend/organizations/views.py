@@ -1,56 +1,79 @@
 # backend/organizations/views.py
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-from django.core.exceptions import ValidationError
-from .models import Organization, Membership
-from django.conf import settings
-from django.http import HttpResponseForbidden
-from django.contrib.auth.models import User
-from django.contrib import messages
-from django.db.models import Q
-from collections import defaultdict
-from tournaments.forms import TournamentForm
-from tournaments.models import Tournament, Group, Team, Match, Goal, Card, Player, TournamentPhoto, Notification, TournamentStaff, TeamRegistration
-from tournaments.utils import send_notification_email, send_schedule_notification
-from .forms import AnnouncementForm
-from tournaments.models import Announcement
-from .forms import (
-    OrganizationCreationForm, MemberInviteForm, 
-    MatchUpdateForm, GoalForm, CardForm, QuarterFinalCreationForm, 
-    SemiFinalCreationForm, FinalCreationForm, ThirdPlaceCreationForm, 
-    MatchCreationForm, PlayerUpdateForm, TournamentStaffInviteForm
-)
-from tournaments.forms import PlayerCreationForm
-from django.utils import timezone
-from django.db import transaction
-from django.utils.http import url_has_allowed_host_and_scheme
-from users.models import Role
-from .forms import MatchMediaUpdateForm
-
-# import cho thị trường công việc
-from .models import JobPosting, JobApplication
-from .forms import JobPostingForm, JobApplicationUpdateForm
-from django.views.decorators.http import require_POST
-from .models import ProfessionalReview
-from .forms import ProfessionalReviewForm
-
-from .forms import SponsorshipForm
-from tournaments.models import Sponsorship
-from django.db import IntegrityError
-# === HÀM KIỂM TRA QUYỀN MỚI ===
-
-# tài trợ
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from tournaments.models import SponsorshipPackage # <-- Import model
-from .forms import SponsorshipPackageForm # <-- Import form vừa tạo
-from django.http import JsonResponse
+# Standard library
 import json
+from collections import defaultdict
 
+# Django
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mass_mail
+from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
+# Apps khác
+from users.models import Role
+
+from tournaments.forms import PlayerCreationForm, TournamentForm
+from tournaments.models import (
+    Announcement,
+    Card,
+    Goal,
+    Group,
+    Match,
+    Notification,
+    Player,
+    Sponsorship,
+    SponsorshipPackage,
+    Team,
+    TeamRegistration,
+    Tournament,
+    TournamentPhoto,
+    TournamentStaff,
+)
+from tournaments.utils import send_notification_email, send_schedule_notification
+
+from .forms import (
+    AnnouncementForm,
+    CardForm,
+    FinalCreationForm,
+    JobApplicationUpdateForm,
+    JobPostingForm,
+    MatchCreationForm,
+    MatchMediaUpdateForm,
+    MatchUpdateForm,
+    MemberInviteForm,
+    OrganizationCreationForm,
+    PlayerUpdateForm,
+    ProfessionalReviewForm,
+    QuarterFinalCreationForm,
+    SemiFinalCreationForm,
+    SponsorAnnouncementForm,
+    SponsorshipForm,
+    SponsorshipPackageForm,
+    ThirdPlaceCreationForm,
+    TournamentStaffInviteForm,
+)
+from .models import (
+    JobApplication,
+    JobPosting,
+    Membership,
+    Organization,
+    ProfessionalReview,
+)
+#========================================
 
 def user_is_org_member(user, organization):
     """Kiểm tra xem user có phải là thành viên (Owner/Admin) của BTC không."""
@@ -1555,20 +1578,22 @@ class SponsorshipPackageDeleteView(OrganizerPermissionMixin, DeleteView):
         return context    
 
 # === NTT ===
-@login_required
-@never_cache
 def sponsorship_dashboard_view(request, tournament_pk):
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền truy cập.")
 
     sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('package', 'sponsor')
-
+    
     sponsors_by_status = defaultdict(list)
     for sponsor in sponsorships:
         sponsors_by_status[sponsor.status].append(sponsor)
-
+        
     status_choices = Sponsorship.SponsorshipStatus.choices
+
+    # === BẮT ĐẦU SỬA LỖI TẠI ĐÂY ===
+    # Khởi tạo một instance của form để truyền cho template
+    announcement_form = SponsorAnnouncementForm()
 
     context = {
         'tournament': tournament,
@@ -1576,8 +1601,12 @@ def sponsorship_dashboard_view(request, tournament_pk):
         'sponsors_by_status': dict(sponsors_by_status),
         'status_choices': status_choices,
         'active_page': 'sponsors_dashboard',
+        'SponsorAnnouncementForm': announcement_form, # <-- THÊM DÒNG NÀY
     }
+    # === KẾT THÚC SỬA LỖI ===
+
     return render(request, 'organizations/sponsorship_dashboard.html', context)        
+
 
 # === DÁN VIEW MỚI VÀO CUỐI FILE ===
 @login_required
@@ -1615,4 +1644,57 @@ def toggle_sponsorship_benefit(request, sponsorship_pk):
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Lỗi định dạng JSON.'}, status=400)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)    
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500) 
+
+
+# === GỬI THÔNG BÁO VÀ MAIL CHO NTT ===
+@login_required
+@require_POST
+def send_sponsor_announcement(request, tournament_pk):
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    if not user_can_manage_tournament(request.user, tournament):
+        messages.error(request, "Bạn không có quyền thực hiện hành động này.")
+        return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
+
+    form = SponsorAnnouncementForm(request.POST)
+    if form.is_valid():
+        subject = form.cleaned_data['subject']
+        message_content = form.cleaned_data['message']
+
+        # Lấy danh sách email của các nhà tài trợ có tài khoản và email hợp lệ
+        sponsorships = Sponsorship.objects.filter(
+            tournament=tournament,
+            sponsor__isnull=False,
+            sponsor__email__isnull=False
+        ).exclude(sponsor__email__exact='').select_related('sponsor')
+
+        # Dùng set để đảm bảo mỗi email chỉ xuất hiện một lần
+        recipient_list = set(s.sponsor.email for s in sponsorships)
+
+        # ---- PHẦN NÂNG CẤP ĐỂ DEBUG ----
+        if not recipient_list:
+            messages.warning(request, "Không tìm thấy email hợp lệ nào của nhà tài trợ để gửi. Vui lòng kiểm tra lại dữ liệu nhà tài trợ.")
+            return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
+
+        messages_to_send = [
+            (subject, message_content, settings.DEFAULT_FROM_EMAIL, [email])
+            for email in recipient_list
+        ]
+
+        try:
+            num_sent = send_mass_mail(messages_to_send, fail_silently=False)
+            if num_sent > 0:
+                # Chuyển set thành list để hiển thị
+                sent_to_emails = ", ".join(list(recipient_list))
+                messages.success(request, f"Đã gửi thông báo thành công đến {num_sent} địa chỉ: {sent_to_emails}")
+            else:
+                messages.warning(request, "Hàm gửi mail đã được thực thi nhưng không có email nào được gửi đi.")
+        except Exception as e:
+            # Báo lỗi chi tiết hơn
+            messages.error(request, f"Gửi email thất bại do lỗi hệ thống: {e}")
+        # ---- KẾT THÚC PHẦN NÂNG CẤP ----
+
+    else:
+        messages.error(request, "Vui lòng điền đầy đủ tiêu đề và nội dung.")
+
+    return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)           

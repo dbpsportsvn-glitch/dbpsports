@@ -2,6 +2,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 
 # 2. Import từ các ứng dụng khác trong dự án
 from tournaments.forms import PlayerCreationForm
@@ -513,3 +515,22 @@ class SponsorshipPackageForm(forms.ModelForm):
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'benefits': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
         }            
+
+# === DÁN FORM MỚI VÀO CUỐI FILE ===
+class SponsorAnnouncementForm(forms.Form):
+    subject = forms.CharField(
+        label="Tiêu đề Email",
+        max_length=100,
+        widget=forms.TextInput(attrs={'placeholder': 'Ví dụ: Cảm ơn sự đồng hành của Quý Nhà tài trợ'})
+    )
+    message = forms.CharField(
+        label="Nội dung thông báo",
+        widget=forms.Textarea(attrs={'rows': 8, 'placeholder': 'Nhập nội dung bạn muốn gửi đến các nhà tài trợ...'})
+    )
+
+    # Thêm hàm __init__ để cấu hình FormHelper
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # <-- DÒNG SỬA LỖI QUAN TRỌNG NHẤT
+        self.helper.disable_csrf = True # Vì CSRF token đã có ở form bên ngoài
