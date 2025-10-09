@@ -26,10 +26,12 @@ User = get_user_model()
 class OrganizationCreationForm(forms.ModelForm):
     class Meta:
         model = Organization
-        fields = ['name', 'logo']
+        fields = ['name', 'logo', 'phone_number', 'contact_email']
         labels = {
             'name': 'Tên đơn vị tổ chức của bạn',
             'logo': 'Logo (không bắt buộc)',
+            'phone_number': 'Số điện thoại liên hệ',
+            'contact_email': 'Email để nhà tài trợ liên hệ',
         }
      
 class MemberInviteForm(forms.Form):

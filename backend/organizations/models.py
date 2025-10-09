@@ -34,6 +34,8 @@ class Organization(models.Model):
         verbose_name="Thành viên"
     )
     logo = models.ImageField("Logo", upload_to='org_logos/', null=True, blank=True)
+    phone_number = models.CharField("Số điện thoại", max_length=20, blank=True)
+    contact_email = models.EmailField("Email liên hệ", blank=True)
     created_at = models.DateTimeField("Ngày tạo", auto_now_add=True)
 
     def __str__(self):
