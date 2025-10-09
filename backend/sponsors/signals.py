@@ -23,5 +23,6 @@ def create_sponsor_profile_on_role_add(sender, instance, action, pk_set, **kwarg
             # Kiểm tra xem user này đã có SponsorProfile chưa, nếu chưa thì tạo mới
             SponsorProfile.objects.get_or_create(
                 user=user,
-                defaults={'brand_name': user.username} # Lấy tạm username làm brand_name
+                # Ưu tiên lấy tên đầy đủ, nếu không có mới dùng username (email)
+                defaults={'brand_name': user.get_full_name() or user.username}
             )
