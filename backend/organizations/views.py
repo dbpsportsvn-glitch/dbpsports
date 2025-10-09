@@ -1437,31 +1437,30 @@ def manage_sponsors_view(request, tournament_pk):
         if form.is_valid():
             sponsorship = form.save(commit=False)
             
-            # =================== LOGIC TỰ ĐỘNG CẬP NHẬT (THÊM MỚI) ===================
-            if sponsorship.sponsor: # Nếu BTC chọn một user nhà tài trợ có sẵn
+            if sponsorship.sponsor: 
                 try:
                     profile = sponsorship.sponsor.sponsor_profile
-                    # Tự động điền thông tin từ profile, bỏ qua dữ liệu nhập tay
-                    sponsorship.sponsor_name = profile.brand_name
+                    # Tự động điền logo và website từ hồ sơ có sẵn
                     sponsorship.logo = profile.brand_logo
                     sponsorship.website_url = profile.website_url
+                    # QUAN TRỌNG: Đảm bảo trường tên nhập tay bị xóa
+                    sponsorship.sponsor_name = "" 
                 except SponsorProfile.DoesNotExist:
                     messages.warning(request, f"Lưu ý: Nhà tài trợ '{sponsorship.sponsor.username}' chưa cập nhật hồ sơ cá nhân.")
-            # =================== KẾT THÚC LOGIC MỚI ===================
-
+            
             sponsorship.tournament = tournament
             try:
                 sponsorship.save()
                 messages.success(request, "Đã thêm nhà tài trợ mới thành công!")
             except IntegrityError:
-                sponsor_name = form.cleaned_data.get('sponsor_name') or form.cleaned_data.get('sponsor').username
-                messages.error(request, f"Nhà tài trợ '{sponsor_name}' đã tồn tại trong giải đấu này. Vui lòng chọn nhà tài trợ khác.")
+                sponsor_display_name = form.cleaned_data.get('sponsor_name') or (form.cleaned_data.get('sponsor').sponsor_profile.brand_name if hasattr(form.cleaned_data.get('sponsor'), 'sponsor_profile') else form.cleaned_data.get('sponsor').username)
+                messages.error(request, f"Nhà tài trợ '{sponsor_display_name}' đã tồn tại trong giải đấu này.")
 
             return redirect('organizations:manage_sponsors', tournament_pk=tournament.pk)
     else:
         form = SponsorshipForm(tournament=tournament)
 
-    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor', 'package')
+    sponsorships = Sponsorship.objects.filter(tournament=tournament).select_related('sponsor__sponsor_profile', 'package')
     context = {
         'tournament': tournament,
         'organization': tournament.organization,
@@ -1730,24 +1729,12 @@ def edit_sponsorship_view(request, pk):
         sponsor_phone_number = sponsorship.sponsor.sponsor_profile.phone_number
 
     if request.method == 'POST':
+        # Quan trọng: Vẫn dùng instance để biết đây là form chỉnh sửa
         form = SponsorshipForm(request.POST, request.FILES, instance=sponsorship, tournament=tournament)
         if form.is_valid():
-            sponsorship_instance = form.save(commit=False)
-
-            # =================== LOGIC TỰ ĐỘNG CẬP NHẬT (CHỈNH SỬA) ===================
-            if sponsorship_instance.sponsor:
-                try:
-                    profile = sponsorship_instance.sponsor.sponsor_profile
-                    # Ghi đè thông tin bằng dữ liệu từ profile
-                    sponsorship_instance.sponsor_name = profile.brand_name
-                    sponsorship_instance.logo = profile.brand_logo
-                    sponsorship_instance.website_url = profile.website_url
-                except SponsorProfile.DoesNotExist:
-                    messages.warning(request, f"Lưu ý: Nhà tài trợ '{sponsorship_instance.sponsor.username}' chưa cập nhật hồ sơ cá nhân.")
-            # =================== KẾT THÚC LOGIC MỚI ===================
-
-            sponsorship_instance.save()
-            messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ '{sponsorship_instance}'.")
+            # Chỉ cần lưu form, không cần logic ghi đè
+            form.save()
+            messages.success(request, f"Đã cập nhật thông tin cho nhà tài trợ.")
             return redirect('organizations:sponsorship_dashboard', tournament_pk=tournament.pk)
     else:
         form = SponsorshipForm(instance=sponsorship, tournament=tournament)

@@ -412,75 +412,90 @@
 
     {# Thêm thẻ div cho tab Nhà tài trợ và bọc toàn bộ nội dung vào trong #}
     <div class="tab-pane fade" id="sponsors" role="tabpanel" aria-labelledby="sponsors-tab">
-    {% if sorted_sponsorships %}
-        <!-- muốn card to hơn trên desktop, đổi row-cols-lg-3 -> row-cols-lg-2 -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for sponsorship in sorted_sponsorships %}
-            <div class="col">
-            <div class="card sponsor-card h-100 shadow-sm position-relative"
-                data-tier="{{ sponsorship.package.name|default:'Standard' }}">
+        {% if sorted_sponsorships %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for sponsorship in sorted_sponsorships %}
+                <div class="col">
+                    <div class="card sponsor-card h-100 shadow-sm position-relative" data-tier="{{ sponsorship.package.name|default:'Standard' }}">
 
-                <!-- clickable toàn thẻ -->
-                <a href="{{ sponsorship.website_url|default:'#' }}" class="stretched-link"
-                target="_blank" rel="noopener"
-                aria-label="Mở trang của {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}"></a>
+                        {# === LOGIC MỚI AN TOÀN === #}
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
+                            {# TRƯỜNG HỢP 1: Nhà tài trợ CÓ tài khoản và CÓ hồ sơ #}
+                            {% with profile=sponsorship.sponsor.sponsor_profile %}
+                                {% with display_name=profile.brand_name|default:sponsorship.sponsor.username %}
+                                    <a href="{{ profile.website_url|default:'#' }}" class="stretched-link" target="_blank" rel="noopener"
+                                    aria-label="Mở trang của {{ display_name }}"></a>
 
-                <!-- ribbon theo gói -->
-                {% if sponsorship.package %}
-                <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
-                {% endif %}
+                                    {% if sponsorship.package %}
+                                    <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
+                                    {% endif %}
 
-                <div class="card-body text-center d-flex flex-column">
-                <!-- LOGO: to hơn + không bị crop -->
-                <div class="sponsor-logo-wrapper rounded-3 mb-3">
-                    {# Logic mới: Ưu tiên logo từ profile, nếu không có mới dùng logo cũ #}
-                    {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
-                        <img src="{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}" class="sponsor-logo"
-                            alt="Logo {{ sponsorship.sponsor.sponsor_profile.brand_name }}"
-                            loading="lazy" decoding="async">
-                    {% elif sponsorship.logo %}
-                        <img src="{{ sponsorship.logo.url }}" class="sponsor-logo"
-                            alt="Logo {{ sponsorship.sponsor_name }}"
-                            loading="lazy" decoding="async">
-                    {% else %}
-                        <div class="logo-placeholder rounded-3">
-                            <i class="bi bi-gem fs-1"></i>
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <div class="sponsor-logo-wrapper rounded-3 mb-3">
+                                            {% if profile.brand_logo %}
+                                                <img src="{{ profile.brand_logo.url }}" alt="Logo của {{ display_name }}" class="sponsor-logo img-fluid">
+                                            {% else %}
+                                                <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
+                                            {% endif %}
+                                        </div>
+                                        <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ display_name }}">
+                                            {{ display_name }}
+                                        </h5>
+                                    </div>
+                                {% endwith %}
+                            {% endwith %}
+
+                        {% else %}
+                            {# TRƯỜNG HỢP 2: Nhà tài trợ KHÔNG CÓ tài khoản (nhập tay) #}
+                            <a href="{{ sponsorship.website_url|default:'#' }}" class="stretched-link" target="_blank" rel="noopener"
+                            aria-label="Mở trang của {{ sponsorship.sponsor_name }}"></a>
+
+                            {% if sponsorship.package %}
+                            <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
+                            {% endif %}
+
+                            <div class="card-body text-center d-flex flex-column">
+                                <div class="sponsor-logo-wrapper rounded-3 mb-3">
+                                    {% if sponsorship.logo %}
+                                        <img src="{{ sponsorship.logo.url }}" alt="Logo của {{ sponsorship.sponsor_name }}" class="sponsor-logo img-fluid">
+                                    {% else %}
+                                        <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
+                                    {% endif %}
+                                </div>
+                                <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ sponsorship.sponsor_name }}">
+                                    {{ sponsorship.sponsor_name }}
+                                </h5>
+                            </div>
+                        {% endif %}
+                        {# === KẾT THÚC LOGIC MỚI === #}
+
+                        {# Phần dưới giữ nguyên cho cả 2 trường hợp #}
+                        <div class="card-footer bg-transparent border-top-0 pt-0">
+                            {% if sponsorship.package %}
+                            <div class="mt-1">
+                                <span class="badge badge-soft">{{ sponsorship.package.name }}</span>
+                            </div>
+                            {% endif %}
+                            {% with rating=sponsorship.avg_rating|default:0 %}
+                            <div class="rating mt-2" style="--rating: {{ rating|floatformat:1 }};">
+                                <span class="rating-base">★★★★★</span>
+                                <span class="rating-fill" aria-hidden="true">★★★★★</span>
+                                <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
+                            </div>
+                            {% endwith %}
                         </div>
-                    {% endif %}
-                </div>
 
-                <!-- Tên nhà tài trợ -->
-                <h5 class="card-title sponsor-title mb-1 text-truncate"
-                    title="{{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}">
-                    {{ sponsorship.sponsor_name|default:sponsorship.sponsor.username }}
-                </h5>
-
-                <!-- Chip gói (nhỏ gọn, dễ nhìn) -->
-                {% if sponsorship.package %}
-                    <div class="mt-1">
-                    <span class="badge badge-soft">{{ sponsorship.package.name }}</span>
                     </div>
-                {% endif %}
-
-                <!-- Rating: không tính toán trong template -->
-                {% with rating=sponsorship.avg_rating|default:0 %}
-                <div class="rating mt-2" style="--rating: {{ rating|floatformat:1 }};">
-                    <span class="rating-base">★★★★★</span>
-                    <span class="rating-fill" aria-hidden="true">★★★★★</span>
-                    <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
                 </div>
-                {% endwith %}
-                </div>
+            {% endfor %}
             </div>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                Giải đấu hiện chưa có thông tin về nhà tài trợ.
             </div>
-        {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info text-center" role="alert">
-        <i class="bi bi-info-circle-fill me-2"></i>
-        Giải đấu hiện chưa có thông tin về nhà tài trợ.
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 
     <style>
         /* ===== Card tổng quát ===== */
