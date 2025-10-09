@@ -1847,37 +1847,89 @@ def job_detail_view(request, pk):
     }
     return render(request, 'tournaments/job_detail.html', context)
 
-@login_required
-@never_cache
-def commentator_notes_view(request, match_pk):
-    match = get_object_or_404(Match.objects.select_related('team1', 'team2'), pk=match_pk)
-    if not user_can_control_match(request.user, match):
-        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
 
-    note_instance, created = MatchNote.objects.get_or_create(
+@never_cache
+@login_required
+def commentator_notes_view(request, match_pk):
+    match = get_object_or_404(Match.objects.select_related('tournament', 'team1', 'team2'), pk=match_pk)
+    tournament = match.tournament
+    
+    # Chỉ BLV được phân công cho giải này mới được xem
+    is_commentator_for_tournament = TournamentStaff.objects.filter(
+        tournament=tournament, 
+        user=request.user, 
+        role__id='COMMENTATOR'
+    ).exists()
+    
+    if not is_commentator_for_tournament and not request.user.is_staff:
+        messages.error(request, "Bạn không có quyền truy cập trang này.")
+        return redirect('tournament_detail', pk=tournament.pk)
+
+    note, created = MatchNote.objects.get_or_create(
         match=match,
         author=request.user,
-        note_type=MatchNote.NoteType.COMMENTATOR,
-        defaults={}
+        note_type=MatchNote.NoteType.COMMENTATOR
     )
 
     if request.method == 'POST':
-        form = CommentatorNoteForm(request.POST, instance=note_instance)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Đã lưu ghi chú thành công!")
-            return redirect('commentator_notes', match_pk=match.pk)
-    else:
-        form = CommentatorNoteForm(instance=note_instance)
+        note.commentator_notes_team1 = request.POST.get('commentator_notes_team1', '')
+        note.commentator_notes_team2 = request.POST.get('commentator_notes_team2', '')
+        note.save()
+        messages.success(request, "Đã lưu ghi chú của bạn.")
+        # redirect để tránh post lại form khi refresh
+        return redirect('commentator_notes', match_pk=match.pk)
+    
+    # Lấy ghi chú từ đội trưởng
+    captain_notes = MatchNote.objects.filter(
+        match=match,
+        note_type=MatchNote.NoteType.CAPTAIN
+    ).select_related('author', 'team')
 
-    captain_note_team1 = MatchNote.objects.filter(match=match, team=match.team1, note_type=MatchNote.NoteType.CAPTAIN).first()
-    captain_note_team2 = MatchNote.objects.filter(match=match, team=match.team2, note_type=MatchNote.NoteType.CAPTAIN).first()
+    # === BẮT ĐẦU PHẦN NÂNG CẤP DỮ LIỆU ===
+
+    # 1. Thống kê toàn giải
+    tournament_stats = {
+        'total_goals': Goal.objects.filter(match__tournament=tournament).count(),
+        'yellow_cards': Card.objects.filter(match__tournament=tournament, card_type='YELLOW').count(),
+        'red_cards': Card.objects.filter(match__tournament=tournament, card_type='RED').count(),
+    }
+    
+    # 2. Top 5 Vua phá lưới
+    top_scorers = Player.objects.filter(
+        goals__match__tournament=tournament
+    ).annotate(
+        num_goals=Count('goals')
+    ).order_by('-num_goals')[:5]
+
+    # 3. Cầu thủ đáng chú ý của 2 đội
+    team1_top_scorer = Player.objects.filter(
+        team=match.team1, 
+        goals__match__tournament=tournament
+    ).annotate(num_goals=Count('goals')).order_by('-num_goals').first()
+
+    team2_top_scorer = Player.objects.filter(
+        team=match.team2, 
+        goals__match__tournament=tournament
+    ).annotate(num_goals=Count('goals')).order_by('-num_goals').first()
+    
+    # 4. Nhà tài trợ
+    sponsors = Sponsorship.objects.filter(
+        tournament=tournament, 
+        is_active=True
+    ).select_related('package').order_by('package__order', 'order')
+
+    # === KẾT THÚC PHẦN NÂNG CẤP DỮ LIỆU ===
 
     context = {
         'match': match,
-        'form': form,
-        'captain_note_team1': captain_note_team1,
-        'captain_note_team2': captain_note_team2,
+        'note': note,
+        'captain_notes': captain_notes,
+        # Thêm dữ liệu mới vào context
+        'tournament_stats': tournament_stats,
+        'top_scorers': top_scorers,
+        'team1_top_scorer': team1_top_scorer,
+        'team2_top_scorer': team2_top_scorer,
+        'sponsors': sponsors,
     }
     return render(request, 'tournaments/commentator_notes.html', context)
 
