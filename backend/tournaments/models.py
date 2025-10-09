@@ -813,13 +813,13 @@ class SponsorshipPackage(models.Model):
     Ví dụ: 'Nhà tài trợ Vàng', 'Nhà tài trợ Bạc'...
     """
     tournament = models.ForeignKey(
-        'Tournament', # Giữ lại 'Tournament' nếu class Tournament ở dưới
+        'Tournament', 
         on_delete=models.CASCADE,
         related_name='sponsorship_packages',
         verbose_name="Giải đấu"
     )
     name = models.CharField("Tên gói", max_length=100)
-    price = models.DecimalField("Mức tài trợ (VNĐ)", max_digits=12, decimal_places=0)
+    price = models.DecimalField("Mức tài trợ (VNĐ)", max_digits=12, decimal_places=0, null=True, blank=True)
     description = models.TextField("Mô tả quyền lợi", blank=True)
     order = models.PositiveIntegerField(
         "Thứ tự ưu tiên",
@@ -836,7 +836,7 @@ class SponsorshipPackage(models.Model):
     class Meta:
         verbose_name = "Gói tài trợ"
         verbose_name_plural = "Các gói tài trợ"
-        ordering = ['order', '-price'] # Sắp xếp theo thứ tự ưu tiên, rồi đến giá
+        ordering = ['order', '-price'] 
 
     def __str__(self):
         return f"{self.name} ({self.tournament.name})"

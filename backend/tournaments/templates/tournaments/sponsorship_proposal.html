@@ -210,7 +210,15 @@
             {% if package.is_featured %}<div class="ribbon">Ưu tiên</div>
             {% elif forloop.first %}<div class="ribbon">Phổ biến</div>{% endif %}
             <h4 class="pkg-name">{{ package.name }}</h4>
-            <div class="price">{{ package.price|vnd_format }}</div>
+
+            {% comment %} --- BẮT ĐẦU THAY ĐỔI TẠI ĐÂY --- {% endcomment %}
+            {% if package.price is not None and package.price > 0 %}
+              <div class="price">{{ package.price|vnd_format }}</div>
+            {% else %}
+              <div class="price" style="font-size: 1.2rem; color: #6b7280;">Liên hệ BTC</div>
+            {% endif %}
+            {% comment %} --- KẾT THÚC THAY ĐỔI --- {% endcomment %}
+
             <div class="benefits">{{ package.benefits|linebreaks }}</div>
             <div class="meta-row">
               {% if package.duration %}<span class="meta"><i class="far fa-clock"></i> Thời hạn: {{ package.duration }}</span>{% endif %}
