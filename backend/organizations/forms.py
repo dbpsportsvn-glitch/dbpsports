@@ -560,3 +560,18 @@ class SponsorAnnouncementForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_tag = False  # <-- DÒNG SỬA LỖI QUAN TRỌNG NHẤT
         self.helper.disable_csrf = True # Vì CSRF token đã có ở form bên ngoài
+
+class OrganizationUpdateForm(forms.ModelForm):
+    """
+    Form cho phép BTC cập nhật thông tin của mình.
+    """
+    class Meta:
+        model = Organization
+        # Thêm phone_number và contact_email vào đây
+        fields = ['name', 'logo', 'phone_number', 'contact_email']
+        labels = {
+            'name': 'Tên đơn vị tổ chức',
+            'logo': 'Logo',
+            'phone_number': 'Số điện thoại liên hệ',
+            'contact_email': 'Email để nhà tài trợ liên hệ',
+        }        

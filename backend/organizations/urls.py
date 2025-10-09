@@ -1,6 +1,6 @@
 # organizations/urls.py
 from django.urls import path
-# --- SỬA ĐỔI IMPORT ---
+from . import views
 # Import tường minh các views để dễ quản lý
 from .views import (
     organization_dashboard, create_tournament, manage_tournament, edit_tournament,
@@ -23,6 +23,7 @@ urlpatterns = [
     path('dashboard/', organization_dashboard, name='dashboard'),
     path('create/', create_organization, name='create'),
     path('members/<int:pk>/remove/', remove_member, name='remove_member'),
+    path('edit/', views.edit_organization, name='edit_organization'),
     
     # Quản lý giải đấu
     path('tournaments/create/', create_tournament, name='create_tournament'),

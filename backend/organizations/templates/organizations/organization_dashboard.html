@@ -32,7 +32,7 @@
     .profile-name {
         font-weight: 600;
         font-size: 1.25rem;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.75rem; /* Tăng khoảng cách dưới tên */
     }
     .dashboard-nav .nav-link {
         display: flex;
@@ -86,7 +86,11 @@
                     <img src="{{ organization.logo.url }}" alt="Logo {{ organization.name }}" class="profile-avatar">
                 {% endif %}
                 <h5 class="profile-name">{{ organization.name }}</h5>
-            </div>
+                
+                <a href="{% url 'organizations:edit_organization' %}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin
+                </a>
+                </div>
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link active" id="tournaments-tab" data-bs-toggle="pill" href="#tournaments" role="tab"><i class="bi bi-trophy-fill"></i>Các giải đấu</a>
                 <a class="nav-link" id="members-tab" data-bs-toggle="pill" href="#members" role="tab"><i class="bi bi-people-fill"></i>Thành viên BTC</a>
@@ -112,12 +116,10 @@
                                 <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-primary">Quản lý</a>
                                 <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary" target="_blank">Xem trang giải</a>
                                 
-                                {# === NÚT XÓA ĐÃ ĐƯỢC THÊM LẠI TẠI ĐÂY === #}
                                 <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giải đấu \'{{ tournament.name }}\' và toàn bộ dữ liệu liên quan không?');" class="mb-0">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-danger">Xóa</button>
                                 </form>
-                                {# === KẾT THÚC KHỐI NÚT XÓA === #}
                             </div>
                         </div>
                     {% empty %}
@@ -155,7 +157,7 @@
                     </div>
                     <div class="col-lg-5">
                          <div class="card card-body bg-light">
-                             <h5 class="mb-3">Mời thành viên mới</h5>
+                            <h5 class="mb-3">Mời thành viên mới</h5>
                             {% if request.user == organization.owner %}
                             <form method="post">
                                 {% csrf_token %}

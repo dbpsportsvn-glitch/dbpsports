@@ -57,6 +57,7 @@ from .forms import (
     MatchUpdateForm,
     MemberInviteForm,
     OrganizationCreationForm,
+    OrganizationUpdateForm,
     PlayerUpdateForm,
     ProfessionalReviewForm,
     QuarterFinalCreationForm,
@@ -1771,3 +1772,29 @@ def get_sponsor_details_api(request, user_id):
         return JsonResponse(data)
     except SponsorProfile.DoesNotExist:
         return JsonResponse({'error': 'Sponsor profile not found'}, status=404)    
+
+
+# BTC chỉnh sửa thông tin
+@login_required
+def edit_organization(request):
+    """
+    View cho phép chủ sở hữu của BTC chỉnh sửa thông tin.
+    """
+    # Lấy thông tin BTC dựa trên người dùng đang đăng nhập
+    organization = get_object_or_404(Organization, owner=request.user)
+
+    if request.method == 'POST':
+        # Nếu người dùng gửi form lên, ta xử lý dữ liệu
+        form = OrganizationUpdateForm(request.POST, request.FILES, instance=organization)
+        if form.is_valid():
+            form.save()
+            # Sau khi lưu thành công, chuyển hướng về trang quản lý
+            return redirect('organizations:organization_dashboard')
+    else:
+        # Nếu chỉ là xem trang, ta hiển thị form với thông tin hiện tại
+        form = OrganizationUpdateForm(instance=organization)
+
+    return render(request, 'organizations/edit_organization.html', {
+        'form': form,
+        'organization': organization
+    })

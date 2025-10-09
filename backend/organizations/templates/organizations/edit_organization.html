@@ -1,0 +1,31 @@
+{% extends "organizations/organization_base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Chỉnh sửa thông tin BTC{% endblock %}
+
+{# Block này sẽ điền nội dung vào phần chính của trang base #}
+{% block management_content %}
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Cập nhật thông tin Ban tổ chức</h3>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          {{ form|crispy }}
+
+          <div class="mt-4">
+              <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+
+              {# SỬA LỖI Ở ĐÂY: Dùng 'dashboard' thay vì 'organization_dashboard' #}
+              <a href="{% url 'organizations:dashboard' %}" class="btn btn-secondary">Hủy</a>
+          </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{# Block sidebar để trống vì trang này không cần menu phụ #}
+{% block sidebar %}
+{% endblock %}
