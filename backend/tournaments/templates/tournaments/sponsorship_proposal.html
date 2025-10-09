@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Hồ Sơ Mời Tài Trợ - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<style>
+  :root{
+    --primary:#0d6efd;         /* Bootstrap blue */
+    --primary-2:#6610f2;       /* Purple accent for gradients */
+    --text:#1f2937;            /* Gray-800 */
+    --muted:#6b7280;           /* Gray-500 */
+    --surface:#ffffff;
+    --bg:#f3f4f6;              /* Gray-100 */
+    --success:#22c55e;
+    --danger:#ef4444;
+    --warning:#f59e0b;
+    --radius:14px;
+    --shadow-lg:0 20px 40px rgba(2,8,23,.08);
+    --shadow-md:0 10px 25px rgba(2,8,23,.06);
+  }
+
+  /* Page base */
+  body{background:var(--bg)}
+  .proposal-wrap{max-width:980px;margin:40px auto;padding:0 20px}
+  .sheet{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden}
+
+  /* Hero */
+  .hero{position:relative;padding:48px 32px 36px;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-2));}
+  .hero::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:18px;background:radial-gradient(100% 18px at 50% 0,#0000 16px,#fff 17px);} /* subtle scallop */
+  .hero-logo{max-width:140px;margin:0 auto 14px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.25));}
+  .hero-title{font-size:2.4rem;line-height:1.15;margin:4px 0 8px;font-weight:800;letter-spacing:.2px}
+  .hero-sub{opacity:.95;font-size:1.1rem}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.15);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.35);font-weight:600}
+  .chip i{opacity:.95}
+
+  /* Section */
+  .section{padding:28px 28px}
+  .section + .section{padding-top:0}
+  .section-title{display:flex;align-items:center;gap:10px;font-size:1.4rem;margin:8px 0 18px;color:var(--text);font-weight:800}
+  .section-title .bar{width:10px;height:10px;border-radius:2px;background:linear-gradient(135deg,var(--primary),var(--primary-2));box-shadow:0 4px 14px rgba(13,110,253,.35)}
+  .prose{color:var(--text);font-size:1.05rem;line-height:1.8}
+  .keylist{margin:10px 0 0;padding:0;list-style:none}
+  .keylist li{display:flex;gap:10px;margin:8px 0;padding:8px 10px;border-radius:10px;background:#f8fafc}
+  .keylist strong{min-width:170px;color:#111827}
+
+  /* Metrics row */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:14px}
+  .metric{background:#f8fafc;border:1px solid #eef2f7;border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow-md)}
+  .metric h4{margin:6px 0 2px;font-size:1rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .metric .num{font-weight:900;font-size:1.8rem;color:var(--text)}
+
+  /* Packages */
+  .packages{padding:4px 28px 28px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+  .card{position:relative;border:1px solid #e8eef6;border-radius:16px;padding:22px;background:#ffffff;box-shadow:var(--shadow-md);transition:transform .2s ease, box-shadow .2s ease}
+  .card:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(2,8,23,.12)}
+  .ribbon{position:absolute;top:14px;right:-8px;background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;padding:6px 12px;border-radius:999px;font-weight:800;font-size:.8rem;box-shadow:0 10px 18px rgba(244,63,94,.4)}
+  .pkg-name{font-size:1.2rem;font-weight:800;margin:6px 0 6px;color:#0f172a}
+  .price{font-size:1.7rem;font-weight:900;color:var(--success);margin-bottom:10px}
+  .benefits{margin:10px 0 0}
+  /* We render paragraphs from linebreaks as bullets */
+  .benefits p{position:relative;margin:10px 0 10px 22px}
+  .benefits p::before{content:'\2713';position:absolute;left:-22px;top:0;color:var(--success);font-weight:900}
+  .meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .meta{font-size:.9rem;color:var(--muted)}
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:10px 14px;font-weight:700;border:1px solid #dbe4f0;background:#fff;cursor:pointer;text-decoration:none}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-2));border:none;color:#fff;box-shadow:0 12px 26px rgba(13,110,253,.35)}
+  .btn-primary:hover{filter:brightness(.98)}
+  .btn-outline{color:var(--text)}
+
+  /* Contact block */
+  .contact{background:linear-gradient(180deg,#fff, #f8fafc);border-top:1px solid #eef2f7;padding:24px 28px;text-align:center}
+  .contact h3{font-size:1.2rem;margin:0 0 8px;font-weight:800;color:var(--text)}
+  .contact p{margin:6px 0;color:var(--muted)}
+
+  /* Print styles */
+  @media print{
+    body{background:#fff}
+    .sheet{box-shadow:none;border-radius:0}
+    .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    /* Keep small blocks intact but allow sections to split to avoid huge blank gaps */
+    .card,.metric,.hero,.contact{break-inside:avoid}
+    .section{break-inside:auto}
+    .actions{display:none}
+    @page{size:A4;margin:0.25in}
+  }
+    .sheet{box-shadow:none;border-radius:0}
+    .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .card,.metric,.section{break-inside:avoid}
+    .actions{display:none}
+    @page{size:A4;margin:0.5in}
+  }
+</style>
+
+<div class="proposal-wrap">
+  <div class="sheet" id="proposal-content">
+    <!-- Hero -->
+    <div class="hero">
+      {% if tournament.organization.logo %}
+        <img class="hero-logo" src="{{ tournament.organization.logo.url }}" alt="Logo {{ tournament.organization.name }}">
+      {% endif %}
+      <div class="hero-sub">HỒ SƠ MỜI TÀI TRỢ</div>
+      <h1 class="hero-title">{{ tournament.name }}</h1>
+      <div class="chips">
+        <span class="chip" aria-label="Thời gian">
+          <i class="far fa-calendar-alt"></i>
+          {{ tournament.start_date|date:"d/m/Y" }} – {{ tournament.end_date|date:"d/m/Y" }}
+        </span>
+        {% if tournament.location_detail %}
+        <span class="chip" aria-label="Địa điểm">
+          <i class="fas fa-map-marker-alt"></i>
+          {{ tournament.location_detail }}
+        </span>
+        {% endif %}
+        <span class="chip" aria-label="Quy mô"><i class="fas fa-users"></i>{{ registered_teams_count }} đội</span>
+      </div>
+    </div>
+
+    <!-- About -->
+    <section class="section">
+      <h3 class="section-title"><span class="bar"></span>Về Giải Đấu</h3>
+      <div class="prose">{{ tournament.description|linebreaks }}</div>
+      <ul class="keylist">
+        <li><strong>Quy mô</strong> <span>{{ registered_teams_count }} đội đã đăng ký</span></li>
+        <li><strong>Thời gian</strong> <span>{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</span></li>
+        {% if tournament.location_detail %}
+        <li><strong>Địa điểm</strong> <span>{{ tournament.location_detail }}</span></li>
+        {% endif %}
+      </ul>
+
+      <!-- Optional quick metrics (feel free to remove if not needed) -->
+      <div class="metrics">
+        <div class="metric"><h4>ĐỘI THAM GIA</h4><div class="num">{{ registered_teams_count }}</div></div>
+        <div class="metric"><h4>THỜI LƯỢNG</h4><div class="num">{{ tournament.start_date|date:"d/m" }}–{{ tournament.end_date|date:"d/m" }}</div></div>
+        <div class="metric"><h4>HÌNH THỨC</h4><div class="num">{{ tournament.format|default:"—" }}</div></div>
+      </div>
+    </section>
+
+    <!-- Packages -->
+    <section class="packages">
+      <h3 class="section-title"><span class="bar"></span>Các Gói Tài Trợ</h3>
+      {% if sponsorship_packages %}
+      <div class="grid">
+        {% for package in sponsorship_packages %}
+          <article class="card">
+            {% if package.is_featured %}<div class="ribbon">Ưu tiên</div>
+            {% elif forloop.first %}<div class="ribbon">Phổ biến</div>{% endif %}
+            <h4 class="pkg-name">{{ package.name }}</h4>
+            <div class="price">{{ package.price|vnd_format }}</div>
+            <div class="benefits">{{ package.benefits|linebreaks }}</div>
+            <div class="meta-row">
+              {% if package.duration %}<span class="meta"><i class="far fa-clock"></i> Thời hạn: {{ package.duration }}</span>{% endif %}
+              {% if package.quantity %}<span class="meta"><i class="fas fa-tag"></i> Số lượng: {{ package.quantity }}</span>{% endif %}
+            </div>
+            <div class="cta">
+              {% if tournament.organization.contact_email %}
+              <a class="btn btn-primary" href="mailto:{{ tournament.organization.contact_email }}?subject=Tài trợ {{ tournament.name }} - {{ package.name }}">
+                <i class="fas fa-envelope"></i> Liên hệ ngay
+              </a>
+              {% endif %}
+              {% if tournament.organization.phone_number %}
+              <a class="btn btn-outline" href="tel:{{ tournament.organization.phone_number }}">
+                <i class="fas fa-phone"></i> Gọi {{ tournament.organization.phone_number }}
+              </a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p class="prose" style="margin-top:8px">Chưa có gói tài trợ nào được tạo cho giải đấu này.</p>
+      {% endif %}
+    </section>
+
+    <!-- Contact -->
+    <section class="contact">
+      <h3>Liên Hệ Hợp Tác</h3>
+      <p>Ban tổ chức xin trân trọng cảm ơn sự quan tâm của Quý Doanh Nghiệp.</p>
+      <p><strong>{{ tournament.organization.name }}</strong></p>
+      <p>
+        {% if tournament.organization.contact_email %}
+          Email: <strong><a href="mailto:{{ tournament.organization.contact_email }}">{{ tournament.organization.contact_email }}</a></strong>
+        {% endif %}
+        {% if tournament.organization.phone_number %}
+          &nbsp; • &nbsp; Điện thoại: <strong><a href="tel:{{ tournament.organization.phone_number }}">{{ tournament.organization.phone_number }}</a></strong>
+        {% endif %}
+      </p>
+    </section>
+  </div>
+
+  <!-- Actions (not printed) -->
+  <div class="actions" style="display:flex;justify-content:center;gap:12px;margin-top:16px">
+    <button id="download-pdf" class="btn btn-primary" aria-label="Tải về PDF">
+      <i class="fas fa-file-pdf"></i> Tải về PDF
+    </button>
+    {% if tournament.organization.contact_email %}
+    <a class="btn btn-outline" href="mailto:{{ tournament.organization.contact_email }}?subject=Tài trợ {{ tournament.name }}">
+      <i class="fas fa-paper-plane"></i> Gửi email quan tâm
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+(function(){
+  const btn = document.getElementById('download-pdf');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    const el = document.getElementById('proposal-content');
+    const filename = `ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`;
+    const opt = {
+      margin: 0.25, // reduce outer PDF margin to avoid big white band
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css','legacy'] } // allow browser to split sections sensibly
+    };
+    html2pdf().from(el).set(opt).save();
+  });
+})();
+</script>
+{% endblock %}

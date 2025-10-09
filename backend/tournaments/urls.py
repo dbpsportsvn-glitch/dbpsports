@@ -45,6 +45,7 @@ urlpatterns = [
     path('match/<int:pk>/media-edit/', views.media_edit_match, name='media_edit_match'),    
     # Nhà tài trợ
     path('sponsorship/<int:pk>/click/', views.record_sponsor_click_view, name='sponsor_click'),
+    path('tournaments/<int:pk>/sponsorship-proposal/', views.sponsorship_proposal_view, name='sponsorship_proposal'),
 
     # --- URL liên quan đến Đội bóng (Team) ---
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),

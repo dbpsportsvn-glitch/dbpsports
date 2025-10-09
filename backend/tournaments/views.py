@@ -76,6 +76,7 @@ from .models import (
     TournamentPhoto,
     TournamentStaff,
     VoteRecord,
+    SponsorshipPackage,
 )
 from .utils import (
     get_current_vote_value,
@@ -2434,3 +2435,32 @@ def record_sponsor_click_view(request, pk):
 
     # Chuyển hướng người dùng đến trang của nhà tài trợ
     return redirect(sponsorship.website_url)
+
+
+# === Mời Ntt ===
+def sponsorship_proposal_view(request, pk):
+    """
+    Hiển thị trang hồ sơ mời tài trợ chuyên nghiệp cho một giải đấu.
+    """
+    # Lấy thông tin giải đấu dựa vào pk từ URL
+    tournament = get_object_or_404(Tournament, pk=pk)
+
+    # Lấy tất cả các gói tài trợ đã được tạo cho giải đấu này
+    # sắp xếp theo thứ tự (order) đã định nghĩa
+    sponsorship_packages = SponsorshipPackage.objects.filter(tournament=tournament).order_by('order')
+
+    # Đếm số đội đã đăng ký và được duyệt
+    registered_teams_count = TeamRegistration.objects.filter(
+        tournament=tournament,
+        payment_status='PAID'
+    ).count()
+
+    # Tạo context để gửi dữ liệu ra template
+    context = {
+        'tournament': tournament,
+        'sponsorship_packages': sponsorship_packages,
+        'registered_teams_count': registered_teams_count,
+    }
+
+    # Render ra file HTML mà chúng ta sẽ tạo ở bước tiếp theo
+    return render(request, 'tournaments/sponsorship_proposal.html', context)    
