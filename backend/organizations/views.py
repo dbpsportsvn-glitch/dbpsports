@@ -1789,7 +1789,7 @@ def edit_organization(request):
         if form.is_valid():
             form.save()
             # Sau khi lưu thành công, chuyển hướng về trang quản lý
-            return redirect('organizations:organization_dashboard')
+            return redirect('organizations:dashboard')
     else:
         # Nếu chỉ là xem trang, ta hiển thị form với thông tin hiện tại
         form = OrganizationUpdateForm(instance=organization)

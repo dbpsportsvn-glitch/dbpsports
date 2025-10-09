@@ -3,7 +3,7 @@
 
 {% block title %}Chỉnh sửa thông tin BTC{% endblock %}
 
-{# Block này sẽ điền nội dung vào phần chính của trang base #}
+{# NỘI DUNG CHÍNH CỦA TRANG (giữ nguyên) #}
 {% block management_content %}
   <div class="card">
     <div class="card-header">
@@ -17,8 +17,6 @@
 
           <div class="mt-4">
               <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-
-              {# SỬA LỖI Ở ĐÂY: Dùng 'dashboard' thay vì 'organization_dashboard' #}
               <a href="{% url 'organizations:dashboard' %}" class="btn btn-secondary">Hủy</a>
           </div>
       </form>
@@ -26,6 +24,27 @@
   </div>
 {% endblock %}
 
-{# Block sidebar để trống vì trang này không cần menu phụ #}
+{# === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY === #}
+{# Thêm menu điều hướng cho khu vực quản lý BTC #}
 {% block sidebar %}
+<div class="card">
+    <div class="card-header">
+        <strong>{{ organization.name }}</strong>
+    </div>
+    <div class="card-body p-2">
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'organizations:dashboard' %}">
+                    <i class="bi bi-speedometer2"></i> Tổng quan BTC
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{% url 'organizations:edit_organization' %}">
+                    <i class="bi bi-pencil-square"></i> Cập nhật thông tin
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
 {% endblock %}
+{# === KẾT THÚC THAY ĐỔI === #}

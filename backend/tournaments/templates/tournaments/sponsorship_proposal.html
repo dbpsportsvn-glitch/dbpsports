@@ -77,9 +77,34 @@
   .contact h3{font-size:1.2rem;margin:0 0 8px;font-weight:800;color:var(--text)}
   .contact p{margin:6px 0;color:var(--muted)}
 
+  /* Contact inline chips */
+  .contact-inline{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 10px;list-style:none;margin:10px 0 0;padding:0}
+  .contact-inline li{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid #e5e7eb;background:#fff;border-radius:999px;font-weight:700;color:var(--text)}
+  .contact-inline a{text-decoration:none;color:inherit}
+
   /* Print styles */
   @media print{
     body{background:#fff}
+    .sheet{box-shadow:none;border-radius:0}
+    .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact;padding:28px 22px 18px}
+    .hero-title{font-size:1.9rem}
+    .chip{padding:4px 8px;font-size:.9rem}
+    .section{padding:16px 18px}
+    .section-title{font-size:1.15rem;margin:6px 0 8px}
+    .prose{font-size:.98rem;line-height:1.6}
+    .keylist li{padding:6px 8px}
+    .metric .num{font-size:1.4rem}
+    .contact{padding:12px 16px}
+    .contact h3{font-size:1rem;margin:0 0 4px}
+    .contact .contact-inline{gap:6px}
+    .contact .contact-inline li{padding:4px 8px;font-size:.92rem}
+
+    /* Keep small blocks intact but allow sections to split sensibly */
+    .card,.metric,.hero,.contact{break-inside:avoid}
+    .section{break-inside:auto}
+    .actions{display:none}
+    @page{size:A4;margin:0.25in}
+  }
     .sheet{box-shadow:none;border-radius:0}
     .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}
     /* Keep small blocks intact but allow sections to split to avoid huge blank gaps */
@@ -94,6 +119,23 @@
     .actions{display:none}
     @page{size:A4;margin:0.5in}
   }
+  /* Compact rules applied only during export */
+  body.pdf-fit .hero{padding:36px 24px 20px}
+  body.pdf-fit .hero-title{font-size:2rem}
+  body.pdf-fit .chip{padding:6px 10px;font-size:.95rem}
+  body.pdf-fit .section{padding:18px 20px}
+  body.pdf-fit .metrics{display:none}
+  body.pdf-fit .grid{gap:12px}
+  body.pdf-fit .card{padding:14px;border-radius:12px}
+  body.pdf-fit .pkg-name{font-size:1.05rem}
+  body.pdf-fit .price{font-size:1.4rem}
+  body.pdf-fit .benefits p{margin:6px 0 6px 18px;line-height:1.35;font-size:.95rem}
+  body.pdf-fit .contact{padding:16px 20px}
+
+  /* Extra compact fixes during export */
+  body.pdf-fit .hero{padding:32px 20px 18px}
+  body.pdf-fit .hero-title{font-size:1.9rem}
+  body.pdf-fit .hero::after{display:none}
 </style>
 
 <div class="proposal-wrap">
@@ -181,14 +223,14 @@
       <h3>Liên Hệ Hợp Tác</h3>
       <p>Ban tổ chức xin trân trọng cảm ơn sự quan tâm của Quý Doanh Nghiệp.</p>
       <p><strong>{{ tournament.organization.name }}</strong></p>
-      <p>
+      <ul class="contact-inline">
         {% if tournament.organization.contact_email %}
-          Email: <strong><a href="mailto:{{ tournament.organization.contact_email }}">{{ tournament.organization.contact_email }}</a></strong>
+          <li><i class="fas fa-envelope"></i><a href="mailto:{{ tournament.organization.contact_email }}">{{ tournament.organization.contact_email }}</a></li>
         {% endif %}
         {% if tournament.organization.phone_number %}
-          &nbsp; • &nbsp; Điện thoại: <strong><a href="tel:{{ tournament.organization.phone_number }}">{{ tournament.organization.phone_number }}</a></strong>
+          <li><i class="fas fa-phone"></i><a href="tel:{{ tournament.organization.phone_number }}">{{ tournament.organization.phone_number }}</a></li>
         {% endif %}
-      </p>
+      </ul>
     </section>
   </div>
 
@@ -211,20 +253,76 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 (function(){
-  const btn = document.getElementById('download-pdf');
-  if(!btn) return;
-  btn.addEventListener('click', function(){
-    const el = document.getElementById('proposal-content');
-    const filename = `ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`;
-    const opt = {
-      margin: 0.25, // reduce outer PDF margin to avoid big white band
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css','legacy'] } // allow browser to split sections sensibly
-    };
-    html2pdf().from(el).set(opt).save();
+  function ready(fn){
+    if(document.readyState !== 'loading'){ fn(); }
+    else{ document.addEventListener('DOMContentLoaded', fn); }
+  }
+
+  function loadScript(src){
+    return new Promise(function(resolve,reject){
+      var s=document.createElement('script');
+      s.src=src; s.async=true; s.onload=resolve; s.onerror=function(){reject(new Error('Load fail: '+src));};
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureLibs(){
+    // html2pdf bundle thường đã cung cấp html2canvas & jsPDF. Nếu thiếu, nạp fallback.
+    if(!window.html2canvas){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    if(!(window.jspdf && (window.jspdf.jsPDF)) && !window.jsPDF){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+    var JS_PDF_CTOR = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if(!window.html2canvas || !JS_PDF_CTOR){
+      throw new Error('Libraries not available');
+    }
+    return JS_PDF_CTOR;
+  }
+
+  ready(function(){
+    var btn = document.getElementById('download-pdf');
+    if(!btn){ return; }
+
+    btn.addEventListener('click', async function(){
+      try{
+        var jsPDF = await ensureLibs();
+        var el = document.getElementById('proposal-content');
+        if(!el){ return; }
+        document.body.classList.add('pdf-fit');
+
+        // Chờ ảnh/logo load (tối đa 800ms)
+        await new Promise(function(r){ setTimeout(r, 300); });
+
+        var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 });
+        var imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+        var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        var pageW = pdf.internal.pageSize.getWidth();
+        var pageH = pdf.internal.pageSize.getHeight();
+        var MARGIN_MM = 2; // giảm viền để to hơn
+
+        // Tính tỉ lệ phóng to tối đa nhưng ưu tiên lấp đầy CHIỀU RỘNG, căn top
+        var scaleW = (pageW - 2*MARGIN_MM) / canvas.width;
+        var scaleH = (pageH - 2*MARGIN_MM) / canvas.height;
+        var scale = Math.min(scaleW, scaleH);
+
+        var imgW = canvas.width * scale;
+        var imgH = canvas.height * scale;
+
+        var x = (pageW - imgW) / 2; // căn giữa ngang
+        var y = MARGIN_MM;          // căn top (giảm khoảng trắng phía trên)
+
+        pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
+        pdf.save(`ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`);(`ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`);
+      }catch(err){
+        console.error(err);
+        alert('Không tải được thư viện xuất PDF. Vui lòng kiểm tra kết nối mạng hoặc chặn CDN.');
+      }finally{
+        document.body.classList.remove('pdf-fit');
+      }
+    });
   });
 })();
 </script>
