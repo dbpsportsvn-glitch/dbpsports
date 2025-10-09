@@ -314,9 +314,9 @@
                         {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
                             {% with profile=sponsorship.sponsor.sponsor_profile %}
                                 {% with display_name=profile.brand_name|default:sponsorship.sponsor.username %}
-                                    {% with href=profile.website_url|default:sponsorship.website_url %}
-                                      {% if href %}<a href="{{ href }}" class="stretched-link" target="_blank" rel="noopener" aria-label="Mở trang của {{ display_name }}"></a>{% endif %}
-                                    {% endwith %}
+                                    {# === THAY ĐỔI TẠI ĐÂY === #}
+                                    {# Thay vì link ra website ngoài, link đến trang chi tiết nhà tài trợ trên hệ thống #}
+                                    <a href="{% url 'sponsors:profile_detail' pk=profile.pk %}" class="stretched-link" aria-label="Mở trang của {{ display_name }}"></a>
 
                                     <div class="card-body text-center d-flex flex-column">
                                         <div class="sponsor-logo-wrapper rounded-3 mb-3">
