@@ -155,20 +155,30 @@
       {% endif %}
       <div class="hero-sub">THƯ MỜI TÀI TRỢ</div>
       <h1 class="hero-title">{{ tournament.name }}</h1>
-      <div class="chips">
-        <span class="chip" aria-label="Thời gian">
-          <i class="far fa-calendar-alt"></i>
-          {{ tournament.start_date|date:"d/m/Y" }} – {{ tournament.end_date|date:"d/m/Y" }}
-        </span>
-        {% if tournament.location_detail %}
-        <span class="chip" aria-label="Địa điểm">
-          <i class="fas fa-map-marker-alt"></i>
-          {{ tournament.location_detail }}
-        </span>
-        {% endif %}
-        <span class="chip" aria-label="Quy mô"><i class="fas fa-users"></i>{{ registered_teams_count }} đội</span>
-      </div>
     </div>
+
+    <!-- Thư Ngỏ Gửi Quý Nhà Tài Trợ -->
+    <section class="section intro">
+      <h3 class="section-title"><span class="bar"></span>Thư Ngỏ Gửi Quý Nhà Tài Trợ</h3>
+      <div class="prose">
+        <p>Kính gửi Quý Nhà Tài Trợ,</p>
+
+        <p>{{ tournament.organization.name }} trân trọng giới thiệu <strong>{{ tournament.name }}</strong>,
+        dự kiến diễn ra từ {{ tournament.start_date|date:"d/m/Y" }} đến {{ tournament.end_date|date:"d/m/Y" }}
+        {% if tournament.location_detail %}tại {{ tournament.location_detail }}{% endif %}. 
+        Mỗi mùa giải là dịp cộng đồng quy tụ, nơi tinh thần fair-play và nỗ lực bền bỉ được tỏa sáng.</p>
+
+        <p>Chúng tôi mong kiến tạo một sân chơi chỉn chu, an toàn và giàu nhân văn — 
+        nơi vận động viên rèn kỷ luật, học tôn trọng; nơi gia đình, bạn bè cùng sẻ chia niềm vui trưởng thành.</p>
+
+        <p>Kính mời Quý vị đồng hành để gieo thêm niềm tin và lan tỏa những điều tốt đẹp. 
+        Mọi sự chung tay đều được trân trọng; chúng tôi cam kết tổ chức tận tâm và minh bạch.</p>
+
+        <p>Trân trọng cảm ơn và hân hạnh được đón tiếp Quý vị tại giải.</p>
+
+        <p><strong>{{ tournament.organization.name }}</strong><br/>Ban Tổ Chức</p>
+      </div>
+    </section>
 
     <!-- About -->
     <section class="section">
