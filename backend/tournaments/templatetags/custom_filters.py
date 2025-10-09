@@ -17,6 +17,17 @@ def vnd_format(value):
     Ví dụ: 69000 -> "69.000 VNĐ"
     """
     try:
+        # Sử dụng f-string với định dạng dấu phẩy, sau đó thay thế
         return f"{int(value):,}".replace(",", ".") + " VNĐ"
     except (ValueError, TypeError):
         return value
+
+# Thêm bộ lọc mới tại đây
+@register.filter(name='filter_by_team')
+def filter_by_team(queryset, team_id):
+    """
+    Lọc một queryset dựa trên team.id.
+    """
+    if not team_id:
+        return []
+    return [item for item in queryset if item.team_id == team_id]

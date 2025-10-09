@@ -4,6 +4,7 @@
 {% block title %}Ghi chú BLV: {{ match }}{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" href="{% static 'css/management.css' %}">
 <style>
   /* ===== Layout 2 cột (trái nội dung, phải sidebar) ===== */
@@ -36,98 +37,138 @@
   .value-danger { color:#dc3545; }
 
   /* Sponsor logos: hộp đồng nhất để logo không méo/lệch */
-  .sponsor-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
-  .sponsor-logo-box { width: 60px; height: 18px; flex: 0 0 60px; display:flex; align-items:center; justify-content:center; background:#fff; border:1px dashed #e9ecef; border-radius:10px; overflow:hidden; }
-  .sponsor-logo { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; image-rendering: -webkit-optimize-contrast; }
+  .sponsor-row { display:flex; align-items:center; gap:.75rem; }
+
+  /* ===== SPONSOR FIX: cố định khung + chặn ảnh phóng to ===== */
+  .sponsor-row .sponsor-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar .sponsor-list {
+    --logo-w: 96px;   /* đổi nhanh kích thước ở đây nếu cần */
+    --logo-h: 48px;
+  }
+
+  .sponsor-logo-box {
+    flex: 0 0 var(--logo-w);
+    width: var(--logo-w);
+    height: var(--logo-h);
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border: 1px dashed #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 6px;
+  }
+
+  .sponsor-logo-box .sponsor-logo {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain;
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+  }
+
+  .sponsor-logo[width], .sponsor-logo[height] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .sidebar img {
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  @media (max-width: 575.98px) {
+    .sidebar .sponsor-list {
+      --logo-w: 80px;
+      --logo-h: 40px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-  <!-- Header + Actions giống mẫu, nhưng giữ đủ biến => không lỗi -->
   <div class="page-header mb-3">
     <div>
-      <h1><i class="fas fa-files-o text-primary me-1"></i> Sổ tay Bình luận viên</h1>
+      <h1><i class="bi bi-files text-primary me-1"></i> Sổ tay Bình luận viên</h1>
       <p class="lead mb-0">Trận đấu: <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong></p>
     </div>
     <div class="action-stack">
-      <a href="{% url 'match_control' match.pk %}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left me-1"></i> Phòng điều khiển
+      <button type="submit" form="notes-form" class="btn btn-primary btn-sm">
+        <i class="bi bi-save-fill me-1"></i> Lưu ghi chú
+      </button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#rulesModal">
+        <i class="bi bi-book me-1"></i> Điều lệ
+      </button>
+       <a href="{% url 'match_control' match.pk %}" class="btn btn-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Quay lại
       </a>
-      <button type="submit" form="notes-form" class="btn btn-primary">
-        <i class="fas fa-save me-1"></i> Lưu ghi chú
-      </button>
-      <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#rulesModal">
-        <i class="fas fa-book me-1"></i> Điều lệ
-      </button>
     </div>
   </div>
 
   <div class="notes-grid">
-    <!-- MAIN CONTENT: 2 cột team như demo, nhưng dùng field gốc để tránh lỗi -->
     <div class="main-content">
       <form method="post" id="notes-form">
         {% csrf_token %}
         <div class="row g-4">
-          <!-- Team 1 -->
           <div class="col-lg-6">
             <div class="card h-100">
               <div class="card-header"><h5>{{ match.team1.name }}</h5></div>
               <div class="card-body">
                 <textarea name="commentator_notes_team1" class="form-control" rows="15" placeholder="Ghi chú cho {{ match.team1.name }}">{{ note.commentator_notes_team1 }}</textarea>
 
-                {# Ghi chú đội trưởng của team1 nằm ngay bên dưới, nền mờ #}
-                {% with has_note=False %}
-                  {% for c_note in captain_notes %}
-                    {% if c_note.team.id == match.team1.id %}
-                      {% if not has_note %}
-                        <hr>
-                        <h6 class="mb-2"><i class="fas fa-comment-dots text-success me-1"></i> Ghi chú từ Đội trưởng</h6>
-                      {% endif %}
+                {% with team1_notes=captain_notes|filter_by_team:match.team1.id %}
+                  {% if team1_notes %}
+                    <hr>
+                    <h6 class="mb-2"><i class="bi bi-chat-right-text-fill text-success me-1"></i> Ghi chú từ Đội trưởng</h6>
+                    {% for c_note in team1_notes %}
                       <div class="alert alert-success alert-glass">{{ c_note.captain_note|linebreaksbr }}</div>
-                      {% with True as has_note %}{% endwith %}
-                    {% endif %}
-                  {% endfor %}
-                  {% if not has_note %}
-                    {# Không hiện gì nếu không có ghi chú cho team này #}
+                    {% endfor %}
                   {% endif %}
                 {% endwith %}
               </div>
             </div>
           </div>
 
-          <!-- Team 2 -->
           <div class="col-lg-6">
             <div class="card h-100">
               <div class="card-header"><h5>{{ match.team2.name }}</h5></div>
               <div class="card-body">
                 <textarea name="commentator_notes_team2" class="form-control" rows="15" placeholder="Ghi chú cho {{ match.team2.name }}">{{ note.commentator_notes_team2 }}</textarea>
-
-                {# Ghi chú đội trưởng của team2 nằm ngay bên dưới, nền mờ #}
-                {% with has_note=False %}
-                  {% for c_note in captain_notes %}
-                    {% if c_note.team.id == match.team2.id %}
-                      {% if not has_note %}
-                        <hr>
-                        <h6 class="mb-2"><i class="fas fa-comment-dots text-success me-1"></i> Ghi chú từ Đội trưởng</h6>
-                      {% endif %}
+                
+                {% with team2_notes=captain_notes|filter_by_team:match.team2.id %}
+                  {% if team2_notes %}
+                    <hr>
+                    <h6 class="mb-2"><i class="bi bi-chat-right-text-fill text-success me-1"></i> Ghi chú từ Đội trưởng</h6>
+                    {% for c_note in team2_notes %}
                       <div class="alert alert-success alert-glass">{{ c_note.captain_note|linebreaksbr }}</div>
-                      {% with True as has_note %}{% endwith %}
-                    {% endif %}
-                  {% endfor %}
+                    {% endfor %}
+                  {% endif %}
                 {% endwith %}
               </div>
             </div>
           </div>
         </div>
+      </form>
+      
+      <div class="mt-4">
+        {% include 'tournaments/partials/standings_table.html' %}
+      </div>
 
-              </form>
     </div>
 
-    <!-- SIDEBAR giữ đủ như code ban đầu -->
     <aside class="sidebar">
-      <div class="sidebar-widget">
-        <h5><i class="fas fa-info-circle"></i> Thông tin trận đấu</h5>
+       <div class="sidebar-widget">
+        <h5><i class="bi bi-info-circle"></i> Thông tin trận đấu</h5>
         <ul class="stat-list">
           <li><span>Giải đấu:</span> <strong>{{ match.tournament.name }}</strong></li>
           <li><span>Vòng đấu:</span> <strong>{{ match.get_match_round_display }}</strong></li>
@@ -136,7 +177,7 @@
       </div>
 
       <div class="sidebar-widget">
-        <h5><i class="fas fa-chart-bar"></i> Thống kê nổi bật</h5>
+        <h5><i class="bi bi-bar-chart-line-fill"></i> Thống kê nổi bật</h5>
         <ul class="stat-list">
           <li><span>Tổng bàn thắng:</span> <span class="value">{{ tournament_stats.total_goals }}</span></li>
           <li><span>Thẻ vàng:</span> <span class="value value-warn">{{ tournament_stats.yellow_cards }}</span></li>
@@ -145,11 +186,11 @@
       </div>
 
       <div class="sidebar-widget">
-        <h5><i class="fas fa-crown"></i> Top 5 Vua phá lưới</h5>
+        <h5><i class="bi bi-person-fill-up"></i> Top 5 Vua phá lưới</h5>
         <ul class="player-list">
           {% for player in top_scorers %}
             <li>
-              <a href="{{ player.get_absolute_url }}" target="_blank">{{ player.full_name }}</a>
+              <a href="{% url 'player_detail' pk=player.pk %}" target="_blank">{{ player.full_name }}</a>
               <span class="value">{{ player.num_goals }}</span>
             </li>
           {% empty %}
@@ -159,18 +200,18 @@
       </div>
 
       <div class="sidebar-widget">
-        <h5><i class="fas fa-star"></i> Cầu thủ đáng chú ý</h5>
+        <h5><i class="bi bi-star-fill"></i> Cầu thủ đáng chú ý</h5>
         <ul class="player-list">
           {% if team1_top_scorer %}
             <li>
               <span>{{ match.team1.name }}:</span>
-              <a href="{{ team1_top_scorer.get_absolute_url }}" target="_blank"><strong>{{ team1_top_scorer.full_name }}</strong> ({{ team1_top_scorer.num_goals }} bàn)</a>
+              <a href="{% url 'player_detail' pk=team1_top_scorer.pk %}" target="_blank"><strong>{{ team1_top_scorer.full_name }}</strong> ({{ team1_top_scorer.num_goals }} bàn)</a>
             </li>
           {% endif %}
           {% if team2_top_scorer %}
             <li>
               <span>{{ match.team2.name }}:</span>
-              <a href="{{ team2_top_scorer.get_absolute_url }}" target="_blank"><strong>{{ team2_top_scorer.full_name }}</strong> ({{ team2_top_scorer.num_goals }} bàn)</a>
+              <a href="{% url 'player_detail' pk=team2_top_scorer.pk %}" target="_blank"><strong>{{ team2_top_scorer.full_name }}</strong> ({{ team2_top_scorer.num_goals }} bàn)</a>
             </li>
           {% endif %}
           {% if not team1_top_scorer and not team2_top_scorer %}
@@ -179,34 +220,37 @@
         </ul>
       </div>
 
+      {% if sponsors %}
       <div class="sidebar-widget">
-        <h5><i class="fas fa-handshake"></i> Nhà tài trợ</h5>
+        <h5><i class="bi bi-gem"></i> Nhà tài trợ</h5>
         <ul class="sponsor-list">
           {% for sponsorship in sponsors %}
             <li class="sponsor-row">
-              <span>
-                {% if sponsorship.sponsor %}
-                  {{ sponsorship.sponsor.username }}
+              <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}"
+                 target="_blank" rel="noopener" class="text-decoration-none text-dark sponsor-name">
+                {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
+                    {{ sponsorship.sponsor.sponsor_profile.brand_name }}
                 {% else %}
-                  {{ sponsorship.sponsor_name }}
+                    {{ sponsorship.sponsor_name }}
                 {% endif %}
-              </span>
-              {% if sponsorship.logo %}
+              </a>
+              {% if sponsorship.logo or sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
                 <div class="sponsor-logo-box">
-                  <img src="{{ sponsorship.logo.url }}" alt="{% if sponsorship.sponsor %}{{ sponsorship.sponsor.username }}{% else %}{{ sponsorship.sponsor_name }}{% endif %}" class="sponsor-logo">
+                    <img
+                      src="{% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}{{ sponsorship.sponsor.sponsor_profile.brand_logo.url }}{% else %}{{ sponsorship.logo.url }}{% endif %}"
+                      alt="Logo" class="sponsor-logo" width="192" height="96" loading="lazy" decoding="async">
                 </div>
               {% endif %}
             </li>
-          {% empty %}
-            <li>Chưa có thông tin nhà tài trợ.</li>
           {% endfor %}
         </ul>
       </div>
+      {% endif %}
+
     </aside>
   </div>
 </div>
 
-<!-- Modal Điều lệ giữ nguyên -->
 <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
@@ -216,7 +260,7 @@
       </div>
       <div class="modal-body">
         {% if match.tournament.rules %}
-          {{ match.tournament.rules|safe }}
+          {{ match.tournament.rules|safe|linebreaks }}
         {% else %}
           <p>Chưa có điều lệ nào được ban tổ chức cập nhật.</p>
         {% endif %}

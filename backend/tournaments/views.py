@@ -1853,14 +1853,13 @@ def job_detail_view(request, pk):
 def commentator_notes_view(request, match_pk):
     match = get_object_or_404(Match.objects.select_related('tournament', 'team1', 'team2'), pk=match_pk)
     tournament = match.tournament
-    
-    # Chỉ BLV được phân công cho giải này mới được xem
+
     is_commentator_for_tournament = TournamentStaff.objects.filter(
-        tournament=tournament, 
-        user=request.user, 
+        tournament=tournament,
+        user=request.user,
         role__id='COMMENTATOR'
     ).exists()
-    
+
     if not is_commentator_for_tournament and not request.user.is_staff:
         messages.error(request, "Bạn không có quyền truy cập trang này.")
         return redirect('tournament_detail', pk=tournament.pk)
@@ -1876,27 +1875,25 @@ def commentator_notes_view(request, match_pk):
         note.commentator_notes_team2 = request.POST.get('commentator_notes_team2', '')
         note.save()
         messages.success(request, "Đã lưu ghi chú của bạn.")
-        # redirect để tránh post lại form khi refresh
         return redirect('commentator_notes', match_pk=match.pk)
-    
-    # Lấy ghi chú từ đội trưởng
+
     captain_notes = MatchNote.objects.filter(
         match=match,
         note_type=MatchNote.NoteType.CAPTAIN
     ).select_related('author', 'team')
 
-    # === BẮT ĐẦU PHẦN NÂNG CẤP DỮ LIỆU ===
-
+    # --- BẮT ĐẦU LOGIC MỚI ĐỂ LẤY DỮ LIỆU BỔ SUNG ---
     # 1. Thống kê toàn giải
     tournament_stats = {
-        'total_goals': Goal.objects.filter(match__tournament=tournament).count(),
+        'total_goals': Goal.objects.filter(match__tournament=tournament, is_own_goal=False).count(),
         'yellow_cards': Card.objects.filter(match__tournament=tournament, card_type='YELLOW').count(),
         'red_cards': Card.objects.filter(match__tournament=tournament, card_type='RED').count(),
     }
     
     # 2. Top 5 Vua phá lưới
     top_scorers = Player.objects.filter(
-        goals__match__tournament=tournament
+        goals__match__tournament=tournament,
+        goals__is_own_goal=False
     ).annotate(
         num_goals=Count('goals')
     ).order_by('-num_goals')[:5]
@@ -1904,34 +1901,88 @@ def commentator_notes_view(request, match_pk):
     # 3. Cầu thủ đáng chú ý của 2 đội
     team1_top_scorer = Player.objects.filter(
         team=match.team1, 
-        goals__match__tournament=tournament
+        goals__match__tournament=tournament,
+        goals__is_own_goal=False
     ).annotate(num_goals=Count('goals')).order_by('-num_goals').first()
 
     team2_top_scorer = Player.objects.filter(
         team=match.team2, 
-        goals__match__tournament=tournament
+        goals__match__tournament=tournament,
+        goals__is_own_goal=False
     ).annotate(num_goals=Count('goals')).order_by('-num_goals').first()
     
     # 4. Nhà tài trợ
     sponsors = Sponsorship.objects.filter(
         tournament=tournament, 
         is_active=True
-    ).select_related('package').order_by('package__order', 'order')
+    ).select_related('package', 'sponsor__sponsor_profile').order_by('package__order', 'order')
 
-    # === KẾT THÚC PHẦN NÂNG CẤP DỮ LIỆU ===
+    # 5. Bảng xếp hạng (logic tương tự tournament_detail)
+    standings_data = defaultdict(list)
+    groups = tournament.groups.prefetch_related('registrations__team').all()
+    if groups:
+        # Lấy tất cả các đội đã được duyệt trong giải đấu
+        paid_teams_in_tournament_ids = TeamRegistration.objects.filter(
+            tournament=tournament, payment_status='PAID'
+        ).values_list('team_id', flat=True)
+
+        # Lấy tất cả các trận đã kết thúc của giải đấu
+        finished_matches_in_tournament = Match.objects.filter(
+            tournament=tournament,
+            team1_score__isnull=False,
+            team2_score__isnull=False
+        )
+
+        team_stats = {team_id: {
+            'played': 0, 'wins': 0, 'draws': 0, 'losses': 0,
+            'gf': 0, 'ga': 0, 'gd': 0, 'points': 0,
+            'team_obj': None # Sẽ được điền sau
+        } for team_id in paid_teams_in_tournament_ids}
+        
+        teams_map = {team.id: team for team in Team.objects.filter(id__in=paid_teams_in_tournament_ids)}
+        for team_id in team_stats:
+            team_stats[team_id]['team_obj'] = teams_map.get(team_id)
+
+        for match in finished_matches_in_tournament:
+            t1_id, t2_id, s1, s2 = match.team1_id, match.team2_id, match.team1_score, match.team2_score
+            if t1_id in team_stats and t2_id in team_stats:
+                # Cập nhật các chỉ số... (giống hệt trong tournament_detail)
+                team_stats[t1_id]['played'] += 1; team_stats[t2_id]['played'] += 1
+                team_stats[t1_id]['gf'] += s1; team_stats[t1_id]['ga'] += s2
+                team_stats[t2_id]['gf'] += s2; team_stats[t2_id]['ga'] += s1
+                if s1 > s2:
+                    team_stats[t1_id]['wins'] += 1; team_stats[t1_id]['points'] += 3
+                    team_stats[t2_id]['losses'] += 1
+                elif s2 > s1:
+                    team_stats[t2_id]['wins'] += 1; team_stats[t2_id]['points'] += 3
+                    team_stats[t1_id]['losses'] += 1
+                else:
+                    team_stats[t1_id]['draws'] += 1; team_stats[t1_id]['points'] += 1
+                    team_stats[t2_id]['draws'] += 1; team_stats[t2_id]['points'] += 1
+
+        for group in groups:
+            group_team_ids = group.registrations.filter(payment_status='PAID').values_list('team_id', flat=True)
+            group_standings = [team_stats[team_id] for team_id in group_team_ids if team_id in team_stats]
+            for stats in group_standings:
+                stats['gd'] = stats['gf'] - stats['ga']
+            group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
+            standings_data[group.id] = group_standings
+    # --- KẾT THÚC LOGIC MỚI ---
 
     context = {
         'match': match,
         'note': note,
         'captain_notes': captain_notes,
-        # Thêm dữ liệu mới vào context
         'tournament_stats': tournament_stats,
         'top_scorers': top_scorers,
         'team1_top_scorer': team1_top_scorer,
         'team2_top_scorer': team2_top_scorer,
         'sponsors': sponsors,
+        'standings_data': standings_data, # Gửi dữ liệu BXH
+        'tournament': tournament, # Gửi cả object tournament
     }
     return render(request, 'tournaments/commentator_notes.html', context)
+    
 
 @login_required
 @never_cache
