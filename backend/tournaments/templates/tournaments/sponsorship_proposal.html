@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Hồ Sơ Mời Tài Trợ - {{ tournament.name }}{% endblock %}
+{% block title %}Thư Mời Tài Trợ - {{ tournament.name }}{% endblock %}
 
 {% block content %}
 <style>
@@ -19,6 +19,10 @@
     --radius:14px;
     --shadow-lg:0 20px 40px rgba(2,8,23,.08);
     --shadow-md:0 10px 25px rgba(2,8,23,.06);
+
+    /* === Logo: chỉnh 2 biến này để đổi size nhanh === */
+    --logo-size: 56px;          /* kích thước logo trên màn hình */
+    --logo-size-print: 48px;    /* kích thước logo khi in/PDF */
   }
 
   /* Page base */
@@ -27,9 +31,30 @@
   .sheet{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden}
 
   /* Hero */
-  .hero{position:relative;padding:48px 32px 36px;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-2));}
-  .hero::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:18px;background:radial-gradient(100% 18px at 50% 0,#0000 16px,#fff 17px);} /* subtle scallop */
-  .hero-logo{max-width:140px;margin:0 auto 14px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.25));}
+  .hero{
+    position:relative;
+    padding:48px 32px 36px;
+    text-align:center;
+    color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  }
+  .hero::after{
+    content:"";
+    position:absolute;left:0;right:0;bottom:-1px;height:18px;
+    background:radial-gradient(100% 18px at 50% 0,#0000 16px,#fff 17px);
+  }
+
+  /* LOGO: thu nhỏ & ghim góc trái bằng biến */
+  .hero-logo{
+    width: var(--logo-size);
+    height: auto;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    margin: 0;
+    filter: drop-shadow(0 6px 24px rgba(0,0,0,.25));
+  }
+
   .hero-title{font-size:2.4rem;line-height:1.15;margin:4px 0 8px;font-weight:800;letter-spacing:.2px}
   .hero-sub{opacity:.95;font-size:1.1rem}
   .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
@@ -61,7 +86,6 @@
   .pkg-name{font-size:1.2rem;font-weight:800;margin:6px 0 6px;color:#0f172a}
   .price{font-size:1.7rem;font-weight:900;color:var(--success);margin-bottom:10px}
   .benefits{margin:10px 0 0}
-  /* We render paragraphs from linebreaks as bullets */
   .benefits p{position:relative;margin:10px 0 10px 22px}
   .benefits p::before{content:'\2713';position:absolute;left:-22px;top:0;color:var(--success);font-weight:900}
   .meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
@@ -88,6 +112,7 @@
     .sheet{box-shadow:none;border-radius:0}
     .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact;padding:28px 22px 18px}
     .hero-title{font-size:1.9rem}
+    .hero-logo{width: var(--logo-size-print); top:12px; left:12px;} /* logo nhỏ hơn khi in */
     .chip{padding:4px 8px;font-size:.9rem}
     .section{padding:16px 18px}
     .section-title{font-size:1.15rem;margin:6px 0 8px}
@@ -98,27 +123,12 @@
     .contact h3{font-size:1rem;margin:0 0 4px}
     .contact .contact-inline{gap:6px}
     .contact .contact-inline li{padding:4px 8px;font-size:.92rem}
-
-    /* Keep small blocks intact but allow sections to split sensibly */
     .card,.metric,.hero,.contact{break-inside:avoid}
     .section{break-inside:auto}
-    .actions{display:none}
-    @page{size:A4;margin:0.25in}
-  }
-    .sheet{box-shadow:none;border-radius:0}
-    .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-    /* Keep small blocks intact but allow sections to split to avoid huge blank gaps */
-    .card,.metric,.hero,.contact{break-inside:avoid}
-    .section{break-inside:auto}
-    .actions{display:none}
-    @page{size:A4;margin:0.25in}
-  }
-    .sheet{box-shadow:none;border-radius:0}
-    .hero{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-    .card,.metric,.section{break-inside:avoid}
     .actions{display:none}
     @page{size:A4;margin:0.5in}
   }
+
   /* Compact rules applied only during export */
   body.pdf-fit .hero{padding:36px 24px 20px}
   body.pdf-fit .hero-title{font-size:2rem}
@@ -131,8 +141,6 @@
   body.pdf-fit .price{font-size:1.4rem}
   body.pdf-fit .benefits p{margin:6px 0 6px 18px;line-height:1.35;font-size:.95rem}
   body.pdf-fit .contact{padding:16px 20px}
-
-  /* Extra compact fixes during export */
   body.pdf-fit .hero{padding:32px 20px 18px}
   body.pdf-fit .hero-title{font-size:1.9rem}
   body.pdf-fit .hero::after{display:none}
@@ -145,7 +153,7 @@
       {% if tournament.organization.logo %}
         <img class="hero-logo" src="{{ tournament.organization.logo.url }}" alt="Logo {{ tournament.organization.name }}">
       {% endif %}
-      <div class="hero-sub">HỒ SƠ MỜI TÀI TRỢ</div>
+      <div class="hero-sub">THƯ MỜI TÀI TRỢ</div>
       <h1 class="hero-title">{{ tournament.name }}</h1>
       <div class="chips">
         <span class="chip" aria-label="Thời gian">
@@ -174,7 +182,7 @@
         {% endif %}
       </ul>
 
-      <!-- Optional quick metrics (feel free to remove if not needed) -->
+      <!-- Optional quick metrics -->
       <div class="metrics">
         <div class="metric"><h4>ĐỘI THAM GIA</h4><div class="num">{{ registered_teams_count }}</div></div>
         <div class="metric"><h4>THỜI LƯỢNG</h4><div class="num">{{ tournament.start_date|date:"d/m" }}–{{ tournament.end_date|date:"d/m" }}</div></div>
@@ -292,7 +300,7 @@
         if(!el){ return; }
         document.body.classList.add('pdf-fit');
 
-        // Chờ ảnh/logo load (tối đa 800ms)
+        // Chờ ảnh/logo load (tối đa 300ms)
         await new Promise(function(r){ setTimeout(r, 300); });
 
         var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 });
@@ -315,7 +323,7 @@
         var y = MARGIN_MM;          // căn top (giảm khoảng trắng phía trên)
 
         pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH, undefined, 'FAST');
-        pdf.save(`ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`);(`ho-so-tai-tro-{{ tournament.name|slugify }}.pdf`);
+        pdf.save(`thu-moi-tai-tro-{{ tournament.name|slugify }}.pdf`);
       }catch(err){
         console.error(err);
         alert('Không tải được thư viện xuất PDF. Vui lòng kiểm tra kết nối mạng hoặc chặn CDN.');
