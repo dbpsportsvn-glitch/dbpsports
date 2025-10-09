@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} 
 {% load static %}
 
 {% block title %}{{ tournament.name }}{% endblock %}
@@ -21,13 +21,12 @@
                         {% elif sponsorship.logo %}
                             <img src="{{ sponsorship.logo.url }}" alt="{{ sponsorship.sponsor_name }}">
                         {% else %}
-                            {# Hiển thị ảnh thay thế nếu không có logo #}
                             <img src="{% static 'images/placeholder_logo.png' %}" alt="Sponsor">
                         {% endif %}
                     </a>
                 {% endfor %}
 
-                {# Vòng lặp 2 (để tạo hiệu ứng cuộn vô tận) #}
+                {# Vòng lặp 2 #}
                 {% for sponsorship in sorted_sponsorships %}
                     <a href="{{ sponsorship.sponsor.sponsor_profile.website_url|default:sponsorship.website_url|default:'#' }}" target="_blank" rel="noopener" title="{{ sponsorship.package.name }}" class="sponsor-ticker__item">
                         {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile.brand_logo %}
@@ -61,7 +60,6 @@
 
 <div class="card shadow-sm" style="border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
     <div class="card-body pb-2">
-        {# === KHỐI HEADER ĐÃ ĐƯỢC CẬP NHẬT === #}
         <div class="border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3">
             <h1 class="text-start mb-0">{{ tournament.name }}</h1>
 
@@ -71,7 +69,6 @@
                 </a>
             {% endif %}
         </div>
-        {# === KẾT THÚC CẬP NHẬT === #}
     </div>
 </div>
 
@@ -101,11 +98,7 @@
 </div>
 
 <style>
-    .sticky-menu-wrapper {
-        position: sticky;
-        top: 64px; /* Chiều cao của thanh điều hướng chính */
-        z-index: 1020;
-    }
+    .sticky-menu-wrapper { position: sticky; top: 64px; z-index: 1020; }
 </style>
 
 <link rel="stylesheet" href="{% static 'css/bracket.css' %}">
@@ -181,33 +174,16 @@
       {% endif %}
     </div>
 
-    {# --- THAY THẾ LẠI TOÀN BỘ KHỐI CODE NÀY --- #}
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
         <style>
-            .rules-content {
-                background-color: #f8f9fa; /* Một màu nền sáng nhẹ */
-                border-left: 5px solid #0d6efd; /* Một đường viền màu xanh để nhấn mạnh */
-                padding: 2rem;
-                border-radius: 5px;
-            }
-            .rules-content h1, .rules-content h2, .rules-content h3 {
-                font-weight: bold;
-                margin-top: 1.5em;
-                margin-bottom: 0.75em;
-                color: #212529;
-            }
-            .rules-content p {
-                line-height: 1.7; /* Tăng khoảng cách dòng cho dễ đọc */
-                margin-bottom: 1.25em;
-            }
-            .rules-content ul, .rules-content ol {
-                padding-left: 2em;
-            }
+            .rules-content { background-color:#f8f9fa; border-left:5px solid #0d6efd; padding:2rem; border-radius:5px; }
+            .rules-content h1,.rules-content h2,.rules-content h3 { font-weight:bold; margin-top:1.5em; margin-bottom:.75em; color:#212529; }
+            .rules-content p { line-height:1.7; margin-bottom:1.25em; }
+            .rules-content ul,.rules-content ol { padding-left:2em; }
         </style>
 
         {% if tournament.rules %}
             <div class="rules-content">
-                {# SỬA LẠI DÒNG NÀY #}
                 {{ tournament.rules|linebreaks|safe }}
             </div>
         {% else %}
@@ -268,7 +244,6 @@
       {% endfor %}
     </div>
 
-{# PASTE THIS ENTIRE BLOCK TO REPLACE THE OLD SCHEDULE TAB #}
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
         {% if group_matches or knockout_matches %}
 
@@ -277,7 +252,6 @@
             </div>
 
             <div id="schedule-all">
-
                 {% for g in tournament.groups.all %}
                 <div class="schedule-block">
                     <h5 class="section-title mt-3">{{ g.name }}</h5>
@@ -305,8 +279,8 @@
                     </div>
                 </div>
                 {% endif %}
-
             </div>
+
             <div id="no-matches-found" class="text-center text-muted mt-4" style="display: none;">
                 <p>Không tìm thấy trận đấu nào phù hợp.</p>
             </div>
@@ -324,111 +298,25 @@
       {% include 'tournaments/partials/tournament_stats.html' %}
     </div>
 
-    <div class="tab-pane fade card-pane" id="gallery" role="tabpanel">
-
-        {# --- PHẦN 1: LƯỚI ẢNH CỦA TOÀN GIẢI (LOGIC CŨ ĐÃ PHỤC HỒI) --- #}
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h5 class="section-title mb-0">Khoảnh khắc Toàn giải</h5>
-            <div>
-                {% if tournament.gallery_url %}
-                    <a href="{{ tournament.gallery_url }}" class="btn btn-success btn-sm" target="_blank" rel="noopener noreferrer">
-                        <i class="bi bi-images"></i> Xem Album Gốc Toàn Giải
-                    </a>
-                {% endif %}
-                {% if is_organizer %}
-                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                        <i class="bi bi-upload"></i> Quản lý Ảnh Toàn Giải
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="row g-3">
-            {% for photo in tournament.photos.all %}
-            <div class="col-lg-4 col-md-6">
-                <div class="gallery-item card shadow-sm">
-                    <a href="{{ photo.image.url }}" data-fancybox="gallery-tournament-{{ tournament.pk }}" data-caption="{{ photo.caption }}">
-                        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:'Ảnh giải đấu' }}" class="img-fluid" style="height: 250px; object-fit: cover; width: 100%;">
-                    </a>
-                    {% if photo.caption %}
-                    <div class="card-footer">
-                        <p class="mb-0 small">{{ photo.caption }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <div class="col">
-                <p class="text-muted">Chưa có ảnh nào được tải lên cho toàn giải đấu.</p>
-            </div>
-            {% endfor %}
-        </div>
-
-        <hr class="my-5">
-
-        {# --- PHẦN 2: ALBUM ẢNH CỦA TỪNG TRẬN ĐẤU (TÍNH NĂNG MỚI) --- #}
-        <h5 class="section-title mb-3">Album ảnh theo Trận đấu</h5>
-        <div class="row g-4">
-            {% for match in matches_with_galleries %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 shadow-sm">
-                    {% if match.cover_photo %}
-                        <img src="{{ match.cover_photo.url }}" class="card-img-top" alt="Ảnh bìa trận {{ match }}" style="height: 200px; object-fit: cover;">
-                    {% else %}
-                        <div class="d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
-                            <i class="bi bi-camera fs-1 text-muted"></i>
-                        </div>
-                    {% endif %}
-                    <div class="card-body d-flex flex-column">
-                        <h6 class="card-title">{{ match.team1.name }} vs {{ match.team2.name }}</h6>
-                        <small class="text-muted mb-3">{{ match.get_match_round_display }} - {{ match.match_time|date:"d/m/Y" }}</small>
-
-                        <div class="mt-auto">
-                            {% if match.gallery_url %}
-                                <a href="{{ match.gallery_url }}" class="btn btn-primary w-100" target="_blank" rel="noopener noreferrer">
-                                    <i class="bi bi-images"></i> Xem Album Trận đấu
-                                </a>
-                            {% else %}
-                                <button class="btn btn-secondary w-100" disabled>Chưa có Album</button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-                <div class="col-12">
-                    <p class="text-muted">Chưa có album ảnh nào cho các trận đấu.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    {% if knockout_matches %}
-    <div class="tab-pane fade card-pane" id="bracket" role="tabpanel">
-        <h4 class="section-title mb-3">Sơ đồ Vòng loại trực tiếp</h4>
-        {% include 'tournaments/partials/knockout_bracket.html' %}
-    </div>
-    {% endif %}
-
-    {# Thêm thẻ div cho tab Nhà tài trợ và bọc toàn bộ nội dung vào trong #}
+    {# ==== TAB NHÀ TÀI TRỢ ==== #}
     <div class="tab-pane fade" id="sponsors" role="tabpanel" aria-labelledby="sponsors-tab">
         {% if sorted_sponsorships %}
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             {% for sponsorship in sorted_sponsorships %}
                 <div class="col">
-                    <div class="card sponsor-card h-100 shadow-sm position-relative" data-tier="{{ sponsorship.package.name|default:'Standard' }}">
+                    <div class="card sponsor-card h-100 shadow-sm position-relative"
+                         data-tier="{{ sponsorship.package.name|default:'Standard' }}">
 
-                        {# === LOGIC MỚI AN TOÀN === #}
+                        {% if sponsorship.package %}
+                          <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
+                        {% endif %}
+
                         {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
-                            {# TRƯỜNG HỢP 1: Nhà tài trợ CÓ tài khoản và CÓ hồ sơ #}
                             {% with profile=sponsorship.sponsor.sponsor_profile %}
                                 {% with display_name=profile.brand_name|default:sponsorship.sponsor.username %}
-                                    <a href="{{ profile.website_url|default:'#' }}" class="stretched-link" target="_blank" rel="noopener"
-                                    aria-label="Mở trang của {{ display_name }}"></a>
-
-                                    {% if sponsorship.package %}
-                                    <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
-                                    {% endif %}
+                                    {% with href=profile.website_url|default:sponsorship.website_url %}
+                                      {% if href %}<a href="{{ href }}" class="stretched-link" target="_blank" rel="noopener" aria-label="Mở trang của {{ display_name }}"></a>{% endif %}
+                                    {% endwith %}
 
                                     <div class="card-body text-center d-flex flex-column">
                                         <div class="sponsor-logo-wrapper rounded-3 mb-3">
@@ -438,21 +326,21 @@
                                                 <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
                                             {% endif %}
                                         </div>
-                                        <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ display_name }}">
-                                            {{ display_name }}
-                                        </h5>
+                                        <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ display_name }}">{{ display_name }}</h5>
+
+                                        {# Badge hạng mục ngay dưới tên, có màu theo tier #}
+                                        {% if sponsorship.package %}
+                                          <div class="mt-1 d-flex justify-content-center">
+                                            <span class="badge tier-badge">{{ sponsorship.package.name }}</span>
+                                          </div>
+                                        {% endif %}
                                     </div>
                                 {% endwith %}
                             {% endwith %}
-
                         {% else %}
-                            {# TRƯỜNG HỢP 2: Nhà tài trợ KHÔNG CÓ tài khoản (nhập tay) #}
-                            <a href="{{ sponsorship.website_url|default:'#' }}" class="stretched-link" target="_blank" rel="noopener"
-                            aria-label="Mở trang của {{ sponsorship.sponsor_name }}"></a>
-
-                            {% if sponsorship.package %}
-                            <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
-                            {% endif %}
+                            {% with href=sponsorship.website_url %}
+                              {% if href %}<a href="{{ href }}" class="stretched-link" target="_blank" rel="noopener" aria-label="Mở trang của {{ sponsorship.sponsor_name }}"></a>{% endif %}
+                            {% endwith %}
 
                             <div class="card-body text-center d-flex flex-column">
                                 <div class="sponsor-logo-wrapper rounded-3 mb-3">
@@ -462,26 +350,24 @@
                                         <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
                                     {% endif %}
                                 </div>
-                                <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ sponsorship.sponsor_name }}">
-                                    {{ sponsorship.sponsor_name }}
-                                </h5>
+                                <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ sponsorship.sponsor_name }}">{{ sponsorship.sponsor_name }}</h5>
+
+                                {% if sponsorship.package %}
+                                  <div class="mt-1 d-flex justify-content-center">
+                                    <span class="badge tier-badge">{{ sponsorship.package.name }}</span>
+                                  </div>
+                                {% endif %}
                             </div>
                         {% endif %}
-                        {# === KẾT THÚC LOGIC MỚI === #}
 
-                        {# Phần dưới giữ nguyên cho cả 2 trường hợp #}
-                        <div class="card-footer bg-transparent border-top-0 pt-0">
-                            {% if sponsorship.package %}
-                            <div class="mt-1">
-                                <span class="badge badge-soft">{{ sponsorship.package.name }}</span>
-                            </div>
-                            {% endif %}
+                        {# Footer: nền dịu + sao bên trái #}
+                        <div class="card-footer info-soft">
                             {% with rating=sponsorship.avg_rating|default:0 %}
-                            <div class="rating mt-2" style="--rating: {{ rating|floatformat:1 }};">
-                                <span class="rating-base">★★★★★</span>
-                                <span class="rating-fill" aria-hidden="true">★★★★★</span>
-                                <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
-                            </div>
+                              <div class="rating mt-2" style="--rating: {{ rating|floatformat:1 }};">
+                                  <span class="rating-base">★★★★★</span>
+                                  <span class="rating-fill" aria-hidden="true">★★★★★</span>
+                                  <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
+                              </div>
                             {% endwith %}
                         </div>
 
@@ -500,111 +386,150 @@
     <style>
         /* ===== Card tổng quát ===== */
         .sponsor-card{
-        --card-radius: 1rem;
-        border: 1px solid rgba(0,0,0,.08);
-        border-radius: var(--card-radius);
-        background: #ffffffcc;       /* sáng hơn để chữ dễ đọc */
-        backdrop-filter: blur(6px);
-        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-        overflow: hidden;
-        color: #0f172a;               /* chữ đậm, dễ nhìn */
+          --card-radius: 1rem;
+          border: 1px solid rgba(0,0,0,.08);
+          border-radius: var(--card-radius);
+          background: #ffffffcc;
+          backdrop-filter: blur(6px);
+          transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+          overflow: hidden;
+          color: #0f172a;
+          position: relative;
         }
         .sponsor-card:hover{
-        transform: translateY(-6px);
-        box-shadow: 0 20px 40px rgba(16,24,40,.12);
-        border-color: transparent;
-        border-image: linear-gradient(90deg,#8ec5ff,#b9ffde,#ffd6a5,#ffadad,#d4b5ff,#8ec5ff) 1;
+          transform: translateY(-6px);
+          box-shadow: 0 20px 40px rgba(16,24,40,.12);
+          border-color: transparent;
+          border-image: linear-gradient(90deg,#8ec5ff,#b3ffde,#ffd6a5,#ffadad,#d4b5ff,#8ec5ff) 1;
         }
 
+        /* Tên NTT to hơn chút */
         .sponsor-title{
-        font-weight: 700;
-        font-size: 1.05rem;      /* lớn hơn mặc định */
-        color: #111827;
-        letter-spacing: .2px;
+          font-weight:700;
+          font-size:1.2rem;   /* tăng từ 1.05rem */
+          line-height:1.2;
+          color:#111827;
+          letter-spacing:.2px;
         }
 
-        .badge-soft{
-        background: #eef2ff;
-        color: #3730a3;
-        border: 1px solid #e0e7ff;
-        font-weight: 600;
-        }
-
-        /* Khung logo: lớn hơn, căn GIỮA tuyệt đối */
+        /* Logo */
         .sponsor-logo-wrapper{
-        /* bạn có thể giữ 3/2; đổi 1/1 nếu muốn ô vuông */
-        aspect-ratio: 3 / 2;
-        min-height: 190px;        /* cho to hơn, dễ nhìn */
-        padding: 12px;
-        display: flex;            /* quan trọng: dùng flex để center */
-        align-items: center;      /* căn giữa theo trục dọc */
-        justify-content: center;  /* căn giữa theo trục ngang */
-        line-height: 0;           /* tránh khe baseline */
-        background: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
-        border: 1px dashed rgba(0,0,0,.06);
+          aspect-ratio: 3 / 2;
+          min-height: 190px;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+          background: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
+          border: 1px dashed rgba(0,0,0,.06);
+          position: relative;
+          z-index: 1;
         }
+        @media (min-width: 992px){ .sponsor-logo-wrapper{ min-height:210px; } }
 
-        @media (min-width: 992px){
-        .sponsor-logo-wrapper{ min-height: 210px; }
-        }
-
-        /* Ảnh logo: KHÔNG kéo giãn, chỉ co tối đa bằng khung */
         .sponsor-logo{
-        max-width: 100%;
-        max-height: 100%;
-        width: auto;              /* để ảnh giữ đúng tỉ lệ */
-        height: auto;             /* thay vì 100% gây dồn/cắt */
-        object-fit: contain;      /* dự phòng, dù width/height auto */
-        object-position: center;  /* căn giữa trong khung */
-        display: block;
-        filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
-        transition: transform .25s ease;
+          max-width: 100%; max-height: 100%;
+          width: auto; height: auto;
+          object-fit: contain; object-position: center;
+          display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
+          transition: transform .25s ease;
+          position: relative; z-index: 1;
         }
         .sponsor-card:hover .sponsor-logo{ transform: scale(1.03); }
 
-        .logo-placeholder{
-        width:100%; height:100%;
-        display:grid; place-items:center;
-        background:#f4f6f8; color:#475569;
-        font-weight: 600;
+        .logo-placeholder{ width:100%; height:100%; display:grid; place-items:center; background:#f4f6f8; color:#475569; font-weight:600; }
+
+        /* ===== Badge hạng mục ngay dưới tên (màu theo tier) ===== */
+        .tier-badge{
+          background: var(--tier-bg, #eef2ff);
+          color: var(--tier-fg, #3730a3);
+          border: 1px solid var(--tier-border, #e0e7ff);
+          font-weight: 700;
+          padding: .25rem .6rem;
+          border-radius: 999px;
+        }
+        /* Map biến màu theo hạng mục (VN + EN) */
+        .sponsor-card[data-tier*="Kim cương"],
+        .sponsor-card[data-tier*="Diamond"]{
+          --tier-bg:#e0f2fe; --tier-fg:#075985; --tier-border:#bae6fd;
+        }
+        .sponsor-card[data-tier*="Bạch kim"],
+        .sponsor-card[data-tier*="Platinum"]{
+          --tier-bg:#f1f5f9; --tier-fg:#0f172a; --tier-border:#e2e8f0;
+        }
+        .sponsor-card[data-tier*="Vàng"],
+        .sponsor-card[data-tier*="Gold"]{
+          --tier-bg:#fef9c3; --tier-fg:#92400e; --tier-border:#fde68a;
+        }
+        .sponsor-card[data-tier*="Bạc"],
+        .sponsor-card[data-tier*="Silver"]{
+          --tier-bg:#eef2ff; --tier-fg:#3730a3; --tier-border:#e0e7ff;
+        }
+        .sponsor-card[data-tier*="Đồng"],
+        .sponsor-card[data-tier*="Bronze"]{
+          --tier-bg:#ffe8d6; --tier-fg:#7c2d12; --tier-border:#fdba74;
         }
 
-        /* ===== Ribbon góc (VN + EN) ===== */
-        .ribbon{ position:absolute; inset:0 auto auto 0; width:140px; height:140px; pointer-events:none; }
+        /* ===== Ribbon góc trái: căn giữa chữ trên băng ===== */
+        .ribbon{
+          position:absolute; top:0; left:0;
+          width: 150px; height:150px;
+          overflow: hidden;
+          pointer-events:none;      /* không chặn click */
+          z-index: 6;               /* trên logo */
+        }
         .ribbon span{
-        position:absolute; left:-40px; top:14px; width:220px;
-        text-align:center; transform:rotate(-45deg);
-        color:#111; font-weight:700; letter-spacing:.3px; padding:.35rem 0;
-        background: var(--ribbon-bg, linear-gradient(90deg,#eaeaea,#ddd));
-        box-shadow: 0 6px 14px rgba(0,0,0,.12);
+          position:absolute;
+          display:flex; align-items:center; justify-content:center;
+          width: 230px;
+          left: -55px;              /* canh giữa băng */
+          top: 24px;                /* hạ nhẹ cho cân */
+          transform: rotate(-45deg);
+          padding: .45rem 0;
+          color:#111; font-weight:700; letter-spacing:.3px;
+          background: var(--ribbon-bg, linear-gradient(90deg,#eaeaea,#ddd));
+          box-shadow: 0 6px 14px rgba(0,0,0,.12);
+          text-align:center;
+          white-space: nowrap;
         }
-        [data-tier*="Vàng"] .ribbon span, [data-tier*="Gold"] .ribbon span{
-        --ribbon-bg: linear-gradient(90deg,#d4af37,#ffd700);
-        }
-        [data-tier*="Bạc"] .ribbon span, [data-tier*="Silver"] .ribbon span{
-        --ribbon-bg: linear-gradient(90deg,#c0c0c0,#e8e8e8);
-        }
-        [data-tier*="Đồng"] .ribbon span, [data-tier*="Bronze"] .ribbon span{
-        --ribbon-bg: linear-gradient(90deg,#cd7f32,#f0ad72);
-        }
-        [data-tier*="Bạch kim"] .ribbon span, [data-tier*="Platinum"] .ribbon span{
-        --ribbon-bg: linear-gradient(90deg,#d7d7d7,#f5f5f5);
-        }
-        [data-tier*="Kim cương"] .ribbon span, [data-tier*="Diamond"] .ribbon span{
-        --ribbon-bg: linear-gradient(90deg,#b3e5fc,#e1f5fe);
-        }
+        /* Gradient theo hạng mục (VN + EN) */
+        [data-tier*="Vàng"] .ribbon span, [data-tier*="Gold"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#d4af37,#ffd700); }
+        [data-tier*="Bạc"] .ribbon span, [data-tier*="Silver"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#c0c0c0,#e8e8e8); }
+        [data-tier*="Đồng"] .ribbon span, [data-tier*="Bronze"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#cd7f32,#f0ad72); }
+        [data-tier*="Bạch kim"] .ribbon span, [data-tier*="Platinum"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#d7d7d7,#f5f5f5); }
+        [data-tier*="Kim cương"] .ribbon span, [data-tier*="Diamond"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#b3e5fc,#e1f5fe); }
 
-        /* ===== Rating: overlay (ổn định) ===== */
+        /* ===== Footer mềm dịu cho phần thông tin (rating bên trái) ===== */
+        .info-soft{
+          background: #f7faff;                 /* nền dịu */
+          border-top: 1px solid #e5edf8;
+          border-bottom-left-radius: var(--card-radius);
+          border-bottom-right-radius: var(--card-radius);
+          padding-top: .6rem;
+          padding-bottom: .6rem;
+        }
+        .info-soft .rating{ margin-left:0; }    /* sao về trái */
+
+        /* ===== Rating ===== */
         .rating{ position:relative; display:inline-flex; align-items:center; line-height:1; }
-        .rating-base, .rating-fill{ font-size:1.05rem; letter-spacing:2px; font-weight:700; }
+        .rating-base,.rating-fill{ font-size:1.05rem; letter-spacing:2px; font-weight:700; }
         .rating-base{ color:#e5e7eb; }
         .rating-fill{
-        position:absolute; top:0; left:0;
-        width: calc(var(--rating) / 5 * 100%);  /* 0..100% */
-        overflow:hidden; color:#f59e0b; text-shadow:0 1px 0 rgba(0,0,0,.08);
-        white-space: nowrap;
+          position:absolute; top:0; left:0;
+          width: calc(var(--rating) / 5 * 100%);
+          overflow:hidden; color:#f59e0b; text-shadow:0 1px 0 rgba(0,0,0,.08);
+          white-space: nowrap;
         }
         .text-muted{ color:#64748b !important; }
+
+        /* ===== Click overlay fix ===== */
+        #sponsors .sponsor-card .stretched-link::after{
+          content:"";
+          position:absolute;
+          inset:0;
+          z-index:20; /* cao hơn ribbon và logo */
+        }
     </style>
     </div>
 
@@ -688,9 +613,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const scheduleContainer = document.getElementById('schedule-all');
     const noMatchesFoundMessage = document.getElementById('no-matches-found');
 
-    if (!searchInput || !scheduleContainer) {
-        return;
-    }
+    if (!searchInput || !scheduleContainer) { return; }
 
     const allMatchWrappers = scheduleContainer.querySelectorAll('.match-card-wrapper');
     const allScheduleBlocks = scheduleContainer.querySelectorAll('.schedule-block');
@@ -701,21 +624,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         allMatchWrappers.forEach(function (wrapper) {
             const teamNames = wrapper.textContent.toLowerCase();
-            if (teamNames.includes(searchTerm)) {
-                wrapper.style.display = '';
-                matchesFound++;
-            } else {
-                wrapper.style.display = 'none';
-            }
+            if (teamNames.includes(searchTerm)) { wrapper.style.display = ''; matchesFound++; }
+            else { wrapper.style.display = 'none'; }
         });
 
         allScheduleBlocks.forEach(function (block) {
             const visibleMatchesInBlock = block.querySelectorAll('.match-card-wrapper:not([style*="display: none"])');
-            if (visibleMatchesInBlock.length > 0) {
-                block.style.display = '';
-            } else {
-                block.style.display = 'none';
-            }
+            block.style.display = visibleMatchesInBlock.length > 0 ? '' : 'none';
         });
 
         if (noMatchesFoundMessage) {
