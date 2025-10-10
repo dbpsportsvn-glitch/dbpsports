@@ -173,6 +173,17 @@ class ScheduleGenerationForm(forms.Form):
         widget=forms.RadioSelect
     )
 
+    # === THÊM TÙY CHỌN LƯỢT ĐI/LƯỢT VỀ ===
+    ROUND_ROBIN_LEGS = [
+        (1, 'Vòng tròn 1 lượt (single round-robin)'),
+        (2, 'Vòng tròn 2 lượt (lượt đi & lượt về)'),
+    ]
+    round_robin_legs = forms.ChoiceField(
+        choices=ROUND_ROBIN_LEGS,
+        label='Hình thức vòng tròn',
+        initial=1,
+    )
+
 class GalleryURLForm(forms.ModelForm):
     class Meta:
         model = Tournament
@@ -189,12 +200,13 @@ class TournamentForm(forms.ModelForm):
     class Meta:
         model = Tournament
         fields = [
-            'name', 'status', 'region', 'location_detail', 'start_date', 'end_date', 'image', 'rules',
+            'name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image', 'rules',
             'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
             'name': 'Tên giải đấu',
             'status': 'Trạng thái giải đấu',
+            'format': 'Thể thức thi đấu',
             'region': 'Khu vực tổ chức',
             'start_date': 'Ngày bắt đầu',
             'location_detail': 'Tỉnh / Thành phố',

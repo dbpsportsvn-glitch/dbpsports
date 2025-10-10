@@ -121,6 +121,7 @@
     <div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
       <p>
         <span class="chip">Trạng thái: {{ tournament.get_status_display }}</span>
+        <span class="chip">Thể thức: {{ tournament.get_format_display }}</span>
         <span class="chip">Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }}</span>
         <span class="chip">Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}</span>
       </p>
@@ -164,9 +165,9 @@
             </a>
             {% endif %}
 
-            {% if tournament.status == 'IN_PROGRESS' and tournament.groups.exists and not tournament.matches.exists and not unassigned_teams and has_paid_teams %}
+            {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
             <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
-                <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
+                <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}
             </a>
             {% endif %}
 

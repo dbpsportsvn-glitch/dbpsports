@@ -182,36 +182,24 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Bắt buộc nhập mật khẩu 2 lần
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
-# yêu cầu quyền truy cập email
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-            'prompt': 'select_account', # <-- Add this line
-        }
-    }
-}
-
 SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
 
+# yêu cầu quyền truy cập email (GỘP GOOGLE + FACEBOOK THÀNH 1 DICT)
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        # ... (cấu hình google)
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',
+        },
     },
     'facebook': {
         'METHOD': 'oauth2',
         'SCOPE': ['email', 'public_profile'],
-        'FIELDS': [
-            'id', 'email', 'name', 'first_name', 'last_name',
-        ],
-        # ... (các cài đặt khác)
+        'FIELDS': ['id', 'email', 'name', 'first_name', 'last_name'],
         'APP': {
-            'client_id': env('FACEBOOK_APP_ID'),      # <-- Đọc ID từ .env
-            'secret': env('FACEBOOK_SECRET_KEY'), # <-- Đọc Khóa bí mật từ .env
+            'client_id': env('FACEBOOK_APP_ID'),
+            'secret': env('FACEBOOK_SECRET_KEY'),
             'key': ''
         }
     }

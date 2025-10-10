@@ -76,6 +76,7 @@
             <p class="mb-2 text-muted">
               {{ t.start_date|date:"d/m/Y" }} – {{ t.end_date|date:"d/m/Y" }}
               <span class="badge bg-success ms-2">{{ t.get_status_display }}</span>
+              <span class="badge bg-primary ms-2">{{ t.get_format_display }}</span>
             </p>
           </div>
 

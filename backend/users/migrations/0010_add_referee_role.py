@@ -12,8 +12,9 @@ REFEREE_ROLE_DATA = {
 
 def create_referee_role(apps, schema_editor):
     Role = apps.get_model('users', 'Role')
-    # Dòng này sẽ chỉ cập nhật các trường có trong REFEREE_ROLE_DATA đã sửa
-    Role.objects.update_or_create(id=REFEREE_ROLE_DATA['id'], defaults=REFEREE_ROLE_DATA)
+    # Chỉ cập nhật các trường ngoài khóa chính 'id'
+    defaults = {k: v for k, v in REFEREE_ROLE_DATA.items() if k != 'id'}
+    Role.objects.update_or_create(id=REFEREE_ROLE_DATA['id'], defaults=defaults)
 
 def delete_referee_role(apps, schema_editor):
     Role = apps.get_model('users', 'Role')

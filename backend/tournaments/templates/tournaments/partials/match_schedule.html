@@ -1,6 +1,6 @@
 <div class="table-responsive">
     {% if group_matches %}
-        <h5>Vòng Bảng</h5>
+        <h5>{% if tournament.format == 'LEAGUE' %}League{% else %}Vòng Bảng{% endif %}</h5>
         <table class="table table-hover">
             <thead>
                 <tr>

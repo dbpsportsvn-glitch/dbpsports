@@ -13,6 +13,7 @@ from colorfield.fields import ColorField
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
+from datetime import timedelta
 import os
 
 MAX_STARTERS = 11
@@ -22,6 +23,10 @@ class Tournament(models.Model):
         REGISTRATION_OPEN = 'REGISTRATION_OPEN', 'Đang mở đăng ký'
         IN_PROGRESS = 'IN_PROGRESS', 'Đang diễn ra'
         FINISHED = 'FINISHED', 'Đã kết thúc'
+
+    class Format(models.TextChoices):
+        CUP = 'CUP', 'Đá Cúp (loại trực tiếp/vòng bảng + knock-out)'
+        LEAGUE = 'LEAGUE', 'Đá League (vòng tròn tính điểm)'
 
     class Region(models.TextChoices):
         MIEN_BAC = 'MIEN_BAC', 'Miền Bắc'
@@ -40,6 +45,7 @@ class Tournament(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REGISTRATION_OPEN)
+    format = models.CharField("Thể thức", max_length=10, choices=Format.choices, default=Format.CUP, help_text="Chọn thể thức thi đấu của giải")
     image = models.ImageField(upload_to='tournament_banners/', null=True, blank=True)
     region = models.CharField("Khu vực", max_length=20, choices=Region.choices, default=Region.KHAC)
     location_detail = models.CharField("Tỉnh/Thành phố", max_length=100, blank=True, help_text="Ví dụ: Hà Nội, Điện Biên, TP.HCM...")
@@ -244,6 +250,7 @@ class Player(models.Model):
 
 class Match(models.Model):
     ROUND_CHOICES = [
+        ('LEAGUE', 'League'),
         ('GROUP', 'Vòng bảng'),
         ('QUARTER', 'Tứ kết'),
         ('SEMI', 'Bán kết'),
@@ -265,6 +272,9 @@ class Match(models.Model):
     referee = models.CharField(max_length=100, null=True, blank=True)
     commentator = models.CharField(max_length=100, null=True, blank=True)
     ticker_text = models.CharField(max_length=255, blank=True, help_text="Dòng chữ chạy trên màn hình livestream. Nếu để trống, hệ thống sẽ dùng thông báo mặc định.")
+    # League metadata
+    round_number = models.PositiveIntegerField("Vòng", null=True, blank=True)
+    leg = models.PositiveSmallIntegerField("Lượt", null=True, blank=True, help_text="1 = lượt đi, 2 = lượt về")
     # === BẮT ĐẦU THÊM 2 TRƯỜNG MỚI TẠI ĐÂY ===
     cover_photo = models.ImageField(
         "Ảnh bìa trận đấu",

@@ -220,7 +220,8 @@ def tournament_detail(request, pk):
         Q(cover_photo__isnull=False) | Q(gallery_url__isnull=False)
     ).distinct()
 
-    group_matches = all_matches.filter(match_round='GROUP')
+    # Lọc trận theo thể thức
+    group_matches = all_matches.filter(match_round=('LEAGUE' if tournament.format == Tournament.Format.LEAGUE else 'GROUP'))
     # SỬA LỖI: Truy vấn các đội chưa được xếp bảng thông qua TeamRegistration
     unassigned_teams = Team.objects.filter(registrations__tournament=tournament, registrations__payment_status='PAID', registrations__group__isnull=True)
 
@@ -288,16 +289,25 @@ def tournament_detail(request, pk):
                 team_stats[team1_id]['draws'] += 1; team_stats[team1_id]['points'] += 1
                 team_stats[team2_id]['draws'] += 1; team_stats[team2_id]['points'] += 1
 
-    for group in groups_with_teams:
-        # SỬA LỖI: Lấy teams trong group thông qua registrations
-        teams_in_group_ids = TeamRegistration.objects.filter(group=group).values_list('team_id', flat=True)
-        group_standings = [team_stats[team_id] for team_id in teams_in_group_ids if team_id in team_stats]
-
-        for stats in group_standings:
+    if tournament.format == Tournament.Format.LEAGUE:
+        # League: một bảng duy nhất 'LEAGUE'
+        league_team_ids = tournament.registrations.filter(payment_status='PAID').values_list('team_id', flat=True)
+        league_standings = [team_stats[tid] for tid in league_team_ids if tid in team_stats]
+        for stats in league_standings:
             stats['gd'] = stats['gf'] - stats['ga']
+        league_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
+        standings_data['LEAGUE'] = league_standings
+    else:
+        for group in groups_with_teams:
+            # SỬA LỖI: Lấy teams trong group thông qua registrations
+            teams_in_group_ids = TeamRegistration.objects.filter(group=group).values_list('team_id', flat=True)
+            group_standings = [team_stats[team_id] for team_id in teams_in_group_ids if team_id in team_stats]
 
-        group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
-        standings_data[group.id] = group_standings
+            for stats in group_standings:
+                stats['gd'] = stats['gf'] - stats['ga']
+
+            group_standings.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
+            standings_data[group.id] = group_standings
 
 
     # SỬA LỖI: Thay thế tournament.teams.all()
@@ -936,14 +946,22 @@ def generate_schedule_view(request, tournament_pk):
     if not request.user.is_staff and not is_organizer:
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
 
-    # SỬA LỖI: Kiểm tra điều kiện xếp lịch
-    if not tournament.groups.exists() or tournament.registrations.filter(payment_status='PAID', group__isnull=True).exists() or not tournament.registrations.filter(payment_status='PAID').exists():
-        messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
-        return redirect('tournament_detail', pk=tournament.pk)
-
-    if tournament.matches.filter(match_round='GROUP').exists():
-        messages.warning(request, "Lịch thi đấu vòng bảng đã được tạo cho giải này.")
-        return redirect('tournament_detail', pk=tournament.pk)
+    # Điều kiện tùy theo thể thức
+    if tournament.format == Tournament.Format.CUP:
+        if not tournament.groups.exists() or tournament.registrations.filter(payment_status='PAID', group__isnull=True).exists() or not tournament.registrations.filter(payment_status='PAID').exists():
+            messages.error(request, "Không thể xếp lịch. Cần tạo bảng, có đội đã đăng ký và tất cả các đội phải được bốc thăm vào bảng.")
+            return redirect('tournament_detail', pk=tournament.pk)
+        if tournament.matches.filter(match_round='GROUP').exists():
+            messages.warning(request, "Lịch thi đấu vòng bảng đã được tạo cho giải này.")
+            return redirect('tournament_detail', pk=tournament.pk)
+    else:
+        # LEAGUE: chỉ cần có đội đã đăng ký và đã thanh toán
+        if not tournament.registrations.filter(payment_status='PAID').exists():
+            messages.error(request, "Không thể xếp lịch. Chưa có đội nào đã đăng ký và thanh toán.")
+            return redirect('tournament_detail', pk=tournament.pk)
+        if tournament.matches.filter(match_round='LEAGUE').exists():
+            messages.warning(request, "Lịch thi đấu League đã được tạo cho giải này.")
+            return redirect('tournament_detail', pk=tournament.pk)
 
     if request.method == 'POST':
         if 'confirm_schedule' in request.POST:
@@ -954,7 +972,9 @@ def generate_schedule_view(request, tournament_pk):
 
             try:
                 with transaction.atomic():
-                    Match.objects.filter(tournament=tournament, match_round='GROUP').delete()
+                    # Xóa lịch cũ theo thể thức
+                    round_code = 'GROUP' if tournament.format == Tournament.Format.CUP else 'LEAGUE'
+                    Match.objects.filter(tournament=tournament, match_round=round_code).delete()
                     schedule_to_save = json.loads(schedule_preview_json)
                     for match_data in schedule_to_save:
                         Match.objects.create(
@@ -963,7 +983,9 @@ def generate_schedule_view(request, tournament_pk):
                             team2_id=match_data['team2_id'],
                             match_time=datetime.fromisoformat(match_data['match_time']),
                             location=match_data['location'],
-                            match_round='GROUP'
+                            match_round=('GROUP' if tournament.format == Tournament.Format.CUP else 'LEAGUE'),
+                            round_number=match_data.get('round_number'),
+                            leg=match_data.get('leg')
                         )
                 del request.session['schedule_preview_json']
                 messages.success(request, "Lịch thi đấu đã được tạo thành công!")
@@ -1005,13 +1027,36 @@ def generate_schedule_view(request, tournament_pk):
                 max_matches_per_team_per_week = data.get('max_matches_per_team_per_week')
 
                 all_pairings_by_group = {}
-                groups = sorted(list(tournament.groups.prefetch_related('registrations__team').all()), key=lambda g: g.name)
+                # Nguồn đội theo thể thức
+                if tournament.format == Tournament.Format.CUP:
+                    groups = sorted(list(tournament.groups.prefetch_related('registrations__team').all()), key=lambda g: g.name)
+                    group_to_teams = {g: [reg.team for reg in g.registrations.all()] for g in groups}
+                else:
+                    # LEAGUE: tất cả đội đã thanh toán, một bảng giả 'League'
+                    league_teams = [reg.team for reg in tournament.registrations.select_related('team').filter(payment_status='PAID')]
+                    groups = ['LEAGUE']
+                    group_to_teams = {'LEAGUE': league_teams}
+
                 for group in groups:
-                    # SỬA LỖI: Lấy teams từ registrations
-                    teams_in_group = [reg.team for reg in group.registrations.all()]
-                    group_pairings = list(combinations(teams_in_group, 2))
+                    teams_in_group = group_to_teams[group]
+                    base_pairings = list(combinations(teams_in_group, 2))
+                    random.shuffle(base_pairings)
+
+                    # === THÊM HỖ TRỢ VÒNG TRÒN 2 LƯỢT: nhân đôi cặp và đảo chủ/khách ===
+                    legs = int(data.get('round_robin_legs') or 1)
+                    group_pairings = []
+                    for pair in base_pairings:
+                        team1, team2 = pair
+                        # Lượt đi
+                        group_pairings.append((team1, team2, 1))
+                        if legs == 2:
+                            # Lượt về (đảo chủ/khách)
+                            group_pairings.append((team2, team1, 2))
+
+                    # Trộn thứ tự để phân tán các lượt
                     random.shuffle(group_pairings)
-                    all_pairings_by_group[group] = [{'pair': pair, 'group_name': group.name} for pair in group_pairings]
+                    display_name = group.name if hasattr(group, 'name') else str(group)
+                    all_pairings_by_group[group] = [{'pair': (p[0], p[1]), 'leg': p[2], 'group_name': display_name} for p in group_pairings]
 
                 scheduled_matches = []
                 team_last_played = {}
@@ -1058,7 +1103,7 @@ def generate_schedule_view(request, tournament_pk):
                                         team2_weekly_ok = not max_matches_per_team_per_week or team_matches_this_week[team2.id] < max_matches_per_team_per_week
 
                                         if can_play1 and can_play2 and team1_weekly_ok and team2_weekly_ok:
-                                            scheduled_matches.append({ 'team1_name': team1.name, 'team1_id': team1.id, 'team2_name': team2.name, 'team2_id': team2.id, 'match_time': current_datetime.isoformat(), 'location': location, 'group_name': group.name })
+                                            scheduled_matches.append({ 'team1_name': team1.name, 'team1_id': team1.id, 'team2_name': team2.name, 'team2_id': team2.id, 'match_time': current_datetime.isoformat(), 'location': location, 'group_name': group.name if hasattr(group, 'name') else str(group), 'leg': pairing_info.get('leg') })
                                             team_last_played[team1.id] = team_last_played[team2.id] = current_datetime
                                             team_matches_this_week[team1.id] += 1
                                             team_matches_this_week[team2.id] += 1
@@ -1076,9 +1121,25 @@ def generate_schedule_view(request, tournament_pk):
 
                 schedule_by_group = defaultdict(list)
                 scheduled_matches.sort(key=lambda x: x['match_time'])
+                # Tính vòng: gom theo tuần-thứ tự để gán round_number tuần tự
                 for match in scheduled_matches:
                     match['match_time'] = datetime.fromisoformat(match['match_time'])
-                    schedule_by_group[match['group_name']].append(match)
+                schedule_by_group_intermediate = defaultdict(list)
+                for m in scheduled_matches:
+                    schedule_by_group_intermediate[m['group_name']].append(m)
+                for gname, mlist in schedule_by_group_intermediate.items():
+                    mlist.sort(key=lambda x: x['match_time'])
+                    round_counter = 1
+                    last_day = None
+                    for m in mlist:
+                        cur_day = m['match_time'].date()
+                        if last_day is None:
+                            last_day = cur_day
+                        elif cur_day != last_day:
+                            round_counter += 1
+                            last_day = cur_day
+                        m['round_number'] = round_counter
+                        schedule_by_group[gname].append(m)
 
                 request.session['schedule_preview_json'] = json.dumps([{**m, 'match_time': m['match_time'].isoformat()} for m in scheduled_matches])
 

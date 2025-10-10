@@ -143,11 +143,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </span>
               </div>
 
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary">{{ tournament.get_format_display }}</span>
+              </div>
               <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-light btn-sm mt-auto d-block">Xem chi tiết</a>
             </div>
           </div>
-          <div class="card-footer">
+          <div class="card-footer d-flex justify-content-between align-items-center">
             <small class="text-muted">{{ tournament.get_status_display }}</small>
+            <small class="text-muted">Thể thức: {{ tournament.get_format_display }}</small>
           </div>
         </div>
       </div>

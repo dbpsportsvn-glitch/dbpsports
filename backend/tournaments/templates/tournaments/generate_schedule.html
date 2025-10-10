@@ -65,7 +65,7 @@
 <div class="schedule-page">
     <div class="schedule-header">
         <h2><i class="bi bi-calendar2-week"></i> Trình Xếp Lịch Thi Đấu</h2>
-        <p>Giải đấu: <strong>{{ tournament.name }}</strong></p>
+        <p>Giải đấu: <strong>{{ tournament.name }}</strong> • Thể thức: <strong>{% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</strong></p>
     </div>
 
     <div class="schedule-form-container" {% if schedule_by_group is not None %}style="display:none;"{% endif %}>
@@ -100,6 +100,8 @@
                             <th>Ngày</th>
                             <th>Giờ</th>
                             <th>Cặp đấu</th>
+                            <th>Vòng</th>
+                            <th>Lượt</th>
                             <th>Sân</th>
                         </tr>
                     </thead>
@@ -109,6 +111,8 @@
                             <td><span>{{ match.match_time|date:"d/m/Y" }}</span></td>
                             <td><span>{{ match.match_time|date:"H:i" }}</span></td>
                             <td><strong>{{ match.team1_name }}</strong> <span>vs</span> <strong>{{ match.team2_name }}</strong></td>
+                            <td><span>{{ match.round_number|default:'-' }}</span></td>
+                            <td><span>{{ match.leg|default:'-' }}</span></td>
                             <td><span>{{ match.location }}</span></td>
                         </tr>
                         {% endfor %}
