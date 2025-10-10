@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thêm nhanh - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-lightning text-warning"></i>
+                        Thêm nhanh khoản thu/chi
+                    </h2>
+                    <p class="text-muted mb-0">{{ tournament.name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form thêm nhanh -->
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning"></i> Thông tin nhanh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.type.id_for_label }}" class="form-label">
+                                {{ form.type.label }}
+                            </label>
+                            {{ form.type }}
+                            {% if form.type.errors %}
+                                <div class="text-danger">{{ form.type.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                {{ form.amount.label }}
+                            </label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                                <div class="text-danger">{{ form.amount.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                {{ form.date.label }}
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger">{{ form.date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Gợi ý:</strong> Sử dụng tính năng này để thêm nhanh các khoản thu/chi đơn giản. 
+                            Để thêm chi tiết hơn, hãy sử dụng form "Thêm khoản thu" hoặc "Thêm khoản chi".
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="btn btn-secondary me-md-2">
+                                Hủy
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-lightning"></i> Thêm nhanh
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hướng dẫn sử dụng -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-question-circle"></i> Hướng dẫn sử dụng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="bi bi-arrow-up-circle"></i> Khoản thu
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li>• Phí đăng ký đội</li>
+                                <li>• Tài trợ từ nhà tài trợ</li>
+                                <li>• Tiền phạt từ thẻ</li>
+                                <li>• Bán vé xem đấu</li>
+                                <li>• Các khoản thu khác</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger">
+                                <i class="bi bi-arrow-down-circle"></i> Khoản chi
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li>• Tiền thuê sân bãi</li>
+                                <li>• Phí trọng tài</li>
+                                <li>• Chi phí livestream</li>
+                                <li>• Chi phí chụp ảnh</li>
+                                <li>• Các khoản chi khác</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

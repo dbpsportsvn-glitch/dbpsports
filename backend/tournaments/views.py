@@ -40,19 +40,25 @@ from sponsors.models import Testimonial
 
 # Current app
 from .forms import (
+    BudgetQuickAddForm,
     CaptainNoteForm,
     CommentatorNoteForm,
     CommentForm,
+    ExpenseItemForm,
     GalleryURLForm,
     PaymentProofForm,
     PlayerCreationForm,
     PlayerTransferForm,
+    RevenueItemForm,
+    TournamentBudgetForm,
     ScheduleGenerationForm,
     TeamCreationForm,
 )
 from .models import (
     Announcement,
+    BudgetHistory,
     Card,
+    ExpenseItem,
     Goal,
     Group,
     HomeBanner,
@@ -64,6 +70,7 @@ from .models import (
     Notification,
     Player,
     PlayerTransfer,
+    RevenueItem,
     ScoutingList,
     SponsorClick,
     Sponsorship,
@@ -73,6 +80,7 @@ from .models import (
     TeamRegistration,
     TeamVoteRecord,
     Tournament,
+    TournamentBudget,
     TournamentPhoto,
     TournamentStaff,
     VoteRecord,
@@ -2628,5 +2636,433 @@ def sponsorship_proposal_view(request, pk):
         'registered_teams_count': registered_teams_count,
     }
 
-    # Render ra file HTML mà chúng ta sẽ tạo ở bước tiếp theo
-    return render(request, 'tournaments/sponsorship_proposal.html', context)    
+
+# ===== VIEWS CHO HỆ THỐNG QUẢN LÝ TÀI CHÍNH =====
+
+@login_required
+def budget_dashboard(request, tournament_pk):
+    """Dashboard quản lý tài chính giải đấu"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    # Tạo hoặc lấy budget
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    # Tự động cập nhật các khoản thu
+    auto_update_revenue(budget)
+    
+    # Lấy dữ liệu
+    revenue_items = budget.revenue_items.all()
+    expense_items = budget.expense_items.all()
+    history = budget.history.all()[:10]  # 10 bản ghi gần nhất
+    
+    # Tính toán tổng quan
+    total_revenue = budget.get_total_revenue()
+    total_expenses = budget.get_total_expenses()
+    profit_loss = budget.get_profit_loss()
+    budget_status = budget.get_budget_status()
+    
+    # Debug: In ra console để kiểm tra (có thể xóa sau khi test xong)
+    # print(f"DEBUG: Total revenue items: {revenue_items.count()}")
+    # print(f"DEBUG: Total expense items: {expense_items.count()}")
+    # print(f"DEBUG: Total revenue: {total_revenue}")
+    # print(f"DEBUG: Total expenses: {total_expenses}")
+    # for item in revenue_items:
+    #     print(f"DEBUG: Revenue item - {item.description}: {item.amount}")
+    
+    # Thống kê theo danh mục
+    revenue_by_category = {}
+    expense_by_category = {}
+    
+    for item in revenue_items:
+        category = item.get_category_display()
+        if category not in revenue_by_category:
+            revenue_by_category[category] = 0
+        revenue_by_category[category] += float(item.amount)
+    
+    for item in expense_items:
+        category = item.get_category_display()
+        if category not in expense_by_category:
+            expense_by_category[category] = 0
+        expense_by_category[category] += float(item.amount)
+    
+    # Thống kê đội
+    paid_teams_count = tournament.registrations.filter(payment_status='PAID').count()
+    total_teams_count = tournament.registrations.count()
+    
+    context = {
+        'tournament': tournament,
+        'budget': budget,
+        'revenue_items': revenue_items,
+        'expense_items': expense_items,
+        'history': history,
+        'total_revenue': total_revenue,
+        'total_expenses': total_expenses,
+        'profit_loss': profit_loss,
+        'budget_status': budget_status,
+        'revenue_by_category': revenue_by_category,
+        'expense_by_category': expense_by_category,
+        'is_organizer': is_organizer,
+        'paid_teams_count': paid_teams_count,
+        'total_teams_count': total_teams_count,
+    }
+    
+    return render(request, 'tournaments/budget_dashboard.html', context)
+
+
+@login_required
+def budget_setup(request, tournament_pk):
+    """Thiết lập ngân sách ban đầu"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    if request.method == 'POST':
+        form = TournamentBudgetForm(request.POST, instance=budget)
+        if form.is_valid():
+            form.save()
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action='UPDATE_BUDGET',
+                description=f'Cập nhật ngân sách ban đầu thành {budget.initial_budget:,} VNĐ',
+                amount=budget.initial_budget,
+                user=request.user
+            )
+            messages.success(request, "Ngân sách đã được cập nhật thành công!")
+            return redirect('budget_dashboard', tournament_pk=tournament.pk)
+    else:
+        form = TournamentBudgetForm(instance=budget)
+    
+    context = {
+        'tournament': tournament,
+        'budget': budget,
+        'form': form,
+    }
+    
+    return render(request, 'tournaments/budget_setup.html', context)
+
+
+@login_required
+def add_revenue(request, tournament_pk):
+    """Thêm khoản thu"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    if request.method == 'POST':
+        form = RevenueItemForm(request.POST)
+        if form.is_valid():
+            revenue_item = form.save(commit=False)
+            revenue_item.budget = budget
+            revenue_item.save()
+            
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action='ADD_REVENUE',
+                description=f'Thêm khoản thu: {revenue_item.description}',
+                amount=revenue_item.amount,
+                user=request.user
+            )
+            
+            messages.success(request, "Khoản thu đã được thêm thành công!")
+            return redirect('budget_dashboard', tournament_pk=tournament.pk)
+    else:
+        form = RevenueItemForm()
+    
+    context = {
+        'tournament': tournament,
+        'budget': budget,
+        'form': form,
+    }
+    
+    return render(request, 'tournaments/add_revenue.html', context)
+
+
+@login_required
+def add_expense(request, tournament_pk):
+    """Thêm khoản chi"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    if request.method == 'POST':
+        form = ExpenseItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            expense_item = form.save(commit=False)
+            expense_item.budget = budget
+            expense_item.save()
+            
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action='ADD_EXPENSE',
+                description=f'Thêm khoản chi: {expense_item.description}',
+                amount=expense_item.amount,
+                user=request.user
+            )
+            
+            messages.success(request, "Khoản chi đã được thêm thành công!")
+            return redirect('budget_dashboard', tournament_pk=tournament.pk)
+    else:
+        form = ExpenseItemForm()
+    
+    context = {
+        'tournament': tournament,
+        'budget': budget,
+        'form': form,
+    }
+    
+    return render(request, 'tournaments/add_expense.html', context)
+
+
+@login_required
+def quick_add_budget_item(request, tournament_pk):
+    """Thêm nhanh khoản thu/chi"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    if request.method == 'POST':
+        form = BudgetQuickAddForm(request.POST)
+        if form.is_valid():
+            item_type = form.cleaned_data['type']
+            description = form.cleaned_data['description']
+            amount = form.cleaned_data['amount']
+            date = form.cleaned_data['date']
+            
+            if item_type == 'revenue':
+                revenue_item = RevenueItem.objects.create(
+                    budget=budget,
+                    category='OTHER',
+                    description=description,
+                    amount=amount,
+                    date=date
+                )
+                action = 'ADD_REVENUE'
+            else:
+                expense_item = ExpenseItem.objects.create(
+                    budget=budget,
+                    category='OTHER',
+                    description=description,
+                    amount=amount,
+                    date=date
+                )
+                action = 'ADD_EXPENSE'
+            
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action=action,
+                description=f'Thêm nhanh: {description}',
+                amount=amount,
+                user=request.user
+            )
+            
+            messages.success(request, f"Đã thêm {item_type} thành công!")
+            return redirect('budget_dashboard', tournament_pk=tournament.pk)
+    else:
+        form = BudgetQuickAddForm()
+    
+    context = {
+        'tournament': tournament,
+        'budget': budget,
+        'form': form,
+    }
+    
+    return render(request, 'tournaments/quick_add_budget.html', context)
+
+
+def auto_update_revenue(budget):
+    """Tự động cập nhật các khoản thu từ dữ liệu giải đấu"""
+    tournament = budget.tournament
+    
+    # Debug: In ra console để kiểm tra
+    print(f"DEBUG auto_update_revenue: Tournament {tournament.name}")
+    print(f"DEBUG: Registration fee = {tournament.registration_fee}")
+    
+    # 1. Tính phí đăng ký đội
+    paid_teams = tournament.registrations.filter(payment_status='PAID').count()
+    print(f"DEBUG: Paid teams = {paid_teams}")
+    
+    if paid_teams > 0:
+        # Sử dụng phí đăng ký từ tournament
+        team_fee = tournament.registration_fee
+        total_team_fees = paid_teams * team_fee
+        print(f"DEBUG: Team fee = {team_fee}, Total = {total_team_fees}")
+        
+        # Kiểm tra xem đã có khoản thu này chưa
+        existing_fee = budget.revenue_items.filter(
+            category='TEAM_FEES',
+            is_auto_calculated=True
+        ).first()
+        
+        if existing_fee:
+            if existing_fee.amount != total_team_fees:
+                existing_fee.amount = total_team_fees
+                existing_fee.save()
+        else:
+            RevenueItem.objects.create(
+                budget=budget,
+                category='TEAM_FEES',
+                description=f'Phí đăng ký {paid_teams} đội',
+                amount=total_team_fees,
+                date=tournament.start_date,
+                is_auto_calculated=True
+            )
+    
+    # 2. Tính tiền phạt từ thẻ
+    yellow_cards = Card.objects.filter(match__tournament=tournament, card_type='YELLOW').count()
+    red_cards = Card.objects.filter(match__tournament=tournament, card_type='RED').count()
+    
+    if yellow_cards > 0 or red_cards > 0:
+        yellow_fine = 50000  # 50k/thẻ vàng
+        red_fine = 100000    # 100k/thẻ đỏ
+        total_penalties = (yellow_cards * yellow_fine) + (red_cards * red_fine)
+        
+        # Kiểm tra xem đã có khoản thu này chưa
+        existing_penalty = budget.revenue_items.filter(
+            category='PENALTIES',
+            is_auto_calculated=True
+        ).first()
+        
+        if existing_penalty:
+            if existing_penalty.amount != total_penalties:
+                existing_penalty.amount = total_penalties
+                existing_penalty.description = f'Tiền phạt: {yellow_cards} thẻ vàng, {red_cards} thẻ đỏ'
+                existing_penalty.save()
+        else:
+            RevenueItem.objects.create(
+                budget=budget,
+                category='PENALTIES',
+                description=f'Tiền phạt: {yellow_cards} thẻ vàng, {red_cards} thẻ đỏ',
+                amount=total_penalties,
+                date=tournament.start_date,
+                is_auto_calculated=True
+            )
+    
+    # 3. Tính tài trợ
+    total_sponsorship = tournament.sponsorships.filter(is_active=True).aggregate(
+        total=Sum('package__price')
+    )['total'] or 0
+    
+    if total_sponsorship > 0:
+        existing_sponsorship = budget.revenue_items.filter(
+            category='SPONSORSHIP',
+            is_auto_calculated=True
+        ).first()
+        
+        if existing_sponsorship:
+            if existing_sponsorship.amount != total_sponsorship:
+                existing_sponsorship.amount = total_sponsorship
+                existing_sponsorship.save()
+        else:
+            RevenueItem.objects.create(
+                budget=budget,
+                category='SPONSORSHIP',
+                description='Tài trợ từ các nhà tài trợ',
+                amount=total_sponsorship,
+                date=tournament.start_date,
+                is_auto_calculated=True
+            )
+
+
+@login_required
+@require_POST
+def delete_budget_item(request, tournament_pk, item_type, item_id):
+    """Xóa khoản thu hoặc chi"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    try:
+        if item_type == 'revenue':
+            item = get_object_or_404(RevenueItem, pk=item_id, budget=budget)
+            # Không cho phép xóa các khoản tự động tính
+            if item.is_auto_calculated:
+                messages.error(request, "Không thể xóa khoản thu tự động tính!")
+                return redirect('budget_dashboard', tournament_pk=tournament.pk)
+            
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action='DELETE_REVENUE',
+                description=f'Xóa khoản thu: {item.description}',
+                amount=item.amount,
+                user=request.user
+            )
+            
+            item.delete()
+            messages.success(request, "Khoản thu đã được xóa thành công!")
+            
+        elif item_type == 'expense':
+            item = get_object_or_404(ExpenseItem, pk=item_id, budget=budget)
+            
+            # Ghi lịch sử
+            BudgetHistory.objects.create(
+                budget=budget,
+                action='DELETE_EXPENSE',
+                description=f'Xóa khoản chi: {item.description}',
+                amount=item.amount,
+                user=request.user
+            )
+            
+            item.delete()
+            messages.success(request, "Khoản chi đã được xóa thành công!")
+            
+        else:
+            messages.error(request, "Loại khoản không hợp lệ!")
+            
+    except Exception as e:
+        messages.error(request, f"Có lỗi xảy ra khi xóa: {str(e)}")
+    
+    return redirect('budget_dashboard', tournament_pk=tournament.pk)
+
+
+@login_required
+def refresh_budget_auto(request, tournament_pk):
+    """Cập nhật lại các khoản thu tự động"""
+    tournament = get_object_or_404(Tournament, pk=tournament_pk)
+    
+    # Kiểm tra quyền truy cập
+    is_organizer = tournament.organization and tournament.organization.members.filter(pk=request.user.pk).exists()
+    if not request.user.is_staff and not is_organizer:
+        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
+    
+    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+    
+    # Gọi hàm cập nhật tự động
+    auto_update_revenue(budget)
+    
+    messages.success(request, "Đã cập nhật các khoản thu tự động thành công!")
+    return redirect('budget_dashboard', tournament_pk=tournament.pk)    

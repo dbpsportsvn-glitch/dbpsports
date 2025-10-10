@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load budget_filters %}
+
+{% block title %}Quản lý tài chính - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-calculator text-primary"></i>
+                        Quản lý tài chính
+                    </h2>
+                    <p class="text-muted mb-0">{{ tournament.name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                    <button onclick="refreshBudget()" class="btn btn-outline-info">
+                        <i class="bi bi-arrow-clockwise"></i> Cập nhật tự động
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tổng quan tài chính -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Tổng thu</h6>
+                            <h4 class="mb-0">{{ total_revenue|currency_format }} VNĐ</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-arrow-up-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Tổng chi</h6>
+                            <h4 class="mb-0">{{ total_expenses|currency_format }} VNĐ</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-arrow-down-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card {% if profit_loss > 0 %}bg-primary{% elif profit_loss < 0 %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Lời/Lỗ</h6>
+                            <h4 class="mb-0">{{ profit_loss|currency_format }} VNĐ</h4>
+                        </div>
+                        <div class="align-self-center">
+                            {% if profit_loss > 0 %}
+                                <i class="bi bi-graph-up fs-1"></i>
+                            {% elif profit_loss < 0 %}
+                                <i class="bi bi-graph-down fs-1"></i>
+                            {% else %}
+                                <i class="bi bi-dash-circle fs-1"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Ngân sách ban đầu</h6>
+                            <h4 class="mb-0">{{ budget.initial_budget|currency_format }} VNĐ</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-piggy-bank fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin giải đấu -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> Thông tin giải đấu
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Phí đăng ký:</strong> {{ tournament.registration_fee|currency_format }} VNĐ/đội</p>
+                            <p><strong>Số đội đã đăng ký:</strong> {{ total_teams_count }} đội</p>
+                            <p><strong>Số đội đã thanh toán:</strong> {{ paid_teams_count }} đội</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Ngân sách ban đầu:</strong> {{ budget.initial_budget|currency_format }} VNĐ</p>
+                            <p class="text-muted small">Đây là số tiền BTC dự trù ban đầu để tổ chức giải đấu</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thao tác nhanh -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning"></i> Thao tác nhanh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'budget_setup' tournament_pk=tournament.pk %}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="bi bi-gear"></i> Thiết lập ngân sách
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'add_revenue' tournament_pk=tournament.pk %}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="bi bi-plus-circle"></i> Thêm khoản thu
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'add_expense' tournament_pk=tournament.pk %}" class="btn btn-outline-danger w-100 mb-2">
+                                <i class="bi bi-dash-circle"></i> Thêm khoản chi
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'quick_add_budget' tournament_pk=tournament.pk %}" class="btn btn-outline-warning w-100 mb-2">
+                                <i class="bi bi-lightning"></i> Thêm nhanh
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách khoản thu và chi -->
+    <div class="row">
+        <!-- Khoản thu -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-arrow-up-circle text-success"></i> Khoản thu
+                    </h5>
+                    <span class="badge bg-success">{{ revenue_items.count }} mục</span>
+                </div>
+                <div class="card-body">
+                    {% if revenue_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Danh mục</th>
+                                        <th>Mô tả</th>
+                                        <th>Số tiền</th>
+                                        <th>Ngày</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in revenue_items %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-success">{{ item.get_category_display }}</span>
+                                            {% if item.is_auto_calculated %}
+                                                <i class="bi bi-cpu text-muted" title="Tự động tính"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.description }}</td>
+                                        <td class="text-success fw-bold">{{ item.amount|currency_format }} VNĐ</td>
+                                        <td>{{ item.date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if not item.is_auto_calculated %}
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('revenue', {{ item.id }})">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Chưa có khoản thu nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Khoản chi -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-arrow-down-circle text-danger"></i> Khoản chi
+                    </h5>
+                    <span class="badge bg-danger">{{ expense_items.count }} mục</span>
+                </div>
+                <div class="card-body">
+                    {% if expense_items %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Danh mục</th>
+                                        <th>Mô tả</th>
+                                        <th>Số tiền</th>
+                                        <th>Ngày</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in expense_items %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-danger">{{ item.get_category_display }}</span>
+                                        </td>
+                                        <td>{{ item.description }}</td>
+                                        <td class="text-danger fw-bold">{{ item.amount|currency_format }} VNĐ</td>
+                                        <td>{{ item.date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('expense', {{ item.id }})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Chưa có khoản chi nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử thay đổi -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Lịch sử thay đổi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if history %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Hành động</th>
+                                        <th>Mô tả</th>
+                                        <th>Số tiền</th>
+                                        <th>Người thực hiện</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in history %}
+                                    <tr>
+                                        <td>{{ record.timestamp|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {% if record.action == 'ADD_REVENUE' %}
+                                                <span class="badge bg-success">Thêm thu</span>
+                                            {% elif record.action == 'ADD_EXPENSE' %}
+                                                <span class="badge bg-danger">Thêm chi</span>
+                                            {% elif record.action == 'UPDATE_BUDGET' %}
+                                                <span class="badge bg-info">Cập nhật ngân sách</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ record.description }}</td>
+                                        <td>
+                                            {% if record.amount %}
+                                                {{ record.amount|currency_format }} VNĐ
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ record.user.username|default:"Hệ thống" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Chưa có lịch sử thay đổi nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteItem(type, itemId) {
+    if (confirm('Bạn có chắc chắn muốn xóa khoản này?')) {
+        // Tạo URL động
+        const baseUrl = '{% url "budget_dashboard" tournament_pk=tournament.pk %}';
+        const deleteUrl = baseUrl.replace('/budget/', '/budget/delete/' + type + '/' + itemId + '/');
+        
+        // Tạo form để gửi POST request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        
+        // Thêm CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function refreshBudget() {
+    if (confirm('Bạn có chắc chắn muốn cập nhật lại các khoản thu tự động?')) {
+        window.location.href = '{% url "refresh_budget_auto" tournament_pk=tournament.pk %}';
+    }
+}
+
+// Auto refresh every 30 seconds to update totals
+setTimeout(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

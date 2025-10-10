@@ -1,7 +1,7 @@
 # tournaments/forms.py
 from django import forms
 from .models import Team, Player, Comment, Tournament, TeamRegistration
-from .models import MatchNote
+from .models import MatchNote, TournamentBudget, RevenueItem, ExpenseItem
 from colorfield.widgets import ColorWidget
 from .models import PlayerTransfer
 
@@ -201,7 +201,7 @@ class TournamentForm(forms.ModelForm):
         model = Tournament
         fields = [
             'name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image', 'rules',
-            'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
+            'registration_fee', 'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
             'name': 'Tên giải đấu',
@@ -213,6 +213,7 @@ class TournamentForm(forms.ModelForm):
             'end_date': 'Ngày kết thúc',
             'image': 'Ảnh bìa / Banner giải đấu',
             'rules': 'Điều lệ & Quy định',
+            'registration_fee': 'Phí đăng ký (VNĐ)',
             'bank_name': 'Tên ngân hàng (cho đội tham gia chuyển khoản)',
             'bank_account_number': 'Số tài khoản',
             'bank_account_name': 'Tên chủ tài khoản',
@@ -222,6 +223,11 @@ class TournamentForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
             'rules': forms.Textarea(attrs={'rows': 5}),
+            'registration_fee': forms.NumberInput(attrs={
+                'min': '0',
+                'step': '100000',
+                'placeholder': 'Nhập phí đăng ký cho mỗi đội'
+            }),
         }        
 
 class CommentatorNoteForm(forms.ModelForm):
@@ -260,4 +266,137 @@ class PlayerTransferForm(forms.ModelForm):
             'loan_end_date': forms.DateInput(attrs={'type': 'date'}),
             # === THÊM WIDGET CHO TRƯỜNG MỚI ===
             'offer_amount': forms.NumberInput(attrs={'placeholder': 'Nhập số tiền bạn đề nghị'}),
-        }             
+        }
+
+
+# ===== FORMS CHO HỆ THỐNG QUẢN LÝ TÀI CHÍNH =====
+
+class TournamentBudgetForm(forms.ModelForm):
+    """Form tạo/cập nhật ngân sách giải đấu"""
+    class Meta:
+        model = TournamentBudget
+        fields = ['initial_budget']
+        widgets = {
+            'initial_budget': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập ngân sách ban đầu (VNĐ)',
+                'min': '0'
+            })
+        }
+        labels = {
+            'initial_budget': 'Ngân sách ban đầu (VNĐ)'
+        }
+
+
+class RevenueItemForm(forms.ModelForm):
+    """Form thêm khoản thu"""
+    class Meta:
+        model = RevenueItem
+        fields = ['category', 'description', 'amount', 'date', 'notes']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Mô tả khoản thu'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Số tiền (VNĐ)',
+                'min': '0'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Ghi chú thêm (không bắt buộc)'
+            })
+        }
+        labels = {
+            'category': 'Danh mục',
+            'description': 'Mô tả',
+            'amount': 'Số tiền (VNĐ)',
+            'date': 'Ngày',
+            'notes': 'Ghi chú'
+        }
+
+
+class ExpenseItemForm(forms.ModelForm):
+    """Form thêm khoản chi"""
+    class Meta:
+        model = ExpenseItem
+        fields = ['category', 'description', 'amount', 'date', 'notes', 'receipt_image']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Mô tả khoản chi'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Số tiền (VNĐ)',
+                'min': '0'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Ghi chú thêm (không bắt buộc)'
+            }),
+            'receipt_image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            })
+        }
+        labels = {
+            'category': 'Danh mục',
+            'description': 'Mô tả',
+            'amount': 'Số tiền (VNĐ)',
+            'date': 'Ngày',
+            'notes': 'Ghi chú',
+            'receipt_image': 'Hóa đơn (tùy chọn)'
+        }
+
+
+class BudgetQuickAddForm(forms.Form):
+    """Form thêm nhanh khoản thu/chi"""
+    TYPE_CHOICES = [
+        ('revenue', 'Khoản thu'),
+        ('expense', 'Khoản chi'),
+    ]
+    
+    type = forms.ChoiceField(
+        choices=TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Loại'
+    )
+    description = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Mô tả'
+        }),
+        label='Mô tả'
+    )
+    amount = forms.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Số tiền (VNĐ)',
+            'min': '0'
+        }),
+        label='Số tiền (VNĐ)'
+    )
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Ngày'
+    )             

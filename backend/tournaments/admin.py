@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db.models import Count
 from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
-                     TeamRegistration) # <-- Import model mới
+                     TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
 
 # Admin configuration
@@ -84,10 +84,27 @@ class TournamentPhotoInline(admin.TabularInline):
 # ===== Admins =====
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ("name", "status", "start_date", "generate_schedule_link", "draw_groups_link", "bulk_upload_link", "view_details_link")
-    list_filter = ("status",); search_fields = ("name",); list_editable = ("status",); date_hierarchy = "start_date"
+    list_display = ("name", "status", "start_date", "registration_fee", "generate_schedule_link", "draw_groups_link", "bulk_upload_link", "budget_dashboard_link", "view_details_link")
+    list_filter = ("status", "region"); search_fields = ("name",); list_editable = ("status",); date_hierarchy = "start_date"
     inlines = [GroupInline, TournamentPhotoInline]; list_per_page = 50
     actions = ['auto_create_next_knockout_round', 'create_third_place_match', 'create_semi_finals_with_best_runner_ups']
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image')
+        }),
+        ('Phí đăng ký', {
+            'fields': ('registration_fee',),
+            'description': 'Phí đăng ký cho mỗi đội tham gia giải đấu'
+        }),
+        ('Thông tin thanh toán', {
+            'fields': ('bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'),
+            'classes': ('collapse',)
+        }),
+        ('Nội dung', {
+            'fields': ('rules', 'gallery_url'),
+            'classes': ('collapse',)
+        }),
+    )
     class Media: js = ('js/admin_state.js',)
     
     @admin.display(description='Tải ảnh hàng loạt')
@@ -113,6 +130,11 @@ class TournamentAdmin(admin.ModelAdmin):
             return format_html('<a class="button" href="{}" target="_blank">Bốc thăm</a>', url)
         return "—"
     draw_groups_link.short_description = 'Bốc thăm Chia bảng'
+    
+    def budget_dashboard_link(self, obj):
+        url = reverse('budget_dashboard', kwargs={'tournament_pk': obj.pk})
+        return format_html('<a class="button" href="{}" target="_blank">💰 Tài chính</a>', url)
+    budget_dashboard_link.short_description = 'Dashboard Tài chính'
     
     def view_details_link(self, obj):
         teams_url = reverse('admin:tournaments_teamregistration_changelist') + f'?tournament__id__exact={obj.pk}'
@@ -395,3 +417,54 @@ class AnnouncementAdmin(ModelAdmin):
 
 @admin.register(TeamAchievement)
 class TeamAchievementAdmin(admin.ModelAdmin): list_display = ('team', 'achievement_type', 'tournament', 'achieved_at'); list_filter = ('tournament', 'achievement_type'); search_fields = ('team__name', 'tournament__name', 'description'); autocomplete_fields = ('team', 'tournament')
+
+# ===== ADMIN CHO CÁC MODEL TÀI CHÍNH =====
+@admin.register(TournamentBudget)
+class TournamentBudgetAdmin(admin.ModelAdmin):
+    list_display = ('tournament', 'initial_budget', 'get_total_revenue', 'get_total_expenses', 'get_profit_loss', 'get_budget_status', 'created_at')
+    list_filter = ('tournament__status', 'tournament__region', 'created_at')
+    search_fields = ('tournament__name',)
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ('tournament',)
+    
+    def get_total_revenue(self, obj):
+        return f"{obj.get_total_revenue():,} VNĐ"
+    get_total_revenue.short_description = "Tổng thu"
+    
+    def get_total_expenses(self, obj):
+        return f"{obj.get_total_expenses():,} VNĐ"
+    get_total_expenses.short_description = "Tổng chi"
+    
+    def get_profit_loss(self, obj):
+        profit_loss = obj.get_profit_loss()
+        if profit_loss > 0:
+            return format_html('<span style="color: green;">+{:,} VNĐ</span>', profit_loss)
+        elif profit_loss < 0:
+            return format_html('<span style="color: red;">{:,} VNĐ</span>', profit_loss)
+        else:
+            return f"{profit_loss:,} VNĐ"
+    get_profit_loss.short_description = "Lời/Lỗ"
+
+@admin.register(RevenueItem)
+class RevenueItemAdmin(admin.ModelAdmin):
+    list_display = ('budget', 'category', 'description', 'amount', 'is_auto_calculated', 'date')
+    list_filter = ('category', 'is_auto_calculated', 'date')
+    search_fields = ('description', 'budget__tournament__name')
+    readonly_fields = ('created_at',)
+    autocomplete_fields = ('budget',)
+
+@admin.register(ExpenseItem)
+class ExpenseItemAdmin(admin.ModelAdmin):
+    list_display = ('budget', 'category', 'description', 'amount', 'date')
+    list_filter = ('category', 'date')
+    search_fields = ('description', 'budget__tournament__name')
+    readonly_fields = ('created_at',)
+    autocomplete_fields = ('budget',)
+
+@admin.register(BudgetHistory)
+class BudgetHistoryAdmin(admin.ModelAdmin):
+    list_display = ('budget', 'action', 'description', 'amount', 'user', 'timestamp')
+    list_filter = ('action', 'timestamp')
+    search_fields = ('description', 'budget__tournament__name', 'user__username')
+    readonly_fields = ('timestamp',)
+    autocomplete_fields = ('budget', 'user')

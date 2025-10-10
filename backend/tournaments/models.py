@@ -3,7 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from organizations.models import Organization
@@ -53,6 +53,7 @@ class Tournament(models.Model):
     bank_account_number = models.CharField("Số tài khoản", max_length=50, blank=True)
     bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)
     payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
+    registration_fee = models.DecimalField("Phí đăng ký (VNĐ)", max_digits=15, decimal_places=0, default=500000, help_text="Phí đăng ký cho mỗi đội tham gia")
     rules = models.TextField("Điều lệ & Thông báo", blank=True, help_text="Nhập các điều lệ, quy định hoặc thông báo của giải đấu tại đây. Bạn có thể sử dụng mã HTML cơ bản để định dạng.")
 
     gallery_url = models.URLField(
@@ -952,4 +953,133 @@ class SponsorClick(models.Model):
     user_agent = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
-        return f"Click for {self.sponsorship.sponsor.username} at {self.timestamp}"        
+        return f"Click for {self.sponsorship.sponsor.username} at {self.timestamp}"
+
+
+# ===== HỆ THỐNG QUẢN LÝ TÀI CHÍNH GIẢI ĐẤU =====
+
+class TournamentBudget(models.Model):
+    """Ngân sách và quản lý tài chính giải đấu"""
+    tournament = models.OneToOneField(Tournament, on_delete=models.CASCADE, related_name='budget')
+    initial_budget = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Ngân sách ban đầu")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Ngân sách giải đấu"
+        verbose_name_plural = "Ngân sách giải đấu"
+    
+    def __str__(self):
+        return f"Ngân sách {self.tournament.name}"
+    
+    def get_total_revenue(self):
+        """Tính tổng thu"""
+        return self.revenue_items.aggregate(total=Sum('amount'))['total'] or 0
+    
+    def get_total_expenses(self):
+        """Tính tổng chi"""
+        return self.expense_items.aggregate(total=Sum('amount'))['total'] or 0
+    
+    def get_profit_loss(self):
+        """Tính lời/lỗ"""
+        return self.get_total_revenue() - self.get_total_expenses()
+    
+    def get_budget_status(self):
+        """Trạng thái ngân sách"""
+        profit_loss = self.get_profit_loss()
+        if profit_loss > 0:
+            return 'PROFIT'
+        elif profit_loss < 0:
+            return 'LOSS'
+        else:
+            return 'BREAK_EVEN'
+    
+    def get_budget_status_display(self):
+        """Hiển thị trạng thái ngân sách"""
+        status = self.get_budget_status()
+        if status == 'PROFIT':
+            return 'Có lời'
+        elif status == 'LOSS':
+            return 'Bị lỗ'
+        else:
+            return 'Hòa vốn'
+
+
+class RevenueItem(models.Model):
+    """Khoản thu"""
+    REVENUE_CATEGORIES = [
+        ('TEAM_FEES', 'Phí đăng ký đội'),
+        ('SPONSORSHIP', 'Tài trợ'),
+        ('PENALTIES', 'Tiền phạt'),
+        ('TICKETS', 'Bán vé'),
+        ('MERCHANDISE', 'Bán hàng hóa'),
+        ('OTHER', 'Khác'),
+    ]
+    
+    budget = models.ForeignKey(TournamentBudget, on_delete=models.CASCADE, related_name='revenue_items')
+    category = models.CharField(max_length=20, choices=REVENUE_CATEGORIES, verbose_name="Danh mục")
+    description = models.CharField(max_length=200, verbose_name="Mô tả")
+    amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name="Số tiền")
+    date = models.DateField(verbose_name="Ngày")
+    notes = models.TextField(blank=True, verbose_name="Ghi chú")
+    is_auto_calculated = models.BooleanField(default=False, verbose_name="Tự động tính")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Khoản thu"
+        verbose_name_plural = "Khoản thu"
+        ordering = ['-date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.get_category_display()} - {self.description}: {self.amount:,} VNĐ"
+
+
+class ExpenseItem(models.Model):
+    """Khoản chi"""
+    EXPENSE_CATEGORIES = [
+        ('VENUE', 'Tiền sân bãi'),
+        ('REFEREE', 'Trọng tài'),
+        ('LIVESTREAM', 'Livestream'),
+        ('PHOTOGRAPHY', 'Chụp ảnh'),
+        ('TROPHIES', 'Cờ cúp, huy chương'),
+        ('REFRESHMENTS', 'Nước uống'),
+        ('TRANSPORTATION', 'Đi lại'),
+        ('EQUIPMENT', 'Thiết bị'),
+        ('MARKETING', 'Marketing'),
+        ('OTHER', 'Khác'),
+    ]
+    
+    budget = models.ForeignKey(TournamentBudget, on_delete=models.CASCADE, related_name='expense_items')
+    category = models.CharField(max_length=20, choices=EXPENSE_CATEGORIES, verbose_name="Danh mục")
+    description = models.CharField(max_length=200, verbose_name="Mô tả")
+    amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name="Số tiền")
+    date = models.DateField(verbose_name="Ngày")
+    notes = models.TextField(blank=True, verbose_name="Ghi chú")
+    receipt_image = models.ImageField(upload_to='expense_receipts/', blank=True, null=True, verbose_name="Hóa đơn")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Khoản chi"
+        verbose_name_plural = "Khoản chi"
+        ordering = ['-date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.get_category_display()} - {self.description}: {self.amount:,} VNĐ"
+
+
+class BudgetHistory(models.Model):
+    """Lịch sử thay đổi ngân sách"""
+    budget = models.ForeignKey(TournamentBudget, on_delete=models.CASCADE, related_name='history')
+    action = models.CharField(max_length=50, verbose_name="Hành động")  # ADD_REVENUE, ADD_EXPENSE, UPDATE_BUDGET
+    description = models.CharField(max_length=200, verbose_name="Mô tả")
+    amount = models.DecimalField(max_digits=15, decimal_places=0, null=True, blank=True, verbose_name="Số tiền")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name="Người thực hiện")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian")
+    
+    class Meta:
+        verbose_name = "Lịch sử ngân sách"
+        verbose_name_plural = "Lịch sử ngân sách"
+        ordering = ['-timestamp']
+    
+    def __str__(self):
+        return f"{self.action} - {self.description} ({self.timestamp})"        

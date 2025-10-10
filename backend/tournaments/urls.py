@@ -78,4 +78,13 @@ urlpatterns = [
     path('match/<int:match_pk>/notes/commentator/', views.commentator_notes_view, name='commentator_notes'),
     path('match/<int:match_pk>/team/<int:team_pk>/notes/captain/', views.captain_note_view, name='captain_note'),
     path('events/<str:event_type>/<int:pk>/delete/', views.delete_match_event, name='delete_match_event'),
+    
+    # --- URL cho hệ thống quản lý tài chính ---
+    path('tournament/<int:tournament_pk>/budget/', views.budget_dashboard, name='budget_dashboard'),
+    path('tournament/<int:tournament_pk>/budget/setup/', views.budget_setup, name='budget_setup'),
+    path('tournament/<int:tournament_pk>/budget/add-revenue/', views.add_revenue, name='add_revenue'),
+    path('tournament/<int:tournament_pk>/budget/add-expense/', views.add_expense, name='add_expense'),
+    path('tournament/<int:tournament_pk>/budget/quick-add/', views.quick_add_budget_item, name='quick_add_budget'),
+    path('tournament/<int:tournament_pk>/budget/delete/<str:item_type>/<int:item_id>/', views.delete_budget_item, name='delete_budget_item'),
+    path('tournament/<int:tournament_pk>/budget/refresh/', views.refresh_budget_auto, name='refresh_budget_auto'),
 ]
