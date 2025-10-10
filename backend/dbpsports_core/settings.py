@@ -19,13 +19,17 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # === Apps ===
 INSTALLED_APPS = [
+    # Apps chính - Tournaments ở đầu
+    "tournaments",
+    "organizations", 
+    "users",
+    'sponsors',
+    
+    # Django admin interface
     'admin_interface',
     'colorfield',
-    "organizations",
-    "users",
-    "tournaments",
-    'sponsors',
-
+    
+    # Django core apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -35,15 +39,19 @@ INSTALLED_APPS = [
     "django.contrib.sites",  # bắt buộc cho allauth
     "django.contrib.humanize",
 
+    # Third party apps
     "crispy_forms",
     "crispy_bootstrap5",
 
+    # Allauth
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",  # dùng Google
     'allauth.socialaccount.providers.facebook',
 ]
+
+# Admin config sẽ được import trong urls.py
 
 # === Middleware ===
 MIDDLEWARE = [

@@ -1,4 +1,4 @@
-# Dán toàn bộ code này để thay thế nội dung file backend/tournaments/admin.py
+# backend/tournaments/admin.py
 
 import random
 from itertools import combinations
@@ -16,6 +16,8 @@ from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card,
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
                      TeamRegistration) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
+
+# Admin configuration
 
 # ===== CÁC Hàm Cho Bộ lọc (Giữ nguyên) =====
 class MatchResultFilter(admin.SimpleListFilter):

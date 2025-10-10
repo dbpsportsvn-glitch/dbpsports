@@ -5,6 +5,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Import admin config để sắp xếp lại thứ tự
+import dbpsports_core.admin_custom
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
