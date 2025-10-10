@@ -1091,8 +1091,10 @@ def generate_schedule_view(request, tournament_pk):
                                     if match_scheduled_in_slot: break
                                     if not all_pairings_by_group.get(group): continue
 
-                                    group_limit = group_limits.get(group.name)
-                                    if group_limit is not None and group_matches_this_week[group.id] >= group_limit: continue
+                                    group_name = group.name if hasattr(group, 'name') else str(group)
+                                    group_limit = group_limits.get(group_name)
+                                    group_id = group.id if hasattr(group, 'id') else str(group)
+                                    if group_limit is not None and group_matches_this_week[group_id] >= group_limit: continue
 
                                     for i, pairing_info in enumerate(all_pairings_by_group[group]):
                                         team1, team2 = pairing_info['pair']
@@ -1107,7 +1109,7 @@ def generate_schedule_view(request, tournament_pk):
                                             team_last_played[team1.id] = team_last_played[team2.id] = current_datetime
                                             team_matches_this_week[team1.id] += 1
                                             team_matches_this_week[team2.id] += 1
-                                            group_matches_this_week[group.id] += 1
+                                            group_matches_this_week[group_id] += 1
                                             all_pairings_by_group[group].pop(i)
                                             match_scheduled_in_slot = True
                                             break
