@@ -2,16 +2,17 @@
 
 from django.db import migrations
 
+# Xóa 'order': 30 khỏi dictionary này
 REFEREE_ROLE_DATA = {
     "id": "REFEREE",
     "name": "Trọng tài",
     "icon": "bi-person-fill-check",
     "description": "Điều hành các trận đấu, đảm bảo tính công bằng và tuân thủ luật lệ. Có thể được BTC mời hoặc tìm việc qua Thị trường Việc làm.",
-    "order": 30
 }
 
 def create_referee_role(apps, schema_editor):
     Role = apps.get_model('users', 'Role')
+    # Dòng này sẽ chỉ cập nhật các trường có trong REFEREE_ROLE_DATA đã sửa
     Role.objects.update_or_create(id=REFEREE_ROLE_DATA['id'], defaults=REFEREE_ROLE_DATA)
 
 def delete_referee_role(apps, schema_editor):
