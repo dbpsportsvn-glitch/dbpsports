@@ -541,7 +541,7 @@
                             <tr>
                                 <td>
                                     <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center gap-2">
-                                        <img src="{{ player.avatar.url|default_if_none:'/static/images/placeholder_avatar.png' }}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+                                        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                                         <div>
                                             <span class="fw-bold">{{ player.full_name }}</span>
                                             {% if player.user and player.team.captain == player.user %}

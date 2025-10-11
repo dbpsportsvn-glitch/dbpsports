@@ -688,7 +688,7 @@ def manage_knockout(request, pk):
     if not user_can_manage_tournament(request.user, tournament):
         return HttpResponseForbidden("Bạn không có quyền thực hiện hành động này.")
 
-    groups = tournament.groups.prefetch_related('teams').all().order_by('name')
+    groups = tournament.groups.all().order_by('name')
 
     # --- Lấy dữ liệu các đội và các vòng đấu ---
     standings_by_group = {}
