@@ -1520,6 +1520,16 @@ function showNotification(message, type) {
 // Load cart count when page loads
 document.addEventListener('DOMContentLoaded', function() {
   loadCartCount();
+  
+  // Xử lý nút add-to-cart-btn với data-product-id
+  document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const productId = this.getAttribute('data-product-id');
+      if (productId) {
+        addToCart(productId);
+      }
+    });
+  });
 });
 
 function loadCartCount() {

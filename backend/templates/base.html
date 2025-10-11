@@ -71,7 +71,7 @@
 
     <div class="nav-center">
       <div class="main-menu d-flex align-items-center gap-2">
-        <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
 
         {# === DROPDOWN BÓNG ĐÁ === #}
         {% with urln=request.resolver_match.url_name %}
@@ -184,7 +184,7 @@
   </div>
   <div class="offcanvas-body">
     <nav class="mobile-nav">
-      <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
 
       {# --- Mobile: Bóng Đá (collapse) --- #}
       {% with urln=request.resolver_match.url_name %}

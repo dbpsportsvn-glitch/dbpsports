@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}
   {% if current_category %}
@@ -73,23 +74,72 @@
   z-index: 2;
 }
 
-/* Filters */
+/* Filters - Modern Design */
 .filters-section {
   background: white;
   border-radius: var(--border-radius-lg);
-  padding: 2rem;
+  padding: 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.filter-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--light);
+}
+
+.filter-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin: 0;
+}
+
+.filter-toggle {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: none;
+}
+
+.filter-toggle:hover {
+  background: var(--primary-dark);
+}
+
+.filter-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: end;
 }
 
 .filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.category-section {
   margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .filter-label {
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: var(--dark);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .search-box {
@@ -101,11 +151,12 @@
   border-radius: var(--border-radius);
   border: 2px solid #e9ecef;
   transition: all 0.3s ease;
+  height: 45px;
 }
 
 .search-box input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.15);
 }
 
 .search-box .search-icon {
@@ -114,12 +165,30 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--secondary);
+  font-size: 1rem;
 }
 
 .category-filter {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.category-filter::-webkit-scrollbar {
+  height: 4px;
+}
+
+.category-filter::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.category-filter::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 2px;
 }
 
 .category-btn {
@@ -131,6 +200,10 @@
   text-decoration: none;
   font-weight: 500;
   transition: all 0.3s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .category-btn:hover,
@@ -138,18 +211,75 @@
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
 .sort-select {
   border-radius: var(--border-radius);
   border: 2px solid #e9ecef;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   transition: all 0.3s ease;
+  height: 48px;
+  line-height: 1.4;
+  vertical-align: middle;
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
 }
 
 .sort-select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.15);
+}
+
+.price-filter {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.price-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  text-align: center;
+  font-weight: 500;
+}
+
+.price-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.15);
+}
+
+.price-separator {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+.clear-filters {
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clear-filters:hover {
+  background: var(--dark);
+  color: white;
+  transform: translateY(-1px);
 }
 
 /* Products Grid */
@@ -359,6 +489,83 @@
     font-size: 2rem;
   }
   
+  .filter-content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+  
+  .filter-group {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .category-section {
+    display: block !important;
+    margin-bottom: 1rem !important;
+    padding-bottom: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  .category-filter {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    overflow-x: visible !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .category-btn {
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    min-width: fit-content !important;
+    white-space: nowrap !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .search-box {
+    width: 100% !important;
+    position: relative !important;
+  }
+  
+  .search-box input {
+    width: 100% !important;
+    height: 40px !important;
+    font-size: 0.9rem !important;
+    padding-left: 2.5rem !important;
+    border-radius: var(--border-radius) !important;
+    border: 2px solid #e9ecef !important;
+  }
+  
+  .search-box .search-icon {
+    left: 0.75rem !important;
+    font-size: 0.9rem !important;
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  
+  .sort-select {
+    width: 100% !important;
+    height: 48px !important;
+    font-size: 0.9rem !important;
+    border-radius: var(--border-radius) !important;
+    border: 2px solid #e9ecef !important;
+    padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+    line-height: 1.4 !important;
+    vertical-align: middle !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.75rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+  }
+  
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 1rem;
@@ -369,7 +576,21 @@
   }
   
   .filters-section {
-    padding: 1rem;
+    display: block !important;
+    padding: 1rem !important;
+    width: 100% !important;
+  }
+  
+  .filter-toggle {
+    display: block !important;
+  }
+  
+  .filter-content {
+    display: flex !important;
+  }
+  
+  .filter-content.show {
+    display: flex !important;
   }
 }
 </style>
@@ -403,49 +624,78 @@
 <div class="container">
   <!-- Filters Section -->
   <div class="filters-section">
-    <form method="get" id="filter-form">
-      <div class="row">
-        <div class="col-lg-4 col-md-6 mb-3">
+    <div class="filter-header">
+      <h3 class="filter-title">
+        <i class="fas fa-filter me-2"></i>
+        Bộ lọc & Tìm kiếm
+      </h3>
+      <button class="filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filterContent">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+    </div>
+    
+    <div class="collapse show" id="filterContent">
+      <form method="get" id="filter-form">
+        <!-- Category Row -->
+        <div class="category-section">
+          <label class="filter-label">Danh mục</label>
+          <div class="category-filter">
+            <a href="{% url 'shop:product_list' %}" class="category-btn {% if not current_category %}active{% endif %}">
+              <i class="fas fa-th-large me-1"></i>Tất cả
+            </a>
+            {% for category in categories %}
+            <a href="{% url 'shop:product_list' %}?category={{ category.slug }}" 
+               class="category-btn {% if current_category.slug == category.slug %}active{% endif %}">
+              {{ category.name }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <!-- Other Filters Row -->
+        <div class="filter-content">
+          <!-- Search -->
           <div class="filter-group">
-            <label class="filter-label">Tìm kiếm sản phẩm</label>
+            <label class="filter-label">Tìm kiếm</label>
             <div class="search-box">
               <i class="fas fa-search search-icon"></i>
               <input type="text" name="search" class="form-control" placeholder="Nhập tên sản phẩm..." value="{{ search }}">
             </div>
           </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-3">
+          
+          <!-- Sort -->
           <div class="filter-group">
-            <label class="filter-label">Danh mục</label>
-            <div class="category-filter">
-              <a href="{% url 'shop:product_list' %}" class="category-btn {% if not current_category %}active{% endif %}">
-                Tất cả
-              </a>
-              {% for category in categories %}
-              <a href="{% url 'shop:product_list' %}?category={{ category.slug }}" 
-                 class="category-btn {% if current_category.slug == category.slug %}active{% endif %}">
-                {{ category.name }}
-              </a>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 mb-3">
-          <div class="filter-group">
-            <label class="filter-label">Sắp xếp theo</label>
+            <label class="filter-label">Sắp xếp</label>
             <select name="sort" class="form-select sort-select" onchange="document.getElementById('filter-form').submit()">
-              <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Mới nhất</option>
-              <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Giá thấp đến cao</option>
-              <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Giá cao đến thấp</option>
-              <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Tên A-Z</option>
-              <option value="bestseller" {% if sort_by == 'bestseller' %}selected{% endif %}>Bán chạy</option>
+              <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>
+                <i class="fas fa-clock"></i> Mới nhất
+              </option>
+              <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>
+                <i class="fas fa-arrow-up"></i> Giá thấp đến cao
+              </option>
+              <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>
+                <i class="fas fa-arrow-down"></i> Giá cao đến thấp
+              </option>
+              <option value="name" {% if sort_by == 'name' %}selected{% endif %}>
+                <i class="fas fa-sort-alpha-down"></i> Tên A-Z
+              </option>
+              <option value="bestseller" {% if sort_by == 'bestseller' %}selected{% endif %}>
+                <i class="fas fa-fire"></i> Bán chạy
+              </option>
             </select>
           </div>
+          
+          <!-- Clear Filters -->
+          <div class="filter-group">
+            <label class="filter-label">&nbsp;</label>
+            <a href="{% url 'shop:product_list' %}" class="clear-filters">
+              <i class="fas fa-times"></i>
+              Xóa bộ lọc
+            </a>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 
   <!-- Products Grid -->
@@ -468,19 +718,20 @@
         <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
         <div class="product-price">
           {% if product.is_on_sale %}
-            <span class="current-price">{{ product.sale_price|floatformat:0 }}đ</span>
-            <span class="original-price">{{ product.price|floatformat:0 }}đ</span>
+            <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+            <span class="original-price">{{ product.price|vnd_format }}</span>
           {% else %}
-            <span class="current-price">{{ product.price|floatformat:0 }}đ</span>
+            <span class="current-price">{{ product.price|vnd_format }}</span>
           {% endif %}
         </div>
         <div class="product-actions">
           <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
-            <i class="fas fa-cart-plus me-1"></i>
+            <i class="fas fa-shopping-cart me-2"></i>
             Thêm vào giỏ
           </button>
           <a href="{% url 'shop:product_detail' product.slug %}" class="btn-view">
-            <i class="fas fa-eye"></i>
+            <i class="fas fa-eye me-2"></i>
+            Xem chi tiết
           </a>
         </div>
       </div>
