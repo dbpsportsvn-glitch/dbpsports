@@ -346,25 +346,39 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
   border: 2px solid #e9ecef;
   border-radius: var(--border-radius);
   margin-bottom: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .payment-method:hover {
   border-color: var(--primary);
+  background: rgba(220, 38, 38, 0.02);
 }
 
 .payment-method.selected {
   border-color: var(--primary);
-  background: rgba(13, 110, 253, 0.1);
+  background: rgba(220, 38, 38, 0.05);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .payment-method input[type="radio"] {
+  width: 22px;
+  height: 22px;
   margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* For better clickability - make entire card clickable */
+.payment-method input[type="radio"]:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .payment-method-info {
@@ -674,7 +688,7 @@
 
 <div class="container">
   <div class="checkout-content">
-    <form method="post" id="checkout-form">
+    <form method="post" id="checkout-form" enctype="multipart/form-data" action="{% url 'shop:place_order' %}">
       {% csrf_token %}
       <div class="row">
         <div class="col-lg-8">
@@ -835,6 +849,11 @@
                         <i class="fas fa-info-circle me-1"></i>
                         Xem thông tin chuyển khoản
                       </button>
+                    {% elif payment_method.payment_type == 'e_wallet' %}
+                      <button type="button" class="btn-payment-info" onclick="showEWalletInfo({{ payment_method.id }})">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Xem thông tin ví điện tử
+                      </button>
                     {% endif %}
                   </div>
                 </div>
@@ -908,6 +927,67 @@
                   <p class="proof-note">
                     <i class="fas fa-info-circle me-1"></i>
                     Vui lòng upload hóa đơn chuyển khoản để chúng tôi xác nhận đơn hàng nhanh hơn
+                  </p>
+                </div>
+              </div>
+              
+              <!-- E-Wallet Info Section -->
+              <div id="ewallet-info" class="bank-transfer-info" style="display: none;">
+                <h4 class="bank-info-title">
+                  <i class="fas fa-wallet me-2"></i>
+                  Thông tin ví điện tử
+                </h4>
+                
+                <div class="bank-accounts">
+                  {% for payment_method in payment_methods %}
+                    {% if payment_method.payment_type == 'e_wallet' %}
+                      {% for ewallet_account in payment_method.ewallet_accounts.all %}
+                      <div class="ewallet-account" data-payment-method="{{ payment_method.id }}">
+                        <div class="bank-card">
+                          <div class="bank-header">
+                            <h5 class="bank-name">{{ ewallet_account.wallet_name }}</h5>
+                            <span class="bank-badge">Ví {{ forloop.counter }}</span>
+                          </div>
+                          
+                          <div class="bank-details">
+                            <div class="bank-detail-row">
+                              <span class="bank-label">Thông tin tài khoản:</span>
+                              <span class="bank-value bank-number">{{ ewallet_account.account_info }}</span>
+                              <button type="button" class="btn-copy" onclick="copyToClipboard('{{ ewallet_account.account_info }}', event)">
+                                <i class="fas fa-copy"></i>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {% if ewallet_account.qr_code %}
+                          <div class="bank-qr">
+                            <img src="{{ ewallet_account.qr_code.url }}" alt="QR Code {{ ewallet_account.wallet_name }}" class="qr-image">
+                            <p class="qr-note">Quét mã QR để thanh toán</p>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                      {% endfor %}
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                
+                <div class="payment-proof-section">
+                  <h5 class="proof-title">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload hóa đơn thanh toán
+                  </h5>
+                  <div class="proof-upload">
+                    <input type="file" id="ewallet-proof" name="payment_proof" accept="image/*,.pdf" class="proof-input">
+                    <label for="ewallet-proof" class="proof-label">
+                      <i class="fas fa-cloud-upload-alt me-2"></i>
+                      Chọn file hóa đơn (JPG, PNG, PDF)
+                    </label>
+                    <div class="proof-preview" id="ewallet-proof-preview"></div>
+                  </div>
+                  <p class="proof-note">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Vui lòng upload hóa đơn thanh toán để chúng tôi xác nhận đơn hàng nhanh hơn
                   </p>
                 </div>
               </div>
@@ -1007,7 +1087,7 @@
             
             <button type="submit" class="checkout-btn" id="checkout-btn">
               <i class="fas fa-arrow-right me-2"></i>
-              Tiếp tục
+              Đặt hàng
             </button>
             
             <a href="{% url 'shop:cart' %}" class="back-to-cart">
@@ -1039,54 +1119,115 @@ document.addEventListener('DOMContentLoaded', function() {
   // Payment method selection
   document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
     radio.addEventListener('change', function() {
-      document.querySelectorAll('.payment-method').forEach(method => {
-        method.classList.remove('selected');
-      });
-      this.closest('.payment-method').classList.add('selected');
+      updatePaymentMethodSelection(this);
+    });
+  });
+  
+  // Make entire payment method card clickable
+  document.querySelectorAll('.payment-method').forEach(card => {
+    card.addEventListener('click', function(e) {
+      // Don't trigger if clicking on a button inside the card
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        return;
+      }
       
-      // Show/hide bank transfer info
-      const bankTransferInfo = document.getElementById('bank-transfer-info');
-      if (this.value === 'bank_transfer') {
-        bankTransferInfo.style.display = 'block';
-      } else {
-        bankTransferInfo.style.display = 'none';
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio && !radio.checked) {
+        radio.checked = true;
+        updatePaymentMethodSelection(radio);
       }
     });
   });
   
-  // Payment proof upload
+  function updatePaymentMethodSelection(radio) {
+    document.querySelectorAll('.payment-method').forEach(method => {
+      method.classList.remove('selected');
+    });
+    radio.closest('.payment-method').classList.add('selected');
+    
+    // Show/hide payment info sections
+    const bankTransferInfo = document.getElementById('bank-transfer-info');
+    const ewalletInfo = document.getElementById('ewallet-info');
+    
+    if (radio.value === 'bank_transfer') {
+      bankTransferInfo.style.display = 'block';
+      ewalletInfo.style.display = 'none';
+    } else if (radio.value === 'e_wallet') {
+      bankTransferInfo.style.display = 'none';
+      ewalletInfo.style.display = 'block';
+    } else {
+      bankTransferInfo.style.display = 'none';
+      ewalletInfo.style.display = 'none';
+    }
+  }
+  
+  // Payment proof upload (Bank Transfer)
   const paymentProofInput = document.getElementById('payment-proof');
   const proofPreview = document.getElementById('proof-preview');
   
-  paymentProofInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        proofPreview.innerHTML = `
-          <div class="d-flex align-items-center gap-3">
-            ${file.type.startsWith('image/') ? 
-              `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
-              `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
-            }
-            <div class="file-info">
-              <div class="fw-bold">${file.name}</div>
-              <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
-              <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeProof()">
-                <i class="fas fa-trash me-1"></i>Xóa
-              </button>
+  if (paymentProofInput) {
+    paymentProofInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          proofPreview.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+              ${file.type.startsWith('image/') ? 
+                `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
+                `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
+              }
+              <div class="file-info">
+                <div class="fw-bold">${file.name}</div>
+                <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeProof('payment-proof')">
+                  <i class="fas fa-trash me-1"></i>Xóa
+                </button>
+              </div>
             </div>
-          </div>
-        `;
-        proofPreview.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    }
-  });
+          `;
+          proofPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+  
+  // E-Wallet proof upload
+  const ewalletProofInput = document.getElementById('ewallet-proof');
+  const ewalletProofPreview = document.getElementById('ewallet-proof-preview');
+  
+  if (ewalletProofInput) {
+    ewalletProofInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          ewalletProofPreview.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+              ${file.type.startsWith('image/') ? 
+                `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
+                `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
+              }
+              <div class="file-info">
+                <div class="fw-bold">${file.name}</div>
+                <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeProof('ewallet-proof')">
+                  <i class="fas fa-trash me-1"></i>Xóa
+                </button>
+              </div>
+            </div>
+          `;
+          ewalletProofPreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
   
   // Form submission
   document.getElementById('checkout-form').addEventListener('submit', function(e) {
-    e.preventDefault();
+    // Don't prevent default - let form submit normally with files
     
     // Validate required fields
     const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
@@ -1102,33 +1243,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     if (!isValid) {
+      e.preventDefault();
       alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
     }
     
     // Check for out of stock products
     if (outOfStockItems.length > 0) {
+      e.preventDefault();
       alert('Không thể đặt hàng vì có sản phẩm đã hết hàng. Vui lòng quay lại giỏ hàng để xóa sản phẩm hết hàng.');
       return;
     }
     
-    // Save form data to localStorage
-    const formData = {
-      customer_name: document.querySelector('input[name="customer_name"]').value,
-      customer_email: document.querySelector('input[name="customer_email"]').value,
-      customer_phone: document.querySelector('input[name="customer_phone"]').value,
-      shipping_address: document.querySelector('textarea[name="shipping_address"]').value,
-      shipping_city: document.querySelector('select[name="shipping_city"]').value,
-      shipping_district: document.querySelector('input[name="shipping_district"]').value,
-      payment_method: document.querySelector('input[name="payment_method"]:checked').value,
-      notes: document.querySelector('textarea[name="notes"]').value,
-      payment_proof: document.getElementById('payment-proof').files[0] ? 'uploaded' : null
-    };
-    
-    localStorage.setItem('checkoutData', JSON.stringify(formData));
-    
-    // Redirect to confirmation page
-    window.location.href = '{% url "shop:order_confirm" %}';
+    // If validation passes, let form submit normally with files
+    // No need to preventDefault - form will submit to place_order view
   });
   
   // Form validation
@@ -1147,10 +1275,25 @@ document.addEventListener('DOMContentLoaded', function() {
 // Show bank transfer info
 function showBankInfo(paymentMethodId) {
   const bankTransferInfo = document.getElementById('bank-transfer-info');
+  const ewalletInfo = document.getElementById('ewallet-info');
+  
   bankTransferInfo.style.display = 'block';
+  ewalletInfo.style.display = 'none';
   
   // Scroll to bank info section
   bankTransferInfo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Show e-wallet info
+function showEWalletInfo(paymentMethodId) {
+  const bankTransferInfo = document.getElementById('bank-transfer-info');
+  const ewalletInfo = document.getElementById('ewallet-info');
+  
+  bankTransferInfo.style.display = 'none';
+  ewalletInfo.style.display = 'block';
+  
+  // Scroll to ewallet info section
+  ewalletInfo.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Copy to clipboard
@@ -1182,13 +1325,19 @@ function copyToClipboard(text, event) {
 }
 
 // Remove payment proof
-function removeProof() {
-  const paymentProofInput = document.getElementById('payment-proof');
-  const proofPreview = document.getElementById('proof-preview');
+function removeProof(inputId) {
+  inputId = inputId || 'payment-proof';
+  const proofInput = document.getElementById(inputId);
+  const previewId = inputId === 'ewallet-proof' ? 'ewallet-proof-preview' : 'proof-preview';
+  const proofPreview = document.getElementById(previewId);
   
-  paymentProofInput.value = '';
-  proofPreview.style.display = 'none';
-  proofPreview.innerHTML = '';
+  if (proofInput) {
+    proofInput.value = '';
+  }
+  if (proofPreview) {
+    proofPreview.style.display = 'none';
+    proofPreview.innerHTML = '';
+  }
 }
 
 // Show toast notification

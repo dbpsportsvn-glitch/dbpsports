@@ -117,10 +117,10 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'customer_name', 'colored_status', 'colored_payment_status', 'total_amount', 'payment_proof_status', 'created_at']
+    list_display = ['order_number', 'customer_name', 'colored_status', 'colored_payment_status', 'total_amount', 'payment_proof_status', 'payment_proof_info', 'created_at']
     list_filter = ['status', 'payment_status', 'created_at', 'shipping_city']
     search_fields = ['order_number', 'customer_name', 'customer_email', 'customer_phone']
-    readonly_fields = ['order_number', 'created_at', 'updated_at']
+    readonly_fields = ['order_number', 'payment_proof_link', 'created_at', 'updated_at']
     inlines = [OrderItemInline]
     list_per_page = 25
     date_hierarchy = 'created_at'
@@ -137,7 +137,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('shipping_address', 'shipping_city', 'shipping_district')
         }),
         ('Thông tin thanh toán', {
-            'fields': ('subtotal', 'shipping_fee', 'total_amount', 'payment_proof')
+            'fields': ('subtotal', 'shipping_fee', 'total_amount', 'payment_proof_link', 'payment_proof')
         }),
         ('Ghi chú', {
             'fields': ('notes',)
@@ -205,8 +205,12 @@ class OrderAdmin(admin.ModelAdmin):
     def payment_proof_status(self, obj):
         """Hiển thị trạng thái hóa đơn chuyển khoản"""
         if obj.payment_proof:
+            import os
+            file_name = os.path.basename(obj.payment_proof.name)
             return format_html(
-                '<span style="color: #16a34a; font-weight: bold;">✓ Đã upload</span>'
+                '<a href="{}" target="_blank" download="{}" style="color: #16a34a; font-weight: bold; text-decoration: none;">✓ Đã upload</a>',
+                obj.payment_proof.url,
+                file_name
             )
         elif obj.payment_status == 'paid':
             return format_html(
@@ -221,6 +225,54 @@ class OrderAdmin(admin.ModelAdmin):
                 '<span style="color: #f59e0b; font-weight: bold;">⚠ Chưa có</span>'
             )
     payment_proof_status.short_description = "Hóa đơn"
+    
+    def payment_proof_info(self, obj):
+        """Hiển thị thông tin file hóa đơn"""
+        if obj.payment_proof:
+            import os
+            file_name = os.path.basename(obj.payment_proof.name)
+            file_size = obj.payment_proof.size if hasattr(obj.payment_proof, 'size') else 0
+            
+            # Format file size
+            if file_size > 1024 * 1024:  # MB
+                size_str = f"{file_size / (1024 * 1024):.1f} MB"
+            elif file_size > 1024:  # KB
+                size_str = f"{file_size / 1024:.1f} KB"
+            else:
+                size_str = f"{file_size} bytes"
+            
+            return format_html(
+                '<div style="font-size: 0.85rem;">'
+                '<div style="color: #374151; font-weight: 500;">{}</div>'
+                '<div style="color: #6b7280;">{}</div>'
+                '</div>',
+                file_name,
+                size_str
+            )
+        return '-'
+    payment_proof_info.short_description = "File Info"
+    
+    def payment_proof_link(self, obj):
+        """Hiển thị link download hóa đơn"""
+        if obj.payment_proof:
+            import os
+            file_name = os.path.basename(obj.payment_proof.name)
+            return format_html(
+                '<div style="padding: 0.5rem; background: #f3f4f6; border-radius: 4px;">'
+                '<a href="{}" target="_blank" download="{}" style="color: #dc2626; font-weight: 600; text-decoration: none; margin-right: 1rem; padding: 0.25rem 0.5rem; background: #fef2f2; border-radius: 3px; border: 1px solid #fecaca;">'
+                '<i class="fas fa-download"></i> Tải xuống</a>'
+                '<a href="{}" target="_blank" style="color: #0ea5e9; font-weight: 600; text-decoration: none; padding: 0.25rem 0.5rem; background: #eff6ff; border-radius: 3px; border: 1px solid #bfdbfe;">'
+                '<i class="fas fa-eye"></i> Xem</a>'
+                '<div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">{}</div>'
+                '</div>',
+                obj.payment_proof.url,
+                file_name,
+                obj.payment_proof.url,
+                file_name
+            )
+        return format_html('<span style="color: #6b7280;">Không có file</span>')
+    payment_proof_link.short_description = "Download Hóa Đơn"
+    payment_proof_link.allow_tags = True
     
     def total_amount(self, obj):
         """Hiển thị tổng tiền với định dạng đẹp"""

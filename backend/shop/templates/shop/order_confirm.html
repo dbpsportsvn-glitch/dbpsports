@@ -550,8 +550,16 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Populate payment method
   if (checkoutData.payment_method) {
-    const paymentMethodText = checkoutData.payment_method === 'cod' ? 
-      'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng';
+    let paymentMethodText = 'Chuyển khoản ngân hàng'; // Default
+    
+    if (checkoutData.payment_method === 'cod') {
+      paymentMethodText = 'Thanh toán khi nhận hàng (COD)';
+    } else if (checkoutData.payment_method === 'e_wallet') {
+      paymentMethodText = 'Ví điện tử';
+    } else if (checkoutData.payment_method === 'bank_transfer') {
+      paymentMethodText = 'Chuyển khoản ngân hàng';
+    }
+    
     document.getElementById('payment-method').textContent = paymentMethodText;
     document.getElementById('form-payment-method').value = checkoutData.payment_method;
   }
