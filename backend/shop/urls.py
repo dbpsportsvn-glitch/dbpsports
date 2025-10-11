@@ -23,9 +23,12 @@ urlpatterns = [
     
     # Thanh toán và đơn hàng
     path('checkout/', views.checkout, name='checkout'),
+    path('order/confirm/', views.order_confirm, name='order_confirm'),
     path('order/place/', views.place_order, name='place_order'),
     path('orders/', views.order_list, name='order_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    path('orders/<int:order_id>/reorder/', views.reorder, name='reorder'),
     
     # Import sản phẩm (chỉ admin)
     path('import/', views.import_product_view, name='import_product'),

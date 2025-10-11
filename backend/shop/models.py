@@ -286,6 +286,9 @@ class Order(models.Model):
     # Ghi chú
     notes = models.TextField(blank=True, verbose_name="Ghi chú")
     
+    # Payment proof
+    payment_proof = models.ImageField(upload_to='shop/payment_proofs/', blank=True, null=True, verbose_name="Hóa đơn chuyển khoản")
+    
     # Thời gian
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -330,7 +333,9 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         """Tổng giá của sản phẩm trong đơn hàng"""
-        return self.price * self.quantity
+        if self.price is not None and self.quantity is not None:
+            return self.price * self.quantity
+        return 0
 
 
 class ShopBanner(models.Model):
@@ -411,3 +416,144 @@ class ProductImport(models.Model):
 
     def __str__(self):
         return f"Import: {self.source_url}"
+
+
+class PaymentMethod(models.Model):
+    """Phương thức thanh toán"""
+    PAYMENT_TYPE_CHOICES = [
+        ('bank_transfer', 'Chuyển khoản ngân hàng'),
+        ('e_wallet', 'Ví điện tử'),
+        ('cod', 'Thanh toán khi nhận hàng'),
+    ]
+    
+    name = models.CharField(max_length=100, verbose_name="Tên phương thức")
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, verbose_name="Loại thanh toán")
+    description = models.TextField(blank=True, verbose_name="Mô tả")
+    icon = models.CharField(max_length=50, default='fas fa-credit-card', verbose_name="Icon")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Phương thức thanh toán"
+        verbose_name_plural = "Phương thức thanh toán"
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class BankAccount(models.Model):
+    """Tài khoản ngân hàng"""
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='bank_accounts', verbose_name="Phương thức thanh toán")
+    bank_name = models.CharField(max_length=100, verbose_name="Tên ngân hàng")
+    account_holder = models.CharField(max_length=100, verbose_name="Chủ tài khoản")
+    account_number = models.CharField(max_length=50, verbose_name="Số tài khoản")
+    branch = models.CharField(max_length=100, blank=True, verbose_name="Chi nhánh")
+    qr_code = models.ImageField(upload_to='shop/qr_codes/', blank=True, null=True, verbose_name="QR Code")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Tài khoản ngân hàng"
+        verbose_name_plural = "Tài khoản ngân hàng"
+        ordering = ['order', 'bank_name']
+    
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number}"
+
+
+class EWalletAccount(models.Model):
+    """Tài khoản ví điện tử"""
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.CASCADE, related_name='ewallet_accounts', verbose_name="Phương thức thanh toán")
+    wallet_name = models.CharField(max_length=100, verbose_name="Tên ví")
+    account_info = models.CharField(max_length=200, verbose_name="Thông tin tài khoản")
+    qr_code = models.ImageField(upload_to='shop/qr_codes/', blank=True, null=True, verbose_name="QR Code")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Tài khoản ví điện tử"
+        verbose_name_plural = "Tài khoản ví điện tử"
+        ordering = ['order', 'wallet_name']
+    
+    def __str__(self):
+        return f"{self.wallet_name} - {self.account_info}"
+
+
+class PaymentStep(models.Model):
+    """Bước trong quy trình thanh toán"""
+    title = models.CharField(max_length=200, verbose_name="Tiêu đề")
+    description = models.TextField(verbose_name="Mô tả")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Bước thanh toán"
+        verbose_name_plural = "Bước thanh toán"
+        ordering = ['order']
+    
+    def __str__(self):
+        return f"{self.order}. {self.title}"
+
+
+class ContactInfo(models.Model):
+    """Thông tin liên hệ hỗ trợ"""
+    CONTACT_TYPE_CHOICES = [
+        ('phone', 'Điện thoại'),
+        ('email', 'Email'),
+        ('messenger', 'Facebook Messenger'),
+        ('zalo', 'Zalo'),
+        ('other', 'Khác'),
+    ]
+    
+    contact_type = models.CharField(max_length=20, choices=CONTACT_TYPE_CHOICES, verbose_name="Loại liên hệ")
+    name = models.CharField(max_length=100, verbose_name="Tên")
+    value = models.CharField(max_length=200, verbose_name="Giá trị")
+    description = models.CharField(max_length=200, blank=True, verbose_name="Mô tả")
+    icon = models.CharField(max_length=50, default='fas fa-phone', verbose_name="Icon")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Thông tin liên hệ"
+        verbose_name_plural = "Thông tin liên hệ"
+        ordering = ['order', 'contact_type']
+    
+    def __str__(self):
+        return f"{self.name} - {self.value}"
+
+
+class PaymentPolicy(models.Model):
+    """Chính sách thanh toán"""
+    POLICY_TYPE_CHOICES = [
+        ('warning', 'Lưu ý quan trọng'),
+        ('success', 'Chính sách đổi trả'),
+        ('info', 'Thông tin khác'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name="Tiêu đề")
+    content = models.TextField(verbose_name="Nội dung")
+    policy_type = models.CharField(max_length=20, choices=POLICY_TYPE_CHOICES, verbose_name="Loại chính sách")
+    icon = models.CharField(max_length=50, default='fas fa-info-circle', verbose_name="Icon")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Chính sách thanh toán"
+        verbose_name_plural = "Chính sách thanh toán"
+        ordering = ['order', 'policy_type']
+    
+    def __str__(self):
+        return self.title

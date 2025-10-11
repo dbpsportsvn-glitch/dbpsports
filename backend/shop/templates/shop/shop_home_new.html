@@ -408,7 +408,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge new">Mới</div>
           </div>
           <div class="product-info">
@@ -459,7 +463,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge bestseller">Bán chạy</div>
           </div>
           <div class="product-info">
@@ -506,7 +514,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge sport">Bóng đá</div>
           </div>
           <div class="product-info">
@@ -556,7 +568,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge sport">Pickleball</div>
           </div>
           <div class="product-info">
@@ -607,7 +623,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge featured">Nổi bật</div>
           </div>
           <div class="product-info">
@@ -655,7 +675,11 @@
       <div class="col-lg-3 col-md-6 mb-4">
         <div class="product-card">
           <div class="product-image">
-            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
             <div class="product-badge" style="background: var(--info);">Mới</div>
           </div>
           <div class="product-info">

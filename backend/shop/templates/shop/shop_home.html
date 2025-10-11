@@ -1346,7 +1346,7 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
     
     <div class="carousel-inner">
       {% for banner in banners %}
-      <div class="carousel-item {% if forloop.first %}active{% endif %}" style="background-image: url('{{ banner.main_image.url }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+      <div class="carousel-item {% if forloop.first %}active{% endif %}" style="background-image: url('{% if banner.main_image %}{{ banner.main_image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
         <div class="carousel-overlay"></div>
         <div class="container">
           <div class="row align-items-center">

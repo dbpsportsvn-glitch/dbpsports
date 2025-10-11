@@ -3,32 +3,148 @@
 
 {% block title %}Thông Tin Thanh Toán - DBP Sports{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-.payment-info-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --gradient-sunset: linear-gradient(135deg, #fbbf24 0%, #f59e0b 25%, #dc2626 75%, #991b1b 100%);
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Hero Section - Đồng bộ với shop */
+.payment-hero-section {
+  background: var(--gradient-sunset);
   color: white;
   padding: 4rem 0;
+  position: relative;
+  overflow: hidden;
   margin-bottom: 3rem;
 }
 
+.payment-hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.payment-hero-content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+.payment-hero-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.payment-hero-subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-weight: 300;
+}
+
+.payment-hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(15px);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Section Titles - Đồng bộ với shop */
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: var(--dark);
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+}
+
+/* Payment Methods Grid */
 .payment-methods {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .payment-method {
   background: white;
-  border-radius: 15px;
+  border-radius: var(--border-radius-lg);
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-method::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-primary);
 }
 
 .payment-method:hover {
   transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
 .payment-method h3 {
@@ -36,121 +152,286 @@
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .payment-method .icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: var(--primary);
+  width: 40px;
+  height: 40px;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Payment Steps */
 .payment-steps {
   background: var(--light);
-  border-radius: 15px;
-  padding: 2rem;
-  margin-bottom: 3rem;
+  border-radius: var(--border-radius-lg);
+  padding: 3rem;
+  margin-bottom: 4rem;
 }
 
 .step {
   display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--primary);
+}
+
+.step:hover {
+  transform: translateX(5px);
+  box-shadow: var(--shadow);
 }
 
 .step-number {
-  background: var(--primary);
+  background: var(--gradient-primary);
   color: white;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  margin-right: 1rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin-right: 1.5rem;
   flex-shrink: 0;
+  box-shadow: var(--shadow);
 }
 
+.step h5 {
+  color: var(--dark);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.step p {
+  color: var(--secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Contact Info */
 .contact-info {
   background: white;
-  border-radius: 15px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 3rem;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
-  padding: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
   background: var(--light);
-  border-radius: 10px;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--primary);
+}
+
+.contact-item:hover {
+  transform: translateX(5px);
+  background: rgba(220, 38, 38, 0.05);
 }
 
 .contact-item .icon {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: var(--primary);
-  margin-right: 1rem;
-  width: 30px;
-  text-align: center;
+  margin-right: 1.5rem;
+  width: 50px;
+  height: 50px;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.qr-code {
-  text-align: center;
+.contact-item strong {
+  color: var(--dark);
+  font-weight: 700;
+}
+
+/* Info Boxes */
+.info-box {
+  border-radius: var(--border-radius);
+  padding: 2rem;
   margin: 2rem 0;
-}
-
-.qr-code img {
-  max-width: 200px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-left: 4px solid;
 }
 
 .warning-box {
   background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin: 2rem 0;
-}
-
-.warning-box .icon {
-  color: #856404;
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
+  border-color: #f59e0b;
+  color: #92400e;
 }
 
 .success-box {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin: 2rem 0;
+  background: #d1fae5;
+  border-color: #16a34a;
+  color: #065f46;
 }
 
-.success-box .icon {
-  color: #155724;
+.info-box h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.info-box .icon {
   font-size: 1.5rem;
-  margin-right: 0.5rem;
+}
+
+.info-box ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Call to Action */
+.cta-section {
+  background: var(--light);
+  padding: 4rem 0;
+  margin-top: 3rem;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.btn-cta {
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.btn-cta-primary {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+}
+
+.btn-cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  color: white;
+}
+
+.btn-cta-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+
+.btn-cta-outline:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payment-hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .payment-hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .payment-methods {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .payment-method {
+    padding: 1.5rem;
+  }
+  
+  .payment-steps {
+    padding: 2rem;
+  }
+  
+  .step {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .step-number {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-cta {
+    width: 100%;
+    max-width: 300px;
+  }
 }
 </style>
+{% endblock %}
 
+{% block content %}
 <!-- Hero Section -->
-<section class="payment-info-section">
+<section class="payment-hero-section">
   <div class="container">
     <div class="row justify-content-center text-center">
       <div class="col-lg-8">
-        <h1 class="display-4 fw-bold mb-4">
-          <i class="fas fa-credit-card me-3"></i>
-          Thông Tin Thanh Toán
-        </h1>
-        <p class="lead">
-          Hướng dẫn chi tiết các phương thức thanh toán và quy trình đặt hàng tại DBP Sports
-        </p>
+        <div class="payment-hero-content">
+          <div class="payment-hero-badge">
+            <i class="fas fa-shield-alt me-2"></i>
+            THANH TOÁN AN TOÀN & BẢO MẬT
+          </div>
+          <h1 class="payment-hero-title">
+            <i class="fas fa-credit-card me-3"></i>
+            Thông Tin Thanh Toán
+          </h1>
+          <p class="payment-hero-subtitle">
+            Hướng dẫn chi tiết các phương thức thanh toán và quy trình đặt hàng tại DBP Sports
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -160,7 +441,7 @@
   <!-- Phương thức thanh toán -->
   <div class="row">
     <div class="col-12">
-      <h2 class="text-center mb-5">
+      <h2 class="section-title">
         <i class="fas fa-wallet me-2"></i>
         Phương Thức Thanh Toán
       </h2>
@@ -168,247 +449,139 @@
   </div>
 
   <div class="payment-methods">
-    <!-- Chuyển khoản ngân hàng -->
+    {% for payment_method in payment_methods %}
     <div class="payment-method">
       <h3>
-        <i class="fas fa-university icon"></i>
-        Chuyển Khoản Ngân Hàng
+        <i class="{{ payment_method.icon }} icon"></i>
+        {{ payment_method.name }}
       </h3>
+      {% if payment_method.description %}
       <p class="text-muted mb-3">
-        Thanh toán qua chuyển khoản ngân hàng - An toàn và nhanh chóng
+        {{ payment_method.description }}
       </p>
+      {% endif %}
       
-      <div class="contact-info">
-        <h5 class="mb-3">Thông tin tài khoản:</h5>
-        
-        <div class="contact-item">
-          <i class="fas fa-university icon"></i>
-          <div>
-            <strong>Ngân hàng:</strong> Vietcombank<br>
-            <strong>Chủ tài khoản:</strong> DBP Sports<br>
-            <strong>Số tài khoản:</strong> 1234567890
+      {% if payment_method.payment_type == 'bank_transfer' %}
+        <div class="contact-info">
+          <h5 class="mb-3">Thông tin tài khoản:</h5>
+          {% for bank_account in payment_method.bank_accounts.all %}
+          <div class="contact-item">
+            <i class="fas fa-university icon"></i>
+            <div>
+              <strong>Ngân hàng:</strong> {{ bank_account.bank_name }}<br>
+              <strong>Chủ tài khoản:</strong> {{ bank_account.account_holder }}<br>
+              <strong>Số tài khoản:</strong> {{ bank_account.account_number }}
+              {% if bank_account.branch %}<br><strong>Chi nhánh:</strong> {{ bank_account.branch }}{% endif %}
+              {% if bank_account.qr_code %}
+              <div class="qr-code mt-2">
+                <img src="{{ bank_account.qr_code.url }}" alt="QR Code {{ bank_account.bank_name }}" style="max-width: 150px;">
+              </div>
+              {% endif %}
+            </div>
           </div>
+          {% endfor %}
         </div>
-        
-        <div class="contact-item">
-          <i class="fas fa-university icon"></i>
-          <div>
-            <strong>Ngân hàng:</strong> Techcombank<br>
-            <strong>Chủ tài khoản:</strong> DBP Sports<br>
-            <strong>Số tài khoản:</strong> 0987654321
+      {% elif payment_method.payment_type == 'e_wallet' %}
+        <div class="contact-info">
+          {% for ewallet_account in payment_method.ewallet_accounts.all %}
+          <div class="contact-item">
+            <i class="{{ payment_method.icon }} icon"></i>
+            <div>
+              <strong>{{ ewallet_account.wallet_name }}:</strong> {{ ewallet_account.account_info }}
+              {% if ewallet_account.qr_code %}
+              <div class="qr-code mt-2">
+                <img src="{{ ewallet_account.qr_code.url }}" alt="QR Code {{ ewallet_account.wallet_name }}" style="max-width: 150px;">
+              </div>
+              {% endif %}
+            </div>
           </div>
+          {% endfor %}
         </div>
-        
-        <div class="contact-item">
-          <i class="fas fa-university icon"></i>
-          <div>
-            <strong>Ngân hàng:</strong> BIDV<br>
-            <strong>Chủ tài khoản:</strong> DBP Sports<br>
-            <strong>Số tài khoản:</strong> 1122334455
-          </div>
+      {% elif payment_method.payment_type == 'cod' %}
+        <div class="success-box info-box">
+          <h4>
+            <i class="fas fa-check-circle icon"></i>
+            Thông Tin COD
+          </h4>
+          <ul>
+            <li><strong>Phí COD:</strong> Miễn phí</li>
+            <li><strong>Phạm vi:</strong> Toàn quốc</li>
+            <li><strong>Thời gian:</strong> 1-3 ngày làm việc</li>
+          </ul>
         </div>
-      </div>
+      {% endif %}
     </div>
-
-    <!-- Ví điện tử -->
-    <div class="payment-method">
-      <h3>
-        <i class="fas fa-mobile-alt icon"></i>
-        Ví Điện Tử
-      </h3>
-      <p class="text-muted mb-3">
-        Thanh toán qua các ví điện tử phổ biến
-      </p>
-      
-      <div class="contact-info">
-        <div class="contact-item">
-          <i class="fab fa-cc-paypal icon"></i>
-          <div>
-            <strong>PayPal:</strong> dbpsports@gmail.com
-          </div>
-        </div>
-        
-        <div class="contact-item">
-          <i class="fas fa-qrcode icon"></i>
-          <div>
-            <strong>MoMo:</strong> 0901234567
-          </div>
-        </div>
-        
-        <div class="contact-item">
-          <i class="fas fa-qrcode icon"></i>
-          <div>
-            <strong>ZaloPay:</strong> 0901234567
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Thanh toán khi nhận hàng -->
-    <div class="payment-method">
-      <h3>
-        <i class="fas fa-truck icon"></i>
-        COD (Thanh Toán Khi Nhận Hàng)
-      </h3>
-      <p class="text-muted mb-3">
-        Thanh toán bằng tiền mặt khi nhận hàng
-      </p>
-      
-      <div class="success-box">
-        <i class="fas fa-check-circle icon"></i>
-        <strong>Phí COD:</strong> Miễn phí<br>
-        <strong>Phạm vi:</strong> Toàn quốc<br>
-        <strong>Thời gian:</strong> 1-3 ngày làm việc
-      </div>
-    </div>
+    {% endfor %}
   </div>
 
   <!-- Quy trình đặt hàng -->
   <div class="payment-steps">
-    <h2 class="text-center mb-5">
+    <h2 class="section-title">
       <i class="fas fa-list-ol me-2"></i>
       Quy Trình Đặt Hàng
     </h2>
     
+    {% for step in payment_steps %}
     <div class="step">
-      <div class="step-number">1</div>
+      <div class="step-number">{{ forloop.counter }}</div>
       <div>
-        <h5>Chọn sản phẩm</h5>
-        <p class="text-muted mb-0">Duyệt và chọn sản phẩm bạn muốn mua từ cửa hàng</p>
+        <h5>{{ step.title }}</h5>
+        <p class="text-muted mb-0">{{ step.description }}</p>
       </div>
     </div>
-    
-    <div class="step">
-      <div class="step-number">2</div>
-      <div>
-        <h5>Thêm vào giỏ hàng</h5>
-        <p class="text-muted mb-0">Thêm sản phẩm vào giỏ hàng và kiểm tra thông tin</p>
-      </div>
-    </div>
-    
-    <div class="step">
-      <div class="step-number">3</div>
-      <div>
-        <h5>Chọn phương thức thanh toán</h5>
-        <p class="text-muted mb-0">Chọn phương thức thanh toán phù hợp với bạn</p>
-      </div>
-    </div>
-    
-    <div class="step">
-      <div class="step-number">4</div>
-      <div>
-        <h5>Xác nhận đơn hàng</h5>
-        <p class="text-muted mb-0">Kiểm tra và xác nhận thông tin đơn hàng</p>
-      </div>
-    </div>
-    
-    <div class="step">
-      <div class="step-number">5</div>
-      <div>
-        <h5>Thanh toán</h5>
-        <p class="text-muted mb-0">Thực hiện thanh toán theo phương thức đã chọn</p>
-      </div>
-    </div>
-    
-    <div class="step">
-      <div class="step-number">6</div>
-      <div>
-        <h5>Nhận hàng</h5>
-        <p class="text-muted mb-0">Nhận hàng và kiểm tra chất lượng sản phẩm</p>
-      </div>
-    </div>
+    {% endfor %}
   </div>
 
   <!-- Thông tin liên hệ -->
   <div class="row">
     <div class="col-lg-8 mx-auto">
       <div class="contact-info">
-        <h2 class="text-center mb-4">
+        <h2 class="section-title">
           <i class="fas fa-headset me-2"></i>
           Hỗ Trợ Khách Hàng
         </h2>
         
+        {% for contact in contact_infos %}
         <div class="contact-item">
-          <i class="fas fa-phone icon"></i>
+          <i class="{{ contact.icon }} icon"></i>
           <div>
-            <strong>Hotline:</strong> 1900 1234<br>
-            <strong>Thời gian:</strong> 8:00 - 22:00 (Tất cả các ngày)
+            <strong>{{ contact.name }}:</strong> {{ contact.value }}
+            {% if contact.description %}<br><strong>Thông tin:</strong> {{ contact.description }}{% endif %}
           </div>
         </div>
-        
-        <div class="contact-item">
-          <i class="fab fa-facebook-messenger icon"></i>
-          <div>
-            <strong>Facebook Messenger:</strong> m.me/dbpsports<br>
-            <strong>Phản hồi:</strong> Trong vòng 5 phút
-          </div>
-        </div>
-        
-        <div class="contact-item">
-          <i class="fas fa-envelope icon"></i>
-          <div>
-            <strong>Email:</strong> support@dbpsports.com<br>
-            <strong>Phản hồi:</strong> Trong vòng 24 giờ
-          </div>
-        </div>
-        
-        <div class="contact-item">
-          <i class="fab fa-zalo icon"></i>
-          <div>
-            <strong>Zalo:</strong> 0901234567<br>
-            <strong>Phản hồi:</strong> Trong vòng 10 phút
-          </div>
-        </div>
+        {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- Lưu ý quan trọng -->
-  <div class="warning-box">
+  <!-- Chính sách thanh toán -->
+  {% for policy in payment_policies %}
+  <div class="{% if policy.policy_type == 'warning' %}warning-box{% elif policy.policy_type == 'success' %}success-box{% else %}info-box{% endif %} info-box">
     <h4>
-      <i class="fas fa-exclamation-triangle icon"></i>
-      Lưu Ý Quan Trọng
+      <i class="{{ policy.icon }} icon"></i>
+      {{ policy.title }}
     </h4>
-    <ul class="mb-0">
-      <li>Vui lòng chuyển khoản đúng số tiền và ghi rõ nội dung chuyển khoản</li>
-      <li>Sau khi chuyển khoản, vui lòng gửi ảnh biên lai qua Zalo/Facebook để xác nhận</li>
-      <li>Đơn hàng sẽ được xử lý trong vòng 24 giờ sau khi xác nhận thanh toán</li>
-      <li>Chúng tôi chỉ giao hàng đến địa chỉ đã đăng ký trong đơn hàng</li>
-      <li>Vui lòng kiểm tra hàng trước khi thanh toán (đối với COD)</li>
-    </ul>
+    <div>{{ policy.content|linebreaks }}</div>
   </div>
-
-  <!-- Chính sách đổi trả -->
-  <div class="success-box">
-    <h4>
-      <i class="fas fa-shield-alt icon"></i>
-      Chính Sách Đổi Trả
-    </h4>
-    <ul class="mb-0">
-      <li><strong>Đổi trả miễn phí:</strong> Trong vòng 7 ngày kể từ ngày nhận hàng</li>
-      <li><strong>Điều kiện:</strong> Sản phẩm còn nguyên tem, chưa sử dụng</li>
-      <li><strong>Hoàn tiền:</strong> 100% giá trị sản phẩm (trừ phí vận chuyển)</li>
-      <li><strong>Bảo hành:</strong> Theo chính sách của từng nhà sản xuất</li>
-    </ul>
-  </div>
+  {% endfor %}
 </div>
 
 <!-- Call to Action -->
-<section class="py-5" style="background: var(--light);">
+<section class="cta-section">
   <div class="container text-center">
     <h3 class="mb-4">Cần Hỗ Trợ Thêm?</h3>
     <p class="lead mb-4">Đội ngũ chăm sóc khách hàng của chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
-    <div class="d-flex justify-content-center gap-3 flex-wrap">
-      <a href="tel:19001234" class="btn btn-primary btn-lg">
-        <i class="fas fa-phone me-2"></i>
+    <div class="cta-buttons">
+      <a href="tel:19001234" class="btn-cta btn-cta-primary">
+        <i class="fas fa-phone"></i>
         Gọi Ngay: 1900 1234
       </a>
-      <a href="https://m.me/dbpsports" target="_blank" class="btn btn-outline-primary btn-lg">
-        <i class="fab fa-facebook-messenger me-2"></i>
+      <a href="https://m.me/dbpsports" target="_blank" class="btn-cta btn-cta-outline">
+        <i class="fab fa-facebook-messenger"></i>
         Chat Facebook
       </a>
-      <a href="https://zalo.me/0901234567" target="_blank" class="btn btn-outline-success btn-lg">
-        <i class="fab fa-zalo me-2"></i>
+      <a href="https://zalo.me/0901234567" target="_blank" class="btn-cta btn-cta-outline">
+        <i class="fab fa-zalo"></i>
         Chat Zalo
       </a>
     </div>

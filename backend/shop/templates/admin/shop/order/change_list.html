@@ -1,0 +1,192 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.stats-container {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stats-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.stat-card.pending .stat-number { color: #f59e0b; }
+.stat-card.processing .stat-number { color: #0ea5e9; }
+.stat-card.shipped .stat-number { color: #16a34a; }
+.stat-card.delivered .stat-number { color: #16a34a; }
+.stat-card.cancelled .stat-number { color: #dc2626; }
+.stat-card.payment-pending .stat-number { color: #f59e0b; }
+.stat-card.payment-paid .stat-number { color: #16a34a; }
+
+.alert-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.alert-title {
+    font-weight: bold;
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.alert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #ffeaa7;
+}
+
+.alert-item:last-child {
+    border-bottom: none;
+}
+
+.alert-count {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content_title %}
+{{ block.super }}
+{% endblock %}
+
+{% block result_list %}
+<div class="stats-container">
+    <div class="stats-title">
+        <i class="fas fa-chart-bar"></i> Thống kê đơn hàng
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_orders }}</div>
+            <div class="stat-label">Tổng đơn hàng</div>
+        </div>
+        
+        <div class="stat-card pending">
+            <div class="stat-number">{{ pending_orders }}</div>
+            <div class="stat-label">Chờ xử lý</div>
+        </div>
+        
+        <div class="stat-card processing">
+            <div class="stat-number">{{ processing_orders }}</div>
+            <div class="stat-label">Đang xử lý</div>
+        </div>
+        
+        <div class="stat-card shipped">
+            <div class="stat-number">{{ shipped_orders }}</div>
+            <div class="stat-label">Đã giao hàng</div>
+        </div>
+        
+        <div class="stat-card delivered">
+            <div class="stat-number">{{ delivered_orders }}</div>
+            <div class="stat-label">Đã nhận hàng</div>
+        </div>
+        
+        <div class="stat-card cancelled">
+            <div class="stat-number">{{ cancelled_orders }}</div>
+            <div class="stat-label">Đã hủy</div>
+        </div>
+        
+        <div class="stat-card payment-pending">
+            <div class="stat-number">{{ pending_payment }}</div>
+            <div class="stat-label">Chờ thanh toán</div>
+        </div>
+        
+        <div class="stat-card payment-paid">
+            <div class="stat-number">{{ paid_orders }}</div>
+            <div class="stat-label">Đã thanh toán</div>
+        </div>
+    </div>
+</div>
+
+{% if pending_orders > 0 or pending_payment > 0 %}
+<div class="alert-section">
+    <div class="alert-title">
+        <i class="fas fa-exclamation-triangle"></i> Cần xử lý
+    </div>
+    
+    {% if pending_orders > 0 %}
+    <div class="alert-item">
+        <span>Đơn hàng chờ xử lý</span>
+        <span class="alert-count">{{ pending_orders }}</span>
+    </div>
+    {% endif %}
+    
+    {% if pending_payment > 0 %}
+    <div class="alert-item">
+        <span>Đơn hàng chờ thanh toán</span>
+        <span class="alert-count">{{ pending_payment }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Xác nhận đơn hàng - Shop Thể Thao{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header */
+.page-header {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 3rem 0;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+/* Confirmation Content */
+.confirmation-content {
+  margin-bottom: 3rem;
+}
+
+.confirmation-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title i {
+  color: var(--primary);
+  font-size: 1.3rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--secondary);
+  min-width: 120px;
+}
+
+.info-value {
+  font-weight: 500;
+  color: var(--dark);
+  text-align: right;
+  flex: 1;
+}
+
+/* Order Items */
+.order-items {
+  margin-bottom: 2rem;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--light);
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+}
+
+.item-image {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.25rem;
+}
+
+.item-details {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  margin-bottom: 0.5rem;
+}
+
+.item-price {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.item-quantity {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  margin-top: 0.25rem;
+}
+
+/* Summary */
+.summary-section {
+  background: var(--light);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--dark);
+}
+
+.summary-label {
+  color: var(--secondary);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.summary-total {
+  color: var(--success);
+  font-size: 1.5rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-confirm {
+  flex: 1;
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-confirm:hover {
+  background: #157347;
+  transform: translateY(-2px);
+}
+
+.btn-back {
+  flex: 1;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-back:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .confirmation-card {
+    padding: 1.5rem;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .item-image {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">Xác nhận đơn hàng</h1>
+        <p class="page-subtitle">Vui lòng kiểm tra lại thông tin trước khi đặt hàng</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Confirmation Content -->
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Customer Information -->
+      <div class="confirmation-card">
+        <h2 class="section-title">
+          <i class="fas fa-user"></i>
+          Thông tin khách hàng
+        </h2>
+        
+        <div class="info-row">
+          <span class="info-label">Họ và tên:</span>
+          <span class="info-value" id="customer-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+        </div>
+        
+        <div class="info-row">
+          <span class="info-label">Email:</span>
+          <span class="info-value" id="customer-email">{{ request.user.email }}</span>
+        </div>
+        
+        <div class="info-row">
+          <span class="info-label">Số điện thoại:</span>
+          <span class="info-value" id="customer-phone">Chưa cập nhật</span>
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="confirmation-card">
+        <h2 class="section-title">
+          <i class="fas fa-map-marker-alt"></i>
+          Địa chỉ giao hàng
+        </h2>
+        
+        <div class="info-row">
+          <span class="info-label">Địa chỉ:</span>
+          <span class="info-value" id="shipping-address">Chưa cập nhật</span>
+        </div>
+        
+        <div class="info-row">
+          <span class="info-label">Tỉnh/Thành phố:</span>
+          <span class="info-value" id="shipping-city">Chưa cập nhật</span>
+        </div>
+        
+        <div class="info-row">
+          <span class="info-label">Quận/Huyện:</span>
+          <span class="info-value" id="shipping-district">Chưa cập nhật</span>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="confirmation-card">
+        <h2 class="section-title">
+          <i class="fas fa-credit-card"></i>
+          Phương thức thanh toán
+        </h2>
+        
+        <div class="info-row">
+          <span class="info-label">Phương thức:</span>
+          <span class="info-value" id="payment-method">Thanh toán khi nhận hàng (COD)</span>
+        </div>
+      </div>
+
+      <!-- Order Notes -->
+      <div class="confirmation-card" id="notes-section" style="display: none;">
+        <h2 class="section-title">
+          <i class="fas fa-sticky-note"></i>
+          Ghi chú đơn hàng
+        </h2>
+        
+        <div class="info-row">
+          <span class="info-label">Ghi chú:</span>
+          <span class="info-value" id="order-notes">Không có ghi chú</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <!-- Order Summary -->
+      <div class="confirmation-card">
+        <h2 class="section-title">
+          <i class="fas fa-shopping-cart"></i>
+          Tóm tắt đơn hàng
+        </h2>
+        
+        <div class="order-items">
+          {% for item in cart.items.all %}
+          <div class="order-item">
+            <div class="item-image">
+              {% if item.product.main_image %}
+                <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" loading="lazy">
+              {% else %}
+                <img src="{% static 'images/no-image.png' %}" alt="{{ item.product.name }}" loading="lazy">
+              {% endif %}
+            </div>
+            
+            <div class="item-info">
+              <h4 class="item-name">{{ item.product.name }}</h4>
+              <div class="item-details">{{ item.product.category.name }}</div>
+              <div class="item-price">
+                {% if item.product.is_on_sale %}
+                  {{ item.product.sale_price|vnd_format }}
+                {% else %}
+                  {{ item.product.price|vnd_format }}
+                {% endif %}
+              </div>
+              <div class="item-quantity">Số lượng: {{ item.quantity }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        
+        <div class="summary-section">
+          <div class="summary-row">
+            <span class="summary-label">Tạm tính:</span>
+            <span class="summary-value">{{ cart.total_price|vnd_format }}</span>
+          </div>
+          
+          <div class="summary-row">
+            <span class="summary-label">Phí vận chuyển:</span>
+            <span class="summary-value">
+              {% if cart.total_price >= 500000 %}
+                Miễn phí
+              {% else %}
+                30.000đ
+              {% endif %}
+            </span>
+          </div>
+          
+          <div class="summary-row">
+            <span class="summary-label">Tổng cộng:</span>
+            <span class="summary-value summary-total">
+              {% if cart.total_price >= 500000 %}
+                {{ cart.total_price|vnd_format }}
+              {% else %}
+                {{ total_amount|vnd_format }}
+              {% endif %}
+            </span>
+          </div>
+          
+          {% if cart.total_price < 500000 %}
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Mua thêm {{ remaining_amount|floatformat:0 }}đ để được miễn phí vận chuyển
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <a href="{% url 'shop:checkout' %}" class="btn-back">
+      <i class="fas fa-arrow-left"></i>
+      Quay lại chỉnh sửa
+    </a>
+    
+    <button type="button" class="btn-confirm" id="confirm-order-btn">
+      <i class="fas fa-check"></i>
+      Xác nhận đặt hàng
+    </button>
+  </div>
+</div>
+
+<!-- Hidden Form -->
+<form id="order-form" method="POST" action="{% url 'shop:place_order' %}" style="display: none;">
+  {% csrf_token %}
+  <input type="hidden" name="customer_name" id="form-customer-name">
+  <input type="hidden" name="customer_email" id="form-customer-email">
+  <input type="hidden" name="customer_phone" id="form-customer-phone">
+  <input type="hidden" name="shipping_address" id="form-shipping-address">
+  <input type="hidden" name="shipping_city" id="form-shipping-city">
+  <input type="hidden" name="shipping_district" id="form-shipping-district">
+  <input type="hidden" name="payment_method" id="form-payment-method">
+  <input type="hidden" name="notes" id="form-notes">
+  <input type="hidden" name="payment_proof" id="form-payment-proof">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Get data from localStorage (set by checkout page)
+  const checkoutData = JSON.parse(localStorage.getItem('checkoutData') || '{}');
+  
+  // Populate customer information
+  if (checkoutData.customer_name) {
+    document.getElementById('customer-name').textContent = checkoutData.customer_name;
+    document.getElementById('form-customer-name').value = checkoutData.customer_name;
+  }
+  
+  if (checkoutData.customer_email) {
+    document.getElementById('customer-email').textContent = checkoutData.customer_email;
+    document.getElementById('form-customer-email').value = checkoutData.customer_email;
+  }
+  
+  if (checkoutData.customer_phone) {
+    document.getElementById('customer-phone').textContent = checkoutData.customer_phone;
+    document.getElementById('form-customer-phone').value = checkoutData.customer_phone;
+  }
+  
+  // Populate shipping address
+  if (checkoutData.shipping_address) {
+    document.getElementById('shipping-address').textContent = checkoutData.shipping_address;
+    document.getElementById('form-shipping-address').value = checkoutData.shipping_address;
+  }
+  
+  if (checkoutData.shipping_city) {
+    document.getElementById('shipping-city').textContent = checkoutData.shipping_city;
+    document.getElementById('form-shipping-city').value = checkoutData.shipping_city;
+  }
+  
+  if (checkoutData.shipping_district) {
+    document.getElementById('shipping-district').textContent = checkoutData.shipping_district;
+    document.getElementById('form-shipping-district').value = checkoutData.shipping_district;
+  }
+  
+  // Populate payment method
+  if (checkoutData.payment_method) {
+    const paymentMethodText = checkoutData.payment_method === 'cod' ? 
+      'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản ngân hàng';
+    document.getElementById('payment-method').textContent = paymentMethodText;
+    document.getElementById('form-payment-method').value = checkoutData.payment_method;
+  }
+  
+  // Populate notes
+  if (checkoutData.notes) {
+    document.getElementById('order-notes').textContent = checkoutData.notes;
+    document.getElementById('form-notes').value = checkoutData.notes;
+    document.getElementById('notes-section').style.display = 'block';
+  }
+  
+  // Populate payment proof
+  if (checkoutData.payment_proof) {
+    document.getElementById('form-payment-proof').value = 'uploaded';
+  }
+  
+  // Confirm order button
+  document.getElementById('confirm-order-btn').addEventListener('click', function() {
+    const button = this;
+    const originalText = button.innerHTML;
+    
+    // Show loading
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+    button.disabled = true;
+    
+    // Submit form
+    document.getElementById('order-form').submit();
+  });
+});
+</script>
+{% endblock %}

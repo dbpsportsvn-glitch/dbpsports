@@ -9,11 +9,33 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 import json
 
-from .models import Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport
+from .models import (
+    Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
+    PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy
+)
 
 def payment_info(request):
     """Trang thông tin thanh toán"""
-    return render(request, 'shop/payment_info.html')
+    # Lấy các phương thức thanh toán
+    payment_methods = PaymentMethod.objects.filter(is_active=True).order_by('order')
+    
+    # Lấy các bước thanh toán
+    payment_steps = PaymentStep.objects.filter(is_active=True).order_by('order')
+    
+    # Lấy thông tin liên hệ
+    contact_infos = ContactInfo.objects.filter(is_active=True).order_by('order')
+    
+    # Lấy các chính sách thanh toán
+    payment_policies = PaymentPolicy.objects.filter(is_active=True).order_by('order')
+    
+    context = {
+        'payment_methods': payment_methods,
+        'payment_steps': payment_steps,
+        'contact_infos': contact_infos,
+        'payment_policies': payment_policies,
+    }
+    
+    return render(request, 'shop/payment_info.html', context)
 
 
 def shop_home(request):
@@ -436,15 +458,53 @@ def checkout(request):
     free_shipping_threshold = 500000
     remaining_amount = max(0, free_shipping_threshold - cart.total_price)
     
+    # Lấy các phương thức thanh toán
+    payment_methods = PaymentMethod.objects.filter(is_active=True).order_by('order')
+    
     context = {
         'cart': cart,
         'shipping_fee': shipping_fee,
         'total_amount': cart.total_price + shipping_fee,
         'remaining_amount': remaining_amount,
         'free_shipping_threshold': free_shipping_threshold,
+        'payment_methods': payment_methods,
     }
     
     return render(request, 'shop/checkout.html', context)
+
+
+@login_required
+def order_confirm(request):
+    """Trang xác nhận đơn hàng"""
+    cart = get_object_or_404(Cart, user=request.user)
+    
+    if cart.items.count() == 0:
+        messages.warning(request, 'Giỏ hàng của bạn đang trống')
+        return redirect('shop:cart')
+    
+    # Kiểm tra tồn kho sản phẩm
+    for cart_item in cart.items.all():
+        if cart_item.product.stock_quantity < cart_item.quantity:
+            messages.error(request, f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho. Số lượng còn lại: {cart_item.product.stock_quantity}')
+            return redirect('shop:cart')
+        
+        if cart_item.product.stock_quantity == 0:
+            messages.error(request, f'Sản phẩm "{cart_item.product.name}" đã hết hàng')
+            return redirect('shop:cart')
+    
+    # Tính phí vận chuyển
+    shipping_fee = 0 if cart.total_price >= 500000 else 30000
+    remaining_amount = max(0, 500000 - cart.total_price)
+    total_amount = cart.total_price + shipping_fee
+    
+    context = {
+        'cart': cart,
+        'shipping_fee': shipping_fee,
+        'total_amount': total_amount,
+        'remaining_amount': remaining_amount,
+    }
+    
+    return render(request, 'shop/order_confirm.html', context)
 
 
 @login_required
@@ -458,6 +518,16 @@ def place_order(request):
             messages.error(request, 'Giỏ hàng của bạn đang trống')
             return redirect('shop:cart')
         
+        # Kiểm tra tồn kho sản phẩm
+        for cart_item in cart.items.all():
+            if cart_item.product.stock_quantity < cart_item.quantity:
+                messages.error(request, f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho. Số lượng còn lại: {cart_item.product.stock_quantity}')
+                return redirect('shop:cart')
+            
+            if cart_item.product.stock_quantity == 0:
+                messages.error(request, f'Sản phẩm "{cart_item.product.name}" đã hết hàng')
+                return redirect('shop:cart')
+        
         # Lấy thông tin từ form
         customer_name = request.POST.get('customer_name')
         customer_email = request.POST.get('customer_email')
@@ -466,6 +536,32 @@ def place_order(request):
         shipping_city = request.POST.get('shipping_city')
         shipping_district = request.POST.get('shipping_district')
         notes = request.POST.get('notes', '')
+        payment_proof = request.FILES.get('payment_proof')
+        
+        # Validation
+        if not customer_name or not customer_name.strip():
+            messages.error(request, 'Vui lòng nhập họ và tên')
+            return redirect('shop:checkout')
+        
+        if not customer_phone or not customer_phone.strip():
+            messages.error(request, 'Vui lòng nhập số điện thoại')
+            return redirect('shop:checkout')
+        
+        if not customer_email or not customer_email.strip():
+            messages.error(request, 'Vui lòng nhập email')
+            return redirect('shop:checkout')
+        
+        if not shipping_address or not shipping_address.strip():
+            messages.error(request, 'Vui lòng nhập địa chỉ chi tiết')
+            return redirect('shop:checkout')
+        
+        if not shipping_city or not shipping_city.strip():
+            messages.error(request, 'Vui lòng chọn tỉnh/thành phố')
+            return redirect('shop:checkout')
+        
+        if not shipping_district or not shipping_district.strip():
+            messages.error(request, 'Vui lòng nhập quận/huyện')
+            return redirect('shop:checkout')
         
         # Tính phí vận chuyển
         shipping_fee = 0 if cart.total_price >= 500000 else 30000
@@ -483,7 +579,8 @@ def place_order(request):
             subtotal=cart.total_price,
             shipping_fee=shipping_fee,
             total_amount=total_amount,
-            notes=notes
+            notes=notes,
+            payment_proof=payment_proof
         )
         
         # Tạo các sản phẩm trong đơn hàng
@@ -537,6 +634,84 @@ def order_list(request):
     }
     
     return render(request, 'shop/order_list.html', context)
+
+
+@login_required
+@require_POST
+def cancel_order(request, order_id):
+    """Hủy đơn hàng"""
+    try:
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        
+        # Chỉ cho phép hủy đơn hàng đang chờ xử lý
+        if order.status != 'pending':
+            return JsonResponse({
+                'success': False,
+                'message': 'Chỉ có thể hủy đơn hàng đang chờ xử lý'
+            })
+        
+        # Cập nhật trạng thái đơn hàng
+        order.status = 'cancelled'
+        order.save()
+        
+        # Hoàn lại số lượng tồn kho
+        for item in order.items.all():
+            item.product.stock_quantity += item.quantity
+            item.product.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Đã hủy đơn hàng thành công'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': 'Có lỗi xảy ra khi hủy đơn hàng'
+        })
+
+
+@login_required
+@require_POST
+def reorder(request, order_id):
+    """Đặt lại đơn hàng"""
+    try:
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        
+        # Lấy hoặc tạo giỏ hàng
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Thêm các sản phẩm từ đơn hàng vào giỏ hàng
+        added_items = 0
+        for item in order.items.all():
+            # Kiểm tra tồn kho
+            if item.product.stock_quantity >= item.quantity:
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=cart,
+                    product=item.product,
+                    defaults={'quantity': item.quantity}
+                )
+                if not created:
+                    cart_item.quantity += item.quantity
+                    cart_item.save()
+                added_items += 1
+        
+        if added_items > 0:
+            return JsonResponse({
+                'success': True,
+                'message': f'Đã thêm {added_items} sản phẩm vào giỏ hàng'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Không thể đặt lại vì sản phẩm không còn đủ hàng'
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': 'Có lỗi xảy ra khi đặt lại đơn hàng'
+        })
 
 
 @staff_member_required
