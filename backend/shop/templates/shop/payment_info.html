@@ -48,6 +48,13 @@
   background-position: bottom;
 }
 
+.back-to-shop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
 .payment-hero-content {
   position: relative;
   z-index: 2;
@@ -417,6 +424,14 @@
 <!-- Hero Section -->
 <section class="payment-hero-section">
   <div class="container">
+    <!-- Back to Shop Button -->
+    <div class="back-to-shop">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
+        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+    
     <div class="row justify-content-center text-center">
       <div class="col-lg-8">
         <div class="payment-hero-content">

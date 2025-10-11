@@ -47,6 +47,13 @@
   background-position: bottom;
 }
 
+.back-to-shop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
 .page-title {
   font-size: 2.5rem;
   font-weight: 900;
@@ -403,6 +410,14 @@
 <!-- Page Header -->
 <section class="page-header">
   <div class="container">
+    <!-- Back to Shop Button -->
+    <div class="back-to-shop">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
+        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+    
     <div class="row">
       <div class="col-12 text-center">
         <h1 class="page-title">Lịch sử đơn hàng</h1>
