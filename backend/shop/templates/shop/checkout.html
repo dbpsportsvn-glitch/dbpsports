@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
+{% load custom_filters %}
 
 {% block title %}Thanh toán - Shop Thể Thao{% endblock %}
 
@@ -602,9 +602,9 @@
                   <h4 class="item-name">{{ item.product.name }}</h4>
                   <div class="item-price">
                     {% if item.product.is_on_sale %}
-                      {{ item.product.sale_price|intcomma }}đ
+                      {{ item.product.sale_price|vnd_format }}
                     {% else %}
-                      {{ item.product.price|intcomma }}đ
+                      {{ item.product.price|vnd_format }}
                     {% endif %}
                   </div>
                   <div class="item-quantity">Số lượng: {{ item.quantity }}</div>
@@ -615,7 +615,7 @@
             
             <div class="summary-row">
               <span class="summary-label">Tạm tính:</span>
-              <span class="summary-value">{{ cart.total_price|intcomma }}đ</span>
+              <span class="summary-value">{{ cart.total_price|vnd_format }}</span>
             </div>
             
             <div class="summary-row">
@@ -633,9 +633,9 @@
               <span class="summary-label">Tổng cộng:</span>
               <span class="summary-value summary-total">
                 {% if cart.total_price >= 500000 %}
-                  {{ cart.total_price|intcomma }}đ
+                  {{ cart.total_price|vnd_format }}
                 {% else %}
-                  {{ total_amount|intcomma }}đ
+                  {{ total_amount|vnd_format }}
                 {% endif %}
               </span>
             </div>

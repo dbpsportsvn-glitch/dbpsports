@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
+{% load custom_filters %}
 
 {% block title %}{{ product.name }} - Shop Thể Thao{% endblock %}
 
@@ -663,11 +663,11 @@
 
           <div class="product-price">
             {% if product.is_on_sale %}
-              <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-              <span class="original-price">{{ product.price|intcomma }}đ</span>
+              <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+              <span class="original-price">{{ product.price|vnd_format }}</span>
               <span class="discount-badge">Giảm {{ product.discount_percentage }}%</span>
             {% else %}
-              <span class="current-price">{{ product.price|intcomma }}đ</span>
+              <span class="current-price">{{ product.price|vnd_format }}</span>
             {% endif %}
           </div>
 
@@ -754,10 +754,10 @@
           <h3 class="product-name">{{ related_product.name }}</h3>
           <div class="product-price">
             {% if related_product.is_on_sale %}
-              <span class="current-price">{{ related_product.sale_price|intcomma }}đ</span>
-              <span class="original-price">{{ related_product.price|intcomma }}đ</span>
+              <span class="current-price">{{ related_product.sale_price|vnd_format }}</span>
+              <span class="original-price">{{ related_product.price|vnd_format }}</span>
             {% else %}
-              <span class="current-price">{{ related_product.price|intcomma }}đ</span>
+              <span class="current-price">{{ related_product.price|vnd_format }}</span>
             {% endif %}
           </div>
           <div class="product-actions">
@@ -790,10 +790,10 @@
           <h3 class="product-name">{{ bestseller.name }}</h3>
           <div class="product-price">
             {% if bestseller.is_on_sale %}
-              <span class="current-price">{{ bestseller.sale_price|intcomma }}đ</span>
-              <span class="original-price">{{ bestseller.price|intcomma }}đ</span>
+              <span class="current-price">{{ bestseller.sale_price|vnd_format }}</span>
+              <span class="original-price">{{ bestseller.price|vnd_format }}</span>
             {% else %}
-              <span class="current-price">{{ bestseller.price|intcomma }}đ</span>
+              <span class="current-price">{{ bestseller.price|vnd_format }}</span>
             {% endif %}
           </div>
           <div class="product-actions">

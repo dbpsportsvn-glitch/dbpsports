@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
+{% load custom_filters %}
 
 {% block title %}Shop Thể Thao - DBP Sports{% endblock %}
 
@@ -1085,10 +1085,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1129,10 +1129,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1180,10 +1180,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1227,10 +1227,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1277,10 +1277,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1328,10 +1328,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">
@@ -1377,10 +1377,10 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
             <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
             <div class="product-price">
               {% if product.is_on_sale %}
-                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
-                <span class="original-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.sale_price|vnd_format }}</span>
+                <span class="original-price">{{ product.price|vnd_format }}</span>
               {% else %}
-                <span class="current-price">{{ product.price|intcomma }}đ</span>
+                <span class="current-price">{{ product.price|vnd_format }}</span>
               {% endif %}
             </div>
             <div class="product-actions">

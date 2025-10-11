@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load humanize %}
+{% load custom_filters %}
 
 {% block title %}Giỏ hàng - Shop Thể Thao{% endblock %}
 
@@ -460,10 +460,10 @@
               <p class="item-category">{{ item.product.category.name }}</p>
               <div class="item-price">
                 {% if item.product.is_on_sale %}
-                  {{ item.product.sale_price|intcomma }}đ
-                  <span class="original-price">{{ item.product.price|intcomma }}đ</span>
+                  {{ item.product.sale_price|vnd_format }}
+                  <span class="original-price">{{ item.product.price|vnd_format }}</span>
                 {% else %}
-                  {{ item.product.price|intcomma }}đ
+                  {{ item.product.price|vnd_format }}
                 {% endif %}
               </div>
             </div>
@@ -477,7 +477,7 @@
             </div>
             
             <div class="item-total" id="total-{{ item.id }}">
-              {{ item.total_price|intcomma }}đ
+              {{ item.total_price|vnd_format }}
             </div>
             
             <div class="item-actions">
@@ -497,7 +497,7 @@
           
           <div class="summary-row">
             <span class="summary-label">Tạm tính:</span>
-            <span class="summary-value" id="subtotal">{{ cart.total_price|intcomma }}đ</span>
+            <span class="summary-value" id="subtotal">{{ cart.total_price|vnd_format }}</span>
           </div>
           
           <div class="summary-row">
@@ -515,7 +515,7 @@
             <span class="summary-label">Tổng cộng:</span>
             <span class="summary-value summary-total" id="total">
               {% if cart.total_price >= 500000 %}
-                {{ cart.total_price|intcomma }}đ
+                {{ cart.total_price|vnd_format }}
               {% else %}
                 {{ cart.total_price|add:30000|floatformat:0 }}đ
               {% endif %}
@@ -525,7 +525,7 @@
           {% if cart.total_price < 500000 %}
           <div class="alert alert-info mt-3">
             <i class="fas fa-info-circle me-2"></i>
-            Mua thêm {{ remaining_amount|intcomma }}đ để được miễn phí vận chuyển
+            Mua thêm {{ remaining_amount|vnd_format }} để được miễn phí vận chuyển
           </div>
           {% endif %}
           
