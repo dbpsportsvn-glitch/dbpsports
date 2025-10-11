@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Blog - Tin Tức & Review Sản Phẩm{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --light: #f8fafc;
+  --dark: #1e293b;
+  --gold: #fbbf24;
+  --gradient-sunset: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+  --gradient-hero: linear-gradient(135deg, #1e293b 0%, #374151 100%);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Blog Hero Section */
+.blog-hero {
+  background: var(--gradient-sunset);
+  color: white;
+  padding: 4rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-to-shop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.back-to-shop .btn {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.blog-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.blog-hero .container {
+  position: relative;
+  z-index: 2;
+}
+
+.blog-hero h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.blog-hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+/* Blog Cards */
+.blog-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.blog-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.blog-card-image {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.blog-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.blog-card:hover .blog-card-image img {
+  transform: scale(1.05);
+}
+
+.blog-card-content {
+  padding: 1.5rem;
+}
+
+.blog-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-type {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.blog-card-type.review {
+  background: var(--success);
+}
+
+.blog-card-type.guide {
+  background: var(--info);
+}
+
+.blog-card-type.tips {
+  background: var(--warning);
+}
+
+.blog-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.blog-card-title a {
+  color: var(--dark);
+  text-decoration: none;
+}
+
+.blog-card-title a:hover {
+  color: var(--primary);
+}
+
+.blog-card-excerpt {
+  color: var(--secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.blog-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--light);
+}
+
+.blog-card-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-stats i {
+  margin-right: 0.25rem;
+}
+
+/* Section Headers */
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: var(--gradient-sunset);
+  border-radius: 2px;
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Categories & Tags */
+.blog-sidebar {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.blog-sidebar h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--light);
+}
+
+.category-list, .tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list li, .tag-list li {
+  margin-bottom: 0.75rem;
+}
+
+.category-list a, .tag-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--light);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  color: var(--dark);
+  transition: all 0.3s ease;
+}
+
+.category-list a:hover, .tag-list a:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateX(5px);
+}
+
+.tag-list a {
+  background: transparent;
+  border: 2px solid var(--light);
+  padding: 0.5rem 1rem;
+}
+
+.tag-list a:hover {
+  border-color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .blog-hero h1 {
+    font-size: 2rem;
+  }
+  
+  .blog-hero p {
+    font-size: 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .blog-card-content {
+    padding: 1rem;
+  }
+  
+  .blog-card-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back to Shop Button -->
+<div class="container mt-3 mb-4">
+  <div class="row">
+    <div class="col-12">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-primary" style="display: inline-flex; align-items: center;">
+        <span style="font-size: 1rem; color: inherit; display: inline-block; visibility: visible; opacity: 1; margin-right: 0.5rem;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Blog Hero Section -->
+<section class="blog-hero">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1>Blog DBP Sports</h1>
+        <p>Tin tức thể thao, review sản phẩm và mẹo hay từ chuyên gia</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Posts -->
+{% if featured_posts %}
+<section class="py-5">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Bài Viết Nổi Bật</h2>
+      <p class="section-subtitle">Những bài viết được quan tâm nhất</p>
+    </div>
+    <div class="row">
+      {% for post in featured_posts %}
+      <div class="col-lg-4 col-md-6 mb-4">
+        <div class="blog-card">
+          <div class="blog-card-image">
+            {% if post.featured_image %}
+              <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                <i class="fas fa-image fa-3x text-muted"></i>
+              </div>
+            {% endif %}
+          </div>
+          <div class="blog-card-content">
+            <div class="blog-card-meta">
+              <span class="blog-card-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+              <span><i class="fas fa-calendar me-1"></i>{{ post.published_at|date:"d/m/Y" }}</span>
+            </div>
+            <h3 class="blog-card-title">
+              <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+            </h3>
+            <p class="blog-card-excerpt">{{ post.excerpt|truncatechars:120 }}</p>
+            <div class="blog-card-footer">
+              <div class="blog-card-author">
+                <i class="fas fa-user"></i>
+                <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+              </div>
+              <div class="blog-card-stats">
+                <span><i class="fas fa-eye"></i>{{ post.view_count }}</span>
+                <span><i class="fas fa-heart"></i>{{ post.like_count }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Main Content -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row">
+      <!-- Blog Posts -->
+      <div class="col-lg-8">
+        <!-- Latest Posts -->
+        {% if latest_posts %}
+        <div class="section-header text-start">
+          <h2 class="section-title">Bài Viết Mới Nhất</h2>
+        </div>
+        <div class="row">
+          {% for post in latest_posts %}
+          <div class="col-md-6 mb-4">
+            <div class="blog-card">
+              <div class="blog-card-image">
+                {% if post.featured_image %}
+                  <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                    <i class="fas fa-image fa-2x text-muted"></i>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="blog-card-content">
+                <div class="blog-card-meta">
+                  <span class="blog-card-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+                  <span><i class="fas fa-calendar me-1"></i>{{ post.published_at|date:"d/m/Y" }}</span>
+                </div>
+                <h3 class="blog-card-title">
+                  <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h3>
+                <p class="blog-card-excerpt">{{ post.excerpt|truncatechars:100 }}</p>
+                <div class="blog-card-footer">
+                  <div class="blog-card-author">
+                    <i class="fas fa-user"></i>
+                    <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                  </div>
+                  <div class="blog-card-stats">
+                    <span><i class="fas fa-eye"></i>{{ post.view_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- News Posts -->
+        {% if news_posts %}
+        <div class="section-header text-start mt-5">
+          <h2 class="section-title">Tin Tức Thể Thao</h2>
+        </div>
+        <div class="row">
+          {% for post in news_posts %}
+          <div class="col-md-6 mb-4">
+            <div class="blog-card">
+              <div class="blog-card-image">
+                {% if post.featured_image %}
+                  <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                    <i class="fas fa-newspaper fa-2x text-muted"></i>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="blog-card-content">
+                <div class="blog-card-meta">
+                  <span class="blog-card-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+                  <span><i class="fas fa-calendar me-1"></i>{{ post.published_at|date:"d/m/Y" }}</span>
+                </div>
+                <h3 class="blog-card-title">
+                  <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h3>
+                <p class="blog-card-excerpt">{{ post.excerpt|truncatechars:100 }}</p>
+                <div class="blog-card-footer">
+                  <div class="blog-card-author">
+                    <i class="fas fa-user"></i>
+                    <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                  </div>
+                  <div class="blog-card-stats">
+                    <span><i class="fas fa-eye"></i>{{ post.view_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Review Posts -->
+        {% if review_posts %}
+        <div class="section-header text-start mt-5">
+          <h2 class="section-title">Review Sản Phẩm</h2>
+        </div>
+        <div class="row">
+          {% for post in review_posts %}
+          <div class="col-md-6 mb-4">
+            <div class="blog-card">
+              <div class="blog-card-image">
+                {% if post.featured_image %}
+                  <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                    <i class="fas fa-star fa-2x text-muted"></i>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="blog-card-content">
+                <div class="blog-card-meta">
+                  <span class="blog-card-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+                  <span><i class="fas fa-calendar me-1"></i>{{ post.published_at|date:"d/m/Y" }}</span>
+                </div>
+                <h3 class="blog-card-title">
+                  <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h3>
+                <p class="blog-card-excerpt">{{ post.excerpt|truncatechars:100 }}</p>
+                <div class="blog-card-footer">
+                  <div class="blog-card-author">
+                    <i class="fas fa-user"></i>
+                    <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                  </div>
+                  <div class="blog-card-stats">
+                    <span><i class="fas fa-eye"></i>{{ post.view_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Categories -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-folder me-2"></i>Danh Mục</h3>
+          <ul class="category-list">
+            {% for category in categories %}
+            <li>
+              <a href="{% url 'blog:category' category.slug %}">
+                <span>{{ category.name }}</span>
+                <span class="badge bg-primary">{{ category.blogpost_set.count }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Tags -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-tags me-2"></i>Tags</h3>
+          <ul class="tag-list">
+            {% for tag in tags %}
+            <li>
+              <a href="{% url 'blog:tag' tag.slug %}">
+                <span>{{ tag.name }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-link me-2"></i>Liên Kết Nhanh</h3>
+          <ul class="category-list">
+            <li>
+              <a href="{% url 'blog:post_list' %}">
+                <span><i class="fas fa-list me-2"></i>Tất cả bài viết</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'blog:post_list' %}?type=news">
+                <span><i class="fas fa-newspaper me-2"></i>Tin tức</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'blog:post_list' %}?type=review">
+                <span><i class="fas fa-star me-2"></i>Review sản phẩm</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'shop:home' %}">
+                <span><i class="fas fa-shopping-bag me-2"></i>Cửa hàng</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

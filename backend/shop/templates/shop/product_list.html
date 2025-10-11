@@ -1,0 +1,622 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if current_category %}
+    {{ current_category.name }} - Shop Thể Thao
+  {% else %}
+    Tất cả sản phẩm - Shop Thể Thao
+  {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header - Jogarbola Style */
+.page-header {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+/* Filters */
+.filters-section {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.filter-group {
+  margin-bottom: 1.5rem;
+}
+
+.filter-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box input {
+  padding-left: 3rem;
+  border-radius: var(--border-radius);
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary);
+}
+
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.category-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: var(--dark);
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.category-btn:hover,
+.category-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.sort-select {
+  border-radius: var(--border-radius);
+  border: 2px solid #e9ecef;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.sort-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Products Grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.product-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  height: 100%;
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-image {
+  position: relative;
+  overflow: hidden;
+  height: 250px;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--danger);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.product-badge.featured {
+  background: var(--success);
+}
+
+.product-badge.bestseller {
+  background: var(--warning);
+  color: var(--dark);
+}
+
+.product-badge.sale {
+  background: var(--info);
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+  line-height: 1.4;
+}
+
+.product-description {
+  color: var(--secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.current-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.original-price {
+  font-size: 1rem;
+  color: var(--secondary);
+  text-decoration: line-through;
+}
+
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-add-cart:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-view {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-view:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Pagination */
+.pagination {
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.page-link {
+  border-radius: var(--border-radius);
+  margin: 0 0.25rem;
+  border: 2px solid #e9ecef;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.page-link:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.page-item.active .page-link {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--secondary);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  .product-image {
+    height: 200px;
+  }
+  
+  .filters-section {
+    padding: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">
+          {% if current_category %}
+            {{ current_category.name }}
+          {% else %}
+            Tất cả sản phẩm
+          {% endif %}
+        </h1>
+        <p class="page-subtitle">
+          {% if current_category %}
+            {{ current_category.description|default:"Khám phá các sản phẩm trong danh mục này" }}
+          {% else %}
+            Khám phá bộ sưu tập đồ thể thao chất lượng cao
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <form method="get" id="filter-form">
+      <div class="row">
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">Tìm kiếm sản phẩm</label>
+            <div class="search-box">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" name="search" class="form-control" placeholder="Nhập tên sản phẩm..." value="{{ search }}">
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">Danh mục</label>
+            <div class="category-filter">
+              <a href="{% url 'shop:product_list' %}" class="category-btn {% if not current_category %}active{% endif %}">
+                Tất cả
+              </a>
+              {% for category in categories %}
+              <a href="{% url 'shop:product_list' %}?category={{ category.slug }}" 
+                 class="category-btn {% if current_category.slug == category.slug %}active{% endif %}">
+                {{ category.name }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">Sắp xếp theo</label>
+            <select name="sort" class="form-select sort-select" onchange="document.getElementById('filter-form').submit()">
+              <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Mới nhất</option>
+              <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Giá thấp đến cao</option>
+              <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Giá cao đến thấp</option>
+              <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Tên A-Z</option>
+              <option value="bestseller" {% if sort_by == 'bestseller' %}selected{% endif %}>Bán chạy</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Products Grid -->
+  {% if products %}
+  <div class="products-grid">
+    {% for product in products %}
+    <div class="product-card">
+      <div class="product-image">
+        <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+        {% if product.is_featured %}
+          <div class="product-badge featured">Nổi bật</div>
+        {% elif product.is_bestseller %}
+          <div class="product-badge bestseller">Bán chạy</div>
+        {% elif product.is_on_sale %}
+          <div class="product-badge sale">Giảm {{ product.discount_percentage }}%</div>
+        {% endif %}
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">{{ product.name }}</h3>
+        <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+        <div class="product-price">
+          {% if product.is_on_sale %}
+            <span class="current-price">{{ product.sale_price|floatformat:0 }}đ</span>
+            <span class="original-price">{{ product.price|floatformat:0 }}đ</span>
+          {% else %}
+            <span class="current-price">{{ product.price|floatformat:0 }}đ</span>
+          {% endif %}
+        </div>
+        <div class="product-actions">
+          <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+            <i class="fas fa-cart-plus me-1"></i>
+            Thêm vào giỏ
+          </button>
+          <a href="{% url 'shop:product_detail' product.slug %}" class="btn-view">
+            <i class="fas fa-eye"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if products.has_other_pages %}
+  <nav aria-label="Phân trang sản phẩm">
+    <ul class="pagination">
+      {% if products.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if current_category %}&category={{ current_category.slug }}{% endif %}&sort={{ sort_by }}">Đầu</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ products.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if current_category %}&category={{ current_category.slug }}{% endif %}&sort={{ sort_by }}">Trước</a>
+        </li>
+      {% endif %}
+
+      {% for num in products.paginator.page_range %}
+        {% if products.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if current_category %}&category={{ current_category.slug }}{% endif %}&sort={{ sort_by }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if products.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ products.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if current_category %}&category={{ current_category.slug }}{% endif %}&sort={{ sort_by }}">Tiếp</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ products.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if current_category %}&category={{ current_category.slug }}{% endif %}&sort={{ sort_by }}">Cuối</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="empty-state">
+    <i class="fas fa-search"></i>
+    <h3>Không tìm thấy sản phẩm</h3>
+    <p>Không có sản phẩm nào phù hợp với tiêu chí tìm kiếm của bạn.</p>
+    <a href="{% url 'shop:product_list' %}" class="btn btn-primary">
+      <i class="fas fa-refresh me-2"></i>
+      Xem tất cả sản phẩm
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addToCart(productId) {
+  const button = event.target;
+  const originalText = button.innerHTML;
+  
+  // Hiển thị loading
+  button.innerHTML = '<span class="loading"></span>';
+  button.disabled = true;
+  
+  fetch('{% url "shop:add_to_cart" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      quantity: 1
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Hiển thị thông báo thành công
+      showNotification(data.message, 'success');
+      
+      // Cập nhật số lượng giỏ hàng trong header (nếu có)
+      const cartCount = document.querySelector('.cart-count');
+      if (cartCount) {
+        cartCount.textContent = data.cart_count;
+      }
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showNotification('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
+  })
+  .finally(() => {
+    // Khôi phục button
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+}
+
+function showNotification(message, type) {
+  // Tạo thông báo
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Tự động ẩn sau 3 giây
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
+// Auto submit form khi tìm kiếm
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.querySelector('input[name="search"]');
+  let searchTimeout;
+  
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      document.getElementById('filter-form').submit();
+    }, 500);
+  });
+});
+</script>
+{% endblock %}

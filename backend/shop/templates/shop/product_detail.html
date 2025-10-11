@@ -1,0 +1,928 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} - Shop Thể Thao{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header - Jogarbola Style */
+.page-header {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-to-shop {
+  position: absolute !important;
+  top: 20px !important;
+  left: 20px !important;
+  z-index: 15 !important;
+}
+
+.back-to-shop .btn {
+  position: relative !important;
+  z-index: 15 !important;
+  pointer-events: auto !important;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+.breadcrumb {
+  background: none;
+  padding: 0;
+  margin: 0;
+}
+
+.breadcrumb-item a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.breadcrumb-item.active {
+  color: var(--secondary);
+}
+
+/* Product Detail */
+.product-detail {
+  margin-bottom: 4rem;
+}
+
+.product-images {
+  position: sticky;
+  top: 2rem;
+}
+
+.main-image {
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.main-image img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.thumbnail-images {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.thumbnail {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.thumbnail:hover,
+.thumbnail.active {
+  border-color: var(--primary);
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-info {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.product-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--dark);
+  line-height: 1.3;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.product-category {
+  background: var(--light);
+  color: var(--primary);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.product-sku {
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.product-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stars {
+  color: #ffc107;
+}
+
+.rating-text {
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.product-price {
+  margin-bottom: 1.5rem;
+}
+
+.current-price {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--success);
+  margin-right: 1rem;
+}
+
+.original-price {
+  font-size: 1.5rem;
+  color: var(--secondary);
+  text-decoration: line-through;
+}
+
+.discount-badge {
+  background: var(--danger);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-left: 1rem;
+}
+
+.product-description {
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  color: var(--dark);
+}
+
+.product-features {
+  margin-bottom: 2rem;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+.feature-list li {
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feature-list li::before {
+  content: '✓';
+  color: var(--success);
+  font-weight: bold;
+}
+
+.product-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.btn-add-cart:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-buy-now {
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+}
+
+.btn-buy-now:hover {
+  background: #157347;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.quantity-label {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.quantity-btn {
+  background: var(--light);
+  border: none;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.quantity-input {
+  border: none;
+  padding: 0.75rem;
+  text-align: center;
+  width: 80px;
+  font-weight: 600;
+}
+
+.quantity-input:focus {
+  outline: none;
+}
+
+.stock-info {
+  margin-bottom: 2rem;
+}
+
+.stock-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.stock-status.in-stock {
+  color: var(--success);
+}
+
+.stock-status.low-stock {
+  color: var(--warning);
+}
+
+.stock-status.out-of-stock {
+  color: var(--danger);
+}
+
+.product-shipping {
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.shipping-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.shipping-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--secondary);
+}
+
+/* Related Products */
+.related-products {
+  margin-top: 4rem;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--dark);
+  text-align: center;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.product-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-image {
+  position: relative;
+  overflow: hidden;
+  height: 200px;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+  line-height: 1.4;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.current-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.original-price {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  text-decoration: line-through;
+}
+
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  min-width: 0;
+}
+
+.btn-add-cart i {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.btn-add-cart:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-view {
+  flex: 1;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.btn-view i {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.btn-view:hover {
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .product-title {
+    font-size: 1.5rem;
+  }
+  
+  .current-price {
+    font-size: 2rem;
+  }
+  
+  .product-actions {
+    flex-direction: column;
+  }
+  
+  .btn-add-cart,
+  .btn-buy-now {
+    min-width: auto;
+  }
+  
+  .main-image img {
+    height: 300px;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <!-- Back to Shop Button -->
+    <div class="back-to-shop">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
+        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+    
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">{{ product.name }}</h1>
+        <p class="page-subtitle">{{ product.summary|default:product.description|truncatewords:20 }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Breadcrumb -->
+<section class="breadcrumb-section">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'shop:home' %}">Shop</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'shop:product_list' %}">Sản phẩm</a></li>
+        <li class="breadcrumb-item active">{{ product.name }}</li>
+      </ol>
+    </nav>
+  </div>
+</section>
+
+<div class="container">
+  <div class="product-detail">
+    <div class="row">
+      <!-- Product Images -->
+      <div class="col-lg-6">
+        <div class="product-images">
+          <div class="main-image">
+            <img id="main-image" src="{{ product.main_image.url }}" alt="{{ product.name }}">
+          </div>
+          {% if product.images.all %}
+          <div class="thumbnail-images">
+            <div class="thumbnail active" onclick="changeMainImage('{{ product.main_image.url }}')">
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}">
+            </div>
+            {% for image in product.images.all %}
+            <div class="thumbnail" onclick="changeMainImage('{{ image.image.url }}')">
+              <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}">
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="col-lg-6">
+        <div class="product-info">
+          <h1 class="product-title">{{ product.name }}</h1>
+          
+          <div class="product-meta">
+            <a href="{% url 'shop:product_list' %}?category={{ product.category.slug }}" class="product-category">
+              {{ product.category.name }}
+            </a>
+            <span class="product-sku">SKU: {{ product.sku }}</span>
+            <div class="product-rating">
+              <div class="stars">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+              </div>
+              <span class="rating-text">(4.8/5)</span>
+            </div>
+          </div>
+
+          <div class="product-price">
+            {% if product.is_on_sale %}
+              <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+              <span class="original-price">{{ product.price|intcomma }}đ</span>
+              <span class="discount-badge">Giảm {{ product.discount_percentage }}%</span>
+            {% else %}
+              <span class="current-price">{{ product.price|intcomma }}đ</span>
+            {% endif %}
+          </div>
+
+          <div class="product-description">
+            {{ product.description|linebreaks }}
+          </div>
+
+          {% if product.weight %}
+          <div class="product-features">
+            <h5>Thông số kỹ thuật:</h5>
+            <ul class="feature-list">
+              <li>Trọng lượng: {{ product.weight }}kg</li>
+              <li>Chất liệu: Cao cấp, bền bỉ</li>
+              <li>Thiết kế: Hiện đại, thời trang</li>
+              <li>Bảo hành: 12 tháng</li>
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="quantity-selector">
+            <span class="quantity-label">Số lượng:</span>
+            <div class="quantity-controls">
+              <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+              <input type="number" class="quantity-input" id="quantity" value="1" min="1" max="{{ product.stock_quantity }}">
+              <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+            </div>
+          </div>
+
+          <div class="stock-info">
+            <div class="stock-status {% if product.stock_quantity > 10 %}in-stock{% elif product.stock_quantity > 0 %}low-stock{% else %}out-of-stock{% endif %}">
+              <i class="fas fa-{% if product.stock_quantity > 10 %}check-circle{% elif product.stock_quantity > 0 %}exclamation-triangle{% else %}times-circle{% endif %}"></i>
+              {% if product.stock_quantity > 10 %}
+                Còn hàng ({{ product.stock_quantity }} sản phẩm)
+              {% elif product.stock_quantity > 0 %}
+                Sắp hết hàng ({{ product.stock_quantity }} sản phẩm)
+              {% else %}
+                Hết hàng
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="product-actions">
+            <button class="btn-add-cart" onclick="addToCart()" {% if product.stock_quantity == 0 %}disabled{% endif %}>
+              <i class="fas fa-cart-plus me-2"></i>
+              Thêm vào giỏ hàng
+            </button>
+            <a href="{% url 'shop:checkout' %}" class="btn-buy-now" {% if product.stock_quantity == 0 %}style="pointer-events: none; opacity: 0.5;"{% endif %}>
+              <i class="fas fa-bolt me-2"></i>
+              Mua ngay
+            </a>
+          </div>
+
+          <div class="product-shipping">
+            <h6 class="shipping-title">Thông tin giao hàng:</h6>
+            <div class="shipping-info">
+              <i class="fas fa-truck"></i>
+              <span>Miễn phí vận chuyển cho đơn hàng từ 500.000đ</span>
+            </div>
+            <div class="shipping-info">
+              <i class="fas fa-clock"></i>
+              <span>Giao hàng trong 2-3 ngày làm việc</span>
+            </div>
+            <div class="shipping-info">
+              <i class="fas fa-shield-alt"></i>
+              <span>Bảo hành chính hãng 12 tháng</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related_products %}
+  <div class="related-products">
+    <h2 class="section-title">Sản phẩm liên quan</h2>
+    <div class="products-grid">
+      {% for related_product in related_products %}
+      <div class="product-card">
+        <div class="product-image">
+          <img src="{{ related_product.main_image.url }}" alt="{{ related_product.name }}" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3 class="product-name">{{ related_product.name }}</h3>
+          <div class="product-price">
+            {% if related_product.is_on_sale %}
+              <span class="current-price">{{ related_product.sale_price|intcomma }}đ</span>
+              <span class="original-price">{{ related_product.price|intcomma }}đ</span>
+            {% else %}
+              <span class="current-price">{{ related_product.price|intcomma }}đ</span>
+            {% endif %}
+          </div>
+          <div class="product-actions">
+            <button class="btn-add-cart" onclick="addToCart({{ related_product.id }})">
+              <i class="fas fa-cart-plus me-1"></i>
+              Thêm vào giỏ
+            </button>
+            <a href="{% url 'shop:product_detail' related_product.slug %}" class="btn-view">
+              <i class="fas fa-eye"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Other Bestsellers -->
+  {% if other_bestsellers %}
+  <div class="related-products">
+    <h2 class="section-title">Sản phẩm bán chạy khác</h2>
+    <div class="products-grid">
+      {% for bestseller in other_bestsellers %}
+      <div class="product-card">
+        <div class="product-image">
+          <img src="{{ bestseller.main_image.url }}" alt="{{ bestseller.name }}" loading="lazy">
+        </div>
+        <div class="product-info">
+          <h3 class="product-name">{{ bestseller.name }}</h3>
+          <div class="product-price">
+            {% if bestseller.is_on_sale %}
+              <span class="current-price">{{ bestseller.sale_price|intcomma }}đ</span>
+              <span class="original-price">{{ bestseller.price|intcomma }}đ</span>
+            {% else %}
+              <span class="current-price">{{ bestseller.price|intcomma }}đ</span>
+            {% endif %}
+          </div>
+          <div class="product-actions">
+            <button class="btn-add-cart" onclick="addToCart({{ bestseller.id }})">
+              <i class="fas fa-shopping-cart me-2"></i>
+              Thêm vào giỏ
+            </button>
+            <a href="{% url 'shop:product_detail' bestseller.slug %}" class="btn-view">
+              <i class="fas fa-eye me-2"></i>
+              Xem chi tiết
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentQuantity = 1;
+const maxQuantity = {{ product.stock_quantity }};
+
+function changeMainImage(imageUrl) {
+  document.getElementById('main-image').src = imageUrl;
+  
+  // Update active thumbnail
+  document.querySelectorAll('.thumbnail').forEach(thumb => {
+    thumb.classList.remove('active');
+  });
+  event.target.closest('.thumbnail').classList.add('active');
+}
+
+function increaseQuantity() {
+  if (currentQuantity < maxQuantity) {
+    currentQuantity++;
+    document.getElementById('quantity').value = currentQuantity;
+  }
+}
+
+function decreaseQuantity() {
+  if (currentQuantity > 1) {
+    currentQuantity--;
+    document.getElementById('quantity').value = currentQuantity;
+  }
+}
+
+function addToCart(productId = null) {
+  const button = event.target;
+  const originalText = button.innerHTML;
+  const quantity = document.getElementById('quantity').value;
+  
+  // Hiển thị loading
+  button.innerHTML = '<span class="loading"></span>';
+  button.disabled = true;
+  
+  const targetProductId = productId || {{ product.id }};
+  
+  fetch('{% url "shop:add_to_cart" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      product_id: targetProductId,
+      quantity: parseInt(quantity)
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Hiển thị thông báo thành công
+      showNotification(data.message, 'success');
+      
+      // Cập nhật số lượng giỏ hàng trong header (nếu có)
+      const cartCount = document.querySelector('.cart-count');
+      if (cartCount) {
+        cartCount.textContent = data.cart_count;
+      }
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showNotification('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
+  })
+  .finally(() => {
+    // Khôi phục button
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+}
+
+function showNotification(message, type) {
+  // Tạo thông báo
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Tự động ẩn sau 3 giây
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
+// Quantity input validation
+document.getElementById('quantity').addEventListener('input', function() {
+  let value = parseInt(this.value);
+  if (value < 1) {
+    this.value = 1;
+    currentQuantity = 1;
+  } else if (value > maxQuantity) {
+    this.value = maxQuantity;
+    currentQuantity = maxQuantity;
+  } else {
+    currentQuantity = value;
+  }
+});
+</script>
+{% endblock %}

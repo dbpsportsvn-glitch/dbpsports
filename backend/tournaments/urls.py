@@ -15,7 +15,6 @@ urlpatterns = [
     path('jobs/', views.job_market_view, name='job_market'),
     path('jobs/<int:pk>/', views.job_detail_view, name='job_detail'),
 
-    path('shop/', views.shop_view, name='shop'),
     path('archive/', views.archive_view, name='archive'),
 
     path('dashboard/announcements/', views.announcement_dashboard, name='announcement_dashboard'),

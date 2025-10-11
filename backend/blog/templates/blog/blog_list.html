@@ -1,0 +1,564 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Danh Sách Bài Viết - Blog DBP Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --light: #f8fafc;
+  --dark: #1e293b;
+  --gold: #fbbf24;
+  --gradient-sunset: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header */
+.page-header {
+  background: var(--gradient-sunset);
+  color: white;
+  padding: 3rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-header .container {
+  position: relative;
+  z-index: 2;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+}
+
+/* Filters */
+.blog-filters {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.filter-group {
+  margin-bottom: 1rem;
+}
+
+.filter-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.filter-group select,
+.filter-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* Blog Cards */
+.blog-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.blog-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.blog-card-image {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.blog-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.blog-card:hover .blog-card-image img {
+  transform: scale(1.05);
+}
+
+.blog-card-content {
+  padding: 1.5rem;
+}
+
+.blog-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-type {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.blog-card-type.review {
+  background: var(--success);
+}
+
+.blog-card-type.guide {
+  background: var(--info);
+}
+
+.blog-card-type.tips {
+  background: var(--warning);
+}
+
+.blog-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.blog-card-title a {
+  color: var(--dark);
+  text-decoration: none;
+}
+
+.blog-card-title a:hover {
+  color: var(--primary);
+}
+
+.blog-card-excerpt {
+  color: var(--secondary);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.blog-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--light);
+}
+
+.blog-card-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-card-stats i {
+  margin-right: 0.25rem;
+}
+
+/* Sidebar */
+.blog-sidebar {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.blog-sidebar h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--light);
+}
+
+.category-list, .tag-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-list li, .tag-list li {
+  margin-bottom: 0.75rem;
+}
+
+.category-list a, .tag-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--light);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  color: var(--dark);
+  transition: all 0.3s ease;
+}
+
+.category-list a:hover, .tag-list a:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateX(5px);
+}
+
+.tag-list a {
+  background: transparent;
+  border: 2px solid var(--light);
+  padding: 0.5rem 1rem;
+}
+
+.tag-list a:hover {
+  border-color: var(--primary);
+}
+
+/* Pagination */
+.pagination {
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.page-link {
+  color: var(--primary);
+  border-color: #e2e8f0;
+}
+
+.page-link:hover {
+  color: var(--primary-dark);
+  background-color: var(--light);
+  border-color: var(--primary);
+}
+
+.page-item.active .page-link {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--secondary);
+}
+
+.no-results i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--light);
+}
+
+.no-results h3 {
+  color: var(--dark);
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .blog-filters {
+    padding: 1.5rem;
+  }
+  
+  .blog-card-content {
+    padding: 1rem;
+  }
+  
+  .blog-card-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">Danh Sách Bài Viết</h1>
+        <p class="page-subtitle">Khám phá những bài viết hay nhất về thể thao và sản phẩm</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Blog Content -->
+<section class="py-5">
+  <div class="container">
+    <div class="row">
+      <!-- Filters -->
+      <div class="col-12">
+        <div class="blog-filters">
+          <form method="GET" class="row">
+            <div class="col-md-3">
+              <div class="filter-group">
+                <label for="category">Danh mục</label>
+                <select name="category" id="category">
+                  <option value="">Tất cả danh mục</option>
+                  {% for category in categories %}
+                  <option value="{{ category.slug }}" {% if current_category == category.slug %}selected{% endif %}>
+                    {{ category.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="filter-group">
+                <label for="type">Loại bài viết</label>
+                <select name="type" id="type">
+                  <option value="">Tất cả loại</option>
+                  <option value="news" {% if current_type == 'news' %}selected{% endif %}>Tin tức</option>
+                  <option value="review" {% if current_type == 'review' %}selected{% endif %}>Review sản phẩm</option>
+                  <option value="guide" {% if current_type == 'guide' %}selected{% endif %}>Hướng dẫn</option>
+                  <option value="tips" {% if current_type == 'tips' %}selected{% endif %}>Mẹo hay</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="filter-group">
+                <label for="search">Tìm kiếm</label>
+                <input type="text" name="search" id="search" placeholder="Nhập từ khóa..." value="{{ current_search }}">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="filter-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="fas fa-search me-2"></i>Tìm kiếm
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Blog Posts -->
+      <div class="col-lg-8">
+        {% if posts %}
+        <div class="row">
+          {% for post in posts %}
+          <div class="col-md-6 mb-4">
+            <div class="blog-card">
+              <div class="blog-card-image">
+                {% if post.featured_image %}
+                  <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="blog-card-content">
+                <div class="blog-card-meta">
+                  <span class="blog-card-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+                  <span><i class="fas fa-calendar me-1"></i>{{ post.published_at|date:"d/m/Y" }}</span>
+                </div>
+                <h3 class="blog-card-title">
+                  <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h3>
+                <p class="blog-card-excerpt">{{ post.excerpt|truncatechars:120 }}</p>
+                <div class="blog-card-footer">
+                  <div class="blog-card-author">
+                    <i class="fas fa-user"></i>
+                    <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                  </div>
+                  <div class="blog-card-stats">
+                    <span><i class="fas fa-eye"></i>{{ post.view_count }}</span>
+                    <span><i class="fas fa-heart"></i>{{ post.like_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if posts.has_other_pages %}
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            {% if posts.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1{% if current_category %}&category={{ current_category }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ posts.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% endif %}
+
+            {% for num in posts.paginator.page_range %}
+              {% if posts.number == num %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+              {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">{{ num }}</a>
+              </li>
+              {% endif %}
+            {% endfor %}
+
+            {% if posts.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ posts.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ posts.paginator.num_pages }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="no-results">
+          <i class="fas fa-search"></i>
+          <h3>Không tìm thấy bài viết nào</h3>
+          <p>Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+          <a href="{% url 'blog:post_list' %}" class="btn btn-primary">
+            <i class="fas fa-refresh me-2"></i>Xem tất cả bài viết
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Categories -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-folder me-2"></i>Danh Mục</h3>
+          <ul class="category-list">
+            {% for category in categories %}
+            <li>
+              <a href="{% url 'blog:category' category.slug %}">
+                <span>{{ category.name }}</span>
+                <span class="badge bg-primary">{{ category.blogpost_set.count }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Tags -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-tags me-2"></i>Tags</h3>
+          <ul class="tag-list">
+            {% for tag in tags %}
+            <li>
+              <a href="{% url 'blog:tag' tag.slug %}">
+                <span>{{ tag.name }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="blog-sidebar">
+          <h3><i class="fas fa-link me-2"></i>Liên Kết Nhanh</h3>
+          <ul class="category-list">
+            <li>
+              <a href="{% url 'blog:home' %}">
+                <span><i class="fas fa-home me-2"></i>Trang chủ blog</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'blog:post_list' %}?type=news">
+                <span><i class="fas fa-newspaper me-2"></i>Tin tức</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'blog:post_list' %}?type=review">
+                <span><i class="fas fa-star me-2"></i>Review sản phẩm</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'shop:home' %}">
+                <span><i class="fas fa-shopping-bag me-2"></i>Cửa hàng</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

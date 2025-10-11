@@ -1,0 +1,1551 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Shop Thể Thao - DBP Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --gradient-sunset: linear-gradient(135deg, #fbbf24 0%, #f59e0b 25%, #dc2626 75%, #991b1b 100%);
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Hero Section - Jogarbola Style */
+.hero-section {
+  background: var(--gradient-sunset);
+  color: white;
+  padding: 8rem 0;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+}
+
+.hero-section .container {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-weight: 300;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.3);
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.hero-btn {
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero-btn:hover {
+  background: rgba(255,255,255,0.3);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* Categories Section */
+.categories-section {
+  padding: 4rem 0;
+  background: var(--light);
+}
+
+.category-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  height: 100%;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.category-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--gradient-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 2rem;
+  color: white;
+}
+
+.category-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.category-count {
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+/* Products Section */
+.products-section {
+  padding: 4rem 0;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: var(--dark);
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+}
+
+.product-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  height: 100%;
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-image {
+  position: relative;
+  overflow: hidden;
+  height: 250px;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--danger);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.product-badge.featured {
+  background: var(--success);
+}
+
+.product-badge.bestseller {
+  background: var(--warning);
+  color: var(--dark);
+}
+
+.product-badge.new {
+  background: var(--info);
+  color: white;
+}
+
+.product-badge.sport {
+  background: var(--primary);
+  color: white;
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+  line-height: 1.4;
+}
+
+.product-description {
+  color: var(--secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.current-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.original-price {
+  font-size: 1rem;
+  color: var(--secondary);
+  text-decoration: line-through;
+}
+
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.btn-add-cart {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.btn-add-cart:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  color: white;
+}
+
+.add-to-cart-btn {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+}
+
+.add-to-cart-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Đảm bảo view-details-btn không bị ảnh hưởng bởi CSS của add-to-cart-btn */
+.product-actions .view-details-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.product-actions .view-details-btn i {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.product-actions .view-details-btn:hover {
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-view {
+  flex: 1;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  min-width: 0;
+}
+
+.btn-view:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Đảm bảo view-details-btn không bị ảnh hưởng bởi CSS của add-to-cart-btn */
+.product-actions .view-details-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  min-height: 45px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.product-actions .view-details-btn i {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.product-actions .view-details-btn:hover {
+  background: var(--primary);
+  color: white;
+  text-decoration: none;
+}
+
+/* Đảm bảo nút hiển thị rõ trên background sáng */
+.products-section[style*="background: var(--light)"] .view-details-btn {
+  background: white !important;
+  color: var(--primary) !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.9rem !important;
+  min-height: 45px !important;
+  min-width: 0 !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 600 !important;
+}
+
+.products-section[style*="background: var(--light)"] .view-details-btn i {
+  display: inline-block !important;
+  margin-right: 0.5rem !important;
+  color: var(--primary) !important;
+}
+
+.products-section[style*="background: var(--light)"] .view-details-btn:hover {
+  background: var(--primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.products-section[style*="background: var(--light)"] .view-details-btn:hover i {
+  color: white !important;
+}
+
+/* CSS với specificity cao nhất để đảm bảo nút hiển thị */
+section.products-section[style*="background: var(--light)"] div.product-actions a.view-details-btn {
+  background: white !important;
+  color: var(--primary) !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.9rem !important;
+  min-height: 45px !important;
+  min-width: 0 !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  flex: 1 !important;
+}
+
+section.products-section[style*="background: var(--light)"] div.product-actions a.view-details-btn i {
+  display: inline-block !important;
+  margin-right: 0.5rem !important;
+  color: var(--primary) !important;
+}
+
+section.products-section[style*="background: var(--light)"] div.product-actions a.view-details-btn:hover {
+  background: var(--primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  text-decoration: none !important;
+}
+
+section.products-section[style*="background: var(--light)"] div.product-actions a.view-details-btn:hover i {
+  color: white !important;
+}
+
+/* Stats Section */
+.stats-section {
+  background: var(--gradient-secondary);
+  color: white;
+  padding: 3rem 0;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .product-image {
+    height: 200px;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.floating-elements {
+  position: relative;
+  height: 400px;
+}
+
+/* Shop Menu Section */
+.shop-menu-section {
+  padding: 1rem 0;
+  background: white;
+  border-bottom: 1px solid var(--light);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.shop-menu-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.shop-search-filter {
+  flex: 0 0 auto;
+}
+
+.search-form {
+  width: 300px;
+}
+
+.search-input {
+  border: 2px solid var(--light);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+}
+
+.search-btn {
+  background: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.shop-menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.shop-menu-item {
+  position: relative;
+}
+
+.shop-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  color: var(--dark);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.shop-menu-link:hover {
+  color: var(--primary);
+  background: rgba(220, 38, 38, 0.1);
+  transform: translateY(-2px);
+}
+
+.shop-menu-link i:first-child {
+  font-size: 1.1rem;
+}
+
+.shop-menu-link .fa-chevron-down {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+}
+
+.shop-menu-item.dropdown .shop-menu-link[aria-expanded="true"] .fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+.shop-menu-item .dropdown-menu {
+  border: none;
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+}
+
+.cart-link {
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.75rem 1rem;
+  color: var(--dark);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  gap: 0.5rem;
+}
+
+.cart-link:hover {
+  color: var(--primary);
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.cart-link i {
+  font-size: 1.3rem !important;
+  color: var(--dark) !important;
+  display: block !important;
+  margin-right: 0.5rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.cart-link:hover i {
+  color: var(--primary) !important;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--danger);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 20px;
+}
+
+.shop-menu-separator {
+  width: 1px;
+  height: 30px;
+  background: var(--light);
+  margin: 0 1rem;
+}
+
+.shop-menu-item .dropdown-item {
+  padding: 0.75rem 1.5rem;
+  color: var(--dark);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.shop-menu-item .dropdown-item:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateX(5px);
+}
+
+.shop-menu-item .dropdown-item i {
+  color: var(--primary);
+  transition: color 0.3s ease;
+}
+
+.shop-menu-item .dropdown-item:hover i {
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .shop-menu-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .search-form {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .shop-menu {
+    gap: 1rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0 1rem;
+  }
+  
+  .shop-menu-link {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+}
+
+/* Filtered Products Section */
+.filtered-products-section {
+  padding: 4rem 0;
+  background: var(--light);
+}
+
+.filtered-products-section .section-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 3rem;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.product-badge.sale {
+  background: var(--danger);
+  color: white;
+}
+
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Shop Menu Section -->
+<section class="shop-menu-section">
+  <div class="container">
+    <div class="shop-menu-wrapper">
+      <!-- Search Filter -->
+      <div class="shop-search-filter">
+        <form method="GET" action="{% url 'shop:home' %}" class="search-form">
+          <div class="input-group">
+            <input type="text" name="search" class="form-control search-input" placeholder="Tìm kiếm sản phẩm..." value="{{ request.GET.search }}">
+            <button type="submit" class="btn btn-primary search-btn">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Shop Menu -->
+      <div class="shop-menu">
+      <div class="shop-menu-item dropdown">
+        <a href="#" class="shop-menu-link dropdown-toggle" id="shopMenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-male"></i>
+          <span>Đồ Nam</span>
+          <i class="fas fa-chevron-down ms-1"></i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="shopMenDropdown">
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=men&type=shoes">
+            <i class="fas fa-shoe-prints me-2"></i>Giày
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=men&type=clothing">
+            <i class="fas fa-tshirt me-2"></i>Quần áo
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=football-shoes">
+            <i class="fas fa-futbol me-2"></i>Giày đá bóng
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=badminton-shoes">
+            <i class="fas fa-shuttle-van me-2"></i>Giày cầu lông
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pickleball-shoes">
+            <i class="fas fa-table-tennis me-2"></i>Giày Pickleball
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=running-shoes">
+            <i class="fas fa-running me-2"></i>Giày chạy bộ
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=basketball-shoes">
+            <i class="fas fa-basketball-ball me-2"></i>Giày bóng rổ
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=polo-shirts">
+            <i class="fas fa-user-tie me-2"></i>Áo polo
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=t-shirts">
+            <i class="fas fa-tshirt me-2"></i>Áo T-shirt
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=jackets">
+            <i class="fas fa-wind me-2"></i>Áo khoác
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pants">
+            <i class="fas fa-user me-2"></i>Quần
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pickleball-apparel">
+            <i class="fas fa-table-tennis me-2"></i>Quần áo pickleball
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=men">
+            <i class="fas fa-list me-2"></i>Tất cả đồ nam
+          </a></li>
+        </ul>
+      </div>
+      <div class="shop-menu-item dropdown">
+        <a href="#" class="shop-menu-link dropdown-toggle" id="shopWomenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-female"></i>
+          <span>Đồ Nữ</span>
+          <i class="fas fa-chevron-down ms-1"></i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="shopWomenDropdown">
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=women&type=shoes">
+            <i class="fas fa-shoe-prints me-2"></i>Giày
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=women&type=clothing">
+            <i class="fas fa-tshirt me-2"></i>Quần áo
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=football-shoes">
+            <i class="fas fa-futbol me-2"></i>Giày đá bóng
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=badminton-shoes">
+            <i class="fas fa-shuttle-van me-2"></i>Giày cầu lông
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pickleball-shoes">
+            <i class="fas fa-table-tennis me-2"></i>Giày Pickleball
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=running-shoes">
+            <i class="fas fa-running me-2"></i>Giày chạy bộ
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=basketball-shoes">
+            <i class="fas fa-basketball-ball me-2"></i>Giày bóng rổ
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=polo-shirts">
+            <i class="fas fa-user-tie me-2"></i>Áo polo
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=t-shirts">
+            <i class="fas fa-tshirt me-2"></i>Áo T-shirt
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=jackets">
+            <i class="fas fa-wind me-2"></i>Áo khoác
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pants">
+            <i class="fas fa-user me-2"></i>Quần
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:product_list' %}?category=pickleball-apparel">
+            <i class="fas fa-table-tennis me-2"></i>Quần áo pickleball
+          </a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?category=women">
+            <i class="fas fa-list me-2"></i>Tất cả đồ nữ
+          </a></li>
+        </ul>
+      </div>
+      <div class="shop-menu-item dropdown">
+        <a href="#" class="shop-menu-link dropdown-toggle" id="shopSportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-futbol"></i>
+          <span>Môn Thể Thao</span>
+          <i class="fas fa-chevron-down ms-1"></i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="shopSportsDropdown">
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?sport=football">
+            <i class="fas fa-futbol me-2"></i>Bóng đá
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?sport=pickleball">
+            <i class="fas fa-table-tennis me-2"></i>Pickleball
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?sport=basketball">
+            <i class="fas fa-basketball-ball me-2"></i>Bóng rổ
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?sport=badminton">
+            <i class="fas fa-shuttle-van me-2"></i>Cầu lông
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'shop:home' %}?sport=running">
+            <i class="fas fa-running me-2"></i>Chạy bộ
+          </a></li>
+        </ul>
+      </div>
+      <div class="shop-menu-item">
+        <a href="{% url 'shop:home' %}?sale=true" class="shop-menu-link">
+          <i class="fas fa-tags"></i>
+          <span>Sale</span>
+        </a>
+      </div>
+      <div class="shop-menu-item">
+        <a href="{% url 'blog:home' %}" class="shop-menu-link">
+          <i class="fas fa-blog"></i>
+          <span>Blog</span>
+        </a>
+      </div>
+      
+      <!-- Separator -->
+      <div class="shop-menu-separator"></div>
+      
+      <!-- Cart -->
+      <div class="shop-menu-item">
+        <a href="{% url 'shop:cart' %}" class="shop-menu-link cart-link" style="display: flex !important; align-items: center !important; gap: 0.3rem !important; padding: 0.5rem 0.75rem !important;">
+          <span style="font-size: 1rem !important; color: #333 !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🛒</span>
+          <span class="cart-count" id="cart-count" style="background: #dc2626 !important; color: white !important; border-radius: 50% !important; width: 18px !important; height: 18px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 0.6rem !important; font-weight: bold !important;">0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Hero Section - Jogarbola Style -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i class="fas fa-star me-2"></i>
+            THƯƠNG HIỆU THỂ THAO CHÍNH HÃNG
+          </div>
+          <h1 class="hero-title">DBP SPORTS</h1>
+          <p class="hero-subtitle">
+            Trang phục thi đấu đội tuyển bóng đá Việt Nam 2025<br>
+            <span style="font-size: 2rem; font-weight: 700; color: var(--gold);">VINH QUANG</span><br>
+            <span style="font-size: 2.5rem; font-weight: 900; color: var(--gold);">VIỆT NAM</span>
+          </p>
+          <a href="{% url 'shop:product_list' %}" class="hero-btn">
+            <i class="fas fa-shopping-bag me-2"></i>
+            Xem ngay
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="text-center position-relative">
+          <!-- Floating elements like Jogarbola -->
+          <div class="floating-elements">
+            <div class="floating-icon" style="position: absolute; top: 20%; left: 10%; animation: float 3s ease-in-out infinite;">
+              <i class="fas fa-futbol" style="font-size: 3rem; color: rgba(255,255,255,0.8);"></i>
+            </div>
+            <div class="floating-icon" style="position: absolute; top: 60%; right: 15%; animation: float 3s ease-in-out infinite 1s;">
+              <i class="fas fa-trophy" style="font-size: 2.5rem; color: var(--gold);"></i>
+            </div>
+            <div class="floating-icon" style="position: absolute; bottom: 30%; left: 20%; animation: float 3s ease-in-out infinite 2s;">
+              <i class="fas fa-medal" style="font-size: 2rem; color: rgba(255,255,255,0.9);"></i>
+            </div>
+          </div>
+          <div class="hero-image-placeholder">
+            <i class="fas fa-users" style="font-size: 12rem; opacity: 0.2; color: white;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Filtered Products Section -->
+{% if filtered_products %}
+<section class="filtered-products-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <h2 class="section-title">
+          {% if current_search %}
+            Kết quả tìm kiếm: "{{ current_search }}"
+          {% elif current_category == 'men' and current_type == 'shoes' %}
+            Giày Nam
+          {% elif current_category == 'men' and current_type == 'clothing' %}
+            Quần Áo Nam
+          {% elif current_category == 'women' and current_type == 'shoes' %}
+            Giày Nữ
+          {% elif current_category == 'women' and current_type == 'clothing' %}
+            Quần Áo Nữ
+          {% elif current_sport == 'football' %}
+            Sản Phẩm Bóng Đá
+          {% elif current_sport == 'pickleball' %}
+            Sản Phẩm Pickleball
+          {% elif current_sale == 'true' %}
+            Sản Phẩm Sale
+          {% else %}
+            Sản Phẩm Được Lọc
+          {% endif %}
+        </h2>
+        {% if current_search %}
+          <p class="text-muted">Tìm thấy {{ filtered_products|length }} sản phẩm</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="row">
+      {% for product in filtered_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if product.is_on_sale %}
+              <div class="product-badge sale">Sale</div>
+            {% elif product.is_featured %}
+              <div class="product-badge featured">Nổi bật</div>
+            {% elif product.is_bestseller %}
+              <div class="product-badge bestseller">Bán chạy</div>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="add-to-cart-btn" data-product-id="{{ product.id }}">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="view-details-btn">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+
+<!-- New Products Section -->
+<section class="products-section">
+  <div class="container">
+    <h2 class="section-title">Sản Phẩm Mới</h2>
+    <div class="row">
+      {% for product in new_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge new">Mới</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="add-to-cart-btn" data-product-id="{{ product.id }}">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="view-details-btn">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center">
+        <p class="text-muted">Chưa có sản phẩm mới nào.</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}?sort=newest" class="btn btn-outline-primary">
+        Xem tất cả sản phẩm mới
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Bestseller Products Section -->
+{% if bestseller_products %}
+<section class="products-section" style="background: var(--light);">
+  <div class="container">
+    <h2 class="section-title">Sản Phẩm Bán Chạy</h2>
+    <div class="row">
+      {% for product in bestseller_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge bestseller">Bán chạy</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="add-to-cart-btn" data-product-id="{{ product.id }}">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="view-details-btn">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}?sort=bestseller" class="btn btn-primary btn-lg">
+        Xem tất cả sản phẩm bán chạy
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Football Products Section -->
+<section class="products-section">
+  <div class="container">
+    <h2 class="section-title">Bóng Đá</h2>
+    <div class="row">
+      {% for product in football_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge sport">Bóng đá</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="add-to-cart-btn" data-product-id="{{ product.id }}">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="view-details-btn">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center">
+        <p class="text-muted">Chưa có sản phẩm bóng đá nào.</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}?sport=football" class="btn btn-outline-primary">
+        Xem tất cả sản phẩm bóng đá
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Pickleball Products Section -->
+<section class="products-section" style="background: var(--light);">
+  <div class="container">
+    <h2 class="section-title">Pickleball</h2>
+    <div class="row">
+      {% for product in pickleball_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge sport">Pickleball</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="add-to-cart-btn" data-product-id="{{ product.id }}">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="view-details-btn">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12 text-center">
+        <p class="text-muted">Chưa có sản phẩm pickleball nào.</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}?sport=pickleball" class="btn btn-outline-primary">
+        Xem tất cả sản phẩm pickleball
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Products -->
+{% if featured_products %}
+<section class="products-section">
+  <div class="container">
+    <h2 class="section-title">Mặt Hàng Tiêu Biểu</h2>
+    <div class="row">
+      {% for product in featured_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge featured">Nổi bật</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="btn-view">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}?sort=bestseller" class="btn btn-primary btn-lg">
+        Xem tất cả sản phẩm nổi bật
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+<!-- Latest Products -->
+{% if latest_products %}
+<section class="products-section">
+  <div class="container">
+    <h2 class="section-title">Sản Phẩm Mới Nhất</h2>
+    <div class="row">
+      {% for product in latest_products %}
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="product-card">
+          <div class="product-image">
+            <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+            <div class="product-badge" style="background: var(--info);">Mới</div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.short_description|truncatewords:15 }}</p>
+            <div class="product-price">
+              {% if product.is_on_sale %}
+                <span class="current-price">{{ product.sale_price|intcomma }}đ</span>
+                <span class="original-price">{{ product.price|intcomma }}đ</span>
+              {% else %}
+                <span class="current-price">{{ product.price|intcomma }}đ</span>
+              {% endif %}
+            </div>
+            <div class="product-actions">
+              <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Thêm vào giỏ
+              </button>
+              <a href="{% url 'shop:product_detail' product.slug %}" class="btn-view">
+                <i class="fas fa-eye me-2"></i>
+                Xem chi tiết
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'shop:product_list' %}" class="btn btn-primary btn-lg">
+        Xem tất cả sản phẩm mới
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+
+
+
+
+<!-- Stats Section -->
+<section class="stats-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-item">
+          <div class="stat-number">1000+</div>
+          <div class="stat-label">Sản phẩm chất lượng</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-item">
+          <div class="stat-number">5000+</div>
+          <div class="stat-label">Khách hàng hài lòng</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Hỗ trợ khách hàng</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-item">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Chính hãng</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addToCart(productId) {
+  const button = event.target;
+  const originalText = button.innerHTML;
+  
+  // Hiển thị loading
+  button.innerHTML = '<span class="loading"></span>';
+  button.disabled = true;
+  
+  fetch('{% url "shop:add_to_cart" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      quantity: 1
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Hiển thị thông báo thành công
+      showNotification(data.message, 'success');
+      
+      // Cập nhật số lượng giỏ hàng trong header (nếu có)
+      const cartCount = document.querySelector('.cart-count');
+      if (cartCount) {
+        cartCount.textContent = data.cart_count;
+      }
+      
+      // Cập nhật số lượng giỏ hàng trong shop menu
+      const shopCartCount = document.getElementById('cart-count');
+      if (shopCartCount) {
+        shopCartCount.textContent = data.cart_count;
+      }
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showNotification('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
+  })
+  .finally(() => {
+    // Khôi phục button
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+}
+
+function showNotification(message, type) {
+  // Tạo thông báo
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Tự động ẩn sau 3 giây
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
+// Load cart count when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadCartCount();
+});
+
+function loadCartCount() {
+  fetch('{% url "shop:cart" %}', {
+    method: 'GET',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.text())
+  .then(html => {
+    // Parse the cart count from the response
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const cartItems = doc.querySelectorAll('.cart-item');
+    const cartCount = cartItems.length;
+    
+    // Update cart count display
+    const cartCountElement = document.getElementById('cart-count');
+    if (cartCountElement) {
+      cartCountElement.textContent = cartCount;
+    }
+  })
+  .catch(error => {
+    console.log('Could not load cart count:', error);
+  });
+}
+</script>
+{% endblock %}

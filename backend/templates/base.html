@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
 
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <style>
     /* === CSS MỚI CHO KÝ HIỆU ĐỘI TRƯỞNG === */
     .captain-indicator{color:#f59e0b;font-weight:700;margin-left:4px}
@@ -68,7 +71,7 @@
 
     <div class="nav-center">
       <div class="main-menu d-flex align-items-center gap-2">
-        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+        <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
 
         {# === DROPDOWN BÓNG ĐÁ === #}
         {% with urln=request.resolver_match.url_name %}
@@ -87,7 +90,7 @@
         </div>
         {% endwith %}
 
-        <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+        <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">Shop</a>
         <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
       </div>
     </div>
@@ -135,7 +138,7 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
-            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.username %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
+            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.email %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
         
             {% if user.player_profile %}
             <li><a class="dropdown-item" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Xem Hồ sơ Cầu thủ</a></li>
@@ -200,7 +203,7 @@
       </div>
       {% endwith %}
 
-      <a class="nav-link {% if request.resolver_match.url_name == 'shop' %}active{% endif %}" href="{% url 'shop' %}">Shop</a>
+      <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">Shop</a>
       <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
 
       {% if not user.is_authenticated %}

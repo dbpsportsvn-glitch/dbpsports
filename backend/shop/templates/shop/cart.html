@@ -1,0 +1,729 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Giỏ hàng - Shop Thể Thao{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header - Jogarbola Style */
+.page-header {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-to-shop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.back-to-shop .btn {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+/* Cart Content */
+.cart-content {
+  margin-bottom: 4rem;
+}
+
+.cart-table {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.cart-header {
+  background: var(--light);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cart-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--dark);
+}
+
+.cart-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.item-image {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+  line-height: 1.4;
+}
+
+.item-category {
+  color: var(--secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.item-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.item-price .original-price {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+}
+
+.item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 1rem;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.quantity-btn {
+  background: var(--light);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--dark);
+}
+
+.quantity-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.quantity-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-input {
+  border: none;
+  padding: 0.5rem;
+  text-align: center;
+  width: 60px;
+  font-weight: 600;
+}
+
+.quantity-input:focus {
+  outline: none;
+}
+
+.item-total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin: 0 1rem;
+  min-width: 120px;
+  text-align: right;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-remove {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-remove:hover {
+  background: #c82333;
+}
+
+/* Cart Summary */
+.cart-summary {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 2rem;
+}
+
+.summary-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--dark);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--dark);
+}
+
+.summary-label {
+  color: var(--secondary);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.summary-total {
+  color: var(--success);
+  font-size: 1.5rem;
+}
+
+.checkout-btn {
+  width: 100% !important;
+  background: var(--success) !important;
+  color: white !important;
+  border: none !important;
+  padding: 1rem !important;
+  border-radius: var(--border-radius) !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1rem !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+}
+
+.checkout-btn:hover {
+  background: #157347 !important;
+  transform: translateY(-2px) !important;
+}
+
+.continue-shopping {
+  width: 100% !important;
+  background: transparent !important;
+  color: var(--primary) !important;
+  border: 2px solid var(--primary) !important;
+  padding: 1rem !important;
+  border-radius: var(--border-radius) !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.continue-shopping:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Empty Cart */
+.empty-cart {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.empty-cart i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--secondary);
+  opacity: 0.5;
+}
+
+.empty-cart h3 {
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.empty-cart p {
+  color: var(--secondary);
+  margin-bottom: 2rem;
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .item-image {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .item-quantity {
+    margin: 0;
+  }
+  
+  .item-total {
+    margin: 0;
+    text-align: left;
+  }
+  
+  .item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .cart-summary {
+    position: static;
+    margin-top: 2rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <!-- Back to Shop Button -->
+    <div class="back-to-shop">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
+        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+    
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">Giỏ hàng của bạn</h1>
+        <p class="page-subtitle">
+          {% if cart.items.count > 0 %}
+            Bạn có {{ cart.items.count }} sản phẩm trong giỏ hàng
+          {% else %}
+            Giỏ hàng của bạn đang trống
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="cart-content">
+    {% if cart.items.count > 0 %}
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Cart Items -->
+        <div class="cart-table">
+          <div class="cart-header">
+            <h2 class="cart-title">Sản phẩm trong giỏ hàng</h2>
+          </div>
+          
+          {% for item in cart.items.all %}
+          <div class="cart-item" id="cart-item-{{ item.id }}">
+            <div class="item-image">
+              <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" loading="lazy">
+            </div>
+            
+            <div class="item-info">
+              <h3 class="item-name">{{ item.product.name }}</h3>
+              <p class="item-category">{{ item.product.category.name }}</p>
+              <div class="item-price">
+                {% if item.product.is_on_sale %}
+                  {{ item.product.sale_price|intcomma }}đ
+                  <span class="original-price">{{ item.product.price|intcomma }}đ</span>
+                {% else %}
+                  {{ item.product.price|intcomma }}đ
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="item-quantity">
+              <div class="quantity-controls">
+                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'-1' }})" {% if item.quantity <= 1 %}disabled{% endif %}>-</button>
+                <input type="number" class="quantity-input" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}" onchange="updateQuantity({{ item.id }}, this.value)">
+                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'1' }})" {% if item.quantity >= item.product.stock_quantity %}disabled{% endif %}>+</button>
+              </div>
+            </div>
+            
+            <div class="item-total" id="total-{{ item.id }}">
+              {{ item.total_price|intcomma }}đ
+            </div>
+            
+            <div class="item-actions">
+              <button class="btn-remove" onclick="removeItem({{ item.id }})" title="Xóa sản phẩm">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <!-- Cart Summary -->
+        <div class="cart-summary">
+          <h3 class="summary-title">Tóm tắt đơn hàng</h3>
+          
+          <div class="summary-row">
+            <span class="summary-label">Tạm tính:</span>
+            <span class="summary-value" id="subtotal">{{ cart.total_price|intcomma }}đ</span>
+          </div>
+          
+          <div class="summary-row">
+            <span class="summary-label">Phí vận chuyển:</span>
+            <span class="summary-value" id="shipping-fee">
+              {% if cart.total_price >= 500000 %}
+                Miễn phí
+              {% else %}
+                30.000đ
+              {% endif %}
+            </span>
+          </div>
+          
+          <div class="summary-row">
+            <span class="summary-label">Tổng cộng:</span>
+            <span class="summary-value summary-total" id="total">
+              {% if cart.total_price >= 500000 %}
+                {{ cart.total_price|intcomma }}đ
+              {% else %}
+                {{ cart.total_price|add:30000|floatformat:0 }}đ
+              {% endif %}
+            </span>
+          </div>
+          
+          {% if cart.total_price < 500000 %}
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Mua thêm {{ remaining_amount|intcomma }}đ để được miễn phí vận chuyển
+          </div>
+          {% endif %}
+          
+          <a href="{% url 'shop:checkout' %}" class="checkout-btn">
+            <i class="fas fa-credit-card me-2"></i>
+            Thanh toán
+          </a>
+          
+          <a href="{% url 'shop:product_list' %}" class="continue-shopping">
+            <i class="fas fa-arrow-left me-2"></i>
+            Tiếp tục mua sắm
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="empty-cart">
+      <i class="fas fa-shopping-cart"></i>
+      <h3>Giỏ hàng của bạn đang trống</h3>
+      <p>Hãy thêm một số sản phẩm vào giỏ hàng để bắt đầu mua sắm!</p>
+      <a href="{% url 'shop:product_list' %}" class="btn btn-primary btn-lg">
+        <i class="fas fa-shopping-bag me-2"></i>
+        Xem sản phẩm
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(itemId, newQuantity) {
+  if (newQuantity < 1) {
+    removeItem(itemId);
+    return;
+  }
+  
+  const button = event.target;
+  const originalText = button.innerHTML;
+  
+  // Hiển thị loading
+  button.innerHTML = '<span class="loading"></span>';
+  button.disabled = true;
+  
+  fetch(`{% url 'shop:update_cart_item' 0 %}`.replace('0', itemId), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      quantity: parseInt(newQuantity)
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Cập nhật giao diện
+      document.getElementById(`quantity-${itemId}`).value = newQuantity;
+      document.getElementById(`total-${itemId}`).textContent = data.item_total + 'đ';
+      document.getElementById('subtotal').textContent = data.cart_total + 'đ';
+      
+      // Cập nhật tổng tiền
+      const totalElement = document.getElementById('total');
+      const shippingFee = data.cart_total >= 500000 ? 0 : 30000;
+      const totalAmount = data.cart_total + shippingFee;
+      totalElement.textContent = totalAmount + 'đ';
+      
+      // Cập nhật phí vận chuyển
+      const shippingElement = document.getElementById('shipping-fee');
+      shippingElement.textContent = shippingFee === 0 ? 'Miễn phí' : '30.000đ';
+      
+      // Cập nhật số lượng giỏ hàng trong header (nếu có)
+      const cartCount = document.querySelector('.cart-count');
+      if (cartCount) {
+        cartCount.textContent = data.cart_count;
+      }
+      
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showNotification('Có lỗi xảy ra khi cập nhật giỏ hàng', 'error');
+  })
+  .finally(() => {
+    // Khôi phục button
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+}
+
+function removeItem(itemId) {
+  if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+    return;
+  }
+  
+  const button = event.target;
+  const originalText = button.innerHTML;
+  
+  // Hiển thị loading
+  button.innerHTML = '<span class="loading"></span>';
+  button.disabled = true;
+  
+  fetch(`{% url 'shop:remove_from_cart' 0 %}`.replace('0', itemId), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Xóa item khỏi giao diện
+      document.getElementById(`cart-item-${itemId}`).remove();
+      
+      // Cập nhật tổng tiền
+      document.getElementById('subtotal').textContent = data.cart_total + 'đ';
+      
+      const totalElement = document.getElementById('total');
+      const shippingFee = data.cart_total >= 500000 ? 0 : 30000;
+      const totalAmount = data.cart_total + shippingFee;
+      totalElement.textContent = totalAmount + 'đ';
+      
+      // Cập nhật phí vận chuyển
+      const shippingElement = document.getElementById('shipping-fee');
+      shippingElement.textContent = shippingFee === 0 ? 'Miễn phí' : '30.000đ';
+      
+      // Cập nhật số lượng giỏ hàng trong header (nếu có)
+      const cartCount = document.querySelector('.cart-count');
+      if (cartCount) {
+        cartCount.textContent = data.cart_count;
+      }
+      
+      // Nếu giỏ hàng trống, reload trang
+      if (data.cart_count == 0) {
+        location.reload();
+      }
+      
+      showNotification(data.message, 'success');
+    } else {
+      showNotification(data.message, 'error');
+    }
+  })
+  .catch(error => {
+    showNotification('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng', 'error');
+  })
+  .finally(() => {
+    // Khôi phục button
+    button.innerHTML = originalText;
+    button.disabled = false;
+  });
+}
+
+function showNotification(message, type) {
+  // Tạo thông báo
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Tự động ẩn sau 3 giây
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
+// Quantity input validation
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('input', function() {
+      const itemId = this.id.split('-')[1];
+      const maxQuantity = parseInt(this.getAttribute('max'));
+      let value = parseInt(this.value);
+      
+      if (value < 1) {
+        this.value = 1;
+        updateQuantity(itemId, 1);
+      } else if (value > maxQuantity) {
+        this.value = maxQuantity;
+        updateQuantity(itemId, maxQuantity);
+      } else {
+        updateQuantity(itemId, value);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Thanh toán - Shop Thể Thao{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gold: #fbbf24;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Page Header - Jogarbola Style */
+.page-header {
+  background: var(--gradient-hero);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.back-to-shop {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.back-to-shop .btn {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  background: linear-gradient(45deg, #ffffff, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  z-index: 2;
+}
+
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+/* Checkout Content */
+.checkout-content {
+  margin-bottom: 4rem;
+}
+
+.checkout-form {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title i {
+  color: var(--primary);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.form-control {
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-select {
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Order Summary */
+.order-summary {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 2rem;
+}
+
+.summary-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: var(--dark);
+}
+
+.order-items {
+  margin-bottom: 1.5rem;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.item-image {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--dark);
+  line-height: 1.4;
+}
+
+.item-price {
+  font-size: 0.9rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.item-quantity {
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--dark);
+}
+
+.summary-label {
+  color: var(--secondary);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.summary-total {
+  color: var(--success);
+  font-size: 1.5rem;
+}
+
+.checkout-btn {
+  width: 100%;
+  background: var(--success);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-btn:hover {
+  background: #157347;
+  transform: translateY(-2px);
+}
+
+.checkout-btn:disabled {
+  background: var(--secondary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.back-to-cart {
+  width: 100%;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+.back-to-cart:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Payment Methods */
+.payment-methods {
+  background: var(--light);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-method:hover {
+  border-color: var(--primary);
+}
+
+.payment-method.selected {
+  border-color: var(--primary);
+  background: rgba(13, 110, 253, 0.1);
+}
+
+.payment-method input[type="radio"] {
+  margin: 0;
+}
+
+.payment-method-info {
+  flex: 1;
+}
+
+.payment-method-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--dark);
+}
+
+.payment-method-desc {
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+/* Loading Animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .checkout-form {
+    padding: 1rem;
+  }
+  
+  .order-summary {
+    position: static;
+    margin-top: 2rem;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .item-image {
+    width: 50px;
+    height: 50px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-header">
+  <div class="container">
+    <!-- Back to Shop Button -->
+    <div class="back-to-shop">
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
+        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+        Quay lại shop
+      </a>
+    </div>
+    
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="page-title">Thanh toán</h1>
+        <p class="page-subtitle">Hoàn tất đơn hàng của bạn</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="checkout-content">
+    <form method="post" id="checkout-form">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Customer Information -->
+          <div class="checkout-form">
+            <div class="form-section">
+              <h2 class="section-title">
+                <i class="fas fa-user"></i>
+                Thông tin khách hàng
+              </h2>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">Họ và tên *</label>
+                    <input type="text" name="customer_name" class="form-control" required 
+                           value="{{ user.get_full_name|default:user.username }}" 
+                           placeholder="Nhập họ và tên">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">Số điện thoại *</label>
+                    <input type="tel" name="customer_phone" class="form-control" required 
+                           placeholder="Nhập số điện thoại">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" name="customer_email" class="form-control" required 
+                       value="{{ user.email }}" 
+                       placeholder="Nhập địa chỉ email">
+              </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <div class="form-section">
+              <h2 class="section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Địa chỉ giao hàng
+              </h2>
+              
+              <div class="form-group">
+                <label class="form-label">Địa chỉ chi tiết *</label>
+                <textarea name="shipping_address" class="form-control" rows="3" required 
+                          placeholder="Nhập địa chỉ chi tiết (số nhà, tên đường, phường/xã)"></textarea>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">Tỉnh/Thành phố *</label>
+                    <select name="shipping_city" class="form-select" required>
+                      <option value="">Chọn tỉnh/thành phố</option>
+                      <option value="Hà Nội">Hà Nội</option>
+                      <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                      <option value="Đà Nẵng">Đà Nẵng</option>
+                      <option value="Hải Phòng">Hải Phòng</option>
+                      <option value="Cần Thơ">Cần Thơ</option>
+                      <option value="Điện Biên">Điện Biên</option>
+                      <option value="Lai Châu">Lai Châu</option>
+                      <option value="Sơn La">Sơn La</option>
+                      <option value="Yên Bái">Yên Bái</option>
+                      <option value="Lào Cai">Lào Cai</option>
+                      <option value="Hà Giang">Hà Giang</option>
+                      <option value="Cao Bằng">Cao Bằng</option>
+                      <option value="Bắc Kạn">Bắc Kạn</option>
+                      <option value="Tuyên Quang">Tuyên Quang</option>
+                      <option value="Thái Nguyên">Thái Nguyên</option>
+                      <option value="Lạng Sơn">Lạng Sơn</option>
+                      <option value="Quảng Ninh">Quảng Ninh</option>
+                      <option value="Bắc Giang">Bắc Giang</option>
+                      <option value="Phú Thọ">Phú Thọ</option>
+                      <option value="Vĩnh Phúc">Vĩnh Phúc</option>
+                      <option value="Bắc Ninh">Bắc Ninh</option>
+                      <option value="Hà Nam">Hà Nam</option>
+                      <option value="Hải Dương">Hải Dương</option>
+                      <option value="Hưng Yên">Hưng Yên</option>
+                      <option value="Thái Bình">Thái Bình</option>
+                      <option value="Nam Định">Nam Định</option>
+                      <option value="Ninh Bình">Ninh Bình</option>
+                      <option value="Thanh Hóa">Thanh Hóa</option>
+                      <option value="Nghệ An">Nghệ An</option>
+                      <option value="Hà Tĩnh">Hà Tĩnh</option>
+                      <option value="Quảng Bình">Quảng Bình</option>
+                      <option value="Quảng Trị">Quảng Trị</option>
+                      <option value="Thừa Thiên Huế">Thừa Thiên Huế</option>
+                      <option value="Quảng Nam">Quảng Nam</option>
+                      <option value="Quảng Ngãi">Quảng Ngãi</option>
+                      <option value="Bình Định">Bình Định</option>
+                      <option value="Phú Yên">Phú Yên</option>
+                      <option value="Khánh Hòa">Khánh Hòa</option>
+                      <option value="Ninh Thuận">Ninh Thuận</option>
+                      <option value="Bình Thuận">Bình Thuận</option>
+                      <option value="Kon Tum">Kon Tum</option>
+                      <option value="Gia Lai">Gia Lai</option>
+                      <option value="Đắk Lắk">Đắk Lắk</option>
+                      <option value="Đắk Nông">Đắk Nông</option>
+                      <option value="Lâm Đồng">Lâm Đồng</option>
+                      <option value="Bình Phước">Bình Phước</option>
+                      <option value="Tây Ninh">Tây Ninh</option>
+                      <option value="Bình Dương">Bình Dương</option>
+                      <option value="Đồng Nai">Đồng Nai</option>
+                      <option value="Bà Rịa - Vũng Tàu">Bà Rịa - Vũng Tàu</option>
+                      <option value="Long An">Long An</option>
+                      <option value="Tiền Giang">Tiền Giang</option>
+                      <option value="Bến Tre">Bến Tre</option>
+                      <option value="Trà Vinh">Trà Vinh</option>
+                      <option value="Vĩnh Long">Vĩnh Long</option>
+                      <option value="Đồng Tháp">Đồng Tháp</option>
+                      <option value="An Giang">An Giang</option>
+                      <option value="Kiên Giang">Kiên Giang</option>
+                      <option value="Cà Mau">Cà Mau</option>
+                      <option value="Bạc Liêu">Bạc Liêu</option>
+                      <option value="Sóc Trăng">Sóc Trăng</option>
+                      <option value="Hậu Giang">Hậu Giang</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-label">Quận/Huyện *</label>
+                    <input type="text" name="shipping_district" class="form-control" required 
+                           placeholder="Nhập quận/huyện">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="form-section">
+              <h2 class="section-title">
+                <i class="fas fa-credit-card"></i>
+                Phương thức thanh toán
+              </h2>
+              
+              <div class="payment-methods">
+                <div class="payment-method selected">
+                  <input type="radio" name="payment_method" value="cod" checked>
+                  <div class="payment-method-info">
+                    <div class="payment-method-name">Thanh toán khi nhận hàng (COD)</div>
+                    <div class="payment-method-desc">Thanh toán bằng tiền mặt khi nhận được hàng</div>
+                  </div>
+                </div>
+                
+                <div class="payment-method">
+                  <input type="radio" name="payment_method" value="bank_transfer">
+                  <div class="payment-method-info">
+                    <div class="payment-method-name">Chuyển khoản ngân hàng</div>
+                    <div class="payment-method-desc">Chuyển khoản trước khi giao hàng</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="form-section">
+              <h2 class="section-title">
+                <i class="fas fa-sticky-note"></i>
+                Ghi chú đơn hàng
+              </h2>
+              
+              <div class="form-group">
+                <label class="form-label">Ghi chú (tùy chọn)</label>
+                <textarea name="notes" class="form-control" rows="3" 
+                          placeholder="Nhập ghi chú cho đơn hàng (thời gian giao hàng, yêu cầu đặc biệt...)"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-4">
+          <!-- Order Summary -->
+          <div class="order-summary">
+            <h3 class="summary-title">Tóm tắt đơn hàng</h3>
+            
+            <div class="order-items">
+              {% for item in cart.items.all %}
+              <div class="order-item">
+                <div class="item-image">
+                  <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" loading="lazy">
+                </div>
+                
+                <div class="item-info">
+                  <h4 class="item-name">{{ item.product.name }}</h4>
+                  <div class="item-price">
+                    {% if item.product.is_on_sale %}
+                      {{ item.product.sale_price|intcomma }}đ
+                    {% else %}
+                      {{ item.product.price|intcomma }}đ
+                    {% endif %}
+                  </div>
+                  <div class="item-quantity">Số lượng: {{ item.quantity }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            
+            <div class="summary-row">
+              <span class="summary-label">Tạm tính:</span>
+              <span class="summary-value">{{ cart.total_price|intcomma }}đ</span>
+            </div>
+            
+            <div class="summary-row">
+              <span class="summary-label">Phí vận chuyển:</span>
+              <span class="summary-value">
+                {% if cart.total_price >= 500000 %}
+                  Miễn phí
+                {% else %}
+                  30.000đ
+                {% endif %}
+              </span>
+            </div>
+            
+            <div class="summary-row">
+              <span class="summary-label">Tổng cộng:</span>
+              <span class="summary-value summary-total">
+                {% if cart.total_price >= 500000 %}
+                  {{ cart.total_price|intcomma }}đ
+                {% else %}
+                  {{ total_amount|intcomma }}đ
+                {% endif %}
+              </span>
+            </div>
+            
+            {% if cart.total_price < 500000 %}
+            <div class="alert alert-info mt-3">
+              <i class="fas fa-info-circle me-2"></i>
+              Mua thêm {{ remaining_amount|floatformat:0 }}đ để được miễn phí vận chuyển
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="checkout-btn" id="checkout-btn">
+              <i class="fas fa-credit-card me-2"></i>
+              Đặt hàng
+            </button>
+            
+            <a href="{% url 'shop:cart' %}" class="back-to-cart">
+              <i class="fas fa-arrow-left me-2"></i>
+              Quay lại giỏ hàng
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Payment method selection
+  document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      document.querySelectorAll('.payment-method').forEach(method => {
+        method.classList.remove('selected');
+      });
+      this.closest('.payment-method').classList.add('selected');
+    });
+  });
+  
+  // Form submission
+  document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const button = document.getElementById('checkout-btn');
+    const originalText = button.innerHTML;
+    
+    // Hiển thị loading
+    button.innerHTML = '<span class="loading"></span> Đang xử lý...';
+    button.disabled = true;
+    
+    // Submit form
+    this.submit();
+  });
+  
+  // Form validation
+  const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+  requiredFields.forEach(field => {
+    field.addEventListener('blur', function() {
+      if (!this.value.trim()) {
+        this.classList.add('is-invalid');
+      } else {
+        this.classList.remove('is-invalid');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,611 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} - Blog DBP Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --light: #f8fafc;
+  --dark: #1e293b;
+  --gold: #fbbf24;
+  --gradient-sunset: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Blog Detail */
+.blog-detail-hero {
+  background: var(--gradient-sunset);
+  color: white;
+  padding: 3rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.blog-detail-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.blog-detail-hero .container {
+  position: relative;
+  z-index: 2;
+}
+
+.blog-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.blog-detail-type {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.blog-detail-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  line-height: 1.2;
+}
+
+.blog-detail-excerpt {
+  font-size: 1.3rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+/* Blog Content */
+.blog-content {
+  padding: 4rem 0;
+}
+
+.blog-content-wrapper {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.blog-featured-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+}
+
+.blog-content-body {
+  padding: 3rem;
+}
+
+.blog-content-body h1,
+.blog-content-body h2,
+.blog-content-body h3,
+.blog-content-body h4,
+.blog-content-body h5,
+.blog-content-body h6 {
+  color: var(--dark);
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.blog-content-body h1 { font-size: 2.5rem; }
+.blog-content-body h2 { font-size: 2rem; }
+.blog-content-body h3 { font-size: 1.75rem; }
+.blog-content-body h4 { font-size: 1.5rem; }
+
+.blog-content-body p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  color: var(--dark);
+}
+
+.blog-content-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--border-radius);
+  margin: 2rem 0;
+}
+
+.blog-content-body blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 2rem;
+  margin: 2rem 0;
+  font-style: italic;
+  color: var(--secondary);
+  background: var(--light);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+}
+
+.blog-content-body ul,
+.blog-content-body ol {
+  margin-bottom: 1.5rem;
+  padding-left: 2rem;
+}
+
+.blog-content-body li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Blog Footer */
+.blog-footer {
+  padding: 2rem 3rem;
+  background: var(--light);
+  border-top: 1px solid #e2e8f0;
+}
+
+.blog-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-author-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.blog-author-info h4 {
+  margin: 0;
+  color: var(--dark);
+}
+
+.blog-author-info p {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.blog-stats {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.blog-stats i {
+  margin-right: 0.5rem;
+  color: var(--primary);
+}
+
+/* Comments Section */
+.comments-section {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.comments-section h3 {
+  color: var(--dark);
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--light);
+}
+
+.comment-form {
+  background: var(--light);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.comment-form h4 {
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+}
+
+.comment-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.comment-form label {
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+}
+
+.comment-form input,
+.comment-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.comment-form input:focus,
+.comment-form textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.comment-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--light);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+}
+
+.comment-date {
+  font-size: 0.9rem;
+  color: var(--secondary);
+  margin-bottom: 1rem;
+}
+
+.comment-content {
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+/* Related Posts */
+.related-posts {
+  margin-top: 3rem;
+}
+
+.related-posts h3 {
+  color: var(--dark);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.related-post-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.related-post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.related-post-image {
+  height: 150px;
+  overflow: hidden;
+}
+
+.related-post-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.related-post-content {
+  padding: 1.5rem;
+}
+
+.related-post-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.related-post-title a {
+  color: var(--dark);
+  text-decoration: none;
+}
+
+.related-post-title a:hover {
+  color: var(--primary);
+}
+
+.related-post-meta {
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .blog-detail-title {
+    font-size: 2rem;
+  }
+  
+  .blog-detail-meta {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .blog-content-body {
+    padding: 2rem 1.5rem;
+  }
+  
+  .blog-footer {
+    padding: 2rem 1.5rem;
+  }
+  
+  .blog-author {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .blog-stats {
+    justify-content: center;
+  }
+  
+  .comment-form {
+    padding: 1.5rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back to Blog Button -->
+<div class="container mt-3 mb-4">
+  <div class="row">
+    <div class="col-12">
+      <a href="{% url 'blog:home' %}" class="btn btn-outline-primary" style="display: inline-flex; align-items: center;">
+        <span style="font-size: 1rem; color: inherit; display: inline-block; visibility: visible; opacity: 1; margin-right: 0.5rem;">←</span>
+        Quay lại trang chủ blog
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Blog Detail Hero -->
+<section class="blog-detail-hero">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="blog-detail-meta">
+          <span class="blog-detail-type {{ post.post_type }}">{{ post.get_post_type_display }}</span>
+          <span><i class="fas fa-calendar me-2"></i>{{ post.created_at|date:"d/m/Y" }}</span>
+          <span><i class="fas fa-user me-2"></i>{{ post.author.email }}</span>
+          <span><i class="fas fa-eye me-2"></i>{{ post.view_count }} lượt xem</span>
+        </div>
+        <h1 class="blog-detail-title">{{ post.title }}</h1>
+        <p class="blog-detail-excerpt">{{ post.excerpt|default:"" }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Blog Content -->
+<section class="blog-content">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="blog-content-wrapper">
+          {% if post.featured_image %}
+          <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="blog-featured-image">
+          {% endif %}
+          
+          <div class="blog-content-body">
+            {{ post.content|safe }}
+          </div>
+          
+          <div class="blog-footer">
+            <div class="blog-author">
+              <div class="blog-author-avatar">
+                {{ post.author.email|first|upper }}
+              </div>
+              <div class="blog-author-info">
+                <h4>{{ post.author.email }}</h4>
+                <p>Tác giả bài viết</p>
+              </div>
+            </div>
+            
+            <div class="blog-stats">
+              <span><i class="fas fa-eye"></i>{{ post.view_count }} lượt xem</span>
+              <span><i class="fas fa-calendar"></i>{{ post.created_at|date:"d/m/Y" }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="comments-section">
+          <h3><i class="fas fa-comments me-2"></i>Bình Luận</h3>
+          
+          <!-- Comment Form -->
+          <div class="comment-form">
+            <h4><i class="fas fa-edit me-2"></i>Viết Bình Luận</h4>
+            <form id="commentForm" method="post" action="{% url 'blog:add_comment' post.slug %}">
+              {% csrf_token %}
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="author_name">Tên của bạn *</label>
+                    <input type="text" id="author_name" name="author_name" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="author_email">Email *</label>
+                    <input type="email" id="author_email" name="author_email" required>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="content">Nội dung bình luận *</label>
+                <textarea id="content" name="content" rows="4" required placeholder="Viết bình luận của bạn..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-2"></i>Gửi Bình Luận
+              </button>
+            </form>
+          </div>
+
+          <!-- Comments List -->
+          {% if post.comments.all %}
+          <ul class="comment-list">
+            {% for comment in post.comments.all %}
+            <li class="comment-item">
+              <div class="comment-author">{{ comment.author.email }}</div>
+              <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
+              <div class="comment-content">{{ comment.content|linebreaks }}</div>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-comment-slash fa-3x mb-3"></i>
+            <p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Related Posts -->
+        {% if related_posts %}
+        <div class="related-posts">
+          <h3><i class="fas fa-newspaper me-2"></i>Bài Viết Liên Quan</h3>
+          <div class="row">
+            {% for related_post in related_posts %}
+            <div class="col-12 mb-3">
+              <div class="related-post-card">
+                <div class="related-post-image">
+                  {% if related_post.featured_image %}
+                    <img src="{{ related_post.featured_image.url }}" alt="{{ related_post.title }}" loading="lazy">
+                  {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                      <i class="fas fa-image text-muted"></i>
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="related-post-content">
+                  <h4 class="related-post-title">
+                    <a href="{% url 'blog:post_detail' related_post.slug %}">{{ related_post.title }}</a>
+                  </h4>
+                  <div class="related-post-meta">
+                    <span><i class="fas fa-calendar me-1"></i>{{ related_post.created_at|date:"d/m/Y" }}</span>
+                    <span class="ms-3"><i class="fas fa-eye me-1"></i>{{ related_post.view_count }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Share Buttons -->
+        <div class="bg-white rounded-lg shadow p-4 mt-4">
+          <h4><i class="fas fa-share-alt me-2"></i>Chia Sẻ Bài Viết</h4>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary btn-sm" onclick="shareOnFacebook()">
+              <i class="fab fa-facebook-f me-1"></i>Facebook
+            </button>
+            <button class="btn btn-info btn-sm" onclick="shareOnTwitter()">
+              <i class="fab fa-twitter me-1"></i>Twitter
+            </button>
+            <button class="btn btn-success btn-sm" onclick="copyLink()">
+              <i class="fas fa-link me-1"></i>Copy Link
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Comment form submission
+document.getElementById('commentForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  
+  fetch(this.action, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      this.reset();
+    } else {
+      alert(data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Có lỗi xảy ra khi gửi bình luận.');
+  });
+});
+
+// Share functions
+function shareOnFacebook() {
+  const url = encodeURIComponent(window.location.href);
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function shareOnTwitter() {
+  const url = encodeURIComponent(window.location.href);
+  const text = encodeURIComponent('{{ post.title }}');
+  window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(function() {
+    alert('Đã copy link bài viết!');
+  });
+}
+</script>
+{% endblock %}

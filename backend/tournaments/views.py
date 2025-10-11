@@ -199,8 +199,6 @@ def livestream_view(request, pk=None):
     }
     return render(request, "tournaments/livestream.html", context)
 
-def shop_view(request):
-    return render(request, 'tournaments/shop.html')
 
 @never_cache
 def tournament_detail(request, pk):
