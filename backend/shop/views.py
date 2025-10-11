@@ -2,12 +2,14 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count, F, Sum, Avg
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
 import json
+from datetime import datetime, timedelta
 
 from .models import (
     Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
@@ -769,3 +771,98 @@ def preview_import(request):
             'success': False,
             'error': 'Không thể crawl thông tin sản phẩm'
         })
+
+
+@staff_member_required
+def shop_dashboard(request):
+    """Dashboard quản lý shop"""
+    
+    # Thống kê tổng quan
+    today = timezone.now().date()
+    this_month = today.replace(day=1)
+    last_month = (this_month - timedelta(days=1)).replace(day=1)
+    
+    # Đơn hàng
+    total_orders = Order.objects.count()
+    pending_orders = Order.objects.filter(status='pending').count()
+    processing_orders = Order.objects.filter(status='processing').count()
+    completed_orders = Order.objects.filter(status='delivered').count()
+    
+    # Doanh thu
+    total_revenue = Order.objects.filter(
+        payment_status='paid'
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    monthly_revenue = Order.objects.filter(
+        payment_status='paid',
+        created_at__gte=this_month
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    # Sản phẩm
+    total_products = Product.objects.count()
+    out_of_stock = Product.objects.filter(stock_quantity=0).count()
+    low_stock = Product.objects.filter(stock_quantity__lte=10, stock_quantity__gt=0).count()
+    
+    # Đơn hàng gần đây
+    recent_orders = Order.objects.select_related('user').order_by('-created_at')[:10]
+    
+    # Sản phẩm bán chạy
+    bestseller_products = Product.objects.annotate(
+        total_sold=Sum('orderitem__quantity')
+    ).order_by('-total_sold')[:5]
+    
+    # Thống kê theo tháng (7 tháng gần nhất)
+    monthly_stats = []
+    for i in range(7):
+        month_date = today.replace(day=1) - timedelta(days=30*i)
+        next_month = (month_date + timedelta(days=32)).replace(day=1)
+        
+        month_orders = Order.objects.filter(
+            created_at__gte=month_date,
+            created_at__lt=next_month
+        ).count()
+        
+        month_revenue = Order.objects.filter(
+            created_at__gte=month_date,
+            created_at__lt=next_month,
+            payment_status='paid'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        monthly_stats.append({
+            'month': month_date.strftime('%m/%Y'),
+            'orders': month_orders,
+            'revenue': month_revenue
+        })
+    
+    monthly_stats.reverse()  # Từ cũ đến mới
+    
+    # Thống kê theo trạng thái thanh toán
+    payment_stats = Order.objects.values('payment_status').annotate(
+        count=Count('id'),
+        total=Sum('total_amount')
+    ).order_by('payment_status')
+    
+    # Top categories
+    top_categories = Category.objects.annotate(
+        product_count=Count('products'),
+        order_count=Sum('products__orderitem__quantity')
+    ).order_by('-order_count')[:5]
+    
+    context = {
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        'processing_orders': processing_orders,
+        'completed_orders': completed_orders,
+        'total_revenue': total_revenue,
+        'monthly_revenue': monthly_revenue,
+        'total_products': total_products,
+        'out_of_stock': out_of_stock,
+        'low_stock': low_stock,
+        'recent_orders': recent_orders,
+        'bestseller_products': bestseller_products,
+        'monthly_stats': monthly_stats,
+        'payment_stats': payment_stats,
+        'top_categories': top_categories,
+    }
+    
+    return render(request, 'shop/admin/dashboard.html', context)

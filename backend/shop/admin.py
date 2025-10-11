@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from .models import (
     Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, 
     ShopBanner, ProductImport, ProductSize, ProductVariant,
@@ -9,6 +11,11 @@ from .models import (
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link dashboard vào changelist"""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('shop:admin_dashboard')
+        return super().changelist_view(request, extra_context)
     list_display = ['name', 'slug', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['name', 'description']
@@ -30,6 +37,11 @@ class ProductVariantInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link dashboard vào changelist"""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('shop:admin_dashboard')
+        return super().changelist_view(request, extra_context)
     list_display = ['name', 'category', 'current_price', 'stock_quantity', 'status', 'is_featured', 'created_at']
     list_filter = ['status', 'category', 'is_featured', 'is_bestseller', 'created_at']
     search_fields = ['name', 'description', 'sku']
@@ -117,6 +129,11 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link dashboard vào changelist"""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('shop:admin_dashboard')
+        return super().changelist_view(request, extra_context)
     list_display = ['order_number', 'customer_name', 'colored_status', 'colored_payment_status', 'total_amount', 'payment_proof_status', 'payment_proof_info', 'created_at']
     list_filter = ['status', 'payment_status', 'created_at', 'shipping_city']
     search_fields = ['order_number', 'customer_name', 'customer_email', 'customer_phone']
@@ -277,8 +294,8 @@ class OrderAdmin(admin.ModelAdmin):
     def total_amount(self, obj):
         """Hiển thị tổng tiền với định dạng đẹp"""
         return format_html(
-            '<span style="font-weight: bold; color: #16a34a;">{:,}đ</span>',
-            obj.total_amount
+            '<span style="font-weight: bold; color: #16a34a;">{}đ</span>',
+            f"{obj.total_amount:,}"
         )
     total_amount.short_description = "Tổng tiền"
     total_amount.admin_order_field = 'total_amount'
@@ -349,6 +366,11 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link dashboard vào changelist"""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('shop:admin_dashboard')
+        return super().changelist_view(request, extra_context)
     list_display = ['order_link', 'product', 'quantity', 'price', 'total_price']
     list_filter = ['order__created_at', 'order__status']
     search_fields = ['order__order_number', 'product__name']
@@ -373,9 +395,10 @@ class OrderItemAdmin(admin.ModelAdmin):
     
     def total_price(self, obj):
         """Hiển thị tổng tiền với màu sắc"""
+        total = obj.total_price or 0
         return format_html(
-            '<span style="font-weight: bold; color: #16a34a;">{:,}đ</span>',
-            obj.total_price
+            '<span style="font-weight: bold; color: #16a34a;">{}đ</span>',
+            f"{total:,}"
         )
     total_price.short_description = "Tổng tiền"
 
@@ -516,6 +539,11 @@ class EWalletAccountInline(admin.TabularInline):
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link dashboard vào changelist"""
+        extra_context = extra_context or {}
+        extra_context['dashboard_url'] = reverse('shop:admin_dashboard')
+        return super().changelist_view(request, extra_context)
     list_display = ['name', 'payment_type', 'order', 'is_active', 'created_at']
     list_filter = ['payment_type', 'is_active', 'created_at']
     search_fields = ['name', 'description']

@@ -1,0 +1,677 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Shop Dashboard - DBP Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 3rem 0;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background-size: cover;
+  background-position: bottom;
+}
+
+.dashboard-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 2;
+}
+
+/* Stats Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  border-left: 4px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+}
+
+.stat-card.primary { border-left-color: var(--primary); }
+.stat-card.success { border-left-color: var(--success); }
+.stat-card.warning { border-left-color: var(--warning); }
+.stat-card.info { border-left-color: var(--info); }
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-icon.primary { background: var(--primary); }
+.stat-icon.success { background: var(--success); }
+.stat-icon.warning { background: var(--warning); }
+.stat-icon.info { background: var(--info); }
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+.stat-change {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-change.positive { color: var(--success); }
+.stat-change.negative { color: var(--danger); }
+
+    /* Charts Section */
+.charts-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  min-height: 400px;
+}
+
+.chart-container {
+  height: 300px;
+  width: 100%;
+}
+
+.chart-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-title i {
+  color: var(--primary);
+}
+
+/* Tables */
+.table-card {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.table-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-title i {
+  color: var(--primary);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+  background: var(--light);
+  font-weight: 600;
+  color: var(--dark);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table tbody tr:hover {
+  background: rgba(220, 38, 38, 0.02);
+}
+
+/* Status badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-processing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.action-btn {
+  background: white;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.action-btn:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.action-btn i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-title {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-card {
+    min-height: 300px;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .quick-actions {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="dashboard-title">
+          <i class="fas fa-chart-line me-3"></i>
+          Shop Dashboard
+        </h1>
+        <p class="dashboard-subtitle">Tổng quan và thống kê cửa hàng</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="/admin/shop/order/" class="action-btn">
+      <i class="fas fa-shopping-cart"></i>
+      Quản lý đơn hàng
+    </a>
+    <a href="/admin/shop/product/" class="action-btn">
+      <i class="fas fa-box"></i>
+      Quản lý sản phẩm
+    </a>
+    <a href="/admin/shop/category/" class="action-btn">
+      <i class="fas fa-tags"></i>
+      Quản lý danh mục
+    </a>
+    <a href="/admin/shop/paymentmethod/" class="action-btn">
+      <i class="fas fa-credit-card"></i>
+      Phương thức thanh toán
+    </a>
+    <a href="{% url 'shop:import_product' %}" class="action-btn">
+      <i class="fas fa-download"></i>
+      Import sản phẩm
+    </a>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card primary">
+      <div class="stat-header">
+        <div class="stat-icon primary">
+          <i class="fas fa-shopping-cart"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_orders }}</div>
+      <div class="stat-label">Tổng đơn hàng</div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-header">
+        <div class="stat-icon success">
+          <i class="fas fa-dollar-sign"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_revenue|vnd_format }}</div>
+      <div class="stat-label">Tổng doanh thu</div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="stat-header">
+        <div class="stat-icon warning">
+          <i class="fas fa-box"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ total_products }}</div>
+      <div class="stat-label">Tổng sản phẩm</div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-header">
+        <div class="stat-icon info">
+          <i class="fas fa-chart-line"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ monthly_revenue|vnd_format }}</div>
+      <div class="stat-label">Doanh thu tháng này</div>
+    </div>
+  </div>
+
+  <!-- Order Status Overview -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon warning">
+          <i class="fas fa-clock"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ pending_orders }}</div>
+      <div class="stat-label">Chờ xử lý</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon info">
+          <i class="fas fa-cog"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ processing_orders }}</div>
+      <div class="stat-label">Đang xử lý</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon success">
+          <i class="fas fa-check"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ completed_orders }}</div>
+      <div class="stat-label">Hoàn thành</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon danger">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ out_of_stock }}</div>
+      <div class="stat-label">Hết hàng</div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <!-- Monthly Revenue Chart -->
+    <div class="chart-card">
+      <h3 class="chart-title">
+        <i class="fas fa-chart-bar"></i>
+        Doanh thu theo tháng
+      </h3>
+      <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Payment Status -->
+    <div class="chart-card">
+      <h3 class="chart-title">
+        <i class="fas fa-pie-chart"></i>
+        Trạng thái thanh toán
+      </h3>
+      <div class="chart-container">
+        <canvas id="paymentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Orders -->
+  <div class="table-card">
+    <h3 class="table-title">
+      <i class="fas fa-receipt"></i>
+      Đơn hàng gần đây
+    </h3>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã đơn hàng</th>
+            <th>Khách hàng</th>
+            <th>Trạng thái</th>
+            <th>Thanh toán</th>
+            <th>Tổng tiền</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td>
+              <a href="/admin/shop/order/{{ order.id }}/change/" style="color: var(--primary); font-weight: 600;">
+                {{ order.order_number }}
+              </a>
+            </td>
+            <td>{{ order.customer_name }}</td>
+            <td>
+              <span class="status-badge status-{{ order.status }}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge status-{{ order.payment_status }}">
+                {{ order.get_payment_status_display }}
+              </span>
+            </td>
+            <td>{{ order.total_amount|vnd_format }}</td>
+            <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bestseller Products -->
+  <div class="table-card">
+    <h3 class="table-title">
+      <i class="fas fa-star"></i>
+      Sản phẩm bán chạy
+    </h3>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Danh mục</th>
+            <th>Đã bán</th>
+            <th>Tồn kho</th>
+            <th>Giá</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in bestseller_products %}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                {% if product.main_image %}
+                  <img src="{{ product.main_image.url }}" alt="{{ product.name }}" 
+                       style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                {% endif %}
+                <div>
+                  <div style="font-weight: 600;">{{ product.name }}</div>
+                  <div style="font-size: 0.8rem; color: var(--secondary);">{{ product.sku }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ product.category.name }}</td>
+            <td>{{ product.total_sold|default:0 }}</td>
+            <td>
+              <span class="{% if product.stock_quantity == 0 %}status-badge status-cancelled{% elif product.stock_quantity <= 10 %}status-badge status-warning{% endif %}">
+                {{ product.stock_quantity }}
+              </span>
+            </td>
+            <td>{{ product.current_price|vnd_format }}</td>
+            <td>
+              <span class="status-badge status-{{ product.status }}">
+                {{ product.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueData = {
+        labels: [{% for stat in monthly_stats %}'{{ stat.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Doanh thu (VNĐ)',
+            data: [{% for stat in monthly_stats %}{{ stat.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    };
+    
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: revenueData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 6,
+                        callback: function(value) {
+                            if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(0) + 'K';
+                            }
+                            return value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Status Chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    const paymentData = {
+        labels: [{% for stat in payment_stats %}'{{ stat.payment_status|title }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for stat in payment_stats %}{{ stat.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#f59e0b',
+                '#16a34a', 
+                '#dc2626',
+                '#6b7280'
+            ],
+            borderWidth: 0
+        }]
+    };
+    
+    new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: paymentData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -33,4 +33,7 @@ urlpatterns = [
     # Import sản phẩm (chỉ admin)
     path('import/', views.import_product_view, name='import_product'),
     path('import/preview/', views.preview_import, name='preview_import'),
+    
+    # Admin dashboard (chỉ admin)
+    path('admin/dashboard/', views.shop_dashboard, name='admin_dashboard'),
 ]
