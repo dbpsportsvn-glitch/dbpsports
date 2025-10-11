@@ -5,7 +5,8 @@ from django.utils.safestring import mark_safe
 from .models import (
     Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, 
     ShopBanner, ProductImport, ProductSize, ProductVariant,
-    PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy
+    PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
+    CustomerShippingInfo
 )
 
 
@@ -673,6 +674,30 @@ class PaymentPolicyAdmin(admin.ModelAdmin):
         }),
         ('Thời gian', {
             'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CustomerShippingInfo)
+class CustomerShippingInfoAdmin(admin.ModelAdmin):
+    list_display = ['user', 'full_name', 'phone', 'city', 'district', 'updated_at']
+    list_filter = ['city', 'updated_at']
+    search_fields = ['user__username', 'user__email', 'full_name', 'phone', 'address']
+    readonly_fields = ['updated_at']
+    
+    fieldsets = (
+        ('Người dùng', {
+            'fields': ('user',)
+        }),
+        ('Thông tin liên hệ', {
+            'fields': ('full_name', 'phone')
+        }),
+        ('Địa chỉ giao hàng', {
+            'fields': ('address', 'city', 'district')
+        }),
+        ('Thông tin cập nhật', {
+            'fields': ('updated_at',),
             'classes': ('collapse',)
         }),
     )

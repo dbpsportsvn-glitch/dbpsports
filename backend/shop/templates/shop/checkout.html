@@ -705,7 +705,7 @@
                   <div class="form-group">
                     <label class="form-label">Họ và tên *</label>
                     <input type="text" name="customer_name" class="form-control" required 
-                           value="{{ user.get_full_name|default:user.username }}" 
+                           value="{{ shipping_info.full_name|default:user.get_full_name|default:user.username }}" 
                            placeholder="Nhập họ và tên">
                   </div>
                 </div>
@@ -713,6 +713,7 @@
                   <div class="form-group">
                     <label class="form-label">Số điện thoại *</label>
                     <input type="tel" name="customer_phone" class="form-control" required 
+                           value="{% if shipping_info %}{{ shipping_info.phone }}{% endif %}"
                            placeholder="Nhập số điện thoại">
                   </div>
                 </div>
@@ -736,7 +737,7 @@
               <div class="form-group">
                 <label class="form-label">Địa chỉ chi tiết *</label>
                 <textarea name="shipping_address" class="form-control" rows="3" required 
-                          placeholder="Nhập địa chỉ chi tiết (số nhà, tên đường, phường/xã)"></textarea>
+                          placeholder="Nhập địa chỉ chi tiết (số nhà, tên đường, phường/xã)">{% if shipping_info %}{{ shipping_info.address }}{% endif %}</textarea>
               </div>
               
               <div class="row">
@@ -814,6 +815,7 @@
                   <div class="form-group">
                     <label class="form-label">Quận/Huyện *</label>
                     <input type="text" name="shipping_district" class="form-control" required 
+                           value="{% if shipping_info %}{{ shipping_info.district }}{% endif %}"
                            placeholder="Nhập quận/huyện">
                   </div>
                 </div>
@@ -1103,6 +1105,26 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+// Tự động chọn city nếu có thông tin đã lưu
+document.addEventListener('DOMContentLoaded', function() {
+  {% if shipping_info %}
+  const savedCity = "{{ shipping_info.city }}";
+  if (savedCity) {
+    const citySelect = document.querySelector('select[name="shipping_city"]');
+    if (citySelect) {
+      // Tìm và chọn option phù hợp
+      for (let option of citySelect.options) {
+        if (option.value === savedCity) {
+          option.selected = true;
+          break;
+        }
+      }
+    }
+  }
+  {% endif %}
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Check for out of stock products

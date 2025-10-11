@@ -569,3 +569,25 @@ class PaymentPolicy(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class CustomerShippingInfo(models.Model):
+    """Thông tin giao hàng của khách (lưu để dùng lại)"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shipping_info', verbose_name="Người dùng")
+    
+    # Thông tin mặc định
+    full_name = models.CharField(max_length=100, verbose_name="Họ và tên")
+    phone = models.CharField(max_length=20, verbose_name="Số điện thoại")
+    address = models.TextField(verbose_name="Địa chỉ chi tiết")
+    city = models.CharField(max_length=100, verbose_name="Tỉnh/Thành phố")
+    district = models.CharField(max_length=100, verbose_name="Quận/Huyện")
+    
+    # Metadata
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Cập nhật lần cuối")
+    
+    class Meta:
+        verbose_name = "Thông tin giao hàng"
+        verbose_name_plural = "Thông tin giao hàng"
+    
+    def __str__(self):
+        return f"Thông tin giao hàng của {self.user.username}"

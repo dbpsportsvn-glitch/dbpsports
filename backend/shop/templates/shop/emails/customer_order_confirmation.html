@@ -1,3 +1,4 @@
+{% load shop_filters %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,12 +38,12 @@
                 {% for item in order.items.all %}
                 <div class="product">
                     <p><strong>{{ item.product.name }}</strong></p>
-                    <p>Số lượng: {{ item.quantity }} x {{ item.price|floatformat:0 }}đ = {{ item.total_price|floatformat:0 }}đ</p>
+                    <p>Số lượng: {{ item.quantity }} x {{ item.price|floatformat:0|vnd }}đ = {{ item.total_price|floatformat:0|vnd }}đ</p>
                 </div>
                 {% endfor %}
                 
-                <p><strong>Phí vận chuyển:</strong> {{ order.shipping_fee|floatformat:0 }}đ</p>
-                <p class="total">Tổng cộng: {{ order.total_amount|floatformat:0 }}đ</p>
+                <p><strong>Phí vận chuyển:</strong> {{ order.shipping_fee|floatformat:0|vnd }}đ</p>
+                <p class="total">Tổng cộng: {{ order.total_amount|floatformat:0|vnd }}đ</p>
             </div>
             
             <div class="order-info">

@@ -1,12 +1,13 @@
+"""
+Product import tasks - Crawl and import products from external sources
+Email functions have been moved to email_service.py
+"""
+
 import requests
 from bs4 import BeautifulSoup
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.utils import timezone
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.conf import settings
-from .models import ProductImport, Product, Category, Order
+from .models import ProductImport, Product, Category
 import re
 import logging
 
@@ -434,158 +435,3 @@ def create_product_from_import(import_item, product_data):
     except Exception as e:
         logger.error(f"Error creating product: {str(e)}")
         return None
-
-
-def send_order_confirmation_email(order_id):
-    """Gửi email xác nhận đơn hàng cho khách hàng - giống tournament email"""
-    try:
-        order = Order.objects.get(id=order_id)
-        
-        # Render email template - sử dụng template đẹp mới
-        html_content = render_to_string('shop/emails/order_confirmation_beautiful.html', {
-            'order': order,
-            'request': type('obj', (object,), {
-                'scheme': 'http',
-                'get_host': lambda: 'localhost:8000'
-            })
-        })
-        
-        # Create plain text version for compatibility
-        text_content = f"""
-Xin chào {order.customer_name},
-
-Cảm ơn bạn đã tin tưởng và đặt hàng tại DBP Sports!
-
-Thông tin đơn hàng:
-- Mã đơn hàng: {order.order_number}
-- Ngày đặt: {order.created_at.strftime('%d/%m/%Y %H:%M')}
-- Trạng thái: {order.get_status_display()}
-- Phương thức thanh toán: {order.get_payment_method_display()}
-
-Sản phẩm đã đặt:
-"""
-        for item in order.items.all():
-            text_content += f"- {item.product.name} x {item.quantity}: {item.total_price:,.0f}đ\n"
-        
-        text_content += f"""
-Tổng cộng: {order.total_amount:,.0f}đ
-
-Thông tin giao hàng:
-- Người nhận: {order.customer_name}
-- Số điện thoại: {order.customer_phone}
-- Địa chỉ: {order.shipping_address}, {order.shipping_district}, {order.shipping_city}
-
-Chúng tôi sẽ xác nhận đơn hàng trong vòng 24h và thông báo cho bạn.
-
-Trân trọng,
-Đội ngũ DBP Sports
-        """
-        
-        # Use EmailMultiAlternatives like admin email (more reliable)
-        subject = f'Xác nhận đơn hàng #{order.order_number} - DBP Sports'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [order.customer_email]
-        
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
-        
-        logger.info(f"Order confirmation email sent to {order.customer_email} for order {order.order_number}")
-        
-    except Order.DoesNotExist:
-        logger.error(f"Order {order_id} not found")
-    except Exception as e:
-        logger.error(f"Error sending order confirmation email: {str(e)}")
-
-
-def send_order_notification_admin_email(order_id):
-    """Gửi email thông báo đơn hàng mới cho admin"""
-    try:
-        order = Order.objects.get(id=order_id)
-        
-        # Get admin emails from settings or use default
-        admin_emails = getattr(settings, 'ADMIN_EMAILS', [settings.DEFAULT_FROM_EMAIL])
-        
-        # Render email template
-        html_content = render_to_string('shop/emails/order_notification_admin.html', {
-            'order': order,
-            'request': type('obj', (object,), {
-                'scheme': 'http',
-                'get_host': lambda: 'localhost:8000'
-            })
-        })
-        
-        # Create email
-        subject = f'🔔 Đơn hàng mới #{order.order_number} - {order.customer_name}'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = admin_emails
-        
-        # Create plain text version
-        text_content = f"""
-Đơn hàng mới cần xử lý!
-
-Thông tin đơn hàng:
-- Mã đơn hàng: {order.order_number}
-- Khách hàng: {order.customer_name}
-- Email: {order.customer_email}
-- Số điện thoại: {order.customer_phone}
-- Tổng tiền: {order.total_amount:,.0f}đ
-- Phương thức thanh toán: {order.get_payment_method_display()}
-- Ngày đặt: {order.created_at.strftime('%d/%m/%Y %H:%M')}
-
-Vui lòng truy cập admin để xử lý đơn hàng.
-        """
-        
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
-        
-        logger.info(f"Admin notification email sent for order {order.order_number}")
-        
-    except Order.DoesNotExist:
-        logger.error(f"Order {order_id} not found")
-    except Exception as e:
-        logger.error(f"Error sending admin notification email: {str(e)}")
-
-
-def send_order_status_update_email(order_id, old_status, new_status):
-    """Gửi email cập nhật trạng thái đơn hàng cho khách hàng"""
-    try:
-        order = Order.objects.get(id=order_id)
-        
-        status_messages = {
-            'processing': 'Đơn hàng của bạn đang được xử lý',
-            'shipped': 'Đơn hàng của bạn đã được gửi đi',
-            'delivered': 'Đơn hàng của bạn đã được giao thành công',
-            'cancelled': 'Đơn hàng của bạn đã bị hủy'
-        }
-        
-        message = status_messages.get(new_status, f'Trạng thái đơn hàng đã thay đổi thành: {new_status}')
-        
-        subject = f'Cập nhật đơn hàng #{order.order_number} - DBP Sports'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [order.customer_email]
-        
-        text_content = f"""
-Xin chào {order.customer_name},
-
-{message}
-
-Thông tin đơn hàng:
-- Mã đơn hàng: {order.order_number}
-- Trạng thái mới: {order.get_status_display()}
-- Tổng tiền: {order.total_amount:,.0f}đ
-
-Trân trọng,
-Đội ngũ DBP Sports
-        """
-        
-        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        msg.send()
-        
-        logger.info(f"Order status update email sent to {order.customer_email} for order {order.order_number}")
-        
-    except Order.DoesNotExist:
-        logger.error(f"Order {order_id} not found")
-    except Exception as e:
-        logger.error(f"Error sending order status update email: {str(e)}")

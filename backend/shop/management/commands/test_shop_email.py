@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from shop.models import Order
-from shop.email_service import send_order_emails, send_customer_order_email, send_admin_order_email
+from shop.email_service import send_order_emails, send_customer_order_email, send_admin_order_email, send_payment_confirmed_email
 
 
 class Command(BaseCommand):
@@ -21,6 +21,11 @@ class Command(BaseCommand):
             '--admin-only',
             action='store_true',
             help='Chi gui email cho admin',
+        )
+        parser.add_argument(
+            '--payment-confirmed',
+            action='store_true',
+            help='Gui email cam on sau khi xac nhan thanh toan',
         )
 
     def handle(self, *args, **options):
@@ -50,7 +55,16 @@ class Command(BaseCommand):
         print("")
         
         # Gui email theo option
-        if options.get('customer_only'):
+        if options.get('payment_confirmed'):
+            print("GUI EMAIL CAM ON SAU KHI XAC NHAN THANH TOAN...")
+            print("-" * 70)
+            success = send_payment_confirmed_email(order.id)
+            if success:
+                print("\n[SUCCESS] Email cam on da duoc gui thanh cong!")
+            else:
+                print("\n[ERROR] Co loi khi gui email")
+                
+        elif options.get('customer_only'):
             print("CHI GUI EMAIL CHO KHACH HANG...")
             print("-" * 70)
             success = send_customer_order_email(order.id)

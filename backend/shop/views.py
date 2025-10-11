@@ -13,7 +13,8 @@ from datetime import datetime, timedelta
 
 from .models import (
     Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
-    PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy
+    PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
+    CustomerShippingInfo
 )
 # NEW: Sử dụng email service mới - đơn giản và hoạt động tốt
 from .email_service import send_order_emails
@@ -465,6 +466,13 @@ def checkout(request):
     # Lấy các phương thức thanh toán
     payment_methods = PaymentMethod.objects.filter(is_active=True).order_by('order')
     
+    # Lấy thông tin giao hàng đã lưu (nếu có)
+    shipping_info = None
+    try:
+        shipping_info = CustomerShippingInfo.objects.get(user=request.user)
+    except CustomerShippingInfo.DoesNotExist:
+        pass
+    
     context = {
         'cart': cart,
         'shipping_fee': shipping_fee,
@@ -472,6 +480,7 @@ def checkout(request):
         'remaining_amount': remaining_amount,
         'free_shipping_threshold': free_shipping_threshold,
         'payment_methods': payment_methods,
+        'shipping_info': shipping_info,  # Thông tin đã lưu
     }
     
     return render(request, 'shop/checkout.html', context)
@@ -601,6 +610,18 @@ def place_order(request):
             # Cập nhật số lượng tồn kho
             cart_item.product.stock_quantity -= cart_item.quantity
             cart_item.product.save()
+        
+        # Lưu thông tin giao hàng để dùng lại lần sau
+        CustomerShippingInfo.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'full_name': customer_name,
+                'phone': customer_phone,
+                'address': shipping_address,
+                'city': shipping_city,
+                'district': shipping_district,
+            }
+        )
         
         # Xóa giỏ hàng
         cart.items.all().delete()

@@ -98,6 +98,45 @@ def send_admin_order_email(order_id):
         raise
 
 
+def send_payment_confirmed_email(order_id):
+    """
+    Gửi email cảm ơn khi admin xác nhận đã thanh toán
+    """
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        # Render HTML template
+        html_message = render_to_string('shop/emails/payment_confirmed.html', {
+            'order': order
+        })
+        
+        # Gửi email - ĐÚNG NHƯ TOURNAMENT
+        send_mail(
+            subject=f'✓ Xác nhận thanh toán #{order.order_number} - DBP Sports',
+            message='',  # Plain text empty
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[order.customer_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        logger.info(f"[OK] Payment confirmation email sent to {order.customer_email} for order {order.order_number}")
+        print(f"[OK] Da gui email cam on cho khach hang: {order.customer_email}")
+        return True
+        
+    except Order.DoesNotExist:
+        logger.error(f"[ERROR] Order {order_id} not found")
+        print(f"[ERROR] Khong tim thay don hang {order_id}")
+        return False
+        
+    except Exception as e:
+        logger.error(f"[ERROR] Error sending payment confirmation email for order {order_id}: {str(e)}")
+        print(f"[ERROR] Loi gui email cam on: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+
 def send_order_emails(order_id):
     """
     Gửi cả 2 email: cho khách hàng và admin
