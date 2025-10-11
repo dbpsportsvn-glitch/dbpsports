@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, ShopBanner
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport
 
 
 @admin.register(Category)
@@ -179,3 +179,54 @@ class ShopBannerAdmin(admin.ModelAdmin):
         """Chỉ hiển thị banner đầu tiên nếu có nhiều banner"""
         qs = super().get_queryset(request)
         return qs
+
+
+@admin.register(ProductImport)
+class ProductImportAdmin(admin.ModelAdmin):
+    list_display = ['source_url', 'crawled_name', 'status', 'created_at', 'processed_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['source_url', 'crawled_name', 'source_name']
+    readonly_fields = ['created_at', 'updated_at', 'processed_at']
+    
+    fieldsets = (
+        ('Thông tin Import', {
+            'fields': ('source_url', 'source_name', 'status')
+        }),
+        ('Thông tin Crawled', {
+            'fields': ('crawled_name', 'crawled_price', 'crawled_description', 'crawled_image_url'),
+            'classes': ('collapse',)
+        }),
+        ('Sản phẩm được tạo', {
+            'fields': ('product',),
+            'classes': ('collapse',)
+        }),
+        ('Lỗi', {
+            'fields': ('error_message',),
+            'classes': ('collapse',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at', 'processed_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['process_imports']
+    
+    def process_imports(self, request, queryset):
+        """Xử lý các import được chọn"""
+        from .tasks import process_product_import
+        processed_count = 0
+        for import_item in queryset:
+            if import_item.status in ['pending', 'processing']:
+                try:
+                    # Reset status to pending if it's stuck in processing
+                    if import_item.status == 'processing':
+                        import_item.status = 'pending'
+                        import_item.save()
+                    
+                    process_product_import(import_item.id)
+                    processed_count += 1
+                except Exception as e:
+                    self.message_user(request, f"Lỗi khi xử lý import {import_item.id}: {str(e)}", level='ERROR')
+        self.message_user(request, f"Đã xử lý {processed_count} import thành công")
+    process_imports.short_description = "Xử lý các import được chọn"

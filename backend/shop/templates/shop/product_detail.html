@@ -622,13 +622,19 @@
       <div class="col-lg-6">
         <div class="product-images">
           <div class="main-image">
-            <img id="main-image" src="{{ product.main_image.url }}" alt="{{ product.name }}">
+            {% if product.main_image %}
+              <img id="main-image" src="{{ product.main_image.url }}" alt="{{ product.name }}">
+            {% else %}
+              <img id="main-image" src="{% static 'images/no-image.png' %}" alt="{{ product.name }}">
+            {% endif %}
           </div>
           {% if product.images.all %}
           <div class="thumbnail-images">
-            <div class="thumbnail active" onclick="changeMainImage('{{ product.main_image.url }}')">
-              <img src="{{ product.main_image.url }}" alt="{{ product.name }}">
-            </div>
+            {% if product.main_image %}
+              <div class="thumbnail active" onclick="changeMainImage('{{ product.main_image.url }}')">
+                <img src="{{ product.main_image.url }}" alt="{{ product.name }}">
+              </div>
+            {% endif %}
             {% for image in product.images.all %}
             <div class="thumbnail" onclick="changeMainImage('{{ image.image.url }}')">
               <img src="{{ image.image.url }}" alt="{{ image.alt_text|default:product.name }}">
@@ -748,7 +754,11 @@
       {% for related_product in related_products %}
       <div class="product-card">
         <div class="product-image">
-          <img src="{{ related_product.main_image.url }}" alt="{{ related_product.name }}" loading="lazy">
+          {% if related_product.main_image %}
+            <img src="{{ related_product.main_image.url }}" alt="{{ related_product.name }}" loading="lazy">
+          {% else %}
+            <img src="{% static 'images/no-image.png' %}" alt="{{ related_product.name }}" loading="lazy">
+          {% endif %}
         </div>
         <div class="product-info">
           <h3 class="product-name">{{ related_product.name }}</h3>
@@ -784,7 +794,11 @@
       {% for bestseller in other_bestsellers %}
       <div class="product-card">
         <div class="product-image">
-          <img src="{{ bestseller.main_image.url }}" alt="{{ bestseller.name }}" loading="lazy">
+          {% if bestseller.main_image %}
+            <img src="{{ bestseller.main_image.url }}" alt="{{ bestseller.name }}" loading="lazy">
+          {% else %}
+            <img src="{% static 'images/no-image.png' %}" alt="{{ bestseller.name }}" loading="lazy">
+          {% endif %}
         </div>
         <div class="product-info">
           <h3 class="product-name">{{ bestseller.name }}</h3>

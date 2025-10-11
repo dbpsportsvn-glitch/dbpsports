@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Import Sản phẩm{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-download me-2"></i>
+                        Import Sản phẩm từ URL
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="importForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="url" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                URL sản phẩm
+                            </label>
+                            <input type="url" class="form-control" id="url" name="url" 
+                                   placeholder="https://example.com/product/..." required>
+                            <div class="form-text">
+                                Nhập URL của sản phẩm bạn muốn import
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="source_name" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
+                                Tên nguồn (tùy chọn)
+                            </label>
+                            <input type="text" class="form-control" id="source_name" name="source_name" 
+                                   placeholder="Ví dụ: Nike Store, Adidas Official...">
+                            <div class="form-text">
+                                Tên để nhận biết nguồn sản phẩm
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-info me-md-2" id="previewBtn">
+                                <i class="fas fa-eye me-1"></i>
+                                Preview
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-download me-1"></i>
+                                Import Sản phẩm
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Preview Area -->
+                    <div id="previewArea" class="mt-4" style="display: none;">
+                        <h5>Preview Sản phẩm:</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="previewContent">
+                                    <!-- Preview content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loading -->
+                    <div id="loadingArea" class="text-center mt-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Đang crawl thông tin sản phẩm...</p>
+                    </div>
+                    
+                    <!-- Processing Status -->
+                    <div id="processingArea" class="mt-4" style="display: none;">
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-cog fa-spin me-2"></i>Đang xử lý import...</h5>
+                            <p class="mb-0">Hệ thống đang crawl và tạo sản phẩm. Vui lòng đợi...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Messages -->
+                    <div id="errorArea" class="mt-4" style="display: none;">
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Có lỗi xảy ra!</h5>
+                            <p id="errorMessage" class="mb-0"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Success Messages -->
+                    <div id="successArea" class="mt-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle me-2"></i>Import thành công!</h5>
+                            <p id="successMessage" class="mb-0"></p>
+                            <a href="{% url 'admin:shop_productimport_changelist' %}" class="btn btn-sm btn-outline-success mt-2">
+                                <i class="fas fa-eye me-1"></i>Xem danh sách import
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hướng dẫn -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Hướng dẫn sử dụng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-check text-success me-1"></i> Hỗ trợ:</h6>
+                            <ul class="list-unstyled">
+                                <li>• Các website thương mại điện tử</li>
+                                <li>• Trang sản phẩm có cấu trúc chuẩn</li>
+                                <li>• Hình ảnh và mô tả sản phẩm</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-exclamation-triangle text-warning me-1"></i> Lưu ý:</h6>
+                            <ul class="list-unstyled">
+                                <li>• Một số website có thể chặn crawl</li>
+                                <li>• Cần kiểm tra lại thông tin sau khi import</li>
+                                <li>• Đảm bảo tuân thủ quyền sở hữu trí tuệ</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const previewBtn = document.getElementById('previewBtn');
+    const importForm = document.getElementById('importForm');
+    const previewArea = document.getElementById('previewArea');
+    const loadingArea = document.getElementById('loadingArea');
+    const processingArea = document.getElementById('processingArea');
+    const errorArea = document.getElementById('errorArea');
+    const successArea = document.getElementById('successArea');
+    const previewContent = document.getElementById('previewContent');
+    const urlInput = document.getElementById('url');
+    
+    // Hide all status areas initially
+    function hideAllStatus() {
+        previewArea.style.display = 'none';
+        loadingArea.style.display = 'none';
+        processingArea.style.display = 'none';
+        errorArea.style.display = 'none';
+        successArea.style.display = 'none';
+    }
+    
+    previewBtn.addEventListener('click', function() {
+        const url = urlInput.value.trim();
+        if (!url) {
+            alert('Vui lòng nhập URL sản phẩm');
+            return;
+        }
+        
+        hideAllStatus();
+        loadingArea.style.display = 'block';
+        
+        // Fetch preview data
+        fetch(`{% url 'shop:preview_import' %}?url=${encodeURIComponent(url)}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingArea.style.display = 'none';
+                
+                if (data.success) {
+                    previewContent.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-4">
+                                ${data.data.image_url ? 
+                                    `<img src="${data.data.image_url}" class="img-fluid rounded" alt="Product Image">` : 
+                                    '<div class="bg-light p-3 text-center rounded">Không có hình ảnh</div>'
+                                }
+                            </div>
+                            <div class="col-md-8">
+                                <h5>${data.data.name || 'Không có tên'}</h5>
+                                <p class="text-muted">${data.data.description || 'Không có mô tả'}</p>
+                                <p class="h4 text-primary">
+                                    ${data.data.price ? data.data.price.toLocaleString('vi-VN') + ' VNĐ' : 'Không có giá'}
+                                    ${data.data.sale_price ? ' <small class="text-success">(Giảm còn ' + data.data.sale_price.toLocaleString('vi-VN') + ' VNĐ)</small>' : ''}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    previewArea.style.display = 'block';
+                } else {
+                    previewContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${data.error || 'Không thể crawl thông tin sản phẩm'}
+                        </div>
+                    `;
+                    previewArea.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loadingArea.style.display = 'none';
+                previewContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Có lỗi xảy ra khi crawl thông tin sản phẩm: ${error.message}
+                    </div>
+                `;
+                previewArea.style.display = 'block';
+            });
+    });
+    
+    // Handle form submission
+    importForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const url = urlInput.value.trim();
+        if (!url) {
+            alert('Vui lòng nhập URL sản phẩm');
+            return;
+        }
+        
+        hideAllStatus();
+        processingArea.style.display = 'block';
+        
+        // Submit form data
+        const formData = new FormData(importForm);
+        
+        fetch('{% url "shop:import_product" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                throw new Error('HTTP ' + response.status);
+            }
+        })
+        .then(html => {
+            processingArea.style.display = 'none';
+            
+            // Check if response contains success message
+            if (html.includes('Đã import sản phẩm thành công')) {
+                successArea.style.display = 'block';
+                document.getElementById('successMessage').textContent = 'Sản phẩm đã được import thành công!';
+            } else if (html.includes('Lỗi khi import sản phẩm')) {
+                errorArea.style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Có lỗi xảy ra khi import sản phẩm. Vui lòng thử lại.';
+            } else {
+                // Reload page to show Django messages
+                location.reload();
+            }
+        })
+        .catch(error => {
+            processingArea.style.display = 'none';
+            errorArea.style.display = 'block';
+            document.getElementById('errorMessage').textContent = 'Có lỗi xảy ra: ' + error.message;
+        });
+    });
+});
+</script>
+{% endblock %}

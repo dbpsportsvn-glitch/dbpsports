@@ -22,4 +22,8 @@ urlpatterns = [
     path('order/place/', views.place_order, name='place_order'),
     path('orders/', views.order_list, name='order_list'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    
+    # Import sản phẩm (chỉ admin)
+    path('import/', views.import_product_view, name='import_product'),
+    path('import/preview/', views.preview_import, name='preview_import'),
 ]

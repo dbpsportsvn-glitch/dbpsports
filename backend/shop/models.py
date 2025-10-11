@@ -294,3 +294,43 @@ class ShopBanner(models.Model):
         if self.product:
             return f"/shop/products/{self.product.slug}/"
         return self.button_url
+
+
+class ProductImport(models.Model):
+    """Sản phẩm được import từ website khác"""
+    STATUS_CHOICES = [
+        ('pending', 'Chờ xử lý'),
+        ('processing', 'Đang xử lý'),
+        ('completed', 'Hoàn thành'),
+        ('failed', 'Thất bại'),
+    ]
+    
+    # Thông tin import
+    source_url = models.URLField(verbose_name="URL nguồn")
+    source_name = models.CharField(max_length=100, blank=True, verbose_name="Tên nguồn")
+    
+    # Thông tin sản phẩm được crawl
+    crawled_name = models.CharField(max_length=200, blank=True, verbose_name="Tên sản phẩm")
+    crawled_price = models.DecimalField(max_digits=10, decimal_places=0, null=True, blank=True, verbose_name="Giá")
+    crawled_description = models.TextField(blank=True, verbose_name="Mô tả")
+    crawled_image_url = models.URLField(blank=True, verbose_name="URL hình ảnh")
+    
+    # Sản phẩm được tạo
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Sản phẩm")
+    
+    # Trạng thái
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Trạng thái")
+    error_message = models.TextField(blank=True, verbose_name="Thông báo lỗi")
+    
+    # Thời gian
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    processed_at = models.DateTimeField(null=True, blank=True, verbose_name="Thời gian xử lý")
+
+    class Meta:
+        verbose_name = "Import Sản phẩm"
+        verbose_name_plural = "Import Sản phẩm"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Import: {self.source_url}"

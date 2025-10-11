@@ -6,9 +6,10 @@ from django.db.models import Q, Count, F
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.admin.views.decorators import staff_member_required
 import json
 
-from .models import Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport
 
 
 def shop_home(request):
@@ -458,3 +459,60 @@ def order_list(request):
     }
     
     return render(request, 'shop/order_list.html', context)
+
+
+@staff_member_required
+def import_product_view(request):
+    """View để import sản phẩm từ URL"""
+    if request.method == 'POST':
+        url = request.POST.get('url')
+        source_name = request.POST.get('source_name', '')
+        
+        if url:
+            # Tạo ProductImport record
+            import_item = ProductImport.objects.create(
+                source_url=url,
+                source_name=source_name,
+                status='pending'
+            )
+            
+            # Xử lý import ngay lập tức
+            from .tasks import process_product_import
+            try:
+                process_product_import(import_item.id)
+                import_item.refresh_from_db()
+                
+                if import_item.status == 'completed':
+                    messages.success(request, f'Đã import sản phẩm thành công từ {url}')
+                else:
+                    messages.error(request, f'Lỗi khi import sản phẩm: {import_item.error_message}')
+                    
+                return redirect('admin:shop_productimport_changelist')
+            except Exception as e:
+                messages.error(request, f'Lỗi khi import sản phẩm: {str(e)}')
+        else:
+            messages.error(request, 'Vui lòng nhập URL sản phẩm')
+    
+    return render(request, 'shop/import_product.html')
+
+
+@staff_member_required
+def preview_import(request):
+    """Preview thông tin sản phẩm trước khi import"""
+    url = request.GET.get('url')
+    if not url:
+        return JsonResponse({'error': 'URL không được để trống'}, status=400)
+    
+    from .tasks import crawl_product_info
+    product_data = crawl_product_info(url)
+    
+    if product_data:
+        return JsonResponse({
+            'success': True,
+            'data': product_data
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': 'Không thể crawl thông tin sản phẩm'
+        })
