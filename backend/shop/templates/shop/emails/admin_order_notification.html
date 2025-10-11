@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #059669; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 20px; }
+        .order-info { background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #059669; }
+        .product { border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .total { font-size: 20px; font-weight: bold; color: #059669; margin-top: 15px; }
+        .alert { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Đơn hàng mới</h1>
+            <p>DBP Sports - Quản trị viên</p>
+        </div>
+        
+        <div class="content">
+            <div class="alert">
+                <strong>⚠️ Có đơn hàng mới cần xử lý!</strong>
+            </div>
+            
+            <div class="order-info">
+                <h3>Thông tin đơn hàng</h3>
+                <p><strong>Mã đơn hàng:</strong> {{ order.order_number }}</p>
+                <p><strong>Ngày đặt:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Trạng thái:</strong> {{ order.get_status_display }}</p>
+                <p><strong>Trạng thái thanh toán:</strong> {{ order.get_payment_status_display }}</p>
+                <p><strong>Phương thức thanh toán:</strong> {{ order.get_payment_method_display }}</p>
+            </div>
+            
+            <div class="order-info">
+                <h3>Thông tin khách hàng</h3>
+                <p><strong>Tên:</strong> {{ order.customer_name }}</p>
+                <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                <p><strong>Điện thoại:</strong> {{ order.customer_phone }}</p>
+                <p><strong>Địa chỉ:</strong> {{ order.shipping_address }}, {{ order.shipping_district }}, {{ order.shipping_city }}</p>
+            </div>
+            
+            <div class="order-info">
+                <h3>Sản phẩm</h3>
+                {% for item in order.items.all %}
+                <div class="product">
+                    <p><strong>{{ item.product.name }}</strong></p>
+                    <p>Số lượng: {{ item.quantity }} x {{ item.price|floatformat:0 }}đ = {{ item.total_price|floatformat:0 }}đ</p>
+                </div>
+                {% endfor %}
+                
+                <p><strong>Phí vận chuyển:</strong> {{ order.shipping_fee|floatformat:0 }}đ</p>
+                <p class="total">Tổng cộng: {{ order.total_amount|floatformat:0 }}đ</p>
+            </div>
+            
+            {% if order.notes %}
+            <div class="order-info">
+                <h3>Ghi chú từ khách hàng</h3>
+                <p>{{ order.notes }}</p>
+            </div>
+            {% endif %}
+            
+            <p style="text-align: center; margin-top: 20px;">
+                <a href="http://localhost:8000/admin/shop/order/{{ order.id }}/change/" 
+                   style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    Xem chi tiết đơn hàng
+                </a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -15,6 +15,8 @@ from .models import (
     Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
     PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy
 )
+# NEW: Sử dụng email service mới - đơn giản và hoạt động tốt
+from .email_service import send_order_emails
 
 def payment_info(request):
     """Trang thông tin thanh toán"""
@@ -537,6 +539,7 @@ def place_order(request):
         shipping_address = request.POST.get('shipping_address')
         shipping_city = request.POST.get('shipping_city')
         shipping_district = request.POST.get('shipping_district')
+        payment_method = request.POST.get('payment_method', 'cod')
         notes = request.POST.get('notes', '')
         payment_proof = request.FILES.get('payment_proof')
         
@@ -578,6 +581,7 @@ def place_order(request):
             shipping_address=shipping_address,
             shipping_city=shipping_city,
             shipping_district=shipping_district,
+            payment_method=payment_method,
             subtotal=cart.total_price,
             shipping_fee=shipping_fee,
             total_amount=total_amount,
@@ -600,6 +604,18 @@ def place_order(request):
         
         # Xóa giỏ hàng
         cart.items.all().delete()
+        
+        # Gửi email thông báo - Sử dụng email service mới
+        try:
+            send_order_emails(order.id)
+        except Exception as email_error:
+            # Log lỗi email nhưng không làm fail đơn hàng
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[ERROR] Error sending emails for order {order.id}: {str(email_error)}")
+            print(f"[ERROR] LOI GUI EMAIL: {str(email_error)}")
+            import traceback
+            traceback.print_exc()
         
         messages.success(request, f'Đặt hàng thành công! Mã đơn hàng: {order.order_number}')
         return redirect('shop:order_detail', order_id=order.id)

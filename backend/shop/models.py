@@ -283,6 +283,14 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Trạng thái đơn hàng")
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name="Trạng thái thanh toán")
     
+    # Phương thức thanh toán
+    PAYMENT_METHOD_CHOICES = [
+        ('cod', 'Thanh toán khi nhận hàng (COD)'),
+        ('bank_transfer', 'Chuyển khoản ngân hàng'),
+        ('e_wallet', 'Ví điện tử'),
+    ]
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cod', verbose_name="Phương thức thanh toán")
+    
     # Ghi chú
     notes = models.TextField(blank=True, verbose_name="Ghi chú")
     
@@ -300,6 +308,10 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.order_number}"
+    
+    def get_payment_method_display(self):
+        """Lấy tên hiển thị của phương thức thanh toán"""
+        return dict(self.PAYMENT_METHOD_CHOICES).get(self.payment_method, self.payment_method)
 
     def save(self, *args, **kwargs):
         if not self.order_number:

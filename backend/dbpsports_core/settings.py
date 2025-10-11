@@ -162,6 +162,12 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False) # Thêm dòng này
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="DBP Sports <no-reply@example.com>")
 
+# Admin emails for notifications
+ADMIN_EMAILS = [
+    ADMIN_EMAIL,
+    # Thêm các email admin khác nếu cần
+]
+
 # === Sites ===
 # Đọc SITE_ID từ file .env, nếu không có thì mặc định là 1 (cho local)
 SITE_ID = env.int("SITE_ID", default=1)
