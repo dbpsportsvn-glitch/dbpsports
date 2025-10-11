@@ -2902,19 +2902,13 @@ def auto_update_revenue(budget):
     """Tự động cập nhật các khoản thu từ dữ liệu giải đấu"""
     tournament = budget.tournament
     
-    # Debug: In ra console để kiểm tra
-    print(f"DEBUG auto_update_revenue: Tournament {tournament.name}")
-    print(f"DEBUG: Registration fee = {tournament.registration_fee}")
-    
     # 1. Tính phí đăng ký đội
     paid_teams = tournament.registrations.filter(payment_status='PAID').count()
-    print(f"DEBUG: Paid teams = {paid_teams}")
     
     if paid_teams > 0:
         # Sử dụng phí đăng ký từ tournament
         team_fee = tournament.registration_fee
         total_team_fees = paid_teams * team_fee
-        print(f"DEBUG: Team fee = {team_fee}, Total = {total_team_fees}")
         
         # Kiểm tra xem đã có khoản thu này chưa
         existing_fee = budget.revenue_items.filter(

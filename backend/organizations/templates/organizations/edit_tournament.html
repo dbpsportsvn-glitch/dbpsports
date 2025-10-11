@@ -22,12 +22,49 @@
     {# --- KẾT THÚC KHỐI CODE ĐÃ SỬA --- #}
 
     <div class="card-body p-4">
-        {# Thêm id="edit-tournament-form" vào thẻ form #}
         <form method="post" enctype="multipart/form-data" id="edit-tournament-form">
             {% csrf_token %}
-            {{ form|crispy }}
             
-            {# Nút lưu cũ ở cuối form đã được xóa bỏ #}
+            <div class="row g-4">
+                {# Cột trái: Thông tin cơ bản giải đấu #}
+                <div class="col-lg-6">
+                    <h5 class="mb-3 text-primary"><i class="bi bi-info-circle-fill"></i> Thông tin cơ bản</h5>
+                    
+                    {{ form.name|as_crispy_field }}
+                    {{ form.status|as_crispy_field }}
+                    {{ form.format|as_crispy_field }}
+                    {{ form.region|as_crispy_field }}
+                    {{ form.location_detail|as_crispy_field }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.start_date|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.end_date|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    {{ form.image|as_crispy_field }}
+                    {{ form.rules|as_crispy_field }}
+                </div>
+                
+                {# Cột phải: Thông tin thanh toán #}
+                <div class="col-lg-6">
+                    <h5 class="mb-3 text-success"><i class="bi bi-cash-coin"></i> Thông tin thanh toán</h5>
+                    
+                    {{ form.registration_fee|as_crispy_field }}
+                    {{ form.bank_name|as_crispy_field }}
+                    {{ form.bank_account_number|as_crispy_field }}
+                    {{ form.bank_account_name|as_crispy_field }}
+                    {{ form.payment_qr_code|as_crispy_field }}
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb-fill"></i> <strong>Mẹo:</strong>
+                        <p class="mb-0 mt-2">Cung cấp đầy đủ thông tin thanh toán để các đội có thể dễ dàng đăng ký và chuyển khoản phí tham gia giải đấu.</p>
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
 </div>
