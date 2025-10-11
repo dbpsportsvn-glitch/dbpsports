@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from .models import (
     Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
     PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
-    CustomerShippingInfo
+    CustomerShippingInfo, ContactSettings
 )
 # NEW: Sử dụng email service mới - đơn giản và hoạt động tốt
 from .email_service import send_order_emails
@@ -181,6 +181,12 @@ def shop_home(request):
     # Lấy banner
     banners = ShopBanner.objects.filter(is_active=True).order_by('order', '-created_at')
     
+    # Lấy cài đặt liên hệ
+    try:
+        contact_settings = ContactSettings.objects.get(is_active=True)
+    except ContactSettings.DoesNotExist:
+        contact_settings = None
+    
     context = {
         'featured_products': featured_products,
         'bestseller_products': bestseller_products,
@@ -195,6 +201,7 @@ def shop_home(request):
         'current_search': search,
         'current_sale': sale,
         'banners': banners,
+        'contact_settings': contact_settings,
     }
     
     return render(request, 'shop/shop_home.html', context)

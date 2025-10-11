@@ -591,3 +591,32 @@ class CustomerShippingInfo(models.Model):
     
     def __str__(self):
         return f"Thông tin giao hàng của {self.user.username}"
+
+
+class ContactSettings(models.Model):
+    """Cài đặt thông tin liên hệ"""
+    phone_number = models.CharField(max_length=20, verbose_name="Số điện thoại", help_text="Ví dụ: 0123456789")
+    zalo_link = models.CharField(max_length=200, verbose_name="Link Zalo", help_text="Ví dụ: https://zalo.me/0123456789")
+    messenger_link = models.CharField(max_length=200, verbose_name="Link Messenger", help_text="Ví dụ: https://m.me/dbpsports")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt popup liên hệ")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
+
+    class Meta:
+        verbose_name = "Cài đặt liên hệ"
+        verbose_name_plural = "Cài đặt liên hệ"
+
+    def __str__(self):
+        return f"Cài đặt liên hệ - {self.phone_number}"
+
+    def save(self, *args, **kwargs):
+        # Chỉ cho phép 1 record duy nhất
+        if not self.pk and ContactSettings.objects.exists():
+            # Nếu đã có record, cập nhật record đó thay vì tạo mới
+            existing = ContactSettings.objects.first()
+            existing.phone_number = self.phone_number
+            existing.zalo_link = self.zalo_link
+            existing.messenger_link = self.messenger_link
+            existing.is_active = self.is_active
+            return existing.save(*args, **kwargs)
+        return super().save(*args, **kwargs)

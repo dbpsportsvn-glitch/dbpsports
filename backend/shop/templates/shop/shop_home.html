@@ -2156,4 +2156,205 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+<!-- Contact Popup Widget -->
+{% if contact_settings and contact_settings.is_active %}
+<div class="contact-widget">
+  <div class="contact-popup" id="contactPopup">
+    <div class="contact-item">
+      <a href="{{ contact_settings.zalo_link }}" target="_blank" class="contact-btn zalo-btn">
+        <i class="fab fa-zalo"></i>
+        <span>Zalo</span>
+      </a>
+    </div>
+    <div class="contact-item">
+      <a href="{{ contact_settings.messenger_link }}" target="_blank" class="contact-btn messenger-btn">
+        <i class="fab fa-facebook-messenger"></i>
+        <span>Messenger</span>
+      </a>
+    </div>
+    <div class="contact-item">
+      <a href="tel:{{ contact_settings.phone_number }}" class="contact-btn phone-btn">
+        <i class="fas fa-phone"></i>
+        <span>Gọi ngay</span>
+      </a>
+    </div>
+  </div>
+  <button class="contact-toggle" id="contactToggle">
+    <i class="fas fa-comments"></i>
+  </button>
+</div>
+{% endif %}
+
+<style>
+/* Contact Widget Styles */
+.contact-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.contact-popup {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  transform: translateY(20px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.contact-popup.show {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.contact-item {
+  margin-bottom: 10px;
+}
+
+.contact-item:last-child {
+  margin-bottom: 0;
+}
+
+.contact-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact-btn i {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.contact-btn:hover {
+  transform: translateX(-5px);
+  text-decoration: none;
+  color: white;
+}
+
+.zalo-btn {
+  background: linear-gradient(135deg, #0068ff, #0084ff);
+}
+
+.zalo-btn:hover {
+  background: linear-gradient(135deg, #0056cc, #0066cc);
+  box-shadow: 0 5px 15px rgba(0, 104, 255, 0.4);
+}
+
+.messenger-btn {
+  background: linear-gradient(135deg, #006aff, #0084ff);
+}
+
+.messenger-btn:hover {
+  background: linear-gradient(135deg, #0056cc, #0066cc);
+  box-shadow: 0 5px 15px rgba(0, 106, 255, 0.4);
+}
+
+.phone-btn {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+.phone-btn:hover {
+  background: linear-gradient(135deg, #1ea952, #0f7a6b);
+  box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+}
+
+.contact-toggle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+}
+
+.contact-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Animation for toggle button */
+.contact-toggle.rotate {
+  transform: rotate(45deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .contact-widget {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .contact-popup {
+    bottom: 60px;
+    right: -10px;
+    min-width: 180px;
+  }
+  
+  .contact-toggle {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+}
+</style>
+
+<script>
+// Contact Widget JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  const contactToggle = document.getElementById('contactToggle');
+  const contactPopup = document.getElementById('contactPopup');
+  let isOpen = false;
+
+  contactToggle.addEventListener('click', function() {
+    isOpen = !isOpen;
+    
+    if (isOpen) {
+      contactPopup.classList.add('show');
+      contactToggle.classList.add('rotate');
+    } else {
+      contactPopup.classList.remove('show');
+      contactToggle.classList.remove('rotate');
+    }
+  });
+
+  // Close popup when clicking outside
+  document.addEventListener('click', function(event) {
+    if (isOpen && !event.target.closest('.contact-widget')) {
+      isOpen = false;
+      contactPopup.classList.remove('show');
+      contactToggle.classList.remove('rotate');
+    }
+  });
+});
+</script>
+
 {% endblock %}

@@ -6,7 +6,7 @@ from .models import (
     Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, 
     ShopBanner, ProductImport, ProductSize, ProductVariant,
     PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
-    CustomerShippingInfo
+    CustomerShippingInfo, ContactSettings
 )
 
 
@@ -701,3 +701,32 @@ class CustomerShippingInfoAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(ContactSettings)
+class ContactSettingsAdmin(admin.ModelAdmin):
+    list_display = ['phone_number', 'is_active', 'updated_at']
+    list_filter = ['is_active', 'created_at', 'updated_at']
+    search_fields = ['phone_number']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Thông tin liên hệ', {
+            'fields': ('phone_number', 'zalo_link', 'messenger_link')
+        }),
+        ('Cài đặt', {
+            'fields': ('is_active',)
+        }),
+        ('Thông tin cập nhật', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        # Chỉ cho phép 1 record duy nhất
+        return not ContactSettings.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Không cho phép xóa
+        return False
