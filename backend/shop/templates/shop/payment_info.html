@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thông Tin Thanh Toán - DBP Sports{% endblock %}
+
+{% block content %}
+<style>
+.payment-info-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4rem 0;
+  margin-bottom: 3rem;
+}
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.payment-method {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.payment-method:hover {
+  transform: translateY(-5px);
+}
+
+.payment-method h3 {
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.payment-method .icon {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.payment-steps {
+  background: var(--light);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.step-number {
+  background: var(--primary);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.contact-info {
+  background: white;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--light);
+  border-radius: 10px;
+}
+
+.contact-item .icon {
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-right: 1rem;
+  width: 30px;
+  text-align: center;
+}
+
+.qr-code {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.qr-code img {
+  max-width: 200px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.warning-box {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.warning-box .icon {
+  color: #856404;
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.success-box {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.success-box .icon {
+  color: #155724;
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+</style>
+
+<!-- Hero Section -->
+<section class="payment-info-section">
+  <div class="container">
+    <div class="row justify-content-center text-center">
+      <div class="col-lg-8">
+        <h1 class="display-4 fw-bold mb-4">
+          <i class="fas fa-credit-card me-3"></i>
+          Thông Tin Thanh Toán
+        </h1>
+        <p class="lead">
+          Hướng dẫn chi tiết các phương thức thanh toán và quy trình đặt hàng tại DBP Sports
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <!-- Phương thức thanh toán -->
+  <div class="row">
+    <div class="col-12">
+      <h2 class="text-center mb-5">
+        <i class="fas fa-wallet me-2"></i>
+        Phương Thức Thanh Toán
+      </h2>
+    </div>
+  </div>
+
+  <div class="payment-methods">
+    <!-- Chuyển khoản ngân hàng -->
+    <div class="payment-method">
+      <h3>
+        <i class="fas fa-university icon"></i>
+        Chuyển Khoản Ngân Hàng
+      </h3>
+      <p class="text-muted mb-3">
+        Thanh toán qua chuyển khoản ngân hàng - An toàn và nhanh chóng
+      </p>
+      
+      <div class="contact-info">
+        <h5 class="mb-3">Thông tin tài khoản:</h5>
+        
+        <div class="contact-item">
+          <i class="fas fa-university icon"></i>
+          <div>
+            <strong>Ngân hàng:</strong> Vietcombank<br>
+            <strong>Chủ tài khoản:</strong> DBP Sports<br>
+            <strong>Số tài khoản:</strong> 1234567890
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fas fa-university icon"></i>
+          <div>
+            <strong>Ngân hàng:</strong> Techcombank<br>
+            <strong>Chủ tài khoản:</strong> DBP Sports<br>
+            <strong>Số tài khoản:</strong> 0987654321
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fas fa-university icon"></i>
+          <div>
+            <strong>Ngân hàng:</strong> BIDV<br>
+            <strong>Chủ tài khoản:</strong> DBP Sports<br>
+            <strong>Số tài khoản:</strong> 1122334455
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ví điện tử -->
+    <div class="payment-method">
+      <h3>
+        <i class="fas fa-mobile-alt icon"></i>
+        Ví Điện Tử
+      </h3>
+      <p class="text-muted mb-3">
+        Thanh toán qua các ví điện tử phổ biến
+      </p>
+      
+      <div class="contact-info">
+        <div class="contact-item">
+          <i class="fab fa-cc-paypal icon"></i>
+          <div>
+            <strong>PayPal:</strong> dbpsports@gmail.com
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fas fa-qrcode icon"></i>
+          <div>
+            <strong>MoMo:</strong> 0901234567
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fas fa-qrcode icon"></i>
+          <div>
+            <strong>ZaloPay:</strong> 0901234567
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh toán khi nhận hàng -->
+    <div class="payment-method">
+      <h3>
+        <i class="fas fa-truck icon"></i>
+        COD (Thanh Toán Khi Nhận Hàng)
+      </h3>
+      <p class="text-muted mb-3">
+        Thanh toán bằng tiền mặt khi nhận hàng
+      </p>
+      
+      <div class="success-box">
+        <i class="fas fa-check-circle icon"></i>
+        <strong>Phí COD:</strong> Miễn phí<br>
+        <strong>Phạm vi:</strong> Toàn quốc<br>
+        <strong>Thời gian:</strong> 1-3 ngày làm việc
+      </div>
+    </div>
+  </div>
+
+  <!-- Quy trình đặt hàng -->
+  <div class="payment-steps">
+    <h2 class="text-center mb-5">
+      <i class="fas fa-list-ol me-2"></i>
+      Quy Trình Đặt Hàng
+    </h2>
+    
+    <div class="step">
+      <div class="step-number">1</div>
+      <div>
+        <h5>Chọn sản phẩm</h5>
+        <p class="text-muted mb-0">Duyệt và chọn sản phẩm bạn muốn mua từ cửa hàng</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">2</div>
+      <div>
+        <h5>Thêm vào giỏ hàng</h5>
+        <p class="text-muted mb-0">Thêm sản phẩm vào giỏ hàng và kiểm tra thông tin</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">3</div>
+      <div>
+        <h5>Chọn phương thức thanh toán</h5>
+        <p class="text-muted mb-0">Chọn phương thức thanh toán phù hợp với bạn</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">4</div>
+      <div>
+        <h5>Xác nhận đơn hàng</h5>
+        <p class="text-muted mb-0">Kiểm tra và xác nhận thông tin đơn hàng</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">5</div>
+      <div>
+        <h5>Thanh toán</h5>
+        <p class="text-muted mb-0">Thực hiện thanh toán theo phương thức đã chọn</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">6</div>
+      <div>
+        <h5>Nhận hàng</h5>
+        <p class="text-muted mb-0">Nhận hàng và kiểm tra chất lượng sản phẩm</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thông tin liên hệ -->
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="contact-info">
+        <h2 class="text-center mb-4">
+          <i class="fas fa-headset me-2"></i>
+          Hỗ Trợ Khách Hàng
+        </h2>
+        
+        <div class="contact-item">
+          <i class="fas fa-phone icon"></i>
+          <div>
+            <strong>Hotline:</strong> 1900 1234<br>
+            <strong>Thời gian:</strong> 8:00 - 22:00 (Tất cả các ngày)
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fab fa-facebook-messenger icon"></i>
+          <div>
+            <strong>Facebook Messenger:</strong> m.me/dbpsports<br>
+            <strong>Phản hồi:</strong> Trong vòng 5 phút
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fas fa-envelope icon"></i>
+          <div>
+            <strong>Email:</strong> support@dbpsports.com<br>
+            <strong>Phản hồi:</strong> Trong vòng 24 giờ
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <i class="fab fa-zalo icon"></i>
+          <div>
+            <strong>Zalo:</strong> 0901234567<br>
+            <strong>Phản hồi:</strong> Trong vòng 10 phút
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lưu ý quan trọng -->
+  <div class="warning-box">
+    <h4>
+      <i class="fas fa-exclamation-triangle icon"></i>
+      Lưu Ý Quan Trọng
+    </h4>
+    <ul class="mb-0">
+      <li>Vui lòng chuyển khoản đúng số tiền và ghi rõ nội dung chuyển khoản</li>
+      <li>Sau khi chuyển khoản, vui lòng gửi ảnh biên lai qua Zalo/Facebook để xác nhận</li>
+      <li>Đơn hàng sẽ được xử lý trong vòng 24 giờ sau khi xác nhận thanh toán</li>
+      <li>Chúng tôi chỉ giao hàng đến địa chỉ đã đăng ký trong đơn hàng</li>
+      <li>Vui lòng kiểm tra hàng trước khi thanh toán (đối với COD)</li>
+    </ul>
+  </div>
+
+  <!-- Chính sách đổi trả -->
+  <div class="success-box">
+    <h4>
+      <i class="fas fa-shield-alt icon"></i>
+      Chính Sách Đổi Trả
+    </h4>
+    <ul class="mb-0">
+      <li><strong>Đổi trả miễn phí:</strong> Trong vòng 7 ngày kể từ ngày nhận hàng</li>
+      <li><strong>Điều kiện:</strong> Sản phẩm còn nguyên tem, chưa sử dụng</li>
+      <li><strong>Hoàn tiền:</strong> 100% giá trị sản phẩm (trừ phí vận chuyển)</li>
+      <li><strong>Bảo hành:</strong> Theo chính sách của từng nhà sản xuất</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Call to Action -->
+<section class="py-5" style="background: var(--light);">
+  <div class="container text-center">
+    <h3 class="mb-4">Cần Hỗ Trợ Thêm?</h3>
+    <p class="lead mb-4">Đội ngũ chăm sóc khách hàng của chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="tel:19001234" class="btn btn-primary btn-lg">
+        <i class="fas fa-phone me-2"></i>
+        Gọi Ngay: 1900 1234
+      </a>
+      <a href="https://m.me/dbpsports" target="_blank" class="btn btn-outline-primary btn-lg">
+        <i class="fab fa-facebook-messenger me-2"></i>
+        Chat Facebook
+      </a>
+      <a href="https://zalo.me/0901234567" target="_blank" class="btn btn-outline-success btn-lg">
+        <i class="fab fa-zalo me-2"></i>
+        Chat Zalo
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

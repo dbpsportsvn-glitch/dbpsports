@@ -620,53 +620,262 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
 .shop-menu-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
+  justify-content: center;
+  gap: 1rem; /* Giảm khoảng cách */
+  flex-wrap: nowrap;
 }
 
 .shop-search-filter {
   flex: 0 0 auto;
+  order: 1;
 }
 
 .search-form {
-  width: 300px;
+  width: 200px; /* Thu gọn lại */
+  position: relative;
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px; /* Bo góc nhẹ */
+  overflow: visible; /* Cho phép nút đè ra ngoài */
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  flex: 1;
+  padding-right: 20px; /* Giảm padding vì nút đè ít hơn */
+}
+
+.search-input-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .search-input {
-  border: 2px solid var(--light);
-  border-radius: var(--border-radius);
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+  flex: 1;
+  border: none;
+  padding: 0.5rem 0.75rem; /* Thu gọn padding */
+  font-size: 0.85rem; /* Thu gọn font size */
+  background: transparent;
+  outline: none;
+  color: var(--dark);
 }
 
-.search-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.25);
+.search-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .search-btn {
+  position: absolute;
+  right: -15px; /* Đè lên thanh input chỉ 1/3 */
+  top: 50%;
+  transform: translateY(-50%);
   background: var(--primary);
-  border: 2px solid var(--primary);
-  border-radius: var(--border-radius);
-  padding: 0.5rem 1rem;
+  border: none;
+  padding: 0.5rem;
+  color: white;
+  cursor: pointer;
   transition: all 0.3s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
 }
 
 .search-btn:hover {
   background: var(--primary-dark);
-  border-color: var(--primary-dark);
-  transform: translateY(-1px);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.search-icon {
+  width: 14px; /* Thu gọn icon */
+  height: 14px;
+  color: white;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover .search-icon {
+  transform: scale(1.1);
+  color: white;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  margin-top: 4px;
+}
+
+.search-suggestion-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-suggestion-item:hover {
+  background: var(--light);
+  color: var(--primary);
+}
+
+.search-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.search-suggestion-item.suggestion-active {
+  background: var(--primary);
+  color: white;
+}
+
+.search-suggestion-item.suggestion-active i {
+  color: white;
+}
+
+.suggestion-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.search-suggestion-item.suggestion-active .suggestion-icon {
+  color: white;
 }
 
 .shop-menu {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
-  flex-wrap: wrap;
+  gap: 0.5rem; /* Giảm khoảng cách giữa các menu items */
+  flex-wrap: nowrap;
   flex: 1;
+  order: 2;
 }
+
+.shop-menu-item {
+  flex: 0 0 auto;
+}
+
+.shop-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem; /* Giảm khoảng cách giữa icon và text */
+  padding: 0.4rem 0.6rem; /* Giảm padding */
+  color: var(--dark);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-size: 0.85rem; /* Giảm font size */
+}
+
+/* Style cho menu item chỉ có icon */
+.shop-menu-link.icon-only {
+  padding: 0.5rem; /* Padding đồng đều cho icon */
+  justify-content: center;
+  min-width: 40px;
+}
+
+.shop-menu-link:hover {
+  background: var(--light);
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.shop-menu-separator {
+  width: 2px; /* Tăng độ dày từ 1px lên 2px */
+  height: 20px; /* Tăng chiều cao từ 16px lên 20px */
+  background: #dc2626; /* Đổi màu đỏ để nổi bật hơn */
+  opacity: 1; /* Tăng opacity lên 1 để hiển thị rõ nhất */
+  margin: 0 0.5rem; /* Thêm margin để tạo khoảng cách */
+  border-radius: 1px; /* Thêm bo góc nhẹ */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shop-menu-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .shop-search-filter {
+    order: 2;
+  }
+  
+  .shop-menu {
+    order: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+  
+  .search-form {
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .search-input-wrapper {
+    border-radius: 6px;
+  }
+  
+  .search-input {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .search-btn {
+    width: 35px;
+    height: 35px;
+    right: -12px; /* Điều chỉnh cho mobile */
+  }
+  
+  .search-icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .search-input-wrapper {
+    padding-right: 15px; /* Giảm padding cho mobile */
+  }
+  
+  .shop-menu-link {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+
 
 .shop-menu-item {
   position: relative;
@@ -765,10 +974,12 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
 }
 
 .shop-menu-separator {
-  width: 1px;
+  width: 2px;
   height: 30px;
-  background: var(--light);
+  background: #dc2626;
+  opacity: 1;
   margin: 0 1rem;
+  border-radius: 1px;
 }
 
 .shop-menu-item .dropdown-item {
@@ -943,12 +1154,18 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
     <div class="shop-menu-wrapper">
       <!-- Search Filter -->
       <div class="shop-search-filter">
-        <form method="GET" action="{% url 'shop:home' %}" class="search-form">
-          <div class="input-group">
-            <input type="text" name="search" class="form-control search-input" placeholder="Tìm kiếm sản phẩm..." value="{{ request.GET.search }}">
-            <button type="submit" class="btn btn-primary search-btn">
-              <i class="fas fa-search"></i>
+        <form method="GET" action="{% url 'shop:home' %}" class="search-form" id="searchForm">
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <input type="text" name="search" class="search-input" placeholder="Tìm kiếm sản phẩm..." value="{{ request.GET.search }}" id="searchInput">
+            </div>
+            <button type="submit" class="search-btn" id="searchBtn">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="sr-only">Tìm kiếm</span>
             </button>
+            <div class="search-suggestions" id="searchSuggestions"></div>
           </div>
         </form>
       </div>
@@ -1096,6 +1313,13 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
       
       <!-- Separator -->
       <div class="shop-menu-separator"></div>
+      
+      <!-- Payment Info -->
+      <div class="shop-menu-item">
+        <a href="{% url 'shop:payment_info' %}" class="shop-menu-link icon-only" title="Thông tin thanh toán">
+          <i class="fas fa-credit-card"></i>
+        </a>
+      </div>
       
       <!-- Cart -->
       <div class="shop-menu-item">
@@ -1745,7 +1969,147 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+  
+  // Xử lý thanh tìm kiếm với gợi ý
+  initSearchSuggestions();
 });
+
+function initSearchSuggestions() {
+  const searchInput = document.getElementById('searchInput');
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  const searchForm = document.getElementById('searchForm');
+  
+  if (!searchInput || !searchSuggestions) return;
+  
+  let searchTimeout;
+  
+  // Xử lý khi người dùng nhập
+  searchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+      hideSuggestions();
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 300);
+  });
+  
+  // Xử lý khi focus vào input
+  searchInput.addEventListener('focus', function() {
+    const query = this.value.trim();
+    if (query.length >= 2) {
+      fetchSuggestions(query);
+    }
+  });
+  
+  // Ẩn gợi ý khi click ra ngoài
+  document.addEventListener('click', function(e) {
+    if (!searchForm.contains(e.target)) {
+      hideSuggestions();
+    }
+  });
+  
+  // Xử lý khi nhấn phím
+  searchInput.addEventListener('keydown', function(e) {
+    const suggestions = searchSuggestions.querySelectorAll('.search-suggestion-item');
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const active = searchSuggestions.querySelector('.suggestion-active');
+      if (active) {
+        active.classList.remove('suggestion-active');
+        const next = active.nextElementSibling;
+        if (next) {
+          next.classList.add('suggestion-active');
+        }
+      } else if (suggestions.length > 0) {
+        suggestions[0].classList.add('suggestion-active');
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const active = searchSuggestions.querySelector('.suggestion-active');
+      if (active) {
+        active.classList.remove('suggestion-active');
+        const prev = active.previousElementSibling;
+        if (prev) {
+          prev.classList.add('suggestion-active');
+        }
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const active = searchSuggestions.querySelector('.suggestion-active');
+      if (active) {
+        active.click();
+      } else {
+        searchForm.submit();
+      }
+    } else if (e.key === 'Escape') {
+      hideSuggestions();
+    }
+  });
+}
+
+function fetchSuggestions(query) {
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  
+  // Gửi request để lấy gợi ý
+  fetch(`{% url 'shop:home' %}?search=${encodeURIComponent(query)}&suggestions=true`, {
+    method: 'GET',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.suggestions.length > 0) {
+      showSuggestions(data.suggestions);
+    } else {
+      hideSuggestions();
+    }
+  })
+  .catch(error => {
+    console.log('Error fetching suggestions:', error);
+    hideSuggestions();
+  });
+}
+
+function showSuggestions(suggestions) {
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  
+  searchSuggestions.innerHTML = '';
+  
+  suggestions.forEach(suggestion => {
+    const item = document.createElement('div');
+    item.className = 'search-suggestion-item';
+    item.innerHTML = `
+      <svg class="suggestion-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>${suggestion.name}</span>
+    `;
+    
+    item.addEventListener('click', function() {
+      document.getElementById('searchInput').value = suggestion.name;
+      hideSuggestions();
+      document.getElementById('searchForm').submit();
+    });
+    
+    searchSuggestions.appendChild(item);
+  });
+  
+  searchSuggestions.style.display = 'block';
+}
+
+function hideSuggestions() {
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  searchSuggestions.style.display = 'none';
+  searchSuggestions.innerHTML = '';
+}
 
 function loadCartCount() {
   fetch('{% url "shop:cart" %}', {

@@ -11,6 +11,10 @@ import json
 
 from .models import Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport
 
+def payment_info(request):
+    """Trang thông tin thanh toán"""
+    return render(request, 'shop/payment_info.html')
+
 
 def shop_home(request):
     """Trang chủ shop"""
@@ -20,6 +24,35 @@ def shop_home(request):
     sport = request.GET.get('sport')
     sale = request.GET.get('sale')
     search = request.GET.get('search')
+    suggestions = request.GET.get('suggestions')
+    
+    # Xử lý AJAX request cho gợi ý tìm kiếm
+    if suggestions and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if search and len(search) >= 2:
+            # Lấy gợi ý từ tên sản phẩm và danh mục
+            product_suggestions = Product.objects.filter(
+                status='published',
+                name__icontains=search
+            ).values_list('name', flat=True).distinct()[:5]
+            
+            category_suggestions = Category.objects.filter(
+                is_active=True,
+                name__icontains=search
+            ).values_list('name', flat=True).distinct()[:3]
+            
+            # Kết hợp và trả về
+            all_suggestions = list(product_suggestions) + list(category_suggestions)
+            suggestions_list = [{'name': suggestion} for suggestion in all_suggestions[:8]]
+            
+            return JsonResponse({
+                'success': True,
+                'suggestions': suggestions_list
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'suggestions': []
+            })
     
     # Base queryset
     products_queryset = Product.objects.filter(status='published')

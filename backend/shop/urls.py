@@ -7,6 +7,9 @@ urlpatterns = [
     # Trang chủ shop
     path('', views.shop_home, name='home'),
     
+    # Thông tin thanh toán
+    path('payment-info/', views.payment_info, name='payment_info'),
+    
     # Danh sách sản phẩm
     path('products/', views.product_list, name='product_list'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
