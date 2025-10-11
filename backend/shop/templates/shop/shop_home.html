@@ -1447,7 +1447,7 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
 
 <!-- Filtered Products Section -->
 {% if filtered_products %}
-<section class="filtered-products-section">
+<section class="filtered-products-section" id="search-results">
   <div class="container">
     <div class="row">
       <div class="col-12">
@@ -2136,5 +2136,24 @@ function loadCartCount() {
     console.log('Could not load cart count:', error);
   });
 }
+
+// Tự động cuộn xuống kết quả tìm kiếm khi có search query
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasSearch = urlParams.get('search') || urlParams.get('category') || urlParams.get('type') || urlParams.get('sport') || urlParams.get('sale');
+  
+  if (hasSearch) {
+    const searchResults = document.getElementById('search-results');
+    if (searchResults) {
+      // Đợi một chút để trang load xong rồi mới scroll
+      setTimeout(function() {
+        searchResults.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 300);
+    }
+  }
+});
 </script>
 {% endblock %}
