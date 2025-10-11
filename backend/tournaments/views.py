@@ -2635,6 +2635,8 @@ def sponsorship_proposal_view(request, pk):
         'sponsorship_packages': sponsorship_packages,
         'registered_teams_count': registered_teams_count,
     }
+    
+    return render(request, 'tournaments/sponsorship_proposal.html', context)
 
 
 # ===== VIEWS CHO HỆ THỐNG QUẢN LÝ TÀI CHÍNH =====
