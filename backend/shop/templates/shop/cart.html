@@ -233,10 +233,21 @@
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .btn-remove:hover {
   background: #c82333;
+  transform: translateY(-1px);
+}
+
+.btn-remove {
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 /* Cart Summary */
@@ -470,9 +481,9 @@
             
             <div class="item-quantity">
               <div class="quantity-controls">
-                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'-1' }})" {% if item.quantity <= 1 %}disabled{% endif %}>-</button>
-                <input type="number" class="quantity-input" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}" onchange="updateQuantity({{ item.id }}, this.value)">
-                <button class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'1' }})" {% if item.quantity >= item.product.stock_quantity %}disabled{% endif %}>+</button>
+                <button class="quantity-btn" data-item-id="{{ item.id }}" data-action="decrease" {% if item.quantity <= 1 %}disabled{% endif %}>-</button>
+                <input type="number" class="quantity-input" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}" data-item-id="{{ item.id }}">
+                <button class="quantity-btn" data-item-id="{{ item.id }}" data-action="increase" {% if item.quantity >= item.product.stock_quantity %}disabled{% endif %}>+</button>
               </div>
             </div>
             
@@ -482,7 +493,7 @@
             
             <div class="item-actions">
               <button class="btn-remove" onclick="removeItem({{ item.id }})" title="Xóa sản phẩm">
-                <i class="fas fa-trash"></i>
+                🗑️
               </button>
             </div>
           </div>
@@ -560,18 +571,44 @@
 
 {% block extra_js %}
 <script>
+// Format currency function
+function formatCurrency(amount) {
+  // Đảm bảo amount là số
+  const numAmount = typeof amount === 'string' ? parseFloat(amount.replace(/[^\d]/g, '')) : amount;
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(numAmount).replace('₫', 'đ');
+}
+
 function updateQuantity(itemId, newQuantity) {
+  console.log('updateQuantity called:', itemId, newQuantity); // Debug
+  
   if (newQuantity < 1) {
     removeItem(itemId);
     return;
   }
   
-  const button = event.target;
-  const originalText = button.innerHTML;
+  // Tìm các elements
+  const quantityInput = document.getElementById(`quantity-${itemId}`);
+  const cartItem = document.getElementById(`cart-item-${itemId}`);
   
-  // Hiển thị loading
-  button.innerHTML = '<span class="loading"></span>';
-  button.disabled = true;
+  console.log('Found elements:', {quantityInput, cartItem}); // Debug
+  
+  if (!quantityInput || !cartItem) {
+    console.error('Could not find required elements');
+    return;
+  }
+  
+  // Disable tất cả controls trong cart item này
+  const allInputs = cartItem.querySelectorAll('input, button');
+  console.log('Found controls:', allInputs.length); // Debug
+  allInputs.forEach(element => {
+    element.disabled = true;
+    console.log('Disabled:', element); // Debug
+  });
   
   fetch(`{% url 'shop:update_cart_item' 0 %}`.replace('0', itemId), {
     method: 'POST',
@@ -586,16 +623,22 @@ function updateQuantity(itemId, newQuantity) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      console.log('Update response:', data); // Debug log
+      
       // Cập nhật giao diện
       document.getElementById(`quantity-${itemId}`).value = newQuantity;
-      document.getElementById(`total-${itemId}`).textContent = data.item_total + 'đ';
-      document.getElementById('subtotal').textContent = data.cart_total + 'đ';
+      document.getElementById(`total-${itemId}`).textContent = formatCurrency(data.item_total);
+      document.getElementById('subtotal').textContent = formatCurrency(data.cart_total);
       
       // Cập nhật tổng tiền
       const totalElement = document.getElementById('total');
-      const shippingFee = data.cart_total >= 500000 ? 0 : 30000;
-      const totalAmount = data.cart_total + shippingFee;
-      totalElement.textContent = totalAmount + 'đ';
+      const cartTotalNum = parseInt(data.cart_total); // Chuyển string thành số
+      const shippingFee = cartTotalNum >= 500000 ? 0 : 30000;
+      const totalAmount = cartTotalNum + shippingFee;
+      
+      console.log('Cart total:', data.cart_total, 'Cart total num:', cartTotalNum, 'Shipping fee:', shippingFee, 'Total amount:', totalAmount); // Debug
+      
+      totalElement.textContent = formatCurrency(totalAmount);
       
       // Cập nhật phí vận chuyển
       const shippingElement = document.getElementById('shipping-fee');
@@ -616,9 +659,37 @@ function updateQuantity(itemId, newQuantity) {
     showNotification('Có lỗi xảy ra khi cập nhật giỏ hàng', 'error');
   })
   .finally(() => {
-    // Khôi phục button
-    button.innerHTML = originalText;
-    button.disabled = false;
+    console.log('Finally block executing'); // Debug
+    
+    // Enable lại tất cả controls
+    const allInputs = cartItem.querySelectorAll('input, button');
+    console.log('Re-enabling controls:', allInputs.length); // Debug
+    allInputs.forEach(element => {
+      element.disabled = false;
+      console.log('Enabled:', element); // Debug
+    });
+    
+    // Cập nhật trạng thái disable của quantity buttons dựa trên giá trị mới
+    const currentQuantity = parseInt(quantityInput.value);
+    const maxQuantity = parseInt(quantityInput.getAttribute('max'));
+    
+    console.log('Current quantity:', currentQuantity, 'Max quantity:', maxQuantity); // Debug
+    
+    // Tìm và disable minus button nếu quantity = 1
+    const minusButton = cartItem.querySelector('.quantity-btn:first-child');
+    if (minusButton && currentQuantity <= 1) {
+      minusButton.disabled = true;
+      console.log('Disabled minus button'); // Debug
+    }
+    
+    // Tìm và disable plus button nếu quantity = max
+    const plusButton = cartItem.querySelector('.quantity-btn:last-child');
+    if (plusButton && currentQuantity >= maxQuantity) {
+      plusButton.disabled = true;
+      console.log('Disabled plus button'); // Debug
+    }
+    
+    console.log('Finally block completed'); // Debug
   });
 }
 
@@ -627,12 +698,12 @@ function removeItem(itemId) {
     return;
   }
   
-  const button = event.target;
-  const originalText = button.innerHTML;
+  // Tìm cart item
+  const cartItem = document.getElementById(`cart-item-${itemId}`);
   
-  // Hiển thị loading
-  button.innerHTML = '<span class="loading"></span>';
-  button.disabled = true;
+  // Disable tất cả controls trong cart item này
+  const allInputs = cartItem.querySelectorAll('input, button');
+  allInputs.forEach(element => element.disabled = true);
   
   fetch(`{% url 'shop:remove_from_cart' 0 %}`.replace('0', itemId), {
     method: 'POST',
@@ -648,12 +719,13 @@ function removeItem(itemId) {
       document.getElementById(`cart-item-${itemId}`).remove();
       
       // Cập nhật tổng tiền
-      document.getElementById('subtotal').textContent = data.cart_total + 'đ';
+      document.getElementById('subtotal').textContent = formatCurrency(data.cart_total);
       
       const totalElement = document.getElementById('total');
-      const shippingFee = data.cart_total >= 500000 ? 0 : 30000;
-      const totalAmount = data.cart_total + shippingFee;
-      totalElement.textContent = totalAmount + 'đ';
+      const cartTotalNum = parseInt(data.cart_total); // Chuyển string thành số
+      const shippingFee = cartTotalNum >= 500000 ? 0 : 30000;
+      const totalAmount = cartTotalNum + shippingFee;
+      totalElement.textContent = formatCurrency(totalAmount);
       
       // Cập nhật phí vận chuyển
       const shippingElement = document.getElementById('shipping-fee');
@@ -679,9 +751,11 @@ function removeItem(itemId) {
     showNotification('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng', 'error');
   })
   .finally(() => {
-    // Khôi phục button
-    button.innerHTML = originalText;
-    button.disabled = false;
+    // Enable lại controls (chỉ nếu item vẫn còn tồn tại)
+    if (document.getElementById(`cart-item-${itemId}`)) {
+      const allInputs = cartItem.querySelectorAll('input, button');
+      allInputs.forEach(element => element.disabled = false);
+    }
   });
 }
 
@@ -705,24 +779,46 @@ function showNotification(message, type) {
   }, 3000);
 }
 
-// Quantity input validation
+// Event delegation for quantity controls
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.quantity-input').forEach(input => {
-    input.addEventListener('input', function() {
-      const itemId = this.id.split('-')[1];
-      const maxQuantity = parseInt(this.getAttribute('max'));
-      let value = parseInt(this.value);
+  // Handle quantity button clicks
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('quantity-btn')) {
+      const itemId = e.target.getAttribute('data-item-id');
+      const action = e.target.getAttribute('data-action');
+      const quantityInput = document.getElementById(`quantity-${itemId}`);
+      const currentQuantity = parseInt(quantityInput.value);
+      
+      let newQuantity;
+      if (action === 'increase') {
+        newQuantity = currentQuantity + 1;
+      } else if (action === 'decrease') {
+        newQuantity = currentQuantity - 1;
+      }
+      
+      if (newQuantity && newQuantity >= 1) {
+        updateQuantity(itemId, newQuantity);
+      }
+    }
+  });
+  
+  // Handle quantity input changes
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('quantity-input')) {
+      const itemId = e.target.getAttribute('data-item-id');
+      const maxQuantity = parseInt(e.target.getAttribute('max'));
+      let value = parseInt(e.target.value);
       
       if (value < 1) {
-        this.value = 1;
+        e.target.value = 1;
         updateQuantity(itemId, 1);
       } else if (value > maxQuantity) {
-        this.value = maxQuantity;
+        e.target.value = maxQuantity;
         updateQuantity(itemId, maxQuantity);
       } else {
         updateQuantity(itemId, value);
       }
-    });
+    }
   });
 });
 </script>

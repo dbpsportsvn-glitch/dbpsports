@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from .models import Product, Category, Cart, CartItem, Order, OrderItem
+from .models import Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner
 
 
 def shop_home(request):
@@ -117,6 +117,9 @@ def shop_home(request):
     # Nếu có filter, hiển thị sản phẩm được filter
     filtered_products = products_queryset.order_by('-created_at')[:12] if any([category, type_filter, sport, sale, search]) else None
     
+    # Lấy banner
+    banners = ShopBanner.objects.filter(is_active=True).order_by('order', '-created_at')
+    
     context = {
         'featured_products': featured_products,
         'bestseller_products': bestseller_products,
@@ -130,6 +133,7 @@ def shop_home(request):
         'current_sport': sport,
         'current_search': search,
         'current_sale': sale,
+        'banners': banners,
     }
     
     return render(request, 'shop/shop_home.html', context)

@@ -254,3 +254,43 @@ class OrderItem(models.Model):
     def total_price(self):
         """Tổng giá của sản phẩm trong đơn hàng"""
         return self.price * self.quantity
+
+
+class ShopBanner(models.Model):
+    """Banner trang chủ shop"""
+    title = models.CharField(max_length=200, verbose_name="Tiêu đề chính")
+    subtitle = models.TextField(verbose_name="Tiêu đề phụ")
+    badge_text = models.CharField(max_length=100, verbose_name="Text badge")
+    button_text = models.CharField(max_length=50, verbose_name="Text nút")
+    button_url = models.CharField(max_length=200, default="/shop/products/", verbose_name="URL nút")
+    
+    # Hình ảnh
+    main_image = models.ImageField(upload_to='shop/banners/', verbose_name="Hình ảnh chính")
+    
+    # Sản phẩm liên kết
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Sản phẩm liên kết")
+    
+    # Thứ tự hiển thị
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    
+    # Trạng thái
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    
+    # Thời gian
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Banner Shop"
+        verbose_name_plural = "Banner Shop"
+        ordering = ['order', '-created_at']
+
+    def __str__(self):
+        return self.title
+    
+    @property
+    def link_url(self):
+        """URL liên kết - ưu tiên sản phẩm, sau đó là button_url"""
+        if self.product:
+            return f"/shop/products/{self.product.slug}/"
+        return self.button_url

@@ -31,7 +31,7 @@
 .hero-section {
   background: var(--gradient-sunset);
   color: white;
-  padding: 8rem 0;
+  padding: 0;
   position: relative;
   overflow: hidden;
   min-height: 100vh;
@@ -74,6 +74,8 @@
 .hero-content {
   position: relative;
   z-index: 2;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
 }
 
 .hero-title {
@@ -97,36 +99,48 @@
 
 .hero-badge {
   display: inline-block;
-  background: rgba(255,255,255,0.2);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
   padding: 0.5rem 1.5rem;
   border-radius: 25px;
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .hero-btn {
-  background: rgba(255,255,255,0.2);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
   color: white;
-  padding: 1rem 2.5rem;
+  padding: 1.2rem 2.5rem;
   border-radius: 50px;
   text-decoration: none;
   font-weight: 700;
   font-size: 1.1rem;
   transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .hero-btn:hover {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.25);
   color: white;
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  border-color: rgba(255,255,255,0.3);
 }
 
 /* Categories Section */
@@ -543,6 +557,20 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
     font-size: 1rem;
   }
   
+  .hero-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 1.2rem;
+    letter-spacing: 0.3px;
+  }
+  
+  .hero-btn {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    min-height: 55px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  
   .section-title {
     font-size: 2rem;
   }
@@ -814,6 +842,83 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Carousel Custom Styles */
+.carousel-indicators {
+  bottom: 20px;
+}
+
+.carousel-indicators button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.5);
+  border: none;
+  margin: 0 5px;
+}
+
+.carousel-indicators button.active {
+  background-color: var(--primary);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.carousel-control-prev {
+  left: 20px;
+}
+
+.carousel-control-next {
+  right: 20px;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Carousel Background Overlay */
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2));
+  z-index: 1;
+}
+
+.carousel-item {
+  position: relative;
+  min-height: 100vh;
+  height: 100vh;
+}
+
+#bannerCarousel {
+  margin: 0;
+  padding: 0;
+}
+
+.carousel-item .container {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.carousel-item .container .row {
+  height: 100%;
+  align-items: center;
+}
 </style>
 {% endblock %}
 
@@ -989,7 +1094,74 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
   </div>
 </section>
 
-<!-- Hero Section - Jogarbola Style -->
+<!-- Hero Section - Carousel Style -->
+{% if banners %}
+<section class="hero-section">
+  <div id="bannerCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+    <div class="carousel-indicators">
+      {% for banner in banners %}
+      <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+              {% if forloop.first %}class="active" aria-current="true"{% endif %} 
+              aria-label="Slide {{ forloop.counter }}"></button>
+      {% endfor %}
+    </div>
+    
+    <div class="carousel-inner">
+      {% for banner in banners %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}" style="background-image: url('{{ banner.main_image.url }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <div class="carousel-overlay"></div>
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-lg-6">
+              <div class="hero-content">
+                <div class="hero-badge">
+                  <i class="fas fa-star me-2"></i>
+                  {{ banners.0.badge_text }}
+                </div>
+                <h1 class="hero-title">{{ banners.0.title }}</h1>
+                <p class="hero-subtitle">
+                  {{ banners.0.subtitle|linebreaks }}
+                </p>
+                <a href="{% if banner.product %}{% url 'shop:product_detail' banner.product.slug %}{% else %}{{ banner.button_url }}{% endif %}" class="hero-btn">
+                  <i class="fas fa-shopping-bag me-2"></i>
+                  {{ banners.0.button_text }}
+                </a>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="text-center position-relative">
+                <!-- Floating elements -->
+                <div class="floating-elements">
+                  <div class="floating-icon" style="position: absolute; top: 20%; left: 10%; animation: float 3s ease-in-out infinite;">
+                    <i class="fas fa-futbol" style="font-size: 3rem; color: rgba(255,255,255,0.8);"></i>
+                  </div>
+                  <div class="floating-icon" style="position: absolute; top: 60%; right: 15%; animation: float 3s ease-in-out infinite 1s;">
+                    <i class="fas fa-trophy" style="font-size: 2.5rem; color: var(--gold);"></i>
+                  </div>
+                  <div class="floating-icon" style="position: absolute; bottom: 30%; left: 20%; animation: float 3s ease-in-out infinite 2s;">
+                    <i class="fas fa-medal" style="font-size: 2rem; color: rgba(255,255,255,0.9);"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+</section>
+{% else %}
+<!-- Default Hero Section -->
 <section class="hero-section">
   <div class="container">
     <div class="row align-items-center">
@@ -1013,7 +1185,7 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
       </div>
       <div class="col-lg-6">
         <div class="text-center position-relative">
-          <!-- Floating elements like Jogarbola -->
+          <!-- Floating elements -->
           <div class="floating-elements">
             <div class="floating-icon" style="position: absolute; top: 20%; left: 10%; animation: float 3s ease-in-out infinite;">
               <i class="fas fa-futbol" style="font-size: 3rem; color: rgba(255,255,255,0.8);"></i>
@@ -1033,6 +1205,7 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
     </div>
   </div>
 </section>
+{% endif %}
 
 <!-- Filtered Products Section -->
 {% if filtered_products %}

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, ShopBanner
 
 
 @admin.register(Category)
@@ -145,3 +145,37 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['order', 'product', 'quantity', 'price', 'total_price']
     list_filter = ['order__created_at']
     search_fields = ['order__order_number', 'product__name']
+
+
+@admin.register(ShopBanner)
+class ShopBannerAdmin(admin.ModelAdmin):
+    list_display = ['title', 'product', 'order', 'badge_text', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['title', 'subtitle', 'badge_text', 'product__name']
+    readonly_fields = ['created_at', 'updated_at']
+    list_editable = ['order', 'is_active']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('title', 'subtitle', 'order', 'is_active')
+        }),
+        ('Badge và Nút', {
+            'fields': ('badge_text', 'button_text', 'button_url')
+        }),
+        ('Sản phẩm liên kết', {
+            'fields': ('product',),
+            'description': 'Nếu chọn sản phẩm, click vào ảnh sẽ dẫn đến trang sản phẩm'
+        }),
+        ('Hình ảnh', {
+            'fields': ('main_image',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_queryset(self, request):
+        """Chỉ hiển thị banner đầu tiên nếu có nhiều banner"""
+        qs = super().get_queryset(request)
+        return qs
