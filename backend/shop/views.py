@@ -195,7 +195,7 @@ def product_list(request):
 
 def product_detail(request, slug):
     """Chi tiết sản phẩm"""
-    product = get_object_or_404(Product, slug=slug, status='published')
+    product = get_object_or_404(Product.objects.prefetch_related('available_sizes'), slug=slug, status='published')
     
     # Sản phẩm liên quan (cùng danh mục)
     related_products = Product.objects.filter(
@@ -216,6 +216,12 @@ def product_detail(request, slug):
     }
     
     return render(request, 'shop/product_detail.html', context)
+
+
+def test_size(request, slug):
+    """Test size selector"""
+    product = get_object_or_404(Product.objects.prefetch_related('available_sizes'), slug=slug, status='published')
+    return render(request, 'shop/test_size.html', {'product': product})
 
 
 @login_required
@@ -244,19 +250,48 @@ def add_to_cart(request):
         data = json.loads(request.body)
         product_id = data.get('product_id')
         quantity = int(data.get('quantity', 1))
+        size_id = data.get('size_id')
         
         product = get_object_or_404(Product, id=product_id, status='published')
         
-        if quantity > product.stock_quantity:
-            return JsonResponse({
-                'success': False,
-                'message': f'Chỉ còn {product.stock_quantity} sản phẩm trong kho'
-            })
+        # Kiểm tra stock dựa trên size hoặc product
+        if size_id:
+            from .models import ProductVariant
+            try:
+                variant = ProductVariant.objects.get(product=product, size_id=size_id, is_active=True)
+                available_stock = variant.stock_quantity
+                if quantity > available_stock:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Chỉ còn {available_stock} sản phẩm size này trong kho'
+                    })
+            except ProductVariant.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Size này không có sẵn'
+                })
+        else:
+            if quantity > product.stock_quantity:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Chỉ còn {product.stock_quantity} sản phẩm trong kho'
+                })
         
         cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Tạo hoặc cập nhật cart item với size
+        size_obj = None
+        if size_id:
+            from .models import ProductSize
+            try:
+                size_obj = ProductSize.objects.get(id=size_id)
+            except ProductSize.DoesNotExist:
+                pass
+        
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
+            size=size_obj,
             defaults={'quantity': quantity}
         )
         
@@ -264,9 +299,19 @@ def add_to_cart(request):
             cart_item.quantity += quantity
             cart_item.save()
         
+        # Tạo message với thông tin size
+        size_name = ""
+        if size_id:
+            from .models import ProductSize
+            try:
+                size = ProductSize.objects.get(id=size_id)
+                size_name = f" size {size.name}"
+            except ProductSize.DoesNotExist:
+                pass
+        
         return JsonResponse({
             'success': True,
-            'message': 'Đã thêm sản phẩm vào giỏ hàng',
+            'message': f'Đã thêm sản phẩm{size_name} vào giỏ hàng',
             'cart_count': cart.total_items
         })
         

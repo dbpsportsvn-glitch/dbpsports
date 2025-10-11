@@ -242,6 +242,15 @@ def create_product_from_import(import_item, product_data):
         if sale_price_value is None:
             sale_price_value = None
         
+        # Xác định loại sản phẩm để chọn size phù hợp
+        product_name = product_data.get('name', '').lower()
+        size_type = 'accessories'  # Mặc định
+        
+        if any(keyword in product_name for keyword in ['giày', 'shoe', 'boot', 'sneaker', 'sandals']):
+            size_type = 'shoes'
+        elif any(keyword in product_name for keyword in ['áo', 'quần', 'shirt', 'pants', 'jacket', 'hoodie', 'sweater']):
+            size_type = 'clothing'
+        
         product = Product.objects.create(
             name=product_data.get('name', f'Import {import_item.id}') or f'Import {import_item.id}',
             slug=slug,
@@ -251,8 +260,35 @@ def create_product_from_import(import_item, product_data):
             category=category,
             stock_quantity=1,  # Mặc định
             sku=f'IMPORT-{import_item.id}',  # SKU tự động
-            status='published'  # Sử dụng status thay vì is_active
+            status='published',  # Sử dụng status thay vì is_active
+            has_sizes=True  # Bật tính năng size
         )
+        
+        # Thêm size phù hợp
+        from .models import ProductSize
+        if size_type == 'shoes':
+            sizes = ProductSize.objects.filter(size_type='shoes', name__in=['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'])
+        elif size_type == 'clothing':
+            sizes = ProductSize.objects.filter(size_type='clothing', name__in=['S', 'M', 'L', 'XL', 'XXL'])
+        else:
+            sizes = ProductSize.objects.filter(size_type='accessories')[:3]
+        
+        if sizes.exists():
+            product.available_sizes.set(sizes)
+            
+            # Tạo ProductVariant cho từng size
+            from .models import ProductVariant
+            for size in sizes:
+                ProductVariant.objects.get_or_create(
+                    product=product,
+                    size=size,
+                    defaults={
+                        'sku': f'{product.sku}-{size.name}',
+                        'stock_quantity': 5,  # Stock mặc định cho import
+                        'price': price_value,
+                        'sale_price': sale_price_value
+                    }
+                )
         
         # Download và lưu hình ảnh
         if product_data.get('image_url'):

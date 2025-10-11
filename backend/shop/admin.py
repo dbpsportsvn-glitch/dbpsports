@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport, ProductSize, ProductVariant
 
 
 @admin.register(Category)
@@ -18,6 +18,12 @@ class ProductImageInline(admin.TabularInline):
     fields = ['image', 'alt_text', 'order']
 
 
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 0
+    fields = ['size', 'sku', 'stock_quantity', 'price', 'sale_price', 'is_active']
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'current_price', 'stock_quantity', 'status', 'is_featured', 'created_at']
@@ -25,7 +31,7 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description', 'sku']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'published_at']
-    inlines = [ProductImageInline]
+    inlines = [ProductImageInline, ProductVariantInline]
     
     fieldsets = (
         ('Thông tin cơ bản', {
@@ -230,3 +236,39 @@ class ProductImportAdmin(admin.ModelAdmin):
                     self.message_user(request, f"Lỗi khi xử lý import {import_item.id}: {str(e)}", level='ERROR')
         self.message_user(request, f"Đã xử lý {processed_count} import thành công")
     process_imports.short_description = "Xử lý các import được chọn"
+
+
+@admin.register(ProductSize)
+class ProductSizeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'size_type', 'order', 'is_active']
+    list_filter = ['size_type', 'is_active']
+    search_fields = ['name']
+    ordering = ['size_type', 'order', 'name']
+
+
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 0
+    fields = ['size', 'sku', 'stock_quantity', 'price', 'sale_price', 'is_active']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ['product', 'size', 'sku', 'stock_quantity', 'effective_price', 'is_active']
+    list_filter = ['is_active', 'size__size_type']
+    search_fields = ['product__name', 'sku', 'size__name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('product', 'size', 'sku', 'is_active')
+        }),
+        ('Giá và tồn kho', {
+            'fields': ('stock_quantity', 'price', 'sale_price')
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

@@ -10,6 +10,7 @@ urlpatterns = [
     # Danh sách sản phẩm
     path('products/', views.product_list, name='product_list'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
+    path('test-size/<slug:slug>/', views.test_size, name='test_size'),
     
     # Giỏ hàng
     path('cart/', views.cart_view, name='cart'),

@@ -236,6 +236,59 @@
   margin-bottom: 2rem;
 }
 
+.size-selector {
+  margin-bottom: 2rem;
+}
+
+.size-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+
+.size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.size-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.size-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.size-name {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--light);
+  border-radius: 8px;
+  background: white;
+  color: var(--dark);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 50px;
+  text-align: center;
+}
+
+.size-option input[type="radio"]:checked + .size-name {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+
+.size-option:hover .size-name {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .feature-list {
   list-style: none;
   padding: 0;
@@ -693,6 +746,21 @@
           </div>
           {% endif %}
 
+          <!-- Size Selector -->
+          {% if product.has_sizes and product.available_sizes.exists %}
+          <div class="size-selector">
+            <span class="size-label">Size:</span>
+            <div class="size-options">
+              {% for size in product.available_sizes.all %}
+                <label class="size-option">
+                  <input type="radio" name="size" value="{{ size.id }}" data-size-name="{{ size.name }}" {% if forloop.first %}checked{% endif %}>
+                  <span class="size-name">{{ size.name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
           <div class="quantity-selector">
             <span class="quantity-label">Số lượng:</span>
             <div class="quantity-controls">
@@ -832,7 +900,39 @@
 {% block extra_js %}
 <script>
 let currentQuantity = 1;
-const maxQuantity = {{ product.stock_quantity }};
+let maxQuantity = {{ product.stock_quantity }};
+
+// Cập nhật maxQuantity khi chọn size
+function updateMaxQuantity() {
+  const selectedSize = document.querySelector('input[name="size"]:checked');
+  if (selectedSize) {
+    // Nếu có size được chọn, sử dụng stock của size đó
+    // Tạm thời sử dụng stock mặc định, có thể cải thiện sau
+    maxQuantity = 10; // Stock mặc định cho mỗi size
+  } else {
+    maxQuantity = {{ product.stock_quantity }};
+  }
+  
+  // Cập nhật max attribute của input
+  document.getElementById('quantity').setAttribute('max', maxQuantity);
+  
+  // Nếu quantity hiện tại > maxQuantity, giảm xuống
+  if (currentQuantity > maxQuantity) {
+    currentQuantity = maxQuantity;
+    document.getElementById('quantity').value = currentQuantity;
+  }
+}
+
+// Lắng nghe sự kiện thay đổi size
+document.addEventListener('DOMContentLoaded', function() {
+  const sizeInputs = document.querySelectorAll('input[name="size"]');
+  sizeInputs.forEach(input => {
+    input.addEventListener('change', updateMaxQuantity);
+  });
+  
+  // Khởi tạo maxQuantity
+  updateMaxQuantity();
+});
 
 function changeMainImage(imageUrl) {
   document.getElementById('main-image').src = imageUrl;
@@ -862,6 +962,7 @@ function addToCart(productId = null) {
   const button = event.target;
   const originalText = button.innerHTML;
   const quantity = document.getElementById('quantity').value;
+  const selectedSize = document.querySelector('input[name="size"]:checked');
   
   // Hiển thị loading
   button.innerHTML = '<span class="loading"></span>';
@@ -869,16 +970,23 @@ function addToCart(productId = null) {
   
   const targetProductId = productId || {{ product.id }};
   
+  const requestData = {
+    product_id: targetProductId,
+    quantity: parseInt(quantity)
+  };
+  
+  // Thêm size_id nếu có size được chọn
+  if (selectedSize) {
+    requestData.size_id = parseInt(selectedSize.value);
+  }
+  
   fetch('{% url "shop:add_to_cart" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRFToken': '{{ csrf_token }}'
     },
-    body: JSON.stringify({
-      product_id: targetProductId,
-      quantity: parseInt(quantity)
-    })
+    body: JSON.stringify(requestData)
   })
   .then(response => response.json())
   .then(data => {

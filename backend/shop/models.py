@@ -23,6 +23,29 @@ class Category(models.Model):
         return self.name
 
 
+class ProductSize(models.Model):
+    """Size sản phẩm"""
+    SIZE_TYPE_CHOICES = [
+        ('shoes', 'Giày'),
+        ('clothing', 'Quần áo'),
+        ('accessories', 'Phụ kiện'),
+    ]
+    
+    name = models.CharField(max_length=20, verbose_name="Tên size")
+    size_type = models.CharField(max_length=20, choices=SIZE_TYPE_CHOICES, verbose_name="Loại size")
+    order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    
+    class Meta:
+        verbose_name = "Size sản phẩm"
+        verbose_name_plural = "Size sản phẩm"
+        ordering = ['size_type', 'order', 'name']
+        unique_together = ['name', 'size_type']
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_size_type_display()})"
+
+
 class Product(models.Model):
     """Sản phẩm"""
     STATUS_CHOICES = [
@@ -46,6 +69,10 @@ class Product(models.Model):
     sku = models.CharField(max_length=50, unique=True, verbose_name="Mã sản phẩm")
     stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
     weight = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, verbose_name="Trọng lượng (kg)")
+    
+    # Size và variant
+    available_sizes = models.ManyToManyField(ProductSize, blank=True, verbose_name="Size có sẵn")
+    has_sizes = models.BooleanField(default=False, verbose_name="Có nhiều size")
     
     # Hình ảnh
     main_image = models.ImageField(upload_to='shop/products/', verbose_name="Hình ảnh chính")
@@ -105,6 +132,50 @@ class Product(models.Model):
         return self.status == 'published' and self.stock_quantity > 0
 
 
+class ProductVariant(models.Model):
+    """Biến thể sản phẩm theo size"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants', verbose_name="Sản phẩm")
+    size = models.ForeignKey(ProductSize, on_delete=models.CASCADE, verbose_name="Size")
+    sku = models.CharField(max_length=50, verbose_name="Mã SKU")
+    stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Số lượng tồn kho")
+    price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, validators=[MinValueValidator(0)], verbose_name="Giá riêng")
+    sale_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, validators=[MinValueValidator(0)], verbose_name="Giá khuyến mãi riêng")
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Biến thể sản phẩm"
+        verbose_name_plural = "Biến thể sản phẩm"
+        unique_together = ['product', 'size']
+        ordering = ['product', 'size__order', 'size__name']
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.size.name}"
+    
+    @property
+    def effective_price(self):
+        """Giá hiệu quả (ưu tiên giá riêng, sau đó giá sản phẩm)"""
+        if self.price:
+            return self.price
+        return self.product.price
+    
+    @property
+    def effective_sale_price(self):
+        """Giá khuyến mãi hiệu quả"""
+        if self.sale_price:
+            return self.sale_price
+        return self.product.sale_price
+    
+    @property
+    def is_on_sale(self):
+        """Có đang khuyến mãi không"""
+        sale_price = self.effective_sale_price
+        if sale_price and sale_price < self.effective_price:
+            return True
+        return False
+
+
 class ProductImage(models.Model):
     """Hình ảnh phụ của sản phẩm"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
@@ -150,16 +221,18 @@ class CartItem(models.Model):
     """Sản phẩm trong giỏ hàng"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.ForeignKey(ProductSize, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Size")
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     added_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Sản phẩm trong giỏ"
         verbose_name_plural = "Sản phẩm trong giỏ"
-        unique_together = ['cart', 'product']
+        unique_together = ['cart', 'product', 'size']
 
     def __str__(self):
-        return f"{self.product.name} x {self.quantity}"
+        size_text = f" - {self.size.name}" if self.size else ""
+        return f"{self.product.name}{size_text} x {self.quantity}"
 
     @property
     def total_price(self):
