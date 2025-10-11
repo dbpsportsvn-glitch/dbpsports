@@ -77,6 +77,10 @@ class Product(models.Model):
     # Hình ảnh
     main_image = models.ImageField(upload_to='shop/products/', verbose_name="Hình ảnh chính")
     
+    # Thông tin import
+    source_url = models.URLField(blank=True, null=True, verbose_name="Link gốc")
+    is_imported = models.BooleanField(default=False, verbose_name="Sản phẩm import")
+    
     # Trạng thái
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Trạng thái")
     is_featured = models.BooleanField(default=False, verbose_name="Sản phẩm nổi bật")

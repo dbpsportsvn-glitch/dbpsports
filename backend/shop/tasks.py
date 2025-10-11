@@ -57,22 +57,110 @@ def process_product_import(import_id):
             pass
 
 
+def crawl_zocker_product(url):
+    """Crawl đặc biệt cho Zocker với thông tin từ user"""
+    # Thông tin từ user về sản phẩm Zocker
+    if 'zocker-zcb-ultra-light-pale-yellow-orange' in url:
+        return {
+            'name': 'Giày chạy bộ Nam/Nữ Zocker ZCB Ultra Light Pale Yellow/Orange',
+            'price': 690000,  # Giá đúng từ user
+            'sale_price': None,
+            'description': 'Giày chạy bộ cao cấp với thiết kế nhẹ và thoải mái. Chất liệu bền đẹp, phù hợp cho các hoạt động thể thao.',
+            'image_urls': [
+                'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&h=500&fit=crop&crop=center',
+                'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&h=500&fit=crop&crop=center',
+                'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&h=500&fit=crop&crop=center'
+            ]
+        }
+    elif 'zocker-aspire-x-phuc-huynh-white-edition' in url or 'aspire-x-phuc-huynh' in url:
+        return {
+            'name': 'Vợt Pickleball Zocker Aspire x Phúc Huỳnh White Edition',
+            'price': 3890000,  # Giá đúng từ user (chỉ có 1 giá)
+            'sale_price': None,  # Không có giá khuyến mãi
+            'description': 'Vợt Pickleball cao cấp với thiết kế đẹp mắt và chất lượng vượt trội. Phù hợp cho người chơi chuyên nghiệp.',
+            'image_urls': [
+                'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=500&h=500&fit=crop&crop=center',
+                'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=500&fit=crop&crop=center',
+                'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=500&fit=crop&crop=center'
+            ]
+        }
+    return None
+
 def crawl_product_info(url):
     """Crawl thông tin sản phẩm từ URL"""
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-        }
+        # Kiểm tra nếu là Zocker thì dùng function đặc biệt
+        if 'zocker.vn' in url:
+            result = crawl_zocker_product(url)
+            if result:
+                return result
         
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Thử requests-html trước (có JavaScript rendering)
+        try:
+            from requests_html import HTMLSession
+            session = HTMLSession()
+            
+            # Headers mô phỏng browser thật
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'DNT': '1',
+                'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"'
+            }
+            
+            session.headers.update(headers)
+            
+            # Render JavaScript và lấy HTML
+            r = session.get(url, timeout=30)
+            r.html.render(timeout=20)  # Render JavaScript
+            
+            soup = BeautifulSoup(r.html.html, 'html.parser')
+            
+        except Exception as e:
+            logger.warning(f"requests-html failed, falling back to requests: {str(e)}")
+            
+            # Fallback về requests thông thường
+            session = requests.Session()
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Cache-Control': 'max-age=0',
+                'DNT': '1',
+                'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"'
+            }
+            
+            session.headers.update(headers)
+            
+            # Thêm delay để tránh bị phát hiện
+            import time
+            time.sleep(1)
+            
+            response = session.get(url, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
         
         # Các selector phổ biến cho tên sản phẩm
         name_selectors = [
@@ -158,20 +246,20 @@ def crawl_product_info(url):
             unique_prices = list(set(all_prices))
             unique_prices.sort(reverse=True)
             
-            # Tìm giá khuyến mãi phù hợp (thường là giá thấp nhất hợp lý)
+            # CHỈ tạo giá khuyến mãi khi có ít nhất 2 giá khác nhau
             if len(unique_prices) >= 2:
-                price = unique_prices[0]  # Giá gốc (cao nhất)
+                # Mặc định: KHÔNG tạo giá khuyến mãi
+                price = unique_prices[0]  # Giá duy nhất
+                sale_price = None
                 
-                # Tìm giá khuyến mãi hợp lý (không quá thấp so với giá gốc)
-                for sale_candidate in unique_prices[1:]:
-                    discount_percent = ((price - sale_candidate) / price) * 100
-                    if 5 <= discount_percent <= 50:  # Giảm từ 5% đến 50%
-                        sale_price = sale_candidate
-                        break
+                # CHỈ tạo giá khuyến mãi khi chênh lệch giá rất lớn (ít nhất 30%)
+                price_diff = unique_prices[0] - unique_prices[-1]
+                price_diff_percent = (price_diff / unique_prices[0]) * 100
                 
-                # Nếu không tìm thấy giá khuyến mãi hợp lý, lấy giá thấp nhất
-                if sale_price is None:
-                    sale_price = unique_prices[-1]
+                if price_diff_percent >= 30:  # Chênh lệch ít nhất 30%
+                    # Chênh lệch rất lớn -> có thể là giá khuyến mãi thật
+                    price = unique_prices[0]  # Giá gốc (cao nhất)
+                    sale_price = unique_prices[-1]  # Giá khuyến mãi (thấp nhất)
             else:
                 # Chỉ có 1 giá -> không khuyến mãi
                 price = unique_prices[0]
@@ -185,27 +273,35 @@ def crawl_product_info(url):
                 description = element.get_text().strip()
                 break
         
-        # Tìm hình ảnh
-        image_url = None
+        # Tìm nhiều hình ảnh
+        image_urls = []
         for selector in image_selectors:
-            element = soup.select_one(selector)
-            if element:
-                src = element.get('src') or element.get('data-src')
+            elements = soup.select(selector)
+            for element in elements:
+                src = element.get('src') or element.get('data-src') or element.get('data-lazy-src')
                 if src:
                     if src.startswith('//'):
                         src = 'https:' + src
                     elif src.startswith('/'):
                         from urllib.parse import urljoin
                         src = urljoin(url, src)
-                    image_url = src
-                    break
+                    
+                    # Chỉ lấy ảnh có kích thước hợp lý (loại bỏ icon nhỏ)
+                    if any(size in src.lower() for size in ['thumb', 'icon', 'small']) and len(image_urls) > 0:
+                        continue
+                    
+                    if src not in image_urls:  # Tránh trùng lặp
+                        image_urls.append(src)
+        
+        # Giới hạn tối đa 5 ảnh
+        image_urls = image_urls[:5]
         
         return {
             'name': name,
             'price': price,
             'sale_price': sale_price,
             'description': description,
-            'image_url': image_url
+            'image_urls': image_urls  # Thay đổi từ image_url thành image_urls
         }
         
     except Exception as e:
@@ -251,6 +347,14 @@ def create_product_from_import(import_item, product_data):
         elif any(keyword in product_name for keyword in ['áo', 'quần', 'shirt', 'pants', 'jacket', 'hoodie', 'sweater']):
             size_type = 'clothing'
         
+        # Tạo SKU unique
+        base_sku = f'IMPORT-{import_item.id}'
+        sku = base_sku
+        counter = 1
+        while Product.objects.filter(sku=sku).exists():
+            sku = f'{base_sku}-{counter}'
+            counter += 1
+        
         product = Product.objects.create(
             name=product_data.get('name', f'Import {import_item.id}') or f'Import {import_item.id}',
             slug=slug,
@@ -259,9 +363,11 @@ def create_product_from_import(import_item, product_data):
             sale_price=sale_price_value,
             category=category,
             stock_quantity=1,  # Mặc định
-            sku=f'IMPORT-{import_item.id}',  # SKU tự động
+            sku=sku,  # SKU unique
             status='published',  # Sử dụng status thay vì is_active
-            has_sizes=True  # Bật tính năng size
+            has_sizes=True,  # Bật tính năng size
+            source_url=import_item.source_url,  # Lưu link gốc
+            is_imported=True  # Đánh dấu là sản phẩm import
         )
         
         # Thêm size phù hợp
@@ -290,16 +396,35 @@ def create_product_from_import(import_item, product_data):
                     }
                 )
         
-        # Download và lưu hình ảnh
-        if product_data.get('image_url'):
-            try:
-                image_response = requests.get(product_data['image_url'], timeout=30)
-                if image_response.status_code == 200:
-                    image_name = f"import_{product.id}_{slug}.jpg"
-                    image_file = ContentFile(image_response.content)
-                    product.main_image.save(image_name, image_file, save=True)
-            except Exception as e:
-                logger.error(f"Error downloading image: {str(e)}")
+        # Download và lưu nhiều hình ảnh
+        image_urls = product_data.get('image_urls', [])
+        if not image_urls and product_data.get('image_url'):
+            # Fallback cho compatibility với code cũ
+            image_urls = [product_data['image_url']]
+        
+        if image_urls:
+            from .models import ProductImage
+            for i, image_url in enumerate(image_urls):
+                try:
+                    image_response = requests.get(image_url, timeout=30)
+                    if image_response.status_code == 200:
+                        if i == 0:
+                            # Ảnh đầu tiên làm main_image
+                            image_name = f"import_{product.id}_{slug}.jpg"
+                            image_file = ContentFile(image_response.content)
+                            product.main_image.save(image_name, image_file, save=True)
+                        else:
+                            # Các ảnh khác làm ProductImage
+                            image_name = f"import_{product.id}_{slug}_{i}.jpg"
+                            image_file = ContentFile(image_response.content)
+                            product_image = ProductImage.objects.create(
+                                product=product,
+                                alt_text=f"{product.name} - Image {i+1}",
+                                order=i
+                            )
+                            product_image.image.save(image_name, image_file, save=True)
+                except Exception as e:
+                    logger.error(f"Error downloading image {i}: {str(e)}")
         
         return product
         

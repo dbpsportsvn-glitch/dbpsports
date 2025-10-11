@@ -704,7 +704,11 @@
     {% for product in products %}
     <div class="product-card">
       <div class="product-image">
-        <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+        {% if product.main_image %}
+          <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy" onerror="this.src='{% static 'images/no-image.png' %}'">
+        {% else %}
+          <img src="{% static 'images/no-image.png' %}" alt="{{ product.name }}" loading="lazy">
+        {% endif %}
         {% if product.is_featured %}
           <div class="product-badge featured">Nổi bật</div>
         {% elif product.is_bestseller %}
