@@ -95,16 +95,63 @@ from .utils import (
 #==================================
 
 def home(request):
-    # Giải chưa kết thúc
-    active_tournaments = Tournament.objects.exclude(status='FINISHED').order_by('start_date')
-
-    # Lấy mọi banner đang bật
+    from django.db.models import Count
+    
+    # Lấy banner
     banners = HomeBanner.objects.filter(is_active=True).order_by('order', 'id')
+    
+    # Giải đấu nổi bật - Kết hợp giải Super Admin + giải nhiều followers
+    # 1. Lấy giải của Super Admin trước (không có organization)
+    super_admin_tournaments = list(Tournament.objects.filter(
+        organization__isnull=True
+    ).exclude(status='FINISHED').annotate(
+        followers_count=Count('followers')
+    ).order_by('-followers_count', '-start_date'))
+    
+    # 2. Tính số giải còn thiếu để đủ 4 giải
+    remaining_count = 4 - len(super_admin_tournaments)
+    
+    # 3. Nếu còn thiếu, lấy thêm giải có nhiều followers nhất từ BTC khác
+    featured_tournaments = super_admin_tournaments
+    if remaining_count > 0:
+        # Lấy ID các giải đã có để loại trừ
+        existing_ids = [t.id for t in super_admin_tournaments]
+        
+        # Lấy thêm giải có nhiều followers từ BTC khác
+        additional_tournaments = list(Tournament.objects.exclude(
+            status='FINISHED'
+        ).exclude(
+            id__in=existing_ids
+        ).annotate(
+            followers_count=Count('followers')
+        ).filter(followers_count__gt=0).order_by('-followers_count')[:remaining_count])
+        
+        featured_tournaments.extend(additional_tournaments)
+    
+    # Giải nhiều người theo dõi nhất (loại trừ các giải đã ở featured)
+    featured_ids = [t.id for t in featured_tournaments]
+    most_followed_tournaments = Tournament.objects.exclude(
+        status='FINISHED'
+    ).exclude(
+        id__in=featured_ids
+    ).annotate(
+        followers_count=Count('followers')
+    ).filter(followers_count__gt=0).order_by('-followers_count')[:6]
+    
+    # Tất cả các giải đang hoạt động
+    all_active_tournaments = Tournament.objects.exclude(
+        status='FINISHED'
+    ).order_by('-start_date')
 
     return render(
         request,
         'tournaments/home.html',
-        {'tournaments_list': active_tournaments, 'banners': banners}
+        {
+            'banners': banners,
+            'featured_tournaments': featured_tournaments,
+            'most_followed_tournaments': most_followed_tournaments,
+            'all_active_tournaments': all_active_tournaments,
+        }
     )
 
 @never_cache
