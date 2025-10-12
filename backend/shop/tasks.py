@@ -238,35 +238,51 @@ def crawl_product_info(url):
         all_prices = []
         for element in price_elements:
             price_text = element.get_text().strip()
-            clean_text = re.sub(r'[^\d,]', '', price_text)
-            numbers = re.findall(r'[\d,]+', clean_text)
+            # Cải thiện regex: loại bỏ tất cả ký tự không phải số, dấu chấm, dấu phẩy
+            clean_text = re.sub(r'[^\d.,]', '', price_text)
+            # Xử lý cả dấu chấm và dấu phẩy ngăn cách hàng nghìn
+            # VD: "1.350.000" hoặc "1,350,000"
+            clean_text = clean_text.replace('.', '').replace(',', '')
+            
+            # Tìm tất cả số liên tiếp có ít nhất 4 chữ số (giá tiền thật)
+            numbers = re.findall(r'\d{4,}', clean_text)
             for number in numbers:
-                price_value = int(number.replace(',', ''))
-                if 1000 <= price_value <= 100000000:  # Giá hợp lý
-                    all_prices.append(price_value)
+                try:
+                    price_value = int(number)
+                    if 1000 <= price_value <= 100000000:  # Giá hợp lý
+                        all_prices.append(price_value)
+                except ValueError:
+                    continue
         
         if all_prices:
-            # Loại bỏ giá trùng lặp và sắp xếp
-            unique_prices = list(set(all_prices))
-            unique_prices.sort(reverse=True)
+            # Loại bỏ giá trùng lặp và sắp xếp từ cao xuống thấp
+            unique_prices = sorted(list(set(all_prices)), reverse=True)
             
-            # CHỈ tạo giá khuyến mãi khi có ít nhất 2 giá khác nhau
-            if len(unique_prices) >= 2:
-                # Mặc định: KHÔNG tạo giá khuyến mãi
-                price = unique_prices[0]  # Giá duy nhất
+            # Lọc giá: loại bỏ các giá quá nhỏ (< 10% giá cao nhất) - có thể là số lượt xem, rating, etc.
+            max_price = unique_prices[0]
+            valid_prices = [p for p in unique_prices if p >= max_price * 0.1]
+            
+            if len(valid_prices) >= 2:
+                # Có ít nhất 2 giá hợp lệ
+                # Giả định: 2 giá đầu tiên (lớn nhất) là giá gốc và giá sale
+                price = valid_prices[0]  # Giá cao nhất = giá gốc
+                
+                # Tìm giá sale: giá lớn thứ 2 VÀ chênh lệch hợp lý (5-50%)
                 sale_price = None
+                for p in valid_prices[1:]:
+                    price_diff_percent = ((price - p) / price) * 100
+                    # Chênh lệch từ 5% đến 50% mới là giá khuyến mãi hợp lý
+                    if 5 <= price_diff_percent <= 50:
+                        sale_price = p
+                        break
                 
-                # CHỈ tạo giá khuyến mãi khi chênh lệch giá rất lớn (ít nhất 30%)
-                price_diff = unique_prices[0] - unique_prices[-1]
-                price_diff_percent = (price_diff / unique_prices[0]) * 100
-                
-                if price_diff_percent >= 30:  # Chênh lệch ít nhất 30%
-                    # Chênh lệch rất lớn -> có thể là giá khuyến mãi thật
-                    price = unique_prices[0]  # Giá gốc (cao nhất)
-                    sale_price = unique_prices[-1]  # Giá khuyến mãi (thấp nhất)
+            elif len(valid_prices) == 1:
+                # Chỉ có 1 giá hợp lệ -> không có khuyến mãi
+                price = valid_prices[0]
+                sale_price = None
             else:
-                # Chỉ có 1 giá -> không khuyến mãi
-                price = unique_prices[0]
+                # Không có giá hợp lệ
+                price = None
                 sale_price = None
         
         # Tìm mô tả
@@ -300,12 +316,42 @@ def crawl_product_info(url):
         # Giới hạn tối đa 5 ảnh
         image_urls = image_urls[:5]
         
+        # Crawl sizes/variants từ trang
+        sizes = []
+        size_selectors = [
+            'select[name*="size"] option',
+            'select[name*="attribute"] option',
+            '.variations select option',
+            '.product-variations select option',
+            'form.variations_form select option',
+            '[class*="size"] option',
+            '.size-options button',
+            '.size-options span',
+            '.product-sizes button',
+            '.product-sizes span'
+        ]
+        
+        for selector in size_selectors:
+            elements = soup.select(selector)
+            for element in elements:
+                size_text = element.get_text().strip()
+                # Lọc các option không hợp lệ
+                if size_text and size_text.lower() not in ['choose an option', 'chọn một tùy chọn', 'select', 'chọn']:
+                    # Extract size từ text (VD: "Size 39 (Chân dài từ...)" -> "39")
+                    # Tìm pattern số (cho giày) hoặc chữ (cho áo quần)
+                    size_match = re.search(r'(?:Size\s+)?(\d+|[SMLX]{1,3})\s*(?:\(|$)', size_text, re.IGNORECASE)
+                    if size_match:
+                        size_value = size_match.group(1)
+                        if size_value not in sizes:
+                            sizes.append(size_value)
+        
         return {
             'name': name,
             'price': price,
             'sale_price': sale_price,
             'description': description,
-            'image_urls': image_urls  # Thay đổi từ image_url thành image_urls
+            'image_urls': image_urls,  # Thay đổi từ image_url thành image_urls
+            'sizes': sizes  # Thêm sizes được crawl
         }
         
     except Exception as e:
@@ -366,7 +412,7 @@ def create_product_from_import(import_item, product_data):
             price=price_value,
             sale_price=sale_price_value,
             category=category,
-            stock_quantity=1,  # Mặc định
+            stock_quantity=10,  # Mặc định
             sku=sku,  # SKU unique
             status='published',  # Sử dụng status thay vì is_active
             has_sizes=True,  # Bật tính năng size
@@ -376,14 +422,46 @@ def create_product_from_import(import_item, product_data):
         
         # Thêm size phù hợp
         from .models import ProductSize
-        if size_type == 'shoes':
-            sizes = ProductSize.objects.filter(size_type='shoes', name__in=['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'])
-        elif size_type == 'clothing':
-            sizes = ProductSize.objects.filter(size_type='clothing', name__in=['S', 'M', 'L', 'XL', 'XXL'])
-        else:
-            sizes = ProductSize.objects.filter(size_type='accessories')[:3]
         
-        if sizes.exists():
+        # Ưu tiên sử dụng sizes được crawl từ trang web
+        crawled_sizes = product_data.get('sizes', [])
+        
+        if crawled_sizes:
+            # Sử dụng sizes được crawl
+            logger.info(f"Using crawled sizes: {crawled_sizes}")
+            
+            # Xác định size_type dựa trên sizes được crawl
+            if any(size.isdigit() and 30 <= int(size) <= 50 for size in crawled_sizes):
+                size_type = 'shoes'
+            elif any(size in ['S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'] for size in crawled_sizes):
+                size_type = 'clothing'
+            else:
+                size_type = 'accessories'
+            
+            # Tạo hoặc lấy ProductSize cho các size được crawl
+            size_objects = []
+            for size_name in crawled_sizes:
+                size_obj, created = ProductSize.objects.get_or_create(
+                    name=size_name,
+                    size_type=size_type,
+                    defaults={'order': 0}
+                )
+                size_objects.append(size_obj)
+                if created:
+                    logger.info(f"Created new size: {size_name} ({size_type})")
+            
+            sizes = size_objects
+        else:
+            # Fallback: sử dụng sizes mặc định
+            logger.info(f"No sizes crawled, using default sizes for {size_type}")
+            if size_type == 'shoes':
+                sizes = ProductSize.objects.filter(size_type='shoes', name__in=['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'])
+            elif size_type == 'clothing':
+                sizes = ProductSize.objects.filter(size_type='clothing', name__in=['S', 'M', 'L', 'XL', 'XXL'])
+            else:
+                sizes = ProductSize.objects.filter(size_type='accessories')[:3]
+        
+        if sizes:
             product.available_sizes.set(sizes)
             
             # Tạo ProductVariant cho từng size
@@ -394,7 +472,7 @@ def create_product_from_import(import_item, product_data):
                     size=size,
                     defaults={
                         'sku': f'{product.sku}-{size.name}',
-                        'stock_quantity': 5,  # Stock mặc định cho import
+                        'stock_quantity': 10,  # Stock mặc định cho import
                         'price': price_value,
                         'sale_price': sale_price_value
                     }

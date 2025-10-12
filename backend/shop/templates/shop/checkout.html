@@ -744,7 +744,7 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label class="form-label">Tỉnh/Thành phố *</label>
-                    <select name="shipping_city" class="form-select" required>
+                    <select id="shipping_city" name="shipping_city" class="form-select" required>
                       <option value="">Chọn tỉnh/thành phố</option>
                       <option value="Hà Nội">Hà Nội</option>
                       <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
@@ -814,9 +814,12 @@
                 <div class="col-md-6">
                   <div class="form-group">
                     <label class="form-label">Quận/Huyện *</label>
-                    <input type="text" name="shipping_district" class="form-control" required 
-                           value="{% if shipping_info %}{{ shipping_info.district }}{% endif %}"
-                           placeholder="Nhập quận/huyện">
+                    <select id="shipping_district" name="shipping_district" class="form-select" required disabled>
+                      <option value="">Chọn quận/huyện</option>
+                      {% if shipping_info and shipping_info.district %}
+                      <option value="{{ shipping_info.district }}" selected>{{ shipping_info.district }}</option>
+                      {% endif %}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -1423,5 +1426,13 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// Initialize address cascade dropdown
+document.addEventListener('DOMContentLoaded', function() {
+  initAddressCascade('shipping_city', 'shipping_district');
+});
 </script>
+
+<!-- Vietnam Address Data -->
+<script src="{% static 'js/vietnam_address.js' %}"></script>
 {% endblock %}
