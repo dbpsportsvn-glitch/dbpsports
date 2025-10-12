@@ -111,7 +111,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5><i class="bi bi-sliders"></i> Phòng Điều Khiển</h5>
         <div class="d-flex gap-2">
-            {% if user.is_staff %}
+            {% if user.is_staff or is_commentator %}
                 <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-info btn-sm js-open-notes" id="open-notes-btn">
                     <i class="bi bi-files"></i> Sổ tay BLV
                 </a>
@@ -165,20 +165,22 @@
                 <div id="timeline-list" class="timeline">
                     {% for event in events %}
                         {% if event.is_captain_note_alert %}
-                            {# Đây là thông báo ảo về ghi chú của đội trưởng #}
-                            <div class="captain-note-alert event-item alert alert-warning" role="alert">
-                                <h4 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Ghi chú từ Đội trưởng!</h4>
-                                <p>Bình luận viên vui lòng kiểm tra Sổ tay để xem các ghi chú mới từ:</p>
-                                <ul>
-                                    {% for note in event.notes %}
-                                    <li><strong>Đội {{ note.team.name }}</strong></li>
-                                    {% endfor %}
-                                </ul>
-                                <hr>
-                                <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-sm btn-warning mb-0 js-open-notes">
-                                    <i class="bi bi-files"></i> Mở Sổ tay
-                                </a>
-                            </div>
+                            {% if user.is_staff or is_commentator %}
+                                {# Đây là thông báo ảo về ghi chú của đội trưởng #}
+                                <div class="captain-note-alert event-item alert alert-warning" role="alert">
+                                    <h4 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Ghi chú từ Đội trưởng!</h4>
+                                    <p>Bình luận viên vui lòng kiểm tra Sổ tay để xem các ghi chú mới từ:</p>
+                                    <ul>
+                                        {% for note in event.notes %}
+                                        <li><strong>Đội {{ note.team.name }}</strong></li>
+                                        {% endfor %}
+                                    </ul>
+                                    <hr>
+                                    <a href="{% url 'commentator_notes' match_pk=match.pk %}" class="btn btn-sm btn-warning mb-0 js-open-notes">
+                                        <i class="bi bi-files"></i> Mở Sổ tay
+                                    </a>
+                                </div>
+                            {% endif %}
 
                         {% elif event.event_type %}
                             {# Đây là sự kiện mốc thời gian (Bắt đầu, Hết hiệp...) #}

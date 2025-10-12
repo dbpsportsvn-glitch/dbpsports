@@ -1047,6 +1047,13 @@ function addToCart(productId = null) {
       }
     } else {
       showNotification(data.message, 'error');
+      
+      // Nếu có redirect URL (chưa đăng nhập), chuyển hướng sau 1.5s
+      if (data.redirect) {
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 1500);
+      }
     }
   })
   .catch(error => {

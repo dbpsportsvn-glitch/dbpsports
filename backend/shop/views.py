@@ -309,10 +309,17 @@ def cart_view(request):
     return render(request, 'shop/cart.html', context)
 
 
-@login_required
 @require_POST
 def add_to_cart(request):
     """Thêm sản phẩm vào giỏ hàng"""
+    # Kiểm tra đăng nhập và trả về JSON response thân thiện
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'message': 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng',
+            'redirect': '/accounts/login/'
+        })
+    
     try:
         data = json.loads(request.body)
         product_id = data.get('product_id')

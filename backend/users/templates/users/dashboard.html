@@ -150,7 +150,7 @@
                     </div>
                 </div>
                 <h5 class="profile-name">
-                    {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+                    {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username|default:user.email }}{% endif %}
                 </h5>
                 <p class="profile-info">
                     {% if player_profile %}
@@ -233,7 +233,7 @@
                         <div class="card shadow-sm">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h4>Chỉnh sửa Hồ sơ Công khai</h4>
-                                <a href="{% url 'public_profile' username=user.username %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <a href="{% url 'public_profile' username=user.username|default:user.email %}" class="btn btn-sm btn-outline-primary" target="_blank">
                                     <i class="bi bi-eye-fill"></i> Xem trang của bạn
                                 </a>
                             </div>

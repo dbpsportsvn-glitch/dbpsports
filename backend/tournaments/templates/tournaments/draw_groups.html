@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         div.className = 'team-ball';
         div.dataset.id = team.id;
         div.dataset.name = team.name;
-        div.innerHTML = `<img src="${team.logo || 'https://via.placeholder.com/32'}" alt="${team.name}" class="logo">`;
+        div.innerHTML = `<img src="${team.logo || '{% static "images/no-image.png" %}'}" alt="${team.name}" class="logo">`;
         return div;
     }
     

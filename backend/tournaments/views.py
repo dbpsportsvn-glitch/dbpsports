@@ -1553,6 +1553,13 @@ def match_control_view(request, pk):
             }
             all_events.insert(0, note_alert_event)
 
+    # Kiểm tra quyền bình luận viên
+    is_commentator = TournamentStaff.objects.filter(
+        tournament=match.tournament,
+        user=request.user,
+        role__id='COMMENTATOR'
+    ).exists()
+    
     context = {
         'match': match,
         'events': all_events,
@@ -1564,6 +1571,7 @@ def match_control_view(request, pk):
         'starters_team2': starters_team2,
         'substitutes_team2': substitutes_team2,
         'substituted_out_player_ids': substituted_out_player_ids,
+        'is_commentator': is_commentator,
     }
     return render(request, 'tournaments/match_control.html', context)
 

@@ -256,7 +256,7 @@
             <div class="player-token"
                  data-player-id="{{ player.pk }}"
                  data-pos="{{ player.position|default_if_none:'' }}">
-              <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}"
+              <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}"
                    alt="{{ player.full_name }}" class="player-avatar">
               <div class="player-info-wrapper">
                   <div class="player-name">

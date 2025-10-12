@@ -163,12 +163,12 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <a href="{% url 'tournament_detail' pk=match.tournament.pk %}?tab=schedule#schedule" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Về Lịch thi đấu
         </a>
         
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             {% if user.is_staff %}
                 {# 1. QUYỀN CAO NHẤT: Superuser thấy Live Control & Quản lý đội hình #}
                 <a href="{% url 'match_control' pk=match.pk %}" class="btn btn-danger btn-sm">
@@ -280,7 +280,7 @@
                     <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team1_starters %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -305,7 +305,7 @@
                     <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team1_substitutes %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                     <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -430,7 +430,7 @@
                     <h5 class="lineup-title sub-heading">Đá chính</h5>
                     {% for p_data in team2_starters %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">
@@ -455,7 +455,7 @@
                     <h5 class="mt-4 sub-heading">Dự bị</h5>
                     {% for p_data in team2_substitutes %}
                         <div class="player-card">
-                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}https://via.placeholder.com/48{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
+                            <img src="{% if p_data.player.avatar %}{{ p_data.player.avatar.url }}{% else %}{% static 'images/placeholder_avatar.png' %}{% endif %}" class="player-avatar" loading="lazy" alt="{{ p_data.player.full_name }}">
                             <div class="player-info">
                                 <div class="player-name">
                                    <a href="{% url 'player_detail' pk=p_data.player.pk %}" class="text-decoration-none text-dark">

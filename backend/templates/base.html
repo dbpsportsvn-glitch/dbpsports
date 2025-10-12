@@ -32,6 +32,24 @@
     .notification-icon:hover{color:#fff}
     .notification-badge{position:absolute;top:-5px;right:0;font-size:.65rem;font-weight:700;background:#ef4444;color:#fff;border-radius:50%;padding:2px 5px;line-height:1;border:2px solid #0f172a}
     .notification-badge.info{background:#3b82f6}
+    
+    /* Desktop: Gap nhỏ hơn để icon gần nhau */
+    @media (min-width: 769px) {
+      .nav-right .d-flex {
+        gap: 0.5rem !important;
+      }
+    }
+    
+    /* Mobile: Tăng size icon và giãn cách */
+    @media (max-width: 768px) {
+      .notification-icon {
+        font-size: 1.6rem;
+        padding: 0 .35rem;
+      }
+      .nav-right .d-flex {
+        gap: 0.75rem !important;
+      }
+    }
 
     /* === NAV / DROPDOWN TINH CHỈNH === */
     .main-menu .nav-link{display:inline-flex;align-items:center}
@@ -44,6 +62,188 @@
     /* Mobile nested list */
     .mobile-submenu{padding-left:1rem}
     .mobile-submenu .nav-link{padding:.35rem 0}
+    
+    /* === HIỆU ỨNG MENU MOBILE ĐẸP HỠN === */
+    /* Nút hamburger menu */
+    .mobile-menu-toggle {
+      position: relative;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15)) !important;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    }
+    
+    .mobile-menu-toggle:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(99, 102, 241, 0.25)) !important;
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+      transform: scale(1.05);
+    }
+    
+    .mobile-menu-toggle:active {
+      transform: scale(0.95);
+    }
+    
+    .mobile-menu-toggle i {
+      transition: transform 0.3s ease;
+      color: #93c5fd;
+    }
+    
+    .mobile-menu-toggle:hover i {
+      transform: rotate(90deg);
+      color: #bfdbfe;
+    }
+    
+    /* Offcanvas mobile menu styling */
+    #mobileMenu .offcanvas-header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      padding: 1.5rem 1rem;
+      border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    #mobileMenu .offcanvas-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+    }
+    
+    #mobileMenu .offcanvas-body {
+      padding: 1rem;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    /* Mobile nav links */
+    .mobile-nav .nav-link {
+      position: relative;
+      padding: 1rem 1.25rem !important;
+      font-size: 1.05rem !important;
+      border-radius: 0.75rem !important;
+      margin-bottom: 0.5rem;
+      transition: all 0.3s ease;
+      color: #cbd5e1 !important;
+      font-weight: 500;
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+    }
+    
+    /* Hiệu ứng gradient hover */
+    .mobile-nav .nav-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .mobile-nav .nav-link:hover::before {
+      left: 100%;
+    }
+    
+    .mobile-nav .nav-link:hover {
+      color: #fff !important;
+      background: rgba(14, 165, 233, 0.15);
+      border-color: rgba(14, 165, 233, 0.3);
+      transform: translateX(8px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+    }
+    
+    /* Active state với gradient đẹp */
+    .mobile-nav .nav-link.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+      border-color: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+      transform: translateX(8px);
+    }
+    
+    .mobile-nav .nav-link.active::after {
+      content: '';
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: #fbbf24;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #fbbf24;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 12px #fbbf24;
+      }
+      50% {
+        opacity: 0.6;
+        box-shadow: 0 0 20px #fbbf24;
+      }
+    }
+    
+    /* Icon styling */
+    .mobile-nav .nav-link i {
+      margin-right: 0.75rem;
+      font-size: 1.1rem;
+      transition: transform 0.3s ease;
+    }
+    
+    .mobile-nav .nav-link:hover i {
+      transform: scale(1.2) rotate(5deg);
+    }
+    
+    .mobile-nav .nav-link.active i {
+      transform: scale(1.1);
+      color: #fbbf24;
+    }
+    
+    /* Submenu styling */
+    .mobile-submenu {
+      margin-top: 0.5rem;
+      padding-left: 2rem !important;
+      border-left: 3px solid rgba(14, 165, 233, 0.3);
+      margin-left: 1rem;
+    }
+    
+    .mobile-submenu .nav-link {
+      padding: 0.75rem 1rem !important;
+      font-size: 0.95rem !important;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .mobile-submenu .nav-link:hover {
+      transform: translateX(5px);
+    }
+    
+    .mobile-submenu .nav-link.active {
+      background: linear-gradient(90deg, rgba(14, 165, 233, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%);
+    }
+    
+    /* Collapse arrow animation */
+    .mobile-nav .bi-caret-down-fill {
+      transition: transform 0.3s ease;
+    }
+    
+    .mobile-nav [aria-expanded="true"] .bi-caret-down-fill {
+      transform: rotate(180deg);
+    }
+    
+    /* Divider styling */
+    .mobile-nav hr {
+      margin: 1rem 0;
+      opacity: 0.2;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
     
     /* Mobile navigation spacing */
     @media (max-width: 767px) {
@@ -427,6 +627,53 @@
 <style>
 .offcanvas-end {
   width: 400px !important;
+  transition: transform 0.3s ease-out !important;
+}
+
+/* Làm dấu X dễ nhìn hơn - sát góc phải, không nền */
+#cartPopup .offcanvas-header {
+  position: relative;
+  padding-right: 3.5rem !important;
+}
+
+#cartPopup .btn-close {
+  position: absolute !important;
+  right: 0.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: transparent !important;
+  border: none !important;
+  opacity: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  background-image: none !important;
+}
+
+#cartPopup .btn-close:hover {
+  transform: translateY(-50%) rotate(90deg) scale(1.15) !important;
+}
+
+#cartPopup .btn-close:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#cartPopup .btn-close::before {
+  content: '✕' !important;
+  color: #dc2626 !important;
+  font-size: 28px !important;
+  font-weight: bold !important;
+  line-height: 1 !important;
+}
+
+#cartPopup .btn-close:hover::before {
+  color: #b91c1c !important;
 }
 
 .cart-item {
@@ -540,6 +787,68 @@
 document.getElementById('cartPopup').addEventListener('shown.bs.offcanvas', function() {
   loadCartContent();
 });
+
+// Thêm tính năng vuốt sang phải để đóng popup
+(function() {
+  const cartPopup = document.getElementById('cartPopup');
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchCurrentX = 0;
+  let touchCurrentY = 0;
+  let isSwiping = false;
+  
+  cartPopup.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = true;
+  }, { passive: true });
+  
+  cartPopup.addEventListener('touchmove', function(e) {
+    if (!isSwiping) return;
+    
+    touchCurrentX = e.touches[0].clientX;
+    touchCurrentY = e.touches[0].clientY;
+    
+    const diffX = touchCurrentX - touchStartX;
+    const diffY = Math.abs(touchCurrentY - touchStartY);
+    
+    // Chỉ xử lý khi vuốt ngang (không phải vuốt dọc để scroll)
+    if (Math.abs(diffX) > diffY && diffX > 0) {
+      // Vuốt sang phải
+      const translateX = Math.min(diffX, 400);
+      cartPopup.style.transform = `translateX(${translateX}px)`;
+      cartPopup.style.transition = 'none';
+    }
+  }, { passive: true });
+  
+  cartPopup.addEventListener('touchend', function(e) {
+    if (!isSwiping) return;
+    
+    const diffX = touchCurrentX - touchStartX;
+    const diffY = Math.abs(touchCurrentY - touchStartY);
+    
+    isSwiping = false;
+    
+    // Nếu vuốt quá 100px sang phải thì đóng popup
+    if (Math.abs(diffX) > diffY && diffX > 100) {
+      // Đóng popup
+      const bsOffcanvas = bootstrap.Offcanvas.getInstance(cartPopup);
+      if (bsOffcanvas) {
+        bsOffcanvas.hide();
+      }
+    }
+    
+    // Reset transform
+    cartPopup.style.transform = '';
+    cartPopup.style.transition = '';
+  }, { passive: true });
+  
+  // Reset khi popup bị đóng
+  cartPopup.addEventListener('hidden.bs.offcanvas', function() {
+    cartPopup.style.transform = '';
+    cartPopup.style.transition = '';
+  });
+})();
 
 // Load cart content
 function loadCartContent() {

@@ -153,8 +153,20 @@ class TournamentAdmin(admin.ModelAdmin):
                 qualified_teams = []
                 for group in groups:
                     standings = group.get_standings()
-                    if len(standings) < 2: self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ 2 đội.", messages.ERROR); continue
-                    qualified_teams.extend([s['team_obj'] for s in standings[:2]])
+                    num_teams_in_group = len(standings)
+                    
+                    # Logic linh hoạt: bảng 4+ đội lấy 2, bảng 3 đội lấy 1, bảng 2 đội lấy 1
+                    if num_teams_in_group >= 4:
+                        num_qualified = 2  # Lấy 2 đội nhất nhì
+                    elif num_teams_in_group == 3:
+                        num_qualified = 1  # Chỉ lấy đội nhất
+                    elif num_teams_in_group == 2:
+                        num_qualified = 1  # Lấy đội nhất
+                    else:
+                        self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ đội.", messages.ERROR)
+                        continue
+                    
+                    qualified_teams.extend([s['team_obj'] for s in standings[:num_qualified]])
                 
                 if len(qualified_teams) == 8:
                     tournament.matches.filter(match_round='QUARTER').delete()
