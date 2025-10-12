@@ -922,65 +922,9 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
   margin-top: 0.5rem;
 }
 
-.cart-link {
-  position: relative;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0.75rem 1rem;
-  color: var(--dark);
-  text-decoration: none;
-  font-weight: 600;
-  border-radius: var(--border-radius);
-  transition: all 0.3s ease;
-  background: transparent;
-  border: none;
-  gap: 0.5rem;
-}
+/* Cart styles removed - using main navigation cart popup instead */
 
-.cart-link:hover {
-  color: var(--primary);
-  background: rgba(220, 38, 38, 0.1);
-}
-
-.cart-link i {
-  font-size: 1.3rem !important;
-  color: var(--dark) !important;
-  display: block !important;
-  margin-right: 0.5rem !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.cart-link:hover i {
-  color: var(--primary) !important;
-}
-
-.cart-count {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: var(--danger);
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: bold;
-  min-width: 20px;
-}
-
-.shop-menu-separator {
-  width: 2px;
-  height: 30px;
-  background: #dc2626;
-  opacity: 1;
-  margin: 0 1rem;
-  border-radius: 1px;
-}
+/* Shop menu separator removed - no longer needed */
 
 .shop-menu-item .dropdown-item {
   padding: 0.75rem 1.5rem;
@@ -1314,23 +1258,7 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
         </a>
       </div>
       
-      <!-- Separator -->
-      <div class="shop-menu-separator"></div>
-      
-      <!-- Payment Info -->
-      <div class="shop-menu-item">
-        <a href="{% url 'shop:payment_info' %}" class="shop-menu-link icon-only" title="Thông tin thanh toán">
-          <i class="fas fa-credit-card"></i>
-        </a>
-      </div>
-      
-      <!-- Cart -->
-      <div class="shop-menu-item">
-        <a href="{% url 'shop:cart' %}" class="shop-menu-link cart-link" style="display: flex !important; align-items: center !important; gap: 0.3rem !important; padding: 0.5rem 0.75rem !important;">
-          <span style="font-size: 1rem !important; color: #333 !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important;">🛒</span>
-          <span class="cart-count" id="cart-count" style="background: #dc2626 !important; color: white !important; border-radius: 50% !important; width: 18px !important; height: 18px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 0.6rem !important; font-weight: bold !important;">0</span>
-        </a>
-      </div>
+      <!-- Cart removed - using main navigation cart icon instead -->
     </div>
   </div>
 </section>
@@ -1357,15 +1285,15 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
               <div class="hero-content">
                 <div class="hero-badge">
                   <i class="fas fa-star me-2"></i>
-                  {{ banners.0.badge_text }}
+                  {{ banner.badge_text }}
                 </div>
-                <h1 class="hero-title">{{ banners.0.title }}</h1>
+                <h1 class="hero-title">{{ banner.title }}</h1>
                 <p class="hero-subtitle">
-                  {{ banners.0.subtitle|linebreaks }}
+                  {{ banner.subtitle|linebreaks }}
                 </p>
                 <a href="{% if banner.product %}{% url 'shop:product_detail' banner.product.slug %}{% else %}{{ banner.button_url }}{% endif %}" class="hero-btn">
                   <i class="fas fa-shopping-bag me-2"></i>
-                  {{ banners.0.button_text }}
+                  {{ banner.button_text }}
                 </a>
               </div>
             </div>
@@ -1901,12 +1829,16 @@ function addToCart(productId) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRFToken': '{{ csrf_token }}'
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
     },
     body: JSON.stringify({
       product_id: productId,
-      quantity: 1
-    })
+      quantity: 1,
+      timestamp: Date.now()  // Thêm timestamp để tránh cache
+    }),
+    cache: 'no-cache'
   })
   .then(response => response.json())
   .then(data => {
@@ -1914,16 +1846,12 @@ function addToCart(productId) {
       // Hiển thị thông báo thành công
       showNotification(data.message, 'success');
       
-      // Cập nhật số lượng giỏ hàng trong header (nếu có)
-      const cartCount = document.querySelector('.cart-count');
-      if (cartCount) {
-        cartCount.textContent = data.cart_count;
-      }
+      // Update cart count everywhere
+      updateCartCount(data.cart_count);
       
-      // Cập nhật số lượng giỏ hàng trong shop menu
-      const shopCartCount = document.getElementById('cart-count');
-      if (shopCartCount) {
-        shopCartCount.textContent = data.cart_count;
+      // Load cart popup content if it's open
+      if (document.getElementById('cartPopup') && document.getElementById('cartPopup').classList.contains('show')) {
+        loadCartContent();
       }
     } else {
       showNotification(data.message, 'error');

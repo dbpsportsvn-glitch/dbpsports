@@ -1000,7 +1000,8 @@ function addToCart(productId = null) {
   
   const requestData = {
     product_id: targetProductId,
-    quantity: parseInt(quantity)
+    quantity: parseInt(quantity),
+    timestamp: Date.now()  // Thêm timestamp để tránh cache
   };
   
   // Thêm size_id nếu có size được chọn
@@ -1012,11 +1013,20 @@ function addToCart(productId = null) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRFToken': '{{ csrf_token }}'
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
     },
-    body: JSON.stringify(requestData)
+    body: JSON.stringify(requestData),
+    cache: 'no-cache'
   })
-  .then(response => response.json())
+  .then(response => {
+    // Force fresh response
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
   .then(data => {
     if (data.success) {
       // Hiển thị thông báo thành công
@@ -1026,6 +1036,14 @@ function addToCart(productId = null) {
       const cartCount = document.querySelector('.cart-count');
       if (cartCount) {
         cartCount.textContent = data.cart_count;
+      }
+      
+      // Update cart count everywhere
+      updateCartCount(data.cart_count);
+      
+      // Load cart popup content if it's open
+      if (document.getElementById('cartPopup') && document.getElementById('cartPopup').classList.contains('show')) {
+        loadCartContent();
       }
     } else {
       showNotification(data.message, 'error');

@@ -25,6 +25,24 @@
   --border-radius-lg: 1rem;
 }
 
+/* Payment Info Button Styles */
+.payment-info-btn-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.payment-info-btn {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.payment-info-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255,255,255,0.2);
+}
+
 /* Page Header - Jogarbola Style */
 .page-header {
   background: var(--gradient-hero);
@@ -681,6 +699,14 @@
       <div class="col-12 text-center">
         <h1 class="page-title">Thanh toán</h1>
         <p class="page-subtitle">Hoàn tất đơn hàng của bạn</p>
+        
+        <!-- Payment Info Button -->
+        <div class="mt-4 payment-info-btn-wrapper">
+          <a href="{% url 'shop:payment_info' %}" class="btn btn-outline-light btn-lg payment-info-btn">
+            <i class="fas fa-credit-card me-2"></i>
+            Thông tin thanh toán
+          </a>
+        </div>
       </div>
     </div>
   </div>

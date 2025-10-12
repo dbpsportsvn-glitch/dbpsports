@@ -376,17 +376,113 @@ def add_to_cart(request):
             except ProductSize.DoesNotExist:
                 pass
         
-        return JsonResponse({
+        response = JsonResponse({
             'success': True,
             'message': f'Đã thêm sản phẩm{size_name} vào giỏ hàng',
             'cart_count': cart.total_items
         })
         
+        # Add cache-busting headers for production
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
     except Exception as e:
-        return JsonResponse({
+        response = JsonResponse({
             'success': False,
             'message': 'Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng'
         })
+        
+        # Add cache-busting headers for production
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+
+
+@login_required
+def cart_api(request):
+    """API để lấy thông tin giỏ hàng cho popup"""
+    try:
+        cart = get_object_or_404(Cart, user=request.user)
+        items = []
+        
+        for item in cart.items.all():
+            item_data = {
+                'id': item.id,
+                'name': item.product.name,
+                'price': float(item.product.current_price),
+                'quantity': item.quantity,
+                'size': item.size.name if item.size else None,
+                'stock': item.product.stock_quantity,
+                'image': item.product.main_image.url if item.product.main_image else None
+            }
+            items.append(item_data)
+        
+        response = JsonResponse({
+            'success': True,
+            'items': items,
+            'total_items': cart.total_items,
+            'total_price': float(cart.total_price)
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        response = JsonResponse({
+            'success': False,
+            'message': 'Có lỗi xảy ra khi tải giỏ hàng'
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+
+
+@login_required
+@require_POST
+def clear_cart(request):
+    """Xóa tất cả sản phẩm trong giỏ hàng"""
+    try:
+        cart = get_object_or_404(Cart, user=request.user)
+        items_count = cart.items.count()
+        cart.items.all().delete()
+        
+        response = JsonResponse({
+            'success': True,
+            'message': f'Đã xóa {items_count} sản phẩm khỏi giỏ hàng'
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        response = JsonResponse({
+            'success': False,
+            'message': 'Có lỗi xảy ra khi xóa giỏ hàng'
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
 
 
 @login_required
