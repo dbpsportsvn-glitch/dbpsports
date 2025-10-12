@@ -8,8 +8,16 @@ def user_roles_context(request):
     if not request.user.is_authenticated:
         return {}
     
+    # Kiểm tra và tạo profile nếu chưa có
+    try:
+        profile = request.user.profile
+    except:
+        # Tự động tạo profile nếu user chưa có
+        from users.models import Profile
+        profile = Profile.objects.create(user=request.user)
+    
     # Lấy tất cả các vai trò của người dùng trong một lần truy vấn
-    user_role_ids = set(request.user.profile.roles.values_list('id', flat=True))
+    user_role_ids = set(profile.roles.values_list('id', flat=True))
     
     is_player_role = 'PLAYER' in user_role_ids
     is_organizer_role = 'ORGANIZER' in user_role_ids
