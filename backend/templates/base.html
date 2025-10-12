@@ -245,8 +245,128 @@
       border-color: rgba(255, 255, 255, 0.3) !important;
     }
     
+    /* Mobile User Info */
+    .mobile-user-info {
+      animation: slideInDown 0.3s ease-out;
+    }
+    
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Logout button special styling */
+    .mobile-nav .nav-link.text-danger {
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .mobile-nav .nav-link.text-danger:hover {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: rgba(239, 68, 68, 0.5) !important;
+      transform: translateX(8px);
+    }
+    
+    /* Brand Logo & Text Responsive */
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      transition: all 0.3s ease;
+    }
+    
+    .brand-title {
+      font-size: 1.4rem;
+      transition: all 0.3s ease;
+    }
+    
+    .brand-subtitle {
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+    
+    /* Mobile Icons Styling */
+    @media (max-width: 991px) {
+      .brand-logo {
+        width: 34px;
+        height: 34px;
+      }
+      
+      .brand-title {
+        font-size: 1.2rem;
+      }
+      
+      .brand-subtitle {
+        font-size: 0.75rem;
+      }
+      
+      /* Đảm bảo container của mobile icons hiển thị */
+      .d-lg-none.d-flex {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      
+      .d-lg-none .btn-outline-light {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.4rem 0.5rem !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .d-lg-none .btn-outline-light i {
+        font-size: 1.1rem;
+        display: inline-block;
+      }
+      
+      .d-lg-none .badge {
+        font-size: 0.55rem !important;
+        padding: 2px 4px !important;
+        min-width: 16px;
+        display: inline-block !important;
+      }
+      
+      /* Mobile login button */
+      .d-lg-none .btn-primary {
+        white-space: nowrap;
+        font-weight: 500;
+      }
+    }
+    
     /* Mobile navigation spacing */
     @media (max-width: 767px) {
+      .brand-logo {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .brand-title {
+        font-size: 1.1rem;
+      }
+      
+      .brand-subtitle {
+        font-size: 0.7rem;
+      }
+      
+      .navbar-brand {
+        margin-right: 0.5rem !important;
+      }
+      
+      .d-lg-none {
+        gap: 0.4rem !important;
+      }
+      .d-lg-none .btn-outline-light {
+        padding: 0.35rem 0.45rem !important;
+      }
+      .d-lg-none .btn-outline-light i {
+        font-size: 1rem;
+      }
       .nav-right .d-flex {
         gap: 0.5rem !important;
       }
@@ -273,12 +393,121 @@
     
     /* Extra small screens */
     @media (max-width: 576px) {
+      .brand-logo {
+        width: 28px;
+        height: 28px;
+      }
+      
+      .brand-title {
+        font-size: 1rem;
+      }
+      
+      .brand-subtitle {
+        font-size: 0.65rem;
+      }
+      
+      .navbar-brand {
+        margin-right: 0.3rem !important;
+      }
+      
+      .brand-text-wrapper {
+        max-width: 120px;
+      }
+      
+      .d-lg-none {
+        gap: 0.3rem !important;
+      }
+      .d-lg-none .btn-outline-light {
+        padding: 0.3rem 0.4rem !important;
+      }
+      .d-lg-none .btn-outline-light i {
+        font-size: 0.95rem;
+      }
+      .d-lg-none .btn-primary {
+        padding: 0.35rem 0.65rem !important;
+        font-size: 0.8rem !important;
+      }
       .nav-right .d-flex {
         gap: 0.3rem !important;
       }
       .notification-icon {
         padding: 0.15rem !important;
         font-size: 1rem !important;
+      }
+    }
+    
+    /* Very small screens (iPhone SE, small Android) */
+    @media (max-width: 390px) {
+      .navbar .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      
+      .brand-logo {
+        width: 26px;
+        height: 26px;
+      }
+      
+      .brand-title {
+        font-size: 0.95rem;
+      }
+      
+      .brand-subtitle {
+        font-size: 0.6rem;
+      }
+      
+      .brand-text-wrapper {
+        max-width: 100px;
+      }
+      
+      .d-lg-none .btn-outline-light {
+        padding: 0.25rem 0.35rem !important;
+      }
+      
+      .d-lg-none .btn-outline-light i {
+        font-size: 0.9rem;
+      }
+      
+      .d-lg-none .btn-primary {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+      
+      .d-lg-none .btn-primary i {
+        font-size: 0.85rem;
+      }
+      
+      .mobile-menu-toggle {
+        padding: 0.35rem 0.4rem !important;
+      }
+      
+      .mobile-menu-toggle i {
+        font-size: 1.5rem !important;
+      }
+    }
+    
+    /* Ensure navbar doesn't wrap on mobile */
+    @media (max-width: 991px) {
+      .navbar .container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+      }
+      
+      .navbar-brand {
+        flex-shrink: 0;
+      }
+      
+      .mobile-menu-toggle {
+        flex-shrink: 0;
+      }
+    }
+    
+    @media (max-width: 767px) {
+      .navbar .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
       }
     }
   </style>
@@ -296,140 +525,243 @@
 
 <body>
 <header class="site-header sticky-top">
-  <nav class="navbar container" data-bs-theme="dark">
-    <div class="nav-left">
-      <a class="brand" href="{% url 'home' %}">
-        <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
-        <span class="brand-text">DBP Sports</span>
-      </a>
-      <button class="mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu" aria-label="Mở menu">
-        <i class="bi bi-list"></i>
-      </button>
-    </div>
-
-    <div class="nav-center">
-      <div class="main-menu d-flex align-items-center gap-2">
-        <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
-
-        {# === DROPDOWN BÓNG ĐÁ === #}
-        {% with urln=request.resolver_match.url_name %}
-                <div class="dropdown">
-          <a href="#" class="nav-link dropdown-toggle {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}active{% endif %}" id="soccerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-trophy"></i> Bóng Đá
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="soccerDropdown">
-            <li><a class="dropdown-item {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}"><i class="bi bi-flag"></i> Giải đấu</a></li>
-            <li><a class="dropdown-item {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}"><i class="bi bi-arrow-left-right"></i> Chuyển nhượng</a></li>
-            <li><a class="dropdown-item {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}"><i class="bi bi-broadcast"></i> Livestream</a></li>
-            <li><a class="dropdown-item {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}"><i class="bi bi-archive"></i> Lưu trữ</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li class="px-3 text-secondary small">Sắp có: Pickleball, Fifa Online…</li>
-          </ul>
+  <nav class="navbar navbar-expand-lg" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59, 130, 246, 0.2);">
+    <div class="container">
+      <!-- Brand -->
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+        <img src="{% static 'images/logo.png' %}" alt="DBP Sports" class="brand-logo me-2 rounded" style="box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">
+        <div class="brand-text-wrapper">
+          <span class="fw-bold text-warning brand-title" style="text-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);">DBP Sports</span>
+          <div class="brand-subtitle text-light opacity-75">Phủi Điện Biên</div>
         </div>
-        {% endwith %}
+      </a>
 
-        <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">Shop</a>
-        <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
-      </div>
-    </div>
+      <!-- Mobile Icons (visible only on mobile) -->
+      <div class="d-lg-none d-flex align-items-center gap-2 ms-auto me-2">
+        {% if user.is_authenticated %}
+          <!-- Announcements -->
+          <a href="{% url 'announcement_dashboard' %}" class="btn btn-sm btn-outline-light position-relative p-2" title="Bảng tin từ BTC">
+            <i class="bi bi-megaphone-fill"></i>
+            {% if unread_announcements_count > 0 %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="font-size: 0.6rem; padding: 2px 4px;">{{ unread_announcements_count }}</span>
+            {% endif %}
+          </a>
 
-    <div class="nav-right">
-      {% if user.is_authenticated %}
-      <div class="d-flex align-items-center gap-3">
-        {% if is_organizer_role %}
-          {% if user.organizations.all.first %}
-            <a href="{% url 'organizations:dashboard' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
-              <i class="bi bi-shield-check"></i> <span>. BTC</span>
-            </a>
-          {% else %}
-            <a href="{% url 'organizations:create' %}" class="btn btn-sm btn-outline-warning d-none d-lg-flex" title="Trở thành Ban tổ chức">
-              <i class="bi bi-shield-plus"></i> <span>. Đăng ký BTC</span>
-            </a>
-          {% endif %}
+          <!-- Notifications -->
+          <a href="{% url 'notification_list' %}" class="btn btn-sm btn-outline-light position-relative p-2" title="Thông báo của bạn">
+            <i class="bi bi-bell-fill"></i>
+            {% if unread_notifications_count > 0 %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 2px 4px;">{{ unread_notifications_count }}</span>
+            {% endif %}
+          </a>
+
+          <!-- Cart -->
+          <a href="#" class="btn btn-sm btn-outline-light position-relative p-2" title="Giỏ hàng" data-bs-toggle="offcanvas" data-bs-target="#cartPopup">
+            <i class="bi bi-cart-fill"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success cart-count" style="font-size: 0.6rem; padding: 2px 4px;">{{ user.cart.total_items|default:0 }}</span>
+          </a>
+        {% else %}
+          <!-- Login button for guests -->
+          <a href="{% url 'account_login' %}" class="btn btn-sm btn-primary" style="padding: 0.4rem 0.75rem; font-size: 0.875rem;">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+          </a>
         {% endif %}
+      </div>
 
-        <a href="{% url 'announcement_dashboard' %}" class="notification-icon" title="Bảng tin từ BTC">
-          <i class="bi bi-megaphone-fill"></i>
-          {% if unread_announcements_count > 0 %}
-            <span class="notification-badge info">{{ unread_announcements_count }}</span>
-          {% endif %}
-        </a>
+      <!-- Mobile toggle -->
+      <button class="navbar-toggler mobile-menu-toggle border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+        <i class="bi bi-list" style="color: #93c5fd; font-size: 1.8rem;"></i>
+      </button>
 
-        <a href="{% url 'notification_list' %}" class="notification-icon" title="Thông báo của bạn">
-          <i class="bi bi-bell-fill"></i>
-          {% if unread_notifications_count > 0 %}
-            <span class="notification-badge">{{ unread_notifications_count }}</span>
-          {% endif %}
-        </a>
+      <!-- Desktop Navigation -->
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item">
+            <a class="nav-link text-light {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">
+              <i class="bi bi-house me-1"></i>Trang chủ
+            </a>
+          </li>
 
-        <!-- Cart Icon -->
-        <a href="#" class="notification-icon" id="cart-icon" title="Giỏ hàng" data-bs-toggle="offcanvas" data-bs-target="#cartPopup" aria-controls="cartPopup">
-          <i class="bi bi-cart-fill"></i>
+          <!-- Football Dropdown -->
+          {% with urln=request.resolver_match.url_name %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-light {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-trophy me-1"></i>Bóng Đá
+            </a>
+            <ul class="dropdown-menu" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px;">
+              <li><a class="dropdown-item text-light {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}"><i class="bi bi-flag me-2"></i>Giải đấu</a></li>
+              <li><a class="dropdown-item text-light {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}"><i class="bi bi-arrow-left-right me-2"></i>Chuyển nhượng</a></li>
+              <li><a class="dropdown-item text-light {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}"><i class="bi bi-broadcast me-2"></i>Livestream</a></li>
+              <li><a class="dropdown-item text-light {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}"><i class="bi bi-archive me-2"></i>Lưu trữ</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li class="px-3 py-2 text-warning small"><i class="bi bi-lightning me-1"></i>Sắp có: Pickleball, FIFA Online</li>
+            </ul>
+          </li>
+          {% endwith %}
+
+          <li class="nav-item">
+            <a class="nav-link text-light {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">
+              <i class="bi bi-shop me-1"></i>Shop
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">
+              <i class="bi bi-briefcase me-1"></i>Việc làm
+            </a>
+          </li>
+        </ul>
+
+        <!-- Right Section -->
+        <div class="d-flex align-items-center gap-3">
           {% if user.is_authenticated %}
-            <span class="notification-badge" id="cart-count">{{ user.cart.total_items|default:0 }}</span>
-          {% else %}
-            <span class="notification-badge" id="cart-count">0</span>
-          {% endif %}
-        </a>
-
-        <div class="dropdown user-dropdown">
-          <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            {% with acct=user.socialaccount_set.first %}
-              {% if user.profile.avatar %}
-                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar">
-              {% elif acct and acct.get_avatar_url %}
-                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="avatar">
-              {% else %}
-                <span class="avatar-ph">{{ user.email|default:user.username|first|upper }}</span>
-              {% endif %}
-            {% endwith %}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài Khoản</a></li>
-            <li><a class="dropdown-item" href="{% url 'public_profile' username=user.email %}"><i class="bi bi-person-vcard"></i> Hồ sơ Công khai</a></li>
-            
-            {% if user.is_staff %}
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'shop:admin_dashboard' %}"><i class="fas fa-chart-line"></i> Shop Dashboard</a></li>
-            <li><a class="dropdown-item" href="/admin/"><i class="bi bi-gear"></i> Django Admin</a></li>
-            {% endif %}
-        
-            {% if user.player_profile %}
-            <li><a class="dropdown-item" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Xem Hồ sơ Cầu thủ</a></li>
-            {% endif %}
-
-            {% if request.user.sponsor_profile %}
-            <li><a class="dropdown-item" href="{% url 'sponsors:profile_detail' pk=request.user.sponsor_profile.pk %}"><i class="bi bi-gem"></i> Hồ sơ Nhà tài trợ</a></li>
-            {% endif %}            
-
-            {% if is_player_role %}
-            <li><a class="dropdown-item" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus"></i> Tạo Đội bóng</a></li>
-            {% endif %}
-   
+            <!-- Organizer Button -->
             {% if is_organizer_role %}
               {% if user.organizations.all.first %}
-                <li><a class="dropdown-item" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a></li>
+                <a href="{% url 'organizations:dashboard' %}" class="btn btn-warning btn-sm d-none d-lg-flex" title="Quản lý Đơn vị Tổ chức">
+                  <i class="bi bi-shield-check"></i> <span class="ms-1">BTC</span>
+                </a>
               {% else %}
-                <li><a class="dropdown-item" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký làm BTC</a></li>
+                <a href="{% url 'organizations:create' %}" class="btn btn-warning btn-sm d-none d-lg-flex" title="Trở thành Ban tổ chức">
+                  <i class="bi bi-shield-plus"></i> <span class="ms-1">Đăng ký BTC</span>
+                </a>
               {% endif %}
             {% endif %}
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'account_email' %}"><i class="bi bi-envelope"></i> Quản lý Email</a></li>
-            <li><a class="dropdown-item" href="{% url 'account_change_password' %}"><i class="bi bi-key"></i> Đổi mật khẩu</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
-          </ul>
+
+            <!-- Notifications -->
+            <a href="{% url 'announcement_dashboard' %}" class="btn btn-outline-light btn-sm position-relative" title="Bảng tin từ BTC">
+              <i class="bi bi-megaphone-fill"></i>
+              {% if unread_announcements_count > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info">{{ unread_announcements_count }}</span>
+              {% endif %}
+            </a>
+
+            <a href="{% url 'notification_list' %}" class="btn btn-outline-light btn-sm position-relative" title="Thông báo của bạn">
+              <i class="bi bi-bell-fill"></i>
+              {% if unread_notifications_count > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread_notifications_count }}</span>
+              {% endif %}
+            </a>
+
+            <!-- Cart -->
+            <a href="#" class="btn btn-outline-light btn-sm position-relative" id="cart-icon" title="Giỏ hàng" data-bs-toggle="offcanvas" data-bs-target="#cartPopup">
+              <i class="bi bi-cart-fill"></i>
+              {% if user.is_authenticated %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="cart-count">{{ user.cart.total_items|default:0 }}</span>
+              {% else %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="cart-count">0</span>
+              {% endif %}
+            </a>
+
+            <!-- User Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                {% with acct=user.socialaccount_set.first %}
+                  {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                  {% elif acct and acct.get_avatar_url %}
+                    <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                  {% else %}
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px;">
+                      <span class="text-white small fw-bold">{{ user.email|default:user.username|first|upper }}</span>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+                <span class="d-none d-lg-inline">{{ user.get_full_name|default:user.username|truncatechars:15 }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.2);">
+                <li><a class="dropdown-item text-light" href="{% url 'dashboard' %}"><i class="bi bi-person-circle me-2"></i>Tài Khoản</a></li>
+                <li><a class="dropdown-item text-light" href="{% url 'public_profile' username=user.email %}"><i class="bi bi-person-vcard me-2"></i>Hồ sơ Công khai</a></li>
+                
+                {% if user.is_staff %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-light" href="{% url 'shop:admin_dashboard' %}"><i class="fas fa-chart-line me-2"></i>Shop Dashboard</a></li>
+                <li><a class="dropdown-item text-light" href="/admin/"><i class="bi bi-gear me-2"></i>Django Admin</a></li>
+                {% endif %}
+
+                {% if user.player_profile %}
+                <li><a class="dropdown-item text-light" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box me-2"></i>Xem Hồ sơ Cầu thủ</a></li>
+                {% endif %}
+
+                {% if request.user.sponsor_profile %}
+                <li><a class="dropdown-item text-light" href="{% url 'sponsors:profile_detail' pk=request.user.sponsor_profile.pk %}"><i class="bi bi-gem me-2"></i>Hồ sơ Nhà tài trợ</a></li>
+                {% endif %}
+
+                {% if is_player_role %}
+                <li><a class="dropdown-item text-light" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus me-2"></i>Tạo Đội bóng</a></li>
+                {% endif %}
+
+                {% if is_organizer_role %}
+                  {% if user.organizations.all.first %}
+                    <li><a class="dropdown-item text-light" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check me-2"></i>Khu vực BTC</a></li>
+                  {% else %}
+                    <li><a class="dropdown-item text-light" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus me-2"></i>Đăng ký làm BTC</a></li>
+                  {% endif %}
+                {% endif %}
+                
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-light" href="{% url 'account_email' %}"><i class="bi bi-envelope me-2"></i>Quản lý Email</a></li>
+                <li><a class="dropdown-item text-light" href="{% url 'account_change_password' %}"><i class="bi bi-key me-2"></i>Đổi mật khẩu</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <!-- Guest Actions -->
+            <a href="{% url 'account_login' %}" class="btn btn-outline-light btn-sm">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+            </a>
+            <a href="{% url 'account_signup' %}" class="btn btn-primary btn-sm">
+              <i class="bi bi-person-plus me-1"></i>Đăng ký
+            </a>
+          {% endif %}
         </div>
       </div>
-      {% else %}
-      <div class="d-flex align-items-center gap-2">
-        <a class="btn btn-outline-light btn-sm" href="{% url 'account_login' %}">Đăng nhập</a>
-        <a class="btn btn-warning btn-sm d-none d-md-inline-block" href="{% url 'account_signup' %}">Đăng ký</a>
-      </div>
-      {% endif %}
     </div>
   </nav>
 </header>
+
+<!-- Header Enhancements -->
+<style>
+.navbar-brand:hover {
+  transform: translateY(-1px);
+}
+
+.nav-link:hover {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dropdown-item:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Mobile responsive for notification icons */
+@media (max-width: 768px) {
+  .navbar .d-flex.gap-3 {
+    gap: 0.5rem !important;
+  }
+  
+  .navbar .btn-sm {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar .btn-outline-light {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .navbar .btn-outline-light i {
+    font-size: 1rem;
+  }
+}
+</style>
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
   <div class="offcanvas-header">
@@ -437,8 +769,31 @@
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
   </div>
   <div class="offcanvas-body">
+    <!-- User Info Section (if authenticated) -->
+    {% if user.is_authenticated %}
+    <div class="mobile-user-info mb-3 p-3" style="background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+      <div class="d-flex align-items-center gap-3">
+        {% with acct=user.socialaccount_set.first %}
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="rounded-circle" width="48" height="48" style="object-fit: cover; border: 2px solid rgba(59, 130, 246, 0.5);">
+          {% elif acct and acct.get_avatar_url %}
+            <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="rounded-circle" width="48" height="48" style="object-fit: cover; border: 2px solid rgba(59, 130, 246, 0.5);">
+          {% else %}
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; border: 2px solid rgba(59, 130, 246, 0.5);">
+              <span class="text-white fw-bold" style="font-size: 1.2rem;">{{ user.email|default:user.username|first|upper }}</span>
+            </div>
+          {% endif %}
+        {% endwith %}
+        <div class="flex-grow-1">
+          <div class="text-light fw-bold" style="font-size: 1rem;">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-light opacity-75 small">{{ user.email|truncatechars:25 }}</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <nav class="mobile-nav">
-      <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}">Trang chủ</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'home' and 'blog' not in request.resolver_match.namespace and 'shop' not in request.resolver_match.namespace %}active{% endif %}" href="{% url 'home' %}"><i class="bi bi-house"></i> Trang chủ</a>
 
       {# --- Mobile: Bóng Đá (collapse) --- #}
       {% with urln=request.resolver_match.url_name %}
@@ -449,20 +804,55 @@
       </a>
       <div class="collapse {% if urln == 'tournaments_active' or 'transfer' in urln or urln == 'livestream' or urln == 'archive' %}show{% endif %}" id="mobileSoccerMenu">
         <div class="mobile-submenu">
-          <a class="nav-link {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}">Giải đấu</a>
-          <a class="nav-link {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}">Chuyển nhượng</a>
-          <a class="nav-link {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}">Livestream</a>
-          <a class="nav-link {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}">Lưu trữ</a>
+          <a class="nav-link {% if urln == 'tournaments_active' %}active{% endif %}" href="{% url 'tournaments_active' %}"><i class="bi bi-flag"></i> Giải đấu</a>
+          <a class="nav-link {% if 'transfer' in urln %}active{% endif %}" href="{% url 'transfer_market' %}"><i class="bi bi-arrow-left-right"></i> Chuyển nhượng</a>
+          <a class="nav-link {% if urln == 'livestream' %}active{% endif %}" href="{% url 'livestream' %}"><i class="bi bi-broadcast"></i> Livestream</a>
+          <a class="nav-link {% if urln == 'archive' %}active{% endif %}" href="{% url 'archive' %}"><i class="bi bi-archive"></i> Lưu trữ</a>
         </div>
       </div>
       {% endwith %}
 
-      <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">Shop</a>
-      <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">Việc làm</a>
+      <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}"><i class="bi bi-shop"></i> Shop</a>
+      <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}"><i class="bi bi-briefcase"></i> Việc làm</a>
 
-      {% if not user.is_authenticated %}
+      {% if user.is_authenticated %}
       <hr class="border-light">
-      <a class="nav-link" href="{% url 'account_signup' %}">Đăng ký</a>
+      
+      <!-- User Menu Items -->
+      <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-person-circle"></i> Tài khoản</a>
+      <a class="nav-link" href="{% url 'public_profile' username=user.email %}"><i class="bi bi-person-vcard"></i> Hồ sơ công khai</a>
+      
+      {% if user.player_profile %}
+      <a class="nav-link" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Hồ sơ cầu thủ</a>
+      {% endif %}
+
+      {% if request.user.sponsor_profile %}
+      <a class="nav-link" href="{% url 'sponsors:profile_detail' pk=request.user.sponsor_profile.pk %}"><i class="bi bi-gem"></i> Hồ sơ nhà tài trợ</a>
+      {% endif %}
+
+      {% if is_organizer_role %}
+        {% if user.organizations.all.first %}
+          <a class="nav-link" href="{% url 'organizations:dashboard' %}"><i class="bi bi-shield-check"></i> Khu vực BTC</a>
+        {% else %}
+          <a class="nav-link" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký BTC</a>
+        {% endif %}
+      {% endif %}
+
+      {% if user.is_staff %}
+      <hr class="border-light">
+      <a class="nav-link" href="{% url 'shop:admin_dashboard' %}"><i class="fas fa-chart-line"></i> Shop Dashboard</a>
+      <a class="nav-link" href="/admin/"><i class="bi bi-gear"></i> Django Admin</a>
+      {% endif %}
+      
+      <hr class="border-light">
+      
+      <!-- Logout Button -->
+      <a class="nav-link text-danger" href="{% url 'account_logout' %}" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);">
+        <i class="bi bi-box-arrow-right"></i> Đăng xuất
+      </a>
+      {% else %}
+      <hr class="border-light">
+      <a class="nav-link" href="{% url 'account_signup' %}"><i class="bi bi-person-plus"></i> Đăng ký</a>
       {% endif %}
     </nav>
   </div>
@@ -476,44 +866,551 @@
   </main>
 </div>
 
-<footer class="site-footer">
+<footer class="modern-footer">
+  <div class="footer-wave">
+    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+      <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="rgba(59, 130, 246, 0.1)"></path>
+    </svg>
+  </div>
+  
   <div class="container">
     <div class="footer-content">
-      <div class="footer-about">
+      <!-- Brand Section -->
+      <div class="footer-brand-section">
         <a href="{% url 'home' %}" class="footer-brand">
-          <img src="{% static 'images/logo.png' %}" alt="DBP Sports">
-          <span>DBP Sports</span>
+          <img src="{% static 'images/logo.png' %}" alt="DBP Sports" class="footer-logo">
+          <span class="footer-brand-text">DBP Sports</span>
         </a>
-        <p class="text-muted">Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào độc quyền Phủi Điện Biên.</p>
-        <p class="footer-copyright">&copy; {% now "Y" %} DBP Sports. All Rights Reserved.</p>
+        <p class="footer-description">
+          Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào độc quyền Phủi Điện Biên. 
+          Kết nối cộng đồng, tạo ra những trải nghiệm thể thao tuyệt vời.
+        </p>
+        <div class="footer-contact">
+          <div class="contact-item">
+            <i class="bi bi-envelope-fill"></i>
+            <span>dbpsportsvn@gmail.com</span>
+          </div>
+          <div class="contact-item">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>Điện Biên, Việt Nam</span>
+          </div>
+        </div>
       </div>
-      <div class="footer-links">
-        <h6>Về DBP Sports</h6>
-        <ul>
-          <li><a href="{% url 'home' %}">Trang chủ</a></li>
-          <li><a href="{% url 'tournaments_active' %}">Giải đấu</a></li>
-          <li><a href="{% url 'faq' %}">Hướng dẫn</a></li>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h4 class="footer-title">
+          <i class="bi bi-compass"></i>
+          Khám Phá
+        </h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'home' %}"><i class="bi bi-house"></i>Trang chủ</a></li>
+          <li><a href="{% url 'tournaments_active' %}"><i class="bi bi-trophy"></i>Giải đấu</a></li>
+          <li><a href="{% url 'shop:home' %}"><i class="bi bi-shop"></i>Shop thể thao</a></li>
+          <li><a href="{% url 'job_market' %}"><i class="bi bi-briefcase"></i>Việc làm</a></li>
+          <li><a href="{% url 'transfer_market' %}"><i class="bi bi-arrow-left-right"></i>Chuyển nhượng</a></li>
+          <li><a href="{% url 'livestream' %}"><i class="bi bi-broadcast"></i>Livestream</a></li>
         </ul>
       </div>
-      <div class="footer-links">
-        <h6>Pháp lý</h6>
-        <ul>
-          <li><a href="{% url 'terms_of_service' %}">Điều khoản dịch vụ</a></li>
-          <li><a href="{% url 'privacy_policy' %}">Chính sách bảo mật</a></li>
-          <li><a href="{% url 'data_deletion' %}">Xóa dữ liệu</a></li>
+
+      <!-- Support & Legal -->
+      <div class="footer-section">
+        <h4 class="footer-title">
+          <i class="bi bi-question-circle"></i>
+          Hỗ Trợ & Pháp Lý
+        </h4>
+        <ul class="footer-links">
+          <li><a href="{% url 'faq' %}"><i class="bi bi-book"></i>Hướng dẫn sử dụng</a></li>
+          <li><a href="{% url 'terms_of_service' %}"><i class="bi bi-shield-check"></i>Điều khoản dịch vụ</a></li>
+          <li><a href="{% url 'privacy_policy' %}"><i class="bi bi-lock"></i>Chính sách bảo mật</a></li>
+          <li><a href="{% url 'data_deletion' %}"><i class="bi bi-trash"></i>Xóa dữ liệu</a></li>
+          <li><a href="{% url 'archive' %}"><i class="bi bi-archive"></i>Lưu trữ giải đấu</a></li>
         </ul>
       </div>
-      <div class="footer-links">
-        <h6>Theo dõi chúng tôi</h6>
-        <div class="social-icons">
-          <a href="https://www.facebook.com/Phuidienbien/" title="Facebook" target="_blank" rel="noopener"><i class="bi bi-facebook"></i></a>
-          <a href="https://www.youtube.com/@PhuiDienBien" title="YouTube" target="_blank" rel="noopener"><i class="bi bi-youtube"></i></a>
-          <a href="#" title="TikTok"><i class="bi bi-tiktok"></i></a>
+
+      <!-- Social & Newsletter -->
+      <div class="footer-section">
+        <h4 class="footer-title">
+          <i class="bi bi-heart"></i>
+          Kết Nối
+        </h4>
+        <p class="footer-subtitle">Theo dõi chúng tôi để cập nhật tin tức mới nhất</p>
+        
+        <div class="social-links">
+          <a href="https://www.facebook.com/Phuidienbien/" class="social-link facebook" target="_blank" rel="noopener">
+            <i class="bi bi-facebook"></i>
+            <span>Facebook</span>
+          </a>
+          <a href="https://www.youtube.com/@PhuiDienBien" class="social-link youtube" target="_blank" rel="noopener">
+            <i class="bi bi-youtube"></i>
+            <span>YouTube</span>
+          </a>
+          <a href="#" class="social-link tiktok" target="_blank" rel="noopener">
+            <i class="bi bi-tiktok"></i>
+            <span>TikTok</span>
+          </a>
+        </div>
+
+        <div class="newsletter-section">
+          <h5>Nhận thông báo mới</h5>
+          <p class="newsletter-text">Đăng ký để nhận thông báo về giải đấu mới và ưu đãi đặc biệt</p>
+          <div class="newsletter-form">
+            <input type="email" placeholder="Nhập email của bạn..." class="newsletter-input">
+            <button type="button" class="newsletter-btn">
+              <i class="bi bi-send"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Bottom -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-content">
+        <div class="copyright">
+          <p>&copy; {% now "Y" %} DBP Sports. Tất cả quyền được bảo lưu.</p>
+        </div>
+        <div class="footer-badges">
+          <span class="badge">
+            <i class="bi bi-shield-check"></i>
+            An toàn & Bảo mật
+          </span>
+          <span class="badge">
+            <i class="bi bi-heart-fill"></i>
+            Made with ❤️ in Điện Biên
+          </span>
         </div>
       </div>
     </div>
   </div>
 </footer>
+
+<!-- Modern Footer CSS -->
+<style>
+/* ========================================
+   MODERN FOOTER STYLES
+   ======================================== */
+.modern-footer {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  color: #e2e8f0;
+  position: relative;
+  margin-top: 4rem;
+  overflow: hidden;
+}
+
+.footer-wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.footer-wave svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 3rem;
+  padding: 3rem 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Brand Section */
+.footer-brand-section {
+  max-width: 400px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+}
+
+.footer-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.footer-brand-text {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fbbf24;
+  text-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.footer-description {
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.contact-item i {
+  color: #3b82f6;
+  width: 16px;
+}
+
+/* Footer Sections */
+.footer-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-title i {
+  font-size: 1.2rem;
+}
+
+.footer-subtitle {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links li a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  padding: 0.25rem 0;
+}
+
+.footer-links li a:hover {
+  color: #3b82f6;
+  transform: translateX(5px);
+}
+
+.footer-links li a i {
+  width: 16px;
+  font-size: 0.85rem;
+}
+
+/* Social Links */
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  text-decoration: none;
+  color: #cbd5e1;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.social-link.facebook:hover {
+  border-color: #1877f2;
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.social-link.youtube:hover {
+  border-color: #ff0000;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+}
+
+.social-link.tiktok:hover {
+  border-color: #000000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.social-link i {
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+/* Newsletter */
+.newsletter-section h5 {
+  color: #fbbf24;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.newsletter-text {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.newsletter-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.newsletter-input::placeholder {
+  color: #64748b;
+}
+
+.newsletter-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.newsletter-btn {
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.newsletter-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem 0;
+  margin-top: 2rem;
+}
+
+.footer-bottom-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.copyright p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.footer-badges {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-badges .badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-badges .badge i {
+  color: #fbbf24;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 1200px) {
+  .footer-content {
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  
+  .footer-brand-section {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 0 1rem;
+  }
+  
+  .footer-bottom-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .newsletter-form {
+    flex-direction: column;
+  }
+  
+  .social-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .social-link {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-brand {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .footer-brand-text {
+    font-size: 1.5rem;
+  }
+  
+  .footer-badges {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .footer-badges .badge {
+    justify-content: center;
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+.footer-links li a {
+  position: relative;
+}
+
+.footer-links li a::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  transition: width 0.3s ease;
+}
+
+.footer-links li a:hover::before {
+  width: 8px;
+}
+
+.social-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.social-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.social-link:hover::before {
+  left: 100%;
+}
+
+/* ========================================
+   HIDE OLD STYLES
+   ======================================== */
+.site-footer {
+  display: none;
+}
+</style>
 
 {# TOAST ZONE #}
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
