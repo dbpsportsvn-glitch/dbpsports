@@ -6,6 +6,7 @@ from .models import Role, Profile
 class RoleAdmin(admin.ModelAdmin):
     list_display = ('name', 'id', 'icon', 'order')
     list_editable = ('order',)
+    search_fields = ('name', 'id')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

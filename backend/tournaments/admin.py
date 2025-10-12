@@ -14,7 +14,8 @@ from django.conf import settings
 from django.db.models import Count
 from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
-                     TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory) # <-- Import model mới
+                     TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory,
+                     TournamentStaff, MatchNote) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
 
 # Admin configuration
@@ -49,7 +50,7 @@ class LineupInline(admin.TabularInline):
                 match = Match.objects.get(pk=match_id)
                 kwargs["queryset"] = Player.objects.filter(Q(team=match.team1) | Q(team=match.team2)).order_by("team__name", "jersey_number", "full_name")
             except Match.DoesNotExist: pass
-        return super().formfield_for_foreignkey(self, db_field, request, **kwargs)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class GoalInline(admin.TabularInline):
     model = Goal; extra = 0; readonly_fields = ("team",); raw_id_fields = ("player",)
@@ -60,7 +61,7 @@ class GoalInline(admin.TabularInline):
                 match = Match.objects.get(pk=match_id)
                 kwargs["queryset"] = Player.objects.filter(Q(team=match.team1) | Q(team=match.team2)).order_by("team__name", "jersey_number", "full_name")
             except Match.DoesNotExist: pass
-        return super().formfield_for_foreignkey(self, db_field, request, **kwargs)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class CardInline(admin.TabularInline):
     model = Card; extra = 0; readonly_fields = ("team",); raw_id_fields = ("player",)
@@ -71,7 +72,7 @@ class CardInline(admin.TabularInline):
                 match = Match.objects.get(pk=match_id)
                 kwargs["queryset"] = Player.objects.filter(Q(team=match.team1) | Q(team=match.team2)).order_by("team__name", "jersey_number", "full_name")
             except Match.DoesNotExist: pass
-        return super().formfield_for_foreignkey(self, db_field, request, **kwargs)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 class TournamentPhotoInline(admin.TabularInline):
     model = TournamentPhoto; extra = 1; readonly_fields = ('image_preview',); fields = ('image', 'image_preview', 'caption')
@@ -468,3 +469,50 @@ class BudgetHistoryAdmin(admin.ModelAdmin):
     search_fields = ('description', 'budget__tournament__name', 'user__username')
     readonly_fields = ('timestamp',)
     autocomplete_fields = ('budget', 'user')
+
+@admin.register(TournamentStaff)
+class TournamentStaffAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'tournament', 'get_user_email')
+    list_filter = ('role', 'tournament')
+    search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name', 'tournament__name')
+    autocomplete_fields = ('tournament', 'user', 'role')
+    list_select_related = ('tournament', 'user', 'role')
+    list_per_page = 50
+    
+    @admin.display(description='Email', ordering='user__email')
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user.email else "Chưa có email"
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('tournament', 'user', 'role')
+        }),
+    )
+
+@admin.register(MatchNote)
+class MatchNoteAdmin(admin.ModelAdmin):
+    list_display = ('match', 'author', 'note_type', 'team', 'updated_at')
+    list_filter = ('note_type', 'match__tournament')
+    search_fields = ('author__username', 'match__team1__name', 'match__team2__name', 'team__name')
+    autocomplete_fields = ('match', 'author', 'team')
+    list_select_related = ('match', 'author', 'team', 'match__tournament')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 50
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('match', 'author', 'note_type', 'team')
+        }),
+        ('Ghi chú của Bình luận viên', {
+            'fields': ('commentator_notes_team1', 'commentator_notes_team2'),
+            'classes': ('collapse',)
+        }),
+        ('Ghi chú của Đội trưởng', {
+            'fields': ('captain_note',),
+            'classes': ('collapse',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
