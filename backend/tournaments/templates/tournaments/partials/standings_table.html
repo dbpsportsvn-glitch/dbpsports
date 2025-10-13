@@ -87,10 +87,6 @@
     text-align: center;
 }
 
-.standings-table thead th:nth-child(2) {
-    text-align: left;
-}
-
 .standings-table tbody tr {
     border-bottom: 1px solid #f1f5f9;
     transition: background-color 0.2s ease;
@@ -113,6 +109,25 @@
 
 .standings-table tbody td:nth-child(2) {
     text-align: left;
+    padding: 1rem 0.75rem;
+}
+
+.standings-table thead th {
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    text-align: center;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.standings-table thead th:nth-child(2) {
+    text-align: center;
+    color: #667eea;
+    font-weight: 700;
 }
 
 /* Rank Column */
@@ -166,6 +181,7 @@
     color: #1e293b;
     transition: color 0.2s ease;
     font-weight: 600;
+    padding-left: 0;
 }
 
 .team-info:hover {
