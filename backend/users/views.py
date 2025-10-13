@@ -142,6 +142,25 @@ def dashboard(request):
     remaining_role_changes = 3 - profile.role_change_count
     if remaining_role_changes < 0:
         remaining_role_changes = 0
+    
+    # === TÍNH SỐ LƯỢNG PENDING CHO DASHBOARD LINKS ===
+    pending_recruitments_count = 0
+    pending_applications_count = 0
+    
+    # Đếm pending recruitments cho HLV
+    if hasattr(request.user, 'coach_profile'):
+        from tournaments.models import CoachRecruitment
+        pending_recruitments_count = CoachRecruitment.objects.filter(
+            coach=request.user.coach_profile,
+            status=CoachRecruitment.Status.PENDING
+        ).count()
+    
+    # Đếm pending applications cho Sân bóng
+    if hasattr(request.user, 'stadium_profile'):
+        pending_applications_count = JobApplication.objects.filter(
+            job__stadium=request.user.stadium_profile,
+            status=JobApplication.Status.PENDING
+        ).count()
 
     context = {
         'user_form': user_form,
@@ -165,6 +184,9 @@ def dashboard(request):
         'scouting_list': scouting_list,
         'user_role_ids': user_role_ids,
         'remaining_role_changes': remaining_role_changes,
+        # Thêm thông tin cho dashboard links
+        'pending_recruitments_count': pending_recruitments_count,
+        'pending_applications_count': pending_applications_count,
     }
     return render(request, 'users/dashboard.html', context)
 

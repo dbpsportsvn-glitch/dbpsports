@@ -1,4 +1,5 @@
 {% load static %}
+{% load role_tags %}
 <!doctype html>
 <html lang="vi">
 <head>
@@ -706,6 +707,17 @@
                     <li><a class="dropdown-item text-light" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus me-2"></i>Đăng ký làm BTC</a></li>
                   {% endif %}
                 {% endif %}
+
+                {# Dashboard links cho HLV và Sân bóng #}
+                {% if user|has_role:'COACH' %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-light" href="{% url 'coach_dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard HLV</a></li>
+                {% endif %}
+
+                {% if user|has_role:'STADIUM' %}
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-light" href="{% url 'stadium_dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Dashboard Sân bóng</a></li>
+                {% endif %}
                 
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-light" href="{% url 'account_email' %}"><i class="bi bi-envelope me-2"></i>Quản lý Email</a></li>
@@ -845,6 +857,15 @@
         {% else %}
           <a class="nav-link" href="{% url 'organizations:create' %}"><i class="bi bi-shield-plus"></i> Đăng ký BTC</a>
         {% endif %}
+      {% endif %}
+
+      {# Dashboard links cho HLV và Sân bóng #}
+      {% if user|has_role:'COACH' %}
+      <a class="nav-link" href="{% url 'coach_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard HLV</a>
+      {% endif %}
+
+      {% if user|has_role:'STADIUM' %}
+      <a class="nav-link" href="{% url 'stadium_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard Sân bóng</a>
       {% endif %}
 
       {% if user.is_staff %}
