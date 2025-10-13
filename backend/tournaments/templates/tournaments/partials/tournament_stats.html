@@ -1,122 +1,229 @@
 {% comment %} File: backend/tournaments/templates/tournaments/partials/tournament_stats.html {% endcomment %}
 
-{# --- DÀNH CHO CÁC THỐNG KÊ TỔNG QUAN --- #}
-<div class="row row-cols-2 row-cols-md-4 g-4 mb-4">
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">TỔNG SỐ ĐỘI</h6>
-                <p class="display-5 fw-bold mb-0">{{ total_teams }}</p>
+<div class="modern-stats-container">
+    
+    {# === THỐNG KÊ TỔNG QUAN === #}
+    <div class="stats-section">
+        <div class="section-header-stats">
+            <div class="section-icon-stats">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="section-info-stats">
+                <h3 class="section-title-stats">Thống kê tổng quan</h3>
+                <p class="section-subtitle-stats">Các chỉ số chính của giải đấu</p>
+            </div>
+        </div>
+
+        <div class="stats-grid primary-stats">
+            <div class="stat-card stat-card-teams">
+                <div class="stat-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_teams }}</div>
+                    <div class="stat-label">Tổng số đội</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-players">
+                <div class="stat-icon">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_players }}</div>
+                    <div class="stat-label">Tổng cầu thủ</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-matches">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ finished_matches_count }}</div>
+                    <div class="stat-label">Trận đã đấu</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-goals">
+                <div class="stat-icon">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_normal_goals }}</div>
+                    <div class="stat-label">Tổng bàn thắng</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">TỔNG SỐ CẦU THỦ</h6>
-                <p class="display-5 fw-bold mb-0">{{ total_players }}</p>
+
+    {# === THỐNG KÊ CHI TIẾT === #}
+    <div class="stats-section">
+        <div class="section-header-stats">
+            <div class="section-icon-stats">
+                <i class="bi bi-bar-chart-fill"></i>
+            </div>
+            <div class="section-info-stats">
+                <h3 class="section-title-stats">Thống kê chi tiết</h3>
+                <p class="section-subtitle-stats">Phân tích sâu về các chỉ số</p>
             </div>
         </div>
-    </div>
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">SỐ TRẬN ĐÃ ĐẤU</h6>
-                <p class="display-5 fw-bold mb-0">{{ finished_matches_count }}</p>
+
+        <div class="stats-grid secondary-stats">
+            <div class="stat-card stat-card-avg">
+                <div class="stat-icon">
+                    <i class="bi bi-calculator"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ avg_goals_per_match }}</div>
+                    <div class="stat-label">Bàn thắng/Trận</div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">TỔNG BÀN THẮNG</h6>
-                <p class="display-5 fw-bold mb-0">{{ total_normal_goals }}</p>
+
+            <div class="stat-card stat-card-own">
+                <div class="stat-icon">
+                    <i class="bi bi-arrow-down-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_own_goals }}</div>
+                    <div class="stat-label">Bàn phản lưới</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-hattrick">
+                <div class="stat-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ hattricks }}</div>
+                    <div class="stat-label">Hat-trick</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-yellow">
+                <div class="stat-icon">
+                    <i class="bi bi-square-fill text-warning"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value text-warning">{{ total_yellow_cards }}</div>
+                    <div class="stat-label">Thẻ vàng</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-card-red">
+                <div class="stat-icon">
+                    <i class="bi bi-square-fill text-danger"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value text-danger">{{ total_red_cards }}</div>
+                    <div class="stat-label">Thẻ đỏ</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-{# --- DÀNH CHO CÁC THỐNG KÊ CHI TIẾT HƠN --- #}
-<div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-4">
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">BÀN THẮNG / TRẬN</h6>
-                <p class="display-5 fw-bold mb-0">{{ avg_goals_per_match }}</p>
-            </div>
+{# === VUA PHÁ LƯỚI === #}
+<div class="stats-section">
+    <div class="section-header-stats">
+        <div class="section-icon-stats">
+            <i class="bi bi-award-fill"></i>
         </div>
-    </div>
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">BÀN PHẢN LƯỚI</h6>
-                <p class="display-5 fw-bold mb-0">{{ total_own_goals }}</p>
-            </div>
+        <div class="section-info-stats">
+            <h3 class="section-title-stats">Vua phá lưới</h3>
+            <p class="section-subtitle-stats">Những chân sút xuất sắc nhất giải đấu</p>
         </div>
     </div>
 
-    {# === Ô HAT-TRICK ĐÃ ĐƯỢC CHUYỂN LÊN ĐÂY === #}
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">SỐ LƯỢT HAT-TRICK</h6>
-                <p class="display-5 fw-bold mb-0">{{ hattricks }}</p>
+    <div class="top-scorers-container">
+        {% for player in top_scorers %}
+        <div class="scorer-card {% if forloop.counter == 1 %}scorer-first{% elif forloop.counter == 2 %}scorer-second{% elif forloop.counter == 3 %}scorer-third{% endif %}">
+            <div class="scorer-rank">
+                {% if forloop.counter == 1 %}
+                    <i class="bi bi-trophy-fill"></i>
+                {% elif forloop.counter == 2 %}
+                    <i class="bi bi-award-fill"></i>
+                {% elif forloop.counter == 3 %}
+                    <i class="bi bi-award"></i>
+                {% else %}
+                    {{ forloop.counter }}
+                {% endif %}
+            </div>
+            <div class="scorer-avatar">
+                {% if player.avatar %}
+                    <img src="{{ player.avatar.url }}" alt="{{ player.full_name }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="scorer-info">
+                <a href="{% url 'player_detail' pk=player.pk %}" class="scorer-name">{{ player.full_name }}</a>
+                <div class="scorer-team">
+                    {% if player.team.logo %}
+                        <img src="{{ player.team.logo.url }}" alt="{{ player.team.name }}" class="team-logo-small">
+                    {% endif %}
+                    <span>{{ player.team.name }}</span>
+                </div>
+            </div>
+            <div class="scorer-goals">
+                <div class="goals-number">{{ player.goal_count }}</div>
+                <div class="goals-label">bàn thắng</div>
             </div>
         </div>
-    </div>
-
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">TỔNG SỐ THẺ VÀNG</h6>
-                <p class="display-5 fw-bold mb-0 text-warning">{{ total_yellow_cards }}</p>
-            </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>Chưa có bàn thắng nào được ghi</p>
         </div>
-    </div>
-    <div class="col">
-        <div class="card text-center h-100 shadow-sm">
-            <div class="card-body">
-                <h6 class="card-title text-muted">TỔNG SỐ THẺ ĐỎ</h6>
-                <p class="display-5 fw-bold mb-0 text-danger">{{ total_red_cards }}</p>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-lg-12 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header"><h5 class="section-title mb-0">Vua phá lưới</h5></div>
-            <ul class="list-group list-group-flush">
-                {% for player in top_scorers %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            {% if player.team.logo %}<img src="{{ player.team.logo.url }}" width="20" height="20" class="me-2" style="object-fit: contain;">{% endif %}
-                            <a href="{% url 'player_detail' pk=player.pk %}">{{ player.full_name }}</a> ({{ player.team.name }})
-                        </span>
-                        <span class="badge bg-primary rounded-pill">{{ player.goal_count }} bàn</span>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item">Chưa có bàn thắng nào được ghi.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header"><h5 class="section-title mb-0">Thống kê Bàn thắng/Thua</h5></div>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                    <thead><tr><th>#</th><th>Đội</th><th class="text-center">BT</th><th class="text-center">BB</th><th class="text-center">HS</th></tr></thead>
+{# === THỐNG KÊ ĐỘI === #}
+<div class="stats-tables-row">
+    <div class="stats-table-col">
+        <div class="modern-table-card">
+            <div class="table-card-header">
+                <div class="table-header-icon">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                </div>
+                <div class="table-header-info">
+                    <h4>Thống kê Bàn thắng/Thua</h4>
+                    <p>Hiệu suất tấn công và phòng thủ</p>
+                </div>
+            </div>
+            <div class="modern-table-wrapper">
+                <table class="modern-stats-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">#</th>
+                            <th class="team-col">Đội</th>
+                            <th class="stat-col">BT</th>
+                            <th class="stat-col">BB</th>
+                            <th class="stat-col highlight-col">HS</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for row in team_goal_stats %}
                         <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{% url 'team_detail' pk=row.team_obj.pk %}">{{ row.team_obj.name }}</a></td>
-                            <td class="text-center">{{ row.gf }}</td>
-                            <td class="text-center">{{ row.ga }}</td>
-                            <td class="text-center"><strong>{{ row.gd }}</strong></td>
+                            <td class="rank-col">
+                                <span class="rank-badge">{{ forloop.counter }}</span>
+                            </td>
+                            <td class="team-col">
+                                {% if row.team_obj.logo %}
+                                    <img src="{{ row.team_obj.logo.url }}" alt="{{ row.team_obj.name }}" class="team-logo-table">
+                                {% endif %}
+                                <a href="{% url 'team_detail' pk=row.team_obj.pk %}" class="team-name-link">{{ row.team_obj.name }}</a>
+                            </td>
+                            <td class="stat-col"><span class="stat-value">{{ row.gf }}</span></td>
+                            <td class="stat-col"><span class="stat-value">{{ row.ga }}</span></td>
+                            <td class="stat-col highlight-col">
+                                <span class="stat-value stat-highlight {% if row.gd > 0 %}positive{% elif row.gd < 0 %}negative{% endif %}">
+                                    {% if row.gd > 0 %}+{% endif %}{{ row.gd }}
+                                </span>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -125,19 +232,49 @@
         </div>
     </div>
 
-    <div class="col-lg-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header"><h5 class="section-title mb-0">Thống kê Thẻ phạt</h5></div>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                    <thead><tr><th>#</th><th>Đội</th><th class="text-center">Thẻ vàng</th><th class="text-center">Thẻ đỏ</th></tr></thead>
+    <div class="stats-table-col">
+        <div class="modern-table-card">
+            <div class="table-card-header">
+                <div class="table-header-icon">
+                    <i class="bi bi-flag-fill"></i>
+                </div>
+                <div class="table-header-info">
+                    <h4>Thống kê Thẻ phạt</h4>
+                    <p>Kỷ luật và fair-play</p>
+                </div>
+            </div>
+            <div class="modern-table-wrapper">
+                <table class="modern-stats-table">
+                    <thead>
+                        <tr>
+                            <th class="rank-col">#</th>
+                            <th class="team-col">Đội</th>
+                            <th class="stat-col">
+                                <i class="bi bi-square-fill text-warning"></i>
+                            </th>
+                            <th class="stat-col">
+                                <i class="bi bi-square-fill text-danger"></i>
+                            </th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for row in team_card_stats %}
                         <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{% url 'team_detail' pk=row.team_obj.pk %}">{{ row.team_obj.name }}</a></td>
-                            <td class="text-center">{{ row.yellow_cards }}</td>
-                            <td class="text-center">{{ row.red_cards }}</td>
+                            <td class="rank-col">
+                                <span class="rank-badge">{{ forloop.counter }}</span>
+                            </td>
+                            <td class="team-col">
+                                {% if row.team_obj.logo %}
+                                    <img src="{{ row.team_obj.logo.url }}" alt="{{ row.team_obj.name }}" class="team-logo-table">
+                                {% endif %}
+                                <a href="{% url 'team_detail' pk=row.team_obj.pk %}" class="team-name-link">{{ row.team_obj.name }}</a>
+                            </td>
+                            <td class="stat-col">
+                                <span class="stat-value text-warning">{{ row.yellow_cards }}</span>
+                            </td>
+                            <td class="stat-col">
+                                <span class="stat-value text-danger">{{ row.red_cards }}</span>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
