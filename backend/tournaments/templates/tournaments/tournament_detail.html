@@ -2532,6 +2532,7 @@
     .scorer-info {
         flex: 1;
         min-width: 0;
+        overflow: hidden;
     }
 
     .scorer-name {
@@ -2542,6 +2543,9 @@
         display: block;
         margin-bottom: 0.25rem;
         transition: color 0.3s ease;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .scorer-name:hover {
@@ -2554,6 +2558,13 @@
         gap: 0.5rem;
         color: #718096;
         font-size: 0.9rem;
+        overflow: hidden;
+    }
+    
+    .scorer-team span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .team-logo-small {
