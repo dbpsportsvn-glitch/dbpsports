@@ -704,6 +704,39 @@
         <!-- Modern Gallery Design -->
         <div class="modern-gallery-container">
             
+            <!-- Tournament Gallery URL Section -->
+            {% if tournament.gallery_url %}
+            <div class="gallery-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="bi bi-link-45deg"></i>
+                    </div>
+                    <div class="section-info">
+                        <h3 class="section-title">Album ảnh chính của giải</h3>
+                        <p class="section-subtitle">Xem toàn bộ ảnh gốc chất lượng cao từ {{ tournament.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-url-card">
+                    <div class="url-card-content">
+                        <div class="url-icon">
+                            <i class="bi bi-images"></i>
+                        </div>
+                        <div class="url-info">
+                            <h4>Album ảnh đầy đủ</h4>
+                            <p>Xem toàn bộ ảnh gốc chất lượng cao của giải đấu</p>
+                        </div>
+                        <div class="url-action">
+                            <a href="{{ tournament.gallery_url }}" target="_blank" class="btn btn-gallery-main">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                <span>Xem album</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Tournament Highlights Section -->
             <div class="gallery-section">
                 <div class="section-header">
@@ -1126,6 +1159,82 @@
         color: white;
     }
 
+    /* Gallery URL Card */
+    .gallery-url-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .gallery-url-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .url-card-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 2rem;
+    }
+
+    .url-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+
+    .url-info {
+        flex: 1;
+    }
+
+    .url-info h4 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .url-info p {
+        color: #718096;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .url-action {
+        flex-shrink: 0;
+    }
+
+    .btn-gallery-main {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .btn-gallery-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
     /* Empty Gallery */
     .empty-gallery {
         text-align: center;
@@ -1175,6 +1284,16 @@
             flex-direction: column;
             text-align: center;
             gap: 1rem;
+        }
+
+        .url-card-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .url-info {
+            order: -1;
         }
 
         .highlight-grid,
