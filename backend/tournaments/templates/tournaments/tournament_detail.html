@@ -558,7 +558,7 @@
             </div>
 
             <!-- Next Match Card -->
-            <div class="overview-info-card next-match-card">
+            <div class="overview-info-card next-match-card" id="next-match-card" style="cursor: pointer;">
                 <div class="next-match-header">
                     <div class="next-match-icon">
                         <i class="bi bi-calendar-event-fill"></i>
@@ -784,6 +784,7 @@
                     {% for match in group_matches %}
                         {% if match.team1_score is None and match.team2_score is None and match.match_time %}
                         {
+                            "match_id": {{ match.pk }},
                             "time": "{{ match.match_time|date:'Y-m-d H:i:s' }}",
                             "stage": "{% if match.stage == 'GROUP' %}Vòng bảng{% else %}{{ match.get_stage_display|escapejs }}{% endif %}",
                             "type": "group",
@@ -802,6 +803,7 @@
                     {% for match in knockout_matches %}
                         {% if match.team1_score is None and match.team2_score is None and match.match_time %}
                         {
+                            "match_id": {{ match.pk }},
                             "time": "{{ match.match_time|date:'Y-m-d H:i:s' }}",
                             "stage": "{{ match.get_stage_display|escapejs }}",
                             "type": "knockout",
@@ -933,6 +935,16 @@
             // Update match details
             document.getElementById('team1-name').textContent = nextMatch.team1_name;
             document.getElementById('team2-name').textContent = nextMatch.team2_name;
+            
+            // Add click event to navigate to match detail
+            const nextMatchCard = document.getElementById('next-match-card');
+            console.log('Next match data:', nextMatch);
+            console.log('Next match ID:', nextMatch.match_id);
+            if (nextMatchCard && nextMatch.match_id) {
+                nextMatchCard.addEventListener('click', function() {
+                    window.location.href = `/match/${nextMatch.match_id}/`;
+                });
+            }
             document.getElementById('match-round').textContent = nextMatch.stage;
             
             // Update team logos
@@ -1020,6 +1032,7 @@
             
             // Parse and sort matches
             const matches = allMatches.map(match => ({
+                match_id: match.match_id,
                 time: new Date(match.time),
                 stage: match.stage,
                 type: match.type,
@@ -1054,8 +1067,12 @@
                     ? `<img src="${match.team2Logo}" alt="${match.team2Name}" class="team-logo-overview">`
                     : `<div class="team-logo-placeholder-overview"><i class="bi bi-shield-fill"></i></div>`;
                 
+                // Debug: Log match data
+                console.log('Match data:', match);
+                console.log('Match ID:', match.match_id);
+                
                 return `
-                    <div class="upcoming-match-card ${match.type === 'knockout' ? 'knockout-match' : ''}">
+                    <div class="upcoming-match-card ${match.type === 'knockout' ? 'knockout-match' : ''}" onclick="if (${match.match_id} && ${match.match_id} !== 'undefined') { window.location.href='/match/${match.match_id}/'; } else { console.error('Match ID is undefined:', ${match.match_id}); }" style="cursor: pointer;">
                         <div class="match-round-badge ${match.type === 'knockout' ? 'knockout-badge' : ''}">${match.stage}</div>
                         <div class="match-teams-overview">
                             <div class="match-team-overview">
@@ -4315,6 +4332,12 @@
     /* Next Match Card */
     .next-match-card {
         grid-column: span 2;
+        transition: all 0.3s ease;
+    }
+
+    .next-match-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
     }
 
     .next-match-header {
