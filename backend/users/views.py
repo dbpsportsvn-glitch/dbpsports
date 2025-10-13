@@ -11,7 +11,7 @@ from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferenc
 from .models import Profile, Role
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
-from organizations.models import ProfessionalReview
+from organizations.models import ProfessionalReview, JobApplication
 from django.db.models import Avg, Count
 # Thêm các import cần thiết ở đầu file
 from django.db import transaction
@@ -524,3 +524,97 @@ def create_stadium_job_posting(request):
     }
     
     return render(request, 'users/stadium_job_posting_form.html', context)
+
+
+@login_required
+def stadium_job_applications(request):
+    """Stadium owner xem và quản lý job applications"""
+    # Kiểm tra user có stadium profile không
+    if not hasattr(request.user, 'stadium_profile'):
+        messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
+        return redirect('create_stadium_profile')
+    
+    stadium = request.user.stadium_profile
+    
+    # Lấy tất cả job postings của stadium này
+    job_postings = stadium.job_postings.all()
+    
+    # Lấy tất cả applications cho các job của stadium
+    applications = JobApplication.objects.filter(
+        job__stadium=stadium
+    ).select_related('applicant', 'job').order_by('-applied_at')
+    
+    # Thống kê
+    total_applications = applications.count()
+    pending_applications = applications.filter(status=JobApplication.Status.PENDING).count()
+    accepted_applications = applications.filter(status=JobApplication.Status.APPROVED).count()
+    rejected_applications = applications.filter(status=JobApplication.Status.REJECTED).count()
+    
+    context = {
+        'stadium': stadium,
+        'job_postings': job_postings,
+        'applications': applications,
+        'total_applications': total_applications,
+        'pending_applications': pending_applications,
+        'accepted_applications': accepted_applications,
+        'rejected_applications': rejected_applications,
+    }
+    
+    return render(request, 'users/stadium_job_applications.html', context)
+
+
+@login_required
+def stadium_job_application_detail(request, application_pk):
+    """Stadium owner xem chi tiết một job application"""
+    # Kiểm tra user có stadium profile không
+    if not hasattr(request.user, 'stadium_profile'):
+        messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
+        return redirect('create_stadium_profile')
+    
+    stadium = request.user.stadium_profile
+    application = get_object_or_404(JobApplication, pk=application_pk, job__stadium=stadium)
+    
+    # Xử lý POST request (accept/reject application)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'accept':
+            application.status = JobApplication.Status.APPROVED
+            application.save()
+            
+            # Gửi thông báo cho applicant
+            from tournaments.models import Notification
+            Notification.objects.create(
+                user=application.applicant,
+                title=f"Đơn ứng tuyển được chấp nhận",
+                message=f"Đơn ứng tuyển của bạn cho vị trí '{application.job.title}' tại {stadium.stadium_name} đã được chấp nhận!",
+                notification_type=Notification.NotificationType.GENERIC,
+                related_url=f"/users/profile/{application.applicant.pk}/"
+            )
+            
+            messages.success(request, f"Đã chấp nhận đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}")
+            
+        elif action == 'reject':
+            application.status = JobApplication.Status.REJECTED
+            application.save()
+            
+            # Gửi thông báo cho applicant
+            from tournaments.models import Notification
+            Notification.objects.create(
+                user=application.applicant,
+                title=f"Đơn ứng tuyển bị từ chối",
+                message=f"Đơn ứng tuyển của bạn cho vị trí '{application.job.title}' tại {stadium.stadium_name} đã bị từ chối.",
+                notification_type=Notification.NotificationType.GENERIC,
+                related_url=f"/users/profile/{application.applicant.pk}/"
+            )
+            
+            messages.info(request, f"Đã từ chối đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}")
+        
+        return redirect('stadium_job_applications')
+    
+    context = {
+        'stadium': stadium,
+        'application': application,
+    }
+    
+    return render(request, 'users/stadium_job_application_detail.html', context)

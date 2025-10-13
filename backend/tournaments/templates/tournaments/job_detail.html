@@ -13,7 +13,15 @@
         <div class="card-header">
             <h1>{{ job.title }}</h1>
             <h5 class="text-muted">
-                <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                {% if job.tournament %}
+                    <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                {% elif job.stadium %}
+                    <span class="text-info">
+                        <i class="bi bi-building"></i> {{ job.stadium.stadium_name }}
+                    </span>
+                {% else %}
+                    <span class="text-muted">Tổ chức khác</span>
+                {% endif %}
             </h5>
         </div>
         <div class="card-body">

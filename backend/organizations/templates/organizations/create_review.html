@@ -31,7 +31,13 @@
             {{ form|crispy }}
             <div class="d-flex gap-2 mt-3">
                 <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
-                <a href="{% url 'organizations:manage_jobs' tournament_pk=application.job.tournament.pk %}" class="btn btn-secondary">Quay lại</a>
+                {% if application.job.tournament %}
+                    <a href="{% url 'organizations:manage_jobs' tournament_pk=application.job.tournament.pk %}" class="btn btn-secondary">Quay lại</a>
+                {% elif application.job.stadium %}
+                    <a href="{% url 'stadium_dashboard' %}" class="btn btn-secondary">Quay lại</a>
+                {% else %}
+                    <a href="{% url 'job_market' %}" class="btn btn-secondary">Quay lại</a>
+                {% endif %}
             </div>
         </form>
     </div>

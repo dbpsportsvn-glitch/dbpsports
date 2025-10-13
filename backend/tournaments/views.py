@@ -58,6 +58,7 @@ from .models import (
     Announcement,
     BudgetHistory,
     Card,
+    CoachRecruitment,
     ExpenseItem,
     Goal,
     Group,
@@ -1917,7 +1918,14 @@ def job_detail_view(request, pk):
 
     if request.user.is_authenticated:
         user_has_applied = JobApplication.objects.filter(job=job, applicant=request.user).exists()
-        is_organizer = job.tournament.organization and job.tournament.organization.members.filter(pk=request.user.pk).exists()
+        
+        # Kiểm tra user có phải organizer không
+        if job.tournament and job.tournament.organization:
+            is_organizer = job.tournament.organization.members.filter(pk=request.user.pk).exists()
+        elif job.stadium and job.stadium.user == request.user:
+            is_organizer = True  # Stadium owner
+        else:
+            is_organizer = False
 
     if request.method == 'POST' and request.user.is_authenticated and not user_has_applied and not is_organizer:
         form = JobApplicationForm(request.POST)
@@ -1928,15 +1936,26 @@ def job_detail_view(request, pk):
             application.save()
             messages.success(request, "Bạn đã ứng tuyển thành công!")
 
-            organization = job.tournament.organization
-            if organization:
+            # Gửi thông báo cho organizer
+            if job.tournament and job.tournament.organization:
+                organization = job.tournament.organization
                 btc_members = organization.members.all()
                 applicant_name = request.user.get_full_name() or request.user.username
                 notification_title = f"Có đơn ứng tuyển mới cho '{job.title}'"
-                notification_message = f"{applicant_name} vừa ứng tuyển vào vị trí của bạn trong giải đấu '{job.tournament.name}'."
-                notification_url = request.build_absolute_uri(
-                    reverse('organizations:manage_jobs', kwargs={'tournament_pk': job.tournament.pk})
-                )
+                # Xác định tên tổ chức và URL
+                if job.tournament:
+                    org_name = job.tournament.name
+                    notification_url = request.build_absolute_uri(
+                        reverse('organizations:manage_jobs', kwargs={'tournament_pk': job.tournament.pk})
+                    )
+                elif job.stadium:
+                    org_name = job.stadium.stadium_name
+                    notification_url = request.build_absolute_uri(reverse('stadium_dashboard'))
+                else:
+                    org_name = "Tổ chức khác"
+                    notification_url = request.build_absolute_uri(reverse('job_market'))
+                
+                notification_message = f"{applicant_name} vừa ứng tuyển vào vị trí của bạn tại '{org_name}'."
 
                 notifications_to_create = [
                     Notification(user=member, title=notification_title, message=notification_message, related_url=notification_url)
@@ -1956,6 +1975,35 @@ def job_detail_view(request, pk):
                             'application': application
                         },
                         recipient_list=btc_emails,
+                        request=request
+                    )
+                    
+            elif job.stadium:
+                # Stadium job - gửi thông báo cho stadium owner
+                applicant_name = request.user.get_full_name() or request.user.username
+                notification_title = f"Có đơn ứng tuyển mới cho '{job.title}'"
+                org_name = job.stadium.stadium_name
+                notification_url = request.build_absolute_uri(reverse('stadium_dashboard'))
+                
+                Notification.objects.create(
+                    user=job.stadium.user,
+                    title=notification_title,
+                    message=f"{applicant_name} vừa ứng tuyển vào vị trí của bạn tại '{org_name}'.",
+                    notification_type=Notification.NotificationType.GENERIC,
+                    related_url=notification_url
+                )
+                
+                # Gửi email cho stadium owner nếu có email
+                if job.stadium.user.email:
+                    send_notification_email(
+                        subject=f"[DBP Sports] {notification_title}",
+                        template_name='organizations/emails/new_job_application.html',
+                        context={
+                            'job': job,
+                            'applicant': request.user,
+                            'application': application
+                        },
+                        recipient_list=[job.stadium.user.email],
                         request=request
                     )
 
@@ -3295,6 +3343,8 @@ def respond_to_recruitment(request, pk, action):
         
         # Chấp nhận lời mời
         recruitment.status = CoachRecruitment.Status.ACCEPTED
+        recruitment.save()  # Lưu status của recruitment
+        
         recruitment.team.coach = recruitment.coach
         recruitment.team.save()
         

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ is_new|yesno:"Tạo,Cập nhật" }} Hồ sơ Huấn luyện viên{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-clipboard-check"></i>
+                        {% if is_new %}Tạo{% else %}Cập nhật{% endif %} Hồ sơ Huấn luyện viên
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if not is_new %}
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        Hồ sơ của bạn sẽ được hiển thị trong danh sách chiêu mộ nếu bạn đánh dấu "Đang tìm đội".
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {# Thông tin cơ bản #}
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-person-circle"></i> Thông tin cơ bản
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.full_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.date_of_birth|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.avatar|as_crispy_field }}
+                        {{ form.bio|as_crispy_field }}
+                        
+                        {# Kinh nghiệm & Chứng chỉ #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-award"></i> Kinh nghiệm & Chứng chỉ
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.years_of_experience|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.coaching_license|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.specialization|as_crispy_field }}
+                        {{ form.achievements|as_crispy_field }}
+                        {{ form.previous_teams|as_crispy_field }}
+                        
+                        {# Liên hệ & Khu vực #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-geo-alt"></i> Liên hệ & Khu vực
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.phone_number|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.region|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.location_detail|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {# Trạng thái #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-toggle-on"></i> Trạng thái
+                        </h5>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Đánh dấu "Đang tìm đội" để hiển thị hồ sơ của bạn trong danh sách chiêu mộ của các đội trưởng.
+                        </div>
+                        {{ form.is_available|as_crispy_field }}
+                        
+                        {# Buttons #}
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-save"></i>
+                                {% if is_new %}Tạo hồ sơ{% else %}Cập nhật{% endif %}
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                    
+                    {% if coach_profile and coach_profile.team %}
+                    <div class="mt-4">
+                        <hr>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-shield"></i>
+                            Bạn hiện đang huấn luyện đội: 
+                            <a href="{% url 'team_detail' coach_profile.team.pk %}" class="fw-bold">
+                                {{ coach_profile.team.name }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if not is_new %}
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-eye"></i> Xem hồ sơ công khai</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">Xem hồ sơ của bạn như đội trưởng nhìn thấy:</p>
+                    <a href="{% url 'coach_profile_detail' coach_profile.pk %}" class="btn btn-outline-primary" target="_blank">
+                        <i class="bi bi-eye-fill"></i> Xem hồ sơ HLV
+                    </a>
+                    
+                    {% if user.coach_profile.is_available %}
+                    <a href="{% url 'coach_dashboard' %}" class="btn btn-outline-success">
+                        <i class="bi bi-briefcase"></i> Dashboard HLV
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

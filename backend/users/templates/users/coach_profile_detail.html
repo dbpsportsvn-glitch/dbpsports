@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}HLV {{ coach_profile.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-4">
+            {# Card thông tin cơ bản #}
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    {% if coach_profile.avatar %}
+                    <img src="{{ coach_profile.avatar.url }}" class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                        <i class="bi bi-person-badge text-white" style="font-size: 4rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h4>{{ coach_profile.full_name }}</h4>
+                    
+                    {% if coach_profile.coaching_license %}
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-award text-warning"></i> {{ coach_profile.coaching_license }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if coach_profile.years_of_experience %}
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-calendar-check"></i> {{ coach_profile.years_of_experience }} năm kinh nghiệm
+                    </p>
+                    {% endif %}
+                    
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-geo-alt"></i> {{ coach_profile.get_region_display }}
+                        {% if coach_profile.location_detail %} - {{ coach_profile.location_detail }}{% endif %}
+                    </p>
+                    
+                    {% if coach_profile.team %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-shield"></i> Đang huấn luyện<br>
+                        <a href="{% url 'team_detail' coach_profile.team.pk %}" class="fw-bold">
+                            {{ coach_profile.team.name }}
+                        </a>
+                    </div>
+                    {% elif coach_profile.is_available %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> Đang tìm đội
+                    </div>
+                    {% endif %}
+                    
+                    {% if can_edit %}
+                    <a href="{% url 'create_coach_profile' %}" class="btn btn-primary w-100 mt-3">
+                        <i class="bi bi-pencil"></i> Chỉnh sửa hồ sơ
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {# Liên hệ #}
+            {% if coach_profile.phone_number or coach_profile.email %}
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-telephone"></i> Liên hệ</h5>
+                </div>
+                <div class="card-body">
+                    {% if coach_profile.phone_number %}
+                    <p class="mb-2">
+                        <i class="bi bi-phone"></i>
+                        <a href="tel:{{ coach_profile.phone_number }}">{{ coach_profile.phone_number }}</a>
+                    </p>
+                    {% endif %}
+                    
+                    {% if coach_profile.email %}
+                    <p class="mb-0">
+                        <i class="bi bi-envelope"></i>
+                        <a href="mailto:{{ coach_profile.email }}">{{ coach_profile.email }}</a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-8">
+            {# Giới thiệu #}
+            {% if coach_profile.bio %}
+            <div class="card shadow mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Giới thiệu</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="white-space: pre-line;">{{ coach_profile.bio }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {# Chuyên môn #}
+            {% if coach_profile.specialization %}
+            <div class="card shadow mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-stars"></i> Chuyên môn</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ coach_profile.specialization }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {# Thành tích #}
+            {% if coach_profile.achievements %}
+            <div class="card shadow mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Thành tích nổi bật</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="white-space: pre-line;">{{ coach_profile.achievements }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {# Lịch sử huấn luyện #}
+            {% if coach_profile.previous_teams %}
+            <div class="card shadow mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Đội đã từng huấn luyện</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" style="white-space: pre-line;">{{ coach_profile.previous_teams }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {# Lịch sử chiêu mộ (chỉ chính user đó xem được) #}
+            {% if recruitment_history %}
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-envelope"></i> Lịch sử lời mời (5 gần nhất)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for recruitment in recruitment_history %}
+                        <a href="{% url 'coach_recruitment_detail' recruitment.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-1">{{ recruitment.team.name }}</h6>
+                                {% if recruitment.status == 'PENDING' %}
+                                <span class="badge bg-warning">Đang chờ</span>
+                                {% elif recruitment.status == 'ACCEPTED' %}
+                                <span class="badge bg-success">Đã chấp nhận</span>
+                                {% elif recruitment.status == 'REJECTED' %}
+                                <span class="badge bg-danger">Đã từ chối</span>
+                                {% elif recruitment.status == 'CANCELED' %}
+                                <span class="badge bg-secondary">Đã hủy</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1 small text-muted">
+                                {% if recruitment.salary_offer %}
+                                Lương: {{ recruitment.salary_offer|floatformat:0 }} VNĐ
+                                {% endif %}
+                                {% if recruitment.contract_duration %}
+                                - {{ recruitment.contract_duration }}
+                                {% endif %}
+                            </p>
+                            <small class="text-muted">{{ recruitment.created_at|date:"d/m/Y H:i" }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

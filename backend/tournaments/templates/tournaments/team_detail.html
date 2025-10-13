@@ -77,9 +77,51 @@
                 <div class="card-body">
                     <h4 class="card-title">{{ team.name }}</h4>
                     <p class="text-muted">
-                        {% if team.coach_name %}<strong>HLV:</strong> {{ team.coach_name }}<br>{% endif %}
                         <strong>Đội trưởng:</strong> {{ team.captain.username }}
                     </p>
+                    
+                    {# Section HLV mới #}
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <h6 class="mb-2">
+                            <i class="bi bi-clipboard-check"></i> Huấn luyện viên
+                        </h6>
+                        {% if team.coach %}
+                            <div class="d-flex align-items-center gap-2">
+                                {% if team.coach.avatar %}
+                                <img src="{{ team.coach.avatar.url }}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="bi bi-person-badge text-white"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="flex-grow-1">
+                                    <a href="{% url 'coach_profile_detail' team.coach.pk %}" class="fw-bold text-decoration-none">
+                                        {{ team.coach.full_name }}
+                                    </a>
+                                    {% if team.coach.coaching_license %}
+                                    <br><small class="text-muted">{{ team.coach.coaching_license }}</small>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if user == team.captain %}
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeCoach()" title="Loại bỏ HLV">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-2 small">Đội chưa có HLV</p>
+                            {% if user == team.captain %}
+                            <a href="{% url 'recruit_coach_list' team.pk %}" class="btn btn-sm btn-success w-100">
+                                <i class="bi bi-search"></i> Tìm & Chiêu mộ HLV
+                            </a>
+                            {% endif %}
+                            {% if team.coach_name %}
+                            <small class="text-muted d-block mt-2">(Dữ liệu cũ: {{ team.coach_name }})</small>
+                            {% endif %}
+                        {% endif %}
+                    </div>
 
                     <h6 class="mt-3">Các giải đấu đã đăng ký:</h6>
                     {% if registrations %}
@@ -263,4 +305,31 @@
         </div>
     </div>
 </div>
+
+<script>
+function removeCoach() {
+    if (confirm('Bạn có chắc muốn loại bỏ HLV khỏi đội? HLV sẽ nhận được thông báo về việc này.')) {
+        fetch('/team/{{ team.pk }}/remove-coach/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Đã loại bỏ HLV khỏi đội thành công!');
+                location.reload();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra. Vui lòng thử lại.');
+        });
+    }
+}
+</script>
 {% endblock %}

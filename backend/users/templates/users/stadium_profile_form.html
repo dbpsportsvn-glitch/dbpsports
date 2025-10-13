@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ is_new|yesno:"Tạo,Cập nhật" }} Hồ sơ Sân bóng{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-house"></i>
+                        {% if is_new %}Tạo{% else %}Cập nhật{% endif %} Hồ sơ Sân bóng
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {# Thông tin cơ bản #}
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="bi bi-info-circle"></i> Thông tin cơ bản
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ form.stadium_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.field_type|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.logo|as_crispy_field }}
+                        {{ form.description|as_crispy_field }}
+                        
+                        {# Địa chỉ & Liên hệ #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-geo-alt"></i> Địa chỉ & Liên hệ
+                        </h5>
+                        {{ form.address|as_crispy_field }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.region|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.location_detail|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.phone_number|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.website|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {# Thông tin sân #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-diagram-3"></i> Thông tin sân
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.capacity|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.number_of_fields|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.rental_price_range|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.amenities|as_crispy_field }}
+                        {{ form.operating_hours|as_crispy_field }}
+                        
+                        {# Thanh toán #}
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">
+                            <i class="bi bi-credit-card"></i> Thông tin thanh toán
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.bank_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.bank_account_number|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.bank_account_name|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.payment_qr_code|as_crispy_field }}
+                        
+                        {# Buttons #}
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-save"></i>
+                                {% if is_new %}Tạo hồ sơ{% else %}Cập nhật{% endif %}
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if not is_new and stadium_profile %}
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Quản lý sân</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Truy cập dashboard để quản lý tin tuyển dụng và ứng viên:</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'stadium_dashboard' %}" class="btn btn-success">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-megaphone"></i> Đăng tin tuyển dụng
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

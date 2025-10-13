@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load custom_filters %}
+{% load role_tags %}
 
 {% block title %}Bảng điều khiển{% endblock %}
 
@@ -178,7 +179,22 @@
                 <a class="nav-link {% if not request.GET.tab or request.GET.tab == 'profile' %}active{% endif %}" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab"><i class="bi bi-person-circle"></i>Thông tin cá nhân</a>
                 {% if player_profile %}
                 <a class="nav-link {% if request.GET.tab == 'player-profile' %}active{% endif %}" id="player-profile-tab" data-bs-toggle="pill" href="#player-profile" role="tab"><i class="bi bi-person-badge"></i>Hồ sơ Cầu thủ</a>
-                {% endif %}              
+                {% endif %}
+                
+                {# Links cho Huấn luyện viên #}
+                {% if user|has_role:'COACH' %}
+                <a class="nav-link" href="{% url 'create_coach_profile' %}">
+                    <i class="bi bi-clipboard-check"></i>Hồ sơ Huấn luyện viên
+                </a>
+                {% endif %}
+                
+                {# Links cho Sân bóng #}
+                {% if user|has_role:'STADIUM' %}
+                <a class="nav-link" href="{% url 'create_stadium_profile' %}">
+                    <i class="bi bi-house"></i>Hồ sơ Sân bóng
+                </a>
+                {% endif %}
+                
                 <a class="nav-link {% if request.GET.tab == 'public-profile' %}active{% endif %}" id="public-profile-tab" data-bs-toggle="pill" href="#public-profile" role="tab"><i class="bi bi-person-vcard"></i>Hồ sơ công khai</a>
                 
                 {# === SỬA LỖI TẠI ĐÂY: Thêm điều kiện if === #}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Lời mời chiêu mộ - {{ recruitment.coach.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header {% if recruitment.status == 'PENDING' %}bg-warning{% elif recruitment.status == 'ACCEPTED' %}bg-success text-white{% elif recruitment.status == 'REJECTED' %}bg-danger text-white{% else %}bg-secondary text-white{% endif %}">
+                    <h4 class="mb-0">
+                        <i class="bi bi-envelope"></i> Lời mời chiêu mộ HLV
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {# Trạng thái #}
+                    <div class="alert {% if recruitment.status == 'PENDING' %}alert-warning{% elif recruitment.status == 'ACCEPTED' %}alert-success{% elif recruitment.status == 'REJECTED' %}alert-danger{% else %}alert-secondary{% endif %} mb-4">
+                        <h5>
+                            {% if recruitment.status == 'PENDING' %}
+                            <i class="bi bi-clock"></i> Đang chờ phản hồi
+                            {% elif recruitment.status == 'ACCEPTED' %}
+                            <i class="bi bi-check-circle"></i> Đã chấp nhận
+                            {% elif recruitment.status == 'REJECTED' %}
+                            <i class="bi bi-x-circle"></i> Đã từ chối
+                            {% elif recruitment.status == 'CANCELED' %}
+                            <i class="bi bi-slash-circle"></i> Đã hủy
+                            {% endif %}
+                        </h5>
+                        <p class="mb-0">
+                            Gửi lúc: {{ recruitment.created_at|date:"d/m/Y H:i" }}
+                            {% if recruitment.updated_at != recruitment.created_at %}
+                            <br>Cập nhật: {{ recruitment.updated_at|date:"d/m/Y H:i" }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {# Thông tin đội bóng #}
+                    <h5 class="border-bottom pb-2 mb-3">
+                        <i class="bi bi-shield"></i> Thông tin đội bóng
+                    </h5>
+                    <div class="mb-3">
+                        <strong>Tên đội:</strong> 
+                        <a href="{% url 'team_detail' recruitment.team.pk %}">{{ recruitment.team.name }}</a>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Đội trưởng:</strong> 
+                        {{ recruitment.team.captain.get_full_name|default:recruitment.team.captain.username }}
+                    </div>
+                    
+                    {# Thông tin HLV #}
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-person-badge"></i> Huấn luyện viên
+                    </h5>
+                    <div class="mb-3">
+                        <strong>Họ tên:</strong> 
+                        <a href="{% url 'coach_profile_detail' recruitment.coach.pk %}">{{ recruitment.coach.full_name }}</a>
+                    </div>
+                    {% if recruitment.coach.coaching_license %}
+                    <div class="mb-3">
+                        <strong>Chứng chỉ:</strong> {{ recruitment.coach.coaching_license }}
+                    </div>
+                    {% endif %}
+                    
+                    {# Thông tin đề nghị #}
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">
+                        <i class="bi bi-file-earmark-text"></i> Thông tin đề nghị
+                    </h5>
+                    
+                    {% if recruitment.salary_offer %}
+                    <div class="mb-3">
+                        <strong><i class="bi bi-cash-coin text-success"></i> Mức lương:</strong>
+                        <span class="fs-5 text-success">{{ recruitment.salary_offer|floatformat:0 }} VNĐ</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if recruitment.contract_duration %}
+                    <div class="mb-3">
+                        <strong><i class="bi bi-calendar-range"></i> Thời hạn hợp đồng:</strong>
+                        {{ recruitment.contract_duration }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if recruitment.message %}
+                    <div class="mb-3">
+                        <strong><i class="bi bi-chat-left-text"></i> Lời nhắn từ đội trưởng:</strong>
+                        <div class="p-3 bg-light rounded mt-2">
+                            <p class="mb-0" style="white-space: pre-line;">{{ recruitment.message }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {# Buttons #}
+                    {% if is_coach and recruitment.status == 'PENDING' %}
+                    <hr class="my-4">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success flex-grow-1" onclick="respondToRecruitment('accept')">
+                            <i class="bi bi-check-circle"></i> Chấp nhận lời mời
+                        </button>
+                        <button class="btn btn-danger flex-grow-1" onclick="respondToRecruitment('reject')">
+                            <i class="bi bi-x-circle"></i> Từ chối
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_captain %}
+                    <hr class="my-4">
+                    <a href="{% url 'team_detail' recruitment.team.pk %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> Quay về đội
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function respondToRecruitment(action) {
+    let message = '';
+    if (action === 'accept') {
+        message = 'Bạn có chắc muốn chấp nhận lời mời này? Bạn sẽ trở thành HLV của đội {{ recruitment.team.name }}.';
+    } else {
+        message = 'Bạn có chắc muốn từ chối lời mời này?';
+    }
+    
+    if (!confirm(message)) {
+        return;
+    }
+    
+    fetch(`/recruitment/{{ recruitment.pk }}/${action}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(action === 'accept' ? 'Đã chấp nhận lời mời!' : 'Đã từ chối lời mời.');
+                window.location.href = '{% url "coach_dashboard" %}';
+            }
+        } else {
+            alert(data.error || 'Có lỗi xảy ra');
+        }
+    });
+}
+</script>
+{% endblock %}
+

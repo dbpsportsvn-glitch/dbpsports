@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Đăng tin tuyển dụng - {{ stadium.stadium_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-megaphone"></i> Đăng tin tuyển dụng
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        Tin tuyển dụng của bạn sẽ hiển thị trong <strong>Thị trường việc làm</strong> để các chuyên gia có thể ứng tuyển.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-person-badge"></i> Vai trò cần tuyển *
+                            </label>
+                            <select name="role_required" class="form-select" required>
+                                <option value="">-- Chọn vai trò --</option>
+                                {% for role in roles %}
+                                <option value="{{ role.id }}">
+                                    {{ role.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                Chọn vai trò phù hợp với công việc bạn cần tuyển
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-card-heading"></i> Tiêu đề công việc *
+                            </label>
+                            <input type="text" name="title" class="form-control" required 
+                                   placeholder="Ví dụ: Tuyển Bình luận viên cho sân bóng X">
+                            <div class="form-text">
+                                Tiêu đề ngắn gọn, rõ ràng về công việc
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-file-text"></i> Mô tả chi tiết *
+                            </label>
+                            <textarea name="description" class="form-control" rows="6" required 
+                                      placeholder="Mô tả chi tiết về công việc, yêu cầu, quyền lợi..."></textarea>
+                            <div class="form-text">
+                                Mô tả càng chi tiết càng thu hút ứng viên chất lượng
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-cash-coin"></i> Mức kinh phí
+                                </label>
+                                <input type="text" name="budget" class="form-control" 
+                                       placeholder="Ví dụ: 500.000 VNĐ/trận hoặc Thỏa thuận">
+                                <div class="form-text">
+                                    Có thể để trống hoặc ghi "Thỏa thuận"
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-geo-alt"></i> Địa điểm làm việc
+                                </label>
+                                <input type="text" name="location_detail" class="form-control" 
+                                       value="{{ stadium.location_detail }}" 
+                                       placeholder="Tỉnh/Thành phố">
+                                <div class="form-text">
+                                    Mặc định lấy từ hồ sơ sân
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="alert alert-light">
+                            <h6><i class="bi bi-house"></i> Thông tin sân của bạn:</h6>
+                            <p class="mb-1"><strong>{{ stadium.stadium_name }}</strong></p>
+                            <p class="mb-1 text-muted">{{ stadium.get_field_type_display }}</p>
+                            <p class="mb-0 text-muted">
+                                <i class="bi bi-geo-alt"></i> {{ stadium.address }}
+                            </p>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-send"></i> Đăng tin
+                            </button>
+                            <a href="{% url 'stadium_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Gợi ý viết tin tuyển dụng</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Mô tả rõ công việc cụ thể (livestream, bình luận, chụp ảnh...)</li>
+                        <li>Nêu yêu cầu về kinh nghiệm và kỹ năng</li>
+                        <li>Ghi rõ thời gian làm việc (ngày/giờ, bao lâu...)</li>
+                        <li>Nêu rõ quyền lợi (lương/thù lao, ăn uống, di chuyển...)</li>
+                        <li>Thêm thông tin liên hệ nếu cần (email, SĐT...)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

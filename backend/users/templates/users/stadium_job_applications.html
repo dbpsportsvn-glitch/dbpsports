@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Quản lý Đơn Ứng Tuyển - {{ stadium.stadium_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: transform 0.2s;
+    }
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+    .application-card {
+        border-left: 4px solid #dee2e6;
+        transition: all 0.2s;
+    }
+    .application-card:hover {
+        border-left-color: #0d6efd;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .status-pending {
+        border-left-color: #ffc107;
+    }
+    .status-accepted {
+        border-left-color: #198754;
+    }
+    .status-rejected {
+        border-left-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-building"></i> Quản lý Đơn Ứng Tuyển</h2>
+            <p class="text-muted mb-0">{{ stadium.stadium_name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'stadium_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+            </a>
+            <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Đăng Tin Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-inbox fs-1 text-primary"></i>
+                    <h3 class="mt-2">{{ total_applications }}</h3>
+                    <p class="text-muted mb-0">Tổng đơn ứng tuyển</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-clock fs-1 text-warning"></i>
+                    <h3 class="mt-2">{{ pending_applications }}</h3>
+                    <p class="text-muted mb-0">Đang chờ xử lý</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle fs-1 text-success"></i>
+                    <h3 class="mt-2">{{ accepted_applications }}</h3>
+                    <p class="text-muted mb-0">Đã chấp nhận</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-x-circle fs-1 text-danger"></i>
+                    <h3 class="mt-2">{{ rejected_applications }}</h3>
+                    <p class="text-muted mb-0">Đã từ chối</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách đơn ứng tuyển -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-list-check"></i> Danh sách đơn ứng tuyển</h5>
+        </div>
+        <div class="card-body">
+            {% if applications %}
+                <div class="row g-3">
+                    {% for application in applications %}
+                    <div class="col-12">
+                        <div class="card application-card status-{{ application.status|lower }}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center mb-2">
+                                            {% if application.applicant.profile.avatar %}
+                                                <img src="{{ application.applicant.profile.avatar.url }}" 
+                                                     class="rounded-circle me-3" 
+                                                     width="50" height="50" 
+                                                     alt="Avatar">
+                                            {% else %}
+                                                <div class="rounded-circle me-3 bg-secondary d-flex align-items-center justify-content-center" 
+                                                     style="width: 50px; height: 50px;">
+                                                    <i class="bi bi-person text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    <a href="{% url 'public_profile' application.applicant.username %}" class="text-decoration-none">
+                                                        {{ application.applicant.get_full_name|default:application.applicant.username }}
+                                                    </a>
+                                                </h6>
+                                                <small class="text-muted">{{ application.applicant.email }}</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <h5 class="card-title mb-2">
+                                            <a href="{% url 'stadium_job_application_detail' application.pk %}" class="text-decoration-none">
+                                                {{ application.job.title }}
+                                            </a>
+                                        </h5>
+                                        
+                                        <p class="text-muted mb-2">
+                                            <i class="bi bi-calendar"></i> 
+                                            Ứng tuyển: {{ application.applied_at|date:"d/m/Y H:i" }}
+                                        </p>
+                                        
+                                        {% if application.message %}
+                                        <p class="mb-0">
+                                            <strong>Lời nhắn:</strong> 
+                                            {{ application.message|truncatewords:20 }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-4 text-end">
+                                        <div class="mb-2">
+                                            {% if application.status == 'PENDING' %}
+                                                <span class="badge bg-warning fs-6">Đang chờ</span>
+                                            {% elif application.status == 'APPROVED' %}
+                                                <span class="badge bg-success fs-6">Đã chấp nhận</span>
+                                            {% elif application.status == 'REJECTED' %}
+                                                <span class="badge bg-danger fs-6">Đã từ chối</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <a href="{% url 'stadium_job_application_detail' application.pk %}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye"></i> Xem chi tiết
+                                            </a>
+                                            
+                                            {% if application.status == 'PENDING' %}
+                                            <form method="post" action="{% url 'stadium_job_application_detail' application.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="accept">
+                                                <button type="submit" class="btn btn-success btn-sm" 
+                                                        onclick="return confirm('Chấp nhận đơn ứng tuyển này?')">
+                                                    <i class="bi bi-check"></i> Chấp nhận
+                                                </button>
+                                            </form>
+                                            
+                                            <form method="post" action="{% url 'stadium_job_application_detail' application.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                        onclick="return confirm('Từ chối đơn ứng tuyển này?')">
+                                                    <i class="bi bi-x"></i> Từ chối
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">Chưa có đơn ứng tuyển nào</h5>
+                    <p class="text-muted">
+                        Đăng tin tuyển dụng để nhận được các đơn ứng tuyển từ ứng viên.
+                    </p>
+                    <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Đăng Tin Tuyển Dụng
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

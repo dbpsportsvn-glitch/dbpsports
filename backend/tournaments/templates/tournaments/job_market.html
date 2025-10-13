@@ -33,13 +33,29 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ job.title }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">
-                        <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                        {% if job.tournament %}
+                            <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                        {% elif job.stadium %}
+                            <span class="text-info">
+                                <i class="bi bi-building"></i> {{ job.stadium.stadium_name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">Tổ chức khác</span>
+                        {% endif %}
                     </h6>
                     <p>
                         <span class="badge text-bg-secondary">
                             <i class="bi bi-geo-alt-fill"></i>
-                            {# Ưu tiên hiển thị địa điểm của job, nếu không có thì lấy của giải đấu #}
-                            {{ job.location_detail|default:job.tournament.location_detail|default:job.tournament.get_region_display }}
+                            {# Ưu tiên hiển thị địa điểm của job, sau đó là tournament hoặc stadium #}
+                            {% if job.location_detail %}
+                                {{ job.location_detail }}
+                            {% elif job.tournament %}
+                                {{ job.tournament.location_detail|default:job.tournament.get_region_display }}
+                            {% elif job.stadium %}
+                                {{ job.stadium.location_detail|default:job.stadium.get_region_display }}
+                            {% else %}
+                                Không xác định
+                            {% endif %}
                         </span>
                         <span class="badge text-bg-info"><i class="bi {{ job.role_required.icon }}"></i> {{ job.role_required.name }}</span>
                         <span class="badge text-bg-light">Đăng {{ job.created_at|naturaltime }}</span>

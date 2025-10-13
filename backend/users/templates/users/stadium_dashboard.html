@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Sân bóng{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-house"></i> Dashboard Sân bóng
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'create_stadium_profile' %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Chỉnh sửa hồ sơ
+            </a>
+            <a href="{% url 'stadium_job_applications' %}" class="btn btn-info">
+                <i class="bi bi-list-check"></i> Đơn Ứng Tuyển
+                {% if recent_applications.count > 0 %}
+                    <span class="badge bg-warning ms-1">{{ recent_applications.count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-success">
+                <i class="bi bi-megaphone"></i> Đăng tin tuyển dụng
+            </a>
+        </div>
+    </div>
+    
+    {# Thông tin sân #}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    {% if stadium_profile.logo %}
+                    <img src="{{ stadium_profile.logo.url }}" class="rounded mb-3" width="150" height="150" style="object-fit: cover;">
+                    {% else %}
+                    <div class="rounded bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                        <i class="bi bi-house text-white" style="font-size: 4rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h5>{{ stadium_profile.stadium_name }}</h5>
+                    <p class="text-muted mb-2">{{ stadium_profile.get_field_type_display }}</p>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt"></i> {{ stadium_profile.get_region_display }}
+                        {% if stadium_profile.location_detail %} - {{ stadium_profile.location_detail }}{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            {# Thống kê #}
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ job_postings.count }}</h3>
+                            <p class="mb-0 text-muted">Tin đã đăng</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ recent_applications.count }}</h3>
+                            <p class="mb-0 text-muted">Ứng viên mới</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ stadium_profile.number_of_fields|default:"N/A" }}</h3>
+                            <p class="mb-0 text-muted">Số sân</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {# Ứng viên mới #}
+            {% if recent_applications %}
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus"></i> Ứng viên mới ({{ recent_applications.count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for app in recent_applications|slice:":5" %}
+                        <a href="{% url 'stadium_job_application_detail' app.pk %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {{ app.applicant.get_full_name|default:app.applicant.username }}
+                                    </h6>
+                                    <p class="mb-1 small text-muted">
+                                        <i class="bi bi-briefcase"></i> {{ app.job.title }}
+                                    </p>
+                                    <small class="text-muted">{{ app.applied_at|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                <span class="badge bg-warning">Đang chờ</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% if recent_applications.count > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'stadium_job_applications' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-list-check"></i> Quản lý Đơn Ứng Tuyển
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {# Danh sách tin đã đăng #}
+    <div class="card shadow">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-megaphone"></i> Tin tuyển dụng đã đăng</h5>
+            <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-sm btn-success">
+                <i class="bi bi-plus-circle"></i> Đăng tin mới
+            </a>
+        </div>
+        <div class="card-body">
+            {% if job_postings %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tiêu đề</th>
+                            <th>Vai trò</th>
+                            <th>Ứng viên</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày đăng</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in job_postings %}
+                        <tr>
+                            <td>
+                                <strong>{{ job.title }}</strong>
+                            </td>
+                            <td>{{ job.role_required.name }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ job.application_count }}</span>
+                            </td>
+                            <td>
+                                {% if job.status == 'OPEN' %}
+                                <span class="badge bg-success">Đang mở</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Đã đóng</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ job.created_at|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="/admin/organizations/jobposting/{{ job.pk }}/change/" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                <p>Chưa có tin tuyển dụng nào</p>
+                <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Đăng tin đầu tiên
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
