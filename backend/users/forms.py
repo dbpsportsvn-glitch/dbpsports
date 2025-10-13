@@ -168,4 +168,26 @@ class ProfileUpdateForm(forms.ModelForm):
                     "Bạn đã hết số lần đổi vai trò. Vui lòng liên hệ Admin để được hỗ trợ."
                 )
         
-        return roles        
+        return roles
+
+
+# === FORM CHO SÂN BÓNG ===
+class StadiumProfileForm(forms.ModelForm):
+    """Form tạo/cập nhật hồ sơ Sân bóng"""
+    class Meta:
+        from .models import StadiumProfile
+        model = StadiumProfile
+        fields = [
+            'stadium_name', 'logo', 'description',
+            'address', 'region', 'location_detail', 'phone_number', 'email', 'website',
+            'field_type', 'capacity', 'number_of_fields', 'amenities', 'rental_price_range', 'operating_hours',
+            'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'amenities': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'operating_hours': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }

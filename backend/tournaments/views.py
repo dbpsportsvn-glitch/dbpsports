@@ -3114,4 +3114,300 @@ def refresh_budget_auto(request, tournament_pk):
     auto_update_revenue(budget)
     
     messages.success(request, "Đã cập nhật các khoản thu tự động thành công!")
-    return redirect('budget_dashboard', tournament_pk=tournament.pk)    
+    return redirect('budget_dashboard', tournament_pk=tournament.pk)
+
+
+# ===== VIEWS CHO HUẤN LUYỆN VIÊN =====
+
+@login_required
+@never_cache
+def recruit_coach_list(request, team_pk):
+    """Danh sách HLV để chiêu mộ"""
+    from users.models import CoachProfile
+    from .utils import user_can_manage_team
+    
+    team = get_object_or_404(Team, pk=team_pk)
+    
+    # Kiểm tra quyền
+    if not user_can_manage_team(request.user, team):
+        messages.error(request, "Bạn không có quyền chiêu mộ HLV cho đội này.")
+        return redirect('team_detail', pk=team.pk)
+    
+    # Nếu đội đã có HLV
+    if team.coach:
+        messages.info(request, f"Đội đã có HLV {team.coach.full_name}. Bạn cần loại bỏ HLV hiện tại trước khi chiêu mộ HLV mới.")
+        return redirect('team_detail', pk=team.pk)
+    
+    # Lấy danh sách HLV available
+    coaches = CoachProfile.objects.filter(
+        team__isnull=True,
+        is_available=True
+    ).select_related('user').order_by('-years_of_experience', '-created_at')
+    
+    # Filter theo khu vực nếu có
+    region_filter = request.GET.get('region')
+    if region_filter:
+        coaches = coaches.filter(region=region_filter)
+    
+    # Filter theo kinh nghiệm
+    exp_filter = request.GET.get('experience')
+    if exp_filter:
+        if exp_filter == '5+':
+            coaches = coaches.filter(years_of_experience__gte=5)
+        elif exp_filter == '10+':
+            coaches = coaches.filter(years_of_experience__gte=10)
+    
+    # Tìm kiếm theo tên
+    search_query = request.GET.get('q')
+    if search_query:
+        coaches = coaches.filter(
+            Q(full_name__icontains=search_query) |
+            Q(coaching_license__icontains=search_query) |
+            Q(specialization__icontains=search_query)
+        )
+    
+    # Lấy danh sách lời mời đã gửi
+    sent_offers = CoachRecruitment.objects.filter(
+        team=team,
+        status=CoachRecruitment.Status.PENDING
+    ).values_list('coach_id', flat=True)
+    
+    context = {
+        'team': team,
+        'coaches': coaches,
+        'sent_offers': list(sent_offers),
+        'region_choices': [
+            ('MIEN_BAC', 'Miền Bắc'),
+            ('MIEN_TRUNG', 'Miền Trung'),
+            ('MIEN_NAM', 'Miền Nam'),
+        ],
+        'current_region': region_filter,
+        'current_exp': exp_filter,
+        'search_query': search_query or '',
+    }
+    
+    return render(request, 'tournaments/recruit_coach_list.html', context)
+
+
+@login_required
+@require_POST
+def send_coach_recruitment(request, team_pk, coach_pk):
+    """Gửi lời mời chiêu mộ HLV"""
+    from users.models import CoachProfile
+    from .utils import user_can_manage_team
+    from .forms import CoachRecruitmentForm
+    
+    team = get_object_or_404(Team, pk=team_pk)
+    coach = get_object_or_404(CoachProfile, pk=coach_pk)
+    
+    # Kiểm tra quyền
+    if not user_can_manage_team(request.user, team):
+        return JsonResponse({'success': False, 'error': 'Bạn không có quyền thực hiện hành động này.'}, status=403)
+    
+    # Kiểm tra đội đã có HLV chưa
+    if team.coach:
+        return JsonResponse({'success': False, 'error': 'Đội đã có HLV.'}, status=400)
+    
+    # Kiểm tra HLV còn available không
+    if not coach.is_available or coach.team:
+        return JsonResponse({'success': False, 'error': 'HLV này không còn available.'}, status=400)
+    
+    # Kiểm tra đã gửi lời mời chưa
+    existing = CoachRecruitment.objects.filter(
+        team=team,
+        coach=coach,
+        status=CoachRecruitment.Status.PENDING
+    ).exists()
+    
+    if existing:
+        return JsonResponse({'success': False, 'error': 'Bạn đã gửi lời mời cho HLV này rồi.'}, status=400)
+    
+    # Tạo lời mời
+    form = CoachRecruitmentForm(request.POST)
+    if form.is_valid():
+        recruitment = form.save(commit=False)
+        recruitment.team = team
+        recruitment.coach = coach
+        recruitment.save()
+        
+        # Tạo thông báo cho HLV
+        Notification.objects.create(
+            user=coach.user,
+            title=f"Lời mời từ đội {team.name}",
+            message=f"Đội {team.name} muốn chiêu mộ bạn làm HLV! Mức lương: {recruitment.salary_offer:,} VNĐ" if recruitment.salary_offer else f"Đội {team.name} muốn chiêu mộ bạn làm HLV!",
+            notification_type=Notification.NotificationType.GENERIC,
+            related_url=reverse('coach_recruitment_detail', args=[recruitment.pk])
+        )
+        
+        messages.success(request, f"Đã gửi lời mời chiêu mộ đến HLV {coach.full_name}!")
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': form.errors}, status=400)
+
+
+@login_required
+@never_cache
+def coach_recruitment_detail(request, pk):
+    """Chi tiết lời mời chiêu mộ"""
+    recruitment = get_object_or_404(
+        CoachRecruitment.objects.select_related('team', 'coach', 'coach__user', 'team__captain'),
+        pk=pk
+    )
+    
+    # Kiểm tra quyền xem
+    is_coach = request.user == recruitment.coach.user
+    is_captain = request.user == recruitment.team.captain or (recruitment.team.coach and request.user == recruitment.team.coach.user)
+    
+    if not is_coach and not is_captain:
+        return HttpResponseForbidden("Bạn không có quyền xem trang này.")
+    
+    context = {
+        'recruitment': recruitment,
+        'is_coach': is_coach,
+        'is_captain': is_captain,
+    }
+    
+    return render(request, 'tournaments/coach_recruitment_detail.html', context)
+
+
+@login_required
+@require_POST
+def respond_to_recruitment(request, pk, action):
+    """HLV chấp nhận hoặc từ chối lời mời"""
+    recruitment = get_object_or_404(CoachRecruitment, pk=pk)
+    
+    # Chỉ HLV mới có thể trả lời
+    if request.user != recruitment.coach.user:
+        return JsonResponse({'success': False, 'error': 'Bạn không có quyền thực hiện hành động này.'}, status=403)
+    
+    # Chỉ có thể trả lời khi đang PENDING
+    if recruitment.status != CoachRecruitment.Status.PENDING:
+        return JsonResponse({'success': False, 'error': 'Lời mời này đã được xử lý rồi.'}, status=400)
+    
+    if action == 'accept':
+        # Kiểm tra coach vẫn còn available
+        if recruitment.coach.team or not recruitment.coach.is_available:
+            return JsonResponse({'success': False, 'error': 'Bạn đã có đội rồi.'}, status=400)
+        
+        # Kiểm tra team chưa có coach khác
+        if recruitment.team.coach:
+            return JsonResponse({'success': False, 'error': 'Đội này đã có HLV rồi.'}, status=400)
+        
+        # Chấp nhận lời mời
+        recruitment.status = CoachRecruitment.Status.ACCEPTED
+        recruitment.team.coach = recruitment.coach
+        recruitment.team.save()
+        
+        # Cập nhật coach profile
+        recruitment.coach.team = recruitment.team
+        recruitment.coach.is_available = False
+        recruitment.coach.save()
+        
+        # Từ chối tất cả lời mời khác đang pending cho coach này
+        CoachRecruitment.objects.filter(
+            coach=recruitment.coach,
+            status=CoachRecruitment.Status.PENDING
+        ).exclude(pk=recruitment.pk).update(status=CoachRecruitment.Status.CANCELED)
+        
+        # Thông báo cho đội trưởng
+        Notification.objects.create(
+            user=recruitment.team.captain,
+            title=f"HLV {recruitment.coach.full_name} đã chấp nhận",
+            message=f"HLV {recruitment.coach.full_name} đã chấp nhận lời mời làm HLV cho đội {recruitment.team.name}!",
+            notification_type=Notification.NotificationType.GENERIC,
+            related_url=reverse('team_detail', args=[recruitment.team.pk])
+        )
+        
+        messages.success(request, f"Bạn đã trở thành HLV của đội {recruitment.team.name}!")
+        return JsonResponse({'success': True, 'redirect_url': reverse('team_detail', args=[recruitment.team.pk])})
+    
+    elif action == 'reject':
+        recruitment.status = CoachRecruitment.Status.REJECTED
+        recruitment.save()
+        
+        # Thông báo cho đội trưởng
+        Notification.objects.create(
+            user=recruitment.team.captain,
+            title=f"HLV {recruitment.coach.full_name} đã từ chối",
+            message=f"HLV {recruitment.coach.full_name} đã từ chối lời mời làm HLV cho đội {recruitment.team.name}.",
+            notification_type=Notification.NotificationType.GENERIC,
+            related_url=reverse('recruit_coach_list', args=[recruitment.team.pk])
+        )
+        
+        messages.info(request, "Đã từ chối lời mời.")
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': 'Action không hợp lệ.'}, status=400)
+
+
+@login_required
+@require_POST
+def remove_coach_from_team(request, team_pk):
+    """Đội trưởng loại bỏ HLV khỏi đội"""
+    from .utils import user_can_manage_team
+    
+    team = get_object_or_404(Team, pk=team_pk)
+    
+    # Chỉ đội trưởng mới có thể loại bỏ HLV (không phải HLV tự loại bỏ mình)
+    if request.user != team.captain:
+        return JsonResponse({'success': False, 'error': 'Chỉ đội trưởng mới có thể loại bỏ HLV.'}, status=403)
+    
+    if not team.coach:
+        return JsonResponse({'success': False, 'error': 'Đội không có HLV.'}, status=400)
+    
+    coach = team.coach
+    
+    # Loại bỏ HLV
+    team.coach = None
+    team.save()
+    
+    # Cập nhật coach profile
+    coach.team = None
+    coach.is_available = True  # Đánh dấu lại là available
+    coach.save()
+    
+    # Thông báo cho HLV
+    Notification.objects.create(
+        user=coach.user,
+        title=f"Đã rời khỏi đội {team.name}",
+        message=f"Bạn đã được đội trưởng {team.captain.get_full_name() or team.captain.username} loại bỏ khỏi vị trí HLV của đội {team.name}.",
+        notification_type=Notification.NotificationType.GENERIC
+    )
+    
+    messages.success(request, f"Đã loại bỏ HLV {coach.full_name} khỏi đội.")
+    return JsonResponse({'success': True})
+
+
+@login_required
+@never_cache
+def coach_dashboard(request):
+    """Dashboard cho HLV - xem các lời mời chiêu mộ"""
+    from users.models import CoachProfile
+    
+    # Kiểm tra user có CoachProfile không
+    if not hasattr(request.user, 'coach_profile'):
+        messages.warning(request, "Bạn cần tạo hồ sơ Huấn luyện viên trước.")
+        return redirect('create_coach_profile')
+    
+    coach_profile = request.user.coach_profile
+    
+    # Lấy các lời mời đang chờ
+    pending_recruitments = CoachRecruitment.objects.filter(
+        coach=coach_profile,
+        status=CoachRecruitment.Status.PENDING
+    ).select_related('team', 'team__captain').order_by('-created_at')
+    
+    # Lấy lịch sử lời mời
+    history_recruitments = CoachRecruitment.objects.filter(
+        coach=coach_profile
+    ).exclude(
+        status=CoachRecruitment.Status.PENDING
+    ).select_related('team', 'team__captain').order_by('-updated_at')[:10]
+    
+    context = {
+        'coach_profile': coach_profile,
+        'pending_recruitments': pending_recruitments,
+        'history_recruitments': history_recruitments,
+    }
+    
+    return render(request, 'tournaments/coach_dashboard.html', context)

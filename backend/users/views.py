@@ -12,7 +12,7 @@ from .models import Profile, Role
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
 from organizations.models import ProfessionalReview
-from django.db.models import Avg
+from django.db.models import Avg, Count
 # Thêm các import cần thiết ở đầu file
 from django.db import transaction
 from tournaments.forms import PlayerCreationForm
@@ -330,3 +330,197 @@ def public_profile_view(request, username):
         'reviews_count': reviews.count(),       # Gửi tổng số reviews
     }
     return render(request, 'users/public_profile.html', context)
+
+
+# ===== VIEWS CHO HLV =====
+
+@login_required
+def create_coach_profile(request):
+    """Tạo hoặc cập nhật hồ sơ HLV"""
+    from .models import CoachProfile
+    from tournaments.forms import CoachProfileForm
+    
+    # Kiểm tra user đã có CoachProfile chưa
+    try:
+        coach_profile = request.user.coach_profile
+        is_new = False
+    except CoachProfile.DoesNotExist:
+        coach_profile = None
+        is_new = True
+    
+    if request.method == 'POST':
+        form = CoachProfileForm(request.POST, request.FILES, instance=coach_profile)
+        if form.is_valid():
+            coach = form.save(commit=False)
+            coach.user = request.user
+            coach.save()
+            
+            # Thêm role COACH nếu chưa có
+            coach_role = Role.objects.get(id='COACH')
+            if coach_role not in request.user.profile.roles.all():
+                request.user.profile.roles.add(coach_role)
+            
+            if is_new:
+                messages.success(request, "Đã tạo hồ sơ Huấn luyện viên thành công!")
+            else:
+                messages.success(request, "Đã cập nhật hồ sơ Huấn luyện viên!")
+            
+            return redirect('coach_profile_detail', pk=coach.pk)
+    else:
+        form = CoachProfileForm(instance=coach_profile)
+    
+    context = {
+        'form': form,
+        'is_new': is_new,
+        'coach_profile': coach_profile
+    }
+    
+    return render(request, 'users/coach_profile_form.html', context)
+
+
+@login_required
+def coach_profile_detail(request, pk):
+    """Chi tiết hồ sơ HLV"""
+    from .models import CoachProfile
+    from tournaments.models import CoachRecruitment
+    
+    coach_profile = get_object_or_404(CoachProfile.objects.select_related('user', 'team'), pk=pk)
+    
+    # Kiểm tra quyền chỉnh sửa
+    can_edit = request.user == coach_profile.user
+    
+    # Lấy lịch sử chiêu mộ nếu là chính user đó
+    recruitment_history = None
+    if can_edit:
+        recruitment_history = CoachRecruitment.objects.filter(
+            coach=coach_profile
+        ).select_related('team', 'team__captain').order_by('-created_at')[:5]
+    
+    context = {
+        'coach_profile': coach_profile,
+        'can_edit': can_edit,
+        'recruitment_history': recruitment_history,
+    }
+    
+    return render(request, 'users/coach_profile_detail.html', context)
+
+
+# ===== VIEWS CHO SÂN BÓNG =====
+
+@login_required
+def create_stadium_profile(request):
+    """Tạo hoặc cập nhật hồ sơ Sân bóng"""
+    from .models import StadiumProfile
+    from .forms import StadiumProfileForm
+    
+    # Kiểm tra user đã có StadiumProfile chưa
+    try:
+        stadium_profile = request.user.stadium_profile
+        is_new = False
+    except StadiumProfile.DoesNotExist:
+        stadium_profile = None
+        is_new = True
+    
+    if request.method == 'POST':
+        form = StadiumProfileForm(request.POST, request.FILES, instance=stadium_profile)
+        if form.is_valid():
+            stadium = form.save(commit=False)
+            stadium.user = request.user
+            stadium.save()
+            
+            # Thêm role STADIUM nếu chưa có
+            stadium_role = Role.objects.get(id='STADIUM')
+            if stadium_role not in request.user.profile.roles.all():
+                request.user.profile.roles.add(stadium_role)
+            
+            if is_new:
+                messages.success(request, "Đã tạo hồ sơ Sân bóng thành công!")
+            else:
+                messages.success(request, "Đã cập nhật hồ sơ Sân bóng!")
+            
+            return redirect('stadium_dashboard')
+    else:
+        form = StadiumProfileForm(instance=stadium_profile)
+    
+    context = {
+        'form': form,
+        'is_new': is_new,
+        'stadium_profile': stadium_profile
+    }
+    
+    return render(request, 'users/stadium_profile_form.html', context)
+
+
+@login_required
+def stadium_dashboard(request):
+    """Dashboard cho Sân bóng"""
+    from .models import StadiumProfile
+    from organizations.models import JobPosting, JobApplication
+    
+    # Kiểm tra user có StadiumProfile không
+    if not hasattr(request.user, 'stadium_profile'):
+        messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
+        return redirect('create_stadium_profile')
+    
+    stadium_profile = request.user.stadium_profile
+    
+    # Lấy các tin tuyển dụng của sân
+    job_postings = JobPosting.objects.filter(
+        stadium=stadium_profile
+    ).annotate(
+        application_count=Count('applications')
+    ).order_by('-created_at')
+    
+    # Lấy các ứng viên mới
+    recent_applications = JobApplication.objects.filter(
+        job__stadium=stadium_profile,
+        status=JobApplication.Status.PENDING
+    ).select_related('job', 'applicant', 'applicant__profile').order_by('-applied_at')[:10]
+    
+    context = {
+        'stadium_profile': stadium_profile,
+        'job_postings': job_postings,
+        'recent_applications': recent_applications,
+    }
+    
+    return render(request, 'users/stadium_dashboard.html', context)
+
+
+@login_required
+def create_stadium_job_posting(request):
+    """Sân bóng đăng tin tuyển dụng"""
+    from .models import StadiumProfile
+    from organizations.models import JobPosting
+    from organizations.forms import JobPostingForm
+    
+    # Kiểm tra user có StadiumProfile
+    if not hasattr(request.user, 'stadium_profile'):
+        messages.error(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
+        return redirect('create_stadium_profile')
+    
+    stadium = request.user.stadium_profile
+    
+    if request.method == 'POST':
+        # Tạo JobPosting với posted_by=STADIUM
+        job = JobPosting.objects.create(
+            posted_by=JobPosting.PostedBy.STADIUM,
+            stadium=stadium,
+            role_required_id=request.POST['role_required'],
+            title=request.POST['title'],
+            description=request.POST['description'],
+            budget=request.POST.get('budget', ''),
+            location_detail=request.POST.get('location_detail', stadium.location_detail)
+        )
+        
+        messages.success(request, "Đã đăng tin tuyển dụng thành công!")
+        return redirect('stadium_dashboard')
+    
+    # Lấy danh sách roles
+    roles = Role.objects.all().order_by('order')
+    
+    context = {
+        'stadium': stadium,
+        'roles': roles,
+    }
+    
+    return render(request, 'users/stadium_job_posting_form.html', context)

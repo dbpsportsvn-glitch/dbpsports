@@ -86,4 +86,12 @@ urlpatterns = [
     path('tournament/<int:tournament_pk>/budget/quick-add/', views.quick_add_budget_item, name='quick_add_budget'),
     path('tournament/<int:tournament_pk>/budget/delete/<str:item_type>/<int:item_id>/', views.delete_budget_item, name='delete_budget_item'),
     path('tournament/<int:tournament_pk>/budget/refresh/', views.refresh_budget_auto, name='refresh_budget_auto'),
+    
+    # --- URL cho Huấn luyện viên ---
+    path('team/<int:team_pk>/recruit-coach/', views.recruit_coach_list, name='recruit_coach_list'),
+    path('team/<int:team_pk>/coach/<int:coach_pk>/send-offer/', views.send_coach_recruitment, name='send_coach_recruitment'),
+    path('recruitment/<int:pk>/', views.coach_recruitment_detail, name='coach_recruitment_detail'),
+    path('recruitment/<int:pk>/<str:action>/', views.respond_to_recruitment, name='respond_to_recruitment'),
+    path('team/<int:team_pk>/remove-coach/', views.remove_coach_from_team, name='remove_coach_from_team'),
+    path('coach/dashboard/', views.coach_dashboard, name='coach_dashboard'),
 ]
