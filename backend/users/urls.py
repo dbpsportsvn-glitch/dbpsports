@@ -18,9 +18,12 @@ urlpatterns = [
     path('stadium/create/', views.create_stadium_profile, name='create_stadium_profile'),
     path('stadium/dashboard/', views.stadium_dashboard, name='stadium_dashboard'),
     path('stadium/job/create/', views.create_stadium_job_posting, name='create_stadium_job_posting'),
+    path('stadium/job/<int:job_pk>/edit/', views.edit_stadium_job_posting, name='edit_stadium_job_posting'),
     path('stadium/applications/', views.stadium_job_applications, name='stadium_job_applications'),
     path('stadium/application/<int:application_pk>/', views.stadium_job_application_detail, name='stadium_job_application_detail'),
-    path('stadium/job/<int:job_pk>/edit/', views.edit_stadium_job_posting, name='edit_stadium_job_posting'),
+    path('coach/<int:coach_pk>/review/', views.create_coach_review, name='create_coach_review'),
+    path('stadium/<int:stadium_pk>/review/', views.create_stadium_review, name='create_stadium_review'),
+    path('stadium/<int:pk>/', views.stadium_profile_detail, name='stadium_profile_detail'),
     
     # Để allauth xử lý mọi thứ liên quan đến tài khoản
     # URL của allauth đã bao gồm login, logout, register, password reset...

@@ -1,6 +1,6 @@
 # backend/users/admin.py
 from django.contrib import admin
-from .models import Role, Profile, CoachProfile, StadiumProfile
+from .models import Role, Profile, CoachProfile, StadiumProfile, CoachReview, StadiumReview
 
 @admin.register(Role)
 class RoleAdmin(admin.ModelAdmin):
@@ -63,3 +63,21 @@ class StadiumProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(CoachReview)
+class CoachReviewAdmin(admin.ModelAdmin):
+    list_display = ('coach_profile', 'reviewer', 'rating', 'team', 'tournament', 'is_approved', 'created_at')
+    list_filter = ('rating', 'is_approved', 'created_at')
+    search_fields = ('coach_profile__full_name', 'reviewer__username', 'comment')
+    readonly_fields = ('created_at',)
+    list_editable = ('is_approved',)
+
+
+@admin.register(StadiumReview)
+class StadiumReviewAdmin(admin.ModelAdmin):
+    list_display = ('stadium_profile', 'reviewer', 'rating', 'team', 'tournament', 'is_approved', 'created_at')
+    list_filter = ('rating', 'is_approved', 'created_at')
+    search_fields = ('stadium_profile__stadium_name', 'reviewer__username', 'comment')
+    readonly_fields = ('created_at',)
+    list_editable = ('is_approved',)

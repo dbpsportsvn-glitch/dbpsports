@@ -168,6 +168,71 @@
                 </div>
             </div>
             {% endif %}
+            
+            {# Đánh giá và Reviews #}
+            <div class="card shadow mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-star-fill"></i> Đánh giá</h5>
+                    {% if avg_rating > 0 %}
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-warning text-dark me-2">{{ avg_rating }}/5</span>
+                        <div class="star-rating">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= avg_rating %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        <div class="row">
+                            {% for review in reviews %}
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
+                                            {% if review.team %}
+                                                <small class="text-muted">- {{ review.team.name }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="star-rating">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                {% else %}
+                                                    <i class="bi bi-star text-muted"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% if review.comment %}
+                                    <p class="mb-0 small">{{ review.comment }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">Chưa có đánh giá nào.</p>
+                    {% endif %}
+                    
+                    {# Nút đánh giá #}
+                    {% if user.is_authenticated and not can_edit and not user_reviewed %}
+                    <div class="mt-3">
+                        <a href="{% url 'create_coach_review' coach_pk=coach_profile.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-star"></i> Đánh giá HLV này
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

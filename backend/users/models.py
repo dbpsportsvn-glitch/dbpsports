@@ -222,3 +222,119 @@ class StadiumProfile(models.Model):
     
     def __str__(self):
         return self.stadium_name
+
+
+class CoachReview(models.Model):
+    """Lưu trữ đánh giá cho Huấn luyện viên từ các đội bóng."""
+    coach_profile = models.ForeignKey(
+        CoachProfile,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name="Huấn luyện viên"
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_coach_reviews',
+        verbose_name="Người đánh giá"
+    )
+    team = models.ForeignKey(
+        'tournaments.Team',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Đội bóng",
+        help_text="Đội bóng mà HLV đã huấn luyện"
+    )
+    tournament = models.ForeignKey(
+        'tournaments.Tournament',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Giải đấu",
+        help_text="Giải đấu liên quan"
+    )
+    rating = models.PositiveSmallIntegerField(
+        "Xếp hạng (sao)",
+        choices=[(i, f"{i} sao") for i in range(1, 6)],
+        default=5
+    )
+    comment = models.TextField(
+        "Nội dung nhận xét",
+        max_length=1000,
+        blank=True,
+        help_text="Chia sẻ cảm nhận về chất lượng huấn luyện"
+    )
+    is_approved = models.BooleanField(
+        "Được hiển thị",
+        default=True,
+        help_text="HLV có thể chọn ẩn/hiện nhận xét này"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Đánh giá HLV"
+        verbose_name_plural = "Các Đánh giá HLV"
+        ordering = ['-created_at']
+        unique_together = ('coach_profile', 'reviewer', 'team')
+
+    def __str__(self):
+        return f"Đánh giá {self.coach_profile.full_name} từ {self.reviewer.username}"
+
+
+class StadiumReview(models.Model):
+    """Lưu trữ đánh giá cho Sân bóng từ các đội bóng và BTC."""
+    stadium_profile = models.ForeignKey(
+        StadiumProfile,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name="Sân bóng"
+    )
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_stadium_reviews',
+        verbose_name="Người đánh giá"
+    )
+    team = models.ForeignKey(
+        'tournaments.Team',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Đội bóng",
+        help_text="Đội bóng đã sử dụng sân"
+    )
+    tournament = models.ForeignKey(
+        'tournaments.Tournament',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Giải đấu",
+        help_text="Giải đấu tổ chức tại sân"
+    )
+    rating = models.PositiveSmallIntegerField(
+        "Xếp hạng (sao)",
+        choices=[(i, f"{i} sao") for i in range(1, 6)],
+        default=5
+    )
+    comment = models.TextField(
+        "Nội dung nhận xét",
+        max_length=1000,
+        blank=True,
+        help_text="Chia sẻ cảm nhận về chất lượng sân bóng"
+    )
+    is_approved = models.BooleanField(
+        "Được hiển thị",
+        default=True,
+        help_text="Sân bóng có thể chọn ẩn/hiện nhận xét này"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Đánh giá Sân bóng"
+        verbose_name_plural = "Các Đánh giá Sân bóng"
+        ordering = ['-created_at']
+        unique_together = ('stadium_profile', 'reviewer', 'team')
+
+    def __str__(self):
+        return f"Đánh giá {self.stadium_profile.stadium_name} từ {self.reviewer.username}"

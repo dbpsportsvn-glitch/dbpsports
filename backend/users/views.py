@@ -8,7 +8,7 @@ from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
 from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, ProfileUpdateForm
-from .models import Profile, Role
+from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
 from organizations.models import ProfessionalReview, JobApplication, JobPosting
@@ -293,7 +293,17 @@ def profile_setup_view(request):
 
 # === Backen hs ca nhan cong viec ===
 def public_profile_view(request, username):
-    profile_user = get_object_or_404(User.objects.select_related('profile'), username=username)
+    try:
+        profile_user = User.objects.select_related('profile').get(username=username)
+    except User.DoesNotExist:
+        # Thử tìm bằng email nếu username không tìm thấy
+        try:
+            profile_user = User.objects.select_related('profile').get(email=username)
+        except User.DoesNotExist:
+            # Hiển thị trang 404 tùy chỉnh
+            return render(request, 'users/user_not_found.html', {
+                'username': username
+            }, status=404)
     profile = profile_user.profile
 
     # Lấy thành tích (giữ nguyên)
@@ -418,10 +428,30 @@ def coach_profile_detail(request, pk):
             coach=coach_profile
         ).select_related('team', 'team__captain').order_by('-created_at')[:5]
     
+    # Lấy reviews và tính rating trung bình
+    reviews = CoachReview.objects.filter(
+        coach_profile=coach_profile,
+        is_approved=True
+    ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
+    
+    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
+    avg_rating = round(avg_rating, 1) if avg_rating else 0
+    
+    # Kiểm tra xem user hiện tại đã đánh giá chưa
+    user_reviewed = False
+    if request.user.is_authenticated:
+        user_reviewed = CoachReview.objects.filter(
+            coach_profile=coach_profile,
+            reviewer=request.user
+        ).exists()
+    
     context = {
         'coach_profile': coach_profile,
         'can_edit': can_edit,
         'recruitment_history': recruitment_history,
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'user_reviewed': user_reviewed,
     }
     
     return render(request, 'users/coach_profile_detail.html', context)
@@ -471,6 +501,42 @@ def create_stadium_profile(request):
     }
     
     return render(request, 'users/stadium_profile_form.html', context)
+
+
+@login_required
+def stadium_profile_detail(request, pk):
+    """Chi tiết hồ sơ Sân bóng"""
+    stadium_profile = get_object_or_404(StadiumProfile.objects.select_related('user'), pk=pk)
+    
+    # Kiểm tra quyền chỉnh sửa
+    can_edit = request.user == stadium_profile.user
+    
+    # Lấy reviews và tính rating trung bình
+    reviews = StadiumReview.objects.filter(
+        stadium_profile=stadium_profile,
+        is_approved=True
+    ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
+    
+    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
+    avg_rating = round(avg_rating, 1) if avg_rating else 0
+    
+    # Kiểm tra xem user hiện tại đã đánh giá chưa
+    user_reviewed = False
+    if request.user.is_authenticated:
+        user_reviewed = StadiumReview.objects.filter(
+            stadium_profile=stadium_profile,
+            reviewer=request.user
+        ).exists()
+    
+    context = {
+        'stadium_profile': stadium_profile,
+        'can_edit': can_edit,
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'user_reviewed': user_reviewed,
+    }
+    
+    return render(request, 'users/stadium_profile_detail.html', context)
 
 
 @login_required
@@ -686,3 +752,79 @@ def edit_stadium_job_posting(request, job_pk):
     }
     
     return render(request, 'users/stadium_job_posting_form.html', context)
+
+
+@login_required
+def create_coach_review(request, coach_pk):
+    """Tạo đánh giá cho Huấn luyện viên."""
+    coach_profile = get_object_or_404(CoachProfile, pk=coach_pk)
+    
+    # Kiểm tra xem user đã đánh giá HLV này chưa
+    existing_review = CoachReview.objects.filter(
+        coach_profile=coach_profile,
+        reviewer=request.user
+    ).first()
+    
+    if existing_review:
+        messages.warning(request, "Bạn đã đánh giá HLV này rồi!")
+        return redirect('coach_profile_detail', pk=coach_pk)
+    
+    if request.method == 'POST':
+        from .forms import CoachReviewForm
+        form = CoachReviewForm(request.POST, user=request.user)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.coach_profile = coach_profile
+            review.reviewer = request.user
+            review.save()
+            
+            messages.success(request, f"Đã đánh giá HLV {coach_profile.full_name} thành công!")
+            return redirect('coach_profile_detail', pk=coach_pk)
+    else:
+        from .forms import CoachReviewForm
+        form = CoachReviewForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'coach_profile': coach_profile,
+    }
+    
+    return render(request, 'users/create_coach_review.html', context)
+
+
+@login_required
+def create_stadium_review(request, stadium_pk):
+    """Tạo đánh giá cho Sân bóng."""
+    stadium_profile = get_object_or_404(StadiumProfile, pk=stadium_pk)
+    
+    # Kiểm tra xem user đã đánh giá sân này chưa
+    existing_review = StadiumReview.objects.filter(
+        stadium_profile=stadium_profile,
+        reviewer=request.user
+    ).first()
+    
+    if existing_review:
+        messages.warning(request, "Bạn đã đánh giá sân bóng này rồi!")
+        return redirect('stadium_profile_detail', pk=stadium_pk)
+    
+    if request.method == 'POST':
+        from .forms import StadiumReviewForm
+        form = StadiumReviewForm(request.POST, user=request.user)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.stadium_profile = stadium_profile
+            review.reviewer = request.user
+            review.save()
+            
+            messages.success(request, f"Đã đánh giá sân bóng {stadium_profile.stadium_name} thành công!")
+            return redirect('stadium_profile_detail', pk=stadium_pk)
+    else:
+        from .forms import StadiumReviewForm
+        form = StadiumReviewForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'stadium_profile': stadium_profile,
+    }
+    
+    return render(request, 'users/create_stadium_review.html', context)

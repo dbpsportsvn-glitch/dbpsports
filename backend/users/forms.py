@@ -5,10 +5,9 @@ from django import forms
 from allauth.account.forms import SignupForm
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
-from .models import Profile # <-- Thêm import này
+from .models import Profile, CoachProfile, StadiumProfile, CoachReview, StadiumReview, Role
 from django.utils.safestring import mark_safe  # <-- THÊM DÒNG NÀY
 from django.urls import reverse_lazy         # <-- THÊM DÒNG NÀY
-from .models import Profile, Role
 
 # ===============================
 
@@ -191,3 +190,87 @@ class StadiumProfileForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
+
+
+class CoachReviewForm(forms.ModelForm):
+    """Form để đánh giá Huấn luyện viên."""
+    class Meta:
+        model = CoachReview
+        fields = ['rating', 'comment', 'team', 'tournament']
+        widgets = {
+            'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
+            'comment': forms.Textarea(attrs={
+                'rows': 4, 
+                'class': 'form-control',
+                'placeholder': 'Chia sẻ cảm nhận về chất lượng huấn luyện của HLV...'
+            }),
+            'team': forms.Select(attrs={'class': 'form-select'}),
+            'tournament': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'rating': 'Bạn đánh giá HLV này thế nào?',
+            'comment': 'Nội dung nhận xét',
+            'team': 'Đội bóng',
+            'tournament': 'Giải đấu',
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Chỉ hiển thị các đội mà user là captain
+        if user:
+            from tournaments.models import Team, Tournament
+            self.fields['team'].queryset = Team.objects.filter(captain=user)
+            
+            # Xử lý tournament queryset
+            if hasattr(user, 'organizations') and user.organizations.exists():
+                organization = user.organizations.first()
+                if organization:
+                    self.fields['tournament'].queryset = organization.tournaments.all()
+                else:
+                    self.fields['tournament'].queryset = Tournament.objects.none()
+            else:
+                self.fields['tournament'].queryset = Tournament.objects.none()
+
+
+class StadiumReviewForm(forms.ModelForm):
+    """Form để đánh giá Sân bóng."""
+    class Meta:
+        model = StadiumReview
+        fields = ['rating', 'comment', 'team', 'tournament']
+        widgets = {
+            'rating': forms.RadioSelect(attrs={'class': 'star-rating'}),
+            'comment': forms.Textarea(attrs={
+                'rows': 4, 
+                'class': 'form-control',
+                'placeholder': 'Chia sẻ cảm nhận về chất lượng sân bóng...'
+            }),
+            'team': forms.Select(attrs={'class': 'form-select'}),
+            'tournament': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'rating': 'Bạn đánh giá sân bóng này thế nào?',
+            'comment': 'Nội dung nhận xét',
+            'team': 'Đội bóng',
+            'tournament': 'Giải đấu',
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Chỉ hiển thị các đội mà user là captain hoặc BTC
+        if user:
+            from tournaments.models import Team, Tournament
+            self.fields['team'].queryset = Team.objects.filter(captain=user)
+            
+            # Xử lý tournament queryset
+            if hasattr(user, 'organizations') and user.organizations.exists():
+                organization = user.organizations.first()
+                if organization:
+                    self.fields['tournament'].queryset = organization.tournaments.all()
+                else:
+                    self.fields['tournament'].queryset = Tournament.objects.none()
+            else:
+                self.fields['tournament'].queryset = Tournament.objects.none()

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Đánh giá HLV - {{ coach_profile.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="bi bi-star"></i> Đánh giá HLV</h4>
+                </div>
+                <div class="card-body">
+                    {# Thông tin HLV #}
+                    <div class="d-flex align-items-center mb-4">
+                        {% if coach_profile.avatar %}
+                        <img src="{{ coach_profile.avatar.url }}" alt="{{ coach_profile.full_name }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover;">
+                        {% else %}
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-person text-white" style="font-size: 1.5rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-1">{{ coach_profile.full_name }}</h5>
+                            <p class="text-muted mb-0">{{ coach_profile.get_region_display }}</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {# Rating #}
+                        <div class="mb-4">
+                            <label class="form-label">{{ form.rating.label }}</label>
+                            <div class="star-rating-input">
+                                {% for choice in form.rating %}
+                                    <div class="form-check form-check-inline">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter == choice.choice_value %}
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.rating.errors %}
+                                <div class="text-danger">{{ form.rating.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {# Team và Tournament #}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.team.label }}</label>
+                                {{ form.team }}
+                                {% if form.team.errors %}
+                                    <div class="text-danger">{{ form.team.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ form.tournament.label }}</label>
+                                {{ form.tournament }}
+                                {% if form.tournament.errors %}
+                                    <div class="text-danger">{{ form.tournament.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Tùy chọn - Chọn giải đấu liên quan</small>
+                            </div>
+                        </div>
+                        
+                        {# Comment #}
+                        <div class="mb-4">
+                            <label class="form-label">{{ form.comment.label }}</label>
+                            {{ form.comment }}
+                            {% if form.comment.errors %}
+                                <div class="text-danger">{{ form.comment.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'coach_profile_detail' pk=coach_profile.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-star"></i> Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.star-rating-input .form-check {
+    margin-right: 0.5rem;
+}
+
+.star-rating-input .form-check-input {
+    display: none;
+}
+
+.star-rating-input .form-check-label {
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.star-rating-input .form-check-input:checked + .form-check-label,
+.star-rating-input .form-check-label:hover {
+    color: #ffc107;
+}
+</style>
+{% endblock %}
