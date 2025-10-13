@@ -552,21 +552,32 @@
     </div>
 
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
-        <style>
-            .rules-content { background-color:#f8f9fa; border-left:5px solid #0d6efd; padding:2rem; border-radius:5px; }
-            .rules-content h1,.rules-content h2,.rules-content h3 { font-weight:bold; margin-top:1.5em; margin-bottom:.75em; color:#212529; }
-            .rules-content p { line-height:1.7; margin-bottom:1.25em; }
-            .rules-content ul,.rules-content ol { padding-left:2em; }
-        </style>
+        <!-- Modern Rules Header -->
+        <div class="rules-header">
+            <div class="rules-header-icon">
+                <i class="bi bi-file-text-fill"></i>
+            </div>
+            <div class="rules-header-content">
+                <h3>Điều lệ giải đấu</h3>
+                <p>Quy định và thể lệ chính thức của giải {{ tournament.name }}</p>
+            </div>
+        </div>
 
         {% if tournament.rules %}
-            <div class="rules-content">
-                {{ tournament.rules|linebreaks|safe }}
+            <div class="rules-section">
+                <div class="rules-content-card">
+                    <div class="rules-content-body">
+                        {{ tournament.rules|linebreaks|safe }}
+                    </div>
+                </div>
             </div>
         {% else %}
-            <div class="text-center p-5">
-                <i class="bi bi-file-earmark-text fs-1 text-muted"></i>
-                <p class="mt-3 text-muted">Chưa có điều lệ hay thông báo nào được cập nhật cho giải đấu này.</p>
+            <div class="empty-rules-state">
+                <div class="empty-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <h4>Chưa có điều lệ</h4>
+                <p class="text-muted">Hiện chưa có điều lệ hay thông báo nào được cập nhật cho giải đấu này.</p>
             </div>
         {% endif %}
     </div>
@@ -3081,6 +3092,370 @@
 
         .team-card-logo-placeholder {
             font-size: 2rem;
+        }
+    }
+    </style>
+
+    <style>
+    /* ============================================
+       MODERN RULES TAB STYLES
+       ============================================ */
+    
+    /* Rules Header */
+    .rules-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .rules-header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .rules-header-content {
+        flex: 1;
+    }
+
+    .rules-header-content h3 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .rules-header-content p {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    /* Rules Section */
+    .rules-section {
+        margin-bottom: 2rem;
+    }
+
+    .rules-content-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+    }
+
+    .rules-content-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea, #764ba2);
+    }
+
+    .rules-content-body {
+        padding: 2.5rem;
+        padding-left: 3rem;
+        line-height: 1.8;
+        color: #2d3748;
+    }
+
+    /* Rules Content Typography */
+    .rules-content-body h1,
+    .rules-content-body h2,
+    .rules-content-body h3,
+    .rules-content-body h4,
+    .rules-content-body h5,
+    .rules-content-body h6 {
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #1a202c;
+        position: relative;
+        padding-left: 1rem;
+    }
+
+    .rules-content-body h1::before,
+    .rules-content-body h2::before,
+    .rules-content-body h3::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 70%;
+        background: linear-gradient(180deg, #667eea, #764ba2);
+        border-radius: 2px;
+    }
+
+    .rules-content-body h1 {
+        font-size: 1.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .rules-content-body h2 {
+        font-size: 1.5rem;
+        color: #2d3748;
+    }
+
+    .rules-content-body h3 {
+        font-size: 1.25rem;
+        color: #4a5568;
+    }
+
+    .rules-content-body p {
+        margin-bottom: 1.25rem;
+        line-height: 1.8;
+        color: #4a5568;
+    }
+
+    .rules-content-body ul,
+    .rules-content-body ol {
+        padding-left: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .rules-content-body li {
+        margin-bottom: 0.75rem;
+        line-height: 1.7;
+        color: #4a5568;
+        position: relative;
+    }
+
+    .rules-content-body ul li::marker {
+        color: #667eea;
+        font-weight: 700;
+    }
+
+    .rules-content-body ol li::marker {
+        color: #667eea;
+        font-weight: 700;
+    }
+
+    .rules-content-body strong {
+        color: #2d3748;
+        font-weight: 600;
+    }
+
+    .rules-content-body em {
+        color: #667eea;
+        font-style: italic;
+    }
+
+    .rules-content-body a {
+        color: #667eea;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .rules-content-body a:hover {
+        color: #764ba2;
+        border-bottom-color: #764ba2;
+    }
+
+    .rules-content-body blockquote {
+        margin: 1.5rem 0;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-left: 4px solid #667eea;
+        border-radius: 0 8px 8px 0;
+        color: #4a5568;
+        font-style: italic;
+    }
+
+    .rules-content-body code {
+        padding: 0.2rem 0.5rem;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #667eea;
+    }
+
+    .rules-content-body pre {
+        padding: 1.5rem;
+        background: #f7fafc;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .rules-content-body table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .rules-content-body th {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        padding: 1rem;
+        text-align: left;
+        font-weight: 700;
+        color: #2d3748;
+        border-bottom: 2px solid #667eea;
+    }
+
+    .rules-content-body td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        color: #4a5568;
+    }
+
+    .rules-content-body tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rules-content-body tr:hover {
+        background: rgba(102, 126, 234, 0.02);
+    }
+
+    .rules-content-body hr {
+        margin: 2rem 0;
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    }
+
+    /* Empty Rules State */
+    .empty-rules-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f7fafc, #edf2f7);
+        border-radius: 16px;
+        border: 2px dashed #cbd5e0;
+    }
+
+    .empty-rules-state .empty-icon {
+        font-size: 5rem;
+        color: #a0aec0;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .empty-rules-state h4 {
+        margin: 0 0 0.75rem 0;
+        color: #4a5568;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .empty-rules-state p {
+        margin: 0;
+        color: #718096;
+        font-size: 1rem;
+    }
+
+    /* Responsive Rules Tab */
+    @media (max-width: 768px) {
+        .rules-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .rules-header-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
+
+        .rules-header-content h3 {
+            font-size: 1.5rem;
+        }
+
+        .rules-content-body {
+            padding: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        .rules-content-body h1 {
+            font-size: 1.5rem;
+        }
+
+        .rules-content-body h2 {
+            font-size: 1.25rem;
+        }
+
+        .rules-content-body h3 {
+            font-size: 1.1rem;
+        }
+
+        .rules-content-body ul,
+        .rules-content-body ol {
+            padding-left: 1.5rem;
+        }
+
+        .empty-rules-state {
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-rules-state .empty-icon {
+            font-size: 4rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .rules-header {
+            padding: 1rem;
+        }
+
+        .rules-header-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 1.1rem;
+        }
+
+        .rules-content-body {
+            padding: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .rules-content-card::before {
+            width: 4px;
+        }
+
+        .empty-rules-state {
+            padding: 2rem 1rem;
+        }
+
+        .empty-rules-state .empty-icon {
+            font-size: 3rem;
+        }
+
+        .empty-rules-state h4 {
+            font-size: 1.25rem;
         }
     }
     </style>
