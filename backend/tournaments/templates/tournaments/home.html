@@ -173,8 +173,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <div class="tournament-stats">
               <div class="stat-item">
-                <i class="bi bi-people-fill"></i>
-                <span>{{ tournament.followers.count }} người theo dõi</span>
+                <span class="badge status-badge status-{{ tournament.status }}">
+                  {{ tournament.get_status_display }}
+                </span>
               </div>
               <div class="stat-item">
                 <span class="badge format-badge format-{{ tournament.format }}">
@@ -183,13 +184,13 @@ document.addEventListener('DOMContentLoaded', function() {
                   {% else %}
                     <i class="bi bi-award"></i>
                   {% endif %}
-                  {{ tournament.get_format_display }}
+                  <span class="format-text-full">{{ tournament.get_format_display }}</span>
+                  <span class="format-text-mobile">Đá {% if tournament.format == 'CUP' %}Cup{% else %}League{% endif %}</span>
                 </span>
               </div>
               <div class="stat-item">
-                <span class="badge status-badge status-{{ tournament.status }}">
-                  {{ tournament.get_status_display }}
-                </span>
+                <i class="bi bi-people-fill"></i>
+                <span>{{ tournament.followers.count }} người theo dõi</span>
               </div>
             </div>
             
@@ -254,7 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   {% else %}
                     <i class="bi bi-award"></i>
                   {% endif %}
-                  {{ tournament.get_format_display }}
+                  <span class="format-text-full">{{ tournament.get_format_display }}</span>
+                  <span class="format-text-mobile">Đá {% if tournament.format == 'CUP' %}Cup{% else %}League{% endif %}</span>
                 </span>
               </div>
               {% if tournament.organization %}
@@ -327,7 +329,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   {% else %}
                     <i class="bi bi-award"></i>
                 {% endif %}
-                  {{ tournament.get_format_display }}
+                  <span class="format-text-full">{{ tournament.get_format_display }}</span>
+                  <span class="format-text-mobile">Đá {% if tournament.format == 'CUP' %}Cup{% else %}League{% endif %}</span>
                   </span>
                 <span class="badge status-badge status-{{ tournament.status }}">
                   {{ tournament.get_status_display }}
@@ -754,10 +757,28 @@ document.addEventListener('DOMContentLoaded', function() {
   font-size: 0.75rem;
 }
 
+/* Format text responsive */
+.format-text-mobile {
+  display: none;
+}
+
+.format-text-full {
+  display: inline;
+}
+
 /* ========================================
    MOBILE RESPONSIVE FIXES
    ======================================== */
 @media (max-width: 768px) {
+  /* Format text mobile - show short version */
+  .format-text-mobile {
+    display: inline;
+  }
+  
+  .format-text-full {
+    display: none;
+  }
+  
   /* Tournament cards mobile adjustments */
   .tournament-card {
     margin-bottom: 1rem;
