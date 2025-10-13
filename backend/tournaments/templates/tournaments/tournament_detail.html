@@ -572,78 +572,186 @@
     </div>
 
     <div class="tab-pane fade card-pane" id="teams" role="tabpanel">
-      {% if unassigned_teams and tournament.format == 'CUP' %}
-        <h5 class="section-title mt-2">Đội chờ xếp bảng</h5>
-        <p class="text-muted">Đây là danh sách các đội đã hoàn tất đăng ký và đang chờ ban tổ chức bốc thăm chia bảng.</p>
-        <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
-          {% for team in unassigned_teams %}
-            <div class="col">
-              <div class="card h-100 shadow-sm bg-light">
-                <div class="card-body d-flex align-items-center">
-                  <div class="flex-grow-1">
-                    <h6 class="card-title mb-1">{{ team.name }}</h6>
-                    <a href="{% url 'public_team_detail' pk=team.pk %}" class="btn btn-outline-secondary btn-sm">Xem đội</a>
-                  </div>
-                  {% if team.logo %}
-                    <img src="{{ team.logo.url }}" alt="Logo {{ team.name }}" class="ms-auto" style="width: 56px; height: 56px; object-fit: contain; border-radius: .25rem;">
-                  {% endif %}
-                </div>
-              </div>
+        <!-- Modern Teams Header -->
+        <div class="teams-header">
+            <div class="teams-header-icon">
+                <i class="bi bi-people-fill"></i>
             </div>
-          {% endfor %}
+            <div class="teams-header-content">
+                <h3>Đội tham gia</h3>
+                <p>Danh sách các đội thi đấu trong giải {{ tournament.name }}</p>
+            </div>
         </div>
-        <hr>
-      {% endif %}
 
-      {% if tournament.format == 'LEAGUE' %}
-        <h5 class="section-title mt-2">Các đội tham gia</h5>
-        <div class="row row-cols-1 row-cols-md-3 g-3">
-          {% for reg in tournament.registrations.all %}
-            {% if reg.payment_status == 'PAID' %}
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <div class="flex-grow-1">
-                            <h6 class="card-title mb-1">{{ reg.team.name }}</h6>
-                            <a href="{% url 'public_team_detail' pk=reg.team.pk %}" class="btn btn-outline-primary btn-sm">Xem đội</a>
-                        </div>
-                        {% if reg.team.logo %}
-                            <img src="{{ reg.team.logo.url }}" alt="Logo {{ reg.team.name }}" class="ms-auto" style="width: 56px; height: 56px; object-fit: contain; border-radius: .25rem;">
-                        {% endif %}
-                    </div>
+        <!-- Unassigned Teams Section -->
+        {% if unassigned_teams and tournament.format == 'CUP' %}
+        <div class="teams-section">
+            <div class="teams-section-header">
+                <div class="teams-section-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="teams-section-info">
+                    <h4 class="teams-section-title">Đội chờ xếp bảng</h4>
+                    <p class="teams-section-subtitle">Các đội đã hoàn tất đăng ký và chờ bốc thăm chia bảng</p>
                 </div>
             </div>
-            {% endif %}
-          {% empty %}
-            <div class="col"><p class="text-muted">Chưa có đội nào đăng ký.</p></div>
-          {% endfor %}
-        </div>
-      {% else %}
-      {% for group in tournament.groups.all %}
-        <h5 class="section-title mt-2">{{ group.name }}</h5>
-        <div class="row row-cols-1 row-cols-md-3 g-3">
-          {% for reg in group.registrations.all %}
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <div class="flex-grow-1">
-                            <h6 class="card-title mb-1">{{ reg.team.name }}</h6>
-                            <a href="{% url 'public_team_detail' pk=reg.team.pk %}" class="btn btn-outline-primary btn-sm">Xem đội</a>
-                        </div>
-                        {% if reg.team.logo %}
-                            <img src="{{ reg.team.logo.url }}" alt="Logo {{ reg.team.name }}" class="ms-auto" style="width: 56px; height: 56px; object-fit: contain; border-radius: .25rem;">
+            
+            <div class="teams-grid">
+                {% for team in unassigned_teams %}
+                <div class="team-card team-card-pending">
+                    <div class="team-card-header">
+                        {% if team.logo %}
+                            <img src="{{ team.logo.url }}" alt="Logo {{ team.name }}" class="team-card-logo">
+                        {% else %}
+                            <div class="team-card-logo-placeholder">
+                                <i class="bi bi-shield-fill"></i>
+                            </div>
                         {% endif %}
                     </div>
+                    <div class="team-card-body">
+                        <h5 class="team-card-name">{{ team.name }}</h5>
+                        <div class="team-card-badge">
+                            <i class="bi bi-clock-history"></i>
+                            <span>Chờ xếp bảng</span>
+                        </div>
+                    </div>
+                    <div class="team-card-footer">
+                        <a href="{% url 'public_team_detail' pk=team.pk %}" class="team-card-btn">
+                            <span>Xem chi tiết</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- League Format Teams -->
+        {% if tournament.format == 'LEAGUE' %}
+        <div class="teams-section">
+            <div class="teams-section-header">
+                <div class="teams-section-icon">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div class="teams-section-info">
+                    <h4 class="teams-section-title">Các đội tham gia</h4>
+                    <p class="teams-section-subtitle">Tất cả các đội đang thi đấu trong giải</p>
+                </div>
+                <div class="teams-count-badge">
+                    <span class="count-number">{{ tournament.registrations.all|length }}</span>
+                    <span class="count-label">Đội</span>
                 </div>
             </div>
-          {% empty %}
-            <div class="col"><p class="text-muted">Chưa có đội.</p></div>
-          {% endfor %}
+            
+            <div class="teams-grid">
+                {% for reg in tournament.registrations.all %}
+                    {% if reg.payment_status == 'PAID' %}
+                    <div class="team-card">
+                        <div class="team-card-header">
+                            {% if reg.team.logo %}
+                                <img src="{{ reg.team.logo.url }}" alt="Logo {{ reg.team.name }}" class="team-card-logo">
+                            {% else %}
+                                <div class="team-card-logo-placeholder">
+                                    <i class="bi bi-shield-fill"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="team-card-body">
+                            <h5 class="team-card-name">{{ reg.team.name }}</h5>
+                            <div class="team-card-stats">
+                                <div class="team-stat-item">
+                                    <i class="bi bi-people"></i>
+                                    <span>{{ reg.team.players.count }} cầu thủ</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="team-card-footer">
+                            <a href="{% url 'public_team_detail' pk=reg.team.pk %}" class="team-card-btn">
+                                <span>Xem chi tiết</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-teams-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>Chưa có đội tham gia</h4>
+                        <p class="text-muted">Hiện chưa có đội nào đăng ký giải đấu này</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-      {% empty %}
-        <p class="text-muted">Chưa có bảng đấu nào được tạo cho giải này.</p>
-      {% endfor %}
-      {% endif %}
+        {% else %}
+        <!-- Cup Format Teams (Groups) -->
+        {% for group in tournament.groups.all %}
+        <div class="teams-section">
+            <div class="teams-section-header">
+                <div class="teams-section-icon">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </div>
+                <div class="teams-section-info">
+                    <h4 class="teams-section-title">{{ group.name }}</h4>
+                    <p class="teams-section-subtitle">Các đội trong bảng đấu</p>
+                </div>
+                <div class="teams-count-badge">
+                    <span class="count-number">{{ group.registrations.all|length }}</span>
+                    <span class="count-label">Đội</span>
+                </div>
+            </div>
+            
+            <div class="teams-grid">
+                {% for reg in group.registrations.all %}
+                <div class="team-card">
+                    <div class="team-card-header">
+                        {% if reg.team.logo %}
+                            <img src="{{ reg.team.logo.url }}" alt="Logo {{ reg.team.name }}" class="team-card-logo">
+                        {% else %}
+                            <div class="team-card-logo-placeholder">
+                                <i class="bi bi-shield-fill"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="team-card-body">
+                        <h5 class="team-card-name">{{ reg.team.name }}</h5>
+                        <div class="team-card-stats">
+                            <div class="team-stat-item">
+                                <i class="bi bi-people"></i>
+                                <span>{{ reg.team.players.count }} cầu thủ</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-card-footer">
+                        <a href="{% url 'public_team_detail' pk=reg.team.pk %}" class="team-card-btn">
+                            <span>Xem chi tiết</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="empty-teams-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>Chưa có đội trong bảng</h4>
+                        <p class="text-muted">Bảng đấu này chưa có đội nào</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+            <div class="empty-teams-state">
+                <div class="empty-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </div>
+                <h4>Chưa có bảng đấu</h4>
+                <p class="text-muted">Giải đấu này chưa có bảng đấu nào được tạo</p>
+            </div>
+        {% endfor %}
+        {% endif %}
     </div>
 
     <div class="tab-pane fade card-pane" id="schedule" role="tabpanel">
@@ -2571,6 +2679,408 @@
         .search-icon {
             left: 0.875rem;
             font-size: 0.9rem;
+        }
+    }
+    </style>
+
+    <style>
+    /* ============================================
+       MODERN TEAMS TAB STYLES
+       ============================================ */
+    
+    /* Teams Header */
+    .teams-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .teams-header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .teams-header-content {
+        flex: 1;
+    }
+
+    .teams-header-content h3 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .teams-header-content p {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    /* Teams Section */
+    .teams-section {
+        margin-bottom: 3rem;
+    }
+
+    .teams-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .teams-section-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .teams-section-info {
+        flex: 1;
+    }
+
+    .teams-section-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .teams-section-subtitle {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+
+    .teams-count-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .count-number {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .count-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
+        opacity: 0.9;
+    }
+
+    /* Teams Grid */
+    .teams-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Team Card */
+    .team-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+    }
+
+    .team-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .team-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+    }
+
+    .team-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    /* Pending Team Card */
+    .team-card-pending {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .team-card-pending::before {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+
+    /* Team Card Header */
+    .team-card-header {
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 140px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .team-card-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .team-card:hover .team-card-header::before {
+        opacity: 1;
+    }
+
+    .team-card-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .team-card:hover .team-card-logo {
+        transform: scale(1.1);
+    }
+
+    .team-card-logo-placeholder {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: 2.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .team-card:hover .team-card-logo-placeholder {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    /* Team Card Body */
+    .team-card-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .team-card-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 1rem 0;
+        line-height: 1.3;
+    }
+
+    .team-card-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 20px;
+        color: #d97706;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .team-card-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .team-stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+
+    .team-stat-item i {
+        color: #667eea;
+        font-size: 1rem;
+    }
+
+    /* Team Card Footer */
+    .team-card-footer {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+
+    .team-card-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .team-card-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .team-card-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .team-card-btn:hover i {
+        transform: translateX(4px);
+    }
+
+    /* Empty Teams State */
+    .empty-teams-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: linear-gradient(135deg, #f7fafc, #edf2f7);
+        border-radius: 16px;
+        border: 2px dashed #cbd5e0;
+    }
+
+    .empty-teams-state .empty-icon {
+        font-size: 4rem;
+        color: #a0aec0;
+        margin-bottom: 1rem;
+    }
+
+    .empty-teams-state h4 {
+        margin: 0 0 0.5rem 0;
+        color: #4a5568;
+        font-weight: 700;
+    }
+
+    .empty-teams-state p {
+        margin: 0;
+        color: #718096;
+    }
+
+    /* Responsive Teams Tab */
+    @media (max-width: 768px) {
+        .teams-header,
+        .teams-section-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .teams-header-icon,
+        .teams-section-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
+
+        .teams-header-content h3 {
+            font-size: 1.5rem;
+        }
+
+        .teams-section-title {
+            font-size: 1.25rem;
+        }
+
+        .teams-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .teams-count-badge {
+            margin-top: 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .teams-header,
+        .teams-section-header {
+            padding: 1rem;
+        }
+
+        .teams-header-icon,
+        .teams-section-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 1.1rem;
+        }
+
+        .team-card-header {
+            min-height: 120px;
+            padding: 1.5rem;
+        }
+
+        .team-card-logo,
+        .team-card-logo-placeholder {
+            width: 60px;
+            height: 60px;
+        }
+
+        .team-card-logo-placeholder {
+            font-size: 2rem;
         }
     }
     </style>
