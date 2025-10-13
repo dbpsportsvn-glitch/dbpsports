@@ -838,16 +838,38 @@
         </div>
     </div>
 
-    <!-- Photo Modal -->
-    <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
+    <!-- Photo Lightbox Modal -->
+    <div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content lightbox-modal">
+                <div class="modal-header lightbox-header">
                     <h5 class="modal-title" id="photoModalTitle">Hình ảnh giải đấu</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="lightbox-controls">
+                        <button type="button" class="btn-lightbox" id="btnSlideshow" title="Trình chiếu tự động">
+                            <i class="bi bi-play-circle"></i>
+                        </button>
+                        <button type="button" class="btn-lightbox btn-close-white" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <img id="photoModalImage" src="" alt="" class="img-fluid">
+                <div class="modal-body lightbox-body">
+                    <button type="button" class="btn-nav btn-prev" id="btnPrev">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="lightbox-image-container">
+                        <img id="photoModalImage" src="" alt="" class="lightbox-image">
+                        <div class="lightbox-caption" id="photoCaption"></div>
+                    </div>
+                    <button type="button" class="btn-nav btn-next" id="btnNext">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="modal-footer lightbox-footer">
+                    <div class="lightbox-counter">
+                        <span id="currentPhoto">1</span> / <span id="totalPhotos">1</span>
+                    </div>
+                    <div class="lightbox-thumbnails" id="thumbnails"></div>
                 </div>
             </div>
         </div>
@@ -1227,26 +1249,183 @@
         margin: 0;
     }
 
-    /* Modal Styles */
-    .modal-content {
+    /* Lightbox Modal Styles */
+    .lightbox-modal {
+        background: rgba(0, 0, 0, 0.95);
         border: none;
-        border-radius: 16px;
-        overflow: hidden;
     }
 
-    .modal-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+    .lightbox-header {
+        background: rgba(0, 0, 0, 0.8);
+        border: none;
+        padding: 1rem 2rem;
         color: white;
+    }
+
+    .lightbox-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .btn-lightbox {
+        background: transparent;
         border: none;
+        color: white;
+        font-size: 1.5rem;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .modal-body {
-        padding: 0;
+    .btn-lightbox:hover {
+        color: #667eea;
+        transform: scale(1.1);
     }
 
-    .modal-body img {
+    .lightbox-body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+        min-height: 60vh;
+    }
+
+    .lightbox-image-container {
+        max-width: 90%;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .lightbox-image {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+        animation: fadeInImage 0.3s ease;
+    }
+
+    @keyframes fadeInImage {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .lightbox-caption {
+        color: white;
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+    }
+
+    .btn-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .btn-nav:hover {
+        background: rgba(102, 126, 234, 0.8);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .btn-prev {
+        left: 2rem;
+    }
+
+    .btn-next {
+        right: 2rem;
+    }
+
+    .lightbox-footer {
+        background: rgba(0, 0, 0, 0.8);
+        border: none;
+        padding: 1rem 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .lightbox-counter {
+        color: white;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .lightbox-thumbnails {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding: 0.5rem 0;
+        justify-content: center;
+    }
+
+    .lightbox-thumbnails::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .lightbox-thumbnails::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .lightbox-thumbnails::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.6);
+        border-radius: 3px;
+    }
+
+    .thumbnail-item {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .thumbnail-item:hover {
+        border-color: rgba(102, 126, 234, 0.6);
+        transform: scale(1.05);
+    }
+
+    .thumbnail-item.active {
+        border-color: #667eea;
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
+    }
+
+    .thumbnail-item img {
         width: 100%;
-        height: auto;
+        height: 100%;
+        object-fit: cover;
     }
 
     /* Responsive */
@@ -1274,26 +1453,225 @@
         .vs-text {
             order: -1;
         }
+
+        .btn-nav {
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+        }
+
+        .btn-prev {
+            left: 0.5rem;
+        }
+
+        .btn-next {
+            right: 0.5rem;
+        }
+
+        .lightbox-header {
+            padding: 0.5rem 1rem;
+        }
+
+        .lightbox-footer {
+            padding: 0.5rem 1rem;
+        }
+
+        .thumbnail-item {
+            width: 60px;
+            height: 60px;
+        }
     }
     </style>
 
     <script>
-    // Photo Modal functionality
+    // Advanced Photo Lightbox functionality
     document.addEventListener('DOMContentLoaded', function() {
         const photoModal = document.getElementById('photoModal');
         const photoModalImage = document.getElementById('photoModalImage');
         const photoModalTitle = document.getElementById('photoModalTitle');
+        const photoCaption = document.getElementById('photoCaption');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnSlideshow = document.getElementById('btnSlideshow');
+        const currentPhotoSpan = document.getElementById('currentPhoto');
+        const totalPhotosSpan = document.getElementById('totalPhotos');
+        const thumbnailsContainer = document.getElementById('thumbnails');
 
+        let photos = [];
+        let currentIndex = 0;
+        let slideshowInterval = null;
+        let isPlaying = false;
+
+        // Collect all photos from the page
+        function collectPhotos() {
+            photos = [];
+            document.querySelectorAll('[data-photo-src]').forEach((item, index) => {
+                photos.push({
+                    src: item.getAttribute('data-photo-src'),
+                    title: item.getAttribute('data-photo-title') || 'Hình ảnh giải đấu',
+                    element: item
+                });
+            });
+        }
+
+        // Show photo at index
+        function showPhoto(index) {
+            if (photos.length === 0) return;
+            
+            currentIndex = (index + photos.length) % photos.length;
+            const photo = photos[currentIndex];
+            
+            photoModalImage.src = photo.src;
+            photoModalImage.alt = photo.title;
+            photoModalTitle.textContent = photo.title;
+            photoCaption.textContent = photo.title;
+            currentPhotoSpan.textContent = currentIndex + 1;
+            totalPhotosSpan.textContent = photos.length;
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail-item').forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === currentIndex);
+            });
+            
+            // Scroll thumbnail into view
+            const activeThumbnail = thumbnailsContainer.children[currentIndex];
+            if (activeThumbnail) {
+                activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        // Generate thumbnails
+        function generateThumbnails() {
+            thumbnailsContainer.innerHTML = '';
+            photos.forEach((photo, index) => {
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = 'thumbnail-item';
+                thumbDiv.innerHTML = `<img src="${photo.src}" alt="${photo.title}">`;
+                thumbDiv.addEventListener('click', () => {
+                    showPhoto(index);
+                });
+                thumbnailsContainer.appendChild(thumbDiv);
+            });
+        }
+
+        // Next photo
+        function nextPhoto() {
+            showPhoto(currentIndex + 1);
+        }
+
+        // Previous photo
+        function prevPhoto() {
+            showPhoto(currentIndex - 1);
+        }
+
+        // Toggle slideshow
+        function toggleSlideshow() {
+            if (isPlaying) {
+                stopSlideshow();
+            } else {
+                startSlideshow();
+            }
+        }
+
+        // Start slideshow
+        function startSlideshow() {
+            isPlaying = true;
+            btnSlideshow.innerHTML = '<i class="bi bi-pause-circle"></i>';
+            btnSlideshow.title = 'Tạm dừng';
+            slideshowInterval = setInterval(nextPhoto, 3000); // 3 seconds per photo
+        }
+
+        // Stop slideshow
+        function stopSlideshow() {
+            isPlaying = false;
+            btnSlideshow.innerHTML = '<i class="bi bi-play-circle"></i>';
+            btnSlideshow.title = 'Trình chiếu tự động';
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+                slideshowInterval = null;
+            }
+        }
+
+        // Keyboard navigation
+        function handleKeyboard(event) {
+            if (!photoModal.classList.contains('show')) return;
+            
+            switch(event.key) {
+                case 'ArrowLeft':
+                    prevPhoto();
+                    stopSlideshow();
+                    break;
+                case 'ArrowRight':
+                    nextPhoto();
+                    stopSlideshow();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    toggleSlideshow();
+                    break;
+                case 'Escape':
+                    stopSlideshow();
+                    break;
+            }
+        }
+
+        // Event listeners
         if (photoModal) {
             photoModal.addEventListener('show.bs.modal', function(event) {
+                collectPhotos();
+                
                 const trigger = event.relatedTarget;
-                const photoSrc = trigger.getAttribute('data-photo-src');
-                const photoTitle = trigger.getAttribute('data-photo-title');
-
-                photoModalImage.src = photoSrc;
-                photoModalImage.alt = photoTitle;
-                photoModalTitle.textContent = photoTitle;
+                if (trigger) {
+                    const clickedSrc = trigger.getAttribute('data-photo-src');
+                    currentIndex = photos.findIndex(p => p.src === clickedSrc);
+                    if (currentIndex === -1) currentIndex = 0;
+                }
+                
+                generateThumbnails();
+                showPhoto(currentIndex);
             });
+
+            photoModal.addEventListener('hidden.bs.modal', function() {
+                stopSlideshow();
+            });
+
+            btnPrev.addEventListener('click', () => {
+                prevPhoto();
+                stopSlideshow();
+            });
+
+            btnNext.addEventListener('click', () => {
+                nextPhoto();
+                stopSlideshow();
+            });
+
+            btnSlideshow.addEventListener('click', toggleSlideshow);
+
+            document.addEventListener('keydown', handleKeyboard);
+
+            // Touch swipe support
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            photoModalImage.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+
+            photoModalImage.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+
+            function handleSwipe() {
+                if (touchEndX < touchStartX - 50) {
+                    nextPhoto();
+                    stopSlideshow();
+                }
+                if (touchEndX > touchStartX + 50) {
+                    prevPhoto();
+                    stopSlideshow();
+                }
+            }
         }
     });
     </script>
