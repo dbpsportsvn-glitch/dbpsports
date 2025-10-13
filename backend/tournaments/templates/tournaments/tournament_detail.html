@@ -704,39 +704,6 @@
         <!-- Modern Gallery Design -->
         <div class="modern-gallery-container">
             
-            <!-- Tournament Gallery URL Section -->
-            {% if tournament.gallery_url %}
-            <div class="gallery-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="bi bi-link-45deg"></i>
-                    </div>
-                    <div class="section-info">
-                        <h3 class="section-title">Album ảnh chính của giải</h3>
-                        <p class="section-subtitle">Xem toàn bộ ảnh gốc chất lượng cao từ {{ tournament.name }}</p>
-                    </div>
-                </div>
-                
-                <div class="gallery-url-card">
-                    <div class="url-card-content">
-                        <div class="url-icon">
-                            <i class="bi bi-images"></i>
-                        </div>
-                        <div class="url-info">
-                            <h4>Album ảnh đầy đủ</h4>
-                            <p>Xem toàn bộ ảnh gốc chất lượng cao của giải đấu</p>
-                        </div>
-                        <div class="url-action">
-                            <a href="{{ tournament.gallery_url }}" target="_blank" class="btn btn-gallery-main">
-                                <i class="bi bi-box-arrow-up-right"></i>
-                                <span>Xem album</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
             <!-- Tournament Highlights Section -->
             <div class="gallery-section">
                 <div class="section-header">
@@ -747,6 +714,14 @@
                         <h3 class="section-title">Hình ảnh nổi bật của giải</h3>
                         <p class="section-subtitle">Những khoảnh khắc đáng nhớ từ {{ tournament.name }}</p>
                     </div>
+                    {% if tournament.gallery_url %}
+                    <div class="section-action">
+                        <a href="{{ tournament.gallery_url }}" target="_blank" class="btn btn-gallery-highlight">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>Xem album</span>
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
                 
                 {% if tournament.photos.all %}
@@ -795,7 +770,11 @@
                 {% if matches_with_galleries %}
                 <div class="gallery-grid match-grid">
                     {% for match in matches_with_galleries %}
+                    {% if match.gallery_url %}
+                    <a href="{{ match.gallery_url }}" target="_blank" class="gallery-item match-item match-card-link">
+                    {% else %}
                     <div class="gallery-item match-item">
+                    {% endif %}
                         <div class="match-card">
                             {% if match.cover_photo %}
                             <div class="match-cover-wrapper">
@@ -817,10 +796,8 @@
                             {% endif %}
                             
                             <div class="match-info">
-                                <div class="match-teams">
-                                    <span class="team-name">{{ match.team1.name }}</span>
-                                    <span class="vs-text">VS</span>
-                                    <span class="team-name">{{ match.team2.name }}</span>
+                                <div class="match-title">
+                                    <h4>{{ match.team1.name }} vs {{ match.team2.name }}</h4>
                                 </div>
                                 <div class="match-details">
                                     <div class="match-time">
@@ -835,17 +812,17 @@
                                     {% endif %}
                                 </div>
                                 
-                                {% if match.gallery_url %}
-                                <div class="match-actions">
-                                    <a href="{{ match.gallery_url }}" target="_blank" class="btn btn-gallery">
-                                        <i class="bi bi-box-arrow-up-right"></i>
-                                        <span>Xem album</span>
-                                    </a>
+                                <div class="match-action">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    <span>Xem album</span>
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
+                    {% if match.gallery_url %}
+                    </a>
+                    {% else %}
                     </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 {% else %}
@@ -910,6 +887,10 @@
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
+    .section-info {
+        flex: 1;
+    }
+
     .section-title {
         font-size: 1.5rem;
         font-weight: 700;
@@ -921,6 +902,32 @@
         color: #718096;
         margin: 0;
         font-size: 0.95rem;
+    }
+
+    .section-action {
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .btn-gallery-highlight {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .btn-gallery-highlight:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        color: white;
     }
 
     /* Gallery Grid */
@@ -1113,6 +1120,46 @@
         border-radius: 6px;
     }
 
+    /* Match Card Link */
+    .match-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .match-card-link:hover {
+        transform: translateY(-4px);
+        color: inherit;
+    }
+
+    .match-card-link:hover .match-card {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .match-title h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 0.75rem 0;
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    .match-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 1rem;
+    }
+
     .match-details {
         display: flex;
         flex-direction: column;
@@ -1154,82 +1201,6 @@
     }
 
     .btn-gallery:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-
-    /* Gallery URL Card */
-    .gallery-url-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .gallery-url-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .url-card-content {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        padding: 2rem;
-    }
-
-    .url-icon {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 2rem;
-        flex-shrink: 0;
-    }
-
-    .url-info {
-        flex: 1;
-    }
-
-    .url-info h4 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #2d3748;
-        margin: 0 0 0.5rem 0;
-    }
-
-    .url-info p {
-        color: #718096;
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
-    .url-action {
-        flex-shrink: 0;
-    }
-
-    .btn-gallery-main {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.875rem 1.5rem;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-    }
-
-    .btn-gallery-main:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         color: white;
@@ -1286,13 +1257,7 @@
             gap: 1rem;
         }
 
-        .url-card-content {
-            flex-direction: column;
-            text-align: center;
-            gap: 1rem;
-        }
-
-        .url-info {
+        .section-action {
             order: -1;
         }
 
