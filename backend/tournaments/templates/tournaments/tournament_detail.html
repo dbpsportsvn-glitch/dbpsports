@@ -58,17 +58,31 @@
 </div>
 {% endif %}
 
-<div class="card shadow-sm" style="border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-    <div class="card-body pb-2">
-        <div class="border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3">
-            <h1 class="text-start mb-0">{{ tournament.name }}</h1>
-
-            {% if tournament.status == 'IN_PROGRESS' and user.is_authenticated %}
-                <a href="{% url 'player_voting' tournament_pk=tournament.pk %}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-hand-thumbs-up-fill"></i> Tới trang Bình chọn
-                </a>
-            {% endif %}
+<!-- Modern Tournament Header -->
+<div class="tournament-header">
+    <div class="tournament-header-content">
+        <div class="tournament-title-section">
+            <h1 class="tournament-title">{{ tournament.name }}</h1>
+            <div class="tournament-status">
+                <span class="status-badge status-{{ tournament.status|lower }}">
+                    {{ tournament.get_status_display }}
+                </span>
+            </div>
         </div>
+
+        {% if tournament.status == 'IN_PROGRESS' and user.is_authenticated %}
+            <div class="tournament-actions">
+                <a href="{% url 'player_voting' tournament_pk=tournament.pk %}" class="voting-btn">
+                    <div class="voting-btn-icon">
+                        <i class="bi bi-hand-thumbs-up-fill"></i>
+                    </div>
+                    <div class="voting-btn-text">
+                        <span class="voting-btn-title">Tới trang Bình chọn</span>
+                        <span class="voting-btn-subtitle">Bình chọn cầu thủ xuất sắc</span>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -2068,6 +2082,192 @@
         .section-header-stats {
             flex-direction: column;
             text-align: center;
+        }
+    }
+
+    /* ============================================
+       MODERN TOURNAMENT HEADER STYLES
+       ============================================ */
+    
+    /* Tournament Header */
+    .tournament-header {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .tournament-header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+    }
+
+    .tournament-title-section {
+        flex: 1;
+    }
+
+    .tournament-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #1a202c;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.2;
+        background: linear-gradient(135deg, #4c51bf, #667eea, #764ba2, #d53f8c);
+        background-size: 200% 200%;
+        animation: gradientShift 3s ease infinite;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .tournament-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-registration_open {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-in_progress {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+        color: #2563eb;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .status-completed {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.1));
+        color: #4b5563;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+
+    /* Voting Button */
+    .tournament-actions {
+        flex-shrink: 0;
+    }
+
+    .voting-btn {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        text-decoration: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        min-width: 200px;
+    }
+
+    .voting-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .voting-btn-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .voting-btn-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .voting-btn-title {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .voting-btn-subtitle {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        line-height: 1.2;
+    }
+
+    /* Responsive Tournament Header */
+    @media (max-width: 768px) {
+        .tournament-header {
+            padding: 1.5rem;
+        }
+
+        .tournament-header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.5rem;
+        }
+
+        .tournament-title {
+            font-size: 2rem;
+        }
+
+        .tournament-status {
+            justify-content: center;
+        }
+
+        .voting-btn {
+            min-width: 100%;
+            justify-content: center;
+        }
+
+        .voting-btn-text {
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tournament-header {
+            padding: 1rem;
+        }
+
+        .tournament-title {
+            font-size: 1.75rem;
+        }
+
+        .voting-btn {
+            padding: 0.875rem 1.25rem;
+        }
+
+        .voting-btn-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 1.25rem;
         }
     }
 
