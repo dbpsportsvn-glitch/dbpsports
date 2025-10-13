@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Hồ Sơ Chuyên Nghiệp - {{ profile_user.get_full_name|default:profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                {% if profile_user.profile.avatar %}
+                                <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.get_full_name|default:profile_user.username }}" 
+                                     class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
+                                {% else %}
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                                    <i class="bi bi-person text-white" style="font-size: 3rem;"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h2 class="mb-2">{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+                            <p class="text-muted mb-2">@{{ profile_user.username }}</p>
+                            
+                            <!-- Professional Roles -->
+                            <div class="mb-3">
+                                {% for role in user_roles %}
+                                <span class="badge bg-primary me-2 mb-2">
+                                    <i class="bi {{ role.icon }}"></i> {{ role.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Rating -->
+                            {% if avg_rating > 0 %}
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-warning text-dark me-2">{{ avg_rating }}/5</span>
+                                <div class="star-rating">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= avg_rating %}
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        {% else %}
+                                            <i class="bi bi-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="ms-2 text-muted small">({{ reviews|length }} đánh giá)</span>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Availability & Rate -->
+                            <div class="d-flex gap-3">
+                                {% if is_available %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Có sẵn
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-clock"></i> Bận
+                                </span>
+                                {% endif %}
+                                
+                                {% if hourly_rate %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-currency-dollar"></i> {{ hourly_rate|floatformat:0 }}k/h
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            {% if is_available %}
+                            <a href="#" class="btn btn-success btn-lg">
+                                <i class="bi bi-telephone"></i><br>
+                                <small>Liên hệ</small>
+                            </a>
+                            {% else %}
+                            <button class="btn btn-secondary btn-lg" disabled>
+                                <i class="bi bi-person-x"></i><br>
+                                <small>Không khả dụng</small>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column: Professional Info -->
+        <div class="col-lg-8">
+            <!-- Professional Skills & Experience -->
+            {% if professional_info %}
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-briefcase-fill text-primary me-2"></i>Thông Tin Chuyên Nghiệp
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if professional_info.referee %}
+                    <div class="mb-4">
+                        <h6 class="text-warning">
+                            <i class="bi bi-whistle me-2"></i>Trọng Tài
+                        </h6>
+                        <div class="row">
+                            {% if professional_info.referee.experience %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Kinh nghiệm:</strong> {{ professional_info.referee.experience }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.referee.certifications %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Chứng chỉ:</strong> {{ professional_info.referee.certifications }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.referee.specialties %}
+                            <div class="col-12">
+                                <strong>Chuyên môn:</strong> {{ professional_info.referee.specialties }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if professional_info.media %}
+                    <div class="mb-4">
+                        <h6 class="text-info">
+                            <i class="bi bi-camera-fill me-2"></i>Media & Nhiếp Ảnh
+                        </h6>
+                        <div class="row">
+                            {% if professional_info.media.portfolio %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Portfolio:</strong> {{ professional_info.media.portfolio }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.media.equipment %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Thiết bị:</strong> {{ professional_info.media.equipment }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.media.specialties %}
+                            <div class="col-12">
+                                <strong>Chuyên môn:</strong> {{ professional_info.media.specialties }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if professional_info.commentator %}
+                    <div class="mb-4">
+                        <h6 class="text-success">
+                            <i class="bi bi-mic-fill me-2"></i>Bình Luận Viên
+                        </h6>
+                        <div class="row">
+                            {% if professional_info.commentator.style %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Phong cách:</strong> {{ professional_info.commentator.style }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.commentator.languages %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Ngôn ngữ:</strong> {{ professional_info.commentator.languages }}
+                            </div>
+                            {% endif %}
+                            {% if professional_info.commentator.experience %}
+                            <div class="col-12">
+                                <strong>Kinh nghiệm:</strong> {{ professional_info.commentator.experience }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Job History -->
+            {% if job_applications %}
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history text-info me-2"></i>Lịch Sử Công Việc
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for app in job_applications %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ app.job.title }}</h6>
+                                    <p class="mb-1 text-muted">
+                                        {% if app.job.tournament %}
+                                            <i class="bi bi-trophy text-warning me-1"></i>{{ app.job.tournament.name }}
+                                        {% elif app.job.stadium %}
+                                            <i class="bi bi-building text-info me-1"></i>{{ app.job.stadium.stadium_name }}
+                                        {% endif %}
+                                    </p>
+                                    <small class="text-muted">{{ app.applied_at|date:"d/m/Y" }}</small>
+                                </div>
+                                <span class="badge bg-success">Đã hoàn thành</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Reviews -->
+            {% if reviews %}
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star-fill text-warning me-2"></i>Đánh Giá & Nhận Xét
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for review in reviews %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
+                                        {% if review.job_application.job %}
+                                            <small class="text-muted">- {{ review.job_application.job.title }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="star-rating">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                <p class="mb-0 small">{{ review.comment }}</p>
+                                {% endif %}
+                                <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Contact & Quick Info -->
+        <div class="col-lg-4">
+            <!-- Contact Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-telephone-fill text-success me-2"></i>Liên Hệ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if profile_user.email %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-envelope text-primary me-2"></i>
+                        <span>{{ profile_user.email }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile_user.profile.phone_number %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-phone text-success me-2"></i>
+                        <span>{{ profile_user.profile.phone_number }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile_user.profile.region %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-geo-alt text-warning me-2"></i>
+                        <span>{{ profile_user.profile.get_region_display }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        {% if is_available %}
+                        <a href="#" class="btn btn-success">
+                            <i class="bi bi-telephone me-2"></i>Liên hệ ngay
+                        </a>
+                        <a href="{% url 'public_profile' username=profile_user.username %}" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>Xem hồ sơ cá nhân
+                        </a>
+                        {% else %}
+                        <button class="btn btn-warning" disabled>
+                            <i class="bi bi-clock me-2"></i>Hiện đang bận
+                        </button>
+                        <a href="{% url 'public_profile' username=profile_user.username %}" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-2"></i>Xem hồ sơ cá nhân
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart-fill text-info me-2"></i>Thống Kê
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 text-primary">{{ reviews|length }}</div>
+                            <small class="text-muted">Đánh giá</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success">{{ job_applications|length }}</div>
+                            <small class="text-muted">Công việc</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.star-rating {
+    font-size: 1rem;
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .card-body .row {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

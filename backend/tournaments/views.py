@@ -17,6 +17,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count, F, Prefetch, Q, Sum, Value
+from django.db import models
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -1900,16 +1901,101 @@ def media_edit_match(request, pk):
     return render(request, 'tournaments/media_edit_match.html', context)
 
 def job_market_view(request):
+    # Lấy các filter parameters
     region_filter = request.GET.get('region', '')
-    jobs = JobPosting.objects.filter(status=JobPosting.Status.OPEN).select_related('tournament', 'role_required')
+    role_filter = request.GET.get('role', '')
+    search_query = request.GET.get('search', '')
+    job_type_filter = request.GET.get('job_type', '')  # tournament hoặc stadium
+    
+    # Base queryset cho jobs
+    jobs = JobPosting.objects.filter(status=JobPosting.Status.OPEN).select_related(
+        'tournament', 'role_required', 'stadium'
+    )
+    
+    # Apply filters
     if region_filter:
-        jobs = jobs.filter(tournament__region=region_filter)
+        # Filter theo region của tournament hoặc stadium
+        jobs = jobs.filter(
+            models.Q(tournament__region=region_filter) | 
+            models.Q(stadium__region=region_filter)
+        )
+    
+    if role_filter:
+        jobs = jobs.filter(role_required__id=role_filter)
+    
+    if job_type_filter:
+        if job_type_filter == 'tournament':
+            jobs = jobs.filter(tournament__isnull=False)
+        elif job_type_filter == 'stadium':
+            jobs = jobs.filter(stadium__isnull=False)
+    
+    if search_query:
+        jobs = jobs.filter(
+            models.Q(title__icontains=search_query) |
+            models.Q(description__icontains=search_query) |
+            models.Q(tournament__name__icontains=search_query) |
+            models.Q(stadium__stadium_name__icontains=search_query)
+        )
+    
+    # Lấy professional rankings (top rated professionals)
+    from users.models import CoachProfile, StadiumProfile
+    from organizations.models import ProfessionalReview
+    
+    # Top coaches với ratings
+    top_coaches = CoachProfile.objects.annotate(
+        avg_rating=models.Avg('reviews__rating'),
+        review_count=models.Count('reviews', filter=models.Q(reviews__is_approved=True))
+    ).filter(
+        review_count__gt=0,
+        is_available=True
+    ).order_by('-avg_rating')[:5]
+    
+    # Top stadiums với ratings
+    top_stadiums = StadiumProfile.objects.annotate(
+        avg_rating=models.Avg('reviews__rating'),
+        review_count=models.Count('reviews', filter=models.Q(reviews__is_approved=True))
+    ).filter(
+        review_count__gt=0
+    ).order_by('-avg_rating')[:5]
+    
+    # Top professionals từ job applications (referee, media, etc.)
+    top_professionals = User.objects.annotate(
+        avg_rating=models.Avg('received_reviews__rating'),
+        review_count=models.Count('received_reviews')
+    ).filter(
+        review_count__gt=0,
+        profile__roles__id__in=['REFEREE', 'MEDIA', 'PHOTOGRAPHER', 'COMMENTATOR']
+    ).order_by('-avg_rating')[:5]
+    
+    # Lấy tất cả roles để filter
+    from users.models import Role
+    all_roles = Role.objects.all().order_by('name')
+    
+    # Tìm kiếm user profiles nếu có search query
+    search_users = None
+    if search_query:
+        # Tìm users theo username, first_name, last_name, email
+        search_users = User.objects.filter(
+            models.Q(username__icontains=search_query) |
+            models.Q(first_name__icontains=search_query) |
+            models.Q(last_name__icontains=search_query) |
+            models.Q(email__icontains=search_query)
+        ).select_related('profile').distinct()[:10]  # Limit 10 results
+    
     context = {
         'jobs': jobs,
+        'search_users': search_users,
         'all_regions': Tournament.Region.choices,
+        'all_roles': all_roles,
         'current_region': region_filter,
+        'current_role': role_filter,
+        'current_search': search_query,
+        'current_job_type': job_type_filter,
+        'top_coaches': top_coaches,
+        'top_stadiums': top_stadiums,
+        'top_professionals': top_professionals,
     }
-    return render(request, 'tournaments/job_market.html', context)
+    return render(request, 'tournaments/job_market_new.html', context)
 
 def job_detail_view(request, pk):
     job = get_object_or_404(JobPosting, pk=pk)

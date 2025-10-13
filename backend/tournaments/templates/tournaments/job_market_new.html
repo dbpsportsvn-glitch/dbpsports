@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Thị Trường Việc Làm & Chuyên Gia{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-5 fw-bold mb-3">
+                            <i class="bi bi-briefcase-fill me-3"></i>Thị Trường Việc Làm & Chuyên Gia
+                        </h1>
+                        <p class="lead mb-0">
+                            Tìm kiếm cơ hội việc làm trong ngành bóng đá và kết nối với các chuyên gia hàng đầu
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 mb-1">{{ jobs|length }}</div>
+                                    <small>Việc làm</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 mb-1">{{ top_coaches|length|add:top_stadiums|length|add:top_professionals|length }}</div>
+                                    <small>Chuyên gia</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 mb-1">{{ all_regions|length }}</div>
+                                    <small>Khu vực</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content - 3 Column Layout -->
+    <div class="row g-4">
+        <!-- Column 1: Advanced Search Filters -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel-fill text-primary me-2"></i>Bộ Lọc Nâng Cao
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form">
+                        <!-- Search Box -->
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       value="{{ current_search }}" placeholder="Tìm việc làm, chuyên gia...">
+                            </div>
+                        </div>
+
+                        <!-- Job Type Filter -->
+                        <div class="mb-3">
+                            <label for="job_type" class="form-label">Loại việc làm</label>
+                            <select name="job_type" id="job_type" class="form-select">
+                                <option value="">Tất cả</option>
+                                <option value="tournament" {% if current_job_type == 'tournament' %}selected{% endif %}>
+                                    <i class="bi bi-trophy"></i> Giải đấu
+                                </option>
+                                <option value="stadium" {% if current_job_type == 'stadium' %}selected{% endif %}>
+                                    <i class="bi bi-building"></i> Sân bóng
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Role Filter -->
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Vai trò</label>
+                            <select name="role" id="role" class="form-select">
+                                <option value="">Tất cả vai trò</option>
+                                {% for role in all_roles %}
+                                <option value="{{ role.id }}" {% if role.id == current_role %}selected{% endif %}>
+                                    <i class="bi {{ role.icon }}"></i> {{ role.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Region Filter -->
+                        <div class="mb-3">
+                            <label for="region" class="form-label">Khu vực</label>
+                            <select name="region" id="region" class="form-select">
+                                <option value="">Tất cả khu vực</option>
+                                {% for region_value, region_name in all_regions %}
+                                <option value="{{ region_value }}" {% if region_value == current_region %}selected{% endif %}>
+                                    {{ region_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-2"></i>Tìm kiếm
+                            </button>
+                            <a href="{% url 'job_market' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Đặt lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 2: Job Listings -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul text-success me-2"></i>
+                        {% if current_search %}
+                            Kết Quả Tìm Kiếm
+                        {% else %}
+                            Việc Làm Đang Tuyển
+                        {% endif %}
+                    </h5>
+                    <div class="d-flex gap-2">
+                        {% if search_users %}
+                        <span class="badge bg-info">{{ search_users|length }} người dùng</span>
+                        {% endif %}
+                        <span class="badge bg-success">{{ jobs|length }} việc làm</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Search Results: Users -->
+                    {% if search_users %}
+                    <div class="search-users mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-people-fill me-2"></i>Người Dùng Tìm Được
+                        </h6>
+                        <div class="row g-2">
+                            {% for user in search_users %}
+                            <div class="col-md-6">
+                                <div class="user-item border rounded-3 p-3 hover-shadow">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar me-3">
+                                            {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold small">{{ user.get_full_name|default:user.username }}</div>
+                                            <div class="text-muted small">@{{ user.username }}</div>
+                                            {% if user.profile.roles.exists %}
+                                            <div class="mt-1">
+                                                {% for role in user.profile.roles.all %}
+                                                <span class="badge bg-light text-dark me-1 small">
+                                                    <i class="bi {{ role.icon }}"></i> {{ role.name }}
+                                                </span>
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <a href="{% url 'professional_profile' username=user.username %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <hr class="my-3">
+                    </div>
+                    {% endif %}
+
+                    <!-- Search Results: Jobs -->
+                    {% if jobs %}
+                        <div class="job-list">
+                            {% for job in jobs %}
+                            <div class="job-item border rounded-3 p-3 mb-3 hover-shadow">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">{{ job.title }}</h6>
+                                        <div class="text-muted small">
+                                            {% if job.tournament %}
+                                                <i class="bi bi-trophy text-warning me-1"></i>
+                                                <a href="{% url 'tournament_detail' pk=job.tournament.pk %}" class="text-decoration-none">
+                                                    {{ job.tournament.name }}
+                                                </a>
+                                            {% elif job.stadium %}
+                                                <i class="bi bi-building text-info me-1"></i>
+                                                <span class="text-info">{{ job.stadium.stadium_name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary">
+                                            <i class="bi {{ job.role_required.icon }} me-1"></i>
+                                            {{ job.role_required.name }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="job-meta mb-2">
+                                    <div class="row g-2">
+                                        <div class="col-auto">
+                                            <span class="badge bg-light text-dark">
+                                                <i class="bi bi-geo-alt me-1"></i>
+                                                {% if job.location_detail %}
+                                                    {{ job.location_detail }}
+                                                {% elif job.tournament %}
+                                                    {{ job.tournament.get_region_display }}
+                                                {% elif job.stadium %}
+                                                    {{ job.stadium.get_region_display }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="col-auto">
+                                            <span class="badge bg-light text-dark">
+                                                <i class="bi bi-clock me-1"></i>
+                                                {{ job.created_at|naturaltime }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if job.description %}
+                                <p class="text-muted small mb-3">{{ job.description|truncatewords:20 }}</p>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'job_detail' pk=job.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                    </a>
+                                    {% if job.tournament %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ job.tournament.start_date|date:"d/m/Y" }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% if current_search %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Không tìm thấy kết quả nào</h5>
+                            <p class="text-muted">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+                            <div class="mt-3">
+                                <a href="{% url 'job_market' %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Xem tất cả việc làm
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Không tìm thấy việc làm nào</h5>
+                            <p class="text-muted">Thử thay đổi bộ lọc để tìm thêm cơ hội việc làm</p>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 3: Professional Rankings -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trophy-fill text-warning me-2"></i>Top Chuyên Gia
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="rankings">
+                        <!-- Top Coaches -->
+                        {% if top_coaches %}
+                        <div class="ranking-section mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-clipboard-check me-2"></i>Huấn Luyện Viên
+                            </h6>
+                            {% for coach in top_coaches %}
+                            <div class="ranking-item d-flex align-items-center mb-2 p-2 rounded hover-bg-light">
+                                <div class="rank-number me-2">
+                                    <span class="badge bg-primary rounded-circle">{{ forloop.counter }}</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">{{ coach.full_name }}</div>
+                                    <div class="star-rating small">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= coach.avg_rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1 text-muted small">{{ coach.avg_rating|floatformat:1 }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'coach_profile_detail' pk=coach.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Top Stadiums -->
+                        {% if top_stadiums %}
+                        <div class="ranking-section mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="bi bi-building me-2"></i>Sân Bóng
+                            </h6>
+                            {% for stadium in top_stadiums %}
+                            <div class="ranking-item d-flex align-items-center mb-2 p-2 rounded hover-bg-light">
+                                <div class="rank-number me-2">
+                                    <span class="badge bg-info rounded-circle">{{ forloop.counter }}</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">{{ stadium.stadium_name }}</div>
+                                    <div class="star-rating small">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= stadium.avg_rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1 text-muted small">{{ stadium.avg_rating|floatformat:1 }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'stadium_profile_detail' pk=stadium.pk %}" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Top Professionals -->
+                        {% if top_professionals %}
+                        <div class="ranking-section">
+                            <h6 class="text-success mb-3">
+                                <i class="bi bi-people-fill me-2"></i>Chuyên Gia Khác
+                            </h6>
+                            {% for professional in top_professionals %}
+                            <div class="ranking-item d-flex align-items-center mb-2 p-2 rounded hover-bg-light">
+                                <div class="rank-number me-2">
+                                    <span class="badge bg-success rounded-circle">{{ forloop.counter }}</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">{{ professional.get_full_name|default:professional.username }}</div>
+                                    <div class="star-rating small">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= professional.avg_rating %}
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            {% else %}
+                                                <i class="bi bi-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-1 text-muted small">{{ professional.avg_rating|floatformat:1 }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'professional_profile' username=professional.username %}" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if not top_coaches and not top_stadiums and not top_professionals %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-star text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted small mt-2">Chưa có đánh giá nào</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.hover-bg-light:hover {
+    background-color: rgba(0,123,255,0.1);
+}
+
+.ranking-item {
+    transition: all 0.2s ease;
+}
+
+.stats-box {
+    backdrop-filter: blur(10px);
+}
+
+.job-item {
+    transition: all 0.3s ease;
+}
+
+.star-rating {
+    font-size: 0.875rem;
+}
+
+.ranking-section h6 {
+    border-bottom: 2px solid;
+    padding-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .hero-section .row {
+        text-align: center;
+    }
+    
+    .stats-box {
+        margin-top: 1rem;
+    }
+}
+</style>
+{% endblock %}

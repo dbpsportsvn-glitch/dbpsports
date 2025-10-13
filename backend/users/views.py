@@ -828,3 +828,103 @@ def create_stadium_review(request, stadium_pk):
     }
     
     return render(request, 'users/create_stadium_review.html', context)
+
+
+def professional_profile_view(request, username):
+    """Hiển thị hồ sơ chuyên nghiệp cho các vai trò công việc."""
+    try:
+        profile_user = User.objects.select_related('profile').get(username=username)
+    except User.DoesNotExist:
+        try:
+            profile_user = User.objects.select_related('profile').get(email=username)
+        except User.DoesNotExist:
+            return render(request, 'users/user_not_found.html', {
+                'username': username
+            }, status=404)
+    
+    profile = profile_user.profile
+    
+    # Kiểm tra user có roles liên quan đến công việc không
+    professional_roles = ['REFEREE', 'MEDIA', 'PHOTOGRAPHER', 'COMMENTATOR', 'COACH', 'STADIUM']
+    user_roles = profile.roles.filter(id__in=professional_roles)
+    
+    if not user_roles.exists():
+        # Nếu không có professional roles, redirect về public profile
+        return redirect('public_profile', username=username)
+    
+    # Lấy thông tin chuyên nghiệp
+    professional_info = {}
+    
+    # Thông tin referee
+    if user_roles.filter(id='REFEREE').exists():
+        professional_info['referee'] = {
+            'experience': getattr(profile, 'referee_experience', None),
+            'certifications': getattr(profile, 'referee_certifications', None),
+            'specialties': getattr(profile, 'referee_specialties', None),
+        }
+    
+    # Thông tin media/photographer
+    if user_roles.filter(id__in=['MEDIA', 'PHOTOGRAPHER']).exists():
+        professional_info['media'] = {
+            'portfolio': getattr(profile, 'media_portfolio', None),
+            'equipment': getattr(profile, 'media_equipment', None),
+            'specialties': getattr(profile, 'media_specialties', None),
+        }
+    
+    # Thông tin commentator
+    if user_roles.filter(id='COMMENTATOR').exists():
+        professional_info['commentator'] = {
+            'style': getattr(profile, 'commentary_style', None),
+            'languages': getattr(profile, 'commentary_languages', None),
+            'experience': getattr(profile, 'commentary_experience', None),
+        }
+    
+    # Lấy reviews và ratings
+    reviews = ProfessionalReview.objects.filter(
+        reviewee=profile_user
+    ).select_related('reviewer', 'job_application').order_by('-created_at')[:10]
+    
+    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
+    avg_rating = round(avg_rating, 1) if avg_rating else 0
+    
+    # Lấy job history
+    job_applications = JobApplication.objects.filter(
+        applicant=profile_user,
+        status='APPROVED'
+    ).select_related('job', 'job__tournament', 'job__stadium').order_by('-applied_at')[:5]
+    
+    # Lấy availability status
+    is_available = False
+    hourly_rate = None
+    
+    # Kiểm tra availability dựa trên roles
+    if user_roles.filter(id='COACH').exists():
+        # Nếu là coach, kiểm tra is_available từ CoachProfile
+        try:
+            coach_profile = CoachProfile.objects.get(user=profile_user)
+            is_available = coach_profile.is_available
+            hourly_rate = getattr(coach_profile, 'hourly_rate', None)
+        except CoachProfile.DoesNotExist:
+            is_available = False
+    elif user_roles.filter(id='STADIUM').exists():
+        # Stadium luôn available (có thể thuê)
+        is_available = True
+        hourly_rate = None
+    else:
+        # Các roles khác (referee, media, etc.) - mặc định available
+        is_available = True
+        hourly_rate = getattr(profile, 'hourly_rate', None)
+    
+    context = {
+        'profile_user': profile_user,
+        'profile': profile,
+        'user_roles': user_roles,
+        'professional_info': professional_info,
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'job_applications': job_applications,
+        'is_available': is_available,
+        'hourly_rate': hourly_rate,
+    }
+    
+    return render(request, 'users/professional_profile.html', context)
