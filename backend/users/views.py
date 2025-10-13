@@ -351,15 +351,79 @@ def public_profile_view(request, username):
     if average_rating:
         average_rating = round(average_rating, 1) # Làm tròn 1 chữ số thập phân    
 
+    # === THÊM: LẤY THÔNG TIN COACH ===
+    coach_profile = None
+    coach_reviews = []
+    coach_avg_rating = 0
+    try:
+        coach_profile = profile_user.coach_profile
+        coach_reviews = CoachReview.objects.filter(
+            coach_profile=coach_profile,
+            is_approved=True
+        ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
+        coach_avg = coach_reviews.aggregate(avg=Avg('rating'))['avg']
+        if coach_avg:
+            coach_avg_rating = round(coach_avg, 1)
+    except CoachProfile.DoesNotExist:
+        pass
+
+    # === THÊM: LẤY THÔNG TIN STADIUM ===
+    stadium_profile = None
+    stadium_reviews = []
+    stadium_avg_rating = 0
+    try:
+        stadium_profile = profile_user.stadium_profile
+        stadium_reviews = StadiumReview.objects.filter(
+            stadium_profile=stadium_profile,
+            is_approved=True
+        ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
+        stadium_avg = stadium_reviews.aggregate(avg=Avg('rating'))['avg']
+        if stadium_avg:
+            stadium_avg_rating = round(stadium_avg, 1)
+    except StadiumProfile.DoesNotExist:
+        pass
+
+    # === THÊM: LẤY LỊCH SỬ CÔNG VIỆC ===
+    job_applications = JobApplication.objects.filter(
+        applicant=profile_user,
+        status='APPROVED'
+    ).select_related('job', 'job__tournament', 'job__stadium').order_by('-applied_at')[:10]
+
+    # === THÊM: TÍNH AVAILABILITY ===
+    is_available = True
+    hourly_rate = None
+    user_roles = profile.roles.all()
+    
+    if user_roles.filter(id='COACH').exists() and coach_profile:
+        is_available = coach_profile.is_available
+        hourly_rate = getattr(coach_profile, 'hourly_rate', None)
+    elif user_roles.filter(id='STADIUM').exists():
+        is_available = True
+    else:
+        hourly_rate = getattr(profile, 'hourly_rate', None)
+
     context = {
         'profile_user': profile_user,
         'profile': profile,
         'achievements': achievements,
         'commentator_gigs': commentator_gigs,
         'media_gigs': media_gigs,
-        'reviews': reviews,                     # Gửi reviews ra template
-        'average_rating': average_rating,       # Gửi rating trung bình
-        'reviews_count': reviews.count(),       # Gửi tổng số reviews
+        'reviews': reviews,
+        'average_rating': average_rating,
+        'reviews_count': reviews.count(),
+        # Coach data
+        'coach_profile': coach_profile,
+        'coach_reviews': coach_reviews,
+        'coach_avg_rating': coach_avg_rating,
+        # Stadium data
+        'stadium_profile': stadium_profile,
+        'stadium_reviews': stadium_reviews,
+        'stadium_avg_rating': stadium_avg_rating,
+        # Professional data
+        'job_applications': job_applications,
+        'is_available': is_available,
+        'hourly_rate': hourly_rate,
+        'user_roles': user_roles,
     }
     return render(request, 'users/public_profile.html', context)
 
@@ -410,51 +474,11 @@ def create_coach_profile(request):
     return render(request, 'users/coach_profile_form.html', context)
 
 
-@login_required
 def coach_profile_detail(request, pk):
-    """Chi tiết hồ sơ HLV"""
+    """Redirect to unified public profile"""
     from .models import CoachProfile
-    from tournaments.models import CoachRecruitment
-    
-    coach_profile = get_object_or_404(CoachProfile.objects.select_related('user', 'team'), pk=pk)
-    
-    # Kiểm tra quyền chỉnh sửa
-    can_edit = request.user == coach_profile.user
-    
-    # Lấy lịch sử chiêu mộ nếu là chính user đó
-    recruitment_history = None
-    if can_edit:
-        recruitment_history = CoachRecruitment.objects.filter(
-            coach=coach_profile
-        ).select_related('team', 'team__captain').order_by('-created_at')[:5]
-    
-    # Lấy reviews và tính rating trung bình
-    reviews = CoachReview.objects.filter(
-        coach_profile=coach_profile,
-        is_approved=True
-    ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
-    
-    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
-    avg_rating = round(avg_rating, 1) if avg_rating else 0
-    
-    # Kiểm tra xem user hiện tại đã đánh giá chưa
-    user_reviewed = False
-    if request.user.is_authenticated:
-        user_reviewed = CoachReview.objects.filter(
-            coach_profile=coach_profile,
-            reviewer=request.user
-        ).exists()
-    
-    context = {
-        'coach_profile': coach_profile,
-        'can_edit': can_edit,
-        'recruitment_history': recruitment_history,
-        'reviews': reviews,
-        'avg_rating': avg_rating,
-        'user_reviewed': user_reviewed,
-    }
-    
-    return render(request, 'users/coach_profile_detail.html', context)
+    coach_profile = get_object_or_404(CoachProfile, pk=pk)
+    return redirect('public_profile', username=coach_profile.user.username)
 
 
 # ===== VIEWS CHO SÂN BÓNG =====
@@ -505,38 +529,9 @@ def create_stadium_profile(request):
 
 @login_required
 def stadium_profile_detail(request, pk):
-    """Chi tiết hồ sơ Sân bóng"""
-    stadium_profile = get_object_or_404(StadiumProfile.objects.select_related('user'), pk=pk)
-    
-    # Kiểm tra quyền chỉnh sửa
-    can_edit = request.user == stadium_profile.user
-    
-    # Lấy reviews và tính rating trung bình
-    reviews = StadiumReview.objects.filter(
-        stadium_profile=stadium_profile,
-        is_approved=True
-    ).select_related('reviewer', 'team', 'tournament').order_by('-created_at')
-    
-    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
-    avg_rating = round(avg_rating, 1) if avg_rating else 0
-    
-    # Kiểm tra xem user hiện tại đã đánh giá chưa
-    user_reviewed = False
-    if request.user.is_authenticated:
-        user_reviewed = StadiumReview.objects.filter(
-            stadium_profile=stadium_profile,
-            reviewer=request.user
-        ).exists()
-    
-    context = {
-        'stadium_profile': stadium_profile,
-        'can_edit': can_edit,
-        'reviews': reviews,
-        'avg_rating': avg_rating,
-        'user_reviewed': user_reviewed,
-    }
-    
-    return render(request, 'users/stadium_profile_detail.html', context)
+    """Redirect to unified public profile"""
+    stadium_profile = get_object_or_404(StadiumProfile, pk=pk)
+    return redirect('public_profile', username=stadium_profile.user.username)
 
 
 @login_required
@@ -831,100 +826,5 @@ def create_stadium_review(request, stadium_pk):
 
 
 def professional_profile_view(request, username):
-    """Hiển thị hồ sơ chuyên nghiệp cho các vai trò công việc."""
-    try:
-        profile_user = User.objects.select_related('profile').get(username=username)
-    except User.DoesNotExist:
-        try:
-            profile_user = User.objects.select_related('profile').get(email=username)
-        except User.DoesNotExist:
-            return render(request, 'users/user_not_found.html', {
-                'username': username
-            }, status=404)
-    
-    profile = profile_user.profile
-    
-    # Kiểm tra user có roles liên quan đến công việc không
-    professional_roles = ['REFEREE', 'MEDIA', 'PHOTOGRAPHER', 'COMMENTATOR', 'COACH', 'STADIUM']
-    user_roles = profile.roles.filter(id__in=professional_roles)
-    
-    if not user_roles.exists():
-        # Nếu không có professional roles, redirect về public profile
-        return redirect('public_profile', username=username)
-    
-    # Lấy thông tin chuyên nghiệp
-    professional_info = {}
-    
-    # Thông tin referee
-    if user_roles.filter(id='REFEREE').exists():
-        professional_info['referee'] = {
-            'experience': getattr(profile, 'referee_experience', None),
-            'certifications': getattr(profile, 'referee_certifications', None),
-            'specialties': getattr(profile, 'referee_specialties', None),
-        }
-    
-    # Thông tin media/photographer
-    if user_roles.filter(id__in=['MEDIA', 'PHOTOGRAPHER']).exists():
-        professional_info['media'] = {
-            'portfolio': getattr(profile, 'media_portfolio', None),
-            'equipment': getattr(profile, 'media_equipment', None),
-            'specialties': getattr(profile, 'media_specialties', None),
-        }
-    
-    # Thông tin commentator
-    if user_roles.filter(id='COMMENTATOR').exists():
-        professional_info['commentator'] = {
-            'style': getattr(profile, 'commentary_style', None),
-            'languages': getattr(profile, 'commentary_languages', None),
-            'experience': getattr(profile, 'commentary_experience', None),
-        }
-    
-    # Lấy reviews và ratings
-    reviews = ProfessionalReview.objects.filter(
-        reviewee=profile_user
-    ).select_related('reviewer', 'job_application').order_by('-created_at')[:10]
-    
-    avg_rating = reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
-    avg_rating = round(avg_rating, 1) if avg_rating else 0
-    
-    # Lấy job history
-    job_applications = JobApplication.objects.filter(
-        applicant=profile_user,
-        status='APPROVED'
-    ).select_related('job', 'job__tournament', 'job__stadium').order_by('-applied_at')[:5]
-    
-    # Lấy availability status
-    is_available = False
-    hourly_rate = None
-    
-    # Kiểm tra availability dựa trên roles
-    if user_roles.filter(id='COACH').exists():
-        # Nếu là coach, kiểm tra is_available từ CoachProfile
-        try:
-            coach_profile = CoachProfile.objects.get(user=profile_user)
-            is_available = coach_profile.is_available
-            hourly_rate = getattr(coach_profile, 'hourly_rate', None)
-        except CoachProfile.DoesNotExist:
-            is_available = False
-    elif user_roles.filter(id='STADIUM').exists():
-        # Stadium luôn available (có thể thuê)
-        is_available = True
-        hourly_rate = None
-    else:
-        # Các roles khác (referee, media, etc.) - mặc định available
-        is_available = True
-        hourly_rate = getattr(profile, 'hourly_rate', None)
-    
-    context = {
-        'profile_user': profile_user,
-        'profile': profile,
-        'user_roles': user_roles,
-        'professional_info': professional_info,
-        'reviews': reviews,
-        'avg_rating': avg_rating,
-        'job_applications': job_applications,
-        'is_available': is_available,
-        'hourly_rate': hourly_rate,
-    }
-    
-    return render(request, 'users/professional_profile.html', context)
+    """Redirect to unified public profile"""
+    return redirect('public_profile', username=username)

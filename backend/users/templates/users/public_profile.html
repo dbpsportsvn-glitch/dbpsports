@@ -149,6 +149,215 @@
             </div>
             {% endif %}
 
+            {# === THÔNG TIN HUẤN LUYỆN VIÊN === #}
+            {% if coach_profile %}
+            <h3 class="section-title"><i class="bi bi-clipboard-check-fill"></i> Thông tin Huấn luyện viên</h3>
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            {% if coach_profile.avatar %}
+                            <img src="{{ coach_profile.avatar.url }}" alt="{{ coach_profile.full_name }}" 
+                                 class="rounded-circle img-fluid mb-2" width="100" height="100" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="bi bi-person-badge text-white" style="font-size: 2.5rem;"></i>
+                            </div>
+                            {% endif %}
+                            <h5>{{ coach_profile.full_name }}</h5>
+                            {% if coach_avg_rating > 0 %}
+                            <div class="text-warning">
+                                {% for i in "12345" %}
+                                <i class="bi {% if forloop.counter <= coach_avg_rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                {% endfor %}
+                                <div class="small text-muted">{{ coach_avg_rating }}/5 ({{ coach_reviews|length }} đánh giá)</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <i class="bi bi-clock-history text-success"></i> <strong>Kinh nghiệm:</strong> {{ coach_profile.years_of_experience }} năm
+                                </div>
+                                {% if coach_profile.coaching_license %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-award text-warning"></i> <strong>Chứng chỉ:</strong> {{ coach_profile.coaching_license }}
+                                </div>
+                                {% endif %}
+                                {% if coach_profile.region %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-geo-alt text-primary"></i> <strong>Khu vực:</strong> {{ coach_profile.get_region_display }}
+                                </div>
+                                {% endif %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-check-circle {% if coach_profile.is_available %}text-success{% else %}text-secondary{% endif %}"></i> 
+                                    <strong>Trạng thái:</strong> {% if coach_profile.is_available %}Sẵn sàng{% else %}Đang bận{% endif %}
+                                </div>
+                                {% if coach_profile.bio %}
+                                <div class="col-12">
+                                    <i class="bi bi-card-text text-info"></i> <strong>Giới thiệu:</strong>
+                                    <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ coach_profile.bio }}</p>
+                                </div>
+                                {% endif %}
+                                {% if coach_profile.achievements %}
+                                <div class="col-12">
+                                    <i class="bi bi-trophy text-warning"></i> <strong>Thành tích:</strong>
+                                    <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ coach_profile.achievements }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {# Coach Reviews #}
+            {% if coach_reviews %}
+            <h4 class="mt-4 mb-3"><i class="bi bi-chat-left-quote"></i> Đánh giá từ các đội bóng</h4>
+            {% for review in coach_reviews %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
+                            <small class="text-muted d-block">
+                                {% if review.team %}{{ review.team.name }}{% endif %}
+                                {% if review.tournament %} - {{ review.tournament.name }}{% endif %}
+                            </small>
+                        </div>
+                        <div class="text-warning">
+                            {% for i in "12345" %}<i class="bi {% if forloop.counter <= review.rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>{% endfor %}
+                        </div>
+                    </div>
+                    {% if review.comment %}
+                    <p class="mt-2 mb-0 fst-italic">"{{ review.comment }}"</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
+            
+            {# === THÔNG TIN SÂN BÓNG === #}
+            {% if stadium_profile %}
+            <h3 class="section-title"><i class="bi bi-building"></i> Thông tin Sân bóng</h3>
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3 text-center">
+                            {% if stadium_profile.logo %}
+                            <img src="{{ stadium_profile.logo.url }}" alt="{{ stadium_profile.stadium_name }}" 
+                                 class="rounded img-fluid mb-2" width="120" height="120" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-success rounded d-flex align-items-center justify-content-center mx-auto mb-2" 
+                                 style="width: 120px; height: 120px;">
+                                <i class="bi bi-building text-white" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                            <h5>{{ stadium_profile.stadium_name }}</h5>
+                            {% if stadium_avg_rating > 0 %}
+                            <div class="text-warning">
+                                {% for i in "12345" %}
+                                <i class="bi {% if forloop.counter <= stadium_avg_rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                {% endfor %}
+                                <div class="small text-muted">{{ stadium_avg_rating }}/5 ({{ stadium_reviews|length }} đánh giá)</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row g-3">
+                                {% if stadium_profile.address %}
+                                <div class="col-md-12">
+                                    <i class="bi bi-geo-alt text-primary"></i> <strong>Địa chỉ:</strong> {{ stadium_profile.address }}
+                                </div>
+                                {% endif %}
+                                {% if stadium_profile.field_type %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-grid-3x3 text-success"></i> <strong>Loại sân:</strong> {{ stadium_profile.get_field_type_display }}
+                                </div>
+                                {% endif %}
+                                {% if stadium_profile.number_of_fields %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-grid text-info"></i> <strong>Số sân:</strong> {{ stadium_profile.number_of_fields }}
+                                </div>
+                                {% endif %}
+                                {% if stadium_profile.rental_price_range %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-cash text-warning"></i> <strong>Giá thuê:</strong> {{ stadium_profile.rental_price_range }}
+                                </div>
+                                {% endif %}
+                                {% if stadium_profile.operating_hours %}
+                                <div class="col-md-6">
+                                    <i class="bi bi-clock text-secondary"></i> <strong>Giờ hoạt động:</strong> {{ stadium_profile.operating_hours }}
+                                </div>
+                                {% endif %}
+                                {% if stadium_profile.description %}
+                                <div class="col-12">
+                                    <i class="bi bi-card-text text-info"></i> <strong>Mô tả:</strong>
+                                    <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ stadium_profile.description }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {# Stadium Reviews #}
+            {% if stadium_reviews %}
+            <h4 class="mt-4 mb-3"><i class="bi bi-chat-left-quote"></i> Đánh giá từ khách hàng</h4>
+            {% for review in stadium_reviews %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
+                            <small class="text-muted d-block">
+                                {% if review.team %}{{ review.team.name }}{% endif %}
+                                {% if review.tournament %} - {{ review.tournament.name }}{% endif %}
+                            </small>
+                        </div>
+                        <div class="text-warning">
+                            {% for i in "12345" %}<i class="bi {% if forloop.counter <= review.rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>{% endfor %}
+                        </div>
+                    </div>
+                    {% if review.comment %}
+                    <p class="mt-2 mb-0 fst-italic">"{{ review.comment }}"</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
+
+            {# === LỊCH SỬ CÔNG VIỆC === #}
+            {% if job_applications %}
+            <h3 class="section-title"><i class="bi bi-briefcase-fill"></i> Lịch sử công việc</h3>
+            <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+                {% for app in job_applications %}
+                <div class="col">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ app.job.title }}</h6>
+                            <p class="card-text">
+                                <span class="badge bg-primary">{{ app.job.role_required.name }}</span>
+                                {% if app.job.tournament %}
+                                <span class="badge bg-info">{{ app.job.tournament.name }}</span>
+                                {% elif app.job.stadium %}
+                                <span class="badge bg-success">{{ app.job.stadium.stadium_name }}</span>
+                                {% endif %}
+                            </p>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> {{ app.applied_at|date:"d/m/Y" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% if reviews %}
             <h3 class="section-title"><i class="bi bi-stars"></i> Đánh giá từ Ban Tổ Chức</h3>
             <div class="card shadow-sm mb-4">
@@ -216,8 +425,196 @@
                     {% endif %}
                     {# === KẾT THÚC VÙNG HIỂN THỊ THÔNG TIN MỚI === #}
                 </ul>
+                
+                {# Thông tin liên hệ - hiển thị nếu available #}
+                {% if is_available and user_roles.exists %}
+                <div class="card-footer">
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="bi bi-telephone me-2"></i>Liên hệ ngay
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="contactModalLabel">
+                    <i class="bi bi-telephone-fill me-2"></i>Thông Tin Liên Hệ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center mb-4">
+                            {% if profile.avatar %}
+                            <img src="{{ profile.avatar.url }}" alt="{{ profile_user.get_full_name|default:profile_user.username }}" 
+                                 class="rounded-circle mb-3" width="80" height="80" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="bi bi-person text-white" style="font-size: 2rem;"></i>
+                            </div>
+                            {% endif %}
+                            <h5>{{ profile_user.get_full_name|default:profile_user.username }}</h5>
+                            <p class="text-muted">@{{ profile_user.username }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Thông Tin Liên Hệ
+                        </h6>
+                        
+                        {% if profile_user.email %}
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="contact-icon me-3">
+                                    <i class="bi bi-envelope-fill text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Email</div>
+                                    <div class="text-muted">{{ profile_user.email }}</div>
+                                    <a href="mailto:{{ profile_user.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                        <i class="bi bi-envelope me-1"></i>Gửi email
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if profile.phone_number %}
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="contact-icon me-3">
+                                    <i class="bi bi-phone-fill text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Số điện thoại</div>
+                                    <div class="text-muted">{{ profile.phone_number }}</div>
+                                    <a href="tel:{{ profile.phone_number }}" class="btn btn-outline-success btn-sm mt-1">
+                                        <i class="bi bi-telephone me-1"></i>Gọi ngay
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if profile.region %}
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="contact-icon me-3">
+                                    <i class="bi bi-geo-alt-fill text-warning"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Khu vực</div>
+                                    <div class="text-muted">{{ profile.get_region_display }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if hourly_rate %}
+                        <div class="contact-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="contact-icon me-3">
+                                    <i class="bi bi-currency-dollar text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Mức giá</div>
+                                    <div class="text-muted">{{ hourly_rate|floatformat:0 }}k VNĐ/giờ</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Professional Roles -->
+                        {% if user_roles %}
+                        <div class="contact-item">
+                            <div class="d-flex align-items-start">
+                                <div class="contact-icon me-3">
+                                    <i class="bi bi-briefcase-fill text-secondary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">Vai trò</div>
+                                    <div class="mt-1">
+                                        {% for role in user_roles %}
+                                        <span class="badge bg-primary me-1 mb-1">
+                                            <i class="bi {{ role.icon }}"></i> {{ role.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="border-top pt-3">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-lightning-fill me-2"></i>Thao Tác Nhanh
+                            </h6>
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if profile_user.email %}
+                                <a href="mailto:{{ profile_user.email }}?subject=Yêu cầu hợp tác - {{ profile_user.get_full_name|default:profile_user.username }}" 
+                                   class="btn btn-primary">
+                                    <i class="bi bi-envelope me-2"></i>Gửi email hợp tác
+                                </a>
+                                {% endif %}
+                                {% if profile.phone_number %}
+                                <a href="tel:{{ profile.phone_number }}" 
+                                   class="btn btn-success">
+                                    <i class="bi bi-telephone me-2"></i>Gọi điện thoại
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Đóng
+                </button>
+                {% if profile_user.email %}
+                <a href="mailto:{{ profile_user.email }}" class="btn btn-primary">
+                    <i class="bi bi-envelope me-2"></i>Liên hệ ngay
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.contact-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items-center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.contact-item {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.contact-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+</style>
 {% endblock %}
