@@ -1,22 +1,28 @@
-{% comment %} File: backend/tournaments/templates/tournaments/partials/_bracket_match_content.html {% endcomment %}
+{% comment %} File: backend/tournaments/templates/tournaments/partials/_bracket_match_content.html - Modern Version {% endcomment %}
 
 {% if match %}
     <div class="match-top {% if match.team1 == match.winner %}match-winner{% endif %}">
-        <span class="team-name">{{ match.team1.name|default:"Chờ..." }}</span>
-        <span class="team-score">{{ match.team1_score|default_if_none:"-" }}</span>
+        <span class="team-name" title="{{ match.team1.name|default:'Chờ xác định' }}">
+            {{ match.team1.name|default:"Chờ xác định" }}
+        </span>
+        <span class="team-score">{{ match.team1_score|default_if_none:"–" }}</span>
     </div>
     <div class="match-bottom {% if match.team2 == match.winner %}match-winner{% endif %}">
-        <span class="team-name">{{ match.team2.name|default:"Chờ..." }}</span>
-        <span class="team-score">{{ match.team2_score|default_if_none:"-" }}</span>
+        <span class="team-name" title="{{ match.team2.name|default:'Chờ xác định' }}">
+            {{ match.team2.name|default:"Chờ xác định" }}
+        </span>
+        <span class="team-score">{{ match.team2_score|default_if_none:"–" }}</span>
     </div>
 
-    {# === BẮT ĐẦU THÊM MỚI TẠI ĐÂY === #}
     {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
-    <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding-top: 5px; border-top: 1px solid var(--border-color); margin-top: 5px;">
-        Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }}
+    <div class="penalty-display">
+        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+        Luân lưu: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }}
     </div>
     {% endif %}
-    {# === KẾT THÚC THÊM MỚI === #}
 {% else %}
-    <div class="placeholder-text">{{ placeholder }}</div>
+    <div class="placeholder-text">
+        <i class="bi bi-hourglass-split"></i>
+        {{ placeholder|default:"Chờ xác định..." }}
+    </div>
 {% endif %}

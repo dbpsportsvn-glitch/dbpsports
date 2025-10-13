@@ -1,79 +1,162 @@
-{% comment %} File: backend/tournaments/templates/tournaments/partials/knockout_bracket.html {% endcomment %}
+{% comment %} File: backend/tournaments/templates/tournaments/partials/knockout_bracket.html - Modern Redesign {% endcomment %}
 
-<div class="bracket-container">
-  <div class="bracket">
+<div class="modern-bracket-wrapper">
+  
+  {# DEBUG: Kiểm tra dữ liệu knockout #}
+  {% comment %}
+  <div style="background: rgba(255,255,255,0.1); padding: 1rem; margin-bottom: 1rem; border-radius: 8px; color: white;">
+    <strong>🔍 DEBUG INFO:</strong><br>
+    Quarter Finals: {{ knockout_data.quarter_final_1|yesno:"Yes,No" }} | {{ knockout_data.quarter_final_2|yesno:"Yes,No" }} | {{ knockout_data.quarter_final_3|yesno:"Yes,No" }} | {{ knockout_data.quarter_final_4|yesno:"Yes,No" }}<br>
+    Semi Finals: {{ knockout_data.semi_final_1|yesno:"Yes,No" }} | {{ knockout_data.semi_final_2|yesno:"Yes,No" }}<br>
+    Final: {{ knockout_data.final_match|yesno:"Yes,No" }}<br>
+    Third Place: {{ knockout_data.third_place_match|yesno:"Yes,No" }}
+  </div>
+  {% endcomment %}
+  
+  <div class="bracket-container">
+    <div class="bracket">
 
-    {# ===== Quarter-finals (QF) ===== #}
-    {% if knockout_data.quarter_final_1 or knockout_data.quarter_final_2 or knockout_data.quarter_final_3 or knockout_data.quarter_final_4 %}
-    <div class="bracket-round quarter-finals">
-      <div class="bracket-match">
-        <h5>Tứ kết 1</h5>
-        {% with match=knockout_data.quarter_final_1 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
+      {# ===== Quarter-finals (QF) ===== #}
+      {% if knockout_data.quarter_final_1 or knockout_data.quarter_final_2 or knockout_data.quarter_final_3 or knockout_data.quarter_final_4 %}
+      <div class="bracket-round quarter-finals">
+        <div class="round-header">
+          <i class="bi bi-trophy"></i>
+          <span>Tứ kết</span>
+        </div>
+        
+        <div class="bracket-match" data-match-type="quarter">
+          <div class="match-header">
+            <span class="match-label">QF1</span>
+            {% if knockout_data.quarter_final_1 and knockout_data.quarter_final_1.match_time %}
+            <span class="match-time">{{ knockout_data.quarter_final_1.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.quarter_final_1 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
+
+        <div class="bracket-match" data-match-type="quarter">
+          <div class="match-header">
+            <span class="match-label">QF2</span>
+            {% if knockout_data.quarter_final_2 and knockout_data.quarter_final_2.match_time %}
+            <span class="match-time">{{ knockout_data.quarter_final_2.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.quarter_final_2 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
+
+        <div class="bracket-match" data-match-type="quarter">
+          <div class="match-header">
+            <span class="match-label">QF3</span>
+            {% if knockout_data.quarter_final_3 and knockout_data.quarter_final_3.match_time %}
+            <span class="match-time">{{ knockout_data.quarter_final_3.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.quarter_final_3 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
+
+        <div class="bracket-match" data-match-type="quarter">
+          <div class="match-header">
+            <span class="match-label">QF4</span>
+            {% if knockout_data.quarter_final_4 and knockout_data.quarter_final_4.match_time %}
+            <span class="match-time">{{ knockout_data.quarter_final_4.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.quarter_final_4 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
       </div>
+      {% endif %}
 
-      <div class="bracket-match">
-        <h5>Tứ kết 2</h5>
-        {% with match=knockout_data.quarter_final_2 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
-      </div>
+      {# ===== Semi-finals (SF) ===== #}
+      {% if knockout_data.semi_final_1 or knockout_data.semi_final_2 %}
+      <div class="bracket-round semi-finals">
+        <div class="round-header">
+          <i class="bi bi-star-fill"></i>
+          <span>Bán kết</span>
+        </div>
+        
+        <div class="bracket-match" data-match-type="semi">
+          <div class="match-header">
+            <span class="match-label">SF1</span>
+            {% if knockout_data.semi_final_1 and knockout_data.semi_final_1.match_time %}
+            <span class="match-time">{{ knockout_data.semi_final_1.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.semi_final_1 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
 
-      <div class="bracket-match">
-        <h5>Tứ kết 3</h5>
-        {% with match=knockout_data.quarter_final_3 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
+        <div class="bracket-match" data-match-type="semi">
+          <div class="match-header">
+            <span class="match-label">SF2</span>
+            {% if knockout_data.semi_final_2 and knockout_data.semi_final_2.match_time %}
+            <span class="match-time">{{ knockout_data.semi_final_2.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.semi_final_2 %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
       </div>
+      {% endif %}
 
-      <div class="bracket-match">
-        <h5>Tứ kết 4</h5>
-        {% with match=knockout_data.quarter_final_4 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
+      {# ===== Final (own column) ===== #}
+      {% if knockout_data.final_match %}
+      <div class="bracket-round final-round">
+        <div class="round-header final-header">
+          <i class="bi bi-trophy-fill"></i>
+          <span>Chung kết</span>
+        </div>
+        
+        <div class="bracket-match final" data-match-type="final">
+          <div class="match-header final-match-header">
+            <span class="match-label">FINAL</span>
+            {% if knockout_data.final_match and knockout_data.final_match.match_time %}
+            <span class="match-time">{{ knockout_data.final_match.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.final_match %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+          {% if knockout_data.final_match and knockout_data.final_match.winner %}
+          <div class="champion-badge">
+            <i class="bi bi-trophy-fill"></i> VÔ ĐỊCH
+          </div>
+          {% endif %}
+        </div>
       </div>
+      {% endif %}
+
+      {# ===== Third place (own column; no connectors) ===== #}
+      {% if knockout_data.third_place_match %}
+      <div class="bracket-round third-place-round">
+        <div class="round-header third-place-header">
+          <i class="bi bi-award"></i>
+          <span>Hạng Ba</span>
+        </div>
+        
+        <div class="bracket-match third-place" data-match-type="third">
+          <div class="match-header">
+            <span class="match-label">3RD</span>
+            {% if knockout_data.third_place_match.match_time %}
+            <span class="match-time">{{ knockout_data.third_place_match.match_time|date:"d/m H:i" }}</span>
+            {% endif %}
+          </div>
+          {% with match=knockout_data.third_place_match %}
+            {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ xác định..." %}
+          {% endwith %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
-    {% endif %}
-
-    {# ===== Semi-finals (SF) ===== #}
-    <div class="bracket-round semi-finals">
-      <div class="bracket-match">
-        <h5>Bán kết 1</h5>
-        {% with match=knockout_data.semi_final_1 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
-      </div>
-
-      <div class="bracket-match">
-        <h5>Bán kết 2</h5>
-        {% with match=knockout_data.semi_final_2 %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
-      </div>
-    </div>
-
-    {# ===== Final (own column) ===== #}
-    <div class="bracket-round final-round">
-      <div class="bracket-match final">
-        <h5>Chung kết</h5>
-        {% with match=knockout_data.final_match %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
-      </div>
-    </div>
-
-    {# ===== Third place (own column; no connectors) ===== #}
-    {% if knockout_data.third_place_match %}
-    <div class="bracket-round third-place-round">
-      <div class="bracket-match third-place">
-        <h5>Tranh Hạng Ba</h5>
-        {% with match=knockout_data.third_place_match %}
-          {% include "tournaments/partials/_bracket_match_content.html" with match=match placeholder="Chờ..." %}
-        {% endwith %}
-      </div>
-    </div>
-    {% endif %}
-
   </div>
 </div>

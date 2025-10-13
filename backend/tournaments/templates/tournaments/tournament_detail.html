@@ -338,6 +338,39 @@
       {% include 'tournaments/partials/tournament_stats.html' %}
     </div>
 
+    {# ==== TAB THƯ VIỆN ẢNH ==== #}
+    <div class="tab-pane fade card-pane" id="gallery" role="tabpanel">
+        {% if matches_with_galleries %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for match in matches_with_galleries %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            {% if match.cover_photo %}
+                                <img src="{{ match.cover_photo.url }}" class="card-img-top" alt="Ảnh trận {{ match.team1.name }} vs {{ match.team2.name }}" style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ match.team1.name }} vs {{ match.team2.name }}</h5>
+                                <p class="card-text text-muted">{{ match.match_time|date:"d/m/Y H:i" }}</p>
+                                {% if match.gallery_url %}
+                                    <a href="{{ match.gallery_url }}" target="_blank" class="btn btn-sm btn-outline-primary">Xem thư viện</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Chưa có thư viện ảnh nào.</p>
+        {% endif %}
+    </div>
+
+    {# ==== TAB NHÁNH ĐẤU ==== #}
+    {% if knockout_matches %}
+    <div class="tab-pane fade card-pane" id="bracket" role="tabpanel">
+        {% include 'tournaments/partials/knockout_bracket.html' %}
+    </div>
+    {% endif %}
+
     {# ==== TAB NHÀ TÀI TRỢ ==== #}
     <div class="tab-pane fade" id="sponsors" role="tabpanel" aria-labelledby="sponsors-tab">
         {% if sorted_sponsorships %}

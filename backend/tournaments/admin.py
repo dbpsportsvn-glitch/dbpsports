@@ -150,23 +150,57 @@ class TournamentAdmin(admin.ModelAdmin):
             if not tournament.matches.filter(match_round__in=['QUARTER', 'SEMI', 'FINAL']).exists():
                 groups = list(tournament.groups.order_by('name'))
                 if not groups: self.message_user(request, f"Giải '{tournament.name}' chưa có bảng đấu.", messages.ERROR); continue
+                
+                num_groups = len(groups)
                 qualified_teams = []
+                all_second_place = []  # Lưu đội nhì các bảng để chọn tốt nhất
+                
                 for group in groups:
                     standings = group.get_standings()
                     num_teams_in_group = len(standings)
                     
-                    # Logic linh hoạt: bảng 4+ đội lấy 2, bảng 3 đội lấy 1, bảng 2 đội lấy 1
-                    if num_teams_in_group >= 4:
-                        num_qualified = 2  # Lấy 2 đội nhất nhì
-                    elif num_teams_in_group == 3:
-                        num_qualified = 1  # Chỉ lấy đội nhất
-                    elif num_teams_in_group == 2:
-                        num_qualified = 1  # Lấy đội nhất
+                    # Logic linh hoạt dựa trên số bảng và số đội trong bảng
+                    if num_groups == 2:
+                        # 2 bảng: lấy 2 đội đầu mỗi bảng để có 4 đội (Bán kết)
+                        if num_teams_in_group >= 2:
+                            num_qualified = 2
+                            qualified_teams.extend([s['team_obj'] for s in standings[:num_qualified]])
+                        else:
+                            self.message_user(request, f"Bảng '{group.name}' cần ít nhất 2 đội để tạo knockout.", messages.ERROR)
+                            continue
+                    elif num_groups == 3:
+                        # 3 bảng: lấy đội nhất mỗi bảng + 1 đội nhì tốt nhất = 4 đội (Bán kết)
+                        if num_teams_in_group >= 2:
+                            qualified_teams.append(standings[0]['team_obj'])  # Đội nhất
+                            all_second_place.append(standings[1])  # Lưu đội nhì để so sánh
+                        elif num_teams_in_group == 1:
+                            qualified_teams.append(standings[0]['team_obj'])  # Chỉ có 1 đội thì lấy luôn
+                        else:
+                            self.message_user(request, f"Bảng '{group.name}' chưa có đội nào.", messages.ERROR)
+                            continue
+                    elif num_groups == 4:
+                        # 4 bảng: lấy 2 đội đầu mỗi bảng để có 8 đội (Tứ kết)
+                        if num_teams_in_group >= 2:
+                            num_qualified = 2
+                            qualified_teams.extend([s['team_obj'] for s in standings[:num_qualified]])
+                        else:
+                            self.message_user(request, f"Bảng '{group.name}' cần ít nhất 2 đội để tạo knockout.", messages.ERROR)
+                            continue
                     else:
-                        self.message_user(request, f"Bảng '{group.name}' của giải '{tournament.name}' chưa đủ đội.", messages.ERROR)
-                        continue
-                    
-                    qualified_teams.extend([s['team_obj'] for s in standings[:num_qualified]])
+                        # Các trường hợp khác: logic cũ
+                        if num_teams_in_group >= 4:
+                            num_qualified = 2
+                        elif num_teams_in_group >= 2:
+                            num_qualified = 1
+                        else:
+                            self.message_user(request, f"Bảng '{group.name}' chưa đủ đội.", messages.ERROR)
+                            continue
+                        qualified_teams.extend([s['team_obj'] for s in standings[:num_qualified]])
+                
+                # Xử lý trường hợp 3 bảng: chọn 1 đội nhì tốt nhất
+                if num_groups == 3 and len(all_second_place) >= 1:
+                    all_second_place.sort(key=lambda x: (x['points'], x['gd'], x['gf']), reverse=True)
+                    qualified_teams.append(all_second_place[0]['team_obj'])
                 
                 if len(qualified_teams) == 8:
                     tournament.matches.filter(match_round='QUARTER').delete()
@@ -177,9 +211,9 @@ class TournamentAdmin(admin.ModelAdmin):
                     tournament.matches.filter(match_round='SEMI').delete()
                     pairings = [(qualified_teams[0], qualified_teams[3]), (qualified_teams[2], qualified_teams[1])]
                     for t1, t2 in pairings: Match.objects.create(tournament=tournament, match_round='SEMI', team1=t1, team2=t2, match_time=timezone.now())
-                    self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết cho giải '{tournament.name}'.", messages.SUCCESS)
+                    self.message_user(request, f"Đã tạo 2 cặp đấu Bán kết cho giải '{tournament.name}' (4 đội từ {num_groups} bảng).", messages.SUCCESS)
                 else: 
-                    self.message_user(request, f"Không đủ số đội (cần 4 hoặc 8) để tạo knockout cho giải '{tournament.name}'.", messages.WARNING)
+                    self.message_user(request, f"Số đội đủ điều kiện: {len(qualified_teams)}. Cần 4 đội (2 bảng x 2) hoặc 8 đội (4 bảng x 2) để tạo knockout.", messages.WARNING)
                 continue
 
             quarter_finals = tournament.matches.filter(match_round='QUARTER')

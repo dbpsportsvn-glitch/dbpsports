@@ -1,162 +1,699 @@
-/* File: backend/static/css/bracket.css — Vẽ nối QF→SF→Final ổn định */
-:root{
-  --panel-dark:#1e2b3b;
-  --border-color:#334155;
-  --text-light:#f1f5f9;
-  --text-muted:#94a3b8;
-  --gold:#f59e0b;
-  --bg-dark:#0f172a;
+/* ========================================
+   MODERN TOURNAMENT BRACKET - DBP SPORTS
+   Thiết kế hiện đại với Glassmorphism & Animations
+   ======================================== */
 
-  --connector-width:3rem;   /* khoảng giữa 2 cột */
-  --match-gap:1.5rem;       /* khoảng cách dọc giữa các trận */
-  --line-thickness:2px;     /* độ dày đường nối */
+:root {
+  /* Màu sắc hiện đại */
+  --bracket-bg-start: #0f172a;
+  --bracket-bg-end: #1e293b;
+  --card-glass-bg: rgba(255, 255, 255, 0.05);
+  --card-glass-border: rgba(255, 255, 255, 0.1);
+  --card-hover-bg: rgba(255, 255, 255, 0.08);
+  
+  /* Gradient colors */
+  --gradient-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --gradient-blue: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  --gradient-purple: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  --gradient-green: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  --gradient-red: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  
+  /* Text colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  /* Connection lines */
+  --line-color: rgba(148, 163, 184, 0.3);
+  --line-glow: rgba(59, 130, 246, 0.5);
+  
+  /* Spacing */
+  --connector-width: 4rem;
+  --match-gap: 2rem;
+  --line-thickness: 3px;
 }
 
-.bracket-container{
-  display:flex;
-  justify-content:center;
-  padding:2rem 0;
-  overflow-x:auto;
+/* ========================================
+   WRAPPER & CONTAINER
+   ======================================== */
+
+.modern-bracket-wrapper {
+  background: linear-gradient(135deg, var(--bracket-bg-start) 0%, var(--bracket-bg-end) 100%);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  margin-top: 1rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
 }
 
-.bracket{ display:inline-flex; align-items:stretch; }
-
-.bracket-round{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-around;
-  width:250px;
-  flex-shrink:0;
-  position:relative;
+/* Hiệu ứng nền động */
+.modern-bracket-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.bracket-round + .bracket-round{ margin-left:var(--connector-width); }
-
-/* Card trận đấu */
-.bracket-match{
-  background-color:var(--panel-dark);
-  border:1px solid var(--border-color);
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  position:relative;
-  margin:var(--match-gap) 0;
-  z-index:1;              /* nằm trên đường nối */
-  overflow:visible;       /* QUAN TRỌNG: cho phép đường nối trồi ra ngoài box */
+.bracket-container {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  z-index: 1;
+  
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(255, 255, 255, 0.05);
 }
 
-/* Nội dung trong card */
-.bracket-match h5{
-  font-size:.8rem;font-weight:700;color:var(--gold);
-  padding:.5rem;margin:0;text-align:center;
-  border-bottom:1px solid var(--border-color);
-  background-color:rgba(0,0,0,.2);
+.bracket-container::-webkit-scrollbar {
+  height: 8px;
 }
 
-.match-top,.match-bottom{ display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem; }
-.match-top{ border-bottom:1px solid var(--border-color); }
-
-.team-name{ font-weight:600;color:var(--text-light); }
-.team-score{
-  font-weight:700;font-size:1.1em;color:var(--bg-dark);
-  background-color:var(--text-muted);
-  padding:2px 10px;border-radius:4px;min-width:32px;text-align:center;
+.bracket-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
 }
 
-.match-winner .team-name{ color:var(--gold); }
-.match-winner .team-score{ background-color:var(--gold); }
-.placeholder-text{ color:var(--text-muted);font-style:italic;text-align:center;padding:1.25rem 1rem;font-size:.9rem; }
-
-/* Giữ chiều cao hàng tương đồng → đường nối thẳng đẹp hơn */
-.bracket-match .match-top, .bracket-match .match-bottom{ min-height:42px; }
-
-/* ===================== */
-/* VẼ ĐƯỜNG NỐI BRACKET */
-/* ===================== */
-
-/* 1) Nét ngang từ mỗi trận QF & SF ra “khe” giữa 2 cột
-   (loại trừ cột Final & cột Hạng Ba; cũng tương thích class .finals cũ) */
-.bracket-round:not(.final-round):not(.finals):not(.third-place-round) .bracket-match::after{
-  content:'';
-  position:absolute;
-  top:50%;
-  right:calc(var(--connector-width)/-2);
-  width:calc(var(--connector-width)/2);
-  height:var(--line-thickness);
-  background:var(--border-color);
-  transform:translateY(-50%);
-  pointer-events:none;
+.bracket-container::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 10px;
 }
 
-/* 2) Nét dọc ghép cặp trong TỨ KẾT (1↔2, 3↔4) */
-.quarter-finals .bracket-match:nth-child(1)::before,
-.quarter-finals .bracket-match:nth-child(3)::before{
-  content:'';
-  position:absolute;
-  top:50%;
-  right:calc(var(--connector-width)/-2);
-  width:var(--line-thickness);
-  height: calc(50% + var(--match-gap));
-  background:var(--border-color);
-  pointer-events:none;
+.bracket-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
 }
+
+.bracket {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--connector-width);
+}
+
+/* ========================================
+   ROUND STRUCTURE
+   ======================================== */
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 280px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible; /* Allow connector lines to show */
+}
+
+/* Căn giữa final và third-place với semi-finals */
+.final-round,
+.third-place-round {
+  justify-content: center;
+  align-items: center;
+}
+
+.final-round .bracket-match,
+.third-place-round .bracket-match {
+  margin: 0;
+}
+
+/* Round Headers */
+.round-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--card-glass-bg);
+  border: 1px solid var(--card-glass-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.round-header i {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.round-header.final-header {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15));
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+.round-header.final-header i {
+  color: #fbbf24;
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+.round-header.third-place-header {
+  background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(168, 85, 247, 0.15));
+  border-color: rgba(192, 132, 252, 0.3);
+  color: #c084fc;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* ========================================
+   MATCH CARDS - GLASSMORPHISM DESIGN
+   ======================================== */
+
+.bracket-match {
+  background: var(--card-glass-bg);
+  border: 1px solid var(--card-glass-border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: var(--match-gap) 0;
+  overflow: visible; /* CRITICAL: Allow lines to show outside */
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Hover effects */
+.bracket-match:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: var(--card-hover-bg);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 
+    0 8px 30px rgba(59, 130, 246, 0.2),
+    0 0 20px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Match type specific borders */
+.bracket-match[data-match-type="quarter"]:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 8px 30px rgba(96, 165, 250, 0.2);
+}
+
+.bracket-match[data-match-type="semi"]:hover {
+  border-color: rgba(192, 132, 252, 0.5);
+  box-shadow: 0 8px 30px rgba(192, 132, 252, 0.2);
+}
+
+.bracket-match[data-match-type="final"]:hover {
+  border-color: rgba(251, 191, 36, 0.6);
+  box-shadow: 0 10px 40px rgba(251, 191, 36, 0.3);
+}
+
+.bracket-match[data-match-type="third"]:hover {
+  border-color: rgba(192, 132, 252, 0.5);
+  box-shadow: 0 8px 30px rgba(192, 132, 252, 0.2);
+}
+
+/* Match Header */
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--card-glass-border);
+}
+
+.match-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+  background: rgba(59, 130, 246, 0.2);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.final-match-header .match-label {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+}
+
+.match-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Team Rows */
+.match-top,
+.match-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  min-height: 52px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.match-top {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.match-top:hover,
+.match-bottom:hover {
+  background: rgba(255, 255, 255, 0.03);
+  padding-left: 1.4rem;
+}
+
+.team-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.team-score {
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0f172a;
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  min-width: 38px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Winner styling */
+.match-winner {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.08), transparent);
+  position: relative;
+}
+
+.match-winner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--gradient-gold);
+  border-radius: 0 4px 4px 0;
+}
+
+.match-winner .team-name {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.match-winner .team-score {
+  background: var(--gradient-gold);
+  color: #0f172a;
+  font-weight: 900;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+  transform: scale(1.05);
+}
+
+/* Placeholder text */
+.placeholder-text {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+/* Penalty score display */
+.penalty-display {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+}
+
+/* Champion Badge */
+.champion-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--gradient-gold);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-top: 2px solid rgba(251, 191, 36, 0.5);
+  animation: champion-shine 3s ease-in-out infinite;
+}
+
+.champion-badge i {
+  font-size: 1.1rem;
+  animation: trophy-bounce 1s ease-in-out infinite;
+}
+
+@keyframes champion-shine {
+  0%, 100% { 
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+  }
+}
+
+@keyframes trophy-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-5deg); }
+  75% { transform: translateY(-3px) rotate(5deg); }
+}
+
+/* ========================================
+   CONNECTION LINES - GRADIENT STYLE
+   ======================================== */
+
+/* Horizontal lines from matches - FIXED */
+.bracket-round:not(.final-round):not(.third-place-round) .bracket-match::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -2rem; /* Fixed position */
+  width: 2rem;
+  height: var(--line-thickness);
+  background: linear-gradient(90deg, var(--line-color), rgba(59, 130, 246, 0.3));
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.bracket-match:hover::after {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.7));
+  box-shadow: 0 0 10px var(--line-glow);
+}
+
+/* Đặc biệt cho semi-finals khi không có quarter-finals */
+.semi-finals:first-child .bracket-match::after {
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.4), rgba(192, 132, 252, 0.6));
+}
+
+.semi-finals:first-child .bracket-match:hover::after {
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.6), rgba(192, 132, 252, 0.8));
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+}
+
+/* Vertical lines for Quarter-finals */
 .quarter-finals .bracket-match:nth-child(2)::before,
-.quarter-finals .bracket-match:nth-child(4)::before{
-  content:'';
-  position:absolute;
-  bottom:50%;
-  right:calc(var(--connector-width)/-2);
-  width:var(--line-thickness);
+.quarter-finals .bracket-match:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: calc(var(--connector-width) / -2);
+  width: var(--line-thickness);
   height: calc(50% + var(--match-gap));
-  background:var(--border-color);
-  pointer-events:none;
+  background: linear-gradient(180deg, rgba(96, 165, 250, 0.3), var(--line-color));
+  pointer-events: none;
 }
 
-/* 3) Nét dọc ghép cặp trong BÁN KẾT (1↔2) */
-.semi-finals .bracket-match:nth-child(1)::before{
-  content:'';
-  position:absolute;
-  top:50%;
-  right:calc(var(--connector-width)/-2);
-  width:var(--line-thickness);
+.quarter-finals .bracket-match:nth-child(3)::before,
+.quarter-finals .bracket-match:nth-child(5)::before {
+  content: '';
+  position: absolute;
+  bottom: 50%;
+  right: calc(var(--connector-width) / -2);
+  width: var(--line-thickness);
   height: calc(50% + var(--match-gap));
-  background:var(--border-color);
-  pointer-events:none;
+  background: linear-gradient(0deg, rgba(96, 165, 250, 0.3), var(--line-color));
+  pointer-events: none;
 }
-.semi-finals .bracket-match:nth-child(2)::before{
-  content:'';
-  position:absolute;
-  bottom:50%;
-  right:calc(var(--connector-width)/-2);
-  width:var(--line-thickness);
+
+/* Vertical lines for Semi-finals - FIXED */
+.semi-finals .bracket-match:nth-child(2)::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -2rem;
+  width: var(--line-thickness);
   height: calc(50% + var(--match-gap));
-  background:var(--border-color);
-  pointer-events:none;
+  background: linear-gradient(180deg, rgba(192, 132, 252, 0.4), var(--line-color));
+  pointer-events: none;
+  z-index: 10;
 }
 
-/* === KẾT THÚC THAY THẾ TẠI ĐÂY === */
-
-/* 4) Đường “đi vào” ô CHUNG KẾT từ bên trái (giữ nguyên) */
-.final-round .final::before,
-.finals .final::before{
-  content:'';
-  position:absolute;
-  top:50%;
-  left:calc(var(--connector-width)/-2);
-  width:calc(var(--connector-width)/2);
-  height:var(--line-thickness);
-  background:var(--border-color);
-  transform:translateY(-50%);
-  pointer-events:none;
+.semi-finals .bracket-match:nth-child(3)::before {
+  content: '';
+  position: absolute;
+  bottom: 50%;
+  right: -2rem;
+  width: var(--line-thickness);
+  height: calc(50% + var(--match-gap));
+  background: linear-gradient(0deg, rgba(192, 132, 252, 0.4), var(--line-color));
+  pointer-events: none;
+  z-index: 10;
 }
 
-/* 5) Cột Tranh Hạng Ba: độc lập, không vẽ nối */
-/* Responsive */
-@media (max-width: 992px){
-  :root{ --connector-width:2.5rem; }
-  .bracket-round{ width:230px; }
+/* Line to Final - FIXED */
+.final-round .final::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -2rem; /* Fixed position */
+  width: 2rem;
+  height: var(--line-thickness);
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.3), rgba(251, 191, 36, 0.5));
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
 }
-@media (max-width: 768px){
-  :root{ --connector-width:2rem; }
-  .bracket-round{ width:210px; }
+
+/* Điều chỉnh đường kẻ cho third place */
+.third-place-round .bracket-match::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -2rem;
+  width: 2rem;
+  height: var(--line-thickness);
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.3), rgba(192, 132, 252, 0.5));
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Đặc biệt cho final khi chỉ có semi-finals (không có quarter-finals) */
+.semi-finals:last-child + .final-round .final::before {
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.4), rgba(251, 191, 36, 0.5));
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1200px) {
+  :root {
+    --connector-width: 3.5rem;
+    --match-gap: 1.75rem;
+  }
+  
+  .bracket-round {
+    width: 260px;
+  }
+  
+  .modern-bracket-wrapper {
+    padding: 2.5rem 1rem;
+  }
+}
+
+@media (max-width: 992px) {
+  :root {
+    --connector-width: 3rem;
+    --match-gap: 1.5rem;
+  }
+  
+  .bracket-round {
+    width: 240px;
+  }
+  
+  .team-name {
+    font-size: 0.88rem;
+  }
+  
+  .team-score {
+    font-size: 1rem;
+    padding: 0.3rem 0.65rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --connector-width: 2.5rem;
+    --match-gap: 1.25rem;
+  }
+  
+  .modern-bracket-wrapper {
+    padding: 2rem 0.75rem;
+    border-radius: 16px;
+  }
+  
+  .bracket-round {
+    width: 220px;
+  }
+  
+  .round-header {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1rem;
+  }
+  
+  .match-header {
+    padding: 0.5rem 0.8rem;
+  }
+  
+  .match-label {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .match-time {
+    font-size: 0.65rem;
+  }
+  
+  .match-top,
+  .match-bottom {
+    padding: 0.85rem 1rem;
+    min-height: 46px;
+  }
+  
+  .team-name {
+    font-size: 0.82rem;
+  }
+  
+  .team-score {
+    font-size: 0.95rem;
+    padding: 0.25rem 0.6rem;
+    min-width: 34px;
+  }
+  
+  .champion-badge {
+    font-size: 0.75rem;
+    padding: 0.6rem;
+  }
+  
+  /* Simplify hover effects on mobile */
+  .bracket-match:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 576px) {
+  .bracket-round {
+    width: 200px;
+  }
+  
+  .match-top,
+  .match-bottom {
+    padding: 0.75rem 0.85rem;
+  }
+  
+  .team-name {
+    font-size: 0.78rem;
+  }
+  
+  .round-header {
+    font-size: 0.75rem;
+  }
+}
+
+/* ========================================
+   ANIMATION ENTRANCE
+   ======================================== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bracket-match {
+  animation: fadeInUp 0.6s ease-out backwards;
+}
+
+.quarter-finals .bracket-match:nth-child(2) { animation-delay: 0.1s; }
+.quarter-finals .bracket-match:nth-child(3) { animation-delay: 0.2s; }
+.quarter-finals .bracket-match:nth-child(4) { animation-delay: 0.3s; }
+.quarter-finals .bracket-match:nth-child(5) { animation-delay: 0.4s; }
+
+.semi-finals .bracket-match:nth-child(2) { animation-delay: 0.5s; }
+.semi-finals .bracket-match:nth-child(3) { animation-delay: 0.6s; }
+
+.final-round .bracket-match { animation-delay: 0.7s; }
+.third-place-round .bracket-match { animation-delay: 0.8s; }
+
+/* Disable animations on mobile for performance */
+@media (max-width: 768px) {
+  .bracket-match {
+    animation: none;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .modern-bracket-wrapper {
+    background: white;
+    box-shadow: none;
+  }
+  
+  .bracket-match {
+    border-color: #ccc;
+    background: white;
+    box-shadow: none;
+  }
+  
+  .bracket-match:hover {
+    transform: none;
+  }
+  
+  .round-header {
+    color: #000;
+    background: #f3f4f6;
+  }
+  
+  .team-name {
+    color: #000;
+  }
 }
