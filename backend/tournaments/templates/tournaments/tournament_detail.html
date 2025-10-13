@@ -842,7 +842,7 @@
                 </a>
                 {% endif %}
 
-                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not tournament.matches.exists %}
+                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
                 <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="admin-action-btn schedule-btn" target="_blank">
                     <i class="bi bi-calendar-plus"></i>
                     <span>Xếp lịch thi đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</span>
@@ -4139,32 +4139,13 @@
     /* Next Match Card */
     .next-match-card {
         grid-column: span 2;
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .next-match-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
     }
 
     .next-match-header {
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-        border-bottom: 1px solid rgba(102, 126, 234, 0.2);
-        margin-bottom: 0;
-    }
-
-    .next-match-body {
-        padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .next-match-icon {
@@ -4178,7 +4159,6 @@
         color: white;
         font-size: 1.5rem;
         flex-shrink: 0;
-        margin-top: 0.125rem; /* Điều chỉnh để icon căn giữa với khối text */
     }
 
     .next-match-title-section {
@@ -5358,235 +5338,619 @@
     {# ==== TAB NHÀ TÀI TRỢ ==== #}
     <div class="tab-pane fade" id="sponsors" role="tabpanel" aria-labelledby="sponsors-tab">
         {% if sorted_sponsorships %}
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for sponsorship in sorted_sponsorships %}
-                <div class="col">
-                    <div class="card sponsor-card h-100 shadow-sm position-relative"
-                         data-tier="{{ sponsorship.package.name|default:'Standard' }}">
+        
+        <!-- Sponsors Header -->
+        <div class="sponsors-header">
+            <div class="sponsors-header-icon">
+                <i class="bi bi-gem"></i>
+            </div>
+            <div class="sponsors-header-content">
+                <h3>Nhà tài trợ</h3>
+                <p>Những đối tác đồng hành cùng giải đấu {{ tournament.name }}</p>
+            </div>
+            <div class="sponsors-count-badge">
+                <span class="count-number">{{ sorted_sponsorships|length }}</span>
+                <span class="count-label">Nhà tài trợ</span>
+            </div>
+        </div>
 
-                        {% if sponsorship.package %}
-                          <div class="ribbon"><span>{{ sponsorship.package.name }}</span></div>
+        <!-- Group sponsors by package/tier -->
+        {% regroup sorted_sponsorships by package.name as sponsors_by_tier %}
+        
+        {% for tier in sponsors_by_tier %}
+        <div class="sponsors-section">
+            <div class="sponsors-section-header">
+                <div class="sponsors-section-icon" data-tier="{{ tier.grouper|default:'Standard' }}">
+                    <i class="bi bi-award-fill"></i>
+                </div>
+                <div class="sponsors-section-info">
+                    <h4 class="sponsors-section-title">{{ tier.grouper|default:"Nhà tài trợ" }}</h4>
+                    <p class="sponsors-section-subtitle">Gói tài trợ {{ tier.grouper|lower|default:"tiêu chuẩn" }}</p>
+                </div>
+                <div class="sponsors-tier-count">
+                    <span class="tier-count-number">{{ tier.list|length }}</span>
+                </div>
+            </div>
+            
+            <div class="sponsors-grid">
+                {% for sponsorship in tier.list %}
+                <div class="sponsor-card" data-tier="{{ sponsorship.package.name|default:'Standard' }}">
+                    <!-- Sponsor Card Header (Logo) -->
+                    <div class="sponsor-card-header">
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
+                            {% with profile=sponsorship.sponsor.sponsor_profile %}
+                                {% if profile.brand_logo %}
+                                    <img src="{{ profile.brand_logo.url }}" alt="Logo {{ profile.brand_name|default:sponsorship.sponsor.username }}" class="sponsor-card-logo">
+                                {% else %}
+                                    <div class="sponsor-card-logo-placeholder">
+                                        <i class="bi bi-gem"></i>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            {% if sponsorship.logo %}
+                                <img src="{{ sponsorship.logo.url }}" alt="Logo {{ sponsorship.sponsor_name }}" class="sponsor-card-logo">
+                            {% else %}
+                                <div class="sponsor-card-logo-placeholder">
+                                    <i class="bi bi-gem"></i>
+                                </div>
+                            {% endif %}
                         {% endif %}
+                    </div>
 
+                    <!-- Sponsor Card Body -->
+                    <div class="sponsor-card-body">
                         {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
                             {% with profile=sponsorship.sponsor.sponsor_profile %}
                                 {% with display_name=profile.brand_name|default:sponsorship.sponsor.username %}
-                                    {# === THAY ĐỔI TẠI ĐÂY === #}
-                                    {# Thay vì link ra website ngoài, link đến trang chi tiết nhà tài trợ trên hệ thống #}
-                                    <a href="{% url 'sponsors:profile_detail' pk=profile.pk %}" class="stretched-link" aria-label="Mở trang của {{ display_name }}"></a>
-
-                                    <div class="card-body text-center d-flex flex-column">
-                                        <div class="sponsor-logo-wrapper rounded-3 mb-3">
-                                            {% if profile.brand_logo %}
-                                                <img src="{{ profile.brand_logo.url }}" alt="Logo của {{ display_name }}" class="sponsor-logo img-fluid">
-                                            {% else %}
-                                                <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
-                                            {% endif %}
-                                        </div>
-                                        <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ display_name }}">{{ display_name }}</h5>
-
-                                        {# Badge hạng mục ngay dưới tên, có màu theo tier #}
-                                        {% if sponsorship.package %}
-                                          <div class="mt-1 d-flex justify-content-center">
-                                            <span class="badge tier-badge">{{ sponsorship.package.name }}</span>
-                                          </div>
-                                        {% endif %}
+                                    <h5 class="sponsor-card-name" title="{{ display_name }}">{{ display_name }}</h5>
+                                    {% if sponsorship.package %}
+                                    <div class="sponsor-card-badge">
+                                        <i class="bi bi-star-fill"></i>
+                                        <span>{{ sponsorship.package.name }}</span>
                                     </div>
+                                    {% endif %}
                                 {% endwith %}
                             {% endwith %}
                         {% else %}
-                            {% with href=sponsorship.website_url %}
-                              {% if href %}<a href="{{ href }}" class="stretched-link" target="_blank" rel="noopener" aria-label="Mở trang của {{ sponsorship.sponsor_name }}"></a>{% endif %}
-                            {% endwith %}
-
-                            <div class="card-body text-center d-flex flex-column">
-                                <div class="sponsor-logo-wrapper rounded-3 mb-3">
-                                    {% if sponsorship.logo %}
-                                        <img src="{{ sponsorship.logo.url }}" alt="Logo của {{ sponsorship.sponsor_name }}" class="sponsor-logo img-fluid">
-                                    {% else %}
-                                        <div class="logo-placeholder"><i class="bi bi-gem fs-1"></i></div>
-                                    {% endif %}
-                                </div>
-                                <h5 class="card-title sponsor-title mb-1 text-truncate" title="{{ sponsorship.sponsor_name }}">{{ sponsorship.sponsor_name }}</h5>
-
-                                {% if sponsorship.package %}
-                                  <div class="mt-1 d-flex justify-content-center">
-                                    <span class="badge tier-badge">{{ sponsorship.package.name }}</span>
-                                  </div>
-                                {% endif %}
+                            <h5 class="sponsor-card-name" title="{{ sponsorship.sponsor_name }}">{{ sponsorship.sponsor_name }}</h5>
+                            {% if sponsorship.package %}
+                            <div class="sponsor-card-badge">
+                                <i class="bi bi-star-fill"></i>
+                                <span>{{ sponsorship.package.name }}</span>
                             </div>
+                            {% endif %}
                         {% endif %}
 
-                        {# Footer: nền dịu + sao bên trái #}
-                        <div class="card-footer info-soft">
-                            {% with rating=sponsorship.avg_rating|default:0 %}
-                              <div class="rating mt-2" style="--rating: {{ rating|floatformat:1 }};">
-                                  <span class="rating-base">★★★★★</span>
-                                  <span class="rating-fill" aria-hidden="true">★★★★★</span>
-                                  <small class="text-muted ms-1">({{ rating|floatformat:1 }}/5)</small>
-                              </div>
-                            {% endwith %}
+                        <!-- Rating -->
+                        {% with rating=sponsorship.avg_rating|default:0 %}
+                        <div class="sponsor-rating">
+                            <div class="rating-stars" style="--rating: {{ rating|floatformat:1 }};">
+                                <span class="stars-empty">★★★★★</span>
+                                <span class="stars-filled">★★★★★</span>
+                            </div>
+                            <span class="rating-value">({{ rating|floatformat:1 }})</span>
                         </div>
+                        {% endwith %}
+                    </div>
 
+                    <!-- Sponsor Card Footer -->
+                    <div class="sponsor-card-footer">
+                        {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
+                            <a href="{% url 'sponsors:profile_detail' pk=sponsorship.sponsor.sponsor_profile.pk %}" class="sponsor-card-btn">
+                                <span>Xem chi tiết</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        {% elif sponsorship.website_url %}
+                            <a href="{{ sponsorship.website_url }}" target="_blank" rel="noopener" class="sponsor-card-btn">
+                                <span>Truy cập website</span>
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        {% else %}
+                            <div class="sponsor-card-btn disabled">
+                                <span>Chưa có thông tin</span>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
+        </div>
+        {% endfor %}
+
         {% else %}
-            <div class="alert alert-info text-center" role="alert">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                Giải đấu hiện chưa có thông tin về nhà tài trợ.
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-gem"></i>
             </div>
+            <p class="empty-text">Giải đấu hiện chưa có thông tin về nhà tài trợ</p>
+        </div>
         {% endif %}
     </div>
 
     <style>
-        /* ===== Card tổng quát ===== */
-        .sponsor-card{
-          --card-radius: 1rem;
-          border: 1px solid rgba(0,0,0,.08);
-          border-radius: var(--card-radius);
-          background: #ffffffcc;
-          backdrop-filter: blur(6px);
-          transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-          overflow: hidden;
-          color: #0f172a;
-          position: relative;
-        }
-        .sponsor-card:hover{
-          transform: translateY(-6px);
-          box-shadow: 0 20px 40px rgba(16,24,40,.12);
-          border-color: transparent;
-          border-image: linear-gradient(90deg,#8ec5ff,#b3ffde,#ffd6a5,#ffadad,#d4b5ff,#8ec5ff) 1;
+    /* ========================================
+       SPONSORS TAB - MODERN DESIGN
+       ======================================== */
+
+    /* Sponsors Header */
+    .sponsors-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(168, 85, 247, 0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(236, 72, 153, 0.2);
+    }
+
+    .sponsors-header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #ec4899, #a855f7);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+    }
+
+    .sponsors-header-content {
+        flex: 1;
+    }
+
+    .sponsors-header-content h3 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .sponsors-header-content p {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .sponsors-count-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 70px;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #ec4899, #a855f7);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(236, 72, 153, 0.2);
+    }
+
+    .sponsors-count-badge .count-number {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .sponsors-count-badge .count-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
+        opacity: 0.9;
+    }
+
+    /* Sponsors Section */
+    .sponsors-section {
+        margin-bottom: 3rem;
+    }
+
+    .sponsors-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05));
+        border-radius: 12px;
+        border: 1px solid rgba(236, 72, 153, 0.15);
+    }
+
+    .sponsors-section-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Tier specific colors for section icon */
+    .sponsors-section-icon[data-tier*="Kim cương"],
+    .sponsors-section-icon[data-tier*="Diamond"] {
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    }
+
+    .sponsors-section-icon[data-tier*="Bạch kim"],
+    .sponsors-section-icon[data-tier*="Platinum"] {
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    }
+
+    .sponsors-section-icon[data-tier*="Vàng"],
+    .sponsors-section-icon[data-tier*="Gold"] {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    .sponsors-section-icon[data-tier*="Bạc"],
+    .sponsors-section-icon[data-tier*="Silver"] {
+        background: linear-gradient(135deg, #94a3b8, #64748b);
+    }
+
+    .sponsors-section-icon[data-tier*="Đồng"],
+    .sponsors-section-icon[data-tier*="Bronze"] {
+        background: linear-gradient(135deg, #fb923c, #f97316);
+    }
+
+    .sponsors-section-info {
+        flex: 1;
+    }
+
+    .sponsors-section-title {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .sponsors-section-subtitle {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.875rem;
+    }
+
+    .sponsors-tier-count {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 0.75rem;
+        background: white;
+        border: 2px solid rgba(236, 72, 153, 0.2);
+        border-radius: 10px;
+        color: #ec4899;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    /* Sponsors Grid */
+    .sponsors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Sponsor Card */
+    .sponsor-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+    }
+
+    .sponsor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ec4899, #a855f7);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .sponsor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(236, 72, 153, 0.15);
+    }
+
+    .sponsor-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    /* Tier specific gradient */
+    .sponsor-card[data-tier*="Kim cương"]::before,
+    .sponsor-card[data-tier*="Diamond"]::before {
+        background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    }
+
+    .sponsor-card[data-tier*="Vàng"]::before,
+    .sponsor-card[data-tier*="Gold"]::before {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+
+    .sponsor-card[data-tier*="Bạc"]::before,
+    .sponsor-card[data-tier*="Silver"]::before {
+        background: linear-gradient(90deg, #94a3b8, #64748b);
+    }
+
+    .sponsor-card[data-tier*="Đồng"]::before,
+    .sponsor-card[data-tier*="Bronze"]::before {
+        background: linear-gradient(90deg, #fb923c, #f97316);
+    }
+
+    /* Sponsor Card Header */
+    .sponsor-card-header {
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 160px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sponsor-card-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .sponsor-card:hover .sponsor-card-header::before {
+        opacity: 1;
+    }
+
+    .sponsor-card-logo {
+        max-width: 140px;
+        max-height: 100px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    .sponsor-card:hover .sponsor-card-logo {
+        transform: scale(1.05);
+    }
+
+    .sponsor-card-logo-placeholder {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: 3rem;
+        transition: all 0.3s ease;
+    }
+
+    .sponsor-card:hover .sponsor-card-logo-placeholder {
+        background: linear-gradient(135deg, #ec4899, #a855f7);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    /* Sponsor Card Body */
+    .sponsor-card-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .sponsor-card-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 1rem 0;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .sponsor-card-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(168, 85, 247, 0.1));
+        border: 1px solid rgba(236, 72, 153, 0.3);
+        border-radius: 20px;
+        color: #be185d;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .sponsor-card-badge i {
+        font-size: 0.75rem;
+    }
+
+    /* Tier specific badge colors */
+    .sponsor-card[data-tier*="Kim cương"] .sponsor-card-badge,
+    .sponsor-card[data-tier*="Diamond"] .sponsor-card-badge {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(14, 165, 233, 0.1));
+        border-color: rgba(56, 189, 248, 0.3);
+        color: #0369a1;
+    }
+
+    .sponsor-card[data-tier*="Vàng"] .sponsor-card-badge,
+    .sponsor-card[data-tier*="Gold"] .sponsor-card-badge {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+        border-color: rgba(251, 191, 36, 0.3);
+        color: #d97706;
+    }
+
+    .sponsor-card[data-tier*="Bạc"] .sponsor-card-badge,
+    .sponsor-card[data-tier*="Silver"] .sponsor-card-badge {
+        background: linear-gradient(135deg, rgba(148, 163, 184, 0.1), rgba(100, 116, 139, 0.1));
+        border-color: rgba(148, 163, 184, 0.3);
+        color: #475569;
+    }
+
+    .sponsor-card[data-tier*="Đồng"] .sponsor-card-badge,
+    .sponsor-card[data-tier*="Bronze"] .sponsor-card-badge {
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(249, 115, 22, 0.1));
+        border-color: rgba(251, 146, 60, 0.3);
+        color: #c2410c;
+    }
+
+    /* Sponsor Rating */
+    .sponsor-rating {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .rating-stars {
+        position: relative;
+        display: inline-block;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .stars-empty {
+        color: #e5e7eb;
+    }
+
+    .stars-filled {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: calc(var(--rating) / 5 * 100%);
+        overflow: hidden;
+        color: #fbbf24;
+        white-space: nowrap;
+    }
+
+    .rating-value {
+        font-size: 0.875rem;
+        color: #718096;
+        font-weight: 600;
+    }
+
+    /* Sponsor Card Footer */
+    .sponsor-card-footer {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(241, 245, 249, 0.8));
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .sponsor-card-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #ec4899, #a855f7);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .sponsor-card-btn:hover {
+        background: linear-gradient(135deg, #db2777, #9333ea);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+        color: white;
+    }
+
+    .sponsor-card-btn i {
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .sponsor-card-btn:hover i {
+        transform: translateX(3px);
+    }
+
+    .sponsor-card-btn.disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .sponsor-card-btn.disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .sponsors-header {
+            flex-wrap: wrap;
         }
 
-        /* Tên NTT to hơn chút */
-        .sponsor-title{
-          font-weight:700;
-          font-size:1.2rem;   /* tăng từ 1.05rem */
-          line-height:1.2;
-          color:#111827;
-          letter-spacing:.2px;
+        .sponsors-count-badge {
+            width: 100%;
+            flex-direction: row;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        /* Logo */
-        .sponsor-logo-wrapper{
-          aspect-ratio: 3 / 2;
-          min-height: 190px;
-          padding: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 0;
-          background: linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,0));
-          border: 1px dashed rgba(0,0,0,.06);
-          position: relative;
-          z-index: 1;
-        }
-        @media (min-width: 992px){ .sponsor-logo-wrapper{ min-height:210px; } }
-
-        .sponsor-logo{
-          max-width: 100%; max-height: 100%;
-          width: auto; height: auto;
-          object-fit: contain; object-position: center;
-          display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
-          transition: transform .25s ease;
-          position: relative; z-index: 1;
-        }
-        .sponsor-card:hover .sponsor-logo{ transform: scale(1.03); }
-
-        .logo-placeholder{ width:100%; height:100%; display:grid; place-items:center; background:#f4f6f8; color:#475569; font-weight:600; }
-
-        /* ===== Badge hạng mục ngay dưới tên (màu theo tier) ===== */
-        .tier-badge{
-          background: var(--tier-bg, #eef2ff);
-          color: var(--tier-fg, #3730a3);
-          border: 1px solid var(--tier-border, #e0e7ff);
-          font-weight: 700;
-          padding: .25rem .6rem;
-          border-radius: 999px;
-        }
-        /* Map biến màu theo hạng mục (VN + EN) */
-        .sponsor-card[data-tier*="Kim cương"],
-        .sponsor-card[data-tier*="Diamond"]{
-          --tier-bg:#e0f2fe; --tier-fg:#075985; --tier-border:#bae6fd;
-        }
-        .sponsor-card[data-tier*="Bạch kim"],
-        .sponsor-card[data-tier*="Platinum"]{
-          --tier-bg:#f1f5f9; --tier-fg:#0f172a; --tier-border:#e2e8f0;
-        }
-        .sponsor-card[data-tier*="Vàng"],
-        .sponsor-card[data-tier*="Gold"]{
-          --tier-bg:#fef9c3; --tier-fg:#92400e; --tier-border:#fde68a;
-        }
-        .sponsor-card[data-tier*="Bạc"],
-        .sponsor-card[data-tier*="Silver"]{
-          --tier-bg:#eef2ff; --tier-fg:#3730a3; --tier-border:#e0e7ff;
-        }
-        .sponsor-card[data-tier*="Đồng"],
-        .sponsor-card[data-tier*="Bronze"]{
-          --tier-bg:#ffe8d6; --tier-fg:#7c2d12; --tier-border:#fdba74;
+        .sponsors-count-badge .count-number {
+            font-size: 1.25rem;
         }
 
-        /* ===== Ribbon góc trái: căn giữa chữ trên băng ===== */
-        .ribbon{
-          position:absolute; top:0; left:0;
-          width: 150px; height:150px;
-          overflow: hidden;
-          pointer-events:none;      /* không chặn click */
-          z-index: 6;               /* trên logo */
+        .sponsors-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
         }
-        .ribbon span{
-          position:absolute;
-          display:flex; align-items:center; justify-content:center;
-          width: 230px;
-          left: -55px;              /* canh giữa băng */
-          top: 24px;                /* hạ nhẹ cho cân */
-          transform: rotate(-45deg);
-          padding: .45rem 0;
-          color:#111; font-weight:700; letter-spacing:.3px;
-          background: var(--ribbon-bg, linear-gradient(90deg,#eaeaea,#ddd));
-          box-shadow: 0 6px 14px rgba(0,0,0,.12);
-          text-align:center;
-          white-space: nowrap;
-        }
-        /* Gradient theo hạng mục (VN + EN) */
-        [data-tier*="Vàng"] .ribbon span, [data-tier*="Gold"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#d4af37,#ffd700); }
-        [data-tier*="Bạc"] .ribbon span, [data-tier*="Silver"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#c0c0c0,#e8e8e8); }
-        [data-tier*="Đồng"] .ribbon span, [data-tier*="Bronze"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#cd7f32,#f0ad72); }
-        [data-tier*="Bạch kim"] .ribbon span, [data-tier*="Platinum"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#d7d7d7,#f5f5f5); }
-        [data-tier*="Kim cương"] .ribbon span, [data-tier*="Diamond"] .ribbon span{ --ribbon-bg: linear-gradient(90deg,#b3e5fc,#e1f5fe); }
 
-        /* ===== Footer mềm dịu cho phần thông tin (rating bên trái) ===== */
-        .info-soft{
-          background: #f7faff;                 /* nền dịu */
-          border-top: 1px solid #e5edf8;
-          border-bottom-left-radius: var(--card-radius);
-          border-bottom-right-radius: var(--card-radius);
-          padding-top: .6rem;
-          padding-bottom: .6rem;
+        .sponsor-card-header {
+            min-height: 140px;
+            padding: 1.5rem;
         }
-        .info-soft .rating{ margin-left:0; }    /* sao về trái */
 
-        /* ===== Rating ===== */
-        .rating{ position:relative; display:inline-flex; align-items:center; line-height:1; }
-        .rating-base,.rating-fill{ font-size:1.05rem; letter-spacing:2px; font-weight:700; }
-        .rating-base{ color:#e5e7eb; }
-        .rating-fill{
-          position:absolute; top:0; left:0;
-          width: calc(var(--rating) / 5 * 100%);
-          overflow:hidden; color:#f59e0b; text-shadow:0 1px 0 rgba(0,0,0,.08);
-          white-space: nowrap;
+        .sponsor-card-logo {
+            max-width: 120px;
+            max-height: 80px;
         }
-        .text-muted{ color:#64748b !important; }
+    }
 
-        /* ===== Click overlay fix ===== */
-        #sponsors .sponsor-card .stretched-link::after{
-          content:"";
-          position:absolute;
-          inset:0;
-          z-index:20; /* cao hơn ribbon và logo */
+    @media (max-width: 576px) {
+        .sponsors-grid {
+            grid-template-columns: 1fr;
         }
+
+        .sponsors-header-content h3 {
+            font-size: 1.5rem;
+        }
+
+        .sponsors-section-title {
+            font-size: 1.15rem;
+        }
+    }
     </style>
     </div>
 
