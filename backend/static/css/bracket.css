@@ -19,8 +19,8 @@
   --gradient-red: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
   
   /* Text colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
   --text-muted: #94a3b8;
   
   /* Connection lines */
@@ -283,16 +283,18 @@
   padding-left: 1.4rem;
 }
 
-.team-name {
-  font-weight: 700 !important;
+/* Team name specifically for bracket matches */
+.bracket-match .team-name {
+  font-weight: 700;
   color: #ffffff !important;
-  font-size: 1.0rem !important;
+  font-size: 0.95rem;
   transition: color 0.3s ease;
   flex: 1;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(0, 0, 0, 0.6);
+  line-height: 1.2;
 }
 
 .team-score {
@@ -325,9 +327,11 @@
   border-radius: 0 4px 4px 0;
 }
 
-.match-winner .team-name {
-  color: #fbbf24;
+.bracket-match.match-winner .team-name {
+  color: #fbbf24 !important;
   font-weight: 700;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 1px 1px rgba(0, 0, 0, 0.7);
+  line-height: 1.2;
 }
 
 .match-winner .team-score {
@@ -340,18 +344,18 @@
 
 /* Placeholder text */
 .placeholder-text {
-  color: #64748b;
+  color: var(--text-muted);
   font-style: italic;
   text-align: center;
   padding: 1.5rem 1rem;
   font-size: 0.85rem;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 /* Penalty score display */
 .penalty-display {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   text-align: center;
   padding: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -542,7 +546,7 @@
     width: 240px;
   }
   
-  .team-name {
+  .bracket-match .team-name {
     font-size: 0.88rem;
   }
   
@@ -592,7 +596,7 @@
     min-height: 46px;
   }
   
-  .team-name {
+  .bracket-match .team-name {
     font-size: 0.82rem;
   }
   
@@ -623,7 +627,7 @@
     padding: 0.75rem 0.85rem;
   }
   
-  .team-name {
+  .bracket-match .team-name {
     font-size: 0.78rem;
   }
   
@@ -694,7 +698,7 @@
     background: #f3f4f6;
   }
   
-  .team-name {
+  .bracket-match .team-name {
     color: #000;
   }
 }

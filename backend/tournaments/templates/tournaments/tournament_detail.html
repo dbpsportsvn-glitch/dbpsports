@@ -255,9 +255,11 @@
 
 /* Desktop Navigation */
 .nav-desktop {
+    display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    position: relative;
 }
 
 .nav-desktop .nav {
@@ -307,6 +309,10 @@
     border-radius: 12px;
     color: white;
     transition: all 0.3s ease;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 10;
 }
 
 .btn-print:hover {
@@ -2685,12 +2691,17 @@
 
     .team-col {
         min-width: 200px;
-    }
-
-    .team-col {
         display: flex;
         align-items: center;
         gap: 0.75rem;
+    }
+
+    .team-col.text-end {
+        justify-content: flex-end;
+    }
+
+    .team-col.text-start {
+        justify-content: flex-start;
     }
 
     .team-logo-table {
@@ -3109,11 +3120,15 @@
     .team-name-left {
         color: #667eea;
         font-weight: 700;
+        margin-right: 1rem;
+        text-align: right !important;
     }
 
     .team-name-right {
         color: #764ba2;
         font-weight: 700;
+        margin-left: 1rem;
+        text-align: left !important;
     }
 
     /* Score Badge */
@@ -4676,7 +4691,7 @@
         padding: 1.5rem;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         gap: 1rem;
     }
 
@@ -4686,6 +4701,7 @@
         flex-direction: column;
         align-items: center;
         gap: 0.75rem;
+        max-width: 150px;
     }
 
     .team-logo-overview {
