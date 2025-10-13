@@ -842,7 +842,7 @@
                 </a>
                 {% endif %}
 
-                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
+                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not tournament.matches.exists %}
                 <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="admin-action-btn schedule-btn" target="_blank">
                     <i class="bi bi-calendar-plus"></i>
                     <span>Xếp lịch thi đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</span>
@@ -4139,13 +4139,32 @@
     /* Next Match Card */
     .next-match-card {
         grid-column: span 2;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .next-match-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
     }
 
     .next-match-header {
         display: flex;
         align-items: center;
         gap: 1rem;
-        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        margin-bottom: 0;
+    }
+
+    .next-match-body {
+        padding: 1.5rem;
     }
 
     .next-match-icon {
@@ -4159,6 +4178,7 @@
         color: white;
         font-size: 1.5rem;
         flex-shrink: 0;
+        margin-top: 0.125rem; /* Điều chỉnh để icon căn giữa với khối text */
     }
 
     .next-match-title-section {
