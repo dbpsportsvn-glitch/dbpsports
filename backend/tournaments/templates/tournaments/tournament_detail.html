@@ -855,6 +855,7 @@
 
         <!-- Admin Actions -->
         {% if user.is_staff or is_organizer or is_tournament_manager or is_media_staff or is_photographer_staff %}
+        
         <div class="admin-actions-section">
             <div class="admin-actions-header">
                 <i class="bi bi-gear-fill"></i>
@@ -868,7 +869,7 @@
                 </a>
                 {% endif %}
 
-                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
+                {% if tournament.status == 'IN_PROGRESS' and tournament.registrations.count >= 2 and group_matches.count == 0 and knockout_matches|length == 0 %}
                 <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="admin-action-btn schedule-btn" target="_blank">
                     <i class="bi bi-calendar-plus"></i>
                     <span>Xếp lịch thi đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</span>

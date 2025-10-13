@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Bốc thăm chia bảng - {{ tournament.name }}{% endblock %}
 
@@ -240,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LẤY DỮ LIỆU TỪ DJANGO ---
     const unassignedTeams = JSON.parse('{{ teams_json|escapejs }}');
     const groups = JSON.parse('{{ groups_json|escapejs }}');
+    const noImageUrl = '{% static "images/no-image.png" %}';
     
     // --- LẤY CÁC THÀNH PHẦN HTML ---
     const potListEl = document.getElementById('pot-list');
@@ -262,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
         div.className = 'team-ball';
         div.dataset.id = team.id;
         div.dataset.name = team.name;
-        div.innerHTML = `<img src="${team.logo || '{% static "images/no-image.png" %}'}" alt="${team.name}" class="logo">`;
+        div.innerHTML = `<img src="${team.logo || noImageUrl}" alt="${team.name}" class="logo">`;
         return div;
     }
     
