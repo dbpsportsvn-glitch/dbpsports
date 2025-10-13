@@ -494,61 +494,627 @@
 
 <div class="tab-content" id="tournamentTabContent">
     <div class="tab-pane fade show active card-pane" id="overview" role="tabpanel">
-      <p>
-        <span class="chip">Trạng thái: {{ tournament.get_status_display }}</span>
-        <span class="chip">Thể thức: {{ tournament.get_format_display }}</span>
-        <span class="chip">Bắt đầu: {{ tournament.start_date|date:"d/m/Y" }}</span>
-        <span class="chip">Kết thúc: {{ tournament.end_date|date:"d/m/Y" }}</span>
-      </p>
+        
+        <!-- Tournament Info Cards -->
+        <div class="overview-info-grid">
+            <!-- Tournament Details Card -->
+            <div class="overview-info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </div>
+                    <h4>Thông tin giải đấu</h4>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-flag-fill"></i>
+                            <span>Trạng thái</span>
+                        </div>
+                        <div class="info-value status-{{ tournament.status|lower }}">
+                            {{ tournament.get_status_display }}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-diagram-3-fill"></i>
+                            <span>Thể thức thi đấu</span>
+                        </div>
+                        <div class="info-value">
+                            {% if tournament.format == 'LEAGUE' %}
+                                Vòng tròn (League)
+                            {% elif tournament.format == 'CUP' %}
+                                Loại trực tiếp (Cup)
+                            {% else %}
+                                {{ tournament.get_format_display }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-calendar-event"></i>
+                            <span>Ngày bắt đầu</span>
+                        </div>
+                        <div class="info-value">
+                            {{ tournament.start_date|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>Ngày kết thúc</span>
+                        </div>
+                        <div class="info-value">
+                            {{ tournament.end_date|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      {% if knockout_matches|length > 0 %}
-        <div class="mt-4">
-            <h5 class="section-title">Trạng thái Vòng loại trực tiếp</h5>
+            <!-- Next Match Card -->
+            <div class="overview-info-card next-match-card">
+                <div class="next-match-header">
+                    <div class="next-match-icon">
+                        <i class="bi bi-calendar-event-fill"></i>
+                    </div>
+                    <div class="next-match-title-section">
+                        <h4 id="next-match-title">Trận đấu tiếp theo</h4>
+                        <p id="next-match-subtitle" class="next-match-subtitle">Đang tải...</p>
+                    </div>
+                </div>
+                
+                <div class="next-match-body" id="next-match-body">
+                    <!-- Countdown Section -->
+                    <div class="next-match-countdown" id="next-match-countdown">
+                        <div class="countdown-display">
+                            <div class="countdown-item">
+                                <div class="countdown-number" id="days">00</div>
+                                <div class="countdown-label">Ngày</div>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-item">
+                                <div class="countdown-number" id="hours">00</div>
+                                <div class="countdown-label">Giờ</div>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-item">
+                                <div class="countdown-number" id="minutes">00</div>
+                                <div class="countdown-label">Phút</div>
+                            </div>
+                            <div class="countdown-separator">:</div>
+                            <div class="countdown-item">
+                                <div class="countdown-number" id="seconds">00</div>
+                                <div class="countdown-label">Giây</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Match Details Section -->
+                    <div class="next-match-details" id="next-match-details">
+                        <div class="match-teams">
+                            <div class="team-info">
+                                <div class="team-logo" id="team1-logo">
+                                    <i class="bi bi-shield-fill"></i>
+                                </div>
+                                <div class="team-name" id="team1-name">Đội 1</div>
+                            </div>
+                            <div class="vs-section">
+                                <div class="vs-text">VS</div>
+                                <div class="match-round" id="match-round">Vòng bảng</div>
+                            </div>
+                            <div class="team-info">
+                                <div class="team-logo" id="team2-logo">
+                                    <i class="bi bi-shield-fill"></i>
+                                </div>
+                                <div class="team-name" id="team2-name">Đội 2</div>
+                            </div>
+                        </div>
+                        
+                        <div class="match-info-grid">
+                            <div class="match-info-item">
+                                <div class="match-info-icon">
+                                    <i class="bi bi-clock-fill"></i>
+                                </div>
+                                <div class="match-info-content">
+                                    <div class="match-info-label">Thời gian</div>
+                                    <div class="match-info-value" id="match-time">--:--</div>
+                                </div>
+                            </div>
+                            <div class="match-info-item">
+                                <div class="match-info-icon">
+                                    <i class="bi bi-calendar-fill"></i>
+                                </div>
+                                <div class="match-info-content">
+                                    <div class="match-info-label">Ngày</div>
+                                    <div class="match-info-value" id="match-date">--/--/----</div>
+                                </div>
+                            </div>
+                            <div class="match-info-item">
+                                <div class="match-info-icon">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </div>
+                                <div class="match-info-content">
+                                    <div class="match-info-label">Địa điểm</div>
+                                    <div class="match-info-value" id="match-location">Chưa xác định</div>
+                                </div>
+                            </div>
+                            <div class="match-info-item">
+                                <div class="match-info-icon">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div class="match-info-content">
+                                    <div class="match-info-label">Trọng tài</div>
+                                    <div class="match-info-value" id="match-referee">Chưa phân công</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Card -->
+            <div class="overview-info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="bi bi-bar-chart-fill"></i>
+                    </div>
+                    <h4>Thống kê nhanh</h4>
+                </div>
+                <div class="info-card-body">
+                    <div class="quick-stats-grid">
+                        <div class="quick-stat-item">
+                            <div class="quick-stat-icon teams-icon">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div class="quick-stat-content">
+                                <div class="quick-stat-number">{{ tournament.registrations.count }}</div>
+                                <div class="quick-stat-label">Đội tham gia</div>
+                            </div>
+                        </div>
+                        <div class="quick-stat-item">
+                            <div class="quick-stat-icon matches-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+                            <div class="quick-stat-content">
+                                <div class="quick-stat-number">{{ group_matches|length|add:knockout_matches|length }}</div>
+                                <div class="quick-stat-label">Trận đấu</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Championship Status Banner -->
+        {% if knockout_matches|length > 0 %}
             {% with final=knockout_data.final_match semi=knockout_data.semi_final_1 quarter=knockout_data.quarter_final_1 %}
                 {% if final and final.winner %}
-                    <div class="alert alert-success"><i class="bi bi-trophy-fill"></i> Chúc mừng <strong>{{ final.winner.name }}</strong> đã vô địch giải đấu!</div>
+                <div class="championship-banner winner-banner">
+                    <div class="banner-icon">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <div class="banner-content">
+                        <h3>Vô địch giải đấu!</h3>
+                        <p>Chúc mừng <strong>{{ final.winner.name }}</strong> đã vô địch giải đấu!</p>
+                    </div>
+                    <div class="banner-decoration">
+                        <i class="bi bi-stars"></i>
+                    </div>
+                </div>
                 {% elif final %}
-                     <div class="alert alert-info">Đang diễn ra trận Chung kết.</div>
+                <div class="championship-banner final-banner">
+                    <div class="banner-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div class="banner-content">
+                        <h3>Trận Chung kết</h3>
+                        <p>Trận chung kết đang diễn ra! Ai sẽ là nhà vô địch?</p>
+                    </div>
+                </div>
                 {% elif semi %}
-                     <div class="alert alert-info">Đã xác định các cặp đấu Bán kết. Chờ kết quả...</div>
+                <div class="championship-banner semi-banner">
+                    <div class="banner-icon">
+                        <i class="bi bi-flag"></i>
+                    </div>
+                    <div class="banner-content">
+                        <h3>Bán kết</h3>
+                        <p>Các cặp đấu bán kết đã được xác định. Chờ kết quả...</p>
+                    </div>
+                </div>
                 {% elif quarter %}
-                     <div class="alert alert-info">Đã xác định các cặp đấu Tứ kết. Chờ kết quả...</div>
+                <div class="championship-banner quarter-banner">
+                    <div class="banner-icon">
+                        <i class="bi bi-signpost-2"></i>
+                    </div>
+                    <div class="banner-content">
+                        <h3>Tứ kết</h3>
+                        <p>Các cặp đấu tứ kết đã được xác định. Chờ kết quả...</p>
+                    </div>
+                </div>
                 {% endif %}
             {% endwith %}
+        {% endif %}
+
+        <!-- Upcoming Matches Section -->
+        <div class="overview-section">
+            <div class="section-header-overview">
+                <div class="section-icon-overview">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div class="section-info-overview">
+                    <h4>Trận đấu sắp diễn ra</h4>
+                    <p>3 trận đấu gần nhất sẽ diễn ra</p>
+                </div>
+            </div>
+            
+            <div class="upcoming-matches-grid" id="upcoming-matches-container">
+                <!-- Matches will be populated by JavaScript -->
+            </div>
+            
+            <!-- Hidden JSON data for JavaScript -->
+            <script type="application/json" id="matches-data">
+            {
+                "group_matches": [
+                    {% for match in group_matches %}
+                        {% if match.team1_score is None and match.team2_score is None and match.match_time %}
+                        {
+                            "time": "{{ match.match_time|date:'Y-m-d H:i:s' }}",
+                            "stage": "{% if match.stage == 'GROUP' %}Vòng bảng{% else %}{{ match.get_stage_display|escapejs }}{% endif %}",
+                            "type": "group",
+                            "team1_name": "{{ match.team1.name|escapejs }}",
+                            "team1_logo": "{% if match.team1.logo %}{{ match.team1.logo.url }}{% endif %}",
+                            "team2_name": "{{ match.team2.name|escapejs }}",
+                            "team2_logo": "{% if match.team2.logo %}{{ match.team2.logo.url }}{% endif %}",
+                            "location": "{{ match.location|default:'Chưa xác định'|escapejs }}",
+                            "referee": "{{ match.referee|default:'Chưa phân công'|escapejs }}"
+                        },
+                        {% endif %}
+                    {% endfor %}
+                    null
+                ],
+                "knockout_matches": [
+                    {% for match in knockout_matches %}
+                        {% if match.team1_score is None and match.team2_score is None and match.match_time %}
+                        {
+                            "time": "{{ match.match_time|date:'Y-m-d H:i:s' }}",
+                            "stage": "{{ match.get_stage_display|escapejs }}",
+                            "type": "knockout",
+                            "team1_name": "{% if match.team1 %}{{ match.team1.name|escapejs }}{% else %}Chờ xác định{% endif %}",
+                            "team1_logo": "{% if match.team1 and match.team1.logo %}{{ match.team1.logo.url }}{% endif %}",
+                            "team2_name": "{% if match.team2 %}{{ match.team2.name|escapejs }}{% else %}Chờ xác định{% endif %}",
+                            "team2_logo": "{% if match.team2 and match.team2.logo %}{{ match.team2.logo.url }}{% endif %}",
+                            "location": "{{ match.location|default:'Chưa xác định'|escapejs }}",
+                            "referee": "{{ match.referee|default:'Chưa phân công'|escapejs }}"
+                        },
+                        {% endif %}
+                    {% endfor %}
+                    null
+                ]
+            }
+            </script>
         </div>
-      {% endif %}
 
-      {% if tournament.status == 'REGISTRATION_OPEN' %}
-        <div class="alert alert-info text-center mt-4">
-            <h4 class="alert-heading">Giải đấu đang mở đăng ký!</h4>
-            <p>Nhanh tay đăng ký cho đội của bạn để có cơ hội tranh tài.</p>
-            <hr>
-            <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-primary btn-lg">
-                <i class="bi bi-pencil-square"></i> Đăng ký tham gia ngay
-            </a>
+        <!-- Registration Banner -->
+        {% if tournament.status == 'REGISTRATION_OPEN' %}
+        <div class="registration-banner">
+            <div class="registration-icon">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div class="registration-content">
+                <h3>Giải đấu đang mở đăng ký!</h3>
+                <p>Nhanh tay đăng ký cho đội của bạn để có cơ hội tranh tài cùng các đội mạnh nhất</p>
+                <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="registration-btn">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Đăng ký tham gia ngay</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
         </div>
-      {% else %}
-          <p class="text-muted mt-2">Giai đoạn đăng ký đã kết thúc.</p>
-      {% endif %}
-
-    {% if user.is_staff or is_organizer or is_tournament_manager or is_media_staff or is_photographer_staff %}
-        <div class="mt-3 d-flex flex-wrap gap-2">
-
-            {% if tournament.status == 'IN_PROGRESS' and unassigned_teams and tournament.format == 'CUP' %}
-            <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
-                <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
-            </a>
-            {% endif %}
-
-            {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
-            <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
-                <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}
-            </a>
-            {% endif %}
-
-
+        {% elif tournament.status == 'DRAFT' %}
+        <div class="info-banner draft-banner">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Giải đấu đang trong quá trình chuẩn bị. Vui lòng chờ thông báo chính thức!</p>
         </div>
-      {% endif %}
+        {% elif tournament.status == 'COMPLETED' %}
+        <div class="info-banner completed-banner">
+            <i class="bi bi-check-circle-fill"></i>
+            <p>Giải đấu đã kết thúc. Cảm ơn các đội đã tham gia!</p>
+        </div>
+        {% else %}
+        <div class="info-banner closed-banner">
+            <i class="bi bi-x-circle"></i>
+            <p>Giai đoạn đăng ký đã kết thúc.</p>
+        </div>
+        {% endif %}
+
+        <!-- Admin Actions -->
+        {% if user.is_staff or is_organizer or is_tournament_manager or is_media_staff or is_photographer_staff %}
+        <div class="admin-actions-section">
+            <div class="admin-actions-header">
+                <i class="bi bi-gear-fill"></i>
+                <h4>Công cụ quản lý</h4>
+            </div>
+            <div class="admin-actions-grid">
+                {% if tournament.status == 'IN_PROGRESS' and unassigned_teams and tournament.format == 'CUP' %}
+                <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="admin-action-btn draw-btn" target="_blank">
+                    <i class="bi bi-shuffle"></i>
+                    <span>Bốc thăm chia bảng</span>
+                </a>
+                {% endif %}
+
+                {% if tournament.status == 'IN_PROGRESS' and has_paid_teams %}
+                <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="admin-action-btn schedule-btn" target="_blank">
+                    <i class="bi bi-calendar-plus"></i>
+                    <span>Xếp lịch thi đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <script>
+        // Next Match Card
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get matches data from the same source as upcoming matches
+            const matchesDataScript = document.getElementById('matches-data');
+            const nextMatchBody = document.getElementById('next-match-body');
+            const nextMatchTitle = document.getElementById('next-match-title');
+            const nextMatchSubtitle = document.getElementById('next-match-subtitle');
+            
+            if (!matchesDataScript) {
+                nextMatchTitle.textContent = 'Không có trận đấu';
+                nextMatchSubtitle.textContent = 'Chưa có trận đấu nào được lên lịch';
+                nextMatchBody.innerHTML = '<div class="no-match-message"><i class="bi bi-calendar-x"></i><p>Chưa có trận đấu nào</p></div>';
+                return;
+            }
+            
+            let matchesData;
+            try {
+                matchesData = JSON.parse(matchesDataScript.textContent);
+            } catch (e) {
+                nextMatchTitle.textContent = 'Lỗi tải dữ liệu';
+                nextMatchSubtitle.textContent = 'Không thể tải thông tin trận đấu';
+                nextMatchBody.innerHTML = '<div class="no-match-message"><i class="bi bi-exclamation-triangle"></i><p>Không thể tải dữ liệu</p></div>';
+                return;
+            }
+            
+            // Combine and filter matches
+            const allMatches = [...matchesData.group_matches, ...matchesData.knockout_matches].filter(m => m !== null);
+            const now = new Date();
+            const upcomingMatches = allMatches
+                .filter(m => {
+                    const matchTime = new Date(m.time);
+                    return matchTime > now;
+                })
+                .sort((a, b) => new Date(a.time) - new Date(b.time));
+            
+            if (upcomingMatches.length === 0) {
+                nextMatchTitle.textContent = 'Không có trận sắp tới';
+                nextMatchSubtitle.textContent = 'Tất cả các trận đấu đã hoàn thành';
+                nextMatchBody.innerHTML = '<div class="no-match-message"><i class="bi bi-calendar-check"></i><p>Tất cả trận đã hoàn thành</p></div>';
+                return;
+            }
+            
+            // Get the nearest match
+            const nextMatch = upcomingMatches[0];
+            const targetDate = new Date(nextMatch.time).getTime();
+            
+            // Update card content
+            nextMatchTitle.textContent = 'Trận đấu tiếp theo';
+            nextMatchSubtitle.textContent = `${nextMatch.team1_name} vs ${nextMatch.team2_name}`;
+            
+            // Update match details
+            document.getElementById('team1-name').textContent = nextMatch.team1_name;
+            document.getElementById('team2-name').textContent = nextMatch.team2_name;
+            document.getElementById('match-round').textContent = nextMatch.stage;
+            
+            // Update team logos
+            const team1Logo = document.getElementById('team1-logo');
+            const team2Logo = document.getElementById('team2-logo');
+            
+            if (nextMatch.team1_logo) {
+                team1Logo.innerHTML = `<img src="${nextMatch.team1_logo}" alt="${nextMatch.team1_name}" class="team-logo-img">`;
+            }
+            if (nextMatch.team2_logo) {
+                team2Logo.innerHTML = `<img src="${nextMatch.team2_logo}" alt="${nextMatch.team2_name}" class="team-logo-img">`;
+            }
+            
+            // Update match time and date
+            const matchDateTime = new Date(nextMatch.time);
+            document.getElementById('match-time').textContent = matchDateTime.toLocaleTimeString('vi-VN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            document.getElementById('match-date').textContent = matchDateTime.toLocaleDateString('vi-VN');
+            
+            // Update location and referee
+            document.getElementById('match-location').textContent = nextMatch.location || 'Chưa xác định';
+            document.getElementById('match-referee').textContent = nextMatch.referee || 'Chưa phân công';
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+                
+                if (distance < 0) {
+                    document.getElementById('next-match-countdown').innerHTML = '<div class="match-live-indicator"><i class="bi bi-play-circle-fill"></i><span>Đang diễn ra</span></div>';
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                document.getElementById('days').textContent = String(days).padStart(2, '0');
+                document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+                document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+                document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        });
+
+        // Upcoming Matches Display
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('upcoming-matches-container');
+            const matchesDataScript = document.getElementById('matches-data');
+            
+            console.log('Container:', container);
+            console.log('Matches data script:', matchesDataScript);
+            
+            if (!matchesDataScript) {
+                console.log('No matches data script found');
+                container.innerHTML = '<div class="no-upcoming-matches"><div class="empty-icon"><i class="bi bi-calendar-x"></i></div><h4>Chưa có trận đấu</h4><p>Hiện chưa có trận đấu nào được lên lịch</p></div>';
+                return;
+            }
+            
+            console.log('Script content:', matchesDataScript.textContent);
+            
+            let matchesData;
+            try {
+                matchesData = JSON.parse(matchesDataScript.textContent);
+                console.log('Parsed matches data:', matchesData);
+            } catch (e) {
+                console.error('Error parsing matches data:', e);
+                container.innerHTML = '<div class="no-upcoming-matches"><div class="empty-icon"><i class="bi bi-calendar-x"></i></div><h4>Lỗi tải dữ liệu</h4><p>Không thể tải thông tin trận đấu</p></div>';
+                return;
+            }
+            
+            // Combine all matches and filter out null values
+            const allMatches = [...matchesData.group_matches, ...matchesData.knockout_matches].filter(m => m !== null);
+            console.log('All matches:', allMatches);
+            
+            if (allMatches.length === 0) {
+                console.log('No matches found');
+                container.innerHTML = '<div class="no-upcoming-matches"><div class="empty-icon"><i class="bi bi-calendar-x"></i></div><h4>Chưa có trận đấu</h4><p>Hiện chưa có trận đấu nào được lên lịch</p></div>';
+                return;
+            }
+            
+            // Parse and sort matches
+            const matches = allMatches.map(match => ({
+                time: new Date(match.time),
+                stage: match.stage,
+                type: match.type,
+                team1Name: match.team1_name,
+                team1Logo: match.team1_logo,
+                team2Name: match.team2_name,
+                team2Logo: match.team2_logo
+            }));
+            
+            // Filter future matches and sort by time
+            const now = new Date();
+            const upcomingMatches = matches
+                .filter(m => {
+                    const matchTime = new Date(m.time);
+                    return matchTime > now;
+                })
+                .sort((a, b) => new Date(a.time) - new Date(b.time))
+                .slice(0, 3); // Get 3 nearest matches
+            
+            if (upcomingMatches.length === 0) {
+                container.innerHTML = '<div class="no-upcoming-matches"><div class="empty-icon"><i class="bi bi-calendar-check"></i></div><h4>Không có trận sắp tới</h4><p>Tất cả các trận đấu đã hoàn thành hoặc đang diễn ra</p></div>';
+                return;
+            }
+            
+            // Render matches
+            container.innerHTML = upcomingMatches.map((match, index) => {
+                const matchId = 'match-countdown-' + index;
+                const team1LogoHtml = match.team1Logo 
+                    ? `<img src="${match.team1Logo}" alt="${match.team1Name}" class="team-logo-overview">`
+                    : `<div class="team-logo-placeholder-overview"><i class="bi bi-shield-fill"></i></div>`;
+                const team2LogoHtml = match.team2Logo 
+                    ? `<img src="${match.team2Logo}" alt="${match.team2Name}" class="team-logo-overview">`
+                    : `<div class="team-logo-placeholder-overview"><i class="bi bi-shield-fill"></i></div>`;
+                
+                return `
+                    <div class="upcoming-match-card ${match.type === 'knockout' ? 'knockout-match' : ''}">
+                        <div class="match-round-badge ${match.type === 'knockout' ? 'knockout-badge' : ''}">${match.stage}</div>
+                        <div class="match-teams-overview">
+                            <div class="match-team-overview">
+                                ${team1LogoHtml}
+                                <span class="team-name-overview">${match.team1Name}</span>
+                            </div>
+                            <div class="match-vs">VS</div>
+                            <div class="match-team-overview">
+                                ${team2LogoHtml}
+                                <span class="team-name-overview">${match.team2Name}</span>
+                            </div>
+                        </div>
+                        <div class="match-details-overview">
+                            <div class="match-detail-item">
+                                <i class="bi bi-calendar3"></i>
+                                <span>${formatDate(match.time)}</span>
+                            </div>
+                            <div class="match-detail-item">
+                                <i class="bi bi-clock"></i>
+                                <span>${formatTime(match.time)}</span>
+                            </div>
+                        </div>
+                        <div class="match-countdown-section">
+                            <div class="match-countdown-label">
+                                <i class="bi bi-hourglass-split"></i>
+                                <span>Thời gian còn lại:</span>
+                            </div>
+                            <div class="match-countdown-display" id="${matchId}">
+                                <span class="countdown-time">--</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update countdowns
+            function updateMatchCountdowns() {
+                upcomingMatches.forEach((match, index) => {
+                    const element = document.getElementById('match-countdown-' + index);
+                    if (!element) return;
+                    
+                    const now = new Date().getTime();
+                    const distance = match.time.getTime() - now;
+                    
+                    if (distance < 0) {
+                        element.innerHTML = '<span class="countdown-started"><i class="bi bi-play-circle-fill"></i> Đang diễn ra</span>';
+                        return;
+                    }
+                    
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    let timeText = '';
+                    if (days > 0) {
+                        timeText = `${days} ngày ${hours} giờ`;
+                    } else if (hours > 0) {
+                        timeText = `${hours} giờ ${minutes} phút`;
+                    } else if (minutes > 0) {
+                        timeText = `${minutes} phút ${seconds} giây`;
+                    } else {
+                        timeText = `${seconds} giây`;
+                    }
+                    
+                    element.innerHTML = `<span class="countdown-time">${timeText}</span>`;
+                });
+            }
+            
+            function formatDate(date) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+            
+            function formatTime(date) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+            
+            updateMatchCountdowns();
+            setInterval(updateMatchCountdowns, 1000);
+        });
+        </script>
     </div>
 
     <div class="tab-pane fade card-pane" id="rules" role="tabpanel">
@@ -3456,6 +4022,1115 @@
 
         .empty-rules-state h4 {
             font-size: 1.25rem;
+        }
+    }
+    </style>
+
+    <style>
+    /* ============================================
+       MODERN OVERVIEW TAB STYLES
+       ============================================ */
+    
+    /* Overview Info Grid */
+    .overview-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .overview-info-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .overview-info-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+    }
+
+    .info-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .info-card-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        flex-shrink: 0;
+    }
+
+    .info-card-header h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .info-card-body {
+        padding: 1.5rem;
+    }
+
+    /* Info Items */
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #718096;
+        font-weight: 500;
+    }
+
+    .info-label i {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    .info-value {
+        font-weight: 700;
+        color: #2d3748;
+        font-size: 1.05rem;
+    }
+
+    .info-value.status-registration_open {
+        color: #10b981;
+    }
+
+    .info-value.status-in_progress {
+        color: #3b82f6;
+    }
+
+    .info-value.status-completed {
+        color: #6b7280;
+    }
+
+    .info-value.status-draft {
+        color: #f59e0b;
+    }
+
+    /* Next Match Card */
+    .next-match-card {
+        grid-column: span 2;
+    }
+
+    .next-match-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .next-match-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .next-match-title-section {
+        flex: 1;
+    }
+
+    .next-match-title-section h4 {
+        margin: 0 0 0.25rem 0;
+        color: #2d3748;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .next-match-subtitle {
+        margin: 0;
+        color: #718096;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .next-match-countdown {
+        margin-bottom: 1.5rem;
+    }
+
+    .countdown-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .countdown-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+    }
+
+    .countdown-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .countdown-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .countdown-separator {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0 0.25rem;
+    }
+
+    /* Match Details */
+    .match-teams {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(118, 75, 162, 0.03));
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.08);
+    }
+
+    .team-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .team-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f7fafc, #edf2f7);
+        border: 2px solid rgba(102, 126, 234, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: 1.5rem;
+        overflow: hidden;
+    }
+
+    .team-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+
+    .team-name {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.9rem;
+        text-align: center;
+        max-width: 120px;
+        word-wrap: break-word;
+    }
+
+    .vs-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 1rem;
+    }
+
+    .vs-text {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #667eea;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .match-round {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #718096;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    /* Match Info Grid */
+    .match-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .match-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid rgba(102, 126, 234, 0.08);
+        transition: all 0.3s ease;
+    }
+
+    .match-info-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .match-info-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .match-info-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .match-info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .match-info-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2d3748;
+        word-wrap: break-word;
+    }
+
+    /* No Match Message */
+    .no-match-message {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #718096;
+    }
+
+    .no-match-message i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #a0aec0;
+    }
+
+    .no-match-message p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    /* Match Live Indicator */
+    .match-live-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+        border-radius: 12px;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .match-live-indicator i {
+        font-size: 1.25rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .completed-message {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .completed-message i {
+        font-size: 3rem;
+        color: #10b981;
+        margin-bottom: 1rem;
+    }
+
+    .completed-message p {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    /* Quick Stats */
+    .quick-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .quick-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .quick-stat-item:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        transform: scale(1.05);
+    }
+
+    .quick-stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .quick-stat-icon.teams-icon {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .quick-stat-icon.matches-icon {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .quick-stat-content {
+        flex: 1;
+    }
+
+    .quick-stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2d3748;
+        line-height: 1;
+    }
+
+    .quick-stat-label {
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    /* Championship Banner */
+    .championship-banner {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .championship-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.1;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 15h15l-12 9 5 15-13-9-13 9 5-15-12-9h15z' fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+    }
+
+    .winner-banner {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border: 2px solid #fbbf24;
+    }
+
+    .final-banner {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: 2px solid #667eea;
+    }
+
+    .semi-banner {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border: 2px solid #3b82f6;
+    }
+
+    .quarter-banner {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: 2px solid #10b981;
+    }
+
+    .banner-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        flex-shrink: 0;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .banner-content {
+        flex: 1;
+        color: white;
+    }
+
+    .banner-content h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .banner-content p {
+        margin: 0;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .banner-content strong {
+        font-weight: 800;
+        text-decoration: underline;
+    }
+
+    .banner-decoration {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Overview Section */
+    .overview-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-header-overview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .section-icon-overview {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .section-info-overview {
+        flex: 1;
+    }
+
+    .section-info-overview h4 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .section-info-overview p {
+        margin: 0.25rem 0 0 0;
+        color: #718096;
+        font-size: 0.9rem;
+    }
+
+    /* Upcoming Matches Grid */
+    .upcoming-matches-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .upcoming-match-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .upcoming-match-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+    }
+
+    .upcoming-match-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .upcoming-match-card.knockout-match::before {
+        background: linear-gradient(90deg, #f093fb, #f5576c);
+    }
+
+    .match-round-badge {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        color: #667eea;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .knockout-badge {
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(245, 87, 108, 0.1));
+        color: #f5576c;
+    }
+
+    .match-teams-overview {
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .match-team-overview {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .team-logo-overview {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+
+    .upcoming-match-card:hover .team-logo-overview {
+        transform: scale(1.1);
+    }
+
+    .team-logo-placeholder-overview {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #a0aec0;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .upcoming-match-card:hover .team-logo-placeholder-overview {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .team-name-overview {
+        font-weight: 700;
+        color: #2d3748;
+        text-align: center;
+        font-size: 0.95rem;
+        line-height: 1.3;
+    }
+
+    .match-vs {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #667eea;
+        padding: 0 0.5rem;
+    }
+
+    .match-details-overview {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .match-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .match-detail-item i {
+        color: #667eea;
+    }
+
+    /* Match Countdown Section */
+    .match-countdown-section {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+        border-top: 1px solid rgba(102, 126, 234, 0.15);
+    }
+
+    .match-countdown-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        color: #718096;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .match-countdown-label i {
+        color: #667eea;
+        font-size: 1rem;
+    }
+
+    .match-countdown-display {
+        text-align: center;
+    }
+
+    .countdown-time {
+        display: inline-block;
+        font-size: 1.25rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+
+    .countdown-started {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #10b981;
+        padding: 0.5rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 8px;
+    }
+
+    .countdown-started i {
+        font-size: 1.25rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* No Upcoming Matches */
+    .no-upcoming-matches {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f7fafc, #edf2f7);
+        border-radius: 16px;
+        border: 2px dashed #cbd5e0;
+    }
+
+    .no-upcoming-matches .empty-icon {
+        font-size: 5rem;
+        color: #a0aec0;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .no-upcoming-matches h4 {
+        margin: 0 0 0.75rem 0;
+        color: #4a5568;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .no-upcoming-matches p {
+        margin: 0;
+        color: #718096;
+        font-size: 1rem;
+    }
+
+    /* Registration Banner */
+    .registration-banner {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .registration-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 40%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .registration-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .registration-content {
+        flex: 1;
+        color: white;
+    }
+
+    .registration-content h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .registration-content p {
+        margin: 0 0 1.5rem 0;
+        font-size: 1.05rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .registration-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1.75rem;
+        background: white;
+        color: #667eea;
+        font-weight: 700;
+        font-size: 1.05rem;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .registration-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        color: #764ba2;
+    }
+
+    .registration-btn i:last-child {
+        transition: transform 0.3s ease;
+    }
+
+    .registration-btn:hover i:last-child {
+        transform: translateX(4px);
+    }
+
+    /* Info Banners */
+    .info-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .info-banner i {
+        font-size: 1.5rem;
+    }
+
+    .draft-banner {
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1));
+        border: 2px solid rgba(251, 191, 36, 0.3);
+        color: #d97706;
+    }
+
+    .completed-banner {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        border: 2px solid rgba(16, 185, 129, 0.3);
+        color: #059669;
+    }
+
+    .closed-banner {
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.1));
+        border: 2px solid rgba(107, 114, 128, 0.3);
+        color: #4b5563;
+    }
+
+    /* Admin Actions */
+    .admin-actions-section {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+        border-radius: 16px;
+        border: 1px dashed rgba(102, 126, 234, 0.3);
+    }
+
+    .admin-actions-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .admin-actions-header i {
+        color: #667eea;
+        font-size: 1.25rem;
+    }
+
+    .admin-actions-header h4 {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .admin-actions-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .admin-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .admin-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+    .draw-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .schedule-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    /* Responsive Overview */
+    @media (max-width: 768px) {
+        .overview-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .next-match-card {
+            grid-column: span 1;
+        }
+
+        .countdown-number {
+            font-size: 2rem;
+        }
+
+        .countdown-separator {
+            font-size: 1.5rem;
+        }
+
+        .match-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .match-teams {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .vs-section {
+            margin: 0;
+        }
+
+        .team-name {
+            max-width: 100px;
+        }
+
+        .quick-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .championship-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .registration-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .registration-content h3 {
+            font-size: 1.5rem;
+        }
+
+        .section-header-overview {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .upcoming-matches-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-actions-grid {
+            flex-direction: column;
+        }
+
+        .admin-action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .info-card-header {
+            padding: 1rem;
+        }
+
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.1rem;
+        }
+
+        .section-icon-overview {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+        }
+
+        .countdown-item {
+            min-width: 60px;
+        }
+
+        .countdown-number {
+            font-size: 1.5rem;
+        }
+
+        .team-logo-overview,
+        .team-logo-placeholder-overview {
+            width: 50px;
+            height: 50px;
+        }
+
+        .registration-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
         }
     }
     </style>
