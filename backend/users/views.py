@@ -11,7 +11,7 @@ from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferenc
 from .models import Profile, Role
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
-from organizations.models import ProfessionalReview, JobApplication
+from organizations.models import ProfessionalReview, JobApplication, JobPosting
 from django.db.models import Avg, Count
 # Thêm các import cần thiết ở đầu file
 from django.db import transaction
@@ -582,17 +582,22 @@ def stadium_job_application_detail(request, application_pk):
             application.status = JobApplication.Status.APPROVED
             application.save()
             
+            # Tự động đóng job posting khi đã chấp nhận ứng viên
+            job = application.job
+            job.status = JobPosting.Status.CLOSED
+            job.save()
+            
             # Gửi thông báo cho applicant
             from tournaments.models import Notification
             Notification.objects.create(
                 user=application.applicant,
                 title=f"Đơn ứng tuyển được chấp nhận",
-                message=f"Đơn ứng tuyển của bạn cho vị trí '{application.job.title}' tại {stadium.stadium_name} đã được chấp nhận!",
+                message=f"Đơn ứng tuyển của bạn cho vị trí '{job.title}' tại {stadium.stadium_name} đã được chấp nhận!",
                 notification_type=Notification.NotificationType.GENERIC,
                 related_url=f"/users/profile/{application.applicant.pk}/"
             )
             
-            messages.success(request, f"Đã chấp nhận đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}")
+            messages.success(request, f"Đã chấp nhận đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}. Tin tuyển dụng '{job.title}' đã được đóng.")
             
         elif action == 'reject':
             application.status = JobApplication.Status.REJECTED
@@ -610,7 +615,7 @@ def stadium_job_application_detail(request, application_pk):
             
             messages.info(request, f"Đã từ chối đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}")
         
-        return redirect('stadium_job_applications')
+        return redirect('stadium_dashboard')
     
     context = {
         'stadium': stadium,
@@ -618,3 +623,44 @@ def stadium_job_application_detail(request, application_pk):
     }
     
     return render(request, 'users/stadium_job_application_detail.html', context)
+
+
+@login_required
+def edit_stadium_job_posting(request, job_pk):
+    """Stadium owner chỉnh sửa job posting của mình"""
+    # Kiểm tra user có stadium profile không
+    if not hasattr(request.user, 'stadium_profile'):
+        messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
+        return redirect('create_stadium_profile')
+    
+    stadium = request.user.stadium_profile
+    job = get_object_or_404(JobPosting, pk=job_pk, stadium=stadium)
+    
+    if request.method == 'POST':
+        from organizations.forms import JobPostingForm
+        form = JobPostingForm(request.POST, instance=job)
+        if form.is_valid():
+            job_posting = form.save(commit=False)
+            job_posting.stadium = stadium
+            job_posting.posted_by = 'STADIUM'
+            job_posting.save()
+            
+            messages.success(request, f"Đã cập nhật tin tuyển dụng '{job_posting.title}' thành công!")
+            return redirect('stadium_dashboard')
+    else:
+        from organizations.forms import JobPostingForm
+        form = JobPostingForm(instance=job)
+    
+    # Lấy danh sách roles
+    from .models import Role
+    roles = Role.objects.all().order_by('order')
+    
+    context = {
+        'form': form,
+        'job': job,
+        'stadium': stadium,
+        'roles': roles,
+        'is_edit': True,
+    }
+    
+    return render(request, 'users/stadium_job_posting_form.html', context)

@@ -20,6 +20,7 @@ urlpatterns = [
     path('stadium/job/create/', views.create_stadium_job_posting, name='create_stadium_job_posting'),
     path('stadium/applications/', views.stadium_job_applications, name='stadium_job_applications'),
     path('stadium/application/<int:application_pk>/', views.stadium_job_application_detail, name='stadium_job_application_detail'),
+    path('stadium/job/<int:job_pk>/edit/', views.edit_stadium_job_posting, name='edit_stadium_job_posting'),
     
     # Để allauth xử lý mọi thứ liên quan đến tài khoản
     # URL của allauth đã bao gồm login, logout, register, password reset...

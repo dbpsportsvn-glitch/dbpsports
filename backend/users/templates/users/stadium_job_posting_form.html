@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Đăng tin tuyển dụng - {{ stadium.stadium_name }}{% endblock %}
+{% block title %}{% if is_edit %}Chỉnh sửa tin tuyển dụng{% else %}Đăng tin tuyển dụng{% endif %} - {{ stadium.stadium_name }}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
@@ -9,7 +9,8 @@
             <div class="card shadow">
                 <div class="card-header bg-success text-white">
                     <h4 class="mb-0">
-                        <i class="bi bi-megaphone"></i> Đăng tin tuyển dụng
+                        <i class="bi bi-megaphone"></i> 
+                        {% if is_edit %}Chỉnh sửa tin tuyển dụng{% else %}Đăng tin tuyển dụng{% endif %}
                     </h4>
                 </div>
                 <div class="card-body">
@@ -98,7 +99,8 @@
                         
                         <div class="d-flex gap-2 mt-4">
                             <button type="submit" class="btn btn-success flex-grow-1">
-                                <i class="bi bi-send"></i> Đăng tin
+                                <i class="bi bi-send"></i> 
+                                {% if is_edit %}Cập nhật tin{% else %}Đăng tin{% endif %}
                             </button>
                             <a href="{% url 'stadium_dashboard' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Hủy

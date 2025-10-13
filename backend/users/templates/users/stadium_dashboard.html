@@ -157,7 +157,7 @@
                             </td>
                             <td>{{ job.created_at|date:"d/m/Y" }}</td>
                             <td>
-                                <a href="/admin/organizations/jobposting/{{ job.pk }}/change/" class="btn btn-sm btn-outline-primary" target="_blank">
+                                <a href="{% url 'edit_stadium_job_posting' job.pk %}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil"></i> Sửa
                                 </a>
                             </td>
