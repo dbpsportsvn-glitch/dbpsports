@@ -90,4 +90,29 @@ def get_current_vote_value():
     vote_value = base_value + (scaling_factor * math.log(user_count))
     
     # Làm tròn đến hàng trăm gần nhất cho số đẹp
-    return round(vote_value / 100) * 100        
+    return round(vote_value / 100) * 100
+
+
+def user_can_manage_team(user, team):
+    """
+    Kiểm tra xem user có quyền quản lý đội không (captain hoặc coach).
+    
+    Args:
+        user: User object
+        team: Team object
+    
+    Returns:
+        bool: True nếu user là captain hoặc coach của đội, False otherwise
+    """
+    if not user or not user.is_authenticated:
+        return False
+    
+    # Kiểm tra nếu là đội trưởng
+    if team.captain == user:
+        return True
+    
+    # Kiểm tra nếu là huấn luyện viên
+    if team.coach and team.coach.user == user:
+        return True
+    
+    return False

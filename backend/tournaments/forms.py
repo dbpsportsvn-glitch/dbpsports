@@ -2,22 +2,38 @@
 from django import forms
 from .models import Team, Player, Comment, Tournament, TeamRegistration
 from .models import MatchNote, TournamentBudget, RevenueItem, ExpenseItem
+from .models import PlayerTransfer, CoachRecruitment
 from colorfield.widgets import ColorWidget
-from .models import PlayerTransfer
+from users.models import CoachProfile
 
 # === BẮT ĐẦU THAY THẾ TỪ ĐÂY ===
 class TeamCreationForm(forms.ModelForm):
+    # Thêm trường để chọn huấn luyện viên
+    coach = forms.ModelChoiceField(
+        queryset=CoachProfile.objects.filter(team__isnull=True, is_available=True),
+        required=False,
+        label='Chọn Huấn luyện viên',
+        help_text='Chọn HLV từ danh sách những người đang tìm đội (để trống nếu không có)',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
     def __init__(self, *args, **kwargs):
         # Lấy user từ view và xóa khỏi kwargs trước khi gọi super()
         self.user = kwargs.pop('user', None)
         super(TeamCreationForm, self).__init__(*args, **kwargs)
+        
+        # Cập nhật queryset cho coach (HLV chưa có đội)
+        self.fields['coach'].queryset = CoachProfile.objects.filter(
+            team__isnull=True, 
+            is_available=True
+        )
 
     class Meta:
         model = Team
-        fields = ['name', 'coach_name', 'logo', 'kit_home_color', 'kit_away_color']
+        fields = ['name', 'coach', 'coach_name', 'logo', 'kit_home_color', 'kit_away_color']
         labels = {
             'name': 'Tên đội bóng',
-            'coach_name': 'Tên huấn luyện viên (không bắt buộc)',
+            'coach_name': 'Hoặc nhập tên HLV (nếu không có trong danh sách)',
             'logo': 'Logo đội bóng',
             'kit_home_color': 'Màu áo sân nhà',
             'kit_away_color': 'Màu áo sân khách',
@@ -34,6 +50,17 @@ class TeamCreationForm(forms.ModelForm):
         if self.user and Team.objects.filter(captain=self.user, name__iexact=name).exists():
             raise forms.ValidationError("Bạn đã có một đội với tên này. Vui lòng chọn một tên khác.")
         return name
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        coach = cleaned_data.get('coach')
+        coach_name = cleaned_data.get('coach_name')
+        
+        # Kiểm tra không được điền cả hai
+        if coach and coach_name:
+            raise forms.ValidationError("Chỉ chọn một trong hai: Chọn HLV từ danh sách hoặc nhập tên HLV.")
+        
+        return cleaned_data
 
 class PlayerCreationForm(forms.ModelForm):
     class Meta:
@@ -399,4 +426,53 @@ class BudgetQuickAddForm(forms.Form):
             'type': 'date'
         }),
         label='Ngày'
-    )             
+    )
+
+
+# === FORMS CHO HUẤN LUYỆN VIÊN ===
+
+class CoachProfileForm(forms.ModelForm):
+    """Form tạo/cập nhật hồ sơ huấn luyện viên"""
+    class Meta:
+        model = CoachProfile
+        fields = [
+            'full_name', 'avatar', 'bio', 'date_of_birth',
+            'years_of_experience', 'coaching_license', 'specialization',
+            'achievements', 'previous_teams',
+            'phone_number', 'email',
+            'region', 'location_detail',
+            'is_available'
+        ]
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'achievements': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'previous_teams': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+
+
+class CoachRecruitmentForm(forms.ModelForm):
+    """Form gửi lời mời chiêu mộ huấn luyện viên"""
+    class Meta:
+        model = CoachRecruitment
+        fields = ['salary_offer', 'contract_duration', 'message']
+        labels = {
+            'salary_offer': 'Mức lương đề nghị (VNĐ)',
+            'contract_duration': 'Thời hạn hợp đồng',
+            'message': 'Lời nhắn'
+        }
+        widgets = {
+            'salary_offer': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ví dụ: 5000000'
+            }),
+            'contract_duration': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ví dụ: 1 năm, 6 tháng...'
+            }),
+            'message': forms.Textarea(attrs={
+                'rows': 4,
+                'class': 'form-control',
+                'placeholder': 'Giới thiệu về đội bóng và kế hoạch phát triển...'
+            })
+        }

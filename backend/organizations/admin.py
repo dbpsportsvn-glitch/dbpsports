@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 from django.db import models
-from .models import Organization, Membership
+from .models import Organization, Membership, JobPosting, JobApplication
 
 # Import các công cụ cần thiết
 from tournaments.utils import send_notification_email
@@ -116,3 +116,54 @@ class MembershipAdmin(admin.ModelAdmin):
     list_filter = ('organization', 'role')
     search_fields = ('organization__name', 'user__username')
     autocomplete_fields = ['organization', 'user']
+
+@admin.register(JobPosting)
+class JobPostingAdmin(admin.ModelAdmin):
+    list_display = ('title', 'posted_by', 'get_posted_for', 'role_required', 'status', 'created_at')
+    list_filter = ('posted_by', 'status', 'role_required', 'created_at')
+    search_fields = ('title', 'description', 'tournament__name', 'stadium__stadium_name')
+    list_editable = ('status',)
+    autocomplete_fields = ('tournament', 'stadium', 'role_required')
+    list_select_related = ('tournament', 'stadium', 'role_required')
+    readonly_fields = ('created_at',)
+    list_per_page = 50
+    
+    @admin.display(description='Đăng cho', ordering='tournament__name')
+    def get_posted_for(self, obj):
+        if obj.posted_by == JobPosting.PostedBy.TOURNAMENT and obj.tournament:
+            return f"Giải: {obj.tournament.name}"
+        elif obj.posted_by == JobPosting.PostedBy.STADIUM and obj.stadium:
+            return f"Sân: {obj.stadium.stadium_name}"
+        return "N/A"
+    
+    fieldsets = (
+        ('Thông tin đăng tin', {
+            'fields': ('posted_by', 'tournament', 'stadium')
+        }),
+        ('Nội dung tuyển dụng', {
+            'fields': ('role_required', 'title', 'description', 'budget', 'location_detail')
+        }),
+        ('Trạng thái', {
+            'fields': ('status', 'created_at')
+        }),
+    )
+
+@admin.register(JobApplication)
+class JobApplicationAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'job', 'status', 'applied_at')
+    list_filter = ('status', 'job__posted_by', 'applied_at')
+    search_fields = ('applicant__username', 'job__title', 'message')
+    list_editable = ('status',)
+    autocomplete_fields = ('job', 'applicant')
+    list_select_related = ('job', 'applicant')
+    readonly_fields = ('applied_at',)
+    list_per_page = 50
+    
+    fieldsets = (
+        ('Thông tin ứng tuyển', {
+            'fields': ('job', 'applicant', 'message')
+        }),
+        ('Trạng thái', {
+            'fields': ('status', 'applied_at')
+        }),
+    )

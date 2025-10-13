@@ -15,7 +15,7 @@ from django.db.models import Count
 from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
                      TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory,
-                     TournamentStaff, MatchNote) # <-- Import model mới
+                     TournamentStaff, MatchNote, CoachRecruitment) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
 
 # Admin configuration
@@ -558,6 +558,29 @@ class MatchNoteAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
         ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(CoachRecruitment)
+class CoachRecruitmentAdmin(admin.ModelAdmin):
+    list_display = ('team', 'coach', 'status', 'salary_offer', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('team__name', 'coach__full_name', 'coach__user__username')
+    autocomplete_fields = ('team', 'coach')
+    list_select_related = ('team', 'coach', 'coach__user')
+    readonly_fields = ('created_at', 'updated_at')
+    list_per_page = 50
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('team', 'coach', 'status')
+        }),
+        ('Đề nghị hợp đồng', {
+            'fields': ('salary_offer', 'contract_duration', 'message')
+        }),
+        ('Thông tin hệ thống', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),

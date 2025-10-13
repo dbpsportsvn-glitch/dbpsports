@@ -72,14 +72,47 @@ class Membership(models.Model):
         return f"{self.user.username} - {self.get_role_display()} tại {self.organization.name}"
 
 class JobPosting(models.Model):
-    """Lưu một tin đăng tuyển nhân sự của BTC cho một giải đấu."""
+    """Lưu một tin đăng tuyển nhân sự của BTC cho một giải đấu hoặc từ Sân bóng."""
     class Status(models.TextChoices):
         OPEN = 'OPEN', 'Đang mở'
         CLOSED = 'CLOSED', 'Đã đóng'
+    
+    class PostedBy(models.TextChoices):
+        TOURNAMENT = 'TOURNAMENT', 'Ban Tổ chức Giải đấu'
+        STADIUM = 'STADIUM', 'Sân bóng'
 
-    tournament = models.ForeignKey("tournaments.Tournament", on_delete=models.CASCADE, related_name='job_postings', verbose_name="Giải đấu")
+    # Người đăng tin
+    posted_by = models.CharField(
+        "Đăng bởi",
+        max_length=20,
+        choices=PostedBy.choices,
+        default=PostedBy.TOURNAMENT
+    )
+    
+    # Liên kết đến giải đấu (nếu BTC đăng)
+    tournament = models.ForeignKey(
+        "tournaments.Tournament",
+        on_delete=models.CASCADE,
+        related_name='job_postings',
+        verbose_name="Giải đấu",
+        null=True,
+        blank=True,
+        help_text="Chỉ điền nếu tin này được đăng bởi BTC"
+    )
+    
+    # Liên kết đến sân bóng (nếu sân bóng đăng)
+    stadium = models.ForeignKey(
+        "users.StadiumProfile",
+        on_delete=models.CASCADE,
+        related_name='job_postings',
+        verbose_name="Sân bóng",
+        null=True,
+        blank=True,
+        help_text="Chỉ điền nếu tin này được đăng bởi Sân bóng"
+    )
+    
     role_required = models.ForeignKey("users.Role", on_delete=models.CASCADE, verbose_name="Vai trò cần tuyển")
-    location_detail = models.CharField("Tỉnh/Thành phố (tùy chọn)", max_length=100, blank=True, help_text="Nếu bỏ trống, sẽ lấy theo địa điểm của giải đấu.")
+    location_detail = models.CharField("Tỉnh/Thành phố (tùy chọn)", max_length=100, blank=True, help_text="Nếu bỏ trống, sẽ lấy theo địa điểm của giải đấu hoặc sân bóng.")
     title = models.CharField("Tiêu đề công việc", max_length=200)
     description = models.TextField("Mô tả chi tiết")
     budget = models.CharField("Mức kinh phí", max_length=150, blank=True, help_text="Ví dụ: 500.000 VNĐ/trận, hoặc 'Thỏa thuận'")
@@ -92,7 +125,21 @@ class JobPosting(models.Model):
         verbose_name_plural = "Các Tin Tuyển dụng"
 
     def __str__(self):
-        return f"{self.title} cho giải {self.tournament.name}"
+        if self.posted_by == self.PostedBy.STADIUM and self.stadium:
+            return f"{self.title} tại {self.stadium.stadium_name}"
+        elif self.tournament:
+            return f"{self.title} cho giải {self.tournament.name}"
+        return self.title
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        # Đảm bảo chỉ có một trong hai: tournament hoặc stadium
+        if self.posted_by == self.PostedBy.TOURNAMENT and not self.tournament:
+            raise ValidationError("Phải chọn Giải đấu nếu đăng bởi BTC")
+        if self.posted_by == self.PostedBy.STADIUM and not self.stadium:
+            raise ValidationError("Phải chọn Sân bóng nếu đăng bởi Sân bóng")
+        if self.tournament and self.stadium:
+            raise ValidationError("Chỉ được chọn một trong hai: Giải đấu hoặc Sân bóng")
 
 class JobApplication(models.Model):
     """Lưu một đơn ứng tuyển của người dùng vào một tin tuyển dụng."""

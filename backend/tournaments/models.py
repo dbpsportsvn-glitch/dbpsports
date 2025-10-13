@@ -118,7 +118,15 @@ class Group(models.Model):
 class Team(models.Model):
     PAYMENT_STATUS_CHOICES = [('UNPAID', 'Chưa thanh toán'), ('PENDING', 'Chờ xác nhận'), ('PAID', 'Đã thanh toán')]
     name = models.CharField(max_length=100)
-    coach_name = models.CharField(max_length=100, blank=True)
+    coach_name = models.CharField(max_length=100, blank=True, help_text="Tên HLV (sử dụng cho dữ liệu cũ, nên dùng trường 'coach' bên dưới)")
+    coach = models.ForeignKey(
+        'users.CoachProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='team_coaching',
+        verbose_name="Huấn luyện viên"
+    )
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
     main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
@@ -1082,4 +1090,65 @@ class BudgetHistory(models.Model):
         ordering = ['-timestamp']
     
     def __str__(self):
-        return f"{self.action} - {self.description} ({self.timestamp})"        
+        return f"{self.action} - {self.description} ({self.timestamp})"
+
+
+class CoachRecruitment(models.Model):
+    """Lưu trữ lời mời chiêu mộ huấn luyện viên từ đội bóng."""
+    
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Đang chờ'
+        ACCEPTED = 'ACCEPTED', 'Đã chấp nhận'
+        REJECTED = 'REJECTED', 'Đã từ chối'
+        CANCELED = 'CANCELED', 'Đã hủy'
+    
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='coach_recruitments',
+        verbose_name="Đội bóng"
+    )
+    coach = models.ForeignKey(
+        'users.CoachProfile',
+        on_delete=models.CASCADE,
+        related_name='recruitment_offers',
+        verbose_name="Huấn luyện viên"
+    )
+    status = models.CharField(
+        "Trạng thái",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    
+    # Thông tin đề nghị
+    salary_offer = models.DecimalField(
+        "Mức lương đề nghị (VNĐ)",
+        max_digits=15,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        help_text="Mức lương/thù lao cho HLV"
+    )
+    contract_duration = models.CharField(
+        "Thời hạn hợp đồng",
+        max_length=100,
+        blank=True,
+        help_text="Ví dụ: 1 năm, 6 tháng..."
+    )
+    message = models.TextField(
+        "Lời nhắn",
+        blank=True,
+        help_text="Lời mời từ đội trưởng/ban quản lý"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Chiêu mộ Huấn luyện viên"
+        verbose_name_plural = "Chiêu mộ Huấn luyện viên"
+    
+    def __str__(self):
+        return f"{self.team.name} chiêu mộ HLV {self.coach.full_name}"
