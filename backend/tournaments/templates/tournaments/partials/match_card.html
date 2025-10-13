@@ -14,26 +14,30 @@
 
         <!-- Tên đội 1 (có .team-col để CSS ellipsis hoạt động) -->
         <div class="col-3 text-end team-col">
-          <span class="team-name" title="{{ match.team1.name }}">{{ match.team1.name }}</span>
+          <span class="team-name team-name-left" title="{{ match.team1.name }}">{{ match.team1.name }}</span>
         </div>
 
         <!-- Tỉ số/VS + Penalty (dùng class bootstrap, không inline style) -->
         <div class="col-2">
           {% if match.team1_score is not None and match.team2_score is not None %}
-            <span class="match-score">{{ match.team1_score }} - {{ match.team2_score }}</span>
-            {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
-              <small class="text-muted d-block lh-1 mt-1">
-                (Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})
-              </small>
-            {% endif %}
+            <div class="score-badge">
+              <span class="score-text">{{ match.team1_score }} - {{ match.team2_score }}</span>
+              {% if match.team1_penalty_score is not None and match.team2_penalty_score is not None %}
+                <small class="penalty-text">
+                  (Pen: {{ match.team1_penalty_score }} - {{ match.team2_penalty_score }})
+                </small>
+              {% endif %}
+            </div>
           {% else %}
-            <span class="match-score">VS</span>
+            <div class="vs-badge">
+              <span class="vs-text">VS</span>
+            </div>
           {% endif %}
         </div>
 
         <!-- Tên đội 2 -->
         <div class="col-3 text-start team-col">
-          <span class="team-name" title="{{ match.team2.name }}">{{ match.team2.name }}</span>
+          <span class="team-name team-name-right" title="{{ match.team2.name }}">{{ match.team2.name }}</span>
         </div>
 
         <!-- Logo đội 2 -->
