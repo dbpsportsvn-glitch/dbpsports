@@ -402,6 +402,23 @@ def public_profile_view(request, username):
     else:
         hourly_rate = getattr(profile, 'hourly_rate', None)
 
+    # === THÊM: LẤY THÔNG TIN NHÀ TÀI TRỢ ===
+    sponsor_profile = None
+    sponsor_testimonials = []
+    sponsor_avg_rating = 0
+    try:
+        from sponsors.models import SponsorProfile, Testimonial
+        sponsor_profile = profile_user.sponsor_profile
+        sponsor_testimonials = Testimonial.objects.filter(
+            sponsor_profile=sponsor_profile,
+            is_approved=True
+        ).select_related('author', 'tournament').order_by('-created_at')
+        sponsor_avg = sponsor_testimonials.aggregate(avg=Avg('rating'))['avg']
+        if sponsor_avg:
+            sponsor_avg_rating = round(sponsor_avg, 1)
+    except:
+        pass
+
     context = {
         'profile_user': profile_user,
         'profile': profile,
@@ -419,6 +436,10 @@ def public_profile_view(request, username):
         'stadium_profile': stadium_profile,
         'stadium_reviews': stadium_reviews,
         'stadium_avg_rating': stadium_avg_rating,
+        # Sponsor data
+        'sponsor_profile': sponsor_profile,
+        'sponsor_testimonials': sponsor_testimonials,
+        'sponsor_avg_rating': sponsor_avg_rating,
         # Professional data
         'job_applications': job_applications,
         'is_available': is_available,
@@ -828,3 +849,32 @@ def create_stadium_review(request, stadium_pk):
 def professional_profile_view(request, username):
     """Redirect to unified public profile"""
     return redirect('public_profile', username=username)
+
+
+@login_required
+def upload_profile_banner(request):
+    """Upload profile banner image"""
+    if request.method == 'POST':
+        banner_image = request.FILES.get('banner_image')
+        if banner_image:
+            # Validate file size (max 5MB)
+            if banner_image.size > 5 * 1024 * 1024:
+                messages.error(request, "Kích thước ảnh không được vượt quá 5MB.")
+                return redirect('public_profile', username=request.user.username)
+            
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            if banner_image.content_type not in allowed_types:
+                messages.error(request, "Chỉ chấp nhận file ảnh (JPG, PNG, WebP).")
+                return redirect('public_profile', username=request.user.username)
+            
+            # Save to profile
+            profile = request.user.profile
+            profile.banner_image = banner_image
+            profile.save()
+            
+            messages.success(request, "Đã cập nhật ảnh bìa hồ sơ thành công!")
+        else:
+            messages.error(request, "Vui lòng chọn một file ảnh.")
+    
+    return redirect('public_profile', username=request.user.username)

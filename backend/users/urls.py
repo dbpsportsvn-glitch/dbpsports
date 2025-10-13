@@ -25,6 +25,7 @@ urlpatterns = [
     path('stadium/<int:stadium_pk>/review/', views.create_stadium_review, name='create_stadium_review'),
     path('stadium/<int:pk>/', views.stadium_profile_detail, name='stadium_profile_detail'),
     path('professional/<str:username>/', views.professional_profile_view, name='professional_profile'),
+    path('upload-banner/', views.upload_profile_banner, name='upload_profile_banner'),
     
     # Để allauth xử lý mọi thứ liên quan đến tài khoản
     # URL của allauth đã bao gồm login, logout, register, password reset...

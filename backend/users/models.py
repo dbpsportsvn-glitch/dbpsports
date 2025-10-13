@@ -35,6 +35,7 @@ class Role(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField("Ảnh đại diện", upload_to='user_avatars/', null=True, blank=True)
+    banner_image = models.ImageField("Ảnh bìa hồ sơ", upload_to='profile_banners/', null=True, blank=True, help_text="Ảnh bìa hiển thị ở đầu trang hồ sơ (khuyến nghị: 1920x400px)")
     
     roles = models.ManyToManyField(Role, blank=True, verbose_name="Các vai trò đã chọn")
     has_selected_roles = models.BooleanField("Đã chọn vai trò lần đầu", default=False)
