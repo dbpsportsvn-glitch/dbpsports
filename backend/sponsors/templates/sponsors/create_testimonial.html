@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Đánh giá {{ sponsor_profile.brand_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-star-fill me-2"></i>Đánh giá {{ sponsor_profile.brand_name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Sponsor Info -->
+                    <div class="d-flex align-items-center mb-4">
+                        {% if sponsor_profile.brand_logo %}
+                            <img src="{{ sponsor_profile.brand_logo.url }}" alt="{{ sponsor_profile.brand_name }}" 
+                                 class="rounded-circle me-3" width="60" height="60">
+                        {% else %}
+                            <div class="rounded-circle bg-warning d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-award text-dark fs-4"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-1">{{ sponsor_profile.brand_name }}</h5>
+                            {% if sponsor_profile.tagline %}
+                                <p class="text-muted mb-0">{{ sponsor_profile.tagline }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'public_profile' username=sponsor_profile.user.username %}" class="btn btn-secondary me-md-2">
+                                <i class="bi bi-arrow-left me-1"></i>Hủy
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-star me-1"></i>Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

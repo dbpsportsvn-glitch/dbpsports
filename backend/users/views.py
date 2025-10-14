@@ -9,6 +9,7 @@ from django.contrib import messages
 from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, UnifiedProfessionalForm
 from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview
+from sponsors.models import SponsorProfile
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
 from organizations.models import ProfessionalReview, JobApplication, JobPosting
@@ -919,3 +920,78 @@ def unified_professional_form_view(request):
         'profile': profile,
     }
     return render(request, 'users/unified_professional_form.html', context)
+
+
+@login_required
+def review_user_view(request, username):
+    """Trang tổng hợp đánh giá cho tất cả vai trò của user"""
+    profile_user = get_object_or_404(User, username=username)
+    
+    # Không cho phép tự đánh giá
+    if request.user == profile_user:
+        messages.error(request, "Bạn không thể đánh giá chính mình.")
+        return redirect('public_profile', username=username)
+    
+    # Lấy thông tin các profile
+    coach_profile = None
+    stadium_profile = None
+    sponsor_profile = None
+    
+    try:
+        coach_profile = profile_user.coach_profile
+    except CoachProfile.DoesNotExist:
+        pass
+    
+    try:
+        stadium_profile = profile_user.stadium_profile
+    except StadiumProfile.DoesNotExist:
+        pass
+    
+    try:
+        sponsor_profile = profile_user.sponsor_profile
+    except SponsorProfile.DoesNotExist:
+        pass
+    
+    # Kiểm tra đánh giá đã tồn tại
+    existing_reviews = {
+        'coach': None,
+        'stadium': None,
+        'sponsor': None,
+    }
+    
+    if coach_profile:
+        existing_reviews['coach'] = CoachReview.objects.filter(
+            coach_profile=coach_profile,
+            reviewer=request.user
+        ).first()
+    
+    if stadium_profile:
+        existing_reviews['stadium'] = StadiumReview.objects.filter(
+            stadium_profile=stadium_profile,
+            reviewer=request.user
+        ).first()
+    
+    if sponsor_profile:
+        from sponsors.models import Testimonial
+        existing_reviews['sponsor'] = Testimonial.objects.filter(
+            sponsor_profile=sponsor_profile,
+            author=request.user
+        ).first()
+    
+    # Kiểm tra vai trò chuyên gia
+    professional_roles = profile_user.profile.roles.filter(
+        id__in=['COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    )
+    has_professional_roles = professional_roles.exists()
+    
+    context = {
+        'profile_user': profile_user,
+        'coach_profile': coach_profile,
+        'stadium_profile': stadium_profile,
+        'sponsor_profile': sponsor_profile,
+        'existing_reviews': existing_reviews,
+        'has_professional_roles': has_professional_roles,
+        'professional_roles': professional_roles,
+    }
+    
+    return render(request, 'users/review_user.html', context)

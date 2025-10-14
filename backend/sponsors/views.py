@@ -3,6 +3,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.views import View
@@ -108,3 +109,46 @@ class DeleteTestimonialView(LoginRequiredMixin, View):
             messages.error(request, f"Không thể xóa nhận xét. Lỗi: {e}")
 
         return redirect('sponsors:manage_testimonials')
+
+
+@login_required
+def create_testimonial_view(request, sponsor_pk):
+    """Tạo testimonial cho sponsor"""
+    sponsor_profile = get_object_or_404(SponsorProfile, pk=sponsor_pk)
+    
+    # Không cho phép tự đánh giá
+    if request.user == sponsor_profile.user:
+        messages.error(request, "Bạn không thể đánh giá chính mình.")
+        return redirect('public_profile', username=request.user.username)
+    
+    # Kiểm tra đã đánh giá chưa
+    existing_testimonial = Testimonial.objects.filter(
+        sponsor_profile=sponsor_profile,
+        author=request.user
+    ).first()
+    
+    if existing_testimonial:
+        messages.info(request, "Bạn đã đánh giá nhà tài trợ này rồi.")
+        return redirect('public_profile', username=sponsor_profile.user.username)
+    
+    if request.method == 'POST':
+        form = TestimonialForm(request.POST)
+        if form.is_valid():
+            testimonial = form.save(commit=False)
+            testimonial.sponsor_profile = sponsor_profile
+            testimonial.author = request.user
+            testimonial.save()
+            messages.success(request, f"Đã tạo đánh giá {testimonial.rating}/5 sao cho {sponsor_profile.brand_name}!")
+            return redirect('public_profile', username=sponsor_profile.user.username)
+        else:
+            messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.")
+    else:
+        form = TestimonialForm()
+    
+    context = {
+        'form': form,
+        'sponsor_profile': sponsor_profile,
+        'existing_testimonial': existing_testimonial,
+    }
+    
+    return render(request, 'sponsors/create_testimonial.html', context)

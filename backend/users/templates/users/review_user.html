@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Đánh giá {{ profile_user.get_full_name|default:profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-star-fill me-3 fs-4"></i>
+                        <div>
+                            <h4 class="mb-0">Đánh giá {{ profile_user.get_full_name|default:profile_user.username }}</h4>
+                            <p class="mb-0 text-muted">Chia sẻ cảm nhận về chất lượng dịch vụ và chuyên môn</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% with acct=profile_user.socialaccount_set.first %}
+                            {% if profile_user.profile.avatar %}
+                                <img src="{{ profile_user.profile.avatar.url }}" alt="Avatar" class="rounded-circle me-3" width="60" height="60">
+                            {% elif acct and acct.get_avatar_url %}
+                                <img src="{{ acct.get_avatar_url }}" alt="Avatar" class="rounded-circle me-3" width="60" height="60">
+                            {% else %}
+                                <div class="rounded-circle bg-primary d-flex justify-content-center align-items-center me-3" style="width: 60px; height: 60px;">
+                                    <span class="text-white fs-4">{{ profile_user.email|default:profile_user.username|first|upper }}</span>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        <div>
+                            <h5 class="mb-1">{{ profile_user.get_full_name|default:profile_user.username }}</h5>
+                            <div class="d-flex gap-2">
+                                {% for role in profile_user.profile.roles.all %}
+                                    <span class="badge bg-primary">{{ role.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Sections -->
+            <div class="row g-4">
+                <!-- Coach Review -->
+                {% if coach_profile %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-clipboard-check me-2"></i>Đánh giá Huấn luyện viên
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                {% if coach_profile.avatar %}
+                                    <img src="{{ coach_profile.avatar.url }}" alt="Coach Avatar" class="rounded-circle mb-2" width="80" height="80">
+                                {% else %}
+                                    <div class="rounded-circle bg-success d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-clipboard-check text-white fs-3"></i>
+                                    </div>
+                                {% endif %}
+                                <h6>{{ coach_profile.full_name }}</h6>
+                                {% if coach_profile.specialization %}
+                                    <small class="text-muted">{{ coach_profile.specialization }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            {% if existing_reviews.coach %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Bạn đã đánh giá:</strong> {{ existing_reviews.coach.rating }}/5 sao
+                                    <br><small>{{ existing_reviews.coach.comment|truncatechars:100 }}</small>
+                                </div>
+                                <a href="{% url 'public_profile' username=profile_user.username %}#reviews" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Xem đánh giá
+                                </a>
+                            {% else %}
+                                <a href="{% url 'create_coach_review' coach_pk=coach_profile.pk %}" class="btn btn-success w-100">
+                                    <i class="bi bi-star me-2"></i>Đánh giá Huấn luyện viên
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stadium Review -->
+                {% if stadium_profile %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-house me-2"></i>Đánh giá Sân bóng
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                {% if stadium_profile.logo %}
+                                    <img src="{{ stadium_profile.logo.url }}" alt="Stadium Logo" class="rounded-circle mb-2" width="80" height="80">
+                                {% else %}
+                                    <div class="rounded-circle bg-info d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-house text-white fs-3"></i>
+                                    </div>
+                                {% endif %}
+                                <h6>{{ stadium_profile.stadium_name }}</h6>
+                                {% if stadium_profile.address %}
+                                    <small class="text-muted">{{ stadium_profile.address|truncatechars:30 }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            {% if existing_reviews.stadium %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Bạn đã đánh giá:</strong> {{ existing_reviews.stadium.rating }}/5 sao
+                                    <br><small>{{ existing_reviews.stadium.comment|truncatechars:100 }}</small>
+                                </div>
+                                <a href="{% url 'public_profile' username=profile_user.username %}#reviews" class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Xem đánh giá
+                                </a>
+                            {% else %}
+                                <a href="{% url 'create_stadium_review' stadium_pk=stadium_profile.pk %}" class="btn btn-info w-100">
+                                    <i class="bi bi-star me-2"></i>Đánh giá Sân bóng
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Sponsor Review -->
+                {% if sponsor_profile %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-award me-2"></i>Đánh giá Nhà tài trợ
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                {% if sponsor_profile.brand_logo %}
+                                    <img src="{{ sponsor_profile.brand_logo.url }}" alt="Brand Logo" class="rounded-circle mb-2" width="80" height="80">
+                                {% else %}
+                                    <div class="rounded-circle bg-warning d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-award text-dark fs-3"></i>
+                                    </div>
+                                {% endif %}
+                                <h6>{{ sponsor_profile.brand_name }}</h6>
+                                {% if sponsor_profile.tagline %}
+                                    <small class="text-muted">{{ sponsor_profile.tagline|truncatechars:30 }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            {% if existing_reviews.sponsor %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Bạn đã đánh giá:</strong> {{ existing_reviews.sponsor.rating }}/5 sao
+                                    <br><small>{{ existing_reviews.sponsor.text|truncatechars:100 }}</small>
+                                </div>
+                                <a href="{% url 'public_profile' username=profile_user.username %}#reviews" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Xem đánh giá
+                                </a>
+                            {% else %}
+                                <a href="{% url 'sponsors:create_testimonial' sponsor_pk=sponsor_profile.pk %}" class="btn btn-warning w-100 text-dark">
+                                    <i class="bi bi-star me-2"></i>Đánh giá Nhà tài trợ
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Professional Review (Commentator, Media, Photographer, Referee) -->
+                {% if has_professional_roles %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-briefcase me-2"></i>Đánh giá Chuyên gia
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <div class="rounded-circle bg-primary d-flex justify-content-center align-items-center mx-auto mb-2" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-briefcase text-white fs-3"></i>
+                                </div>
+                                <h6>{{ profile_user.get_full_name|default:profile_user.username }}</h6>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    {% for role in professional_roles %}
+                                        <span class="badge bg-primary">{{ role.name }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Đánh giá chuyên gia</strong> được thực hiện thông qua hệ thống Job Application.
+                                <br><small>Đánh giá sẽ được tạo tự động khi bạn hoàn thành công việc với họ.</small>
+                            </div>
+                            <a href="{% url 'public_profile' username=profile_user.username %}#professional" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>Xem hồ sơ chuyên môn
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- No Reviewable Roles -->
+            {% if not coach_profile and not stadium_profile and not sponsor_profile and not has_professional_roles %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-info-circle text-muted fs-1"></i>
+                    <h5 class="text-muted mt-3">Chưa có vai trò để đánh giá</h5>
+                    <p class="text-muted">{{ profile_user.get_full_name|default:profile_user.username }} chưa có hồ sơ chuyên môn nào để đánh giá.</p>
+                    <a href="{% url 'public_profile' username=profile_user.username %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Quay lại hồ sơ
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Back Button -->
+            <div class="text-center mt-4">
+                <a href="{% url 'public_profile' username=profile_user.username %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại hồ sơ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
