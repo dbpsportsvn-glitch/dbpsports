@@ -529,6 +529,11 @@ def create_stadium_profile(request):
     from .models import StadiumProfile
     from .forms import StadiumProfileForm
     
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
+    
     # Kiểm tra user đã có StadiumProfile chưa
     try:
         stadium_profile = request.user.stadium_profile
@@ -580,6 +585,11 @@ def stadium_dashboard(request):
     from .models import StadiumProfile
     from organizations.models import JobPosting, JobApplication
     
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
+    
     # Kiểm tra user có StadiumProfile không
     if not hasattr(request.user, 'stadium_profile'):
         messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
@@ -615,6 +625,11 @@ def create_stadium_job_posting(request):
     from .models import StadiumProfile
     from organizations.models import JobPosting
     from organizations.forms import JobPostingForm
+    
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
     
     # Kiểm tra user có StadiumProfile
     if not hasattr(request.user, 'stadium_profile'):
@@ -652,6 +667,11 @@ def create_stadium_job_posting(request):
 @login_required
 def stadium_job_applications(request):
     """Stadium owner xem và quản lý job applications"""
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
+    
     # Kiểm tra user có stadium profile không
     if not hasattr(request.user, 'stadium_profile'):
         messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
@@ -689,6 +709,11 @@ def stadium_job_applications(request):
 @login_required
 def stadium_job_application_detail(request, application_pk):
     """Stadium owner xem chi tiết một job application"""
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
+    
     # Kiểm tra user có stadium profile không
     if not hasattr(request.user, 'stadium_profile'):
         messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")
@@ -751,6 +776,11 @@ def stadium_job_application_detail(request, application_pk):
 @login_required
 def edit_stadium_job_posting(request, job_pk):
     """Stadium owner chỉnh sửa job posting của mình"""
+    # Kiểm tra user có vai trò STADIUM không
+    if not request.user.profile.roles.filter(id='STADIUM').exists():
+        messages.error(request, "Bạn cần có vai trò Sân bóng để truy cập trang này.")
+        return redirect('dashboard')
+    
     # Kiểm tra user có stadium profile không
     if not hasattr(request.user, 'stadium_profile'):
         messages.warning(request, "Bạn cần tạo hồ sơ Sân bóng trước.")

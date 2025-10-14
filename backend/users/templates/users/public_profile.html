@@ -662,30 +662,57 @@
                         <h5 class="card-title mb-0">
                             <i class="bi bi-gear me-2"></i>Quản lý Thông tin Chuyên môn
                         </h5>
-                        <div class="dropdown">
-                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'unified_professional_form' %}">
-                                        <i class="bi bi-gear text-primary me-2"></i>Chỉnh sửa Thông tin Chuyên môn
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'dashboard' %}?tab=public-profile">
-                                        <i class="bi bi-person-badge text-info me-2"></i>Thay đổi Vai trò
-                                    </a>
-                                </li>
-                            </ul>
+                        <div class="d-flex gap-2">
+                            <!-- Job Market Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-briefcase me-1"></i>Đăng tin
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'job_market' %}">
+                                            <i class="bi bi-search text-primary me-2"></i>Tìm việc làm
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'job_market' %}?action=create">
+                                            <i class="bi bi-plus-circle text-success me-2"></i>Đăng tin tuyển dụng
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'stadium_dashboard' %}">
+                                            <i class="bi bi-gear text-info me-2"></i>Quản lý tin đăng
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Edit Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'unified_professional_form' %}">
+                                            <i class="bi bi-gear text-primary me-2"></i>Chỉnh sửa Thông tin Chuyên môn
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'dashboard' %}?tab=public-profile">
+                                            <i class="bi bi-person-badge text-info me-2"></i>Thay đổi Vai trò
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-0">
                         <i class="bi bi-info-circle me-2"></i>
-                        Chọn vai trò bạn muốn chỉnh sửa từ menu trên. Thông tin sẽ được cập nhật ngay lập tức.
+                        Tìm việc làm, đăng tin tuyển dụng hoặc chỉnh sửa thông tin chuyên môn của bạn. Chọn từ menu dropdown để truy cập các tính năng.
                     </p>
                 </div>
             </div>

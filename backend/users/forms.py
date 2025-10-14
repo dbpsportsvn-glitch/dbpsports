@@ -49,6 +49,21 @@ class ProfileUpdateForm(forms.ModelForm):
             profile.roles.set(self.cleaned_data['roles'])
         return profile
 
+class StadiumProfileForm(forms.ModelForm):
+    class Meta:
+        model = StadiumProfile
+        fields = ['stadium_name', 'address', 'phone_number', 'description', 'logo']
+        labels = {
+            'stadium_name': 'Tên sân bóng',
+            'address': 'Địa chỉ sân',
+            'phone_number': 'Số điện thoại',
+            'description': 'Mô tả sân bóng',
+            'logo': 'Logo sân bóng',
+        }
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
 class ProfileSetupForm(forms.ModelForm):
     class Meta:
         model = Profile
