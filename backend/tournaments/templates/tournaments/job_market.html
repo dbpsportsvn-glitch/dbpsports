@@ -35,12 +35,20 @@
                     <h6 class="card-subtitle mb-2 text-muted">
                         {% if job.tournament %}
                             <a href="{% url 'tournament_detail' pk=job.tournament.pk %}">{{ job.tournament.name }}</a>
+                            <span class="badge bg-success ms-2">Tuyển dụng</span>
                         {% elif job.stadium %}
                             <span class="text-info">
                                 <i class="bi bi-building"></i> {{ job.stadium.stadium_name }}
                             </span>
+                            <span class="badge bg-success ms-2">Tuyển dụng</span>
+                        {% elif job.professional_user %}
+                            <span class="text-warning">
+                                <i class="bi bi-person-badge"></i> {{ job.professional_user.get_full_name|default:job.professional_user.username }}
+                            </span>
+                            <span class="badge bg-warning ms-2">Tìm việc</span>
                         {% else %}
                             <span class="text-muted">Tổ chức khác</span>
+                            <span class="badge bg-secondary ms-2">Tuyển dụng</span>
                         {% endif %}
                     </h6>
                     <p>
@@ -60,7 +68,13 @@
                         <span class="badge text-bg-info"><i class="bi {{ job.role_required.icon }}"></i> {{ job.role_required.name }}</span>
                         <span class="badge text-bg-light">Đăng {{ job.created_at|naturaltime }}</span>
                     </p>
-                    <a href="{% url 'job_detail' pk=job.pk %}" class="btn btn-primary stretched-link">Xem chi tiết & Ứng tuyển</a>
+                    <a href="{% url 'job_detail' pk=job.pk %}" class="btn btn-primary stretched-link">
+                        {% if job.professional_user %}
+                            Xem chi tiết & Liên hệ
+                        {% else %}
+                            Xem chi tiết & Ứng tuyển
+                        {% endif %}
+                    </a>
                 </div>
             </div>
         </div>

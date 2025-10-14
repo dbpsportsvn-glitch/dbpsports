@@ -2025,7 +2025,7 @@ def job_detail_view(request, pk):
             elif job.stadium and job.stadium.user == request.user:
                 messages.warning(request, "Bạn không thể ứng tuyển vào chính tin đăng tuyển dụng của sân bóng mình.")
             else:
-                messages.warning(request, "Là thành viên BTC, bạn không thể ứng tuyển.")
+                messages.warning(request, "Bạn không thể ứng tuyển vào tin đăng này.")
         else:
             # Cho phép ứng tuyển
             form = JobApplicationForm(request.POST)
@@ -2104,6 +2104,35 @@ def job_detail_view(request, pk):
                                 'application': application
                             },
                             recipient_list=[job.stadium.user.email],
+                            request=request
+                        )
+
+                elif job.professional_user:
+                    # Professional job - gửi thông báo cho professional user
+                    applicant_name = request.user.get_full_name() or request.user.username
+                    notification_title = f"Có đơn ứng tuyển mới cho '{job.title}'"
+                    org_name = f"{job.professional_user.get_full_name() or job.professional_user.username} (Chuyên gia)"
+                    notification_url = request.build_absolute_uri(reverse('professional_job_applications'))
+                    
+                    Notification.objects.create(
+                        user=job.professional_user,
+                        title=notification_title,
+                        message=f"{applicant_name} vừa ứng tuyển vào vị trí của bạn tại '{org_name}'.",
+                        notification_type=Notification.NotificationType.GENERIC,
+                        related_url=notification_url
+                    )
+                    
+                    # Gửi email cho professional user nếu có email
+                    if job.professional_user.email:
+                        send_notification_email(
+                            subject=f"[DBP Sports] {notification_title}",
+                            template_name='organizations/emails/new_job_application.html',
+                            context={
+                                'job': job,
+                                'applicant': request.user,
+                                'application': application
+                            },
+                            recipient_list=[job.professional_user.email],
                             request=request
                         )
 

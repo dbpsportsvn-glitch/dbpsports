@@ -199,9 +199,15 @@
                                                 <a href="{% url 'tournament_detail' pk=job.tournament.pk %}" class="text-decoration-none">
                                                     {{ job.tournament.name }}
                                                 </a>
+                                                <span class="badge bg-success ms-2">Tuyển dụng</span>
                                             {% elif job.stadium %}
                                                 <i class="bi bi-building text-info me-1"></i>
                                                 <span class="text-info">{{ job.stadium.stadium_name }}</span>
+                                                <span class="badge bg-success ms-2">Tuyển dụng</span>
+                                            {% elif job.professional_user %}
+                                                <i class="bi bi-person-badge text-warning me-1"></i>
+                                                <span class="text-warning">{{ job.professional_user.get_full_name|default:job.professional_user.username }}</span>
+                                                <span class="badge bg-warning ms-2">Tìm việc</span>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -242,7 +248,12 @@
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a href="{% url 'job_detail' pk=job.pk %}" class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                        <i class="bi bi-eye me-1"></i>
+                                        {% if job.professional_user %}
+                                            Xem chi tiết & Liên hệ
+                                        {% else %}
+                                            Xem chi tiết & Ứng tuyển
+                                        {% endif %}
                                     </a>
                                     {% if job.tournament %}
                                     <small class="text-muted">
