@@ -21,7 +21,6 @@ class SponsorProfile(models.Model):
     description = models.TextField("Giới thiệu chi tiết", blank=True, help_text="Mô tả về thương hiệu, lĩnh vực hoạt động...")
     website_url = models.URLField("Link trang web", blank=True)
     phone_number = models.CharField("Số điện thoại", max_length=20, blank=True)
-    cover_image = models.ImageField("Ảnh bìa", upload_to='sponsor_covers/', blank=True, null=True, help_text="Ảnh bìa cho trang hồ sơ.")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -34,7 +33,7 @@ class SponsorProfile(models.Model):
         return self.brand_name
 
     def get_absolute_url(self):
-        return reverse('sponsors:profile_detail', kwargs={'pk': self.pk})
+        return reverse('public_profile', kwargs={'username': self.user.username})
 
 class Testimonial(models.Model):
     """Lưu trữ nhận xét, lời chứng thực cho nhà tài trợ."""

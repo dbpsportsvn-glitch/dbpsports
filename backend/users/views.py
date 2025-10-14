@@ -7,7 +7,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
 from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
-from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, ProfileUpdateForm
+from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, UnifiedProfessionalForm
 from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
@@ -392,12 +392,23 @@ def public_profile_view(request, username):
     # === THÊM: TÍNH AVAILABILITY ===
     is_available = True
     hourly_rate = None
-    user_roles = profile.roles.all()
+    user_roles_queryset = profile.roles.all()
     
-    if user_roles.filter(id='COACH').exists() and coach_profile:
+    # Tạo dictionary để template dễ check
+    user_roles = {
+        'COACH': user_roles_queryset.filter(id='COACH').exists(),
+        'STADIUM': user_roles_queryset.filter(id='STADIUM').exists(),
+        'SPONSOR': user_roles_queryset.filter(id='SPONSOR').exists(),
+        'COMMENTATOR': user_roles_queryset.filter(id='COMMENTATOR').exists(),
+        'MEDIA': user_roles_queryset.filter(id='MEDIA').exists(),
+        'PHOTOGRAPHER': user_roles_queryset.filter(id='PHOTOGRAPHER').exists(),
+        'REFEREE': user_roles_queryset.filter(id='REFEREE').exists(),
+    }
+    
+    if user_roles['COACH'] and coach_profile:
         is_available = coach_profile.is_available
         hourly_rate = getattr(coach_profile, 'hourly_rate', None)
-    elif user_roles.filter(id='STADIUM').exists():
+    elif user_roles['STADIUM']:
         is_available = True
     else:
         hourly_rate = getattr(profile, 'hourly_rate', None)
@@ -853,9 +864,6 @@ def create_stadium_review(request, stadium_pk):
     return render(request, 'users/create_stadium_review.html', context)
 
 
-def professional_profile_view(request, username):
-    """Redirect to unified public profile"""
-    return redirect('public_profile', username=username)
 
 
 @login_required
@@ -881,7 +889,33 @@ def upload_profile_banner(request):
             profile.save()
             
             messages.success(request, "Đã cập nhật ảnh bìa hồ sơ thành công!")
-        else:
-            messages.error(request, "Vui lòng chọn một file ảnh.")
-    
     return redirect('public_profile', username=request.user.username)
+
+
+# === VIEW CHO FORM THỐNG NHẤT ===
+@login_required
+def unified_professional_form_view(request):
+    """View xử lý form thống nhất cho tất cả vai trò chuyên môn"""
+    profile = request.user.profile
+    
+    if request.method == 'POST':
+        form = UnifiedProfessionalForm(request.POST, request.FILES, instance=profile, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đã cập nhật thông tin chuyên môn thành công!')
+            return redirect('public_profile', username=request.user.username)
+        else:
+            messages.error(request, 'Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.')
+    else:
+        form = UnifiedProfessionalForm(instance=profile, user=request.user)
+    
+    # Get user roles for context
+    user_roles = profile.roles.all()
+    role_ids = [role.id for role in user_roles]
+    
+    context = {
+        'form': form,
+        'user_roles': role_ids,
+        'profile': profile,
+    }
+    return render(request, 'users/unified_professional_form.html', context)

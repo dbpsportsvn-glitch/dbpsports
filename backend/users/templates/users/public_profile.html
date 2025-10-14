@@ -233,7 +233,7 @@
                 </button>
             </li>
             {% endif %}
-            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or 'COMMENTATOR' in user_roles or 'MEDIA' in user_roles or 'PHOTOGRAPHER' in user_roles or 'REFEREE' in user_roles %}
+            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE %}
             <li class="nav-item">
                 <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button">
                     <i class="bi bi-briefcase"></i> Chuyên môn
@@ -626,6 +626,43 @@
 
         <!-- Professional Tab -->
         <div class="tab-pane fade" id="professional" role="tabpanel">
+            <!-- Professional Header with Edit Options -->
+            {% if request.user == profile_user %}
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>Quản lý Thông tin Chuyên môn
+                        </h5>
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'unified_professional_form' %}">
+                                        <i class="bi bi-gear text-primary me-2"></i>Chỉnh sửa Thông tin Chuyên môn
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'dashboard' %}?tab=public-profile">
+                                        <i class="bi bi-person-badge text-info me-2"></i>Thay đổi Vai trò
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Chọn vai trò bạn muốn chỉnh sửa từ menu trên. Thông tin sẽ được cập nhật ngay lập tức.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="row g-4">
                 <div class="col-lg-8">
                     <!-- Coach Profile Section -->
@@ -715,15 +752,10 @@
                     <!-- Sponsor Profile Section -->
                     {% if sponsor_profile %}
                     <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="card-header">
                             <h5 class="card-title mb-0">
                                 <i class="bi bi-award me-2"></i>Hồ sơ Nhà tài trợ
                             </h5>
-                            {% if request.user == profile_user %}
-                            <a href="{% url 'sponsors:profile_edit' %}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
-                            </a>
-                            {% endif %}
                         </div>
                         <div class="card-body">
                             <div class="row g-4">
@@ -809,7 +841,7 @@
                     {% endif %}
 
                     <!-- Commentator Profile Section -->
-                    {% if 'COMMENTATOR' in user_roles %}
+                    {% if user_roles.COMMENTATOR %}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -855,6 +887,12 @@
                                 <i class="bi bi-mic text-muted" style="font-size: 3rem;"></i>
                                 <h5 class="text-muted mt-3">Chưa có lịch sử bình luận</h5>
                                 <p class="text-muted">Lịch sử bình luận sẽ được hiển thị ở đây khi bạn tham gia các giải đấu.</p>
+                                {% if request.user == profile_user %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Mẹo:</strong> Bạn có thể cập nhật thông tin cá nhân, thiết bị và kinh nghiệm từ menu "Chỉnh sửa" phía trên.
+                                </div>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -862,7 +900,7 @@
                     {% endif %}
 
                     <!-- Media/Photographer Profile Section -->
-                    {% if 'MEDIA' in user_roles or 'PHOTOGRAPHER' in user_roles %}
+                    {% if user_roles.MEDIA or user_roles.PHOTOGRAPHER %}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -910,6 +948,12 @@
                                 <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
                                 <h5 class="text-muted mt-3">Chưa có dự án nào</h5>
                                 <p class="text-muted">Các dự án Media/Nhiếp ảnh sẽ được hiển thị ở đây khi bạn tham gia.</p>
+                                {% if request.user == profile_user %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Mẹo:</strong> Bạn có thể cập nhật thông tin cá nhân, thiết bị và kinh nghiệm từ menu "Chỉnh sửa" phía trên.
+                                </div>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -917,7 +961,7 @@
                     {% endif %}
 
                     <!-- Referee Profile Section -->
-                    {% if 'REFEREE' in user_roles %}
+                    {% if user_roles.REFEREE %}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -958,6 +1002,12 @@
                                 <i class="bi bi-whistle text-muted" style="font-size: 3rem;"></i>
                                 <h5 class="text-muted mt-3">Chưa có lịch sử trọng tài</h5>
                                 <p class="text-muted">Lịch sử trọng tài sẽ được hiển thị ở đây khi bạn tham gia các giải đấu.</p>
+                                {% if request.user == profile_user %}
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Mẹo:</strong> Bạn có thể cập nhật thông tin cá nhân, cấp độ trọng tài và kinh nghiệm từ menu "Chỉnh sửa" phía trên.
+                                </div>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -965,7 +1015,7 @@
                     {% endif %}
 
                     <!-- Job History Section -->
-                    {% if job_applications and 'REFEREE' not in user_roles %}
+                    {% if job_applications and not user_roles.REFEREE %}
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -1000,7 +1050,7 @@
                     {% endif %}
 
                     <!-- No Professional Info -->
-                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not commentator_gigs and not media_gigs and not job_applications and 'COMMENTATOR' not in user_roles and 'MEDIA' not in user_roles and 'PHOTOGRAPHER' not in user_roles and 'REFEREE' not in user_roles %}
+                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not commentator_gigs and not media_gigs and not job_applications and not user_roles.COMMENTATOR and not user_roles.MEDIA and not user_roles.PHOTOGRAPHER and not user_roles.REFEREE %}
                     <div class="card">
                         <div class="card-body text-center py-5">
                             <i class="bi bi-briefcase text-muted" style="font-size: 4rem;"></i>

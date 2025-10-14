@@ -24,7 +24,7 @@ urlpatterns = [
     path('coach/<int:coach_pk>/review/', views.create_coach_review, name='create_coach_review'),
     path('stadium/<int:stadium_pk>/review/', views.create_stadium_review, name='create_stadium_review'),
     path('stadium/<int:pk>/', views.stadium_profile_detail, name='stadium_profile_detail'),
-    path('professional/<str:username>/', views.professional_profile_view, name='professional_profile'),
+    path('professional/edit/', views.unified_professional_form_view, name='unified_professional_form'),
     path('upload-banner/', views.upload_profile_banner, name='upload_profile_banner'),
     
     # Để allauth xử lý mọi thứ liên quan đến tài khoản

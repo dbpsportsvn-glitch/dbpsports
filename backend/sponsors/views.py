@@ -18,33 +18,10 @@ class SponsorProfileDetailView(DetailView):
     template_name = 'sponsors/sponsor_profile_detail.html'
     context_object_name = 'profile'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get(self, request, *args, **kwargs):
+        """Redirect to unified public profile"""
         profile = self.get_object()
-        sponsorships = profile.user.sponsorships.filter(is_active=True).select_related('tournament')
-        context['sponsorships'] = sponsorships
-        testimonials = profile.testimonials.filter(is_approved=True).select_related('author__profile')
-        context['testimonials'] = testimonials
-        context['testimonial_form'] = TestimonialForm()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('account_login')
-        self.object = self.get_object()
-        form = TestimonialForm(request.POST)
-        if form.is_valid():
-            testimonial = form.save(commit=False)
-            testimonial.sponsor_profile = self.object
-            testimonial.author = request.user
-            testimonial.save()
-            messages.success(request, "Cảm ơn bạn! Nhận xét của bạn đã được gửi.")
-            return redirect(self.object.get_absolute_url())
-        else:
-            messages.error(request, "Gửi nhận xét thất bại. Vui lòng kiểm tra lại thông tin.")
-            context = self.get_context_data()
-            context['testimonial_form'] = form
-            return self.render_to_response(context)
+        return redirect('public_profile', username=profile.user.username)
 
 class SponsorProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = SponsorProfile

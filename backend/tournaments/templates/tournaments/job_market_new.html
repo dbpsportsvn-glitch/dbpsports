@@ -172,7 +172,7 @@
                                             {% endif %}
                                         </div>
                                         <div>
-                                            <a href="{% url 'professional_profile' username=user.username %}" class="btn btn-outline-primary btn-sm">
+                                            <a href="{% url 'public_profile' username=user.username %}#professional" class="btn btn-outline-primary btn-sm">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </div>
@@ -376,7 +376,7 @@
                                         <span class="ms-1 text-muted small">{{ professional.avg_rating|floatformat:1 }}</span>
                                     </div>
                                 </div>
-                                <a href="{% url 'professional_profile' username=professional.username %}" class="btn btn-outline-success btn-sm">
+                                <a href="{% url 'public_profile' username=professional.username %}#professional" class="btn btn-outline-success btn-sm">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </div>

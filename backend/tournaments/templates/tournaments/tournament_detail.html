@@ -5723,7 +5723,7 @@
                     <!-- Sponsor Card Footer -->
                     <div class="sponsor-card-footer">
                         {% if sponsorship.sponsor and sponsorship.sponsor.sponsor_profile %}
-                            <a href="{% url 'sponsors:profile_detail' pk=sponsorship.sponsor.sponsor_profile.pk %}" class="sponsor-card-btn">
+                            <a href="{% url 'public_profile' username=sponsorship.sponsor.username %}#professional" class="sponsor-card-btn">
                                 <span>Xem chi tiết</span>
                                 <i class="bi bi-arrow-right"></i>
                             </a>

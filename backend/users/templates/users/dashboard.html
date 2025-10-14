@@ -258,7 +258,7 @@
                                     {% csrf_token %}
                                     
                                     <div class="row">
-                                        {# CỘT TRÁI: THÔNG TIN CƠ BẢN #}
+                                        {# CỘT TRÁI: CHỈ GIỮ LẠI VAI TRÒ VÀ BANNER #}
                                         <div class="col-md-6">
                                             
                                             {% comment %} Bắt đầu logic kiểm tra số lần đổi vai trò {% endcomment %}
@@ -291,44 +291,66 @@
                                             {% endif %}
                                             {% comment %} Kết thúc logic vai trò {% endcomment %}
 
-                                            {{ profile_form.bio|as_crispy_field }}
-                                            {{ profile_form.location|as_crispy_field }}
-                                            {{ profile_form.experience|as_crispy_field }}
+                                            {# CHỈ GIỮ LẠI BANNER IMAGE #}
+                                            {{ profile_form.banner_image|as_crispy_field }}
                                         </div>
 
-                                        {# CỘT PHẢI: THÔNG TIN THEO VAI TRÒ (GIỮ NGUYÊN) #}
+                                        {# CỘT PHẢI: CHỈ HIỂN THỊ THÔNG TIN VÀ LINK ĐẾN FORM THỐNG NHẤT #}
                                         <div class="col-md-6">
-                                            {% if 'REFEREE' in user_role_ids %}
-                                                <div class="mb-3">
-                                                    <h5 class="form-label">Thông tin Trọng tài</h5>
-                                                    {{ profile_form.referee_level|as_crispy_field }}
+                                            <div class="alert alert-primary">
+                                                <h5 class="alert-heading">
+                                                    <i class="bi bi-info-circle me-2"></i>Thông tin Chuyên môn
+                                                </h5>
+                                                <p class="mb-3">
+                                                    Để chỉnh sửa thông tin chuyên môn, vui lòng click vào nút bên dưới.
+                                                </p>
+                                                <hr>
+                                                <div class="d-grid">
+                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-primary">
+                                                        <i class="bi bi-gear me-2"></i>Chỉnh sửa Thông tin Chuyên môn
+                                                    </a>
                                                 </div>
-                                            {% endif %}
+                                            </div>
 
-                                            {% if 'SPONSOR' in user_role_ids %}
-                                                <div class="mb-3">
-                                                    <h5 class="form-label">Thông tin Nhà tài trợ</h5>
-                                                    {{ profile_form.brand_website|as_crispy_field }}
-                                                    {{ profile_form.sponsorship_interests|as_crispy_field }}
-                                                    
-                                                    {% if user.sponsor_profile %}
-                                                    <div class="alert alert-info mt-3">
-                                                        <i class="bi bi-info-circle me-2"></i>
-                                                        <strong>Hồ sơ nhà tài trợ đầy đủ:</strong>
-                                                        <a href="{% url 'sponsors:profile_edit' %}" class="btn btn-sm btn-primary ms-2">
-                                                            <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa Logo, Tên thương hiệu, Giới thiệu...
-                                                        </a>
-                                                    </div>
-                                                    {% endif %}
+                                            {# HIỂN THỊ VAI TRÒ HIỆN TẠI #}
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h6 class="mb-0">
+                                                        <i class="bi bi-person-badge me-2"></i>Vai trò hiện tại
+                                                    </h6>
                                                 </div>
-                                            {% endif %}
-                                    
-                                            {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
-                                                <div class="mb-3">
-                                                    <h5 class="form-label">Thông tin Media/Nhiếp ảnh</h5>
-                                                    {{ profile_form.equipment|as_crispy_field }}
+                                                <div class="card-body">
+                                                    {% for role in request.user.profile.roles.all %}
+                                                        <div class="d-flex align-items-center mb-2">
+                                                            {% if role.id == 'COACH' %}
+                                                                <i class="bi bi-clipboard-check text-success me-2"></i>
+                                                                <span>Huấn luyện viên</span>
+                                                            {% elif role.id == 'STADIUM' %}
+                                                                <i class="bi bi-house text-info me-2"></i>
+                                                                <span>Sân bóng</span>
+                                                            {% elif role.id == 'SPONSOR' %}
+                                                                <i class="bi bi-award text-warning me-2"></i>
+                                                                <span>Nhà tài trợ</span>
+                                                            {% elif role.id == 'COMMENTATOR' %}
+                                                                <i class="bi bi-mic text-danger me-2"></i>
+                                                                <span>Bình luận viên</span>
+                                                            {% elif role.id == 'MEDIA' %}
+                                                                <i class="bi bi-camera text-success me-2"></i>
+                                                                <span>Media</span>
+                                                            {% elif role.id == 'PHOTOGRAPHER' %}
+                                                                <i class="bi bi-camera-reels text-primary me-2"></i>
+                                                                <span>Nhiếp ảnh gia</span>
+                                                            {% elif role.id == 'REFEREE' %}
+                                                                <i class="bi bi-whistle text-warning me-2"></i>
+                                                                <span>Trọng tài</span>
+                                                            {% else %}
+                                                                <i class="bi bi-person text-muted me-2"></i>
+                                                                <span>{{ role.name }}</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    {% endfor %}
                                                 </div>
-                                            {% endif %}
+                                            </div>
                                         </div>
                                     </div>
                                     
