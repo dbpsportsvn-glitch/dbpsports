@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
-from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
+from tournaments.models import Team, Player, Tournament, Match, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, UnifiedProfessionalForm
 from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview, SponsorProfile
 from django.contrib.auth.models import User
@@ -517,7 +517,7 @@ def coach_profile_detail(request, pk):
     """Redirect to unified public profile"""
     from .models import CoachProfile
     coach_profile = get_object_or_404(CoachProfile, pk=pk)
-    return redirect('public_profile', username=coach_profile.user.username)
+    return redirect('public_profile', username=coach_profile.user.username or coach_profile.user.email)
 
 
 # ===== VIEWS CHO SÂN BÓNG =====
@@ -575,7 +575,7 @@ def create_stadium_profile(request):
 def stadium_profile_detail(request, pk):
     """Redirect to unified public profile"""
     stadium_profile = get_object_or_404(StadiumProfile, pk=pk)
-    return redirect('public_profile', username=stadium_profile.user.username)
+    return redirect('public_profile', username=stadium_profile.user.username or stadium_profile.user.email)
 
 
 @login_required
@@ -905,13 +905,13 @@ def upload_profile_banner(request):
             # Validate file size (max 5MB)
             if banner_image.size > 5 * 1024 * 1024:
                 messages.error(request, "Kích thước ảnh không được vượt quá 5MB.")
-                return redirect('public_profile', username=request.user.username)
+                return redirect('public_profile', username=request.user.username or request.user.email)
             
             # Validate file type
             allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
             if banner_image.content_type not in allowed_types:
                 messages.error(request, "Chỉ chấp nhận file ảnh (JPG, PNG, WebP).")
-                return redirect('public_profile', username=request.user.username)
+                return redirect('public_profile', username=request.user.username or request.user.email)
             
             # Save to profile
             profile = request.user.profile
@@ -919,7 +919,7 @@ def upload_profile_banner(request):
             profile.save()
             
             messages.success(request, "Đã cập nhật ảnh bìa hồ sơ thành công!")
-    return redirect('public_profile', username=request.user.username)
+    return redirect('public_profile', username=request.user.username or request.user.email)
 
 
 # === VIEW CHO FORM THỐNG NHẤT ===
@@ -933,7 +933,7 @@ def unified_professional_form_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Đã cập nhật thông tin chuyên môn thành công!')
-            return redirect('public_profile', username=request.user.username)
+            return redirect('public_profile', username=request.user.username or request.user.email)
         else:
             messages.error(request, 'Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.')
     else:
@@ -1321,7 +1321,7 @@ def create_sponsor_profile(request):
                 messages.success(request, "Đã tạo hồ sơ Nhà tài trợ thành công!")
             else:
                 messages.success(request, "Đã cập nhật hồ sơ Nhà tài trợ thành công!")
-            return redirect('public_profile', username=request.user.username)
+            return redirect('public_profile', username=request.user.username or request.user.email)
         else:
             # Debug: hiển thị lỗi form
             messages.error(request, f"Form không hợp lệ. Vui lòng kiểm tra lại thông tin.")

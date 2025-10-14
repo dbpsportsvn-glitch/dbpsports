@@ -22,7 +22,7 @@ class SponsorProfileDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         """Redirect to unified public profile"""
         profile = self.get_object()
-        return redirect('public_profile', username=profile.user.username)
+        return redirect('public_profile', username=profile.user.username or profile.user.email)
 
 class SponsorProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = SponsorProfile
@@ -39,7 +39,8 @@ class SponsorProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
     def get_success_url(self):
         # Redirect về public profile tab Chuyên môn thay vì sponsor detail page cũ
         from django.urls import reverse
-        return reverse('public_profile', kwargs={'username': self.request.user.username}) + '#professional'
+        username = self.request.user.username or self.request.user.email
+        return reverse('public_profile', kwargs={'username': username}) + '#professional'
 
 class ManageTestimonialsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Testimonial
@@ -119,7 +120,7 @@ def create_testimonial_view(request, sponsor_pk):
     # Không cho phép tự đánh giá
     if request.user == sponsor_profile.user:
         messages.error(request, "Bạn không thể đánh giá chính mình.")
-        return redirect('public_profile', username=request.user.username)
+        return redirect('public_profile', username=request.user.username or request.user.email)
     
     # Kiểm tra đã đánh giá chưa
     existing_testimonial = Testimonial.objects.filter(
@@ -129,7 +130,7 @@ def create_testimonial_view(request, sponsor_pk):
     
     if existing_testimonial:
         messages.info(request, "Bạn đã đánh giá nhà tài trợ này rồi.")
-        return redirect('public_profile', username=sponsor_profile.user.username)
+        return redirect('public_profile', username=sponsor_profile.user.username or sponsor_profile.user.email)
     
     if request.method == 'POST':
         form = TestimonialForm(request.POST)
@@ -139,7 +140,7 @@ def create_testimonial_view(request, sponsor_pk):
             testimonial.author = request.user
             testimonial.save()
             messages.success(request, f"Đã tạo đánh giá {testimonial.rating}/5 sao cho {sponsor_profile.brand_name}!")
-            return redirect('public_profile', username=sponsor_profile.user.username)
+            return redirect('public_profile', username=sponsor_profile.user.username or sponsor_profile.user.email)
         else:
             messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.")
     else:
