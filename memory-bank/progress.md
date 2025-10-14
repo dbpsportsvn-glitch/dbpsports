@@ -9,6 +9,8 @@
   - Quản lý hồ sơ cá nhân (Profile) với avatar, banner, bio
   - Dashboard tổng hợp cho từng vai trò
   - Hồ sơ chuyên nghiệp cho: Coach, Referee, Stadium, Sponsor
+  - **Sửa lỗi cập nhật mã QR cho nhà tài trợ:** Đã khắc phục lỗi form không cập nhật được mã QR do conflict giữa 2 model SponsorProfile (cũ và mới). Đã chuyển toàn bộ sang dùng model mới từ users.models với đầy đủ fields bao gồm payment_qr_code.
+  - **Tối ưu hiển thị thông tin vai trò:** Đã làm gọn gàng hơn khu vực hiển thị thông tin các vai trò (Coach, Stadium, Sponsor) với layout compact, giảm không gian chiếm dụng và cải thiện UX.
   
   **Module Tournaments:**
   - Tạo và quản lý giải đấu (Tournament)
@@ -53,6 +55,7 @@
   - Trang giải đấu với gradient styling, animation
   - Trang lưu trữ giải đấu (màu tím phân biệt)
   - Share và copy link functionality
+  - **Compact profile cards:** Tối ưu hiển thị thông tin vai trò với layout gọn gàng, hover effects và gradient styling cho header cards.
 
 - **Những gì cần làm tiếp:**
   - Hoàn thiện trang "Thị trường việc làm" (Job Market)

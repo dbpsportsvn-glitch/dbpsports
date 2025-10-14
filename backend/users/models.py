@@ -339,3 +339,74 @@ class StadiumReview(models.Model):
 
     def __str__(self):
         return f"Đánh giá {self.stadium_profile.stadium_name} từ {self.reviewer.username}"
+
+
+class SponsorProfile(models.Model):
+    """Hồ sơ chi tiết dành cho Nhà tài trợ."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='sponsor_profile',
+        verbose_name="Tài khoản"
+    )
+    
+    # Thông tin thương hiệu
+    brand_name = models.CharField("Tên thương hiệu", max_length=200)
+    brand_logo = models.ImageField("Logo thương hiệu", upload_to='sponsor_logos/', null=True, blank=True)
+    tagline = models.CharField("Slogan/Khẩu hiệu", max_length=255, blank=True)
+    description = models.TextField("Giới thiệu chi tiết", blank=True, help_text="Mô tả về thương hiệu, sản phẩm, dịch vụ...")
+    
+    # Thông tin liên hệ
+    website_url = models.URLField("Website", blank=True)
+    phone_number = models.CharField("Số điện thoại", max_length=20, blank=True)
+    email = models.EmailField("Email liên hệ", blank=True)
+    
+    # Thông tin tài trợ
+    sponsorship_interests = models.CharField(
+        "Lĩnh vực quan tâm tài trợ", 
+        max_length=255, 
+        blank=True,
+        help_text="Ví dụ: Giải đấu U21, Đội bóng doanh nghiệp, Cầu thủ trẻ..."
+    )
+    budget_range = models.CharField(
+        "Khoảng ngân sách tài trợ",
+        max_length=100,
+        blank=True,
+        help_text="Ví dụ: 10-50 triệu VNĐ, 100-500 triệu VNĐ..."
+    )
+    
+    # Mã QR thanh toán
+    payment_qr_code = models.ImageField(
+        "Mã QR thanh toán", 
+        upload_to='sponsor_qr_codes/', 
+        null=True, 
+        blank=True,
+        help_text="Mã QR để nhận thanh toán/donate"
+    )
+    
+    # Khu vực
+    region = models.CharField(
+        "Khu vực", 
+        max_length=20, 
+        choices=[
+            ('MIEN_BAC', 'Miền Bắc'),
+            ('MIEN_TRUNG', 'Miền Trung'),
+            ('MIEN_NAM', 'Miền Nam'),
+            ('KHAC', 'Khác')
+        ],
+        default='KHAC'
+    )
+    location_detail = models.CharField("Tỉnh/Thành phố", max_length=100, blank=True)
+    
+    # Trạng thái
+    is_active = models.BooleanField("Đang hoạt động", default=True, help_text="Đánh dấu nếu đang tìm cơ hội tài trợ")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Hồ sơ Nhà tài trợ"
+        verbose_name_plural = "Hồ sơ Nhà tài trợ"
+    
+    def __str__(self):
+        return f"Nhà tài trợ {self.brand_name}"

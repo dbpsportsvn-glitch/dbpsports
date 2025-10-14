@@ -28,6 +28,9 @@ urlpatterns = [
     path('upload-banner/', views.upload_profile_banner, name='upload_profile_banner'),
     path('review/<str:username>/', views.review_user_view, name='review_user'),
     
+    # URLs cho Nhà tài trợ
+    path('sponsor/create/', views.create_sponsor_profile, name='create_sponsor_profile'),
+    
     # URLs cho Chuyên gia (Professional)
     path('professional/dashboard/', views.professional_dashboard, name='professional_dashboard'),
     path('professional/job/create/', views.create_professional_job_posting, name='create_professional_job_posting'),

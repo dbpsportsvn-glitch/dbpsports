@@ -7,85 +7,108 @@
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <div class="card shadow">
+            <div class="card modern-review-card">
                 <div class="card-header">
-                    <h4 class="mb-0"><i class="bi bi-star"></i> Đánh giá Sân bóng</h4>
+                    <h4 class="mb-0"><i class="bi bi-star-fill"></i> Đánh giá Sân bóng</h4>
                 </div>
                 <div class="card-body">
                     {# Thông tin Sân bóng #}
-                    <div class="d-flex align-items-center mb-4">
-                        {% if stadium_profile.logo %}
-                        <img src="{{ stadium_profile.logo.url }}" alt="{{ stadium_profile.stadium_name }}" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover;">
-                        {% else %}
-                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-house text-white" style="font-size: 1.5rem;"></i>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <h5 class="mb-1">{{ stadium_profile.stadium_name }}</h5>
-                            <p class="text-muted mb-0">{{ stadium_profile.get_region_display }}</p>
+                    <div class="stadium-info-card">
+                        <div class="d-flex align-items-center">
+                            {% if stadium_profile.logo %}
+                            <img src="{{ stadium_profile.logo.url }}" alt="{{ stadium_profile.stadium_name }}" class="stadium-logo me-3">
+                            {% else %}
+                            <div class="bg-primary rounded-3 d-flex align-items-center justify-content-center me-3 stadium-logo">
+                                <i class="bi bi-house text-white" style="font-size: 1.5rem;"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1 fw-bold">{{ stadium_profile.stadium_name }}</h5>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-geo-alt"></i> {{ stadium_profile.get_region_display }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                     
-                    <form method="post">
+                    <form method="post" class="modern-form">
                         {% csrf_token %}
                         
-                        {# Rating #}
-                        <div class="mb-4">
-                            <label class="form-label">{{ form.rating.label }}</label>
-                            <div class="star-rating-input">
-                                {% for choice in form.rating %}
-                                    <div class="form-check form-check-inline">
-                                        {{ choice.tag }}
-                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
-                                            {% for i in "12345" %}
-                                                {% if forloop.counter == choice.choice_value %}
-                                                    <i class="bi bi-star-fill text-warning"></i>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </label>
-                                    </div>
-                                {% endfor %}
+                        {# Rating Section #}
+                        <div class="form-section">
+                            <h6><i class="bi bi-star-fill text-warning"></i> {{ form.rating.label }}</h6>
+                            <div class="modern-star-rating" id="star-rating">
+                                <input type="radio" name="rating" value="1" id="star1" class="star-input">
+                                <label for="star1" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="2" id="star2" class="star-input">
+                                <label for="star2" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="3" id="star3" class="star-input">
+                                <label for="star3" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="4" id="star4" class="star-input">
+                                <label for="star4" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="5" id="star5" class="star-input">
+                                <label for="star5" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
                             </div>
                             {% if form.rating.errors %}
-                                <div class="text-danger">{{ form.rating.errors }}</div>
+                                <div class="alert alert-danger mt-2">{{ form.rating.errors }}</div>
                             {% endif %}
                         </div>
                         
-                        {# Team và Tournament #}
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">{{ form.team.label }}</label>
-                                {{ form.team }}
-                                {% if form.team.errors %}
-                                    <div class="text-danger">{{ form.team.errors }}</div>
-                                {% endif %}
+                        {# Team và Tournament Section #}
+                        <div class="form-section">
+                            <h6><i class="bi bi-people-fill text-info"></i> Thông tin liên quan</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">{{ form.team.label }}</label>
+                                    {{ form.team }}
+                                    {% if form.team.errors %}
+                                        <div class="alert alert-danger mt-2">{{ form.team.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">{{ form.tournament.label }}</label>
+                                    {{ form.tournament }}
+                                    {% if form.tournament.errors %}
+                                        <div class="alert alert-danger mt-2">{{ form.tournament.errors }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">{{ form.tournament.label }}</label>
-                                {{ form.tournament }}
-                                {% if form.tournament.errors %}
-                                    <div class="text-danger">{{ form.tournament.errors }}</div>
-                                {% endif %}
-                                <small class="text-muted">Tùy chọn - Chọn giải đấu liên quan</small>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i> Tùy chọn - Chọn giải đấu liên quan
+                                </small>
                             </div>
                         </div>
                         
-                        {# Comment #}
-                        <div class="mb-4">
-                            <label class="form-label">{{ form.comment.label }}</label>
+                        {# Comment Section #}
+                        <div class="form-section">
+                            <h6><i class="bi bi-chat-quote text-success"></i> {{ form.comment.label }}</h6>
                             {{ form.comment }}
                             {% if form.comment.errors %}
-                                <div class="text-danger">{{ form.comment.errors }}</div>
+                                <div class="alert alert-danger mt-2">{{ form.comment.errors }}</div>
                             {% endif %}
                         </div>
                         
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'stadium_profile_detail' pk=stadium_profile.pk %}" class="btn btn-secondary">
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'stadium_profile_detail' pk=stadium_profile.pk %}" class="modern-btn modern-btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Quay lại
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-star"></i> Gửi đánh giá
+                            <button type="submit" class="modern-btn modern-btn-primary">
+                                <i class="bi bi-star-fill"></i> Gửi đánh giá
                             </button>
                         </div>
                     </form>
@@ -96,24 +119,269 @@
 </div>
 
 <style>
-.star-rating-input .form-check {
-    margin-right: 0.5rem;
+/* Modern Form Styling */
+.modern-form .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
 }
 
-.star-rating-input .form-check-input {
+.modern-form .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    background-color: white;
+}
+
+/* Comment textarea full width */
+.modern-form textarea[name="comment"] {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+}
+
+.modern-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* Modern Star Rating */
+.modern-star-rating {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    justify-content: flex-start;
+}
+
+.star-input {
     display: none;
 }
 
-.star-rating-input .form-check-label {
+.star-label {
+    display: inline-block;
     cursor: pointer;
-    font-size: 1.5rem;
-    color: #ddd;
-    transition: color 0.2s;
+    font-size: 2rem;
+    color: #e9ecef;
+    transition: all 0.3s ease;
+    padding: 8px;
+    border-radius: 8px;
 }
 
-.star-rating-input .form-check-input:checked + .form-check-label,
-.star-rating-input .form-check-label:hover {
+.star-label:hover {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.star-input:checked + .star-label {
     color: #ffc107;
 }
+
+/* Modern Card */
+.modern-review-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.modern-review-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 24px;
+}
+
+.modern-review-card .card-body {
+    padding: 32px;
+    background: white;
+}
+
+/* Modern Buttons */
+.modern-btn {
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modern-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.modern-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.modern-btn-secondary {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+}
+
+.modern-btn-secondary:hover {
+    background: #e9ecef;
+    color: #495057;
+    transform: translateY(-1px);
+}
+
+/* Stadium Info Card */
+.stadium-info-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #dee2e6;
+}
+
+.stadium-info-card .stadium-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modern-review-card .card-body {
+        padding: 20px;
+    }
+    
+    .modern-star-rating {
+        justify-content: center;
+    }
+    
+    .star-rating-item label {
+        font-size: 1.5rem;
+        padding: 4px;
+    }
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Star Rating Interactive
+    const starInputs = document.querySelectorAll('.star-input');
+    const starLabels = document.querySelectorAll('.star-label');
+    const ratingContainer = document.querySelector('.modern-star-rating');
+    
+    // Click event for each star
+    starLabels.forEach((label, index) => {
+        label.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Uncheck all stars
+            starInputs.forEach(input => {
+                input.checked = false;
+            });
+            
+            // Check clicked star
+            starInputs[index].checked = true;
+            
+            // Update visual state
+            updateStarVisual();
+            
+            console.log('Star clicked:', index + 1);
+        });
+        
+        // Hover effect
+        label.addEventListener('mouseenter', function() {
+            const hoverValue = index + 1;
+            highlightStars(hoverValue);
+        });
+    });
+    
+    // Add click event directly to radio inputs as backup
+    starInputs.forEach((input, index) => {
+        input.addEventListener('change', function() {
+            console.log('Radio changed:', this.value);
+            updateStarVisual();
+        });
+    });
+    
+    // Remove hover effect when mouse leaves rating area
+    ratingContainer.addEventListener('mouseleave', function() {
+        updateStarVisual();
+    });
+    
+    function highlightStars(value) {
+        starLabels.forEach((label, index) => {
+            if (index < value) {
+                label.style.color = '#ffc107';
+                label.style.transform = 'scale(1.1)';
+            } else {
+                label.style.color = '#e9ecef';
+                label.style.transform = 'scale(1)';
+            }
+        });
+    }
+    
+    function updateStarVisual() {
+        const checkedInput = document.querySelector('.star-input:checked');
+        if (checkedInput) {
+            const checkedValue = parseInt(checkedInput.value);
+            highlightStars(checkedValue);
+        } else {
+            highlightStars(0);
+        }
+    }
+    
+    // Form validation
+    const form = document.querySelector('.modern-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        const rating = form.querySelector('input[name="rating"]:checked');
+        const comment = form.querySelector('textarea[name="comment"]').value.trim();
+        
+        if (!rating) {
+            e.preventDefault();
+            alert('Vui lòng chọn đánh giá (1-5 sao)');
+            return;
+        }
+        
+        if (!comment) {
+            e.preventDefault();
+            alert('Vui lòng nhập nhận xét');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
 {% endblock %}

@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Context
 
-- Quy tắc này được áp dụng SAU KHI một nhiệm vụ lập trình (như thêm tính năng, sửa lỗi, refactor code) đã được hoàn thành.
+- Quy tắc này được áp dụng SAU KHI một nhiệm vụ lập trình (như thêm tính năng, sửa lỗi, refactor code) đã được hoàn thành, và phải có kích hoạt của người dùng theo nguyên tắc bên dưới.
 - Mục đích là để ghi lại tiến độ và dọn dẹp bối cảnh công việc hiện tại, giữ cho Memory Bank luôn được cập nhật.
 - Quy tắc này thường được kích hoạt khi người dùng sử dụng các cụm từ như "update memory bank", "cập nhật tiến độ", "xong việc rồi", "cập nhật Memory Bank", "lưu Memory Bank", "lưu", "lưu lại", v.v.
 

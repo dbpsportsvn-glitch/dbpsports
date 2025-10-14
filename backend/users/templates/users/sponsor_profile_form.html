@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if is_edit %}Chỉnh sửa hồ sơ{% else %}Tạo hồ sơ{% endif %} Nhà tài trợ{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            {% if is_edit %}
+                                <i class="bi bi-pencil-square"></i> Chỉnh sửa hồ sơ Nhà tài trợ
+                            {% else %}
+                                <i class="bi bi-plus-circle"></i> Tạo hồ sơ Nhà tài trợ
+                            {% endif %}
+                        </h4>
+                        <a href="{% url 'public_profile' username=user.username %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Quay lại Hồ sơ
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if not is_edit %}
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-info-circle"></i> Hướng dẫn tạo hồ sơ Nhà tài trợ
+                        </h5>
+                        <p class="mb-0">
+                            Hãy điền đầy đủ thông tin về thương hiệu của bạn để các tổ chức thể thao có thể tìm thấy và liên hệ tài trợ.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <!-- Hiển thị Logo hiện tại nếu có -->
+                        {% if form.instance.brand_logo %}
+                        <div class="mb-3">
+                            <label class="form-label">Logo thương hiệu hiện tại:</label>
+                            <div class="border rounded p-3 bg-light">
+                                <img src="{{ form.instance.brand_logo.url }}" alt="Brand Logo" class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Hiển thị QR Code hiện tại nếu có -->
+                        {% if form.instance.payment_qr_code %}
+                        <div class="mb-3">
+                            <label class="form-label">Mã QR thanh toán hiện tại:</label>
+                            <div class="border rounded p-3 bg-light">
+                                <img src="{{ form.instance.payment_qr_code.url }}" alt="Payment QR Code" class="img-thumbnail" style="max-width: 300px;">
+                                <p class="text-muted small mt-2 mb-0">
+                                    <i class="bi bi-info-circle"></i> Upload ảnh mới để thay đổi mã QR
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'public_profile' username=user.username %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> 
+                                {% if is_edit %}Cập nhật hồ sơ{% else %}Tạo hồ sơ{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Thông tin bổ sung -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Mẹo tạo hồ sơ hiệu quả
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li><strong>Logo thương hiệu:</strong> Sử dụng logo rõ nét, chất lượng cao để tạo ấn tượng tốt</li>
+                        <li><strong>Mô tả chi tiết:</strong> Giới thiệu về sản phẩm/dịch vụ và lý do muốn tài trợ thể thao</li>
+                        <li><strong>Lĩnh vực quan tâm:</strong> Chỉ rõ loại hình tài trợ bạn quan tâm (giải đấu, đội bóng, cầu thủ...)</li>
+                        <li><strong>Mã QR thanh toán:</strong> Upload mã QR để nhận thanh toán/donate từ cộng đồng</li>
+                        <li><strong>Ngân sách:</strong> Đề xuất khoảng ngân sách để các tổ chức biết khả năng tài trợ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

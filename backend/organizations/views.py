@@ -24,8 +24,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 # Apps khác
-from users.models import Role
-from sponsors.models import SponsorProfile
+from users.models import Role, SponsorProfile
 
 from tournaments.forms import PlayerCreationForm, TournamentForm
 from tournaments.models import (
@@ -1756,7 +1755,7 @@ def get_sponsor_details_api(request, user_id):
     API endpoint để lấy thông tin chi tiết của một nhà tài trợ.
     """
     # Di chuyển import vào trong hàm để tránh circular import
-    from sponsors.models import SponsorProfile 
+    from users.models import SponsorProfile 
 
     try:
         # Truy vấn thẳng vào SponsorProfile thông qua user_id

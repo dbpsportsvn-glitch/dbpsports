@@ -8,8 +8,7 @@ from django.contrib import messages
 # Import các model từ đúng ứng dụng của chúng
 from tournaments.models import Team, Player, Tournament, Player, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, UnifiedProfessionalForm
-from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview
-from sponsors.models import SponsorProfile
+from .models import Profile, Role, CoachProfile, StadiumProfile, CoachReview, StadiumReview, SponsorProfile
 from django.contrib.auth.models import User
 # Thêm import đánh giá công việc
 from organizations.models import ProfessionalReview, JobApplication, JobPosting
@@ -420,7 +419,7 @@ def public_profile_view(request, username):
     sponsor_sponsorships = []
     sponsor_avg_rating = 0
     try:
-        from sponsors.models import SponsorProfile, Testimonial
+        from sponsors.models import Testimonial
         sponsor_profile = profile_user.sponsor_profile
         
         # Lấy testimonials
@@ -1295,3 +1294,48 @@ def professional_job_application_detail(request, application_pk):
     }
     
     return render(request, 'users/professional_job_application_detail.html', context)
+
+
+@login_required
+def create_sponsor_profile(request):
+    """Tạo/chỉnh sửa hồ sơ Nhà tài trợ"""
+    
+    # Kiểm tra user có vai trò SPONSOR không
+    if not request.user.profile.roles.filter(id='SPONSOR').exists():
+        messages.error(request, "Bạn cần có vai trò Nhà tài trợ để truy cập trang này.")
+        return redirect('dashboard')
+    
+    # Lấy hoặc tạo SponsorProfile
+    sponsor_profile, created = SponsorProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'brand_name': request.user.get_full_name() or request.user.username}
+    )
+    
+    if request.method == 'POST':
+        from .forms import SponsorProfileForm
+        form = SponsorProfileForm(request.POST, request.FILES, instance=sponsor_profile)
+        
+        if form.is_valid():
+            form.save()
+            if created:
+                messages.success(request, "Đã tạo hồ sơ Nhà tài trợ thành công!")
+            else:
+                messages.success(request, "Đã cập nhật hồ sơ Nhà tài trợ thành công!")
+            return redirect('public_profile', username=request.user.username)
+        else:
+            # Debug: hiển thị lỗi form
+            messages.error(request, f"Form không hợp lệ. Vui lòng kiểm tra lại thông tin.")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Lỗi {field}: {error}")
+    else:
+        from .forms import SponsorProfileForm
+        form = SponsorProfileForm(instance=sponsor_profile)
+    
+    context = {
+        'form': form,
+        'sponsor_profile': sponsor_profile,
+        'is_edit': not created,
+    }
+    
+    return render(request, 'users/sponsor_profile_form.html', context)

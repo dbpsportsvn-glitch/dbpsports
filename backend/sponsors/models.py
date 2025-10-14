@@ -6,34 +6,10 @@ from django.urls import reverse
 
 # Chúng ta sẽ cần liên kết đến model Tournament sau này
 from tournaments.models import Tournament
+from users.models import SponsorProfile  # Import model mới từ users app
 
-class SponsorProfile(models.Model):
-    """Lưu trữ hồ sơ công khai chi tiết của một nhà tài trợ."""
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='sponsor_profile',
-        verbose_name="Tài khoản Nhà tài trợ"
-    )
-    brand_name = models.CharField("Tên thương hiệu", max_length=200, help_text="Tên công khai của nhà tài trợ.")
-    brand_logo = models.ImageField(upload_to='sponsor_logos/', blank=True, null=True, verbose_name="Logo thương hiệu") # <-- THÊM DÒNG NÀY
-    tagline = models.CharField("Slogan/Khẩu hiệu", max_length=255, blank=True, help_text="Một câu giới thiệu ngắn gọn.")
-    description = models.TextField("Giới thiệu chi tiết", blank=True, help_text="Mô tả về thương hiệu, lĩnh vực hoạt động...")
-    website_url = models.URLField("Link trang web", blank=True)
-    phone_number = models.CharField("Số điện thoại", max_length=20, blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Hồ sơ Nhà tài trợ"
-        verbose_name_plural = "Các Hồ sơ Nhà tài trợ"
-
-    def __str__(self):
-        return self.brand_name
-
-    def get_absolute_url(self):
-        return reverse('public_profile', kwargs={'username': self.user.username})
+# DEPRECATED: Model SponsorProfile cũ đã được xóa và thay thế bởi users.models.SponsorProfile
+# Model mới có đầy đủ fields: payment_qr_code, email, region, location_detail, is_active...
 
 class Testimonial(models.Model):
     """Lưu trữ nhận xét, lời chứng thực cho nhà tài trợ."""

@@ -3,10 +3,9 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
-from .models import Profile, Role, CoachProfile, StadiumProfile
-from sponsors.models import SponsorProfile
+from .models import Profile, Role, CoachProfile, StadiumProfile, SponsorProfile
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Div, HTML, Fieldset
+from crispy_forms.layout import Layout, Row, Column, Div, HTML, Fieldset, Submit
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
@@ -403,7 +402,90 @@ class UnifiedProfessionalForm(forms.ModelForm):
         return profile
 
 
-# === FORM CHO CHUYÊN GIA ĐĂNG TIN TÌM VIỆC ===
+# === FORM CHO NHÀ TÀI TRỢ ===
+class SponsorProfileForm(forms.ModelForm):
+    """Form tạo/chỉnh sửa hồ sơ Nhà tài trợ"""
+    
+    class Meta:
+        model = SponsorProfile
+        fields = [
+            'brand_name', 'brand_logo', 'tagline', 'description',
+            'website_url', 'phone_number', 'email',
+            'sponsorship_interests', 'budget_range', 'payment_qr_code',
+            'region', 'location_detail', 'is_active'
+        ]
+        labels = {
+            'brand_name': 'Tên thương hiệu',
+            'brand_logo': 'Logo thương hiệu',
+            'tagline': 'Slogan/Khẩu hiệu',
+            'description': 'Giới thiệu chi tiết',
+            'website_url': 'Website',
+            'phone_number': 'Số điện thoại',
+            'email': 'Email liên hệ',
+            'sponsorship_interests': 'Lĩnh vực quan tâm tài trợ',
+            'budget_range': 'Khoảng ngân sách tài trợ',
+            'payment_qr_code': 'Mã QR thanh toán',
+            'region': 'Khu vực',
+            'location_detail': 'Tỉnh/Thành phố',
+            'is_active': 'Đang hoạt động',
+        }
+        help_texts = {
+            'brand_logo': 'Khuyến nghị: 500x500px',
+            'description': 'Mô tả về thương hiệu, sản phẩm, dịch vụ...',
+            'sponsorship_interests': 'Ví dụ: Giải đấu U21, Đội bóng doanh nghiệp, Cầu thủ trẻ...',
+            'budget_range': 'Ví dụ: 10-50 triệu VNĐ, 100-500 triệu VNĐ...',
+            'payment_qr_code': 'Mã QR để nhận thanh toán/donate',
+            'is_active': 'Đánh dấu nếu đang tìm cơ hội tài trợ',
+        }
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 4}),
+            'sponsorship_interests': forms.Textarea(attrs={'rows': 2}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = 'multipart/form-data'
+        
+        self.helper.layout = Layout(
+            Fieldset(
+                'Thông tin Thương hiệu',
+                Row(
+                    Column('brand_name', css_class='form-group col-md-8 mb-3'),
+                    Column('brand_logo', css_class='form-group col-md-4 mb-3'),
+                ),
+                'tagline',
+                'description',
+            ),
+            Fieldset(
+                'Thông tin Liên hệ',
+                Row(
+                    Column('website_url', css_class='form-group col-md-6 mb-3'),
+                    Column('phone_number', css_class='form-group col-md-6 mb-3'),
+                ),
+                'email',
+            ),
+            Fieldset(
+                'Thông tin Tài trợ',
+                Row(
+                    Column('sponsorship_interests', css_class='form-group col-md-6 mb-3'),
+                    Column('budget_range', css_class='form-group col-md-6 mb-3'),
+                ),
+                'payment_qr_code',
+            ),
+            Fieldset(
+                'Khu vực & Trạng thái',
+                Row(
+                    Column('region', css_class='form-group col-md-6 mb-3'),
+                    Column('location_detail', css_class='form-group col-md-6 mb-3'),
+                ),
+                'is_active',
+            ),
+        )
+
+
+# === FORM CHO TRỌNG TÀI ===
 class ProfessionalJobSeekingForm(forms.ModelForm):
     """Form cho chuyên gia đăng tin tìm việc"""
     
@@ -485,3 +567,81 @@ class ProfessionalJobSeekingForm(forms.ModelForm):
         if commit:
             job.save()
         return job
+
+
+# === FORMS CHO REVIEWS ===
+
+class CoachReviewForm(forms.ModelForm):
+    """Form đánh giá Huấn luyện viên"""
+    
+    class Meta:
+        from .models import CoachReview
+        model = CoachReview
+        fields = ['rating', 'comment', 'team', 'tournament']
+        labels = {
+            'rating': 'Đánh giá',
+            'comment': 'Nhận xét',
+            'team': 'Đội bóng',
+            'tournament': 'Giải đấu',
+        }
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ cảm nhận về chất lượng huấn luyện...'}),
+            'rating': forms.Select(choices=[(i, f"{i} sao") for i in range(1, 6)]),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        if user:
+            # Lấy danh sách đội bóng mà user đã từng tham gia
+            from tournaments.models import Team
+            user_teams = Team.objects.filter(
+                players__user=user
+            ).distinct()
+            self.fields['team'].queryset = user_teams
+            
+            # Lấy danh sách giải đấu mà user đã tham gia
+            from tournaments.models import Tournament
+            user_tournaments = Tournament.objects.filter(
+                teams_registered__players__user=user
+            ).distinct()
+            self.fields['tournament'].queryset = user_tournaments
+
+
+class StadiumReviewForm(forms.ModelForm):
+    """Form đánh giá Sân bóng"""
+    
+    class Meta:
+        from .models import StadiumReview
+        model = StadiumReview
+        fields = ['rating', 'comment', 'team', 'tournament']
+        labels = {
+            'rating': 'Đánh giá',
+            'comment': 'Nhận xét',
+            'team': 'Đội bóng',
+            'tournament': 'Giải đấu',
+        }
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Chia sẻ cảm nhận về chất lượng sân bóng...'}),
+            'rating': forms.Select(choices=[(i, f"{i} sao") for i in range(1, 6)]),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        if user:
+            # Lấy danh sách đội bóng mà user đã từng tham gia
+            from tournaments.models import Team
+            user_teams = Team.objects.filter(
+                players__user=user
+            ).distinct()
+            self.fields['team'].queryset = user_teams
+            
+            # Lấy danh sách giải đấu mà user đã tham gia
+            from tournaments.models import Tournament
+            user_tournaments = Tournament.objects.filter(
+                teams_registered__players__user=user
+            ).distinct()
+            self.fields['tournament'].queryset = user_tournaments
