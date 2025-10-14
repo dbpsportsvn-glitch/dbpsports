@@ -101,41 +101,143 @@
         background: #ffffff;
     }
     
-    /* Navigation Tabs */
-    .profile-nav {
-        background: white;
-        border-bottom: 2px solid #e9ecef;
+    /* Modern Profile Navigation Styles */
+    .modern-profile-nav {
         position: sticky;
-        top: 56px;
-        z-index: 100;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        top: 64px;
+        z-index: 1020;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
     }
-    
-    .profile-nav .nav-link {
-        color: #6c757d;
+
+    .nav-container {
+        padding: 1rem;
+    }
+
+    /* Desktop Navigation */
+    .nav-desktop {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        position: relative;
+    }
+
+    .nav-desktop .nav {
+        gap: 0.5rem;
+    }
+
+    .nav-desktop .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.8);
         font-weight: 500;
-        padding: 1rem 1.5rem;
-        border-bottom: 3px solid transparent;
         transition: all 0.3s ease;
-        background: transparent !important;
+        text-decoration: none;
     }
-    
-    .profile-nav .nav-link:hover {
-        color: #0d6efd !important;
-        background: rgba(13, 110, 253, 0.08) !important;
-        border-bottom-color: rgba(13, 110, 253, 0.3);
+
+    .nav-desktop .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
-    
-    .profile-nav .nav-link.active {
-        color: #0d6efd !important;
-        background: rgba(13, 110, 253, 0.1) !important;
-        border-bottom-color: #0d6efd;
+
+    .nav-desktop .nav-link.active {
+        background: rgba(255, 255, 255, 0.95);
+        color: #667eea;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
     }
-    
-    .profile-nav .nav-link:focus {
-        color: #0d6efd !important;
-        background: rgba(13, 110, 253, 0.1) !important;
-        box-shadow: none;
+
+    .nav-desktop .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    /* Quick Actions */
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 193, 7, 0.2);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-action:hover {
+        background: rgba(255, 193, 7, 0.3);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-action i {
+        font-size: 1.1rem;
+    }
+
+    /* Mobile Navigation */
+    .nav-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .mobile-nav-content {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .mobile-nav-content .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .mobile-nav-content .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .mobile-nav-content .nav-link.active {
+        background: rgba(255, 255, 255, 0.95);
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .mobile-nav-content .nav-link i {
+        font-size: 1.1rem;
     }
     
     /* Section Styles */
@@ -162,7 +264,21 @@
         object-fit: cover;
     }
     
+    /* Responsive adjustments */
     @media (max-width: 768px) {
+        .modern-profile-nav {
+            top: 56px; /* Adjust for mobile header */
+        }
+        
+        .nav-container {
+            padding: 0.75rem;
+        }
+        
+        .nav-desktop .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        
         .profile-banner {
             height: 300px;
         }
@@ -172,6 +288,24 @@
         .profile-avatar-large {
             width: 100px;
             height: 100px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .nav-desktop .nav-link span {
+            display: none;
+        }
+        
+        .nav-desktop .nav-link {
+            padding: 0.75rem;
+        }
+        
+        .btn-action span {
+            display: none;
+        }
+        
+        .btn-action {
+            padding: 0.75rem;
         }
     }
 </style>
@@ -264,37 +398,104 @@
     </div>
 </div>
 
-<!-- Profile Navigation -->
-<div class="profile-nav">
-    <div class="container">
-        <ul class="nav nav-pills" id="profileTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
-                    <i class="bi bi-house-door"></i> Tổng quan
+<!-- Modern Profile Navigation -->
+<div class="modern-profile-nav">
+    <div class="nav-container">
+        <!-- Desktop Navigation -->
+        <div class="nav-desktop d-none d-lg-flex">
+            <ul class="nav nav-pills" id="profileTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                        <i class="bi bi-house-door"></i>
+                        <span>Tổng quan</span>
+                    </button>
+                </li>
+                {% if achievements %}
+                <li class="nav-item">
+                    <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button">
+                        <i class="bi bi-trophy"></i>
+                        <span>Thành tích</span>
+                    </button>
+                </li>
+                {% endif %}
+                {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE or user_roles.SPONSOR %}
+                <li class="nav-item">
+                    <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button">
+                        <i class="bi bi-briefcase"></i>
+                        <span>Chuyên môn</span>
+                    </button>
+                </li>
+                {% endif %}
+                {% if reviews or coach_reviews or stadium_reviews or sponsor_testimonials %}
+                <li class="nav-item">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                        <i class="bi bi-star"></i>
+                        <span>Đánh giá</span>
+                    </button>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <!-- Quick Actions -->
+            <div class="nav-actions">
+                {% if request.user != profile_user and request.user.is_authenticated %}
+                <button class="btn-action" data-bs-toggle="modal" data-bs-target="#contactModal">
+                    <i class="bi bi-telephone-fill"></i>
+                    <span>Liên hệ</span>
                 </button>
-            </li>
-            {% if achievements %}
-            <li class="nav-item">
-                <button class="nav-link" id="achievements-tab" data-bs-toggle="tab" data-bs-target="#achievements" type="button">
-                    <i class="bi bi-trophy"></i> Thành tích
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div class="nav-mobile d-lg-none">
+            <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNavMenu" aria-expanded="false">
+                    <i class="bi bi-list"></i> Menu
                 </button>
-            </li>
-            {% endif %}
-            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE or user_roles.SPONSOR %}
-            <li class="nav-item">
-                <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button">
-                    <i class="bi bi-briefcase"></i> Chuyên môn
+                {% if request.user != profile_user and request.user.is_authenticated %}
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal">
+                    <i class="bi bi-telephone-fill"></i>
                 </button>
-            </li>
-            {% endif %}
-            {% if reviews or coach_reviews or stadium_reviews or sponsor_testimonials %}
-            <li class="nav-item">
-                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
-                    <i class="bi bi-star"></i> Đánh giá
-                </button>
-            </li>
-            {% endif %}
-        </ul>
+                {% endif %}
+            </div>
+            <div class="collapse" id="mobileNavMenu">
+                <div class="mobile-nav-content">
+                    <ul class="nav flex-column" id="profileTabMobile" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="overview-tab-mobile" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                                <i class="bi bi-house-door"></i>
+                                <span>Tổng quan</span>
+                            </button>
+                        </li>
+                        {% if achievements %}
+                        <li class="nav-item">
+                            <button class="nav-link" id="achievements-tab-mobile" data-bs-toggle="tab" data-bs-target="#achievements" type="button">
+                                <i class="bi bi-trophy"></i>
+                                <span>Thành tích</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE or user_roles.SPONSOR %}
+                        <li class="nav-item">
+                            <button class="nav-link" id="professional-tab-mobile" data-bs-toggle="tab" data-bs-target="#professional" type="button">
+                                <i class="bi bi-briefcase"></i>
+                                <span>Chuyên môn</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% if reviews or coach_reviews or stadium_reviews or sponsor_testimonials %}
+                        <li class="nav-item">
+                            <button class="nav-link" id="reviews-tab-mobile" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                                <i class="bi bi-star"></i>
+                                <span>Đánh giá</span>
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1577,4 +1778,45 @@
     background-color: rgba(0, 123, 255, 0.05);
 }
 </style>
+
+<script>
+(function () {
+    // Sync desktop and mobile navigation
+    function syncTabs(desktopTab, mobileTab) {
+        const desktopBtn = document.getElementById(desktopTab);
+        const mobileBtn = document.getElementById(mobileTab);
+        
+        if (desktopBtn && mobileBtn) {
+            desktopBtn.addEventListener('click', function() {
+                mobileBtn.click();
+            });
+            
+            mobileBtn.addEventListener('click', function() {
+                desktopBtn.click();
+            });
+        }
+    }
+    
+    // Sync all tab pairs
+    syncTabs('overview-tab', 'overview-tab-mobile');
+    syncTabs('achievements-tab', 'achievements-tab-mobile');
+    syncTabs('professional-tab', 'professional-tab-mobile');
+    syncTabs('reviews-tab', 'reviews-tab-mobile');
+    
+    // Auto-close mobile menu when tab is selected
+    const mobileNavLinks = document.querySelectorAll('#profileTabMobile .nav-link');
+    const mobileNavMenu = document.getElementById('mobileNavMenu');
+    
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            if (mobileNavMenu && mobileNavMenu.classList.contains('show')) {
+                const bsCollapse = new bootstrap.Collapse(mobileNavMenu, {
+                    toggle: false
+                });
+                bsCollapse.hide();
+            }
+        });
+    });
+})();
+</script>
 {% endblock %}
