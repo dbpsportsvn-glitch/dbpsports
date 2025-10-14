@@ -18,8 +18,10 @@
                         {% csrf_token %}
                         {{ form|crispy }}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{{ object.get_absolute_url }}" class="btn btn-secondary me-md-2">Hủy</a>
-                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            <a href="{% url 'public_profile' username=user.username %}#professional" class="btn btn-secondary me-md-2">Hủy</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Lưu thay đổi
+                            </button>
                         </div>
                     </form>
                 </div>

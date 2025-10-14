@@ -6,27 +6,28 @@ from .models import SponsorProfile, Testimonial
 class SponsorProfileForm(forms.ModelForm):
     class Meta:
         model = SponsorProfile
-        # Cập nhật lại fields cho đúng với model của bạn
         fields = [
             'brand_name', 
-            'brand_logo',  # <-- Thêm logo vào form
+            'brand_logo',
             'tagline', 
             'description', 
             'website_url', 
-            'phone_number', 
-            'cover_image'
+            'phone_number'
         ]
         labels = {
             'brand_name': 'Tên thương hiệu',
-            'brand_logo': 'Logo thương hiệu', # <-- Thêm label
+            'brand_logo': 'Logo thương hiệu',
             'tagline': 'Slogan/Khẩu hiệu',
             'description': 'Giới thiệu chi tiết',
             'website_url': 'Link trang web',
-            'cover_image': 'Ảnh bìa',
+            'phone_number': 'Số điện thoại liên hệ',
         }
         help_texts = {
-            'cover_image': 'Tải lên ảnh bìa mới để thay thế ảnh hiện tại (nếu có).',
-            'brand_logo': 'Đây là logo sẽ hiển thị khi bạn tài trợ cho các giải đấu.' # <-- Thêm help_text
+            'brand_logo': 'Logo sẽ hiển thị trên hồ sơ và khi bạn tài trợ các giải đấu. Khuyến nghị: 500x500px.',
+            'description': 'Giới thiệu về thương hiệu, lĩnh vực kinh doanh, cam kết với thể thao...',
+        }
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
         }
 
 # --- BẮT ĐẦU THÊM MỚI ---

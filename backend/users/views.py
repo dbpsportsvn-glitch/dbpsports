@@ -405,10 +405,13 @@ def public_profile_view(request, username):
     # === THÊM: LẤY THÔNG TIN NHÀ TÀI TRỢ ===
     sponsor_profile = None
     sponsor_testimonials = []
+    sponsor_sponsorships = []
     sponsor_avg_rating = 0
     try:
         from sponsors.models import SponsorProfile, Testimonial
         sponsor_profile = profile_user.sponsor_profile
+        
+        # Lấy testimonials
         sponsor_testimonials = Testimonial.objects.filter(
             sponsor_profile=sponsor_profile,
             is_approved=True
@@ -416,6 +419,9 @@ def public_profile_view(request, username):
         sponsor_avg = sponsor_testimonials.aggregate(avg=Avg('rating'))['avg']
         if sponsor_avg:
             sponsor_avg_rating = round(sponsor_avg, 1)
+        
+        # Lấy danh sách giải đấu đã tài trợ
+        sponsor_sponsorships = profile_user.sponsorships.filter(is_active=True).select_related('tournament').order_by('-tournament__start_date')
     except:
         pass
 
@@ -439,6 +445,7 @@ def public_profile_view(request, username):
         # Sponsor data
         'sponsor_profile': sponsor_profile,
         'sponsor_testimonials': sponsor_testimonials,
+        'sponsor_sponsorships': sponsor_sponsorships,
         'sponsor_avg_rating': sponsor_avg_rating,
         # Professional data
         'job_applications': job_applications,

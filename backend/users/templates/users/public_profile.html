@@ -233,7 +233,7 @@
                 </button>
             </li>
             {% endif %}
-            {% if coach_profile or stadium_profile or sponsor_profile %}
+            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or 'COMMENTATOR' in user_roles or 'MEDIA' in user_roles or 'PHOTOGRAPHER' in user_roles or 'REFEREE' in user_roles %}
             <li class="nav-item">
                 <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button">
                     <i class="bi bi-briefcase"></i> Chuyên môn
@@ -290,46 +290,6 @@
             </div>
             {% endif %}
 
-            {% if commentator_gigs %}
-            <h3 class="section-title"><i class="bi bi-mic-fill"></i> Lịch sử Bình luận</h3>
-            {% for gig in commentator_gigs %}
-                <div class="card shadow-sm mb-4 portfolio-item">
-                    <div class="card-header"><strong>Giải đấu: {{ gig.tournament.name }}</strong></div>
-                    <ul class="list-group list-group-flush">
-                        {% for match in gig.matches %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{{ match.team1.name }} vs {{ match.team2.name }}</span>
-                            <a href="{{ match.livestream_url }}" target="_blank" rel="noopener" class="btn btn-danger btn-sm">
-                                <i class="bi bi-youtube"></i> Xem lại
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endfor %}
-            {% endif %}
-
-            {% if media_gigs %}
-            <h3 class="section-title"><i class="bi bi-camera-reels-fill"></i> Các dự án Media / Nhiếp ảnh đã tham gia</h3>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-                {% for gig in media_gigs %}
-                <div class="col">
-                    <div class="card shadow-sm h-100 portfolio-item portfolio-card">
-                        {% if gig.tournament.image %}
-                        <img src="{{ gig.tournament.image.url }}" class="card-img-top" alt="{{ gig.tournament.name }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{ gig.tournament.name }}</h5>
-                            <p class="card-text">
-                                <span class="badge bg-primary">{{ gig.role_name }}</span>
-                            </p>
-                            <a href="{% url 'tournament_detail' pk=gig.tournament.pk %}" class="btn btn-outline-primary stretched-link">Xem giải đấu</a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
 
             {# === THÔNG TIN HUẤN LUYỆN VIÊN === #}
             {% if coach_profile %}
@@ -755,46 +715,257 @@
                     <!-- Sponsor Profile Section -->
                     {% if sponsor_profile %}
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
                                 <i class="bi bi-award me-2"></i>Hồ sơ Nhà tài trợ
                             </h5>
+                            {% if request.user == profile_user %}
+                            <a href="{% url 'sponsors:profile_edit' %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+                            </a>
+                            {% endif %}
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Thương hiệu:</strong> {{ sponsor_profile.brand_name }}</p>
-                                    <p><strong>Slogan:</strong> {{ sponsor_profile.tagline|default:"Chưa có" }}</p>
-                                    <p><strong>Website:</strong> 
-                                        {% if sponsor_profile.website_url %}
-                                            <a href="{{ sponsor_profile.website_url }}" target="_blank">{{ sponsor_profile.website_url }}</a>
-                                        {% else %}
-                                            Chưa cập nhật
-                                        {% endif %}
-                                    </p>
+                            <div class="row g-4">
+                                <div class="col-md-3 text-center">
+                                    {% if sponsor_profile.brand_logo %}
+                                    <img src="{{ sponsor_profile.brand_logo.url }}" alt="{{ sponsor_profile.brand_name }}" 
+                                         class="rounded img-fluid mb-2" width="120" height="120" style="object-fit: contain;">
+                                    {% else %}
+                                    <div class="bg-warning rounded d-flex align-items-center justify-content-center mx-auto mb-2" 
+                                         style="width: 120px; height: 120px;">
+                                        <i class="bi bi-gem text-white" style="font-size: 3rem;"></i>
+                                    </div>
+                                    {% endif %}
+                                    <h5>{{ sponsor_profile.brand_name }}</h5>
+                                    {% if sponsor_avg_rating > 0 %}
+                                    <div class="text-warning">
+                                        {% for i in "12345" %}
+                                        <i class="bi {% if forloop.counter <= sponsor_avg_rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                        {% endfor %}
+                                        <div class="small text-muted">{{ sponsor_avg_rating }}/5 ({{ sponsor_testimonials|length }} đánh giá)</div>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>Đánh giá trung bình:</strong> 
-                                        {% if sponsor_avg_rating %}
-                                            {{ sponsor_avg_rating }}/5 <i class="bi bi-star-fill text-warning"></i>
-                                        {% else %}
-                                            Chưa có đánh giá
+                                <div class="col-md-9">
+                                    <div class="row g-3">
+                                        {% if sponsor_profile.tagline %}
+                                        <div class="col-md-12">
+                                            <i class="bi bi-chat-square-quote text-primary"></i> <strong>Slogan:</strong> "{{ sponsor_profile.tagline }}"
+                                        </div>
                                         {% endif %}
-                                    </p>
-                                    <p><strong>Liên hệ:</strong> {{ sponsor_profile.phone_number|default:"Chưa cập nhật" }}</p>
+                                        {% if sponsor_profile.website_url %}
+                                        <div class="col-md-6">
+                                            <i class="bi bi-globe text-success"></i> <strong>Website:</strong> 
+                                            <a href="{{ sponsor_profile.website_url }}" target="_blank" rel="noopener">{{ sponsor_profile.website_url|truncatechars:30 }}</a>
+                                        </div>
+                                        {% endif %}
+                                        {% if sponsor_profile.phone_number %}
+                                        <div class="col-md-6">
+                                            <i class="bi bi-telephone text-info"></i> <strong>Liên hệ:</strong> {{ sponsor_profile.phone_number }}
+                                        </div>
+                                        {% endif %}
+                                        {% if sponsor_profile.description %}
+                                        <div class="col-12">
+                                            <i class="bi bi-card-text text-info"></i> <strong>Giới thiệu:</strong>
+                                            <p class="mb-0 mt-1" style="white-space: pre-wrap;">{{ sponsor_profile.description }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                            {% if sponsor_profile.description %}
+                            
+                            <!-- Sponsorships List -->
+                            {% if sponsor_sponsorships %}
                             <hr>
-                            <p><strong>Giới thiệu:</strong></p>
-                            <p>{{ sponsor_profile.description }}</p>
+                            <h6 class="mt-3"><i class="bi bi-trophy-fill text-warning"></i> Các giải đấu đã tài trợ</h6>
+                            <div class="row g-2 mt-2">
+                                {% for sponsorship in sponsor_sponsorships %}
+                                <div class="col-md-6">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="card-title mb-1">
+                                                        <a href="{% url 'tournament_detail' pk=sponsorship.tournament.pk %}" class="text-decoration-none">
+                                                            {{ sponsorship.tournament.name }}
+                                                        </a>
+                                                    </h6>
+                                                    <small class="text-muted">{{ sponsorship.tournament.start_date|date:"d/m/Y" }}</small>
+                                                </div>
+                                                <span class="badge bg-info">{{ sponsorship.package_name|default:"Tài trợ" }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <hr>
+                            <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có lịch sử tài trợ nào được ghi nhận.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Commentator Profile Section -->
+                    {% if 'COMMENTATOR' in user_roles %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-mic-fill me-2"></i>Hồ sơ Bình Luận Viên
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if commentator_gigs %}
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Tổng số giải đấu đã bình luận:</strong> {{ commentator_gigs|length }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% for gig in commentator_gigs %}
+                            <div class="mb-4 {% if not forloop.last %}pb-4 border-bottom{% endif %}">
+                                <h6 class="text-primary">
+                                    <i class="bi bi-trophy text-warning"></i> {{ gig.tournament.name }}
+                                </h6>
+                                <div class="list-group list-group-flush">
+                                    {% for match in gig.matches %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ match.team1.name }}</strong> vs <strong>{{ match.team2.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar3"></i> {{ match.match_date|date:"d/m/Y" }}
+                                            </small>
+                                        </div>
+                                        <a href="{{ match.livestream_url }}" target="_blank" rel="noopener" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-youtube"></i> Xem lại
+                                        </a>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-mic text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">Chưa có lịch sử bình luận</h5>
+                                <p class="text-muted">Lịch sử bình luận sẽ được hiển thị ở đây khi bạn tham gia các giải đấu.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Media/Photographer Profile Section -->
+                    {% if 'MEDIA' in user_roles or 'PHOTOGRAPHER' in user_roles %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-camera-reels-fill me-2"></i>Hồ sơ Media / Nhiếp Ảnh
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if media_gigs %}
+                            <div class="alert alert-success mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Tổng số dự án đã tham gia:</strong> {{ media_gigs|length }}
+                            </div>
+                            
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                                {% for gig in media_gigs %}
+                                <div class="col">
+                                    <div class="card h-100 border-primary">
+                                        {% if gig.tournament.image %}
+                                        <img src="{{ gig.tournament.image.url }}" class="card-img-top" alt="{{ gig.tournament.name }}" style="height: 180px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                            <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ gig.tournament.name }}</h6>
+                                            <span class="badge bg-primary">{{ gig.role_name }}</span>
+                                            <p class="card-text mt-2">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar3"></i> {{ gig.tournament.start_date|date:"d/m/Y" }}
+                                                </small>
+                                            </p>
+                                        </div>
+                                        <div class="card-footer bg-transparent">
+                                            <a href="{% url 'tournament_detail' pk=gig.tournament.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                                                <i class="bi bi-eye"></i> Xem giải đấu
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">Chưa có dự án nào</h5>
+                                <p class="text-muted">Các dự án Media/Nhiếp ảnh sẽ được hiển thị ở đây khi bạn tham gia.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Referee Profile Section -->
+                    {% if 'REFEREE' in user_roles %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-whistle me-2"></i>Hồ sơ Trọng tài
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if job_applications %}
+                            <div class="alert alert-warning mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Tổng số công việc đã làm:</strong> {{ job_applications|length }}
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                {% for application in job_applications %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ application.job.title }}</h6>
+                                            <p class="mb-1">
+                                                {% if application.job.tournament %}
+                                                    <i class="bi bi-trophy me-1"></i>{{ application.job.tournament.name }}
+                                                {% elif application.job.stadium %}
+                                                    <i class="bi bi-house me-1"></i>{{ application.job.stadium.stadium_name }}
+                                                {% endif %}
+                                            </p>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar me-1"></i>{{ application.applied_at|date:"d/m/Y" }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Đã được chấp nhận</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-whistle text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">Chưa có lịch sử trọng tài</h5>
+                                <p class="text-muted">Lịch sử trọng tài sẽ được hiển thị ở đây khi bạn tham gia các giải đấu.</p>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
                     {% endif %}
 
                     <!-- Job History Section -->
-                    {% if job_applications %}
+                    {% if job_applications and 'REFEREE' not in user_roles %}
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -829,7 +1000,7 @@
                     {% endif %}
 
                     <!-- No Professional Info -->
-                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not job_applications %}
+                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not commentator_gigs and not media_gigs and not job_applications and 'COMMENTATOR' not in user_roles and 'MEDIA' not in user_roles and 'PHOTOGRAPHER' not in user_roles and 'REFEREE' not in user_roles %}
                     <div class="card">
                         <div class="card-body text-center py-5">
                             <i class="bi bi-briefcase text-muted" style="font-size: 4rem;"></i>
@@ -846,16 +1017,17 @@
         <div class="tab-pane fade" id="reviews" role="tabpanel">
             <div class="row g-4">
                 <div class="col-lg-8">
-                    <!-- Player Reviews -->
+                    <!-- Professional Reviews (Commentator, Media, Referee...) -->
                     {% if reviews %}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="bi bi-people me-2"></i>Đánh giá cầu thủ
+                                <i class="bi bi-briefcase me-2"></i>Đánh giá Chuyên môn
                                 {% if average_rating > 0 %}
-                                <span class="badge bg-primary ms-2">{{ average_rating }}/5</span>
+                                <span class="badge bg-primary ms-2">{{ average_rating }}/5 ⭐</span>
                                 {% endif %}
                             </h5>
+                            <small class="text-muted">Đánh giá cho Bình luận viên, Media, Nhiếp ảnh, Trọng tài...</small>
                         </div>
                         <div class="card-body">
                             {% for review in reviews %}
@@ -863,7 +1035,16 @@
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
                                         <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
-                                        <small class="text-muted d-block">{{ review.created_at|date:"d/m/Y" }}</small>
+                                        <small class="text-muted d-block">
+                                            {% if review.job_application.job %}
+                                                <i class="bi bi-briefcase text-primary"></i> {{ review.job_application.job.title }}
+                                                {% if review.job_application.job.tournament %}
+                                                    - {{ review.job_application.job.tournament.name }}
+                                                {% endif %}
+                                                <br>
+                                            {% endif %}
+                                            <i class="bi bi-calendar3"></i> {{ review.created_at|date:"d/m/Y" }}
+                                        </small>
                                     </div>
                                     <div class="text-warning">
                                         {% for i in "12345" %}
@@ -961,9 +1142,9 @@
                     <div class="card mb-4">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="bi bi-award me-2"></i>Đánh giá nhà tài trợ
+                                <i class="bi bi-gem me-2"></i>Đánh giá nhà tài trợ
                                 {% if sponsor_avg_rating > 0 %}
-                                <span class="badge bg-primary ms-2">{{ sponsor_avg_rating }}/5</span>
+                                <span class="badge bg-warning ms-2">{{ sponsor_avg_rating }}/5 ⭐</span>
                                 {% endif %}
                             </h5>
                         </div>
@@ -974,8 +1155,10 @@
                                     <div>
                                         <strong>{{ testimonial.author.get_full_name|default:testimonial.author.username }}</strong>
                                         <small class="text-muted d-block">
-                                            {% if testimonial.tournament %}{{ testimonial.tournament.name }}{% endif %}
-                                            - {{ testimonial.created_at|date:"d/m/Y" }}
+                                            {% if testimonial.tournament %}
+                                                <i class="bi bi-trophy text-warning"></i> {{ testimonial.tournament.name }} - 
+                                            {% endif %}
+                                            {{ testimonial.created_at|date:"d/m/Y" }}
                                         </small>
                                     </div>
                                     <div class="text-warning">
@@ -984,8 +1167,8 @@
                                         {% endfor %}
                                     </div>
                                 </div>
-                                {% if testimonial.content %}
-                                <p class="mb-0 fst-italic">"{{ testimonial.content }}"</p>
+                                {% if testimonial.text %}
+                                <p class="mb-0 fst-italic">"{{ testimonial.text }}"</p>
                                 {% endif %}
                             </div>
                             {% endfor %}

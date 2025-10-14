@@ -59,7 +59,9 @@ class SponsorProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         return self.request.user == profile.user
 
     def get_success_url(self):
-        return reverse_lazy('sponsors:profile_detail', kwargs={'pk': self.object.pk})
+        # Redirect về public profile tab Chuyên môn thay vì sponsor detail page cũ
+        from django.urls import reverse
+        return reverse('public_profile', kwargs={'username': self.request.user.username}) + '#professional'
 
 class ManageTestimonialsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Testimonial

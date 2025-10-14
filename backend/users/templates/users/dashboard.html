@@ -310,6 +310,16 @@
                                                     <h5 class="form-label">Thông tin Nhà tài trợ</h5>
                                                     {{ profile_form.brand_website|as_crispy_field }}
                                                     {{ profile_form.sponsorship_interests|as_crispy_field }}
+                                                    
+                                                    {% if user.sponsor_profile %}
+                                                    <div class="alert alert-info mt-3">
+                                                        <i class="bi bi-info-circle me-2"></i>
+                                                        <strong>Hồ sơ nhà tài trợ đầy đủ:</strong>
+                                                        <a href="{% url 'sponsors:profile_edit' %}" class="btn btn-sm btn-primary ms-2">
+                                                            <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa Logo, Tên thương hiệu, Giới thiệu...
+                                                        </a>
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
                                             {% endif %}
                                     

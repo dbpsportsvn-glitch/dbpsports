@@ -692,9 +692,6 @@
                 <li><a class="dropdown-item text-light" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box me-2"></i>Xem Hồ sơ Cầu thủ</a></li>
                 {% endif %}
 
-                {% if request.user.sponsor_profile %}
-                <li><a class="dropdown-item text-light" href="{% url 'sponsors:profile_detail' pk=request.user.sponsor_profile.pk %}"><i class="bi bi-gem me-2"></i>Hồ sơ Nhà tài trợ</a></li>
-                {% endif %}
 
                 {% if is_player_role %}
                 <li><a class="dropdown-item text-light" href="{% url 'create_standalone_team' %}"><i class="bi bi-shield-plus me-2"></i>Tạo Đội bóng</a></li>
@@ -847,9 +844,6 @@
       <a class="nav-link" href="{% url 'player_detail' pk=user.player_profile.pk %}"><i class="bi bi-person-bounding-box"></i> Hồ sơ cầu thủ</a>
       {% endif %}
 
-      {% if request.user.sponsor_profile %}
-      <a class="nav-link" href="{% url 'sponsors:profile_detail' pk=request.user.sponsor_profile.pk %}"><i class="bi bi-gem"></i> Hồ sơ nhà tài trợ</a>
-      {% endif %}
 
       {% if is_organizer_role %}
         {% if user.organizations.all.first %}
