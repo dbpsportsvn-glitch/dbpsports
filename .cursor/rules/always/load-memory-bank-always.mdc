@@ -1,0 +1,17 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Quy tắc: Luôn Tải Memory Bank
+
+## Context
+
+- Quy tắc này đảm bảo AI luôn có đầy đủ bối cảnh về dự án ngay từ đầu mỗi phiên làm việc hoặc mỗi nhiệm vụ mới.
+- Nó giải quyết vấn đề AI "quên" thông tin giữa các lần tương tác.
+
+## Critical Rules
+
+- **BẮT BUỘC:** Vào đầu MỌI nhiệm vụ (chat, edit, generate), bạn PHẢI đọc và hiểu toàn bộ nội dung của thư mục `@memory-bank/` trước khi đưa ra bất kỳ câu trả lời hay đoạn mã nào.
+- Việc đọc `@memory-bank/` là bước đầu tiên và không được bỏ qua.

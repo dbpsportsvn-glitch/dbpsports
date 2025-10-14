@@ -1,0 +1,46 @@
+---
+description: "Quy tắc để cập nhật các tệp trong Memory Bank sau khi hoàn thành một nhiệm vụ (thêm tính năng, sửa lỗi)."
+globs: 
+alwaysApply: false
+---
+
+# Quy tắc: Cập nhật Memory Bank
+
+## Context
+
+- Quy tắc này được áp dụng SAU KHI một nhiệm vụ lập trình (như thêm tính năng, sửa lỗi, refactor code) đã được hoàn thành.
+- Mục đích là để ghi lại tiến độ và dọn dẹp bối cảnh công việc hiện tại, giữ cho Memory Bank luôn được cập nhật.
+- Quy tắc này thường được kích hoạt khi người dùng sử dụng các cụm từ như "update memory bank", "cập nhật tiến độ", "xong việc rồi", "cập nhật Memory Bank", "lưu Memory Bank", "lưu", "lưu lại", v.v.
+
+## Critical Rules
+
+- Khi được yêu cầu cập nhật memory bank, bạn PHẢI thực hiện các bước sau:
+  1.  **Phân tích cuộc trò chuyện gần đây:** Đọc lại các yêu cầu và các đoạn mã đã tạo để xác định (1) công việc nào đã hoàn thành và (2) những file nào đã bị thay đổi.
+  2.  **Cập nhật `progress.md`:**
+      - Di chuyển các mục tương ứng từ phần "Những gì cần làm tiếp" sang phần "Những gì đã hoạt động".
+      - Bổ sung chi tiết về tính năng/sửa lỗi vừa hoàn thành.
+  3.  **Cập nhật `activeContext.md`:**
+      - Xóa các dòng mô tả công việc vừa hoàn thành khỏi mục "Công việc đang tập trung".
+      - Ghi lại các thay đổi quan trọng vào mục "Các thay đổi gần đây".
+  4.  **Hỏi xác nhận:** Trước khi lưu các thay đổi vào file, hãy hiển thị cho người dùng xem nội dung bạn dự định cập nhật và hỏi "Bạn có đồng ý với nội dung cập nhật này không?". Chỉ lưu lại khi người dùng đã xác nhận.
+
+## Examples
+
+<example>
+  **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
+  **AI:** (Phân tích) "Ok, tôi sẽ cập nhật `progress.md` và `activeContext.md`.
+  
+  **Nội dung cập nhật đề xuất:**
+  *Trong progress.md:*
+  - Đã hoàn thành tính năng X, cho phép người dùng làm Y.
+  
+  *Trong activeContext.md:*
+  - Xóa mục 'Làm tính năng X'.
+  
+  Bạn có đồng ý với nội dung cập nhật này không?"
+</example>
+
+<example type="invalid">
+  **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
+  **AI:** (Tự động cập nhật file mà không hỏi người dùng)
+</example>
