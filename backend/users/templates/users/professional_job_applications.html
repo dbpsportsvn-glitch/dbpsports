@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Danh sách Lời mời{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-envelope-open"></i> Lời mời nhận được
+        </h2>
+        <a href="{% url 'professional_dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+        </a>
+    </div>
+    
+    {# Thống kê #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ total_applications }}</h3>
+                    <p class="mb-0 text-muted">Tổng lời mời</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ pending_applications }}</h3>
+                    <p class="mb-0 text-muted">Đang chờ</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ accepted_applications }}</h3>
+                    <p class="mb-0 text-muted">Đã chấp nhận</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-danger">{{ rejected_applications }}</h3>
+                    <p class="mb-0 text-muted">Đã từ chối</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {# Danh sách lời mời #}
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-check"></i> Tất cả lời mời
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Từ</th>
+                            <th>Tin đăng</th>
+                            <th>Lời nhắn</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày gửi</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if app.applicant.profile.avatar %}
+                                    <img src="{{ app.applicant.profile.avatar.url }}" class="rounded-circle me-2" width="40" height="40" style="object-fit: cover;">
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person text-white"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ app.applicant.get_full_name|default:app.applicant.username }}</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ app.job.title }}</strong><br>
+                                <small class="text-muted">{{ app.job.role_required.name }}</small>
+                            </td>
+                            <td>
+                                {% if app.message %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ app.message }}">
+                                        {{ app.message|truncatewords:10 }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted fst-italic">Không có lời nhắn</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark">Đang chờ</span>
+                                {% elif app.status == 'APPROVED' %}
+                                <span class="badge bg-success">Đã chấp nhận</span>
+                                {% elif app.status == 'REJECTED' %}
+                                <span class="badge bg-danger">Đã từ chối</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.applied_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'professional_job_application_detail' app.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Xem
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                <h5>Chưa có lời mời nào</h5>
+                <p class="text-muted mb-3">Đăng tin tìm việc để nhận lời mời từ các tổ chức!</p>
+                <a href="{% url 'create_professional_job_posting' %}" class="btn btn-success">
+                    <i class="bi bi-megaphone"></i> Đăng tin tìm việc
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

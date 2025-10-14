@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if is_edit %}Chỉnh sửa tin{% else %}Đăng tin tìm việc{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        {% if is_edit %}
+                            <i class="bi bi-pencil"></i> Chỉnh sửa tin tìm việc
+                        {% else %}
+                            <i class="bi bi-megaphone"></i> Đăng tin tìm việc mới
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if not is_edit %}
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-info-circle"></i> Hướng dẫn đăng tin
+                        </h5>
+                        <p class="mb-0">
+                            Hãy mô tả rõ ràng kỹ năng, kinh nghiệm và loại công việc bạn đang tìm kiếm. 
+                            Các BTC, Sân bóng và tổ chức khác sẽ thấy tin của bạn và gửi lời mời hợp tác.
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h5 class="mb-3">Thông tin công việc mong muốn</h5>
+                        
+                        {{ form.title|as_crispy_field }}
+                        {{ form.role_required|as_crispy_field }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.location_detail|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.budget|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        {{ form.description|as_crispy_field }}
+                        
+                        <div class="alert alert-warning">
+                            <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Mô tả chi tiết về kinh nghiệm, kỹ năng của bạn</li>
+                                <li>Ghi rõ thời gian có thể làm việc</li>
+                                <li>Đề xuất mức phí hợp lý hoặc để "Thỏa thuận"</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex gap-2 justify-content-between mt-4">
+                            <a href="{% url 'professional_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                {% if is_edit %}
+                                    <i class="bi bi-check-circle"></i> Cập nhật tin
+                                {% else %}
+                                    <i class="bi bi-megaphone"></i> Đăng tin
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {# Hiển thị vai trò hiện tại #}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-badge"></i> Vai trò chuyên môn của bạn
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for role in user_roles %}
+                            <span class="badge bg-primary fs-6">{{ role.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle"></i> 
+                        Bạn chỉ có thể đăng tin tìm việc cho các vai trò này. 
+                        Để thêm vai trò mới, vui lòng cập nhật trong phần Hồ sơ Công khai.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

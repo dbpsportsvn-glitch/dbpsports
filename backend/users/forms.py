@@ -52,16 +52,40 @@ class ProfileUpdateForm(forms.ModelForm):
 class StadiumProfileForm(forms.ModelForm):
     class Meta:
         model = StadiumProfile
-        fields = ['stadium_name', 'address', 'phone_number', 'description', 'logo']
+        fields = [
+            'stadium_name', 'logo', 'description', 
+            'address', 'region', 'location_detail', 
+            'phone_number', 'email', 'website',
+            'field_type', 'capacity', 'number_of_fields',
+            'amenities', 'rental_price_range',
+            'bank_name', 'bank_account_number', 'bank_account_name',
+            'payment_qr_code', 'operating_hours'
+        ]
         labels = {
             'stadium_name': 'Tên sân bóng',
-            'address': 'Địa chỉ sân',
-            'phone_number': 'Số điện thoại',
+            'logo': 'Logo/Ảnh sân',
             'description': 'Mô tả sân bóng',
-            'logo': 'Logo sân bóng',
+            'address': 'Địa chỉ chi tiết',
+            'region': 'Khu vực',
+            'location_detail': 'Tỉnh/Thành phố',
+            'phone_number': 'Số điện thoại',
+            'email': 'Email liên hệ',
+            'website': 'Website',
+            'field_type': 'Loại sân',
+            'capacity': 'Sức chứa khán giả',
+            'number_of_fields': 'Số sân',
+            'amenities': 'Tiện ích',
+            'rental_price_range': 'Giá thuê (khoảng)',
+            'bank_name': 'Tên ngân hàng',
+            'bank_account_number': 'Số tài khoản',
+            'bank_account_name': 'Tên chủ tài khoản',
+            'payment_qr_code': 'Mã QR thanh toán',
+            'operating_hours': 'Giờ hoạt động',
         }
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
+            'amenities': forms.Textarea(attrs={'rows': 3}),
+            'operating_hours': forms.Textarea(attrs={'rows': 3}),
         }
 
 class ProfileSetupForm(forms.ModelForm):
@@ -387,3 +411,85 @@ class UnifiedProfessionalForm(forms.ModelForm):
                     sponsor_profile.save()
         
         return profile
+
+
+# === FORM CHO CHUYÊN GIA ĐĂNG TIN TÌM VIỆC ===
+class ProfessionalJobSeekingForm(forms.ModelForm):
+    """Form cho chuyên gia đăng tin tìm việc"""
+    
+    class Meta:
+        from organizations.models import JobPosting
+        model = JobPosting
+        fields = ['title', 'role_required', 'location_detail', 'budget', 'description']
+        labels = {
+            'title': 'Tiêu đề công việc',
+            'role_required': 'Vai trò tìm việc',
+            'location_detail': 'Tỉnh / Thành phố',
+            'budget': 'Mức kinh phí (tùy chọn)',
+            'description': 'Mô tả chi tiết công việc',
+        }
+        help_texts = {
+            'budget': "Ví dụ: 500.000 VNĐ/trận, hoặc 'Thỏa thuận'",
+            'location_detail': "Nếu bỏ trống, sẽ lấy theo địa điểm của giải đấu hoặc sân bóng.",
+        }
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 6}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Lưu user để sử dụng trong clean()
+        self.user = user
+        
+        if user:
+            # Chỉ hiển thị các vai trò mà user có
+            user_role_ids = user.profile.roles.values_list('id', flat=True)
+            professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+            available_roles = [role_id for role_id in user_role_ids if role_id in professional_role_ids]
+            
+            if available_roles:
+                self.fields['role_required'].queryset = Role.objects.filter(id__in=available_roles)
+                # Nếu chỉ có 1 vai trò, tự động chọn
+                if len(available_roles) == 1 and not self.instance.pk:
+                    self.fields['role_required'].initial = available_roles[0]
+            else:
+                # Nếu không có vai trò chuyên gia nào, ẩn field này và set default
+                self.fields['role_required'].widget = forms.HiddenInput()
+                self.fields['role_required'].required = False
+                # Set default value để tránh lỗi validation
+                self.fields['role_required'].initial = Role.objects.filter(id='COACH').first()
+        
+        # Set posted_by thành PROFESSIONAL để tránh lỗi validation
+        if hasattr(self, 'instance') and self.instance:
+            from organizations.models import JobPosting
+            self.instance.posted_by = JobPosting.PostedBy.PROFESSIONAL
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        role_required = cleaned_data.get('role_required')
+        
+        if not role_required:
+            raise forms.ValidationError("Vui lòng chọn vai trò tìm việc.")
+        
+        # Set posted_by và professional_user để tránh lỗi validation
+        if hasattr(self, 'instance') and self.instance:
+            from organizations.models import JobPosting
+            self.instance.posted_by = JobPosting.PostedBy.PROFESSIONAL
+            # Set professional_user từ user được truyền vào form
+            if hasattr(self, 'user') and self.user:
+                self.instance.professional_user = self.user
+                print(f"Form clean() - Set professional_user: {self.user}")
+            else:
+                print(f"Form clean() - No user found: {hasattr(self, 'user')}")
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        from organizations.models import JobPosting
+        job = super().save(commit=False)
+        job.posted_by = JobPosting.PostedBy.PROFESSIONAL
+        if commit:
+            job.save()
+        return job

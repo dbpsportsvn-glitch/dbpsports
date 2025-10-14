@@ -72,7 +72,7 @@ class Membership(models.Model):
         return f"{self.user.username} - {self.get_role_display()} tại {self.organization.name}"
 
 class JobPosting(models.Model):
-    """Lưu một tin đăng tuyển nhân sự của BTC cho một giải đấu hoặc từ Sân bóng."""
+    """Lưu một tin đăng tuyển nhân sự của BTC cho một giải đấu, từ Sân bóng, hoặc từ Chuyên gia tìm việc."""
     class Status(models.TextChoices):
         OPEN = 'OPEN', 'Đang mở'
         CLOSED = 'CLOSED', 'Đã đóng'
@@ -80,6 +80,7 @@ class JobPosting(models.Model):
     class PostedBy(models.TextChoices):
         TOURNAMENT = 'TOURNAMENT', 'Ban Tổ chức Giải đấu'
         STADIUM = 'STADIUM', 'Sân bóng'
+        PROFESSIONAL = 'PROFESSIONAL', 'Chuyên gia tìm việc'
 
     # Người đăng tin
     posted_by = models.CharField(
@@ -111,6 +112,17 @@ class JobPosting(models.Model):
         help_text="Chỉ điền nếu tin này được đăng bởi Sân bóng"
     )
     
+    # Liên kết đến chuyên gia (nếu chuyên gia đăng tin tìm việc)
+    professional_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='professional_job_postings',
+        verbose_name="Chuyên gia",
+        null=True,
+        blank=True,
+        help_text="Chỉ điền nếu tin này được đăng bởi Chuyên gia tìm việc"
+    )
+    
     role_required = models.ForeignKey("users.Role", on_delete=models.CASCADE, verbose_name="Vai trò cần tuyển")
     location_detail = models.CharField("Tỉnh/Thành phố (tùy chọn)", max_length=100, blank=True, help_text="Nếu bỏ trống, sẽ lấy theo địa điểm của giải đấu hoặc sân bóng.")
     title = models.CharField("Tiêu đề công việc", max_length=200)
@@ -127,19 +139,33 @@ class JobPosting(models.Model):
     def __str__(self):
         if self.posted_by == self.PostedBy.STADIUM and self.stadium:
             return f"{self.title} tại {self.stadium.stadium_name}"
+        elif self.posted_by == self.PostedBy.PROFESSIONAL and self.professional_user:
+            return f"{self.title} - {self.professional_user.get_full_name() or self.professional_user.username}"
         elif self.tournament:
             return f"{self.title} cho giải {self.tournament.name}"
         return self.title
     
     def clean(self):
         from django.core.exceptions import ValidationError
-        # Đảm bảo chỉ có một trong hai: tournament hoặc stadium
+        
+        # Debug: in ra giá trị posted_by
+        print(f"Model clean() - posted_by: {self.posted_by}")
+        print(f"Model clean() - tournament: {self.tournament}")
+        print(f"Model clean() - stadium: {self.stadium}")
+        print(f"Model clean() - professional_user: {self.professional_user}")
+        
+        # Đảm bảo chỉ có một trong ba: tournament, stadium, hoặc professional_user
         if self.posted_by == self.PostedBy.TOURNAMENT and not self.tournament:
             raise ValidationError("Phải chọn Giải đấu nếu đăng bởi BTC")
         if self.posted_by == self.PostedBy.STADIUM and not self.stadium:
             raise ValidationError("Phải chọn Sân bóng nếu đăng bởi Sân bóng")
-        if self.tournament and self.stadium:
-            raise ValidationError("Chỉ được chọn một trong hai: Giải đấu hoặc Sân bóng")
+        if self.posted_by == self.PostedBy.PROFESSIONAL and not self.professional_user:
+            raise ValidationError("Phải chọn Chuyên gia nếu đăng bởi Chuyên gia")
+        
+        # Đếm số lượng trường được điền
+        filled_count = sum([bool(self.tournament), bool(self.stadium), bool(self.professional_user)])
+        if filled_count > 1:
+            raise ValidationError("Chỉ được chọn một trong ba: Giải đấu, Sân bóng, hoặc Chuyên gia")
 
 class JobApplication(models.Model):
     """Lưu một đơn ứng tuyển của người dùng vào một tin tuyển dụng."""

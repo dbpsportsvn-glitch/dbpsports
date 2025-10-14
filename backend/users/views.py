@@ -1025,3 +1025,273 @@ def review_user_view(request, username):
     }
     
     return render(request, 'users/review_user.html', context)
+
+
+# ===== VIEWS CHO CHUYÊN GIA (PROFESSIONAL) =====
+
+@login_required
+def professional_dashboard(request):
+    """Dashboard cho Chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE)"""
+    
+    # Kiểm tra user có vai trò chuyên gia không
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    user_roles = request.user.profile.roles.filter(id__in=professional_role_ids)
+    
+    if not user_roles.exists():
+        messages.error(request, "Bạn cần có vai trò chuyên gia để truy cập trang này.")
+        return redirect('dashboard')
+    
+    # Lấy các tin đã đăng của chuyên gia này
+    job_postings = JobPosting.objects.filter(
+        professional_user=request.user,
+        posted_by=JobPosting.PostedBy.PROFESSIONAL
+    ).annotate(
+        application_count=Count('applications')
+    ).order_by('-created_at')
+    
+    # Lấy các ứng tuyển/lời mời cho tin của mình
+    recent_applications = JobApplication.objects.filter(
+        job__professional_user=request.user,
+        status=JobApplication.Status.PENDING
+    ).select_related('job', 'applicant', 'applicant__profile').order_by('-applied_at')[:10]
+    
+    context = {
+        'user_roles': user_roles,
+        'job_postings': job_postings,
+        'recent_applications': recent_applications,
+    }
+    
+    return render(request, 'users/professional_dashboard.html', context)
+
+
+@login_required
+def create_professional_job_posting(request):
+    """Chuyên gia đăng tin tìm việc"""
+    
+    # Kiểm tra user có vai trò chuyên gia không
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    user_roles = request.user.profile.roles.filter(id__in=professional_role_ids)
+    
+    if not user_roles.exists():
+        messages.error(request, "Bạn cần có vai trò chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE) để đăng tin tìm việc.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        from .forms import ProfessionalJobSeekingForm
+        
+        # Tạo form với instance để có thể set các field trước khi validation
+        form = ProfessionalJobSeekingForm(request.POST, user=request.user)
+        
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.posted_by = JobPosting.PostedBy.PROFESSIONAL
+            job.professional_user = request.user
+            
+            # Debug: in ra giá trị các field
+            print(f"Posted by: {job.posted_by}")
+            print(f"Professional user: {job.professional_user}")
+            print(f"Tournament: {job.tournament}")
+            print(f"Stadium: {job.stadium}")
+            print(f"Role required: {job.role_required}")
+            
+            # Gọi full_clean() để trigger model validation
+            try:
+                job.full_clean()
+                job.save()
+                messages.success(request, "Đã đăng tin tìm việc thành công!")
+                return redirect('professional_dashboard')
+            except Exception as e:
+                print(f"Model validation error: {e}")
+                messages.error(request, f"Lỗi validation: {e}")
+        else:
+            # Debug: hiển thị lỗi form
+            print("Form errors:", form.errors)
+            print("Form data:", request.POST)
+            print("Form non-field errors:", form.non_field_errors())
+            for field, errors in form.errors.items():
+                print(f"Field {field} errors: {errors}")
+            
+            # Hiển thị lỗi cụ thể cho user
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    messages.error(request, error)
+    else:
+        from .forms import ProfessionalJobSeekingForm
+        form = ProfessionalJobSeekingForm(user=request.user)
+    
+    context = {
+        'form': form,
+        'user_roles': user_roles,
+    }
+    
+    return render(request, 'users/professional_job_posting_form.html', context)
+
+
+@login_required
+def edit_professional_job_posting(request, job_pk):
+    """Chuyên gia chỉnh sửa tin đã đăng"""
+    
+    job = get_object_or_404(
+        JobPosting, 
+        pk=job_pk, 
+        professional_user=request.user,
+        posted_by=JobPosting.PostedBy.PROFESSIONAL
+    )
+    
+    if request.method == 'POST':
+        from .forms import ProfessionalJobSeekingForm
+        form = ProfessionalJobSeekingForm(request.POST, instance=job, user=request.user)
+        
+        if form.is_valid():
+            job_posting = form.save(commit=False)
+            job_posting.posted_by = JobPosting.PostedBy.PROFESSIONAL
+            job_posting.professional_user = request.user
+            job_posting.save()
+            
+            messages.success(request, f"Đã cập nhật tin '{job_posting.title}' thành công!")
+            return redirect('professional_dashboard')
+    else:
+        from .forms import ProfessionalJobSeekingForm
+        form = ProfessionalJobSeekingForm(instance=job, user=request.user)
+    
+    context = {
+        'form': form,
+        'job': job,
+        'is_edit': True,
+    }
+    
+    return render(request, 'users/professional_job_posting_form.html', context)
+
+
+@login_required
+def delete_professional_job_posting(request, job_pk):
+    """Xóa tin đăng của chuyên gia"""
+    
+    job = get_object_or_404(
+        JobPosting, 
+        pk=job_pk, 
+        professional_user=request.user,
+        posted_by=JobPosting.PostedBy.PROFESSIONAL
+    )
+    
+    if request.method == 'POST':
+        job_title = job.title
+        job.delete()
+        messages.success(request, f"Đã xóa tin '{job_title}' thành công!")
+        return redirect('professional_dashboard')
+    
+    context = {
+        'job': job,
+    }
+    
+    return render(request, 'users/confirm_delete_job.html', context)
+
+
+@login_required
+def professional_job_applications(request):
+    """Xem các ứng tuyển cho tin tìm việc của chuyên gia"""
+    
+    # Kiểm tra user có vai trò chuyên gia không
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    if not request.user.profile.roles.filter(id__in=professional_role_ids).exists():
+        messages.error(request, "Bạn cần có vai trò chuyên gia để truy cập trang này.")
+        return redirect('dashboard')
+    
+    # Lấy tất cả tin đã đăng của chuyên gia
+    job_postings = JobPosting.objects.filter(
+        professional_user=request.user,
+        posted_by=JobPosting.PostedBy.PROFESSIONAL
+    )
+    
+    # Lấy tất cả applications cho các tin của chuyên gia
+    applications = JobApplication.objects.filter(
+        job__professional_user=request.user,
+        job__posted_by=JobPosting.PostedBy.PROFESSIONAL
+    ).select_related('applicant', 'job', 'applicant__profile').order_by('-applied_at')
+    
+    # Thống kê
+    total_applications = applications.count()
+    pending_applications = applications.filter(status=JobApplication.Status.PENDING).count()
+    accepted_applications = applications.filter(status=JobApplication.Status.APPROVED).count()
+    rejected_applications = applications.filter(status=JobApplication.Status.REJECTED).count()
+    
+    context = {
+        'job_postings': job_postings,
+        'applications': applications,
+        'total_applications': total_applications,
+        'pending_applications': pending_applications,
+        'accepted_applications': accepted_applications,
+        'rejected_applications': rejected_applications,
+    }
+    
+    return render(request, 'users/professional_job_applications.html', context)
+
+
+@login_required
+def professional_job_application_detail(request, application_pk):
+    """Xem chi tiết một ứng tuyển và xử lý (accept/reject)"""
+    
+    # Kiểm tra user có vai trò chuyên gia không
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    if not request.user.profile.roles.filter(id__in=professional_role_ids).exists():
+        messages.error(request, "Bạn cần có vai trò chuyên gia để truy cập trang này.")
+        return redirect('dashboard')
+    
+    application = get_object_or_404(
+        JobApplication, 
+        pk=application_pk, 
+        job__professional_user=request.user,
+        job__posted_by=JobPosting.PostedBy.PROFESSIONAL
+    )
+    
+    # Xử lý POST request (accept/reject)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'accept':
+            application.status = JobApplication.Status.APPROVED
+            application.save()
+            
+            # Tự động đóng tin đăng khi đã chấp nhận
+            job = application.job
+            job.status = JobPosting.Status.CLOSED
+            job.save()
+            
+            # Gửi thông báo cho applicant
+            from tournaments.models import Notification
+            Notification.objects.create(
+                user=application.applicant,
+                title=f"Ứng tuyển được chấp nhận",
+                message=f"Chuyên gia {request.user.get_full_name() or request.user.username} đã chấp nhận đơn ứng tuyển của bạn cho '{job.title}'!",
+                notification_type=Notification.NotificationType.GENERIC,
+                related_url=f"/users/profile/{request.user.username}/"
+            )
+            
+            messages.success(request, f"Đã chấp nhận đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}.")
+            
+        elif action == 'reject':
+            application.status = JobApplication.Status.REJECTED
+            application.save()
+            
+            # Gửi thông báo
+            from tournaments.models import Notification
+            Notification.objects.create(
+                user=application.applicant,
+                title=f"Ứng tuyển bị từ chối",
+                message=f"Chuyên gia {request.user.get_full_name() or request.user.username} đã từ chối đơn ứng tuyển của bạn cho '{application.job.title}'.",
+                notification_type=Notification.NotificationType.GENERIC,
+                related_url=f"/users/profile/{request.user.username}/"
+            )
+            
+            messages.info(request, f"Đã từ chối đơn ứng tuyển của {application.applicant.get_full_name() or application.applicant.username}")
+        
+        return redirect('professional_dashboard')
+    
+    context = {
+        'application': application,
+    }
+    
+    return render(request, 'users/professional_job_application_detail.html', context)

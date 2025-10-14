@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Xác nhận xóa tin{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa tin
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác!
+                    </div>
+                    
+                    <h5 class="mb-3">Bạn có chắc muốn xóa tin đăng này?</h5>
+                    
+                    <div class="alert alert-light">
+                        <h6 class="mb-2">{{ job.title }}</h6>
+                        <p class="mb-2">
+                            <strong>Vai trò:</strong> {{ job.role_required.name }}<br>
+                            {% if job.location_detail %}
+                                <strong>Địa điểm:</strong> {{ job.location_detail }}<br>
+                            {% endif %}
+                            <strong>Ngày đăng:</strong> {{ job.created_at|date:"d/m/Y" }}
+                        </p>
+                        <div class="border-top pt-2">
+                            <small class="text-muted">{{ job.description|truncatewords:30 }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-danger mb-4">
+                        <strong>Điều gì sẽ xảy ra khi xóa:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Tin đăng sẽ bị xóa vĩnh viễn khỏi hệ thống</li>
+                            <li>Các lời mời liên quan sẽ không còn hiệu lực</li>
+                            <li>Thông tin không thể khôi phục</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-2 justify-content-between">
+                        <a href="{% url 'professional_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Hủy bỏ
+                        </a>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Xóa tin đăng
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

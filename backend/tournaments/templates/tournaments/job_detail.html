@@ -43,6 +43,14 @@
                     <div class="alert alert-warning">
                          Là thành viên BTC, bạn không thể ứng tuyển.
                     </div>
+                {% elif job.professional_user == user %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Đây là tin đăng tìm việc của bạn. Bạn không thể ứng tuyển vào chính tin đăng của mình.
+                    </div>
+                {% elif job.stadium and job.stadium.user == user %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Đây là tin đăng tuyển dụng của sân bóng bạn. Bạn không thể ứng tuyển vào chính tin đăng của mình.
+                    </div>
                 {% else %}
                     <h5>Ứng tuyển ngay</h5>
                     <form method="post">

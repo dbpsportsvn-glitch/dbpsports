@@ -28,6 +28,14 @@ urlpatterns = [
     path('upload-banner/', views.upload_profile_banner, name='upload_profile_banner'),
     path('review/<str:username>/', views.review_user_view, name='review_user'),
     
+    # URLs cho Chuyên gia (Professional)
+    path('professional/dashboard/', views.professional_dashboard, name='professional_dashboard'),
+    path('professional/job/create/', views.create_professional_job_posting, name='create_professional_job_posting'),
+    path('professional/job/<int:job_pk>/edit/', views.edit_professional_job_posting, name='edit_professional_job_posting'),
+    path('professional/job/<int:job_pk>/delete/', views.delete_professional_job_posting, name='delete_professional_job_posting'),
+    path('professional/applications/', views.professional_job_applications, name='professional_job_applications'),
+    path('professional/application/<int:application_pk>/', views.professional_job_application_detail, name='professional_job_application_detail'),
+    
     # Để allauth xử lý mọi thứ liên quan đến tài khoản
     # URL của allauth đã bao gồm login, logout, register, password reset...
     path('', include('allauth.urls')),
