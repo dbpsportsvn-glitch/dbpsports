@@ -1031,10 +1031,10 @@ def review_user_view(request, username):
 
 @login_required
 def professional_dashboard(request):
-    """Dashboard cho Chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE)"""
+    """Dashboard cho Chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE, SPONSOR)"""
     
     # Kiểm tra user có vai trò chuyên gia không
-    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE', 'SPONSOR']
     user_roles = request.user.profile.roles.filter(id__in=professional_role_ids)
     
     if not user_roles.exists():
@@ -1069,11 +1069,11 @@ def create_professional_job_posting(request):
     """Chuyên gia đăng tin tìm việc"""
     
     # Kiểm tra user có vai trò chuyên gia không
-    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE', 'SPONSOR']
     user_roles = request.user.profile.roles.filter(id__in=professional_role_ids)
     
     if not user_roles.exists():
-        messages.error(request, "Bạn cần có vai trò chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE) để đăng tin tìm việc.")
+        messages.error(request, "Bạn cần có vai trò chuyên gia (COACH, COMMENTATOR, MEDIA, PHOTOGRAPHER, REFEREE, SPONSOR) để đăng tin tìm việc.")
         return redirect('dashboard')
     
     if request.method == 'POST':
@@ -1195,7 +1195,7 @@ def professional_job_applications(request):
     """Xem các ứng tuyển cho tin tìm việc của chuyên gia"""
     
     # Kiểm tra user có vai trò chuyên gia không
-    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE', 'SPONSOR']
     if not request.user.profile.roles.filter(id__in=professional_role_ids).exists():
         messages.error(request, "Bạn cần có vai trò chuyên gia để truy cập trang này.")
         return redirect('dashboard')
@@ -1235,7 +1235,7 @@ def professional_job_application_detail(request, application_pk):
     """Xem chi tiết một ứng tuyển và xử lý (accept/reject)"""
     
     # Kiểm tra user có vai trò chuyên gia không
-    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+    professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE', 'SPONSOR']
     if not request.user.profile.roles.filter(id__in=professional_role_ids).exists():
         messages.error(request, "Bạn cần có vai trò chuyên gia để truy cập trang này.")
         return redirect('dashboard')

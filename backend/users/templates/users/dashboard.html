@@ -318,7 +318,7 @@
                                                 <hr>
                                                 
                                                 {# Kiểm tra xem user có vai trò chuyên gia không #}
-                                                {% if user|has_role:'COACH' or user|has_role:'COMMENTATOR' or user|has_role:'MEDIA' or user|has_role:'PHOTOGRAPHER' or user|has_role:'REFEREE' %}
+                                                {% if user|has_role:'COACH' or user|has_role:'COMMENTATOR' or user|has_role:'MEDIA' or user|has_role:'PHOTOGRAPHER' or user|has_role:'REFEREE' or user|has_role:'SPONSOR' %}
                                                     <div class="d-grid gap-2">
                                                         <a href="{% url 'professional_dashboard' %}" class="btn btn-success">
                                                             <i class="bi bi-briefcase me-2"></i>Khu vực Chuyên môn (Đăng tin & Quản lý)
