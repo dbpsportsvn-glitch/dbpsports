@@ -3547,3 +3547,37 @@ def coach_dashboard(request):
     }
     
     return render(request, 'tournaments/coach_dashboard.html', context)
+
+@login_required
+def create_free_agent_player(request):
+    """Tạo player profile độc lập cho user có vai trò PLAYER"""
+    
+    # Kiểm tra user có vai trò PLAYER không
+    if not request.user.profile.roles.filter(id='PLAYER').exists():
+        messages.error(request, "Bạn cần có vai trò Cầu thủ để tạo hồ sơ cầu thủ.")
+        return redirect('dashboard')
+    
+    # Kiểm tra user đã có player_profile chưa
+    if hasattr(request.user, 'player_profile') and request.user.player_profile:
+        messages.info(request, "Bạn đã có hồ sơ cầu thủ.")
+        return redirect('player_detail', pk=request.user.player_profile.pk)
+    
+    if request.method == 'POST':
+        form = PlayerCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            player = form.save(commit=False)
+            player.user = request.user
+            player.team = None  # Free agent
+            player.save()
+            messages.success(request, f"Đã tạo thành công hồ sơ cầu thủ '{player.full_name}'!")
+            return redirect('player_detail', pk=player.pk)
+        else:
+            messages.error(request, "Có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.")
+    else:
+        form = PlayerCreationForm()
+    
+    context = {
+        'form': form,
+        'is_free_agent': True,
+    }
+    return render(request, 'tournaments/create_player_profile.html', context)

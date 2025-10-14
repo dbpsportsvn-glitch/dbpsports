@@ -278,7 +278,7 @@ def profile_setup_view(request):
             messages.success(request, "Cảm ơn bạn đã cập nhật hồ sơ!")
             return redirect('home')
     else:
-        form = ProfileSetupForm(instance=profile, user=request.user)
+        form = ProfileSetupForm(instance=profile)
 
     is_player = profile.roles.filter(id='PLAYER').exists()
     user_role_ids = set(profile.roles.values_list('id', flat=True)) # Lấy danh sách ID vai trò

@@ -36,10 +36,6 @@
             <form method="post">
                 {% csrf_token %}
                 
-                {{ form.display_name|as_crispy_field }}
-                
-                <hr class="my-4">
-
                 <h5 class="mb-3">Thông tin chung (tùy chọn)</h5>
                 {{ form.bio|as_crispy_field }}
                 {{ form.location|as_crispy_field }}

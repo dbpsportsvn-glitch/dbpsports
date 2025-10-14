@@ -58,6 +58,7 @@ urlpatterns = [
     path('team/<int:pk>/delete/', views.delete_team, name='delete_team'),
 
     # --- URL liên quan đến Cầu thủ (Player) ---
+    path('player/create-free-agent/', views.create_free_agent_player, name='create_free_agent_player'),
     path('player/<int:pk>/claim/', views.claim_player_profile, name='claim_player_profile'),
     path('player/<int:pk>/', views.player_detail, name='player_detail'),
     path('player/<int:pk>/update/', views.update_player, name='update_player'),

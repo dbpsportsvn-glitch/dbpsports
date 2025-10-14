@@ -50,13 +50,6 @@ class ProfileUpdateForm(forms.ModelForm):
         return profile
 
 class ProfileSetupForm(forms.ModelForm):
-    roles = forms.ModelMultipleChoiceField(
-        queryset=Role.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=True,
-        label="Chọn vai trò của bạn"
-    )
-
     class Meta:
         model = Profile
         fields = ['bio', 'location', 'experience', 'equipment', 'referee_level', 'brand_website', 'sponsorship_interests']
@@ -65,18 +58,8 @@ class ProfileSetupForm(forms.ModelForm):
             'equipment': forms.Textarea(attrs={'rows': 3}),
         }
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        
-        if user and user.profile:
-            self.fields['roles'].initial = user.profile.roles.all()
-
     def save(self, commit=True):
-        profile = super().save(commit=False)
-        if commit:
-            profile.save()
-            profile.roles.set(self.cleaned_data['roles'])
+        profile = super().save(commit=True)
         return profile
 
 # === FORM THỐNG NHẤT CHO TẤT CẢ VAI TRÒ ===
