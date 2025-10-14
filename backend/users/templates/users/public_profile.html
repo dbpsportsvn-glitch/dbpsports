@@ -664,7 +664,8 @@
             {% endif %}
 
             <div class="row g-4">
-                <div class="col-lg-8">
+                <!-- LEFT COLUMN -->
+                <div class="col-lg-6">
                     <!-- Coach Profile Section -->
                     {% if coach_profile %}
                     <div class="card mb-4">
@@ -707,43 +708,6 @@
                             <hr>
                             <p><strong>Giới thiệu:</strong></p>
                             <p>{{ coach_profile.bio }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Stadium Profile Section -->
-                    {% if stadium_profile %}
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-house me-2"></i>Hồ sơ Sân bóng
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Tên sân:</strong> {{ stadium_profile.stadium_name }}</p>
-                                    <p><strong>Địa chỉ:</strong> {{ stadium_profile.address }}</p>
-                                    <p><strong>Số điện thoại:</strong> {{ stadium_profile.phone_number }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Đánh giá trung bình:</strong> 
-                                        {% if stadium_avg_rating %}
-                                            {{ stadium_avg_rating }}/5 <i class="bi bi-star-fill text-warning"></i>
-                                        {% else %}
-                                            Chưa có đánh giá
-                                        {% endif %}
-                                    </p>
-                                    <p><strong>Trạng thái:</strong> 
-                                        <span class="badge bg-success">Hoạt động</span>
-                                    </p>
-                                </div>
-                            </div>
-                            {% if stadium_profile.description %}
-                            <hr>
-                            <p><strong>Mô tả:</strong></p>
-                            <p>{{ stadium_profile.description }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -835,6 +799,46 @@
                             {% else %}
                             <hr>
                             <p class="text-muted mb-0"><i class="bi bi-info-circle"></i> Chưa có lịch sử tài trợ nào được ghi nhận.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- RIGHT COLUMN -->
+                <div class="col-lg-6">
+                    <!-- Stadium Profile Section -->
+                    {% if stadium_profile %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-house me-2"></i>Hồ sơ Sân bóng
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Tên sân:</strong> {{ stadium_profile.stadium_name }}</p>
+                                    <p><strong>Địa chỉ:</strong> {{ stadium_profile.address }}</p>
+                                    <p><strong>Số điện thoại:</strong> {{ stadium_profile.phone_number }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Đánh giá trung bình:</strong> 
+                                        {% if stadium_avg_rating %}
+                                            {{ stadium_avg_rating }}/5 <i class="bi bi-star-fill text-warning"></i>
+                                        {% else %}
+                                            Chưa có đánh giá
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>Trạng thái:</strong> 
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    </p>
+                                </div>
+                            </div>
+                            {% if stadium_profile.description %}
+                            <hr>
+                            <p><strong>Mô tả:</strong></p>
+                            <p>{{ stadium_profile.description }}</p>
                             {% endif %}
                         </div>
                     </div>
