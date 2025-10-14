@@ -1,35 +1,40 @@
 ---
-description: "Quy tắc để cập nhật các tệp trong Memory Bank sau khi hoàn thành một nhiệm vụ (thêm tính năng, sửa lỗi)."
+description: "Quy tắc NGHIÊM NGẶT để cập nhật các tệp trong Memory Bank. Chỉ kích hoạt khi có lệnh cụ thể."
 globs: 
 alwaysApply: false
 ---
 
-# Quy tắc: Cập nhật Memory Bank
+# Quy tắc BẮT BUỘC: Cập nhật Memory Bank
 
 ## Context
 
-- Quy tắc này được áp dụng SAU KHI một nhiệm vụ lập trình (như thêm tính năng, sửa lỗi, refactor code) đã được hoàn thành, và phải có kích hoạt của người dùng theo nguyên tắc bên dưới.
-- Mục đích là để ghi lại tiến độ và dọn dẹp bối cảnh công việc hiện tại, giữ cho Memory Bank luôn được cập nhật.
-- Quy tắc này thường được kích hoạt khi người dùng sử dụng các cụm từ như "update memory bank", "cập nhật tiến độ", "xong việc rồi", "cập nhật Memory Bank", "lưu Memory Bank", "lưu", "lưu lại", v.v.
+- Quy tắc này CHỈ được áp dụng SAU KHI một nhiệm vụ lập trình đã hoàn thành VÀ người dùng ra lệnh cập nhật một cách RÕ RÀNG.
+- Mục đích là để ghi lại tiến độ công việc một cách chính xác theo ý người dùng.
 
 ## Critical Rules
 
-- Khi được yêu cầu cập nhật memory bank, bạn PHẢI thực hiện các bước sau:
-  1.  **Phân tích cuộc trò chuyện gần đây:** Đọc lại các yêu cầu và các đoạn mã đã tạo để xác định (1) công việc nào đã hoàn thành và (2) những file nào đã bị thay đổi.
-  2.  **Cập nhật `progress.md`:**
-      - Di chuyển các mục tương ứng từ phần "Những gì cần làm tiếp" sang phần "Những gì đã hoạt động".
+- **ĐIỀU KIỆN TIÊN QUYẾT (QUAN TRỌNG NHẤT):**
+  - **TUYỆT ĐỐI KHÔNG** được tự ý đề xuất hay tự động cập nhật Memory Bank.
+  - Bạn CHỈ được phép kích hoạt quy tắc này khi yêu cầu của người dùng chứa một trong các cụm từ sau: **"update memory bank"**, **"cập nhật memory bank"**, **"cập nhật tiến độ"**, **"xong việc rồi"**, **"lưu memory bank"**, **"lưu lại"**.
+  - Nếu không có các từ khóa trên, bạn **KHÔNG ĐƯỢC** thực hiện bất kỳ hành động cập nhật nào.
+
+- **QUY TRÌNH KHI ĐƯỢC KÍCH HOẠT:**
+  1.  **KHÔNG HỎI LẠI:** Ngay lập tức tiến hành cập nhật, không cần hỏi xác nhận.
+  2.  **Phân tích cuộc trò chuyện gần đây:** Đọc lại các yêu cầu và mã nguồn đã tạo để xác định chính xác công việc nào đã hoàn thành.
+  3.  **Cập nhật `progress.md`:**
+      - Di chuyển mục công việc tương ứng từ "Những gì cần làm tiếp" sang "Những gì đã hoạt động".
       - Bổ sung chi tiết về tính năng/sửa lỗi vừa hoàn thành.
-  3.  **Cập nhật `activeContext.md`:**
+  4.  **Cập nhật `activeContext.md`:**
       - Xóa các dòng mô tả công việc vừa hoàn thành khỏi mục "Công việc đang tập trung".
       - Ghi lại các thay đổi quan trọng vào mục "Các thay đổi gần đây".
-      - Ghi lại các quyết định kỹ thuật/thiết kế quan trọng vào mục "Các quyết định gần đây".
-  4.  **Lưu và thông báo:** Tự động lưu các thay đổi vào file và thông báo cho người dùng biết nội dung đã được cập nhật.
+      - Ghi lại các quyết định kỹ thuật/thiết kế quan trọng vào mục "Các quyết định gần đây" nếu có.
+  5.  **Lưu và thông báo:** Tự động lưu các thay đổi vào file và thông báo cho người dùng theo đúng định dạng trong ví dụ.
 
 ## Examples
 
 <example>
   **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
-  **AI:** (Đọc file, phân tích và tự động cập nhật)
+  **AI:** (Đọc file, phân tích và tự động cập nhật ngay lập tức)
   
   "✅ Đã cập nhật Memory Bank thành công!
   
@@ -42,6 +47,6 @@ alwaysApply: false
 </example>
 
 <example type="invalid">
-  **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
-  **AI:** "Bạn có muốn tôi cập nhật memory bank không?" (KHÔNG nên hỏi lại, hãy thực hiện ngay)
+  **Người dùng:** "Tính năng X tôi thấy hoạt động tốt rồi đó."
+  **AI:** "Tuyệt vời! Tôi sẽ cập nhật memory bank ngay nhé." (HÀNH VI SAI - AI đã tự ý cập nhật khi không có từ khóa kích hoạt).
 </example>

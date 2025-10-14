@@ -340,10 +340,11 @@
 
             {# === THÔNG TIN HUẤN LUYỆN VIÊN - COMPACT === #}
             {% if coach_profile %}
+            <h3 class="section-title"><i class="bi bi-clipboard-check"></i> Thông tin Huấn luyện viên</h3>
             <div class="card shadow-sm mb-4 compact-profile-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-clipboard-check me-2"></i>{{ coach_profile.full_name }}
+                        <i class="bi bi-person-badge me-2"></i>{{ coach_profile.full_name }}
                     </h5>
                     {% if coach_avg_rating > 0 %}
                     <div class="text-warning">
@@ -516,34 +517,6 @@
             {% endfor %}
             {% endif %}
             {% endif %}
-
-            {# === LỊCH SỬ CÔNG VIỆC === #}
-            {% if job_applications %}
-            <h3 class="section-title"><i class="bi bi-briefcase-fill"></i> Lịch sử công việc</h3>
-            <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
-                {% for app in job_applications %}
-                <div class="col">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body">
-                            <h6 class="card-title">{{ app.job.title }}</h6>
-                            <p class="card-text">
-                                <span class="badge bg-primary">{{ app.job.role_required.name }}</span>
-                                {% if app.job.tournament %}
-                                <span class="badge bg-info">{{ app.job.tournament.name }}</span>
-                                {% elif app.job.stadium %}
-                                <span class="badge bg-success">{{ app.job.stadium.stadium_name }}</span>
-                                {% endif %}
-                            </p>
-                            <small class="text-muted">
-                                <i class="bi bi-calendar"></i> {{ app.applied_at|date:"d/m/Y" }}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
             {% if reviews %}
             <h3 class="section-title"><i class="bi bi-stars"></i> Đánh giá từ Ban Tổ Chức</h3>
             <div class="card shadow-sm mb-4">
@@ -795,10 +768,14 @@
 
                     <!-- Sponsor Profile Section - Compact Version -->
                     {% if sponsor_profile %}
+                    <h3 class="section-title"><i class="bi bi-gem"></i> Thông tin Nhà tài trợ</h3>
                     <div class="card mb-4 compact-profile-card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">
                                 <i class="bi bi-award me-2"></i>{{ sponsor_profile.brand_name }}
+                                {% if sponsor_profile.is_active %}
+                                <span class="badge bg-success ms-2"><i class="bi bi-check-circle"></i> Đang hoạt động</span>
+                                {% endif %}
                             </h5>
                             {% if sponsor_avg_rating > 0 %}
                             <div class="text-warning">
@@ -839,9 +816,33 @@
                                             </small>
                                         </div>
                                         {% endif %}
+                                        {% if sponsor_profile.email %}
+                                        <div class="col-12">
+                                            <small><i class="bi bi-envelope text-primary"></i> 
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#contactModal" class="text-decoration-none">{{ sponsor_profile.email }}</a>
+                                            </small>
+                                        </div>
+                                        {% endif %}
                                         {% if sponsor_profile.phone_number %}
                                         <div class="col-12">
-                                            <small><i class="bi bi-telephone text-info"></i> {{ sponsor_profile.phone_number }}</small>
+                                            <small><i class="bi bi-telephone text-info"></i> 
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#contactModal" class="text-decoration-none">{{ sponsor_profile.phone_number }}</a>
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        {% if sponsor_profile.region %}
+                                        <div class="col-12">
+                                            <small><i class="bi bi-geo-alt text-danger"></i> {{ sponsor_profile.get_region_display }}{% if sponsor_profile.location_detail %} - {{ sponsor_profile.location_detail }}{% endif %}</small>
+                                        </div>
+                                        {% endif %}
+                                        {% if sponsor_profile.budget_range %}
+                                        <div class="col-12">
+                                            <small><i class="bi bi-cash-stack text-success"></i> Ngân sách: {{ sponsor_profile.budget_range }}</small>
+                                        </div>
+                                        {% endif %}
+                                        {% if sponsor_profile.sponsorship_interests %}
+                                        <div class="col-12">
+                                            <small><i class="bi bi-heart text-danger"></i> Quan tâm: {{ sponsor_profile.sponsorship_interests|truncatechars:80 }}</small>
                                         </div>
                                         {% endif %}
                                         {% if sponsor_profile.description %}
@@ -919,7 +920,9 @@
                                     <small><i class="bi bi-geo-alt text-primary"></i> {{ stadium_profile.address|truncatechars:30 }}</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <small><i class="bi bi-telephone text-info"></i> {{ stadium_profile.phone_number }}</small>
+                                    <small><i class="bi bi-telephone text-info"></i> 
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#contactModal" class="text-decoration-none">{{ stadium_profile.phone_number }}</a>
+                                    </small>
                                 </div>
                                 {% if stadium_profile.field_type %}
                                 <div class="col-md-6">
@@ -1372,7 +1375,8 @@
                             <i class="bi bi-info-circle me-2"></i>Thông Tin Liên Hệ
                         </h6>
                         
-                        {% if profile_user.email %}
+                        {# Email - Ưu tiên từ profile chuyên nghiệp #}
+                        {% if sponsor_profile and sponsor_profile.email or coach_profile and coach_profile.email or stadium_profile and stadium_profile.email or profile_user.email %}
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-center">
                                 <div class="contact-icon me-3">
@@ -1380,8 +1384,19 @@
                                 </div>
                                 <div>
                                     <div class="fw-bold">Email</div>
-                                    <div class="text-muted">{{ profile_user.email }}</div>
-                                    <a href="mailto:{{ profile_user.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                    {% if sponsor_profile and sponsor_profile.email %}
+                                        <div class="text-muted">{{ sponsor_profile.email }}</div>
+                                        <a href="mailto:{{ sponsor_profile.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                    {% elif coach_profile and coach_profile.email %}
+                                        <div class="text-muted">{{ coach_profile.email }}</div>
+                                        <a href="mailto:{{ coach_profile.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                    {% elif stadium_profile and stadium_profile.email %}
+                                        <div class="text-muted">{{ stadium_profile.email }}</div>
+                                        <a href="mailto:{{ stadium_profile.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                    {% else %}
+                                        <div class="text-muted">{{ profile_user.email }}</div>
+                                        <a href="mailto:{{ profile_user.email }}" class="btn btn-outline-primary btn-sm mt-1">
+                                    {% endif %}
                                         <i class="bi bi-envelope me-1"></i>Gửi email
                                     </a>
                                 </div>
@@ -1389,7 +1404,8 @@
                         </div>
                         {% endif %}
                         
-                        {% if profile.phone_number %}
+                        {# Số điện thoại - Ưu tiên từ profile chuyên nghiệp #}
+                        {% if sponsor_profile and sponsor_profile.phone_number or coach_profile and coach_profile.phone_number or stadium_profile and stadium_profile.phone_number %}
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-center">
                                 <div class="contact-icon me-3">
@@ -1397,8 +1413,16 @@
                                 </div>
                                 <div>
                                     <div class="fw-bold">Số điện thoại</div>
-                                    <div class="text-muted">{{ profile.phone_number }}</div>
-                                    <a href="tel:{{ profile.phone_number }}" class="btn btn-outline-success btn-sm mt-1">
+                                    {% if sponsor_profile and sponsor_profile.phone_number %}
+                                        <div class="text-muted">{{ sponsor_profile.phone_number }}</div>
+                                        <a href="tel:{{ sponsor_profile.phone_number }}" class="btn btn-outline-success btn-sm mt-1">
+                                    {% elif coach_profile and coach_profile.phone_number %}
+                                        <div class="text-muted">{{ coach_profile.phone_number }}</div>
+                                        <a href="tel:{{ coach_profile.phone_number }}" class="btn btn-outline-success btn-sm mt-1">
+                                    {% else %}
+                                        <div class="text-muted">{{ stadium_profile.phone_number }}</div>
+                                        <a href="tel:{{ stadium_profile.phone_number }}" class="btn btn-outline-success btn-sm mt-1">
+                                    {% endif %}
                                         <i class="bi bi-telephone me-1"></i>Gọi ngay
                                     </a>
                                 </div>
@@ -1406,7 +1430,8 @@
                         </div>
                         {% endif %}
                         
-                        {% if profile.region %}
+                        {# Khu vực - Ưu tiên từ profile chuyên nghiệp #}
+                        {% if sponsor_profile and sponsor_profile.region or coach_profile and coach_profile.region or stadium_profile and stadium_profile.region or profile.location %}
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-center">
                                 <div class="contact-icon me-3">
@@ -1414,7 +1439,15 @@
                                 </div>
                                 <div>
                                     <div class="fw-bold">Khu vực</div>
-                                    <div class="text-muted">{{ profile.get_region_display }}</div>
+                                    {% if sponsor_profile and sponsor_profile.region %}
+                                        <div class="text-muted">{{ sponsor_profile.get_region_display }}{% if sponsor_profile.location_detail %} - {{ sponsor_profile.location_detail }}{% endif %}</div>
+                                    {% elif coach_profile and coach_profile.region %}
+                                        <div class="text-muted">{{ coach_profile.get_region_display }}{% if coach_profile.location_detail %} - {{ coach_profile.location_detail }}{% endif %}</div>
+                                    {% elif stadium_profile and stadium_profile.region %}
+                                        <div class="text-muted">{{ stadium_profile.get_region_display }}{% if stadium_profile.location_detail %} - {{ stadium_profile.location_detail }}{% endif %}</div>
+                                    {% else %}
+                                        <div class="text-muted">{{ profile.location }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1465,14 +1498,14 @@
                                 <i class="bi bi-lightning-fill me-2"></i>Thao Tác Nhanh
                             </h6>
                             <div class="d-flex gap-2 flex-wrap">
-                                {% if profile_user.email %}
-                                <a href="mailto:{{ profile_user.email }}?subject=Yêu cầu hợp tác - {{ profile_user.get_full_name|default:profile_user.username }}" 
+                                {% if sponsor_profile and sponsor_profile.email or coach_profile and coach_profile.email or stadium_profile and stadium_profile.email or profile_user.email %}
+                                <a href="mailto:{% if sponsor_profile and sponsor_profile.email %}{{ sponsor_profile.email }}{% elif coach_profile and coach_profile.email %}{{ coach_profile.email }}{% elif stadium_profile and stadium_profile.email %}{{ stadium_profile.email }}{% else %}{{ profile_user.email }}{% endif %}?subject=Yêu cầu hợp tác - {{ profile_user.get_full_name|default:profile_user.username }}" 
                                    class="btn btn-primary">
                                     <i class="bi bi-envelope me-2"></i>Gửi email hợp tác
                                 </a>
                                 {% endif %}
-                                {% if profile.phone_number %}
-                                <a href="tel:{{ profile.phone_number }}" 
+                                {% if sponsor_profile and sponsor_profile.phone_number or coach_profile and coach_profile.phone_number or stadium_profile and stadium_profile.phone_number %}
+                                <a href="tel:{% if sponsor_profile and sponsor_profile.phone_number %}{{ sponsor_profile.phone_number }}{% elif coach_profile and coach_profile.phone_number %}{{ coach_profile.phone_number }}{% else %}{{ stadium_profile.phone_number }}{% endif %}" 
                                    class="btn btn-success">
                                     <i class="bi bi-telephone me-2"></i>Gọi điện thoại
                                 </a>
@@ -1486,8 +1519,8 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i>Đóng
                 </button>
-                {% if profile_user.email %}
-                <a href="mailto:{{ profile_user.email }}" class="btn btn-primary">
+                {% if sponsor_profile and sponsor_profile.email or coach_profile and coach_profile.email or stadium_profile and stadium_profile.email or profile_user.email %}
+                <a href="mailto:{% if sponsor_profile and sponsor_profile.email %}{{ sponsor_profile.email }}{% elif coach_profile and coach_profile.email %}{{ coach_profile.email }}{% elif stadium_profile and stadium_profile.email %}{{ stadium_profile.email }}{% else %}{{ profile_user.email }}{% endif %}" class="btn btn-primary">
                     <i class="bi bi-envelope me-2"></i>Liên hệ ngay
                 </a>
                 {% endif %}
