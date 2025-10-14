@@ -9,9 +9,11 @@
   - Đã soát xét và cập nhật toàn bộ Memory Bank để phản ánh đúng thực tế dự án.
   - **Sửa lỗi cập nhật mã QR nhà tài trợ:** Khắc phục lỗi form không lưu được mã QR do conflict 2 model SponsorProfile. Đã migrate database và chuyển sang model mới từ users.models.
   - **Tối ưu UI hiển thị vai trò:** Làm gọn gàng hơn khu vực hiển thị thông tin Coach, Stadium, Sponsor với layout compact và CSS effects.
+  - **Sửa lỗi NoReverseMatch:** Đã khắc phục lỗi `NoReverseMatch` khi tạo URL `public_profile` do `user.username` có thể rỗng trong hệ thống xác thực bằng email.
 
 - **Các quyết định gần đây:**
   - Quyết định sử dụng màu tím (purple/violet) cho trang Lưu trữ thay vì xanh dương để phân biệt rõ ràng với trang Giải đấu đang hoạt động.
   - Quyết định không yêu cầu xác nhận khi cập nhật Memory Bank để tăng tốc workflow.
   - **Quyết định về SponsorProfile:** Xóa model cũ trong sponsors.models, chuyển toàn bộ sang users.models.SponsorProfile để tránh conflict và có đầy đủ fields.
   - **Quyết định về UI:** Sử dụng layout compact cho profile cards với small text, ít padding, và rating badges để tiết kiệm không gian hiển thị.
+  - **Quyết định về URL Reversing:** Để xử lý lỗi `NoReverseMatch`, quyết định sử dụng `user.email` làm giá trị thay thế (fallback) cho `user.username` khi tạo URL cho hồ sơ công khai (`public_profile`).
