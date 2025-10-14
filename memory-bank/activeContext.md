@@ -1,11 +1,13 @@
 # Bối Cảnh Hiện Tại
 
 - **Công việc đang tập trung:**
-  - [Ghi rõ công việc bạn đang làm, ví dụ: "Hoàn thiện chức năng cho người dùng có vai trò 'Chuyên gia' tự ứng tuyển vào các vị trí công việc."]
-  - [Ví dụ: "Sửa lỗi hiển thị sai link ở tab Chuyên môn."]
+  - (Sẽ được cập nhật khi có task mới)
 
 - **Các thay đổi gần đây:**
-  - [Ghi lại những gì bạn vừa làm xong, ví dụ: "Đã thêm model `JobApplication`."]
+  - Đã nâng cấp template trang Lưu trữ Giải đấu (archive.html) với giao diện hiện đại: gradient styling, responsive grid layout, animation effects, và màu sắc tím để phân biệt với trang giải đấu chính.
+  - Đã cập nhật quy tắc update-memory-bank-agent để bỏ bước hỏi xác nhận.
+  - Đã soát xét và cập nhật toàn bộ Memory Bank để phản ánh đúng thực tế dự án.
 
 - **Các quyết định gần đây:**
-  - [Ghi lại các quyết định, ví dụ: "Quyết định tách riêng form đăng ký cho Sân vận động và Huấn luyện viên."]
+  - Quyết định sử dụng màu tím (purple/violet) cho trang Lưu trữ thay vì xanh dương để phân biệt rõ ràng với trang Giải đấu đang hoạt động.
+  - Quyết định không yêu cầu xác nhận khi cập nhật Memory Bank để tăng tốc workflow.

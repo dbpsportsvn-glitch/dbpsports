@@ -1,63 +1,663 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Lưu trữ Giải đấu · DBP Sports{% endblock %}
 
-{% block title %}Lưu trữ Giải đấu{% endblock %}
+{% block extra_css %}
+<style>
+/* ========================================
+   MODERN FILTER SECTION
+   ======================================== */
+.filter-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.filter-section h3 {
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-section h3::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 2px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-select {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.filter-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px solid #f1f5f9;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 2px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-title::before {
+  content: '📚';
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.page-subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+/* ========================================
+   TOURNAMENT CARDS
+   ======================================== */
+.tournament-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.tournament-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.tournament-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: #8b5cf6;
+}
+
+.tournament-card.admin-card {
+  border: 2px solid #fbbf24;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+}
+
+.tournament-card.admin-card:hover {
+  box-shadow: 0 12px 30px rgba(251, 191, 36, 0.4);
+}
+
+.tournament-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.admin-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1e293b;
+}
+
+.archive-badge {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.tournament-image {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.tournament-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+  filter: grayscale(20%);
+}
+
+.tournament-card:hover .tournament-image img {
+  transform: scale(1.1);
+  filter: grayscale(0%);
+}
+
+.tournament-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.tournament-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.tournament-content {
+  padding: 1.5rem;
+}
+
+.tournament-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tournament-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.meta-item i {
+  color: #8b5cf6;
+  width: 16px;
+  text-align: center;
+}
+
+.location-badge {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  color: #6b21a6;
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.org-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.org-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.org-name {
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.org-name.admin {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.tournament-dates {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  padding: 0.75rem;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.date-text {
+  font-size: 0.9rem;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.tournament-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.status-badge, .format-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-FINISHED {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
+}
+
+.format-CUP {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+.format-LEAGUE {
+  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+  color: #5b21b6;
+}
+
+.tournament-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  color: white;
+}
+
+.btn-outline-info {
+  border: 2px solid #06b6d4;
+  color: #06b6d4;
+  background: white;
+}
+
+.btn-outline-info:hover {
+  background: #06b6d4;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  margin-top: 2rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+  color: #94a3b8;
+}
+
+.empty-state h3 {
+  color: #64748b;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .filter-section {
+    padding: 1.5rem;
+  }
+  
+  .tournament-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .tournament-actions {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    flex: none;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .filter-section {
+    padding: 1rem;
+  }
+  
+  .tournament-content {
+    padding: 1rem;
+  }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+.tournament-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tournament-card:nth-child(1) { animation-delay: 0.1s; }
+.tournament-card:nth-child(2) { animation-delay: 0.2s; }
+.tournament-card:nth-child(3) { animation-delay: 0.3s; }
+.tournament-card:nth-child(4) { animation-delay: 0.4s; }
+.tournament-card:nth-child(5) { animation-delay: 0.5s; }
+.tournament-card:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>Lưu trữ Giải đấu</h1>
-        <p class="lead">Xem lại lịch sử các giải đấu đã diễn ra.</p>
-    </div>
-
-    {# === BẮT ĐẦU KHỐI CODE TÌM KIẾM MỚI === #}
-    <div class="card card-body mb-4">
-        <form method="get" class="row g-3 align-items-center">
-            <div class="col-md-5">
-                <label for="regionFilter" class="form-label">Lọc theo Khu vực</label>
-                <select name="region" id="regionFilter" class="form-select">
-                    <option value="">Tất cả khu vực</option>
-                    {% for region_value, region_name in all_regions %}
-                    <option value="{{ region_value }}" {% if region_value == current_region %}selected{% endif %}>{{ region_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-5">
-                <label for="orgFilter" class="form-label">Lọc theo Đơn vị Tổ chức</label>
-                <select name="org" id="orgFilter" class="form-select">
-                    <option value="">Tất cả đơn vị</option>
-                    {% for org in all_organizations %}
-                    <option value="{{ org.id }}" {% if org.id|stringformat:"s" == current_org %}selected{% endif %}>{{ org.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2 mt-auto">
-                <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
-            </div>
-        </form>
-    </div>
-    {# === KẾT THÚC KHỐI CODE TÌM KIẾM MỚI === #}
-
-
-    <div class="row">
-        {# Sửa lại biến lặp thành 'tournament' và 'tournaments' #}
-        {% for tournament in tournaments %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ tournament.name }}</h5>
-                        <p class="card-text">
-                            Đã diễn ra từ {{ tournament.start_date|date:"d/m/Y" }}
-                            đến {{ tournament.end_date|date:"d/m/Y" }}.
-                        </p>
-                        <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary">Xem lại chi tiết</a>
-                    </div>
-                </div>
-            </div>
-        {% empty %}
-            <div class="col">
-                <div class="alert alert-warning">Không tìm thấy giải đấu nào phù hợp với tiêu chí của bạn.</div>
-            </div>
-        {% endfor %}
-    </div>
+<!-- Page Header -->
+<div class="page-header">
+  <h1 class="page-title">Lưu Trữ Giải Đấu</h1>
+  <p class="page-subtitle">Xem lại lịch sử các giải đấu đã diễn ra</p>
 </div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+  <h3>
+    <i class="bi bi-funnel"></i>
+    Bộ Lọc Tìm Kiếm
+  </h3>
+  
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-5">
+      <label for="regionFilter" class="form-label">
+        <i class="bi bi-geo-alt-fill me-2"></i>Khu Vực
+      </label>
+      <select name="region" id="regionFilter" class="form-select">
+        <option value="">Tất cả khu vực</option>
+        {% for region_value, region_name in all_regions %}
+          <option value="{{ region_value }}" {% if region_value == current_region %}selected{% endif %}>{{ region_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="col-md-5">
+      <label for="orgFilter" class="form-label">
+        <i class="bi bi-building me-2"></i>Đơn Vị Tổ Chức
+      </label>
+      <select name="org" id="orgFilter" class="form-select">
+        <option value="">Tất cả đơn vị</option>
+        {% for org in all_organizations %}
+          <option value="{{ org.id }}" {% if org.id|stringformat:"s" == current_org %}selected{% endif %}>{{ org.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="col-md-2">
+      <button type="submit" class="btn filter-btn w-100">
+        <i class="bi bi-search me-2"></i>Tìm kiếm
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Tournament Grid -->
+{% if tournaments %}
+  <div class="tournament-grid">
+    {% for tournament in tournaments %}
+      <div class="tournament-card {% if not tournament.organization %}admin-card{% endif %}">
+        <div class="tournament-badge archive-badge">
+          <i class="bi bi-archive-fill"></i> Đã kết thúc
+        </div>
+        
+        <div class="tournament-image">
+          {% if tournament.image %}
+            <img src="{{ tournament.image.url }}" alt="{{ tournament.name }}">
+          {% else %}
+            <div class="tournament-image-placeholder">
+              <i class="bi bi-trophy"></i>
+            </div>
+          {% endif %}
+          <div class="tournament-overlay"></div>
+        </div>
+        
+        <div class="tournament-content">
+          <h3 class="tournament-name">{{ tournament.name }}</h3>
+          
+          <div class="tournament-meta">
+            <div class="meta-item">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span class="location-badge">
+                {{ tournament.get_region_display }}
+                {% if tournament.location_detail %} - {{ tournament.location_detail }}{% endif %}
+              </span>
+            </div>
+            
+            <div class="org-info">
+              {% if tournament.organization %}
+                {% if tournament.organization.logo %}
+                  <img src="{{ tournament.organization.logo.url }}" alt="{{ tournament.organization.name }}" class="org-logo">
+                {% endif %}
+                <span class="org-name">{{ tournament.organization.name }}</span>
+              {% else %}
+                <i class="bi bi-award-fill text-warning"></i>
+                <span class="org-name admin">DBP Sports</span>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="tournament-dates">
+            <div class="date-text">
+              <i class="bi bi-calendar-check me-2"></i>
+              {{ tournament.start_date|date:"d/m/Y" }} – {{ tournament.end_date|date:"d/m/Y" }}
+            </div>
+          </div>
+          
+          <div class="tournament-badges">
+            <span class="status-badge status-{{ tournament.status }}">
+              <i class="bi bi-check-circle-fill"></i>
+              {{ tournament.get_status_display }}
+            </span>
+            <span class="format-badge format-{{ tournament.format }}">
+              {% if tournament.format == 'CUP' %}
+                <i class="bi bi-trophy"></i>
+              {% else %}
+                <i class="bi bi-award"></i>
+              {% endif %}
+              {{ tournament.get_format_display }}
+            </span>
+          </div>
+          
+          <div class="tournament-actions">
+            <a class="btn btn-primary action-btn" href="{% url 'tournament_detail' pk=tournament.pk %}">
+              <i class="bi bi-eye"></i>Xem lại chi tiết
+            </a>
+            
+            <button class="btn btn-outline-info action-btn btn-share" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'tournament_detail' pk=tournament.pk %}" data-title="{{ tournament.name }}">
+              <i class="bi bi-share"></i>Chia sẻ
+            </button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <i class="bi bi-inbox"></i>
+    </div>
+    <h3>Chưa có giải đấu nào</h3>
+    <p>Không tìm thấy giải đấu đã kết thúc phù hợp với tiêu chí của bạn.</p>
+  </div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Xử lý nút Chia sẻ
+    document.querySelectorAll('.btn-share').forEach(button => {
+        button.addEventListener('click', async function () {
+            const url = this.dataset.url;
+            const title = this.dataset.title;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: title,
+                        text: `Xem thông tin giải đấu ${title} trên DBP Sports!`,
+                        url: url,
+                    });
+                } catch (err) {
+                    console.error('Lỗi khi chia sẻ:', err);
+                }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="bi bi-check-lg"></i>Đã sao chép!';
+                    this.classList.add('btn-success');
+                    this.classList.remove('btn-outline-info');
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-info');
+                    }, 2000);
+                } catch (err) {
+                    alert('Không thể sao chép link. Vui lòng sao chép thủ công.');
+                }
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

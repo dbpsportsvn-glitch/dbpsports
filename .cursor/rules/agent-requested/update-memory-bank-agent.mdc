@@ -22,25 +22,26 @@ alwaysApply: false
   3.  **Cập nhật `activeContext.md`:**
       - Xóa các dòng mô tả công việc vừa hoàn thành khỏi mục "Công việc đang tập trung".
       - Ghi lại các thay đổi quan trọng vào mục "Các thay đổi gần đây".
-  4.  **Hỏi xác nhận:** Trước khi lưu các thay đổi vào file, hãy hiển thị cho người dùng xem nội dung bạn dự định cập nhật và hỏi "Bạn có đồng ý với nội dung cập nhật này không?". Chỉ lưu lại khi người dùng đã xác nhận.
+      - Ghi lại các quyết định kỹ thuật/thiết kế quan trọng vào mục "Các quyết định gần đây".
+  4.  **Lưu và thông báo:** Tự động lưu các thay đổi vào file và thông báo cho người dùng biết nội dung đã được cập nhật.
 
 ## Examples
 
 <example>
   **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
-  **AI:** (Phân tích) "Ok, tôi sẽ cập nhật `progress.md` và `activeContext.md`.
+  **AI:** (Đọc file, phân tích và tự động cập nhật)
   
-  **Nội dung cập nhật đề xuất:**
-  *Trong progress.md:*
-  - Đã hoàn thành tính năng X, cho phép người dùng làm Y.
+  "✅ Đã cập nhật Memory Bank thành công!
   
-  *Trong activeContext.md:*
-  - Xóa mục 'Làm tính năng X'.
+  **1. File `progress.md`:**
+  - ✓ Thêm vào 'Những gì đã hoạt động': Đã hoàn thành tính năng X, cho phép người dùng làm Y.
   
-  Bạn có đồng ý với nội dung cập nhật này không?"
+  **2. File `activeContext.md`:**
+  - ✓ Xóa mục 'Làm tính năng X' khỏi 'Công việc đang tập trung'.
+  - ✓ Cập nhật 'Các thay đổi gần đây' với chi tiết về tính năng X."
 </example>
 
 <example type="invalid">
   **Người dùng:** "Tính năng X đã xong. Giờ hãy update memory bank nhé."
-  **AI:** (Tự động cập nhật file mà không hỏi người dùng)
+  **AI:** "Bạn có muốn tôi cập nhật memory bank không?" (KHÔNG nên hỏi lại, hãy thực hiện ngay)
 </example>
