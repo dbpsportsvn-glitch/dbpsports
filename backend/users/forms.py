@@ -112,6 +112,13 @@ class UnifiedProfessionalForm(forms.ModelForm):
         label="Chuyên môn",
         help_text="Ví dụ: Bóng đá, Futsal, Bóng rổ..."
     )
+    coach_years_of_experience = forms.IntegerField(
+        required=False,
+        label="Số năm kinh nghiệm",
+        help_text="Để trống nếu chưa có kinh nghiệm",
+        min_value=0,
+        max_value=50
+    )
     coach_hourly_rate = forms.DecimalField(
         max_digits=10, 
         decimal_places=0, 
@@ -210,7 +217,8 @@ class UnifiedProfessionalForm(forms.ModelForm):
         try:
             coach_profile = self.user.coach_profile
             self.fields['coach_specialization'].initial = coach_profile.specialization
-            self.fields['coach_hourly_rate'].initial = coach_profile.hourly_rate
+            self.fields['coach_years_of_experience'].initial = coach_profile.years_of_experience
+            # self.fields['coach_hourly_rate'].initial = coach_profile.hourly_rate  # Thuộc tính không tồn tại
             self.fields['coach_is_available'].initial = coach_profile.is_available
         except CoachProfile.DoesNotExist:
             pass
@@ -225,15 +233,15 @@ class UnifiedProfessionalForm(forms.ModelForm):
         except StadiumProfile.DoesNotExist:
             pass
             
-        # Load sponsor data
-        try:
-            sponsor_profile = self.user.sponsor_profile
-            self.fields['sponsor_brand_name'].initial = sponsor_profile.brand_name
-            self.fields['sponsor_tagline'].initial = sponsor_profile.tagline
-            self.fields['sponsor_description'].initial = sponsor_profile.description
-            self.fields['sponsor_website_url'].initial = sponsor_profile.website_url
-            self.fields['sponsor_phone_number'].initial = sponsor_profile.phone_number
-        except SponsorProfile.DoesNotExist:
+        # Load sponsor data from Profile model
+        if hasattr(self.user, 'profile'):
+            profile = self.user.profile
+            # Thông tin sponsor được lưu trong Profile model
+            # self.fields['sponsor_brand_name'].initial = profile.brand_name  # Chưa có trong Profile
+            # self.fields['sponsor_tagline'].initial = profile.tagline  # Chưa có trong Profile
+            # self.fields['sponsor_description'].initial = profile.description  # Chưa có trong Profile
+            # self.fields['sponsor_website_url'].initial = profile.website_url  # Chưa có trong Profile
+            # self.fields['sponsor_phone_number'].initial = profile.phone_number  # Chưa có trong Profile
             pass
 
     def setup_form_helper(self):
@@ -268,10 +276,11 @@ class UnifiedProfessionalForm(forms.ModelForm):
                     'Thông tin Huấn luyện viên',
                     Row(
                         Column('coach_specialization', css_class='form-group col-md-6 mb-3'),
-                        Column('coach_hourly_rate', css_class='form-group col-md-6 mb-3'),
+                        Column('coach_years_of_experience', css_class='form-group col-md-6 mb-3'),
                     ),
                     Row(
-                        Column('coach_is_available', css_class='form-group col-md-12 mb-3'),
+                        Column('coach_hourly_rate', css_class='form-group col-md-6 mb-3'),
+                        Column('coach_is_available', css_class='form-group col-md-6 mb-3'),
                     ),
                 )
             )
@@ -357,13 +366,13 @@ class UnifiedProfessionalForm(forms.ModelForm):
                     user=self.user,
                     defaults={
                         'specialization': self.cleaned_data.get('coach_specialization', ''),
-                        'hourly_rate': self.cleaned_data.get('coach_hourly_rate'),
+                        'years_of_experience': self.cleaned_data.get('coach_years_of_experience'),
                         'is_available': self.cleaned_data.get('coach_is_available', True),
                     }
                 )
                 if not created:
                     coach_profile.specialization = self.cleaned_data.get('coach_specialization', '')
-                    coach_profile.hourly_rate = self.cleaned_data.get('coach_hourly_rate')
+                    coach_profile.years_of_experience = self.cleaned_data.get('coach_years_of_experience')
                     coach_profile.is_available = self.cleaned_data.get('coach_is_available', True)
                     coach_profile.save()
             
@@ -385,30 +394,11 @@ class UnifiedProfessionalForm(forms.ModelForm):
                     stadium_profile.description = self.cleaned_data.get('stadium_description', '')
                     stadium_profile.save()
             
-            # Save sponsor data
+            # Save sponsor data to Profile model (SponsorProfile doesn't exist)
             if 'SPONSOR' in [role.id for role in self.user.profile.roles.all()]:
-                sponsor_profile, created = SponsorProfile.objects.get_or_create(
-                    user=self.user,
-                    defaults={
-                        'brand_name': self.cleaned_data.get('sponsor_brand_name', ''),
-                        'tagline': self.cleaned_data.get('sponsor_tagline', ''),
-                        'description': self.cleaned_data.get('sponsor_description', ''),
-                        'website_url': self.cleaned_data.get('sponsor_website_url', ''),
-                        'phone_number': self.cleaned_data.get('sponsor_phone_number', ''),
-                    }
-                )
-                if not created:
-                    sponsor_profile.brand_name = self.cleaned_data.get('sponsor_brand_name', '')
-                    sponsor_profile.tagline = self.cleaned_data.get('sponsor_tagline', '')
-                    sponsor_profile.description = self.cleaned_data.get('sponsor_description', '')
-                    sponsor_profile.website_url = self.cleaned_data.get('sponsor_website_url', '')
-                    sponsor_profile.phone_number = self.cleaned_data.get('sponsor_phone_number', '')
-                    sponsor_profile.save()
-                
-                # Handle logo upload
-                if self.cleaned_data.get('sponsor_brand_logo'):
-                    sponsor_profile.brand_logo = self.cleaned_data['sponsor_brand_logo']
-                    sponsor_profile.save()
+                # Sponsor data is stored in Profile model, not a separate SponsorProfile
+                # This will be handled by the main Profile save above
+                pass
         
         return profile
 
@@ -446,7 +436,7 @@ class ProfessionalJobSeekingForm(forms.ModelForm):
         if user:
             # Chỉ hiển thị các vai trò mà user có
             user_role_ids = user.profile.roles.values_list('id', flat=True)
-            professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE']
+            professional_role_ids = ['COACH', 'COMMENTATOR', 'MEDIA', 'PHOTOGRAPHER', 'REFEREE', 'SPONSOR']
             available_roles = [role_id for role_id in user_role_ids if role_id in professional_role_ids]
             
             if available_roles:
@@ -458,8 +448,10 @@ class ProfessionalJobSeekingForm(forms.ModelForm):
                 # Nếu không có vai trò chuyên gia nào, ẩn field này và set default
                 self.fields['role_required'].widget = forms.HiddenInput()
                 self.fields['role_required'].required = False
-                # Set default value để tránh lỗi validation
-                self.fields['role_required'].initial = Role.objects.filter(id='COACH').first()
+                # Set default value để tránh lỗi validation - lấy vai trò đầu tiên có sẵn
+                first_available_role = Role.objects.filter(id__in=professional_role_ids).first()
+                if first_available_role:
+                    self.fields['role_required'].initial = first_available_role
         
         # Set posted_by thành PROFESSIONAL để tránh lỗi validation
         if hasattr(self, 'instance') and self.instance:

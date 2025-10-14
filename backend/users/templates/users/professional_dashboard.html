@@ -140,7 +140,7 @@
                     <thead>
                         <tr>
                             <th>Tiêu đề</th>
-                            <th>Vai trò mong muốn</th>
+                            <th>Vai trò của người đăng</th>
                             <th>Lời mời</th>
                             <th>Trạng thái</th>
                             <th>Ngày đăng</th>
@@ -153,7 +153,13 @@
                             <td>
                                 <strong>{{ job.title }}</strong>
                             </td>
-                            <td>{{ job.role_required.name }}</td>
+                            <td>
+                                {% for role in job.professional_user.profile.roles.all %}
+                                    {% if role.id == 'COACH' or role.id == 'COMMENTATOR' or role.id == 'MEDIA' or role.id == 'PHOTOGRAPHER' or role.id == 'REFEREE' or role.id == 'SPONSOR' %}
+                                        <span class="badge bg-primary">{{ role.name }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
                             <td>
                                 <span class="badge bg-info">{{ job.application_count }}</span>
                             </td>

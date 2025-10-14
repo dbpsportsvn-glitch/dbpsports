@@ -261,7 +261,7 @@
                 </button>
             </li>
             {% endif %}
-            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE %}
+            {% if coach_profile or stadium_profile or sponsor_profile or commentator_gigs or media_gigs or job_applications or user_roles.COMMENTATOR or user_roles.MEDIA or user_roles.PHOTOGRAPHER or user_roles.REFEREE or user_roles.SPONSOR %}
             <li class="nav-item">
                 <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button">
                     <i class="bi bi-briefcase"></i> Chuyên môn
@@ -655,7 +655,7 @@
         <!-- Professional Tab -->
         <div class="tab-pane fade" id="professional" role="tabpanel">
             <!-- Professional Header with Edit Options -->
-            {% if request.user == profile_user and user_roles.COACH or request.user == profile_user and user_roles.COMMENTATOR or request.user == profile_user and user_roles.MEDIA or request.user == profile_user and user_roles.PHOTOGRAPHER or request.user == profile_user and user_roles.REFEREE %}
+            {% if request.user == profile_user and user_roles.COACH or request.user == profile_user and user_roles.COMMENTATOR or request.user == profile_user and user_roles.MEDIA or request.user == profile_user and user_roles.PHOTOGRAPHER or request.user == profile_user and user_roles.REFEREE or request.user == profile_user and user_roles.SPONSOR %}
             <div class="card mb-4 border-primary">
                 <div class="card-header bg-primary text-white">
                     <div class="d-flex justify-content-between align-items-center">
@@ -699,6 +699,21 @@
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
+                                    {% if user_roles.COACH %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'create_coach_profile' %}">
+                                            <i class="bi bi-clipboard-check text-success me-2"></i>Hồ sơ Huấn luyện viên
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if user_roles.STADIUM %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'create_stadium_profile' %}">
+                                            <i class="bi bi-house text-info me-2"></i>Hồ sơ Sân bóng
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item" href="{% url 'dashboard' %}?tab=public-profile">
                                             <i class="bi bi-person-badge text-info me-2"></i>Thay đổi Vai trò
@@ -732,15 +747,15 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><strong>Kinh nghiệm:</strong> {{ coach_profile.experience|default:"Chưa cập nhật" }}</p>
-                                    <p><strong>Chuyên môn:</strong> {{ coach_profile.specialization|default:"Chưa cập nhật" }}</p>
-                                    <p><strong>Giá thuê:</strong> 
-                                        {% if coach_profile.hourly_rate %}
-                                            {{ coach_profile.hourly_rate|floatformat:0 }} VNĐ/giờ
+                                    <p><strong>Kinh nghiệm:</strong> 
+                                        {% if coach_profile.years_of_experience %}
+                                            {{ coach_profile.years_of_experience }} năm
                                         {% else %}
                                             Chưa cập nhật
                                         {% endif %}
                                     </p>
+                                    <p><strong>Chuyên môn:</strong> {{ coach_profile.specialization|default:"Chưa cập nhật" }}</p>
+                                    <p><strong>Giá thuê:</strong> Chưa cập nhật</p>
                                 </div>
                                 <div class="col-md-6">
                                     <p><strong>Trạng thái:</strong> 
@@ -1109,7 +1124,7 @@
                     {% endif %}
 
                     <!-- No Professional Info -->
-                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not commentator_gigs and not media_gigs and not job_applications and not user_roles.COMMENTATOR and not user_roles.MEDIA and not user_roles.PHOTOGRAPHER and not user_roles.REFEREE %}
+                    {% if not coach_profile and not stadium_profile and not sponsor_profile and not commentator_gigs and not media_gigs and not job_applications and not user_roles.COMMENTATOR and not user_roles.MEDIA and not user_roles.PHOTOGRAPHER and not user_roles.REFEREE and not user_roles.SPONSOR %}
                     <div class="card">
                         <div class="card-body text-center py-5">
                             <i class="bi bi-briefcase text-muted" style="font-size: 4rem;"></i>

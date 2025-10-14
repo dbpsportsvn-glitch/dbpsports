@@ -349,24 +349,80 @@
                                                             {% if role.id == 'COACH' %}
                                                                 <i class="bi bi-clipboard-check text-success me-2"></i>
                                                                 <span>Huấn luyện viên</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'STADIUM' %}
                                                                 <i class="bi bi-house text-info me-2"></i>
                                                                 <span>Sân bóng</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'SPONSOR' %}
                                                                 <i class="bi bi-award text-warning me-2"></i>
                                                                 <span>Nhà tài trợ</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'COMMENTATOR' %}
                                                                 <i class="bi bi-mic text-danger me-2"></i>
                                                                 <span>Bình luận viên</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'MEDIA' %}
                                                                 <i class="bi bi-camera text-success me-2"></i>
                                                                 <span>Media</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'PHOTOGRAPHER' %}
                                                                 <i class="bi bi-camera-reels text-primary me-2"></i>
                                                                 <span>Nhiếp ảnh gia</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% elif role.id == 'REFEREE' %}
                                                                 <i class="bi bi-whistle text-warning me-2"></i>
                                                                 <span>Trọng tài</span>
+                                                                <div class="ms-auto">
+                                                                    <a href="{% url 'professional_dashboard' %}" class="btn btn-sm btn-outline-success me-1">
+                                                                        <i class="bi bi-briefcase"></i> Đăng tin
+                                                                    </a>
+                                                                    <a href="{% url 'unified_professional_form' %}" class="btn btn-sm btn-outline-primary">
+                                                                        <i class="bi bi-gear"></i> Chỉnh sửa
+                                                                    </a>
+                                                                </div>
                                                             {% else %}
                                                                 <i class="bi bi-person text-muted me-2"></i>
                                                                 <span>{{ role.name }}</span>
