@@ -484,26 +484,6 @@ def tournament_detail(request, pk):
     return render(request, 'tournaments/tournament_detail.html', context)
 
 
-@login_required
-def add_free_agent(request, team_pk, player_pk):
-    team = get_object_or_404(Team, pk=team_pk)
-    if request.user != team.captain:
-        messages.error(request, "Bạn không có quyền thực hiện hành động này.")
-        return redirect('team_detail', pk=team_pk)
-
-    player = get_object_or_404(Player, pk=player_pk, team__isnull=True)
-
-    if request.method == 'POST':
-        if team.players.filter(jersey_number=player.jersey_number).exists():
-            messages.error(request, f"Số áo {player.jersey_number} đã có người sử dụng trong đội của bạn.")
-            return redirect('team_detail', pk=team_pk)
-
-        player.team = team
-        player.save()
-        messages.success(request, f"Đã chiêu mộ thành công cầu thủ {player.full_name} vào đội!")
-        return redirect('team_detail', pk=team_pk)
-
-    return redirect('team_detail', pk=team_pk)
 
 @login_required
 @never_cache
@@ -512,8 +492,6 @@ def team_detail(request, pk):
     registrations = TeamRegistration.objects.filter(team=team).select_related('tournament').order_by('-tournament__start_date')
     
     player_form = PlayerCreationForm()
-    search_query = request.GET.get('q', '')
-    search_results = []
     active_tab = ''
     can_manage_players = not registrations.exists() or registrations.filter(payment_status='PAID').exists()
 
@@ -540,25 +518,12 @@ def team_detail(request, pk):
                             player_form.add_error(field if field != '__all__' else None, errors[0])
                         messages.error(request, 'Thêm cầu thủ thất bại, vui lòng kiểm tra lại.')
 
-    elif search_query:
-        active_tab = 'search'
-        # === BẮT ĐẦU THAY ĐỔI TẠI ĐÂY ===
-        # Giờ đây, chúng ta sẽ tìm kiếm tất cả cầu thủ phù hợp với tên,
-        # loại bỏ chính các cầu thủ đã ở trong đội của bạn.
-        search_results = Player.objects.filter(
-            full_name__icontains=search_query
-        ).exclude(
-            team=team
-        ).select_related('team') # Thêm select_related để tối ưu truy vấn
-
     context = {
         'team': team,
         'registrations': registrations,
         'can_manage_players': can_manage_players,
         'player_form': player_form,
         'achievements': team.achievements.select_related('tournament').all(),
-        'search_results': search_results,
-        'search_query': search_query,
         'active_tab': active_tab,
     }
     return render(request, 'tournaments/team_detail.html', context)

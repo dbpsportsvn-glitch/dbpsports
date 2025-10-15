@@ -328,8 +328,8 @@
                         <div class="card-body">
                             <ul class="nav nav-pills nav-fill mb-3" id="pills-tab" role="tablist">
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link {% if active_tab == 'search' %}active{% endif %}" id="pills-search-tab" data-bs-toggle="pill" data-bs-target="#pills-search" type="button">
-                                        <i class="bi bi-search"></i> Chiêu mộ
+                                    <button class="nav-link {% if active_tab == 'recruit' %}active{% endif %}" id="pills-recruit-tab" data-bs-toggle="pill" data-bs-target="#pills-recruit" type="button">
+                                        <i class="bi bi-person-plus-fill"></i> Chiêu mộ
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -339,50 +339,26 @@
                                 </li>
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
-                                <div class="tab-pane fade {% if active_tab == 'search' %}show active{% endif %}" id="pills-search" role="tabpanel">
-                                    <p class="small text-muted">Tìm kiếm các cầu thủ tự do trên hệ thống.</p>
-                                    <form method="get">
-                                        <div class="input-group">
-                                            <input type="text" name="q" class="form-control" placeholder="Nhập tên cầu thủ..." value="{{ search_query|default:'' }}">
-                                            <button class="btn btn-primary" type="submit">Tìm</button>
+                                <div class="tab-pane fade {% if active_tab == 'recruit' %}show active{% endif %}" id="pills-recruit" role="tabpanel">
+                                    <div class="text-center py-4">
+                                        <div class="mb-4">
+                                            <i class="bi bi-info-circle-fill text-primary" style="font-size: 3rem;"></i>
                                         </div>
-                                    </form>
-
-                                    {% if search_results %}
-                                        <hr>
-                                        <ul class="list-group mt-3">
-                                            {% for player in search_results %}
-                                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <a href="{% url 'player_detail' pk=player.pk %}" target="_blank"><strong>{{ player.full_name }}</strong></a>
-                                                    <small class="text-muted d-block">
-                                                        {% if player.team %}
-                                                            Đang ở đội: <strong>{{ player.team.name }}</strong>
-                                                        {% else %}
-                                                            <span class="text-success">Cầu thủ tự do</span>
-                                                        {% endif %}
-                                                    </small>
-                                                </div>
-                                                
-                                                {% if player.team %}
-                                                    {# Cầu thủ đã có đội -> Form "Mời" #}
-                                                    <form method="post" action="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn btn-info btn-sm">Mời</button>
-                                                    </form>
-                                                {% else %}
-                                                    {# Cầu thủ tự do -> Form "Chiêu mộ" #}
-                                                    <form method="post" action="{% url 'add_free_agent' team_pk=team.pk player_pk=player.pk %}">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="btn btn-success btn-sm">Chiêu mộ</button>
-                                                    </form>
-                                                {% endif %}
-                                            </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% elif search_query %}
-                                        <p class="text-muted mt-3">Không tìm thấy cầu thủ nào có tên '{{ search_query }}'.</p>
-                                    {% endif %}
+                                        <h5 class="mb-3">Hướng dẫn chiêu mộ cầu thủ</h5>
+                                        <p class="text-muted mb-4">
+                                            Để chiêu mộ cầu thủ, bạn cần thông qua <strong>Thị trường chuyển nhượng</strong>. 
+                                            Tại đó bạn có thể tìm kiếm và gửi lời mời đến các cầu thủ tự do hoặc cầu thủ đang ở đội khác.
+                                        </p>
+                                        <p class="text-muted mb-4">
+                                            <strong>Quy trình:</strong><br>
+                                            1. Tìm cầu thủ phù hợp trên thị trường chuyển nhượng<br>
+                                            2. Gửi lời mời với điều kiện cụ thể<br>
+                                            3. Cầu thủ sẽ xem xét và quyết định có gia nhập đội hay không
+                                        </p>
+                                        <a href="{% url 'transfer_market' %}" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-arrow-right-circle"></i> Đến thị trường chuyển nhượng
+                                        </a>
+                                    </div>
                                 </div>
                                 <div class="tab-pane fade {% if active_tab == 'new' or not active_tab %}show active{% endif %}" id="pills-new" role="tabpanel">
                                     <form method="post" enctype="multipart/form-data">

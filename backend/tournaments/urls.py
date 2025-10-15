@@ -67,7 +67,6 @@ urlpatterns = [
     path('player/<int:pk>/', views.player_detail, name='player_detail'),
     path('player/<int:pk>/update/', views.update_player, name='update_player'),
     path('player/<int:pk>/delete/', views.delete_player, name='delete_player'),
-    path('team/<int:team_pk>/add_free_agent/<int:player_pk>/', views.add_free_agent, name='add_free_agent'),
     path('player/<int:player_pk>/invite_from/<int:team_pk>/', views.invite_player_view, name='invite_player'),
     path('transfers/<int:transfer_pk>/respond/', views.respond_to_transfer_view, name='respond_to_transfer'),
     path('scout/add/<int:player_pk>/from/<int:team_pk>/', views.add_to_scouting_list, name='add_to_scouting_list'),
