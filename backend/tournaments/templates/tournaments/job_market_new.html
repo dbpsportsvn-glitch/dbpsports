@@ -4,36 +4,153 @@
 
 {% block title %}Thị Trường Việc Làm & Chuyên Gia{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ========================================
+   MODERN JOB MARKET HEADER
+   ======================================== */
+.job-market-hero {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.job-market-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+  transform: rotate(15deg);
+  pointer-events: none;
+}
+
+.job-market-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: white;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
+}
+
+.job-market-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  font-weight: 400;
+}
+
+.job-market-icon {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.stats-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
+  text-align: center;
+  color: white;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+  .job-market-hero {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+  .job-market-title {
+    font-size: 2.2rem;
+  }
+  
+  .job-market-icon {
+    font-size: 2rem;
+    margin-right: 0.5rem;
+  }
+  
+  .stats-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .job-market-title {
+    font-size: 1.8rem;
+  }
+  
+  .job-market-subtitle {
+    font-size: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h1 class="display-5 fw-bold mb-3">
-                            <i class="bi bi-briefcase-fill me-3"></i>Thị Trường Việc Làm & Chuyên Gia
-                        </h1>
-                        <p class="lead mb-0">
-                            Tìm kiếm cơ hội việc làm trong ngành bóng đá và kết nối với các chuyên gia hàng đầu
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <div class="h4 mb-1">{{ jobs|length }}</div>
-                                    <small>Việc làm</small>
-                                </div>
-                                <div class="col-4">
-                                    <div class="h4 mb-1">{{ top_coaches|length|add:top_stadiums|length|add:top_professionals|length }}</div>
-                                    <small>Chuyên gia</small>
-                                </div>
-                                <div class="col-4">
-                                    <div class="h4 mb-1">{{ all_regions|length }}</div>
-                                    <small>Khu vực</small>
-                                </div>
+<div class="container my-5">
+    <!-- Modern Header Section -->
+    <div class="job-market-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="job-market-title">
+                    <i class="bi bi-briefcase-fill job-market-icon"></i>
+                    Thị Trường Việc Làm &<br>Chuyên Gia
+                </h1>
+                <p class="job-market-subtitle">
+                    Tìm kiếm cơ hội việc làm trong ngành bóng đá và kết nối với các chuyên gia hàng đầu
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <div class="stats-container">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ jobs|length }}</div>
+                                <div class="stat-label">Việc làm</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ top_coaches|length|add:top_stadiums|length|add:top_professionals|length }}</div>
+                                <div class="stat-label">Chuyên gia</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ all_regions|length }}</div>
+                                <div class="stat-label">Khu vực</div>
                             </div>
                         </div>
                     </div>
@@ -409,10 +526,9 @@
 </div>
 
 <style>
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
+/* ========================================
+   ADDITIONAL STYLES FOR JOB MARKET
+   ======================================== */
 .hover-shadow {
     transition: all 0.3s ease;
 }
@@ -430,10 +546,6 @@
     transition: all 0.2s ease;
 }
 
-.stats-box {
-    backdrop-filter: blur(10px);
-}
-
 .job-item {
     transition: all 0.3s ease;
 }
@@ -445,16 +557,6 @@
 .ranking-section h6 {
     border-bottom: 2px solid;
     padding-bottom: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .hero-section .row {
-        text-align: center;
-    }
-    
-    .stats-box {
-        margin-top: 1rem;
-    }
 }
 </style>
 {% endblock %}

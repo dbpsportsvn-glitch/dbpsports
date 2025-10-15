@@ -1,45 +1,103 @@
 {% load humanize custom_filters %}
-<form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% endif %}">
-    {% csrf_token %}
-    
-    {% if captained_teams|length > 1 %}
-    <div class="mb-3">
-        <label for="team-select-{{ player.pk }}" class="form-label">Mời từ đội</label>
-        <select id="team-select-{{ player.pk }}" class="form-select" required>
-            <option value="">-- Chọn đội của bạn --</option>
-            {% for team in captained_teams %}
-            <option value="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">{{ team.name }} (Ngân sách: {{ team.budget|intcomma }} VNĐ)</option>
-            {% endfor %}
-        </select>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-person-plus-fill me-2"></i>
+            Gửi lời mời cho {{ player.full_name }}
+        </h5>
     </div>
-    {% endif %}
+    <div class="card-body p-4">
+        <form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% endif %}">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                    <!-- Market Value Section -->
+                    <div class="form-section">
+                        <h6 class="section-title">
+                            <i class="bi bi-graph-up"></i>
+                            Thông tin giá trị
+                        </h6>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span>
+                        </div>
+                    </div>
 
-    <p><strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span></p>
-    
-    <div class="mb-3">
-        <label class="form-label">Chọn loại hình đề nghị:</label>
-        <div class="form-check">
-            <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="permanent-{{ player.pk }}" value="PERMANENT" data-player-id="{{ player.pk }}" checked>
-            <label class="form-check-label" for="permanent-{{ player.pk }}">Mua đứt</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="loan-{{ player.pk }}" value="LOAN" data-player-id="{{ player.pk }}">
-            <label class="form-check-label" for="loan-{{ player.pk }}">Cho mượn</label>
-        </div>
-    </div>
+                    <!-- Team Selection Section -->
+                    {% if captained_teams|length > 1 %}
+                    <div class="form-section">
+                        <h6 class="section-title">
+                            <i class="bi bi-people-fill"></i>
+                            Chọn đội bóng
+                        </h6>
+                        <div class="mb-3">
+                            <label for="team-select-{{ player.pk }}" class="form-label">Mời từ đội</label>
+                            <select id="team-select-{{ player.pk }}" class="form-select" required>
+                                <option value="">-- Chọn đội của bạn --</option>
+                                {% for team in captained_teams %}
+                                <option value="{% url 'invite_player' player_pk=player.pk team_pk=team.pk %}">{{ team.name }} (Ngân sách: {{ team.budget|intcomma }} VNĐ)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
 
-    <div class="mb-3">
-        <label for="offer-amount-{{ player.pk }}" class="form-label">Phí đề nghị (VNĐ)</label>
-        <input type="number" name="offer_amount" id="offer-amount-{{ player.pk }}" class="form-control" value="{{ player.market_value|floatformat:'0' }}" required>
-        <small class="form-text text-muted" id="fee-suggestion-{{ player.pk }}">Giá đề nghị bằng giá trị thị trường.</small>
-    </div>
+                <!-- Right Column -->
+                <div class="col-md-6">
+                    <!-- Transfer Type Section -->
+                    <div class="form-section">
+                        <h6 class="section-title">
+                            <i class="bi bi-arrow-left-right"></i>
+                            Loại hình chuyển nhượng
+                        </h6>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="permanent-{{ player.pk }}" value="PERMANENT" data-player-id="{{ player.pk }}" checked>
+                                <label class="form-check-label" for="permanent-{{ player.pk }}">
+                                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                    Mua đứt
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input transfer-type-radio" type="radio" name="transfer_type" id="loan-{{ player.pk }}" value="LOAN" data-player-id="{{ player.pk }}">
+                                <label class="form-check-label" for="loan-{{ player.pk }}">
+                                    <i class="bi bi-clock-fill text-warning me-1"></i>
+                                    Cho mượn
+                                </label>
+                            </div>
+                        </div>
+                    </div>
 
-    <div class="mb-3 loan-options" style="display: none;">
-        <label for="loan_end_date-{{ player.pk }}" class="form-label">Ngày kết thúc cho mượn</label>
-        <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}" class="form-control">
+                    <!-- Offer Amount Section -->
+                    <div class="form-section">
+                        <h6 class="section-title">
+                            <i class="bi bi-currency-dollar"></i>
+                            Phí đề nghị
+                        </h6>
+                        <div class="mb-3">
+                            <label for="offer-amount-{{ player.pk }}" class="form-label">Phí đề nghị (VNĐ)</label>
+                            <input type="number" name="offer_amount" id="offer-amount-{{ player.pk }}" class="form-control" value="{{ player.market_value|floatformat:'0' }}" required>
+                            <small class="form-text text-muted" id="fee-suggestion-{{ player.pk }}">Giá đề nghị bằng giá trị thị trường.</small>
+                        </div>
+
+                        <div class="mb-3 loan-options" style="display: none;">
+                            <label for="loan_end_date-{{ player.pk }}" class="form-label">Ngày kết thúc cho mượn</label>
+                            <input type="date" name="loan_end_date" id="loan_end_date-{{ player.pk }}" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-send-fill me-2"></i>
+                    Xác nhận gửi lời mời
+                </button>
+            </div>
+        </form>
     </div>
-    <hr>
-    <div class="d-grid">
-        <button type="submit" class="btn btn-primary">Xác nhận gửi lời mời</button>
-    </div>
-</form>
+</div>

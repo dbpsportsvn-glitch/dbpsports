@@ -1,7 +1,7 @@
 # Bối Cảnh Hiện Tại
 
 - **Công việc đang tập trung:**
-  - (Sẽ được cập nhật khi có task mới)
+  - (Không có công việc đang tập trung)
 
 - **Các thay đổi gần đây:**
   - **Viet hoa va sap xep lai trang quan tri admin:** Hoan thanh viet hoa toan bo trang quan tri Django admin voi tieu de "DBP Sports - Trung tam Quan tri", sap xep lai thu tu cac app theo logic nghiep vu (Giai dau → To chuc → Nguoi dung → Nha tai tro → Cua hang → Tin tuc), viet hoa ten hien thi tat ca cac models trong moi app, them emoji icons de phan biet cac model, va di chuyen action "Xoa" xuong cuoi cung trong dropdown actions de tranh nham lan.
@@ -15,7 +15,12 @@
   - Đã soát xét và cập nhật toàn bộ Memory Bank để phản ánh đúng thực tế dự án.
   - **Sửa lỗi cập nhật mã QR nhà tài trợ:** Khắc phục lỗi form không lưu được mã QR do conflict 2 model SponsorProfile. Đã migrate database và chuyển sang model mới từ users.models.
   - **Tối ưu UI hiển thị vai trò:** Làm gọn gàng hơn khu vực hiển thị thông tin Coach, Stadium, Sponsor với layout compact và CSS effects.
-  - **Sửa lỗi NoReverseMatch:** Đã khắc phục lỗi `NoReverseMatch` khi tạo URL `public_profile` do `user.username` có thể rỗng trong hệ thống xác thực bằng email.
+  - **Test va xac nhan he thong email hoan hao:** Da test toan bo 19 email templates va xac nhan he thong email backend hoat dong hoan hao. SMTP server mail.dbpsports.com:465 hoat dong on dinh, tat ca templates render dung va dep mat voi thiet ke purple gradient chuyen nghiep. Da don dep tat ca file test va template cu, workspace backend gio da sach se va chuyen nghiep.
+  - **Hoan thanh tich hop payment_rejected.html:** Da them trang thai "Tu choi" vao dropdown payment_status trong admin, tao migration de cap nhat database, them admin action "reject_payments" de tu choi hang loat, cap nhat template team_detail.html de hien thi badge "Tu choi" va nut "Tai lai hoa don", va xoa tat ca debug statements. Email tu choi hoat dong hoan hao.
+  - **Them nut dang ky ngay vao trang chi tiet giai dau:** Da them nut "Dang ky ngay" vao header trang chi tiet giai dau ben canh status badge, voi styling gradient tim dong bo voi thiet ke trang, responsive tren mobile, va chi hien thi khi giai dau dang mo dang ky va nguoi dung da dang nhap.
+  - **Sua loi checkbox khuyen mai trong form thanh toan:** Da xac dinh va huong dan khac phuc loi checkbox khuyen mai khong hien thi cho cac doi thu 2, 3. Nguyen nhan la cac giai dau co shop_discount_percentage = 0, can cap nhat trong Django admin de hien thi checkbox.
+  - **Cap nhat template tim huan luyen vien:** Da thiet ke lai template recruit_coach_list.html dong bo voi trang luu tru giai dau, bao gom gradient styling, coach cards hien dai, filter section dep mat, responsive design, va empty state chuyen nghiep.
+  - **Toi uu trang thi truong chuyen nhuong:** Da cap nhat layout trang thi truong chuyen nhuong voi nut "Lich su" mau trang dat o goc duoi ben phai banner, xoa khoi tim kiem thua, di chuyen khoi tim kiem xuong duoi bang thong ke, va cap nhat template form moi voi layout 2 cot gon gang dong bo voi cac template form khac trong he thong.
 
 - **Các quyết định gần đây:**
   - **Quyet dinh ve Admin Interface:** Quyet dinh viet hoa toan bo trang quan tri Django admin de de dang su dung hon cho nguoi dung Viet Nam. Sap xep lai thu tu cac app theo logic nghiep vu voi Giai dau uu tien cao nhat, sau do den To chuc, Nguoi dung, Nha tai tro, Cua hang, Tin tuc. Them emoji icons de phan biet cac model va di chuyen action "Xoa" xuong cuoi cung de tranh nham lan.

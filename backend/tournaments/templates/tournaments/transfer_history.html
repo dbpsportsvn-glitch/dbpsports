@@ -3,80 +3,379 @@
 
 {% block title %}Lịch sử Chuyển nhượng{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ========================================
+   MODERN PAGE HEADER
+   ======================================== */
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px solid #f1f5f9;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 2px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-title::before {
+  content: '📊';
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.page-subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+/* ========================================
+   MODERN TABLE STYLING
+   ======================================== */
+.transfer-table-container {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.transfer-table-container:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.transfer-table {
+  margin: 0;
+}
+
+.transfer-table thead {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.transfer-table thead th {
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.transfer-table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.transfer-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transform: translateX(4px);
+}
+
+.transfer-table tbody td {
+  padding: 1rem;
+  border: none;
+  vertical-align: middle;
+}
+
+/* ========================================
+   PLAYER INFO STYLING
+   ======================================== */
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.player-info:hover {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.player-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.player-info:hover .player-avatar {
+  border-color: #6366f1;
+  transform: scale(1.05);
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* ========================================
+   TEAM INFO STYLING
+   ======================================== */
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.team-info:hover {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.team-info:hover .team-logo {
+  transform: scale(1.1);
+}
+
+.team-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* ========================================
+   VALUE STYLING
+   ======================================== */
+.transfer-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #059669;
+  text-shadow: 0 1px 2px rgba(5, 150, 105, 0.1);
+}
+
+/* ========================================
+   BADGE STYLING
+   ======================================== */
+.transfer-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-permanent {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.badge-loan {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+}
+
+/* ========================================
+   DATE STYLING
+   ======================================== */
+.transfer-date {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  margin-top: 2rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.empty-state h5 {
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+/* ========================================
+   BACK BUTTON
+   ======================================== */
+.back-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.back-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  color: white;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .transfer-table thead th,
+  .transfer-table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .player-name,
+  .team-name {
+    font-size: 0.85rem;
+  }
+  
+  .transfer-value {
+    font-size: 0.9rem;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <h1><i class="bi bi-clock-history text-primary"></i> Lịch sử Chuyển nhượng</h1>
-            <p class="lead mb-0">Tổng hợp các thương vụ đã hoàn tất trên hệ thống.</p>
-        </div>
-        <a href="{% url 'transfer_market' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại Thị trường
-        </a>
+<div class="container my-5">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">Lịch sử Chuyển nhượng</h1>
+        <p class="page-subtitle">Tổng hợp các thương vụ đã hoàn tất trên hệ thống</p>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Cầu thủ</th>
-                        <th scope="col">Từ đội</th>
-                        <th scope="col">Đến đội</th>
-                        <th scope="col" class="text-end">Phí</th>
-                        <th scope="col" class="text-center">Loại hình</th>
-                        <th scope="col" class="text-center">Ngày hoàn tất</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for transfer in transfers %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'player_detail' pk=transfer.player.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark fw-bold">
-                                {% if transfer.player.avatar %}
-                                    <img src="{{ transfer.player.avatar.url }}" alt="{{ transfer.player.full_name }}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%;">
+    <!-- Transfer Table -->
+    {% if transfers %}
+        <div class="transfer-table-container">
+            <div class="table-responsive">
+                <table class="table transfer-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Cầu thủ</th>
+                            <th scope="col">Từ đội</th>
+                            <th scope="col">Đến đội</th>
+                            <th scope="col" class="text-end">Phí</th>
+                            <th scope="col" class="text-center">Loại hình</th>
+                            <th scope="col" class="text-center">Ngày hoàn tất</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in transfers %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'player_detail' pk=transfer.player.pk %}" class="player-info">
+                                    {% if transfer.player.avatar %}
+                                        <img src="{{ transfer.player.avatar.url }}" alt="{{ transfer.player.full_name }}" class="player-avatar">
+                                    {% else %}
+                                        <div class="player-avatar bg-secondary d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-person-fill text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="player-name">{{ transfer.player.full_name }}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'public_team_detail' pk=transfer.current_team.pk %}" class="team-info">
+                                    {% if transfer.current_team.logo %}
+                                        <img src="{{ transfer.current_team.logo.url }}" alt="{{ transfer.current_team.name }}" class="team-logo">
+                                    {% else %}
+                                        <div class="team-logo bg-light d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-shield text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="team-name">{{ transfer.current_team.name }}</span>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'public_team_detail' pk=transfer.inviting_team.pk %}" class="team-info">
+                                    {% if transfer.inviting_team.logo %}
+                                        <img src="{{ transfer.inviting_team.logo.url }}" alt="{{ transfer.inviting_team.name }}" class="team-logo">
+                                    {% else %}
+                                        <div class="team-logo bg-light d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-shield text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="team-name">{{ transfer.inviting_team.name }}</span>
+                                </a>
+                            </td>
+                            <td class="text-end">
+                                <span class="transfer-value">{{ transfer.offer_amount|intcomma }} VNĐ</span>
+                            </td>
+                            <td class="text-center">
+                                {% if transfer.transfer_type == 'LOAN' %}
+                                    <span class="transfer-badge badge-loan">Cho mượn</span>
+                                {% else %}
+                                    <span class="transfer-badge badge-permanent">Mua đứt</span>
                                 {% endif %}
-                                <span>{{ transfer.player.full_name }}</span>
-                            </a>
-                        </td>
-                        <td>
-                            {# === BẮT ĐẦU CẬP NHẬT LIÊN KẾT ĐỘI BÓNG === #}
-                            <a href="{% url 'public_team_detail' pk=transfer.current_team.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
-                                {% if transfer.current_team.logo %}
-                                    <img src="{{ transfer.current_team.logo.url }}" alt="{{ transfer.current_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
-                                {% endif %}
-                                <span>{{ transfer.current_team.name }}</span>
-                            </a>
-                            {# === KẾT THÚC CẬP NHẬT === #}
-                        </td>
-                        <td>
-                            {# === BẮT ĐẦU CẬP NHẬT LIÊN KẾT ĐỘI BÓNG === #}
-                            <a href="{% url 'public_team_detail' pk=transfer.inviting_team.pk %}" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
-                                {% if transfer.inviting_team.logo %}
-                                    <img src="{{ transfer.inviting_team.logo.url }}" alt="{{ transfer.inviting_team.name }}" style="width: 24px; height: 24px; object-fit: contain;">
-                                {% endif %}
-                                <span>{{ transfer.inviting_team.name }}</span>
-                            </a>
-                            {# === KẾT THÚC CẬP NHẬT === #}
-                        </td>
-                        <td class="text-end text-success fw-bold">{{ transfer.offer_amount|intcomma }} VNĐ</td>
-                        <td class="text-center">
-                            {% if transfer.transfer_type == 'LOAN' %}
-                                <span class="badge bg-info text-dark">Cho mượn</span>
-                            {% else %}
-                                <span class="badge bg-primary">Mua đứt</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center text-muted small">{{ transfer.updated_at|date:"d/m/Y" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center p-4 text-muted">Chưa có thương vụ nào được hoàn tất.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="text-center">
+                                <span class="transfer-date">{{ transfer.updated_at|date:"d/m/Y" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h5>Chưa có thương vụ nào được hoàn tất</h5>
+            <p>Hệ thống sẽ hiển thị lịch sử chuyển nhượng khi có các thương vụ được hoàn tất.</p>
+        </div>
+    {% endif %}
+    
+    <!-- Back Button -->
+    <div class="text-center mt-5">
+        <a href="{% url 'transfer_market' %}" class="btn back-btn">
+            <i class="bi bi-arrow-left"></i> Quay lại Thị trường
+        </a>
     </div>
 </div>
 {% endblock %}
