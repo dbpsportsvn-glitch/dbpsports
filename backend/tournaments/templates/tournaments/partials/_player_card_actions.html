@@ -1,5 +1,6 @@
 <div class="actions">
     {% if captained_teams and player.team and player.team not in captained_teams %}
+        {# Cầu thủ có đội nhưng không phải đội của người dùng #}
         <div class="d-flex gap-2 mb-2">
             
             {# === CỘT TRÁI - NÚT MỜI === #}
@@ -37,6 +38,73 @@
                 {% endif %}
             </div>
         </div>
+    {% elif not player.team and request.user.is_authenticated %}
+        {# Cầu thủ tự do - có thể mời và theo dõi #}
+        <div class="d-flex gap-2 mb-2">
+            
+            {# === CỘT TRÁI - NÚT MỜI === #}
+            <div class="w-50 d-grid">
+                <button type="button" class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#inviteModal-{{ player.pk }}" title="Gửi lời mời cầu thủ tự do">
+                    <i class="bi bi-person-plus-fill"></i> Mời
+                </button>
+            </div>
+            
+            {# === CỘT PHẢI - NÚT THEO DÕI === #}
+            <div class="w-50">
+                {% if captained_teams|length == 1 %}
+                    <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=captained_teams.0.pk %}" class="d-grid">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-light btn-action" title="Theo dõi cầu thủ tự do">
+                            <i class="bi bi-binoculars-fill"></i> Theo dõi
+                        </button>
+                    </form>
+                {% elif captained_teams|length > 1 %}
+                    <div class="btn-group w-100" role="group">
+                        <button type="button" class="btn btn-outline-light btn-action dropdown-toggle w-100" data-bs-toggle="dropdown" aria-expanded="false" title="Theo dõi cầu thủ tự do">
+                            <i class="bi bi-binoculars-fill"></i> Theo dõi
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            {% for team_to_scout_with in captained_teams %}
+                            <li>
+                                <form method="post" action="{% url 'add_to_scouting_list' player_pk=player.pk team_pk=team_to_scout_with.pk %}" class="d-grid">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">Cho đội {{ team_to_scout_with.name }}</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="text-center">
+                        <small class="text-muted">Cần có đội bóng để theo dõi</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {# === NÚT "ĐÂY LÀ TÔI" CHO CẦU THỦ TỰ DO === #}
+        {% if not player.user and request.user.is_authenticated %}
+        <div class="d-grid mb-2">
+            <form method="post" action="{% url 'claim_player_profile' pk=player.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning btn-action" title="Liên kết hồ sơ này với tài khoản của bạn">
+                    <i class="bi bi-person-check-fill"></i> Đây là tôi
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {# === NÚT "ĐÂY LÀ TÔI" CHO CẦU THỦ CÓ ĐỘI NHƯNG CHƯA CÓ USER === #}
+    {% if player.team and not player.user and request.user.is_authenticated %}
+    <div class="d-grid mb-2">
+        <form method="post" action="{% url 'claim_player_profile' pk=player.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning btn-action" title="Liên kết hồ sơ này với tài khoản của bạn">
+                <i class="bi bi-person-check-fill"></i> Đây là tôi
+            </button>
+        </form>
+    </div>
     {% endif %}
 
     {# --- NÚT XEM HỒ SƠ --- #}

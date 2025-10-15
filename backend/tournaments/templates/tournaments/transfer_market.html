@@ -463,9 +463,9 @@
   {% endif %}
 </div>
 
-{# Giữ nguyên modal mỗi cầu thủ để không thay đổi logic của _invite_form #}
+{# Modal cho cầu thủ có đội và cầu thủ tự do #}
 {% for player in players %}
-  {% if captained_teams and player.team and player.team not in captained_teams %}
+  {% if captained_teams and player.team and player.team not in captained_teams or not player.team and request.user.is_authenticated %}
   <div class="modal fade" id="inviteModal-{{ player.pk }}" tabindex="-1" aria-labelledby="inviteModalLabel-{{ player.pk }}" data-market-value="{{ player.market_value|floatformat:'0' }}">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">

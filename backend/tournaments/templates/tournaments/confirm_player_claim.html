@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Xác nhận liên kết cầu thủ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Xác nhận liên kết cầu thủ
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Yêu cầu xác nhận:</strong> Có người dùng muốn liên kết với cầu thủ trong đội của bạn. Vui lòng xác nhận danh tính của họ.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-info h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-person-circle me-2"></i>
+                                        Thông tin cầu thủ
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tên:</strong> {{ player.full_name }}</li>
+                                        <li><strong>Đội:</strong> {{ team_name }}</li>
+                                        <li><strong>Số áo:</strong> {{ player.jersey_number }}</li>
+                                        <li><strong>Vị trí:</strong> {{ player.position }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-person-check me-2"></i>
+                                        Người yêu cầu liên kết
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tên:</strong> {{ claiming_user.get_full_name|default:claiming_user.username }}</li>
+                                        <li><strong>Email:</strong> {{ claiming_user.email }}</li>
+                                        <li><strong>Ngày đăng ký:</strong> {{ claiming_user.date_joined|date:"d/m/Y" }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Lưu ý:</strong> Sau khi xác nhận, người dùng này sẽ được liên kết với hồ sơ cầu thủ và có thể tham gia các hoạt động của đội.
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="claiming_user" value="{{ claiming_user.username }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button type="submit" name="action" value="confirm" class="btn btn-success btn-lg w-100">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    Xác nhận liên kết
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-lg w-100">
+                                    <i class="bi bi-x-circle-fill me-2"></i>
+                                    Từ chối yêu cầu
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-exclamation me-1"></i>
+                            <strong>Bảo mật:</strong> Chỉ xác nhận nếu bạn chắc chắn đây là thành viên thực sự của đội.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}

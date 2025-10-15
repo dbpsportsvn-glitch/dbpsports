@@ -4,26 +4,49 @@
         <h5 class="mb-0">
             <i class="bi bi-person-plus-fill me-2"></i>
             Gửi lời mời cho {{ player.full_name }}
+            {% if not player.team %}
+                <span class="badge bg-success ms-2">Cầu thủ tự do</span>
+            {% endif %}
         </h5>
     </div>
     <div class="card-body p-4">
-        <form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% endif %}">
+        <form method="post" action="{% if captained_teams|length == 1 %}{% url 'invite_player' player_pk=player.pk team_pk=captained_teams.0.pk %}{% else %}#{% endif %}">
             {% csrf_token %}
             
             <div class="row">
                 <!-- Left Column -->
                 <div class="col-md-6">
-                    <!-- Market Value Section -->
-                    <div class="form-section">
-                        <h6 class="section-title">
-                            <i class="bi bi-graph-up"></i>
-                            Thông tin giá trị
-                        </h6>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle-fill me-2"></i>
-                            <strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span>
-                        </div>
-                    </div>
+            <!-- Market Value Section -->
+            <div class="form-section">
+                <h6 class="section-title">
+                    <i class="bi bi-graph-up"></i>
+                    Thông tin giá trị
+                </h6>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Giá trị thị trường:</strong> <span class="text-primary fw-bold">{{ player.market_value|vnd_format }}</span>
+                </div>
+                
+                <!-- Contact Information -->
+                {% if player.agent_contact %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-telephone-fill me-2"></i>
+                    <strong>Liên hệ:</strong> {{ player.agent_contact }}
+                    <br><small class="text-muted">Lời mời sẽ được gửi đến địa chỉ liên hệ này</small>
+                </div>
+                {% elif player.user.email %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-envelope-fill me-2"></i>
+                    <strong>Email:</strong> {{ player.user.email }}
+                    <br><small class="text-muted">Lời mời sẽ được gửi đến email của cầu thủ</small>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Lưu ý:</strong> Cầu thủ chưa có thông tin liên hệ. Vui lòng liên hệ trực tiếp qua hồ sơ công khai.
+                </div>
+                {% endif %}
+            </div>
 
                     <!-- Team Selection Section -->
                     {% if captained_teams|length > 1 %}
@@ -93,10 +116,33 @@
 
             <!-- Submit Button -->
             <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-send-fill me-2"></i>
-                    Xác nhận gửi lời mời
-                </button>
+                {% if captained_teams|length == 1 %}
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-send-fill me-2"></i>
+                        Xác nhận gửi lời mời
+                    </button>
+                {% elif captained_teams|length > 1 %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Lưu ý:</strong> Bạn có nhiều đội bóng. Vui lòng chọn đội bóng trước khi gửi lời mời.
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" disabled>
+                        <i class="bi bi-send-fill me-2"></i>
+                        Xác nhận gửi lời mời
+                    </button>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Thông tin:</strong> Bạn cần có đội bóng để gửi lời mời. 
+                        <a href="{% url 'create_standalone_team' %}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-plus-circle me-1"></i>Tạo đội bóng
+                        </a>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" disabled>
+                        <i class="bi bi-send-fill me-2"></i>
+                        Xác nhận gửi lời mời
+                    </button>
+                {% endif %}
             </div>
         </form>
     </div>

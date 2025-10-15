@@ -202,6 +202,10 @@
                                 <a href="{{ notif.related_url }}" class="btn btn-primary btn-sm">
                                     <i class="bi bi-arrow-right me-1"></i>Xem chi tiết
                                 </a>
+                            {% elif notif.notification_type == 'player_claim_request' %}
+                                <a href="{% url 'confirm_player_claim' notification_id=notif.pk %}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-shield-check me-1"></i>Xác nhận liên kết
+                                </a>
                             {% endif %}
                         </div>
                         

@@ -69,6 +69,11 @@
 
         <div class="d-grid gap-2 col-6 mx-auto mt-4">
             <button type="submit" class="btn btn-primary btn-lg" disabled>Hoàn tất & Bắt đầu</button>
+            {% if pending_player_creation %}
+            <button type="submit" name="cancel_player_creation" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-x-circle me-2"></i>Hủy tạo cầu thủ
+            </button>
+            {% endif %}
         </div>
     </form>
 </div>

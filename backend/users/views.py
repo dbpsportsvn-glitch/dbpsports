@@ -194,10 +194,18 @@ def dashboard(request):
 def select_roles_view(request):
     profile = request.user.profile
     
-    if profile.has_selected_roles:
+    # Cho phép quay lại trang chọn vai trò nếu đang trong quá trình tạo cầu thủ
+    if profile.has_selected_roles and not request.session.get('pending_player_creation'):
         return redirect('dashboard')
 
     if request.method == 'POST':
+        # Kiểm tra nếu người dùng muốn hủy quy trình tạo cầu thủ
+        if 'cancel_player_creation' in request.POST:
+            if request.session.get('pending_player_creation'):
+                del request.session['pending_player_creation']
+            messages.info(request, "Đã hủy quy trình tạo cầu thủ.")
+            return redirect('dashboard')
+        
         selected_role_ids = request.POST.getlist('roles')
 
         if len(selected_role_ids) == 0:
@@ -221,18 +229,17 @@ def select_roles_view(request):
 
                 # === LOGIC MỚI: TỰ ĐỘNG TẠO HỒ SƠ CẦU THỦ & THƯỞNG PHIẾU (PHIÊN BẢN 2.0) ===
                 if 'PLAYER' in selected_role_ids:
-                    # Tạo hồ sơ cầu thủ tự do (team=None) và cộng thưởng 1 phiếu bầu
-                    Player.objects.get_or_create(
-                        user=request.user,
-                        defaults={
-                            'team': None, # Cầu thủ tự do, không thuộc đội nào
-                            'full_name': request.user.get_full_name() or request.user.username,
-                            'jersey_number': 99,
-                            'position': 'MF',
-                            'votes': 1  # Cộng thưởng trực tiếp
+                    # Kiểm tra xem đã có session chưa (để tránh ghi đè khi quay lại)
+                    if not request.session.get('pending_player_creation'):
+                        # Lưu thông tin vào session để hiển thị form nhập tên
+                        request.session['pending_player_creation'] = {
+                            'user_name': request.user.get_full_name() or request.user.username,
+                            'user_email': request.user.email,
+                            'has_existing_profile': hasattr(request.user, 'player_profile') and request.user.player_profile is not None
                         }
-                    )
-                    messages.success(request, "Chào mừng bạn! Một hồ sơ cầu thủ tự do đã được tạo và bạn được tặng 1 phiếu bầu.")
+                    
+                    # Chuyển hướng đến trang nhập tên cầu thủ (luôn đi qua workflow)
+                    return redirect('enter_player_name')
 
             # === Logic chuyển hướng sau khi xử lý ===
             if 'ORGANIZER' in selected_role_ids:
@@ -243,7 +250,132 @@ def select_roles_view(request):
             return redirect('profile_setup') 
 
     roles = Role.objects.all().order_by('order')
-    return render(request, 'users/select_roles.html', {'roles': roles})    
+    context = {
+        'roles': roles,
+        'pending_player_creation': request.session.get('pending_player_creation')
+    }
+    return render(request, 'users/select_roles.html', context)
+
+@login_required
+def enter_player_name_view(request):
+    """Nhập tên cầu thủ để kiểm tra liên kết"""
+    pending_data = request.session.get('pending_player_creation')
+    
+    if not pending_data:
+        messages.error(request, "Không tìm thấy thông tin đăng ký.")
+        return redirect('select_roles')
+    
+    if request.method == 'POST':
+        player_name = request.POST.get('player_name', '').strip()
+        
+        if not player_name:
+            messages.error(request, "Vui lòng nhập tên cầu thủ.")
+            return render(request, 'users/enter_player_name.html', {
+                'user_name': pending_data['user_name'],
+                'user_email': pending_data['user_email']
+            })
+        
+        # Kiểm tra xem có cầu thủ nào chưa có user không (được đội trưởng tạo trước)
+        existing_player = Player.objects.filter(
+            user__isnull=True,
+            full_name__iexact=player_name,
+            team__isnull=False  # Chỉ liên kết với cầu thủ đã có đội
+        ).first()
+        
+        # Lưu thông tin vào session để hiển thị xác nhận
+        if existing_player:
+            # Có cầu thủ đã có đội
+            request.session['pending_player_link'] = {
+                'player_id': existing_player.pk,
+                'player_name': existing_player.full_name,
+                'team_name': existing_player.team.name,
+                'has_existing_player': True,
+                'entered_name': player_name
+            }
+        else:
+            # Không có cầu thủ đã có đội, chỉ tạo cầu thủ tự do
+            request.session['pending_player_link'] = {
+                'player_id': None,
+                'player_name': player_name,
+                'team_name': None,
+                'has_existing_player': False,
+                'entered_name': player_name
+            }
+        
+        # Chuyển hướng đến trang xác nhận (giữ lại session để có thể quay lại)
+        return redirect('confirm_player_link')
+    
+    context = {
+        'user_name': pending_data['user_name'],
+        'user_email': pending_data['user_email'],
+        'has_existing_profile': pending_data.get('has_existing_profile', False)
+    }
+    return render(request, 'users/enter_player_name.html', context)
+
+@login_required
+def confirm_player_link_view(request):
+    """Xác nhận liên kết với cầu thủ đã có đội hoặc tạo cầu thủ tự do"""
+    pending_data = request.session.get('pending_player_link')
+    
+    if not pending_data:
+        messages.error(request, "Không tìm thấy thông tin cầu thủ cần liên kết.")
+        return redirect('select_roles')
+    
+    # Lấy thông tin cầu thủ nếu có
+    player = None
+    if pending_data.get('has_existing_player') and pending_data.get('player_id'):
+        try:
+            player = Player.objects.get(pk=pending_data['player_id'])
+        except Player.DoesNotExist:
+            messages.error(request, "Cầu thủ không tồn tại.")
+            del request.session['pending_player_link']
+            return redirect('select_roles')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'link' and player:
+            # Liên kết với cầu thủ đã có đội
+            player.user = request.user
+            player.save()
+            del request.session['pending_player_link']
+            # Xóa session tạo cầu thủ khi hoàn tất
+            if request.session.get('pending_player_creation'):
+                del request.session['pending_player_creation']
+            messages.success(request, f"Chào mừng bạn! Bạn đã được liên kết với hồ sơ cầu thủ '{player.full_name}' trong đội '{player.team.name}'.")
+            return redirect('profile_setup')
+            
+        elif action == 'create_new':
+            # Tạo cầu thủ tự do mới
+            player_name = pending_data.get('entered_name', request.user.get_full_name() or request.user.username)
+            Player.objects.get_or_create(
+                user=request.user,
+                defaults={
+                    'team': None,
+                    'full_name': player_name,
+                    'jersey_number': 99,
+                    'position': 'MF',
+                    'votes': 1
+                }
+            )
+            del request.session['pending_player_link']
+            # Xóa session tạo cầu thủ khi hoàn tất
+            if request.session.get('pending_player_creation'):
+                del request.session['pending_player_creation']
+            messages.success(request, f"Chào mừng bạn! Hồ sơ cầu thủ tự do '{player_name}' đã được tạo và bạn được tặng 1 phiếu bầu.")
+            return redirect('profile_setup')
+    
+    # Lấy thông tin từ session pending_player_creation
+    creation_data = request.session.get('pending_player_creation', {})
+    
+    context = {
+        'player': player,
+        'team_name': pending_data.get('team_name'),
+        'has_existing_player': pending_data.get('has_existing_player', False),
+        'user_name': pending_data.get('entered_name', pending_data.get('player_name')),
+        'has_existing_profile': creation_data.get('has_existing_profile', False)
+    }
+    return render(request, 'users/confirm_player_link.html', context)
 
 @login_required
 def profile_setup_view(request):

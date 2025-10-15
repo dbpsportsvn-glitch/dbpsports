@@ -1326,18 +1326,124 @@ def player_detail(request, pk):
 def claim_player_profile(request, pk):
     player_to_claim = get_object_or_404(Player, pk=pk)
 
-    if hasattr(request.user, 'player_profile') and request.user.player_profile is not None:
-        messages.error(request, "Tài khoản của bạn đã được liên kết với một hồ sơ cầu thủ khác.")
-        return redirect('player_detail', pk=pk)
-
     if player_to_claim.user is not None:
         messages.error(request, "Hồ sơ này đã được một tài khoản khác liên kết.")
         return redirect('player_detail', pk=pk)
 
+    # Kiểm tra xem có cần xác nhận từ đội trưởng không
+    if player_to_claim.team and player_to_claim.team.captain != request.user:
+        # Tạo thông báo cho đội trưởng
+        notification = Notification.objects.create(
+            user=player_to_claim.team.captain,
+            title="Yêu cầu liên kết cầu thủ",
+            message=f"{request.user.get_full_name()} muốn liên kết với cầu thủ '{player_to_claim.full_name}' trong đội '{player_to_claim.team.name}'. Vui lòng xác nhận.",
+            notification_type='player_claim_request',
+            related_player=player_to_claim,
+            related_user=request.user
+        )
+        # Cập nhật related_url sau khi có pk
+        notification.related_url = f"/confirm-player-claim/{notification.pk}/"
+        notification.save()
+        
+        messages.info(request, f"Đã gửi yêu cầu liên kết đến đội trưởng {player_to_claim.team.captain.get_full_name()}. Vui lòng chờ xác nhận.")
+        return redirect('player_detail', pk=pk)
+    
+    # Nếu là cầu thủ tự do hoặc đội trưởng tự claim, liên kết trực tiếp
+    if hasattr(request.user, 'player_profile') and request.user.player_profile is not None:
+        old_player = request.user.player_profile
+        old_player.user = None
+        old_player.save()
+        messages.info(request, f"Đã hủy liên kết với hồ sơ cầu thủ '{old_player.full_name}'.")
+
     player_to_claim.user = request.user
     player_to_claim.save()
-    messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ {player_to_claim.full_name}.")
+    messages.success(request, f"Bạn đã liên kết thành công với hồ sơ cầu thủ '{player_to_claim.full_name}'.")
     return redirect('player_detail', pk=pk)
+
+@login_required
+def confirm_player_claim_view(request, notification_id):
+    """Xác nhận liên kết cầu thủ từ đội trưởng"""
+    try:
+        notification = Notification.objects.get(pk=notification_id)
+    except Notification.DoesNotExist:
+        messages.error(request, "Thông báo không tồn tại.")
+        return redirect('transfer_market')
+    
+    # Kiểm tra quyền truy cập
+    if notification.user != request.user:
+        messages.error(request, "Bạn không có quyền truy cập thông báo này.")
+        return redirect('transfer_market')
+    
+    if notification.notification_type != 'player_claim_request':
+        messages.error(request, "Thông báo không hợp lệ.")
+        return redirect('transfer_market')
+    
+    player = notification.related_player
+    claiming_user = notification.related_user
+    
+    if not player or not claiming_user:
+        messages.error(request, "Thông tin yêu cầu không đầy đủ.")
+        return redirect('transfer_market')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'confirm':
+            # Đội trưởng xác nhận
+            if player.team and player.team.captain == request.user:
+                # Nếu user đã có player_profile, xóa liên kết cũ
+                if hasattr(claiming_user, 'player_profile') and claiming_user.player_profile is not None:
+                    old_player = claiming_user.player_profile
+                    old_player.user = None
+                    old_player.save()
+                
+                # Liên kết với hồ sơ mới
+                player.user = claiming_user
+                player.save()
+                
+                # Tạo thông báo cho người được liên kết
+                Notification.objects.create(
+                    user=claiming_user,
+                    title="Liên kết cầu thủ thành công",
+                    message=f"Đội trưởng {request.user.get_full_name()} đã xác nhận liên kết bạn với hồ sơ cầu thủ '{player.full_name}' trong đội '{player.team.name}'.",
+                    notification_type='player_claim_confirmed'
+                )
+                
+                # Xóa thông báo yêu cầu
+                notification.delete()
+                
+                messages.success(request, f"Đã xác nhận liên kết {claiming_user.get_full_name()} với cầu thủ '{player.full_name}'.")
+                return redirect('team_detail', pk=player.team.pk)
+            else:
+                messages.error(request, "Bạn không có quyền xác nhận liên kết này.")
+                
+        elif action == 'reject':
+            # Đội trưởng từ chối
+            # Tạo thông báo cho người bị từ chối
+            Notification.objects.create(
+                user=claiming_user,
+                title="Yêu cầu liên kết bị từ chối",
+                message=f"Đội trưởng {request.user.get_full_name()} đã từ chối yêu cầu liên kết bạn với hồ sơ cầu thủ '{player.full_name}' trong đội '{player.team.name}'.",
+                notification_type='player_claim_rejected'
+            )
+            
+            # Xóa thông báo yêu cầu
+            notification.delete()
+            
+            messages.info(request, f"Đã từ chối yêu cầu liên kết của {claiming_user.get_full_name()}.")
+            return redirect('team_detail', pk=player.team.pk)
+    
+    # Kiểm tra quyền truy cập
+    if not player.team or player.team.captain != request.user:
+        messages.error(request, "Bạn không có quyền xác nhận liên kết này.")
+        return redirect('transfer_market')
+    
+    context = {
+        'player': player,
+        'team_name': player.team.name,
+        'claiming_user': claiming_user
+    }
+    return render(request, 'tournaments/confirm_player_claim.html', context)
 
 @login_required
 def tournament_bulk_upload(request, tournament_pk):
@@ -2548,9 +2654,10 @@ def invite_player_view(request, player_pk, team_pk):
         messages.error(request, "Bạn không phải là đội trưởng của đội này.")
         return redirect('transfer_market') # Chuyển về chợ chuyển nhượng
 
-    if not target_player.team:
-        messages.error(request, "Cầu thủ này là cầu thủ tự do, bạn có thể 'Chiêu mộ' trực tiếp.")
-        return redirect('transfer_market')
+    # Cho phép mời cầu thủ tự do
+    # if not target_player.team:
+    #     messages.error(request, "Cầu thủ này là cầu thủ tự do, bạn có thể 'Chiêu mộ' trực tiếp.")
+    #     return redirect('transfer_market')
 
     if target_player.team == inviting_team:
         messages.error(request, "Bạn không thể mời một cầu thủ đã ở trong đội của mình.")
@@ -2583,37 +2690,56 @@ def invite_player_view(request, player_pk, team_pk):
                     offer_amount=offer_amount
                 )
 
-            # Lấy thông tin đội trưởng của đội bị mời
-            captain_to_notify = target_player.team.captain
-            
-            # Cập nhật URL thông báo trong app để trỏ thẳng đến tab chuyển nhượng
-            notification_url = request.build_absolute_uri(reverse('dashboard') + '?tab=transfers')
-
-            # Gửi thông báo trong app (in-app notification)
-            Notification.objects.create(
-                user=captain_to_notify,
-                title="Bạn có lời mời chuyển nhượng mới",
-                message=(
+            # Xác định người nhận thông báo
+            if target_player.team:
+                # Cầu thủ có đội -> thông báo cho đội trưởng
+                captain_to_notify = target_player.team.captain
+                notification_title = "Bạn có lời mời chuyển nhượng mới"
+                notification_message = (
                     f"Đội '{inviting_team.name}' đã gửi lời mời chuyển nhượng cho cầu thủ "
                     f"'{target_player.full_name}' của bạn."
-                ),
-                notification_type=Notification.NotificationType.GENERIC,
-                related_url=notification_url
-            )
+                )
+                email_subject = f"[DBP Sports] Lời mời chuyển nhượng cho cầu thủ {target_player.full_name}"
+            else:
+                # Cầu thủ tự do -> thông báo cho cầu thủ hoặc người đại diện
+                if target_player.user:
+                    captain_to_notify = target_player.user
+                    notification_title = "Bạn có lời mời gia nhập đội bóng"
+                    notification_message = (
+                        f"Đội '{inviting_team.name}' đã gửi lời mời cho bạn gia nhập đội bóng của họ."
+                    )
+                    email_subject = f"[DBP Sports] Lời mời gia nhập đội bóng từ {inviting_team.name}"
+                else:
+                    # Không có user account -> không thể gửi thông báo
+                    captain_to_notify = None
+            
+            if captain_to_notify:
+                # Cập nhật URL thông báo trong app để trỏ thẳng đến tab chuyển nhượng
+                notification_url = request.build_absolute_uri(reverse('dashboard') + '?tab=transfers')
 
-            # === BẮT ĐẦU THÊM MỚI: GỬI EMAIL THÔNG BÁO ===
-            if captain_to_notify.email:
-                send_notification_email(
-                    subject=f"[DBP Sports] Lời mời chuyển nhượng cho cầu thủ {target_player.full_name}",
-                    template_name='organizations/emails/new_transfer_invitation.html',
-                    context={
-                        'inviting_team': inviting_team,
-                        'current_team': target_player.team,
-                        'player': target_player
-                    },
-                    recipient_list=[captain_to_notify.email],
-                    request=request
-                )        
+                # Gửi thông báo trong app (in-app notification)
+                Notification.objects.create(
+                    user=captain_to_notify,
+                    title=notification_title,
+                    message=notification_message,
+                    notification_type=Notification.NotificationType.GENERIC,
+                    related_url=notification_url
+                )
+
+                # === GỬI EMAIL THÔNG BÁO ===
+                if captain_to_notify.email:
+                    email_template = 'organizations/emails/new_transfer_invitation.html' if target_player.team else 'organizations/emails/free_agent_invitation.html'
+                    send_notification_email(
+                        subject=email_subject,
+                        template_name=email_template,
+                        context={
+                            'inviting_team': inviting_team,
+                            'current_team': target_player.team,
+                            'player': target_player
+                        },
+                        recipient_list=[captain_to_notify.email],
+                        request=request
+                    )        
 
             messages.success(request, f"Đã gửi lời mời {transfer.get_transfer_type_display()} trị giá {offer_amount:,.0f} VNĐ đến cầu thủ {target_player.full_name} thành công!")
 

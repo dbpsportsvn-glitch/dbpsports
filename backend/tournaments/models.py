@@ -524,6 +524,9 @@ class Notification(models.Model):
         DRAW_COMPLETE = 'DRAW_COMPLETE', 'Bốc thăm hoàn tất'  
         SCHEDULE_CREATED = 'SCHEDULE_CREATED', 'Lịch thi đấu mới' 
         VOTE_AWARDED = 'VOTE_AWARDED', 'Nhận phiếu bầu'
+        PLAYER_CLAIM_REQUEST = 'player_claim_request', 'Yêu cầu liên kết cầu thủ'
+        PLAYER_CLAIM_CONFIRMED = 'player_claim_confirmed', 'Liên kết cầu thủ thành công'
+        PLAYER_CLAIM_REJECTED = 'player_claim_rejected', 'Yêu cầu liên kết bị từ chối'
         GENERIC = 'GENERIC', 'Thông báo chung'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
@@ -531,13 +534,16 @@ class Notification(models.Model):
     message = models.TextField("Nội dung")
     notification_type = models.CharField(
         "Loại thông báo",
-        max_length=20,
+        max_length=30,
         choices=NotificationType.choices,
         default=NotificationType.GENERIC
     )
     is_read = models.BooleanField("Đã đọc", default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     related_url = models.URLField("Link liên quan", max_length=500, null=True, blank=True)
+    # Thêm các trường để lưu thông tin yêu cầu liên kết cầu thủ
+    related_player = models.ForeignKey('Player', on_delete=models.CASCADE, null=True, blank=True, related_name='claim_notifications')
+    related_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, related_name='claim_request_notifications')
 
     class Meta:
         ordering = ['-created_at']

@@ -7,6 +7,8 @@ urlpatterns = [
     # Giữ lại các URL quan trọng của bạn
     path('dashboard/', views.dashboard, name='dashboard'),
     path('select-roles/', views.select_roles_view, name='select_roles'),
+    path('enter-player-name/', views.enter_player_name_view, name='enter_player_name'),
+    path('confirm-player-link/', views.confirm_player_link_view, name='confirm_player_link'),
     path('profile-setup/', views.profile_setup_view, name='profile_setup'),
     path('profile/<str:username>/', views.public_profile_view, name='public_profile'),
     

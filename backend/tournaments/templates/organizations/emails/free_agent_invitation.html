@@ -1,0 +1,75 @@
+{% extends 'emails/base_email.html' %}
+{% load humanize %}
+
+{% block title %}Lời mời gia nhập đội bóng{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">⚽ Lời mời gia nhập đội bóng</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">{{ inviting_team.name }} muốn mời bạn gia nhập!</p>
+    </div>
+
+    <div style="padding: 30px; background: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 10px;">Xin chào {{ player.full_name }}!</h2>
+            <p style="color: #666; font-size: 16px; line-height: 1.6;">
+                Đội bóng <strong style="color: #667eea;">{{ inviting_team.name }}</strong> đã gửi lời mời cho bạn gia nhập đội bóng của họ.
+            </p>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin: 20px 0;">
+            <h3 style="color: #333; margin-top: 0; margin-bottom: 15px;">📋 Thông tin lời mời:</h3>
+            <div style="display: grid; gap: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666;">Đội bóng:</span>
+                    <strong style="color: #667eea;">{{ inviting_team.name }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666;">Loại hình:</span>
+                    <strong style="color: #333;">{{ transfer.get_transfer_type_display }}</strong>
+                </div>
+                {% if transfer.offer_amount %}
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666;">Phí đề nghị:</span>
+                    <strong style="color: #28a745;">{{ transfer.offer_amount|intcomma }} VNĐ</strong>
+                </div>
+                {% endif %}
+                {% if transfer.loan_end_date %}
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #666;">Ngày kết thúc:</span>
+                    <strong style="color: #333;">{{ transfer.loan_end_date|date:"d/m/Y" }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ notification_url }}" 
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: white; 
+                      padding: 15px 30px; 
+                      text-decoration: none; 
+                      border-radius: 8px; 
+                      font-weight: bold; 
+                      display: inline-block;
+                      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                🔗 Xem chi tiết và phản hồi
+            </a>
+        </div>
+
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404; font-size: 14px;">
+                <strong>💡 Lưu ý:</strong> Bạn có thể xem chi tiết lời mời và phản hồi trực tiếp trên trang web DBP Sports.
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 14px; margin: 0;">
+                Email này được gửi tự động từ hệ thống DBP Sports.<br>
+                Nếu bạn không mong muốn nhận email này, vui lòng liên hệ với chúng tôi.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

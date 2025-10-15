@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Xác nhận liên kết cầu thủ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-check-fill me-2"></i>
+                        Xác nhận liên kết cầu thủ
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Progress indicator -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">Bước 1: Chọn vai trò</small>
+                                <small class="text-muted">Bước 2: Nhập tên cầu thủ</small>
+                                <small class="text-primary fw-bold">Bước 3: Xác nhận</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if has_existing_profile %}
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Bạn đã có hồ sơ cầu thủ
+                        </h6>
+                        <p class="mb-2">Bạn đã có hồ sơ cầu thủ hiện tại. Việc liên kết hoặc tạo mới sẽ:</p>
+                        <ul class="mb-0">
+                            <li><strong>Hủy liên kết hiện tại:</strong> Hồ sơ cầu thủ hiện tại sẽ trở thành tự do</li>
+                            <li><strong>Liên kết với hồ sơ mới:</strong> Bạn sẽ được liên kết với hồ sơ được chọn</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if has_existing_player %}
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Tìm thấy cầu thủ trùng tên!
+                        </h6>
+                        <p class="mb-2">Chúng tôi tìm thấy một hồ sơ cầu thủ có tên trùng khớp với bạn đã được đội trưởng tạo sẵn. Bạn có thể:</p>
+                        <ul class="mb-0">
+                            <li><strong>Liên kết với đội hiện có:</strong> Tham gia đội ngay lập tức</li>
+                            <li><strong>Tạo cầu thủ tự do mới:</strong> Tạo hồ sơ riêng và chờ được mời</li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Tạo hồ sơ cầu thủ tự do
+                        </h6>
+                        <p class="mb-2">Không tìm thấy cầu thủ trùng tên. Bạn sẽ tạo hồ sơ cầu thủ tự do mới:</p>
+                        <ul class="mb-0">
+                            <li><strong>Hồ sơ tự do:</strong> Có thể được các đội khác mời</li>
+                            <li><strong>Tham gia đội:</strong> Sau khi được đội trưởng mời</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        {% if has_existing_player %}
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-people-fill me-2"></i>
+                                        Liên kết với đội hiện có
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-person-circle text-success" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <h6 class="text-success">Thông tin cầu thủ:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tên:</strong> {{ player.full_name }}</li>
+                                        <li><strong>Đội:</strong> {{ team_name }}</li>
+                                        <li><strong>Số áo:</strong> {{ player.jersey_number }}</li>
+                                        <li><strong>Vị trí:</strong> {{ player.position }}</li>
+                                    </ul>
+                                    <div class="alert alert-success">
+                                        <small>
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Bạn sẽ được liên kết với đội này và có thể tham gia các hoạt động của đội ngay lập tức.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-{% if has_existing_player %}6{% else %}12{% endif %}">
+                            <div class="card border-warning h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-person-plus-fill me-2"></i>
+                                        Tạo cầu thủ tự do mới
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-person-plus text-warning" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <h6 class="text-warning">Tạo hồ sơ mới:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Tên:</strong> {{ user_name }}</li>
+                                        <li><strong>Đội:</strong> Chưa có đội</li>
+                                        <li><strong>Số áo:</strong> 99</li>
+                                        <li><strong>Vị trí:</strong> MF</li>
+                                    </ul>
+                                    <div class="alert alert-warning">
+                                        <small>
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Bạn sẽ tạo một hồ sơ cầu thủ tự do mới và có thể được các đội khác mời sau này.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <a href="{% url 'enter_player_name' %}" class="btn btn-outline-secondary btn-lg w-100">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Quay lại bước trước
+                            </a>
+                        </div>
+                        {% if has_existing_player %}
+                        <div class="col-md-4">
+                            <form method="post" class="d-grid">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="link">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    Liên kết với đội {{ team_name }}
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <form method="post" class="d-grid">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="create_new">
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-plus-circle-fill me-2"></i>
+                                    Tạo cầu thủ tự do mới
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <div class="col-md-8">
+                            <form method="post" class="d-grid">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="create_new">
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-plus-circle-fill me-2"></i>
+                                    Tạo cầu thủ tự do mới
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="mt-4">
+                        <div class="card border-light">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-question-circle me-2"></i>
+                                    Cần hỗ trợ?
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-lightbulb me-2"></i>
+                                            Lời khuyên
+                                        </h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Chọn "Liên kết với đội" nếu bạn muốn tham gia ngay</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Chọn "Tạo cầu thủ tự do" nếu bạn muốn tự do hơn</li>
+                                            <li><i class="bi bi-check-circle text-success me-2"></i>Bạn có thể thay đổi quyết định sau này</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-info">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            Thông tin thêm
+                                        </h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="bi bi-arrow-right text-info me-2"></i>Cầu thủ tự do có thể được mời bởi nhiều đội</li>
+                                            <li><i class="bi bi-arrow-right text-info me-2"></i>Liên kết với đội giúp bạn tham gia ngay lập tức</li>
+                                            <li><i class="bi bi-arrow-right text-info me-2"></i>Bạn sẽ nhận được 1 phiếu bầu khi tạo hồ sơ</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+</style>
+{% endblock %}
