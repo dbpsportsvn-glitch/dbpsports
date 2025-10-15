@@ -563,23 +563,45 @@
 })();
 </script>
 
-<!-- JSON-LD (tuỳ chọn cho SEO) -->
+<!-- JSON-LD Structured Data for Match Event -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
   "name": "{{ match.team1.name|escapejs }} vs {{ match.team2.name|escapejs }}",
+  "description": "Trận đấu {{ match.get_stage_display }} - {{ match.tournament.name|escapejs }}",
   "sport": "Soccer",
   "startDate": "{{ match.match_time|date:'c' }}",
+  "endDate": "{{ match.match_time|date:'c'|add:'+2 hours' }}",
   "location": {
     "@type": "Place",
-    "name": "{{ match.location|escapejs }}",
-    "address": {"@type": "PostalAddress", "addressLocality": "Việt Nam"}
+    "name": "{{ match.location|default:match.tournament.location_detail|default:'Việt Nam'|escapejs }}",
+    "address": {
+      "@type": "PostalAddress", 
+      "addressLocality": "{{ match.tournament.location_detail|default:'Việt Nam'|escapejs }}",
+      "addressCountry": "VN"
+    }
   },
-  "competitor": [
+  "organizer": {
+    "@type": "Organization",
+    "name": "{{ match.tournament.organization.name|default:'DBP Sports'|escapejs }}",
+    "url": "{% if match.tournament.organization %}{{ request.build_absolute_uri }}{% else %}https://dbpsports.com{% endif %}"
+  },
+  "performer": [
     {"@type": "SportsTeam", "name": "{{ match.team1.name|escapejs }}"},
     {"@type": "SportsTeam", "name": "{{ match.team2.name|escapejs }}"}
-  ]
+  ],
+  "eventStatus": "{% if match.team1_score is not None and match.team2_score is not None %}EventCompleted{% elif match.match_time|date:'Y-m-d H:i:s' < now|date:'Y-m-d H:i:s' %}EventInProgress{% else %}EventScheduled{% endif %}",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "VND",
+    "availability": "InStock",
+    "validFrom": "{{ match.match_time|date:'c' }}",
+    "validThrough": "{{ match.match_time|date:'c'|add:'+2 hours' }}"
+  },
+  "image": "{% if match.cover_photo %}{{ request.scheme }}://{{ request.get_host }}{{ match.cover_photo.url }}{% elif match.tournament.image %}{{ request.scheme }}://{{ request.get_host }}{{ match.tournament.image.url }}{% else %}https://dbpsports.com/static/images/placeholder_logo.png{% endif %}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}"
 }
 </script>
 {% endblock %}

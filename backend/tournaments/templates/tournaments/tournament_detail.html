@@ -6351,5 +6351,46 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<!-- JSON-LD Structured Data for Tournament Event -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ tournament.name|escapejs }}",
+  "description": "{{ tournament.rules|truncatewords:50|escapejs }}",
+  "startDate": "{{ tournament.start_date|date:'c' }}",
+  "endDate": "{{ tournament.end_date|date:'c' }}",
+  "location": {
+    "@type": "Place",
+    "name": "{{ tournament.location_detail|default:'Việt Nam'|escapejs }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ tournament.location_detail|default:'Việt Nam'|escapejs }}",
+      "addressCountry": "VN"
+    }
+  },
+  "organizer": {
+    "@type": "Organization",
+    "name": "{{ tournament.organization.name|default:'DBP Sports'|escapejs }}",
+    "url": "{% if tournament.organization %}{{ request.build_absolute_uri }}{% else %}https://dbpsports.com{% endif %}"
+  },
+  "performer": {
+    "@type": "SportsTeam",
+    "name": "{{ tournament.name|escapejs }} Teams"
+  },
+  "sport": "Soccer",
+  "eventStatus": "{% if tournament.status == 'REGISTRATION_OPEN' %}EventScheduled{% elif tournament.status == 'IN_PROGRESS' %}EventInProgress{% else %}EventCompleted{% endif %}",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ tournament.registration_fee }}",
+    "priceCurrency": "VND",
+    "availability": "{% if tournament.status == 'REGISTRATION_OPEN' %}InStock{% else %}OutOfStock{% endif %}",
+    "validFrom": "{{ tournament.start_date|date:'c' }}",
+    "validThrough": "{{ tournament.end_date|date:'c' }}"
+  },
+  "image": "{% if tournament.image %}{{ request.scheme }}://{{ request.get_host }}{{ tournament.image.url }}{% else %}https://dbpsports.com/static/images/placeholder_logo.png{% endif %}",
+  "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}"
+}
+</script>
 
 {% endblock %}
