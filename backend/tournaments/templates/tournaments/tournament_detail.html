@@ -67,6 +67,11 @@
                 <span class="status-badge status-{{ tournament.status|lower }}">
                     {{ tournament.get_status_display }}
                 </span>
+                {% if tournament.status == 'REGISTRATION_OPEN' and user.is_authenticated %}
+                    <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-primary btn-sm ms-3 registration-quick-btn">
+                        <i class="bi bi-pencil-square me-1"></i>Đăng ký ngay
+                    </a>
+                {% endif %}
             </div>
         </div>
 
@@ -2993,6 +2998,28 @@
         gap: 0.5rem;
     }
 
+    .registration-quick-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .registration-quick-btn:hover {
+        background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .registration-quick-btn:active {
+        transform: translateY(0);
+    }
+
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -3095,6 +3122,13 @@
 
         .tournament-status {
             justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .registration-quick-btn {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
         }
 
         .voting-btn {
