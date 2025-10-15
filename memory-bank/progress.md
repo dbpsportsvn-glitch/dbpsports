@@ -57,6 +57,11 @@
   - Trang lưu trữ giải đấu (màu tím phân biệt)
   - Share và copy link functionality
   - **Compact profile cards:** Tối ưu hiển thị thông tin vai trò với layout gọn gàng, hover effects và gradient styling cho header cards.
+  - **Modern Profile Navigation:** Thiết kế lại navigation tabs của trang hồ sơ công khai theo phong cách modern-tournament-nav với gradient tím, backdrop blur, responsive design và đồng bộ desktop/mobile.
+  - **Professional Cards Redesign:** Thiết kế lại tab chuyên môn với các thẻ thông tin đồng bộ và đẹp mắt, bao gồm avatar với gradient, info grid, status badges, và responsive design cho tất cả vai trò (Coach, Sponsor, Stadium, Commentator, Media, Referee).
+  - **Overview Tab Redesign:** Thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ, bao gồm Bio Card, Personal Info Card với role badges có icon, Professional Summary Card, Achievements Card và Reviews Card. Sắp xếp lại thứ tự thẻ để thông tin cá nhân và chuyên môn hiển thị trước.
+  - **QR Code Integration:** Thêm mã QR thanh toán vào Stadium Profile Card trong tab chuyên môn với thiết kế center alignment, kích thước 120px và styling đẹp mắt.
+  - **SEO Optimization - Structured Data Event:** Hoàn thành việc khắc phục các vấn đề Structured Data Event mà Google Analytics báo cáo. Đã thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) vào các template: tournament_detail.html, match_detail.html, home.html, active_list.html, archive.html. Sử dụng Schema.org Event với JSON-LD format để cải thiện SEO và hiển thị rich results trên Google.
 
 - **Những gì cần làm tiếp:**
   - Hoàn thiện trang "Thị trường việc làm" (Job Market)
@@ -65,7 +70,6 @@
   - Tích hợp payment gateway thực tế
   - Hoàn thiện module Shop
   - Thêm analytics và reporting
-  - SEO optimization
 
 - **Các vấn đề đã biết:**
   - (Không có vấn đề nghiêm trọng đang track)

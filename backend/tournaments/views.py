@@ -88,6 +88,7 @@ from .models import (
     VoteRecord,
     SponsorshipPackage,
 )
+from shop.models import Cart
 from .utils import (
     get_current_vote_value,
     send_notification_email,
@@ -823,21 +824,39 @@ def match_print_view(request, pk):
 def team_payment(request, pk):
     registration = get_object_or_404(TeamRegistration, pk=pk)
     team = registration.team
+    tournament = registration.tournament
 
     if request.user != team.captain:
         return redirect('home')
+
+    # Lấy cart của user
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    
+    # Tính toán giảm giá
+    cart_total = cart.total_price
+    discount_amount = tournament.calculate_shop_discount(cart.items.all())
+    final_fee = tournament.get_final_registration_fee(cart.items.all())
 
     if request.method == 'POST':
         form = PaymentProofForm(request.POST, request.FILES, instance=registration)
         if form.is_valid():
             reg = form.save(commit=False)
             reg.payment_status = 'PENDING'
+            
+            # Xử lý tích hợp shop
+            use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
+            if use_shop_discount and tournament.shop_discount_percentage > 0:
+                if cart_total > 0:
+                    messages.info(request, f'Bạn đã sử dụng giảm giá từ shop ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                else:
+                    messages.warning(request, 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
+            
             reg.save()
 
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team},
+                context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -845,7 +864,7 @@ def team_payment(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team},
+                    context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                     recipient_list=[team.captain.email]
                 )
 
@@ -858,7 +877,11 @@ def team_payment(request, pk):
     context = {
         'form': form,
         'team': team,
-        'registration': registration
+        'registration': registration,
+        'cart': cart,
+        'cart_total': cart_total,
+        'discount_amount': discount_amount,
+        'final_fee': final_fee,
     }
     return render(request, 'tournaments/payment_proof.html', context)
 
@@ -3624,3 +3647,104 @@ def create_free_agent_player(request):
         'is_free_agent': True,
     }
     return render(request, 'tournaments/create_player_profile.html', context)
+
+
+@login_required
+@require_POST
+def calculate_shop_discount(request, tournament_pk):
+    """API tính toán giảm giá từ shop cart cho payment flow"""
+    try:
+        tournament = get_object_or_404(Tournament, pk=tournament_pk)
+        
+        # Lấy cart của user
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Tính tổng giá trị cart
+        cart_total = cart.total_price
+        
+        # Tính giảm giá từ tournament
+        discount_amount = tournament.calculate_shop_discount(cart.items.all())
+        final_fee = tournament.get_final_registration_fee(cart.items.all())
+        
+        return JsonResponse({
+            'success': True,
+            'cart_total': float(cart_total),
+            'discount_percentage': float(tournament.shop_discount_percentage),
+            'discount_amount': float(discount_amount),
+            'original_fee': float(tournament.registration_fee),
+            'final_fee': float(final_fee),
+            'cart_items_count': cart.total_items,
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@login_required
+def payment_with_shop(request, pk):
+    """Payment page với tích hợp shop cart"""
+    registration = get_object_or_404(TeamRegistration, pk=pk)
+    team = registration.team
+    tournament = registration.tournament
+
+    if request.user != team.captain:
+        return redirect('home')
+
+    # Lấy cart của user
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    
+    # Tính toán giảm giá
+    cart_total = cart.total_price
+    discount_amount = tournament.calculate_shop_discount(cart.items.all())
+    final_fee = tournament.get_final_registration_fee(cart.items.all())
+
+    if request.method == 'POST':
+        form = PaymentProofForm(request.POST, request.FILES, instance=registration)
+        if form.is_valid():
+            reg = form.save(commit=False)
+            reg.payment_status = 'PENDING'
+            
+            # Xử lý tích hợp shop
+            use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
+            if use_shop_discount and tournament.shop_discount_percentage > 0:
+                if cart_total > 0:
+                    messages.info(request, f'Bạn đã sử dụng giảm giá từ shop ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                else:
+                    messages.warning(request, 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
+            
+            reg.save()
+
+            send_notification_email(
+                subject=f"Xác nhận thanh toán mới từ đội {team.name}",
+                template_name='tournaments/emails/new_payment_proof.html',
+                context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                recipient_list=[settings.ADMIN_EMAIL]
+            )
+
+            if team.captain.email:
+                send_notification_email(
+                    subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
+                    template_name='tournaments/emails/payment_pending_confirmation.html',
+                    context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                    recipient_list=[team.captain.email]
+                )
+
+            messages.success(request, 'Đã tải lên hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
+
+            return redirect('team_detail', pk=team.pk)
+    else:
+        form = PaymentProofForm(instance=registration)
+
+    context = {
+        'form': form,
+        'team': team,
+        'registration': registration,
+        'cart': cart,
+        'cart_total': cart_total,
+        'discount_amount': discount_amount,
+        'final_fee': final_fee,
+    }
+    return render(request, 'tournaments/payment_proof.html', context)

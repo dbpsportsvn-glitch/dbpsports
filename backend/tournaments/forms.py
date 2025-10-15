@@ -109,6 +109,12 @@ class PlayerCreationForm(forms.ModelForm):
 
 
 class PaymentProofForm(forms.ModelForm):
+    # Field để tích hợp shop - checkbox trong template sẽ submit giá trị này
+    use_shop_discount = forms.BooleanField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    
     class Meta:
         model = TeamRegistration  # <-- THAY ĐỔI QUAN TRỌNG NHẤT
         fields = ['payment_proof']
@@ -228,7 +234,7 @@ class TournamentForm(forms.ModelForm):
         model = Tournament
         fields = [
             'name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image', 'rules',
-            'registration_fee', 'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
+            'registration_fee', 'shop_discount_percentage', 'bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'
         ]
         labels = {
             'name': 'Tên giải đấu',
@@ -241,6 +247,7 @@ class TournamentForm(forms.ModelForm):
             'image': 'Ảnh bìa / Banner giải đấu',
             'rules': 'Điều lệ & Quy định',
             'registration_fee': 'Phí đăng ký (VNĐ)',
+            'shop_discount_percentage': 'Phần trăm tiền lãi từ shop (%)',
             'bank_name': 'Tên ngân hàng (cho đội tham gia chuyển khoản)',
             'bank_account_number': 'Số tài khoản',
             'bank_account_name': 'Tên chủ tài khoản',
@@ -254,6 +261,12 @@ class TournamentForm(forms.ModelForm):
                 'min': '0',
                 'step': '100000',
                 'placeholder': 'Nhập phí đăng ký cho mỗi đội'
+            }),
+            'shop_discount_percentage': forms.NumberInput(attrs={
+                'min': '0',
+                'max': '100',
+                'step': '0.01',
+                'placeholder': 'Nhập phần trăm tiền lãi được trừ (0-100)'
             }),
         }        
 

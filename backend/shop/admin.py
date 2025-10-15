@@ -58,7 +58,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('description', 'short_description')
         }),
         ('Giá cả', {
-            'fields': ('price', 'sale_price')
+            'fields': ('price', 'sale_price', 'cost_price')
         }),
         ('Kho hàng', {
             'fields': ('stock_quantity', 'weight')

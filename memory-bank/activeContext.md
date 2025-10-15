@@ -4,6 +4,11 @@
   - (Sẽ được cập nhật khi có task mới)
 
 - **Các thay đổi gần đây:**
+  - **SEO Optimization - Structured Data Event:** Hoàn thành việc khắc phục các vấn đề Structured Data Event mà Google Analytics báo cáo cho dbpsports.com. Đã thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) vào các template quan trọng: tournament_detail.html, match_detail.html, home.html, active_list.html, archive.html. Sử dụng Schema.org Event với JSON-LD format để cải thiện SEO và hiển thị rich results trên Google Search.
+  - **Thiết kế lại tab tổng quan:** Hoàn thành việc thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ và đẹp mắt. Bao gồm Bio Card, Personal Info Card với role badges có icon đẹp mắt, Professional Summary Card, Achievements Card và Reviews Card. Sắp xếp lại thứ tự thẻ để thông tin cá nhân và chuyên môn hiển thị trước thành tích và đánh giá.
+  - **Thêm QR code vào Stadium Profile:** Tích hợp mã QR thanh toán vào Stadium Profile Card trong tab chuyên môn với thiết kế center alignment, kích thước 120px và styling đẹp mắt với background và border.
+  - **Thiết kế lại trang hồ sơ công khai:** Đã hoàn thành việc thiết kế lại giao diện trang hồ sơ công khai với phong cách theme giống các tab trong trang chi tiết giải đấu. Bao gồm modern navigation với gradient tím, backdrop blur, responsive design và đồng bộ desktop/mobile.
+  - **Redesign tab chuyên môn:** Thiết kế lại hoàn toàn tab chuyên môn với các thẻ thông tin đồng bộ và đẹp mắt cho tất cả vai trò (Coach, Sponsor, Stadium, Commentator, Media, Referee). Mỗi thẻ có avatar với gradient, info grid, status badges, và responsive design.
   - Đã nâng cấp template trang Lưu trữ Giải đấu (archive.html) với giao diện hiện đại: gradient styling, responsive grid layout, animation effects, và màu sắc tím để phân biệt với trang giải đấu chính.
   - Đã cập nhật quy tắc update-memory-bank-agent để bỏ bước hỏi xác nhận.
   - Đã soát xét và cập nhật toàn bộ Memory Bank để phản ánh đúng thực tế dự án.
@@ -12,6 +17,12 @@
   - **Sửa lỗi NoReverseMatch:** Đã khắc phục lỗi `NoReverseMatch` khi tạo URL `public_profile` do `user.username` có thể rỗng trong hệ thống xác thực bằng email.
 
 - **Các quyết định gần đây:**
+  - **Quyết định về SEO Structured Data:** Sử dụng Schema.org Event với JSON-LD format để khắc phục các vấn đề Structured Data mà Google Analytics báo cáo. Thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) với fallback values và dynamic eventStatus dựa trên trạng thái giải đấu. Sử dụng ItemList cho danh sách giải đấu và SportsEvent cho từng sự kiện cụ thể.
+  - **Quyết định về Overview Tab Design:** Thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ, sắp xếp lại thứ tự để thông tin cá nhân và chuyên môn hiển thị trước thành tích và đánh giá. Thêm role badges có icon đẹp mắt cho từng vai trò.
+  - **Quyết định về QR Code Integration:** Tích hợp mã QR thanh toán vào Stadium Profile Card với thiết kế center alignment, kích thước 120px và styling đẹp mắt để người dùng dễ dàng quét và thanh toán.
+  - **Quyết định về Profile Design:** Thiết kế lại trang hồ sơ công khai theo phong cách modern-tournament-nav với gradient tím (#667eea → #764ba2), backdrop blur, và responsive design để đồng bộ với trang chi tiết giải đấu.
+  - **Quyết định về Professional Cards:** Sử dụng layout grid responsive (col-lg-6 col-xl-4) với các thẻ thông tin đồng bộ cho tất cả vai trò chuyên môn, mỗi thẻ có avatar với gradient, info grid, status badges và hover effects.
+  - **Quyết định về Color Scheme:** Mỗi vai trò có màu sắc riêng biệt: Coach (xanh lá), Sponsor (vàng), Stadium (xanh dương), Commentator (đỏ), Media (tím), Referee (xám đen) để dễ phân biệt.
   - Quyết định sử dụng màu tím (purple/violet) cho trang Lưu trữ thay vì xanh dương để phân biệt rõ ràng với trang Giải đấu đang hoạt động.
   - Quyết định không yêu cầu xác nhận khi cập nhật Memory Bank để tăng tốc workflow.
   - **Quyết định về SponsorProfile:** Xóa model cũ trong sponsors.models, chuyển toàn bộ sang users.models.SponsorProfile để tránh conflict và có đầy đủ fields.

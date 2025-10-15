@@ -93,10 +93,10 @@ class TournamentAdmin(admin.ModelAdmin):
         ('Thông tin cơ bản', {
             'fields': ('name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image')
         }),
-        ('Phí đăng ký', {
-            'fields': ('registration_fee',),
-            'description': 'Phí đăng ký cho mỗi đội tham gia giải đấu'
-        }),
+               ('Phí đăng ký', {
+                   'fields': ('registration_fee', 'shop_discount_percentage'),
+                   'description': 'Phí đăng ký cho mỗi đội tham gia giải đấu và phần trăm tiền lãi từ shop được trừ vào phí đăng ký'
+               }),
         ('Thông tin thanh toán', {
             'fields': ('bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code'),
             'classes': ('collapse',)

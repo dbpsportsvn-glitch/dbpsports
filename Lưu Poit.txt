@@ -11,9 +11,12 @@ cd ..
 python manage.py runserver
 
 git add .
-git commit -m "Them vai tro 2 loi sua cau thu"
+git commit -m "Memory Bank 6"
 git push
 
+bạn cập nhật memory bank nhé!
+
+đẩy lên git giúp mình với ghi chú tiếng việt không dấu
 
 #Cập Nhật Dữ Liệu
 

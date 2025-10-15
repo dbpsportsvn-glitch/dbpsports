@@ -2,6 +2,7 @@
 
 from .models import Team, Player, Announcement, Notification, TeamRegistration
 from django.db.models import Q
+from shop.models import Cart
 
 def unread_announcements_count(request):
     """
@@ -54,3 +55,17 @@ def unread_notifications_count(request):
     count = Notification.objects.filter(user=request.user, is_read=False).count()
 
     return {'unread_notifications_count': count}
+
+
+def user_cart_context(request):
+    """
+    Thêm cart của user vào context cho tất cả template
+    """
+    if not request.user.is_authenticated:
+        return {'user_cart': None}
+    
+    try:
+        cart = Cart.objects.get(user=request.user)
+        return {'user_cart': cart}
+    except Cart.DoesNotExist:
+        return {'user_cart': None}

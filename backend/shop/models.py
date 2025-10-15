@@ -63,6 +63,7 @@ class Product(models.Model):
     # Thông tin giá cả
     price = models.DecimalField(max_digits=10, decimal_places=0, validators=[MinValueValidator(0)], verbose_name="Giá")
     sale_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, validators=[MinValueValidator(0)], verbose_name="Giá khuyến mãi")
+    cost_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, validators=[MinValueValidator(0)], verbose_name="Giá vốn", help_text="Giá nhập vào để tính lãi")
     
     # Thông tin sản phẩm
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', verbose_name="Danh mục")
@@ -134,6 +135,20 @@ class Product(models.Model):
     def is_available(self):
         """Sản phẩm có sẵn không"""
         return self.status == 'published' and self.stock_quantity > 0
+    
+    @property
+    def profit_amount(self):
+        """Số tiền lãi của sản phẩm"""
+        if not self.cost_price:
+            return 0
+        return self.current_price - self.cost_price
+    
+    @property
+    def profit_percentage(self):
+        """Phần trăm lãi của sản phẩm"""
+        if not self.cost_price or self.cost_price == 0:
+            return 0
+        return (self.profit_amount / self.cost_price) * 100
 
 
 class ProductVariant(models.Model):
