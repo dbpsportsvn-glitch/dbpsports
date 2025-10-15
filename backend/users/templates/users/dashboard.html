@@ -388,6 +388,8 @@
                 {% endif %}
                 <a class="nav-link {% if request.GET.tab == 'notifications' %}active{% endif %}" id="notifications-tab" data-bs-toggle="pill" href="#notifications" role="tab"><i class="bi bi-gear-wide-connected"></i>Cài đặt Thông báo</a>
                 <a class="nav-link {% if request.GET.tab == 'password' %}active{% endif %}" id="password-tab" data-bs-toggle="pill" href="#password" role="tab"><i class="bi bi-key-fill"></i>Đổi mật khẩu</a>
+                <hr class="my-2">
+                <a href="{% url 'professional_dashboard' %}" class="nav-link"><i class="bi bi-briefcase"></i>Khu vực Chuyên môn</a>
             </div>
         </aside>
 
@@ -407,6 +409,7 @@
                                         <i class="bi bi-person-circle text-primary"></i>
                                         Thông tin cơ bản
                                     </h5>
+                                    <p class="text-muted mb-4">Cập nhật thông tin cá nhân của bạn để hoàn thiện hồ sơ.</p>
                                     <form method="post">
                                         {% csrf_token %}
                                         {{ user_form|crispy }}
@@ -427,9 +430,11 @@
                 <div class="row justify-content-center">
                     <div class="col-lg-10">
                         <div class="card shadow-sm">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h4>Chỉnh sửa Hồ sơ Công khai</h4>
-                                <a href="{% url 'public_profile' username=user.username|default:user.email %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-person-vcard me-2"></i>Chỉnh sửa Hồ sơ Công khai
+                                </h4>
+                                <a href="{% url 'public_profile' username=user.username|default:user.email %}" class="btn btn-sm btn-light" target="_blank">
                                     <i class="bi bi-eye-fill"></i> Xem trang của bạn
                                 </a>
                             </div>
@@ -614,94 +619,146 @@
             {# === TAB MỚI CHO QUẢN LÝ GIẢI ĐẤU === #}
             {% if managed_tournaments %}
             <div class="tab-pane fade {% if request.GET.tab == 'managed_tournaments' %}show active{% endif %}" id="managed-tournaments" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Các giải đấu bạn được giao quyền quản lý</h5>
-                </div>
-                <div class="row mt-3">
-                    {% for tournament in managed_tournaments %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ tournament.name }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
-                                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-primary mt-2">
-                                        <i class="bi bi-gear-fill"></i> Tới trang Quản lý
-                                    </a>
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-warning text-dark">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-person-workspace me-2"></i>Các giải đấu bạn được giao quyền quản lý
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="bi bi-trophy text-warning"></i>
+                                        Danh sách giải đấu
+                                    </h5>
+                                    <p class="text-muted mb-4">Các giải đấu mà bạn có quyền quản lý và điều hành.</p>
+                                    <div class="row">
+                                        {% for tournament in managed_tournaments %}
+                                            <div class="col-lg-6 mb-4">
+                                                <div class="card shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ tournament.name }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
+                                                        <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-primary mt-2">
+                                                            <i class="bi bi-gear-fill"></i> Tới trang Quản lý
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="col">
+                                                <p class="text-muted">Bạn chưa được giao quản lý giải đấu nào.</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    {% empty %}
-                        <div class="col">
-                            <p class="text-muted">Bạn chưa được giao quản lý giải đấu nào.</p>
-                        </div>
-                    {% endfor %}
+                    </div>
                 </div>
             </div>
             {% endif %}
             {# === KẾT THÚC TAB MỚI === #}
 
             <div class="tab-pane fade {% if request.GET.tab == 'following' %}show active{% endif %}" id="following" role="tabpanel">
-                <h5>Các giải đấu bạn đang theo dõi</h5>
-                <div class="row mt-3">
-                    {% for tournament in followed_tournaments %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">{{ tournament.name }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
-                                    <p class="card-text mt-auto">
-                                        <span class="badge bg-success">{{ tournament.get_status_display }}</span>
-                                    </p>
-                                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary mt-2">Xem giải đấu</a>
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-info text-white">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-bell-fill me-2"></i>Các giải đấu bạn đang theo dõi
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="bi bi-eye text-info"></i>
+                                        Danh sách theo dõi
+                                    </h5>
+                                    <p class="text-muted mb-4">Các giải đấu bạn đang quan tâm và theo dõi.</p>
+                                    <div class="row">
+                                        {% for tournament in followed_tournaments %}
+                                            <div class="col-lg-6 mb-4">
+                                                <div class="card shadow-sm h-100">
+                                                    <div class="card-body d-flex flex-column">
+                                                        <h5 class="card-title">{{ tournament.name }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
+                                                        <p class="card-text mt-auto">
+                                                            <span class="badge bg-success">{{ tournament.get_status_display }}</span>
+                                                        </p>
+                                                        <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-primary mt-2">Xem giải đấu</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="col">
+                                                <p class="text-muted">Bạn chưa theo dõi giải đấu nào.</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    {% empty %}
-                        <div class="col">
-                            <p class="text-muted">Bạn chưa theo dõi giải đấu nào.</p>
-                        </div>
-                    {% endfor %}
+                    </div>
                 </div>
             </div>
 
             <div class="tab-pane fade {% if request.GET.tab == 'teams' %}show active{% endif %}" id="teams" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Các đội bạn đang quản lý</h5>
-                    {% if is_player_role %}
-                        <a href="{% url 'create_standalone_team' %}" class="btn btn-success">
-                            <i class="bi bi-plus-circle-fill"></i> Tạo đội bóng mới
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="row mt-3">
-                    {% for team in managed_teams %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ team.name }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">
-                                        {% if team.registrations.exists %}
-                                            Đã đăng ký giải
-                                        {% else %}
-                                            Đội tự do
-                                        {% endif %}
-                                    </h6>
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-shield-fill me-2"></i>Các đội bạn đang quản lý
+                                </h4>
+                                {% if is_player_role %}
+                                    <a href="{% url 'create_standalone_team' %}" class="btn btn-light">
+                                        <i class="bi bi-plus-circle-fill"></i> Tạo đội bóng mới
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="bi bi-people text-success"></i>
+                                        Danh sách đội bóng
+                                    </h5>
+                                    <p class="text-muted mb-4">Quản lý các đội bóng mà bạn đang làm đội trưởng hoặc có quyền quản lý.</p>
+                                    <div class="row">
+                                        {% for team in managed_teams %}
+                                            <div class="col-lg-6 mb-4">
+                                                <div class="card shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ team.name }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted">
+                                                            {% if team.registrations.exists %}
+                                                                Đã đăng ký giải
+                                                            {% else %}
+                                                                Đội tự do
+                                                            {% endif %}
+                                                        </h6>
 
-                                    <p class="card-text"><strong>Ngân sách:</strong> <span class="text-success">{{ team.budget|vnd_format }}</span></p>
+                                                        <p class="card-text"><strong>Ngân sách:</strong> <span class="text-success">{{ team.budget|vnd_format }}</span></p>
 
-                                    <div class="d-flex gap-2 mt-3">
-                                        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-primary">Quản lý</a>
-                                        <a href="{% url 'delete_team' pk=team.pk %}" class="btn btn-outline-danger">Xóa</a>
+                                                        <div class="d-flex gap-2 mt-3">
+                                                            <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-primary">Quản lý</a>
+                                                            <a href="{% url 'delete_team' pk=team.pk %}" class="btn btn-outline-danger">Xóa</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="col">
+                                                <p class="text-muted">Bạn chưa quản lý đội bóng nào.</p>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                    {# === KẾT THÚC CẬP NHẬT === #}
                                 </div>
                             </div>
                         </div>
-                    {% empty %}
-                        <div class="col">
-                            <p class="text-muted">Bạn chưa quản lý đội bóng nào.</p>
-                        </div>
-                    {% endfor %}
+                    </div>
                 </div>
             </div>
 
@@ -775,25 +832,44 @@
             {# === THÊM NỘI DUNG TAB MEDIA MỚI VÀO ĐÂY (trước thẻ </main>) === #}
             {% if media_tournaments %}
             <div class="tab-pane fade {% if request.GET.tab == 'media_tournaments' %}show active{% endif %}" id="media-tournaments" role="tabpanel">
-                <h5>Các giải đấu bạn tham gia với vai trò Media/Nhiếp ảnh</h5>
-                <div class="row mt-3">
-                    {% for tournament in media_tournaments %}
-                        <div class="col-lg-6 mb-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ tournament.name }}</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
-                                    <a href="{% url 'media_dashboard' tournament_pk=tournament.pk %}" class="btn btn-info mt-2">
-                                        <i class="bi bi-camera-reels-fill"></i> Tới Khu vực Media
-                                    </a>
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-info text-white">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-camera-reels-fill me-2"></i>Các giải đấu bạn tham gia với vai trò Media/Nhiếp ảnh
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-section">
+                                    <h5 class="section-title">
+                                        <i class="bi bi-camera text-info"></i>
+                                        Khu vực Media
+                                    </h5>
+                                    <p class="text-muted mb-4">Các giải đấu mà bạn có quyền truy cập với vai trò Media hoặc Nhiếp ảnh gia.</p>
+                                    <div class="row">
+                                        {% for tournament in media_tournaments %}
+                                            <div class="col-lg-6 mb-4">
+                                                <div class="card shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ tournament.name }}</h5>
+                                                        <h6 class="card-subtitle mb-2 text-muted">{{ tournament.start_date|date:"d/m/Y" }} - {{ tournament.end_date|date:"d/m/Y" }}</h6>
+                                                        <a href="{% url 'media_dashboard' tournament_pk=tournament.pk %}" class="btn btn-info mt-2">
+                                                            <i class="bi bi-camera-reels-fill"></i> Tới Khu vực Media
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% empty %}
+                                            <div class="col">
+                                                <p class="text-muted">Bạn chưa được gán quyền Media/Nhiếp ảnh cho giải đấu nào.</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    {% empty %}
-                        <div class="col">
-                            <p class="text-muted">Bạn chưa được gán quyền Media/Nhiếp ảnh cho giải đấu nào.</p>
-                        </div>
-                    {% endfor %}
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -805,8 +881,8 @@
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     <div class="card shadow-sm">
-                        <div class="card-header">
-                            <h4><i class="bi bi-person-plus me-2"></i>Tạo Hồ sơ Cầu thủ</h4>
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0"><i class="bi bi-person-plus me-2"></i>Tạo Hồ sơ Cầu thủ</h4>
                         </div>
                         <div class="card-body">
                             <div class="alert alert-info">
@@ -860,9 +936,9 @@
             <div class="row justify-content-center">
                 <div class="col-lg-10">
                     <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4>Chỉnh sửa Hồ sơ Cầu thủ</h4>
-                            <a href="{% url 'player_detail' pk=player_profile.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Chỉnh sửa Hồ sơ Cầu thủ</h4>
+                            <a href="{% url 'player_detail' pk=player_profile.pk %}" class="btn btn-sm btn-light" target="_blank">
                                 <i class="bi bi-eye-fill"></i> Xem trang hồ sơ
                             </a>
                         </div>
@@ -944,107 +1020,141 @@
 
         {# Dán vào trước thẻ </main> ở cuối file #}
         <div class="tab-pane fade {% if request.GET.tab == 'transfers' %}show active{% endif %}" id="transfers" role="tabpanel">
-            <h4><i class="bi bi-arrow-left-right"></i> Trung tâm Chuyển nhượng</h4>
-            <p class="text-muted">Quản lý các lời mời chuyển nhượng cho các đội bóng của bạn.</p>
-
-            <hr>
-            
-                <h5><i class="bi bi-arrow-down-square-fill text-success"></i> Lời mời nhận được</h5>
-                {% if incoming_transfers %}
-                    <ul class="list-group">
-                        {% for transfer in incoming_transfers %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                Đội <strong>{{ transfer.inviting_team.name }}</strong> 
-                                {% if transfer.transfer_type == 'LOAN' %}
-                                    muốn mượn
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <h4 class="mb-0">
+                                <i class="bi bi-arrow-left-right me-2"></i>Trung tâm Chuyển nhượng
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-exchange text-warning"></i>
+                                    Quản lý chuyển nhượng
+                                </h5>
+                                <p class="text-muted mb-4">Quản lý các lời mời chuyển nhượng cho các đội bóng của bạn.</p>
+                                
+                                <h5><i class="bi bi-arrow-down-square-fill text-success"></i> Lời mời nhận được</h5>
+                                {% if incoming_transfers %}
+                                    <ul class="list-group">
+                                        {% for transfer in incoming_transfers %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div>
+                                                Đội <strong>{{ transfer.inviting_team.name }}</strong> 
+                                                {% if transfer.transfer_type == 'LOAN' %}
+                                                    muốn mượn
+                                                {% else %}
+                                                    muốn chiêu mộ
+                                                {% endif %}
+                                                cầu thủ <strong>{{ transfer.player.full_name }}</strong> với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="accept">
+                                                    <button type="submit" class="btn btn-success btn-sm">Đồng ý</button>
+                                                </form>
+                                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
                                 {% else %}
-                                    muốn chiêu mộ
+                                    <p class="text-muted">Bạn không có lời mời nào đang chờ xử lý.</p>
                                 {% endif %}
-                                cầu thủ <strong>{{ transfer.player.full_name }}</strong> với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
-                            </div>
-                            <div class="d-flex gap-2">
-                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="accept">
-                                    <button type="submit" class="btn btn-success btn-sm">Đồng ý</button>
-                                </form>
-                                <form method="post" action="{% url 'respond_to_transfer' transfer_pk=transfer.pk %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="reject">
-                                    <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
-                                </form>
-                            </div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-muted">Bạn không có lời mời nào đang chờ xử lý.</p>
-                {% endif %}
-                
-                <h5 class="mt-4"><i class="bi bi-arrow-up-square-fill text-info"></i> Lời mời đã gửi</h5>
-                {% if outgoing_transfers %}
-                    <ul class="list-group">
-                        {% for transfer in outgoing_transfers %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                Bạn đã gửi lời mời 
-                                {% if transfer.transfer_type == 'LOAN' %}
-                                    mượn
+                                
+                                <h5 class="mt-4"><i class="bi bi-arrow-up-square-fill text-info"></i> Lời mời đã gửi</h5>
+                                {% if outgoing_transfers %}
+                                    <ul class="list-group">
+                                        {% for transfer in outgoing_transfers %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                Bạn đã gửi lời mời 
+                                                {% if transfer.transfer_type == 'LOAN' %}
+                                                    mượn
+                                                {% else %}
+                                                    mua
+                                                {% endif %}
+                                                <strong>{{ transfer.player.full_name }}</strong> (Đội {{ transfer.current_team.name }}) với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
+                                            </div>
+                                            {% if transfer.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark">Đang chờ</span>
+                                            {% elif transfer.status == 'ACCEPTED' %}
+                                                <span class="badge bg-success">Đã chấp nhận</span>
+                                            {% elif transfer.status == 'REJECTED' %}
+                                                <span class="badge bg-danger">Đã từ chối</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transfer.get_status_display }}</span>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
                                 {% else %}
-                                    mua
+                                    <p class="text-muted">Bạn chưa gửi lời mời nào.</p>
                                 {% endif %}
-                                <strong>{{ transfer.player.full_name }}</strong> (Đội {{ transfer.current_team.name }}) với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
                             </div>
-                            {% if transfer.status == 'PENDING' %}
-                                <span class="badge bg-warning text-dark">Đang chờ</span>
-                            {% elif transfer.status == 'ACCEPTED' %}
-                                <span class="badge bg-success">Đã chấp nhận</span>
-                            {% elif transfer.status == 'REJECTED' %}
-                                <span class="badge bg-danger">Đã từ chối</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ transfer.get_status_display }}</span>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-muted">Bạn chưa gửi lời mời nào.</p>
-                {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {# === DÁN TOÀN BỘ KHỐI TAB-PANE MỚI NÀY VÀO TRƯỚC THẺ </main> === #}
         <div class="tab-pane fade {% if request.GET.tab == 'scouting' %}show active{% endif %}" id="scouting" role="tabpanel">
-            <h4><i class="bi bi-binoculars-fill"></i> Danh sách Cầu thủ đang Theo dõi</h4>
-            <p class="text-muted">Đây là danh sách các mục tiêu chuyển nhượng tiềm năng cho các đội của bạn.</p>
-            {% if scouting_list %}
-                <ul class="list-group">
-                    {% for item in scouting_list %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-3">
-                            <a href="{% url 'player_detail' pk=item.player.pk %}" target="_blank">
-                                <img src="{% if item.player.avatar %}{{ item.player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ item.player.full_name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 50%;">
-                            </a>
-                            <div>
-                                <strong>{{ item.player.full_name }}</strong>
-                                <small class="d-block text-muted">Đội hiện tại: {{ item.player.team.name|default:"Tự do" }}</small>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <h4 class="mb-0">
+                                <i class="bi bi-binoculars-fill me-2"></i>Danh sách Cầu thủ đang Theo dõi
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="bi bi-search text-dark"></i>
+                                    Mục tiêu chuyển nhượng
+                                </h5>
+                                <p class="text-muted mb-4">Đây là danh sách các mục tiêu chuyển nhượng tiềm năng cho các đội của bạn.</p>
+                                {% if scouting_list %}
+                                    <ul class="list-group">
+                                        {% for item in scouting_list %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <a href="{% url 'player_detail' pk=item.player.pk %}" target="_blank">
+                                                    <img src="{% if item.player.avatar %}{{ item.player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ item.player.full_name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 50%;">
+                                                </a>
+                                                <div>
+                                                    <strong>{{ item.player.full_name }}</strong>
+                                                    <small class="d-block text-muted">Đội hiện tại: {{ item.player.team.name|default:"Tự do" }}</small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-secondary">Theo dõi cho: {{ item.team.name }}</span>
+                                                <form method="post" action="{% url 'remove_from_scouting_list' scout_pk=item.pk %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm" title="Xóa khỏi danh sách">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-muted">Danh sách theo dõi của bạn đang trống. Hãy ra Thị trường Chuyển nhượng để tìm kiếm tài năng!</p>
+                                {% endif %}
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary">Theo dõi cho: {{ item.team.name }}</span>
-                            <form method="post" action="{% url 'remove_from_scouting_list' scout_pk=item.pk %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa khỏi danh sách">
-                                    <i class="bi bi-trash3-fill"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Danh sách theo dõi của bạn đang trống. Hãy ra Thị trường Chuyển nhượng để tìm kiếm tài năng!</p>
-            {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
         {# === KẾT THÚC KHỐI TAB-PANE MỚI === #}
     </main>
