@@ -1,0 +1,92 @@
+{% extends 'emails/base_email.html' %}
+
+{% block header_subtitle %}
+    ❌ Yêu cầu rời đội không được duyệt
+{% endblock %}
+
+{% block content %}
+    <div style="padding: 30px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background-color: #f8d7da; border-radius: 50%; width: 80px; height: 80px; 
+                        display: inline-flex; align-items: center; justify-content: center; 
+                        margin-bottom: 20px;">
+                <span style="font-size: 40px; color: #721c24;">❌</span>
+            </div>
+        </div>
+        
+        <h2 style="color: #333333; text-align: center; margin-bottom: 20px;">
+            Yêu cầu rời đội không được duyệt
+        </h2>
+        
+        <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #721c24; margin-top: 0; margin-bottom: 15px;">
+                📋 Thông tin từ chối
+            </h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24; width: 40%;"><strong>Đội hiện tại:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ team.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24;"><strong>Thời gian từ chối:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ "now"|date:"d/m/Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24;"><strong>Trạng thái:</strong></td>
+                    <td style="padding: 8px 0; color: #dc3545; font-weight: bold;">Vẫn thuộc đội</td>
+                </tr>
+            </table>
+        </div>
+        
+        {% if admin_notes %}
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #856404; margin-top: 0; margin-bottom: 10px;">
+                💬 Lý do từ chối từ đội trưởng
+            </h4>
+            <p style="color: #856404; margin: 0; font-style: italic;">
+                "{{ admin_notes }}"
+            </p>
+        </div>
+        {% else %}
+        <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #721c24; margin-top: 0; margin-bottom: 10px;">
+                💬 Thông báo từ đội trưởng
+            </h4>
+            <p style="color: #721c24; margin: 0;">
+                Yêu cầu rời đội của bạn đã không được duyệt. Đội trưởng không có ghi chú cụ thể.
+            </p>
+        </div>
+        {% endif %}
+        
+        <div style="background-color: #cce5ff; border-left: 4px solid #007bff; padding: 20px; margin-bottom: 25px;">
+            <h4 style="color: #004085; margin-top: 0; margin-bottom: 15px;">
+                🤝 Gợi ý
+            </h4>
+            <ul style="color: #004085; margin: 0; padding-left: 20px;">
+                <li><strong>Trao đổi trực tiếp:</strong> Liên hệ với đội trưởng để hiểu rõ lý do</li>
+                <li><strong>Thời gian phù hợp:</strong> Có thể đề xuất thời điểm khác để rời đội</li>
+                <li><strong>Hoàn thiện vai trò:</strong> Tiếp tục đóng góp cho đội trong thời gian này</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ player_detail_url }}" 
+               style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; 
+                      border-radius: 25px; font-weight: bold; font-size: 16px;">
+                👤 Xem hồ sơ cá nhân
+            </a>
+        </div>
+        
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 25px;">
+            <h4 style="color: #495057; margin-top: 0; margin-bottom: 15px;">
+                💡 Lời khuyên
+            </h4>
+            <p style="color: #6c757d; margin: 0; line-height: 1.6;">
+                Mặc dù yêu cầu không được duyệt, chúng tôi khuyến khích bạn tiếp tục cống hiến cho đội bóng. 
+                Mọi thay đổi đều cần thời gian và sự thỏa thuận từ cả hai phía.
+            </p>
+        </div>
+    </div>
+{% endblock %}
+

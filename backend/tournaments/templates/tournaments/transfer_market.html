@@ -547,6 +547,14 @@
       if(teamSelect){
         teamSelect.addEventListener('change', function(){
           if(form) form.action = this.value;
+          
+          // Enable submit button when team is selected
+          const submitBtn = form?.querySelector('button[type="submit"]');
+          if(submitBtn && this.value) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+          }
         });
       }
 

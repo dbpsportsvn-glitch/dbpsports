@@ -25,15 +25,15 @@ def send_notification_email(subject, template_name, context, recipient_list, req
             html_message=html_message,
             fail_silently=False,
         )
-        print(f"Đã gửi email thông báo: '{subject}' đến {recipient_list}")
+        print(f"Email notification sent: '{subject}' to {recipient_list}")
         return True # <-- THÊM DÒNG NÀY: Báo hiệu thành công
 
     except Exception as e:
-        error_message = f"Lỗi nghiêm trọng khi gửi email '{subject}': {e}"
+        error_message = f"Critical error sending email '{subject}': {e}"
         print(error_message)
         if request:
             # Làm cho thông báo lỗi cụ thể và hữu ích hơn
-            messages.error(request, f"Không thể gửi email đến {recipient_list}. Lỗi: {e}")
+            messages.error(request, f"Cannot send email to {recipient_list}. Error: {e}")
         return False # <-- THÊM DÒNG NÀY: Báo hiệu thất bại
 
 

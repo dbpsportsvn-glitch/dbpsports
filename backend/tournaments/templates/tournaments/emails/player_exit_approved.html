@@ -1,0 +1,83 @@
+{% extends 'emails/base_email.html' %}
+
+{% block header_subtitle %}
+    ✅ Yêu cầu rời đội đã được duyệt
+{% endblock %}
+
+{% block content %}
+    <div style="padding: 30px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background-color: #d4edda; border-radius: 50%; width: 80px; height: 80px; 
+                        display: inline-flex; align-items: center; justify-content: center; 
+                        margin-bottom: 20px;">
+                <span style="font-size: 40px; color: #155724;">✅</span>
+            </div>
+        </div>
+        
+        <h2 style="color: #333333; text-align: center; margin-bottom: 20px;">
+            Chúc mừng! Yêu cầu rời đội đã được duyệt
+        </h2>
+        
+        <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #155724; margin-top: 0; margin-bottom: 15px;">
+                🎉 Thông tin duyệt
+            </h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #155724; width: 40%;"><strong>Đội đã rời:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ old_team_name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #155724;"><strong>Thời gian duyệt:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ "now"|date:"d/m/Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #155724;"><strong>Trạng thái:</strong></td>
+                    <td style="padding: 8px 0; color: #28a745; font-weight: bold;">Cầu thủ tự do</td>
+                </tr>
+            </table>
+        </div>
+        
+        {% if admin_notes %}
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #856404; margin-top: 0; margin-bottom: 10px;">
+                💬 Ghi chú từ đội trưởng
+            </h4>
+            <p style="color: #856404; margin: 0; font-style: italic;">
+                "{{ admin_notes }}"
+            </p>
+        </div>
+        {% endif %}
+        
+        <div style="background-color: #cce5ff; border-left: 4px solid #007bff; padding: 20px; margin-bottom: 25px;">
+            <h4 style="color: #004085; margin-top: 0; margin-bottom: 15px;">
+                🚀 Bước tiếp theo
+            </h4>
+            <ul style="color: #004085; margin: 0; padding-left: 20px;">
+                <li><strong>Tìm đội mới:</strong> Bạn có thể tìm kiếm và tham gia đội bóng khác</li>
+                <li><strong>Tham gia giải đấu:</strong> Đăng ký với vai trò cầu thủ tự do</li>
+                <li><strong>Cập nhật hồ sơ:</strong> Đảm bảo thông tin cá nhân luôn chính xác</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ player_detail_url }}" 
+               style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; 
+                      border-radius: 25px; font-weight: bold; font-size: 16px;">
+                👤 Xem hồ sơ cá nhân
+            </a>
+        </div>
+        
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 25px;">
+            <h4 style="color: #495057; margin-top: 0; margin-bottom: 15px;">
+                💡 Lời khuyên
+            </h4>
+            <p style="color: #6c757d; margin: 0; line-height: 1.6;">
+                Chúng tôi hy vọng bạn sẽ tìm được đội bóng phù hợp và tiếp tục đam mê bóng đá. 
+                DBP Sports luôn sẵn sàng hỗ trợ bạn trong hành trình thể thao của mình!
+            </p>
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,6 +1,7 @@
 # tournaments/urls.py
 from django.urls import path
 from . import views
+from . import player_exit_views
 from .views import tournaments_active
 
 urlpatterns = [
@@ -72,6 +73,12 @@ urlpatterns = [
     path('scout/add/<int:player_pk>/from/<int:team_pk>/', views.add_to_scouting_list, name='add_to_scouting_list'),
     path('scout/remove/<int:scout_pk>/', views.remove_from_scouting_list, name='remove_from_scouting_list'),
     path('player/toggle-looking-for-club/', views.toggle_looking_for_club_view, name='toggle_looking_for_club'),    
+
+    # --- URL liên quan đến Player Team Exit ---
+    path('player/<int:player_pk>/request-exit/', player_exit_views.request_team_exit, name='request_team_exit'),
+    path('exit-request/<int:exit_request_pk>/approve/', player_exit_views.approve_team_exit, name='approve_team_exit'),
+    path('exit-request/<int:exit_request_pk>/reject/', player_exit_views.reject_team_exit, name='reject_team_exit'),
+    path('exit-request/<int:exit_request_pk>/cancel/', player_exit_views.cancel_team_exit, name='cancel_team_exit'),
 
     # --- URL liên quan đến Trận đấu (Match) ---
     path('match/<int:pk>/', views.match_detail, name='match_detail'),

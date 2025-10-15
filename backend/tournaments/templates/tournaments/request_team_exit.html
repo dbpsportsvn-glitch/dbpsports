@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Yêu cầu rời đội - {{ player.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .exit-request-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .exit-type-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .exit-type-card:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .exit-type-card.selected {
+        border-color: #667eea;
+        background-color: #f0f2ff;
+    }
+    
+    .exit-type-card input[type="radio"] {
+        margin-right: 0.5rem;
+    }
+    
+    .exit-type-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .immediate-exit {
+        color: #dc3545;
+    }
+    
+    .end-season-exit {
+        color: #ffc107;
+    }
+    
+    .reason-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .warning-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="exit-request-container">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">
+                <i class="bi bi-door-open"></i>
+                Yêu cầu rời đội
+            </h2>
+            <p class="text-muted">Xác nhận yêu cầu rời đội {{ team.name }}</p>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle"></i>
+                    Thông tin cầu thủ
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" 
+                             alt="{{ player.full_name }}" 
+                             class="rounded-circle" 
+                             style="width: 60px; height: 60px; object-fit: cover;">
+                    </div>
+                    <div class="col">
+                        <h6 class="mb-1">{{ player.full_name }}</h6>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-shield-check"></i> {{ player.get_position_display }}
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-123"></i> #{{ player.jersey_number }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="warning-box">
+            <div class="d-flex align-items-start">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                <div>
+                    <strong>Lưu ý quan trọng:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Yêu cầu rời đội cần được đội trưởng duyệt</li>
+                        <li>Nếu chọn "Rời ngay lập tức", bạn sẽ trở thành cầu thủ tự do ngay sau khi được duyệt</li>
+                        <li>Nếu chọn "Rời cuối mùa giải", bạn sẽ rời đội khi giải đấu kết thúc</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-clock-history"></i>
+                    Loại rời đội
+                </label>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="exit-type-card" onclick="selectExitType('IMMEDIATE')">
+                            <input type="radio" name="exit_type" value="IMMEDIATE" id="immediate" checked>
+                            <div class="exit-type-icon immediate-exit">
+                                <i class="bi bi-lightning-fill"></i>
+                            </div>
+                            <h6 class="fw-bold">Rời ngay lập tức</h6>
+                            <p class="text-muted small mb-0">
+                                Rời đội ngay sau khi được đội trưởng duyệt
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="exit-type-card" onclick="selectExitType('END_SEASON')">
+                            <input type="radio" name="exit_type" value="END_SEASON" id="end_season">
+                            <div class="exit-type-icon end-season-exit">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <h6 class="fw-bold">Rời cuối mùa giải</h6>
+                            <p class="text-muted small mb-0">
+                                Rời đội khi giải đấu hiện tại kết thúc
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="reason" class="form-label fw-semibold">
+                    <i class="bi bi-chat-text"></i>
+                    Lý do rời đội (không bắt buộc)
+                </label>
+                <textarea name="reason" id="reason" class="form-control reason-textarea" 
+                          placeholder="Giải thích lý do bạn muốn rời đội..."></textarea>
+                <div class="form-text">
+                    Thông tin này sẽ được gửi cho đội trưởng để xem xét
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'player_detail' pk=player.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Hủy bỏ
+                </a>
+                
+                <button type="submit" class="btn submit-btn">
+                    <i class="bi bi-send"></i>
+                    Gửi yêu cầu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function selectExitType(type) {
+    // Bỏ chọn tất cả radio buttons
+    document.querySelectorAll('input[name="exit_type"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Bỏ highlight tất cả cards
+    document.querySelectorAll('.exit-type-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Chọn radio button và highlight card
+    document.getElementById(type.toLowerCase()).checked = true;
+    event.currentTarget.classList.add('selected');
+}
+
+// Khởi tạo trạng thái ban đầu
+document.addEventListener('DOMContentLoaded', function() {
+    selectExitType('IMMEDIATE');
+});
+</script>
+{% endblock %}

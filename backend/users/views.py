@@ -5,6 +5,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
+from django.db.models import Q
 # Import các model từ đúng ứng dụng của chúng
 from tournaments.models import Team, Player, Tournament, Match, TeamAchievement, VoteRecord, TournamentStaff, PlayerTransfer, ScoutingList 
 from .forms import CustomUserChangeForm, AvatarUpdateForm, NotificationPreferencesForm, ProfileSetupForm, ProfileUpdateForm, UnifiedProfessionalForm
@@ -129,7 +130,8 @@ def dashboard(request):
     # === BẮT ĐẦU THÊM MỚI TẠI ĐÂY ===
     # 2. Lấy danh sách lời mời
     incoming_transfers = PlayerTransfer.objects.filter(
-        current_team__in=managed_teams, status='PENDING'
+        Q(current_team__in=managed_teams) | Q(player__user=request.user, current_team__isnull=True),
+        status='PENDING'
     ).select_related('inviting_team', 'player')
 
     outgoing_transfers = PlayerTransfer.objects.filter(

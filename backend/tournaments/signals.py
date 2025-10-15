@@ -20,7 +20,7 @@ def delete_all_tournament_matches_on_group_delete(sender, instance, **kwargs):
     tournament = group.tournament
     matches_to_delete = Match.objects.filter(tournament=tournament)
     if matches_to_delete.exists():
-        print(f"Xóa bảng {group.name}. Sắp xóa {matches_to_delete.count()} trận đấu của giải {tournament.name}.")
+        print(f"Deleting group {group.name}. About to delete {matches_to_delete.count()} matches from tournament {tournament.name}.")
         matches_to_delete.delete()
 
 @receiver(post_save, sender=Match)
@@ -156,7 +156,7 @@ def award_achievements_on_final_match_save(sender, instance, created, **kwargs):
         user_ids = list(players_with_users.values_list('user_id', flat=True))
 
         updated_count = Player.objects.filter(team=team).update(votes=F('votes') + votes_to_add)
-        print(f"Đã cộng {votes_to_add} phiếu cho {updated_count} thành viên của đội {team.name}.")
+        print(f"Added {votes_to_add} votes to {updated_count} members of team {team.name}.")
 
         if user_ids:
             player_pk_map = {p.user_id: p.pk for p in players_with_users}
@@ -172,17 +172,17 @@ def award_achievements_on_final_match_save(sender, instance, created, **kwargs):
                 for user_id in user_ids if player_pk_map.get(user_id)
             ]
             Notification.objects.bulk_create(notifications)
-            print(f"Đã tạo {len(notifications)} thông báo thưởng phiếu cho đội {team.name}.")
+            print(f"Created {len(notifications)} vote reward notifications for team {team.name}.")
 
     if match.match_round == 'FINAL':
         process_award(match.winner, 3, "Vô địch", "CHAMPION")
         process_award(match.loser, 2, "Á quân", "RUNNER_UP")
-        print(f"Đã tự động trao giải Vô địch, Á quân và cộng phiếu cho giải {tournament.name}.")
+        print(f"Automatically awarded Championship, Runner-up and votes for tournament {tournament.name}.")
 
     elif match.match_round == 'THIRD_PLACE':
         process_award(match.winner, 1, "Hạng ba", "THIRD_PLACE")
         process_award(match.loser, 1, "Hạng tư", "OTHER") 
-        print(f"Đã tự động trao giải Hạng ba, Hạng tư và cộng phiếu cho giải {tournament.name}.")
+        print(f"Automatically awarded Third place, Fourth place and votes for tournament {tournament.name}.")
 
 
 # Tự động tạo hoặc cập nhật checklist quyền lợi khi một Sponsorship được lưu

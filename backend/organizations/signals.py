@@ -32,4 +32,4 @@ def notify_user_on_new_role(sender, instance, created, **kwargs):
             notification_type=Notification.NotificationType.GENERIC, # Dùng loại thông báo chung
             related_url=url
         )
-        print(f"Đã tạo thông báo gán vai trò cho {user_to_notify.username}")
+        print(f"Created role assignment notification for {user_to_notify.username}")

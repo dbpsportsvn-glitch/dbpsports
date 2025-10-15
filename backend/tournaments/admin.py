@@ -15,7 +15,7 @@ from django.db.models import Count
 from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
                      TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory,
-                     TournamentStaff, MatchNote, CoachRecruitment) # <-- Import model mới
+                     TournamentStaff, MatchNote, CoachRecruitment, PlayerTeamExit) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
 
 # Admin configuration
@@ -726,3 +726,43 @@ class CoachRecruitmentAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(PlayerTeamExit)
+class PlayerTeamExitAdmin(ModelAdmin):
+    """Admin cho model PlayerTeamExit"""
+    list_display = (
+        'player', 'current_team', 'exit_type', 'status', 
+        'created_at', 'processed_at', 'processed_by'
+    )
+    list_filter = (
+        'status', 'exit_type', 'current_team', 'created_at'
+    )
+    search_fields = (
+        'player__full_name', 'current_team__name', 
+        'reason', 'admin_notes'
+    )
+    readonly_fields = ('created_at', 'updated_at', 'processed_at')
+    list_per_page = 50
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        ('Thông tin yêu cầu', {
+            'fields': ('player', 'current_team', 'exit_type', 'reason')
+        }),
+        ('Xử lý yêu cầu', {
+            'fields': ('status', 'processed_by', 'processed_at', 'admin_notes')
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Tự động cập nhật thông tin xử lý khi thay đổi status"""
+        if change and 'status' in form.changed_data:
+            if obj.status != 'PENDING':
+                obj.processed_by = request.user
+                obj.processed_at = timezone.now()
+        super().save_model(request, obj, form, change)

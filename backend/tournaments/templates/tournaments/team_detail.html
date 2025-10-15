@@ -459,6 +459,98 @@
                     </div>
                 </div>
             </div>
+            
+            {# --- CARD YÊU CẦU RỜI ĐỘI CHO ĐỘI TRƯỞNG --- #}
+            {% if user == team.captain %}
+                {% load player_exit_extras %}
+                {% get_team_exit_requests team 'PENDING' as pending_exit_requests %}
+                {% if pending_exit_requests %}
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">
+                            <i class="bi bi-door-open"></i>
+                            Yêu cầu rời đội ({{ pending_exit_requests.count }})
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for exit_request in pending_exit_requests %}
+                        <div class="border rounded p-3 mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="{% if exit_request.player.avatar %}{{ exit_request.player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" 
+                                             alt="{{ exit_request.player.full_name }}" 
+                                             class="rounded-circle" 
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-1">{{ exit_request.player.full_name }}</h6>
+                                            <small class="text-muted">
+                                                <i class="bi bi-{{ exit_request.exit_type|get_exit_status_icon }}"></i>
+                                                {{ exit_request.get_exit_type_display }}
+                                                <span class="mx-2">•</span>
+                                                {{ exit_request.created_at|date:"d/m/Y H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% if exit_request.reason %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <strong>Lý do:</strong> {{ exit_request.reason }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="btn-group" role="group">
+                                        <form method="post" action="{% url 'approve_team_exit' exit_request.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                    onclick="return confirm('Bạn có chắc muốn duyệt yêu cầu rời đội của {{ exit_request.player.full_name }}?')">
+                                                <i class="bi bi-check"></i> Duyệt
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-danger btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#rejectModal{{ exit_request.pk }}">
+                                            <i class="bi bi-x"></i> Từ chối
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {# Modal từ chối yêu cầu #}
+                        <div class="modal fade" id="rejectModal{{ exit_request.pk }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Từ chối yêu cầu rời đội</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="post" action="{% url 'reject_team_exit' exit_request.pk %}">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <p>Bạn có chắc muốn từ chối yêu cầu rời đội của <strong>{{ exit_request.player.full_name }}</strong>?</p>
+                                            <div class="mb-3">
+                                                <label for="admin_notes_{{ exit_request.pk }}" class="form-label">Ghi chú (không bắt buộc)</label>
+                                                <textarea name="admin_notes" id="admin_notes_{{ exit_request.pk }}" 
+                                                          class="form-control" rows="3" 
+                                                          placeholder="Lý do từ chối yêu cầu..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                            <button type="submit" class="btn btn-danger">Từ chối yêu cầu</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>

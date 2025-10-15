@@ -1,0 +1,84 @@
+{% extends 'emails/base_email.html' %}
+
+{% block header_subtitle %}
+    🚪 Yêu cầu rời đội từ {{ player.full_name }}
+{% endblock %}
+
+{% block content %}
+    <div style="padding: 30px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/placeholder_avatar.png{% endif %}" 
+                 alt="{{ player.full_name }}" 
+                 style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
+        </div>
+        
+        <h2 style="color: #333333; text-align: center; margin-bottom: 20px;">
+            Cầu thủ {{ player.full_name }} yêu cầu rời đội
+        </h2>
+        
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #495057; margin-top: 0; margin-bottom: 15px;">
+                📋 Thông tin yêu cầu
+            </h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d; width: 40%;"><strong>Cầu thủ:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ player.full_name }} (#{{ player.jersey_number }})</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d;"><strong>Đội hiện tại:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ team.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d;"><strong>Loại rời đội:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ exit_type_display }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d;"><strong>Thời gian:</strong></td>
+                    <td style="padding: 8px 0; color: #333333;">{{ exit_request.created_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        {% if exit_request.reason %}
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #856404; margin-top: 0; margin-bottom: 10px;">
+                💭 Lý do rời đội
+            </h4>
+            <p style="color: #856404; margin: 0; font-style: italic;">
+                "{{ exit_request.reason }}"
+            </p>
+        </div>
+        {% endif %}
+        
+        <div style="background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin-bottom: 25px;">
+            <h4 style="color: #0c5460; margin-top: 0; margin-bottom: 10px;">
+                ⚠️ Hành động cần thực hiện
+            </h4>
+            <p style="color: #0c5460; margin: 0;">
+                Với tư cách là đội trưởng của {{ team.name }}, bạn cần xem xét và phản hồi yêu cầu này trong thời gian sớm nhất.
+            </p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ team_detail_url }}" 
+               style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: #ffffff; text-decoration: none; padding: 15px 30px; 
+                      border-radius: 25px; font-weight: bold; font-size: 16px;">
+                🔗 Xem chi tiết và xử lý
+            </a>
+        </div>
+        
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 25px;">
+            <h4 style="color: #495057; margin-top: 0; margin-bottom: 15px;">
+                📝 Hướng dẫn xử lý
+            </h4>
+            <ul style="color: #6c757d; margin: 0; padding-left: 20px;">
+                <li><strong>Duyệt yêu cầu:</strong> Cầu thủ sẽ rời đội theo loại đã chọn</li>
+                <li><strong>Từ chối yêu cầu:</strong> Cầu thủ sẽ tiếp tục ở lại đội</li>
+                <li><strong>Thời gian phản hồi:</strong> Khuyến nghị phản hồi trong vòng 48 giờ</li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+

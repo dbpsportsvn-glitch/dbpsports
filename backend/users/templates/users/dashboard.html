@@ -1081,7 +1081,13 @@
                                                 {% else %}
                                                     mua
                                                 {% endif %}
-                                                <strong>{{ transfer.player.full_name }}</strong> (Đội {{ transfer.current_team.name }}) với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
+                                                <strong>{{ transfer.player.full_name }}</strong> 
+                                                {% if transfer.current_team %}
+                                                    (Đội {{ transfer.current_team.name }})
+                                                {% else %}
+                                                    (Cầu thủ tự do)
+                                                {% endif %}
+                                                với giá <strong class="text-success">{{ transfer.offer_amount|vnd_format }}</strong>.
                                             </div>
                                             {% if transfer.status == 'PENDING' %}
                                                 <span class="badge bg-warning text-dark">Đang chờ</span>

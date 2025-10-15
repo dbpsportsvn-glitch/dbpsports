@@ -794,7 +794,9 @@ class PlayerTransfer(models.Model):
         Team,
         on_delete=models.CASCADE,
         related_name='received_transfers',
-        verbose_name="Đội hiện tại"
+        verbose_name="Đội hiện tại",
+        null=True,
+        blank=True
     )
     player = models.ForeignKey(
         Player,
@@ -827,7 +829,8 @@ class PlayerTransfer(models.Model):
         verbose_name_plural = "Các lời mời Chuyển nhượng"
 
     def __str__(self):
-        return f"{self.inviting_team.name} mời {self.player.full_name} từ {self.current_team.name}"
+        current_team_name = self.current_team.name if self.current_team else "Cầu thủ tự do"
+        return f"{self.inviting_team.name} mời {self.player.full_name} từ {current_team_name}"
 
 
 # === THÊM MODEL MỚI VÀO CUỐI TỆP ===
@@ -1186,3 +1189,102 @@ class CoachRecruitment(models.Model):
     
     def __str__(self):
         return f"{self.team.name} chiêu mộ HLV {self.coach.full_name}"
+
+
+# === MODEL MỚI: PLAYER TEAM EXIT ===
+class PlayerTeamExit(models.Model):
+    """
+    Lưu trữ yêu cầu rời đội của cầu thủ.
+    """
+    class ExitType(models.TextChoices):
+        IMMEDIATE = 'IMMEDIATE', 'Rời ngay lập tức'
+        END_SEASON = 'END_SEASON', 'Rời cuối mùa giải'
+    
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Chờ xác nhận'
+        APPROVED = 'APPROVED', 'Đã duyệt'
+        REJECTED = 'REJECTED', 'Từ chối'
+        CANCELLED = 'CANCELLED', 'Đã hủy'
+    
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='exit_requests',
+        verbose_name="Cầu thủ"
+    )
+    current_team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='exit_requests_received',
+        verbose_name="Đội hiện tại"
+    )
+    exit_type = models.CharField(
+        "Loại rời đội",
+        max_length=15,
+        choices=ExitType.choices,
+        default=ExitType.IMMEDIATE
+    )
+    reason = models.TextField(
+        "Lý do rời đội",
+        blank=True,
+        help_text="Giải thích lý do muốn rời đội (không bắt buộc)"
+    )
+    status = models.CharField(
+        "Trạng thái",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    
+    # Thông tin xử lý
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_exit_requests',
+        verbose_name="Người xử lý"
+    )
+    processed_at = models.DateTimeField(null=True, blank=True)
+    admin_notes = models.TextField(
+        "Ghi chú của đội trưởng",
+        blank=True,
+        help_text="Ghi chú từ đội trưởng về việc xử lý yêu cầu"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Yêu cầu Rời đội"
+        verbose_name_plural = "Yêu cầu Rời đội"
+        # Một cầu thủ chỉ có thể có 1 yêu cầu rời đội đang chờ xử lý
+        constraints = [
+            models.UniqueConstraint(
+                fields=['player', 'status'],
+                condition=models.Q(status='PENDING'),
+                name='unique_pending_exit_request_per_player'
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.player.full_name} yêu cầu rời {self.current_team.name} ({self.get_status_display()})"
+    
+    def clean(self):
+        """Validation cho model"""
+        if self.player.team != self.current_team:
+            raise ValidationError("Cầu thủ không thuộc đội này.")
+        
+        # Kiểm tra không có yêu cầu rời đội đang chờ xử lý
+        if self.status == 'PENDING' and not self.pk:
+            existing = PlayerTeamExit.objects.filter(
+                player=self.player,
+                status='PENDING'
+            )
+            if existing.exists():
+                raise ValidationError("Cầu thủ đã có yêu cầu rời đội đang chờ xử lý.")
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

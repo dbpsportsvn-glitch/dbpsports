@@ -68,6 +68,27 @@
                 </form>
             {% endif %}
             
+            {# Nút Rời đội cho cầu thủ có user và thuộc đội #}
+            {% if user.is_authenticated and player.user == user and player.team %}
+                {% load player_exit_extras %}
+                {% has_pending_exit_request player as has_pending_exit %}
+                {% if not has_pending_exit %}
+                    <div class="mt-2">
+                        <a href="{% url 'request_team_exit' player_pk=player.pk %}" 
+                           class="btn btn-outline-warning btn-sm"
+                           onclick="return confirm('Bạn có chắc muốn yêu cầu rời đội {{ player.team.name }}?')">
+                            <i class="bi bi-door-open"></i> Rời đội
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="mt-2">
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-clock"></i> Đang chờ duyệt yêu cầu rời đội
+                        </span>
+                    </div>
+                {% endif %}
+            {% endif %}
+            
             <h4 class="fw-light mb-2">{{ player.get_position_display }}</h4>
             <div class="d-flex align-items-center gap-3">
                 {% if player.team %}
