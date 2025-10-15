@@ -3,22 +3,656 @@
 
 {% block title %}Tạo giải đấu mới{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --info-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        --card-hover-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .hero-section {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 2rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .stats-box {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .stat-item {
+        text-align: center;
+        color: white;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 1.5rem;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .form-card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-5px);
+    }
+
+    .form-header {
+        background: var(--success-gradient);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+    }
+
+    .form-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .form-header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .form-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .form-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        margin: 1rem;
+        border-radius: 1rem;
+        border-left: 4px solid #4facfe;
+    }
+
+    .section-title {
+        color: #495057;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        background: white;
+    }
+
+    .form-control:hover, .form-select:hover {
+        border-color: #4facfe;
+    }
+
+    .btn-primary {
+        background: var(--success-gradient);
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        background: var(--success-gradient);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .is-invalid {
+        border-color: #dc3545;
+    }
+
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 0;
+            margin-bottom: 1rem;
+        }
+        
+        .form-section {
+            padding: 1.5rem;
+            margin: 0.5rem;
+        }
+        
+        .stats-box {
+            padding: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4" style="max-width: 720px;">
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h3>Tạo giải đấu mới cho {{ organization.name }}</h3>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Lưu và Tạo giải đấu</button>
-                    <a href="{% url 'organizations:dashboard' %}" class="btn btn-secondary">Hủy</a>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-trophy-fill me-3"></i>
+                Tạo Giải Đấu Mới
+            </h1>
+            <p class="lead mb-4">
+                Thiết lập giải đấu cho tổ chức <strong>{{ organization.name }}</strong>
+            </p>
+            
+            <!-- Stats Box -->
+            <div class="stats-box">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ organization.tournaments.count }}</span>
+                            <span class="stat-label">Giải đấu đã tạo</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ organization.members.count }}</span>
+                            <span class="stat-label">Thành viên</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ organization.tournaments.filter|length }}</span>
+                            <span class="stat-label">Giải đang hoạt động</span>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<div class="container" style="max-width: 900px;">
+    <div class="form-card">
+        <div class="form-header">
+            <div class="form-header-content">
+                <h2>
+                    <i class="bi bi-plus-circle-fill me-2"></i>
+                    Thông Tin Giải Đấu
+                </h2>
+                <p>Điền đầy đủ thông tin để tạo giải đấu mới</p>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="p-0">
+            {% csrf_token %}
+            
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    Thông Tin Cơ Bản
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="bi bi-trophy me-1"></i>
+                                {{ form.name.label }}
+                            </label>
+                            {{ form.name|as_crispy_field }}
+                            {% if form.name.help_text %}
+                                <div class="form-text">{{ form.name.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="bi bi-flag me-1"></i>
+                                {{ form.status.label }}
+                            </label>
+                            {{ form.status|as_crispy_field }}
+                            {% if form.status.help_text %}
+                                <div class="form-text">{{ form.status.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.status.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.format.id_for_label }}" class="form-label">
+                                <i class="bi bi-diagram-3 me-1"></i>
+                                {{ form.format.label }}
+                            </label>
+                            {{ form.format|as_crispy_field }}
+                            {% if form.format.help_text %}
+                                <div class="form-text">{{ form.format.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.format.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.region.id_for_label }}" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                {{ form.region.label }}
+                            </label>
+                            {{ form.region|as_crispy_field }}
+                            {% if form.region.help_text %}
+                                <div class="form-text">{{ form.region.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.region.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.location_detail.id_for_label }}" class="form-label">
+                        <i class="bi bi-geo me-1"></i>
+                        {{ form.location_detail.label }}
+                    </label>
+                            {{ form.location_detail|as_crispy_field }}
+                    {% if form.location_detail.help_text %}
+                        <div class="form-text">{{ form.location_detail.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.location_detail.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Date & Image Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-calendar-event-fill text-info"></i>
+                    Thời Gian & Hình Ảnh
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                {{ form.start_date.label }}
+                            </label>
+                            {{ form.start_date|as_crispy_field }}
+                            {% if form.start_date.help_text %}
+                                <div class="form-text">{{ form.start_date.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.start_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                <i class="bi bi-calendar-x me-1"></i>
+                                {{ form.end_date.label }}
+                            </label>
+                            {{ form.end_date|as_crispy_field }}
+                            {% if form.end_date.help_text %}
+                                <div class="form-text">{{ form.end_date.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.end_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.image.id_for_label }}" class="form-label">
+                        <i class="bi bi-image me-1"></i>
+                        {{ form.image.label }}
+                    </label>
+                    {{ form.image|as_crispy_field }}
+                    {% if form.image.help_text %}
+                        <div class="form-text">{{ form.image.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.image.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div id="imagePreview" class="mt-2"></div>
+                </div>
+            </div>
+
+            <!-- Rules & Registration Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-file-text-fill text-warning"></i>
+                    Quy Định & Đăng Ký
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.rules.id_for_label }}" class="form-label">
+                        <i class="bi bi-list-ul me-1"></i>
+                        {{ form.rules.label }}
+                    </label>
+                    {{ form.rules|as_crispy_field }}
+                    {% if form.rules.help_text %}
+                        <div class="form-text">{{ form.rules.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.rules.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.registration_fee.id_for_label }}" class="form-label">
+                                <i class="bi bi-currency-dollar me-1"></i>
+                                {{ form.registration_fee.label }}
+                            </label>
+                            {{ form.registration_fee|as_crispy_field }}
+                            {% if form.registration_fee.help_text %}
+                                <div class="form-text">{{ form.registration_fee.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.registration_fee.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.shop_discount_percentage.id_for_label }}" class="form-label">
+                                <i class="bi bi-percent me-1"></i>
+                                {{ form.shop_discount_percentage.label }}
+                            </label>
+                            {{ form.shop_discount_percentage|as_crispy_field }}
+                            {% if form.shop_discount_percentage.help_text %}
+                                <div class="form-text">{{ form.shop_discount_percentage.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.shop_discount_percentage.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-credit-card-fill text-success"></i>
+                    Thông Tin Thanh Toán
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.bank_name.id_for_label }}" class="form-label">
+                                <i class="bi bi-bank me-1"></i>
+                                {{ form.bank_name.label }}
+                            </label>
+                            {{ form.bank_name|as_crispy_field }}
+                            {% if form.bank_name.help_text %}
+                                <div class="form-text">{{ form.bank_name.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.bank_name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.bank_account_number.id_for_label }}" class="form-label">
+                                <i class="bi bi-hash me-1"></i>
+                                {{ form.bank_account_number.label }}
+                            </label>
+                            {{ form.bank_account_number|as_crispy_field }}
+                            {% if form.bank_account_number.help_text %}
+                                <div class="form-text">{{ form.bank_account_number.help_text }}</div>
+                            {% endif %}
+                            {% for error in form.bank_account_number.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.bank_account_name.id_for_label }}" class="form-label">
+                        <i class="bi bi-person me-1"></i>
+                        {{ form.bank_account_name.label }}
+                    </label>
+                    {{ form.bank_account_name|as_crispy_field }}
+                    {% if form.bank_account_name.help_text %}
+                        <div class="form-text">{{ form.bank_account_name.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.bank_account_name.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.payment_qr_code.id_for_label }}" class="form-label">
+                        <i class="bi bi-qr-code me-1"></i>
+                        {{ form.payment_qr_code.label }}
+                    </label>
+                    {{ form.payment_qr_code|as_crispy_field }}
+                    {% if form.payment_qr_code.help_text %}
+                        <div class="form-text">{{ form.payment_qr_code.help_text }}</div>
+                    {% endif %}
+                    {% for error in form.payment_qr_code.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                    <div id="qrPreview" class="mt-2"></div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="p-4 text-center">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Tạo Giải Đấu
+                    </button>
+                    <a href="{% url 'organizations:dashboard' %}" class="btn btn-secondary btn-lg px-5">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Hủy Bỏ
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image preview functionality
+    const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" class="image-preview">
+                        <p class="text-muted mt-2">Ảnh xem trước</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.innerHTML = '';
+            }
+        });
+    }
+
+    // QR code preview functionality
+    const qrInput = document.getElementById('{{ form.payment_qr_code.id_for_label }}');
+    const qrPreview = document.getElementById('qrPreview');
+    
+    if (qrInput) {
+        qrInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    qrPreview.innerHTML = `
+                        <img src="${e.target.result}" alt="QR Preview" class="image-preview">
+                        <p class="text-muted mt-2">Mã QR xem trước</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                qrPreview.innerHTML = '';
+            }
+        });
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitted:', new FormData(form));
+        });
+    }
+
+    // Auto-format registration fee
+    const feeInput = document.getElementById('{{ form.registration_fee.id_for_label }}');
+    if (feeInput) {
+        feeInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value) {
+                e.target.value = parseInt(value).toLocaleString('vi-VN');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
