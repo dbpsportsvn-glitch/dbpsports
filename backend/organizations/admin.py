@@ -28,6 +28,10 @@ class OrganizationAdmin(admin.ModelAdmin):
     search_fields = ('name', 'owner__username')
     autocomplete_fields = ['owner']
     inlines = [MembershipInline]
+    
+    class Meta:
+        verbose_name = "Tổ chức"
+        verbose_name_plural = "Tổ chức"
 
     class Media:
         js = ('js/admin_state.js',)
@@ -116,6 +120,10 @@ class MembershipAdmin(admin.ModelAdmin):
     list_filter = ('organization', 'role')
     search_fields = ('organization__name', 'user__username')
     autocomplete_fields = ['organization', 'user']
+    
+    class Meta:
+        verbose_name = "Thành viên"
+        verbose_name_plural = "Thành viên"
 
 @admin.register(JobPosting)
 class JobPostingAdmin(admin.ModelAdmin):
@@ -127,6 +135,10 @@ class JobPostingAdmin(admin.ModelAdmin):
     list_select_related = ('tournament', 'stadium', 'role_required')
     readonly_fields = ('created_at',)
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Tin tuyển dụng"
+        verbose_name_plural = "Tin tuyển dụng"
     
     @admin.display(description='Đăng cho', ordering='tournament__name')
     def get_posted_for(self, obj):
@@ -158,6 +170,10 @@ class JobApplicationAdmin(admin.ModelAdmin):
     list_select_related = ('job', 'applicant')
     readonly_fields = ('applied_at',)
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Đơn ứng tuyển"
+        verbose_name_plural = "Đơn ứng tuyển"
     
     fieldsets = (
         ('Thông tin ứng tuyển', {

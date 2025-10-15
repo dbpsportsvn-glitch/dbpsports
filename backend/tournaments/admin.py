@@ -89,6 +89,10 @@ class TournamentAdmin(admin.ModelAdmin):
     list_filter = ("status", "region"); search_fields = ("name",); list_editable = ("status",); date_hierarchy = "start_date"
     inlines = [GroupInline, TournamentPhotoInline]; list_per_page = 50
     actions = ['auto_create_next_knockout_round', 'create_third_place_match', 'create_semi_finals_with_best_runner_ups']
+    
+    class Meta:
+        verbose_name = "Giải đấu"
+        verbose_name_plural = "Giải đấu"
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('name', 'status', 'format', 'region', 'location_detail', 'start_date', 'end_date', 'image')
@@ -305,6 +309,10 @@ class TeamAdmin(ModelAdmin):
     autocomplete_fields = ("captain",)
     list_select_related = ("captain",)
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Đội bóng"
+        verbose_name_plural = "Đội bóng"
 
     def display_logo(self, obj):
         if obj.logo: return format_html(f'<img src="{obj.logo.url}" width="40" height="40" />')
@@ -320,6 +328,10 @@ class TeamRegistrationAdmin(ModelAdmin):
     autocomplete_fields = ('team', 'tournament', 'group')
     list_select_related = ('team', 'tournament', 'group')
     actions = ['approve_payments']
+    
+    class Meta:
+        verbose_name = "Đăng ký đội"
+        verbose_name_plural = "Đăng ký đội"
 
     def display_proof(self, obj):
         if obj.payment_proof:
@@ -362,6 +374,10 @@ class PlayerAdmin(ModelAdmin):
     autocomplete_fields = ("team",)
     list_select_related = ("team",)
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Cầu thủ"
+        verbose_name_plural = "Cầu thủ"
 
     @admin.display(description='Đội', ordering='team__name')
     def link_to_team(self, obj):
@@ -387,6 +403,10 @@ class PlayerAdmin(ModelAdmin):
 @admin.register(Match)
 class MatchAdmin(ModelAdmin):
     list_display = ("__str__", "tournament", "colored_round", "display_match_time", "team1_score", "team2_score",); list_filter = ("tournament", "match_round", MatchResultFilter); search_fields = ("team1__name", "team2__name", "tournament__name"); list_editable = ("team1_score", "team2_score",); date_hierarchy = "match_time"; inlines = [LineupInline, GoalInline, CardInline]; autocomplete_fields = ("team1", "team2", "tournament"); list_select_related = ("tournament", "team1", "team2"); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Trận đấu"
+        verbose_name_plural = "Trận đấu"
     @admin.display(description='Thời gian thi đấu', ordering='match_time')
     def display_match_time(self, obj): return format_html("{}<br>{}", obj.match_time.strftime("%H:%M"), obj.match_time.strftime("%d-%m-%Y"))
     fieldsets = (
@@ -423,21 +443,53 @@ class TournamentPhotoAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'tournament')
     readonly_fields = ('image_preview',)
     list_per_page = 20
+    
+    class Meta:
+        verbose_name = "Ảnh giải đấu"
+        verbose_name_plural = "Ảnh giải đấu"
     @admin.display(description='Xem trước')
     def image_preview(self, obj):
         if obj.image: return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;" />', obj.image.url)
         return "Không có ảnh"
 @admin.register(Group)
-class GroupAdmin(ModelAdmin): list_display = ("name", "tournament"); list_filter = ("tournament",); search_fields = ("name", "tournament__name"); list_per_page = 50
+class GroupAdmin(ModelAdmin): 
+    list_display = ("name", "tournament"); list_filter = ("tournament",); search_fields = ("name", "tournament__name"); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Bảng đấu"
+        verbose_name_plural = "Bảng đấu"
+
 @admin.register(Lineup)
-class LineupAdmin(ModelAdmin): list_display = ("player", "team", "match", "status"); list_filter = ("match__tournament", "team", "status"); search_fields = ("player__full_name", "match__team1__name", "match__team2__name"); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+class LineupAdmin(ModelAdmin): 
+    list_display = ("player", "team", "match", "status"); list_filter = ("match__tournament", "team", "status"); search_fields = ("player__full_name", "match__team1__name", "match__team2__name"); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Đội hình"
+        verbose_name_plural = "Đội hình"
+
 @admin.register(Goal)
-class GoalAdmin(ModelAdmin): list_display = ("match", "team", "player", "minute"); list_filter = ("match__tournament", "team"); search_fields = ("player__full_name",); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+class GoalAdmin(ModelAdmin): 
+    list_display = ("match", "team", "player", "minute"); list_filter = ("match__tournament", "team"); search_fields = ("player__full_name",); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Bàn thắng"
+        verbose_name_plural = "Bàn thắng"
+
 @admin.register(Card)
-class CardAdmin(ModelAdmin): list_display = ("match", "team", "player", "card_type", "minute"); list_filter = ("match__tournament", "team", "card_type"); search_fields = ("player__full_name",); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+class CardAdmin(ModelAdmin): 
+    list_display = ("match", "team", "player", "card_type", "minute"); list_filter = ("match__tournament", "team", "card_type"); search_fields = ("player__full_name",); autocomplete_fields = ("match", "player", "team"); list_select_related = ("match", "team", "player"); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Thẻ phạt"
+        verbose_name_plural = "Thẻ phạt"
 @admin.register(HomeBanner)
 class HomeBannerAdmin(ModelAdmin): 
     list_display = ("title", "order", "is_active", "preview"); list_editable = ("order", "is_active"); search_fields = ("title",); list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Banner trang chủ"
+        verbose_name_plural = "Banner trang chủ"
+    
     def preview(self, obj):
         if obj.image: return format_html('<img src="{}" style="height:36px;border-radius:6px;object-fit:cover">', obj.image.url)
         return "-"
@@ -446,6 +498,10 @@ class HomeBannerAdmin(ModelAdmin):
 class AnnouncementAdmin(ModelAdmin): 
     list_display = ('title', 'tournament', 'audience', 'is_published', 'created_at'); list_filter = ('tournament', 'is_published', 'audience'); search_fields = ('title', 'content'); list_editable = ('is_published',); date_hierarchy = 'created_at'; actions = ['send_email_notification']
     class Media: js = ('js/admin_state.js',)
+    
+    class Meta:
+        verbose_name = "Thông báo"
+        verbose_name_plural = "Thông báo"
     @admin.action(description='Gửi email thông báo cho các đội trưởng')
     def send_email_notification(self, request, queryset):
         sent_count = 0
@@ -463,7 +519,12 @@ class AnnouncementAdmin(ModelAdmin):
         if sent_count > 0: self.message_user(request, f"Đã gửi thành công {sent_count} thông báo qua email.", messages.SUCCESS)
 
 @admin.register(TeamAchievement)
-class TeamAchievementAdmin(admin.ModelAdmin): list_display = ('team', 'achievement_type', 'tournament', 'achieved_at'); list_filter = ('tournament', 'achievement_type'); search_fields = ('team__name', 'tournament__name', 'description'); autocomplete_fields = ('team', 'tournament')
+class TeamAchievementAdmin(admin.ModelAdmin): 
+    list_display = ('team', 'achievement_type', 'tournament', 'achieved_at'); list_filter = ('tournament', 'achievement_type'); search_fields = ('team__name', 'tournament__name', 'description'); autocomplete_fields = ('team', 'tournament')
+    
+    class Meta:
+        verbose_name = "Thành tích đội"
+        verbose_name_plural = "Thành tích đội"
 
 # ===== ADMIN CHO CÁC MODEL TÀI CHÍNH =====
 @admin.register(TournamentBudget)
@@ -473,6 +534,10 @@ class TournamentBudgetAdmin(admin.ModelAdmin):
     search_fields = ('tournament__name',)
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ('tournament',)
+    
+    class Meta:
+        verbose_name = "Ngân sách giải đấu"
+        verbose_name_plural = "Ngân sách giải đấu"
     
     def get_total_revenue(self, obj):
         return f"{obj.get_total_revenue():,} VNĐ"
@@ -499,6 +564,10 @@ class RevenueItemAdmin(admin.ModelAdmin):
     search_fields = ('description', 'budget__tournament__name')
     readonly_fields = ('created_at',)
     autocomplete_fields = ('budget',)
+    
+    class Meta:
+        verbose_name = "Khoản thu"
+        verbose_name_plural = "Khoản thu"
 
 @admin.register(ExpenseItem)
 class ExpenseItemAdmin(admin.ModelAdmin):
@@ -507,6 +576,10 @@ class ExpenseItemAdmin(admin.ModelAdmin):
     search_fields = ('description', 'budget__tournament__name')
     readonly_fields = ('created_at',)
     autocomplete_fields = ('budget',)
+    
+    class Meta:
+        verbose_name = "Khoản chi"
+        verbose_name_plural = "Khoản chi"
 
 @admin.register(BudgetHistory)
 class BudgetHistoryAdmin(admin.ModelAdmin):
@@ -515,6 +588,10 @@ class BudgetHistoryAdmin(admin.ModelAdmin):
     search_fields = ('description', 'budget__tournament__name', 'user__username')
     readonly_fields = ('timestamp',)
     autocomplete_fields = ('budget', 'user')
+    
+    class Meta:
+        verbose_name = "Lịch sử ngân sách"
+        verbose_name_plural = "Lịch sử ngân sách"
 
 @admin.register(TournamentStaff)
 class TournamentStaffAdmin(admin.ModelAdmin):
@@ -524,6 +601,10 @@ class TournamentStaffAdmin(admin.ModelAdmin):
     autocomplete_fields = ('tournament', 'user', 'role')
     list_select_related = ('tournament', 'user', 'role')
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Nhân sự giải đấu"
+        verbose_name_plural = "Nhân sự giải đấu"
     
     @admin.display(description='Email', ordering='user__email')
     def get_user_email(self, obj):
@@ -544,6 +625,10 @@ class MatchNoteAdmin(admin.ModelAdmin):
     list_select_related = ('match', 'author', 'team', 'match__tournament')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Ghi chú trận đấu"
+        verbose_name_plural = "Ghi chú trận đấu"
     
     fieldsets = (
         ('Thông tin cơ bản', {
@@ -572,6 +657,10 @@ class CoachRecruitmentAdmin(admin.ModelAdmin):
     list_select_related = ('team', 'coach', 'coach__user')
     readonly_fields = ('created_at', 'updated_at')
     list_per_page = 50
+    
+    class Meta:
+        verbose_name = "Tuyển dụng HLV"
+        verbose_name_plural = "Tuyển dụng HLV"
     
     fieldsets = (
         ('Thông tin cơ bản', {

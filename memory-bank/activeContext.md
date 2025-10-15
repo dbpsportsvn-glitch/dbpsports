@@ -4,6 +4,7 @@
   - (Sẽ được cập nhật khi có task mới)
 
 - **Các thay đổi gần đây:**
+  - **Viet hoa va sap xep lai trang quan tri admin:** Hoan thanh viet hoa toan bo trang quan tri Django admin voi tieu de "DBP Sports - Trung tam Quan tri", sap xep lai thu tu cac app theo logic nghiep vu (Giai dau → To chuc → Nguoi dung → Nha tai tro → Cua hang → Tin tuc), viet hoa ten hien thi tat ca cac models trong moi app, them emoji icons de phan biet cac model, va di chuyen action "Xoa" xuong cuoi cung trong dropdown actions de tranh nham lan.
   - **SEO Optimization - Structured Data Event:** Hoàn thành việc khắc phục các vấn đề Structured Data Event mà Google Analytics báo cáo cho dbpsports.com. Đã thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) vào các template quan trọng: tournament_detail.html, match_detail.html, home.html, active_list.html, archive.html. Sử dụng Schema.org Event với JSON-LD format để cải thiện SEO và hiển thị rich results trên Google Search.
   - **Thiết kế lại tab tổng quan:** Hoàn thành việc thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ và đẹp mắt. Bao gồm Bio Card, Personal Info Card với role badges có icon đẹp mắt, Professional Summary Card, Achievements Card và Reviews Card. Sắp xếp lại thứ tự thẻ để thông tin cá nhân và chuyên môn hiển thị trước thành tích và đánh giá.
   - **Thêm QR code vào Stadium Profile:** Tích hợp mã QR thanh toán vào Stadium Profile Card trong tab chuyên môn với thiết kế center alignment, kích thước 120px và styling đẹp mắt với background và border.
@@ -17,6 +18,7 @@
   - **Sửa lỗi NoReverseMatch:** Đã khắc phục lỗi `NoReverseMatch` khi tạo URL `public_profile` do `user.username` có thể rỗng trong hệ thống xác thực bằng email.
 
 - **Các quyết định gần đây:**
+  - **Quyet dinh ve Admin Interface:** Quyet dinh viet hoa toan bo trang quan tri Django admin de de dang su dung hon cho nguoi dung Viet Nam. Sap xep lai thu tu cac app theo logic nghiep vu voi Giai dau uu tien cao nhat, sau do den To chuc, Nguoi dung, Nha tai tro, Cua hang, Tin tuc. Them emoji icons de phan biet cac model va di chuyen action "Xoa" xuong cuoi cung de tranh nham lan.
   - **Quyết định về SEO Structured Data:** Sử dụng Schema.org Event với JSON-LD format để khắc phục các vấn đề Structured Data mà Google Analytics báo cáo. Thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) với fallback values và dynamic eventStatus dựa trên trạng thái giải đấu. Sử dụng ItemList cho danh sách giải đấu và SportsEvent cho từng sự kiện cụ thể.
   - **Quyết định về Overview Tab Design:** Thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ, sắp xếp lại thứ tự để thông tin cá nhân và chuyên môn hiển thị trước thành tích và đánh giá. Thêm role badges có icon đẹp mắt cho từng vai trò.
   - **Quyết định về QR Code Integration:** Tích hợp mã QR thanh toán vào Stadium Profile Card với thiết kế center alignment, kích thước 120px và styling đẹp mắt để người dùng dễ dàng quét và thanh toán.

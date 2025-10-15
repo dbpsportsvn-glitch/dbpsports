@@ -10,6 +10,10 @@ class BlogCategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Danh mục tin tức"
+        verbose_name_plural = "Danh mục tin tức"
 
 
 @admin.register(BlogTag)
@@ -17,6 +21,10 @@ class BlogTagAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'color_tag']
     search_fields = ['name']
     prepopulated_fields = {'slug': ('name',)}
+    
+    class Meta:
+        verbose_name = "Thẻ"
+        verbose_name_plural = "Thẻ"
 
     def color_tag(self, obj):
         return format_html(
@@ -49,6 +57,10 @@ class BlogPostAdmin(admin.ModelAdmin):
         'view_count', 'like_count', 'created_at', 'updated_at'
     ]
     inlines = [BlogCommentInline]
+    
+    class Meta:
+        verbose_name = "Bài viết"
+        verbose_name_plural = "Bài viết"
     
     fieldsets = (
         ('Thông tin cơ bản', {
@@ -88,6 +100,10 @@ class BlogCommentAdmin(admin.ModelAdmin):
     list_filter = ['is_approved', 'created_at', 'post__category']
     search_fields = ['author_name', 'author_email', 'content']
     readonly_fields = ['created_at']
+    
+    class Meta:
+        verbose_name = "Bình luận"
+        verbose_name_plural = "Bình luận"
     
     actions = ['approve_comments', 'disapprove_comments']
 

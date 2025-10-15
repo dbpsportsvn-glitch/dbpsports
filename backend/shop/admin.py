@@ -22,6 +22,10 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Danh mục"
+        verbose_name_plural = "Danh mục"
 
 
 class ProductImageInline(admin.TabularInline):
@@ -49,6 +53,10 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ['created_at', 'updated_at', 'published_at']
     inlines = [ProductImageInline, ProductVariantInline]
+    
+    class Meta:
+        verbose_name = "Sản phẩm"
+        verbose_name_plural = "Sản phẩm"
     
     fieldsets = (
         ('Thông tin cơ bản', {
@@ -97,6 +105,10 @@ class ProductImageAdmin(admin.ModelAdmin):
     list_display = ['product', 'alt_text', 'order', 'created_at']
     list_filter = ['created_at']
     search_fields = ['product__name', 'alt_text']
+    
+    class Meta:
+        verbose_name = "Ảnh sản phẩm"
+        verbose_name_plural = "Ảnh sản phẩm"
 
 
 @admin.register(Cart)
@@ -105,6 +117,10 @@ class CartAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
     search_fields = ['user__username', 'user__email']
     readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Giỏ hàng"
+        verbose_name_plural = "Giỏ hàng"
 
     def total_items(self, obj):
         return obj.total_items
@@ -120,6 +136,10 @@ class CartItemAdmin(admin.ModelAdmin):
     list_display = ['cart', 'product', 'quantity', 'total_price', 'added_at']
     list_filter = ['added_at']
     search_fields = ['cart__user__username', 'product__name']
+    
+    class Meta:
+        verbose_name = "Mục giỏ hàng"
+        verbose_name_plural = "Mục giỏ hàng"
 
 
 class OrderItemInline(admin.TabularInline):
@@ -139,6 +159,10 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ['status', 'payment_status', 'created_at', 'shipping_city']
     search_fields = ['order_number', 'customer_name', 'customer_email', 'customer_phone']
     readonly_fields = ['order_number', 'payment_proof_link', 'created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Đơn hàng"
+        verbose_name_plural = "Đơn hàng"
     inlines = [OrderItemInline]
     list_per_page = 25
     date_hierarchy = 'created_at'
@@ -376,6 +400,10 @@ class OrderItemAdmin(admin.ModelAdmin):
     list_filter = ['order__created_at', 'order__status']
     search_fields = ['order__order_number', 'product__name']
     
+    class Meta:
+        verbose_name = "Mục đơn hàng"
+        verbose_name_plural = "Mục đơn hàng"
+    
     def order_link(self, obj):
         """Hiển thị link đến đơn hàng với màu sắc"""
         status_colors = {
@@ -412,6 +440,10 @@ class ShopBannerAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
     
+    class Meta:
+        verbose_name = "Banner cửa hàng"
+        verbose_name_plural = "Banner cửa hàng"
+    
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('title', 'subtitle', 'order', 'is_active')
@@ -443,6 +475,10 @@ class ProductImportAdmin(admin.ModelAdmin):
     list_display = ['source_url', 'crawled_name', 'status', 'created_at', 'processed_at']
     list_filter = ['status', 'created_at']
     search_fields = ['source_url', 'crawled_name', 'source_name']
+    
+    class Meta:
+        verbose_name = "Nhập sản phẩm"
+        verbose_name_plural = "Nhập sản phẩm"
     readonly_fields = ['created_at', 'updated_at', 'processed_at']
     
     fieldsets = (
@@ -495,6 +531,10 @@ class ProductSizeAdmin(admin.ModelAdmin):
     list_filter = ['size_type', 'is_active']
     search_fields = ['name']
     ordering = ['size_type', 'order', 'name']
+    
+    class Meta:
+        verbose_name = "Kích thước sản phẩm"
+        verbose_name_plural = "Kích thước sản phẩm"
 
 
 class ProductVariantInline(admin.TabularInline):
@@ -510,6 +550,10 @@ class ProductVariantAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'size__size_type']
     search_fields = ['product__name', 'sku', 'size__name']
     readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Biến thể sản phẩm"
+        verbose_name_plural = "Biến thể sản phẩm"
     
     fieldsets = (
         ('Thông tin cơ bản', {
@@ -552,6 +596,10 @@ class PaymentMethodAdmin(admin.ModelAdmin):
     list_editable = ['order', 'is_active']
     inlines = [BankAccountInline, EWalletAccountInline]
     
+    class Meta:
+        verbose_name = "Phương thức thanh toán"
+        verbose_name_plural = "Phương thức thanh toán"
+    
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('name', 'payment_type', 'description', 'icon')
@@ -573,6 +621,10 @@ class BankAccountAdmin(admin.ModelAdmin):
     search_fields = ['bank_name', 'account_holder', 'account_number']
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
+    
+    class Meta:
+        verbose_name = "Tài khoản ngân hàng"
+        verbose_name_plural = "Tài khoản ngân hàng"
     
     fieldsets = (
         ('Thông tin tài khoản', {
@@ -599,6 +651,10 @@ class EWalletAccountAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
     
+    class Meta:
+        verbose_name = "Tài khoản ví điện tử"
+        verbose_name_plural = "Tài khoản ví điện tử"
+    
     fieldsets = (
         ('Thông tin ví điện tử', {
             'fields': ('payment_method', 'wallet_name', 'account_info', 'qr_code')
@@ -620,6 +676,10 @@ class PaymentStepAdmin(admin.ModelAdmin):
     search_fields = ['title', 'description']
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
+    
+    class Meta:
+        verbose_name = "Bước thanh toán"
+        verbose_name_plural = "Bước thanh toán"
     
     fieldsets = (
         ('Thông tin bước', {
@@ -643,6 +703,10 @@ class ContactInfoAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
     
+    class Meta:
+        verbose_name = "Thông tin liên hệ"
+        verbose_name_plural = "Thông tin liên hệ"
+    
     fieldsets = (
         ('Thông tin liên hệ', {
             'fields': ('contact_type', 'name', 'value', 'description', 'icon')
@@ -665,6 +729,10 @@ class PaymentPolicyAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     list_editable = ['order', 'is_active']
     
+    class Meta:
+        verbose_name = "Chính sách thanh toán"
+        verbose_name_plural = "Chính sách thanh toán"
+    
     fieldsets = (
         ('Thông tin chính sách', {
             'fields': ('title', 'content', 'policy_type', 'icon')
@@ -685,6 +753,10 @@ class CustomerShippingInfoAdmin(admin.ModelAdmin):
     list_filter = ['city', 'updated_at']
     search_fields = ['user__username', 'user__email', 'full_name', 'phone', 'address']
     readonly_fields = ['updated_at']
+    
+    class Meta:
+        verbose_name = "Thông tin giao hàng"
+        verbose_name_plural = "Thông tin giao hàng"
     
     fieldsets = (
         ('Người dùng', {
@@ -709,6 +781,10 @@ class ContactSettingsAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'created_at', 'updated_at']
     search_fields = ['phone_number']
     readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Cài đặt liên hệ"
+        verbose_name_plural = "Cài đặt liên hệ"
     
     fieldsets = (
         ('Thông tin liên hệ', {

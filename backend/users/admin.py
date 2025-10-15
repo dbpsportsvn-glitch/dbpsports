@@ -7,12 +7,20 @@ class RoleAdmin(admin.ModelAdmin):
     list_display = ('name', 'id', 'icon', 'order')
     list_editable = ('order',)
     search_fields = ('name', 'id')
+    
+    class Meta:
+        verbose_name = "Vai trò"
+        verbose_name_plural = "Vai trò"
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'has_selected_roles')
     list_filter = ('has_selected_roles',)
     filter_horizontal = ('roles',)
+    
+    class Meta:
+        verbose_name = "Hồ sơ"
+        verbose_name_plural = "Hồ sơ"
 
 @admin.register(CoachProfile)
 class CoachProfileAdmin(admin.ModelAdmin):
@@ -20,6 +28,10 @@ class CoachProfileAdmin(admin.ModelAdmin):
     list_filter = ('is_available', 'region', 'created_at')
     search_fields = ('full_name', 'user__username', 'coaching_license', 'specialization')
     readonly_fields = ('created_at', 'updated_at')
+    
+    class Meta:
+        verbose_name = "Hồ sơ HLV"
+        verbose_name_plural = "Hồ sơ HLV"
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('user', 'team', 'full_name', 'avatar', 'bio', 'date_of_birth')
@@ -45,6 +57,10 @@ class StadiumProfileAdmin(admin.ModelAdmin):
     list_filter = ('field_type', 'region', 'created_at')
     search_fields = ('stadium_name', 'user__username', 'address', 'location_detail')
     readonly_fields = ('created_at', 'updated_at')
+    
+    class Meta:
+        verbose_name = "Hồ sơ sân bóng"
+        verbose_name_plural = "Hồ sơ sân bóng"
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('user', 'stadium_name', 'logo', 'description')
@@ -72,6 +88,10 @@ class CoachReviewAdmin(admin.ModelAdmin):
     search_fields = ('coach_profile__full_name', 'reviewer__username', 'comment')
     readonly_fields = ('created_at',)
     list_editable = ('is_approved',)
+    
+    class Meta:
+        verbose_name = "Đánh giá HLV"
+        verbose_name_plural = "Đánh giá HLV"
 
 
 @admin.register(StadiumReview)
@@ -81,3 +101,7 @@ class StadiumReviewAdmin(admin.ModelAdmin):
     search_fields = ('stadium_profile__stadium_name', 'reviewer__username', 'comment')
     readonly_fields = ('created_at',)
     list_editable = ('is_approved',)
+    
+    class Meta:
+        verbose_name = "Đánh giá sân bóng"
+        verbose_name_plural = "Đánh giá sân bóng"

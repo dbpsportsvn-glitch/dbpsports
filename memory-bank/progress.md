@@ -62,6 +62,7 @@
   - **Overview Tab Redesign:** Thiết kế lại tab tổng quan với các thẻ thông tin đồng bộ, bao gồm Bio Card, Personal Info Card với role badges có icon, Professional Summary Card, Achievements Card và Reviews Card. Sắp xếp lại thứ tự thẻ để thông tin cá nhân và chuyên môn hiển thị trước.
   - **QR Code Integration:** Thêm mã QR thanh toán vào Stadium Profile Card trong tab chuyên môn với thiết kế center alignment, kích thước 120px và styling đẹp mắt.
   - **SEO Optimization - Structured Data Event:** Hoàn thành việc khắc phục các vấn đề Structured Data Event mà Google Analytics báo cáo. Đã thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) vào các template: tournament_detail.html, match_detail.html, home.html, active_list.html, archive.html. Sử dụng Schema.org Event với JSON-LD format để cải thiện SEO và hiển thị rich results trên Google.
+  - **Viet hoa va sap xep lai trang quan tri admin:** Hoan thanh viet hoa toan bo trang quan tri Django admin voi tieu de "DBP Sports - Trung tam Quan tri", sap xep lai thu tu cac app theo logic nghiep vu (Giai dau → To chuc → Nguoi dung → Nha tai tro → Cua hang → Tin tuc), viet hoa ten hien thi tat ca cac models trong moi app, them emoji icons de phan biet cac model, va di chuyen action "Xoa" xuong cuoi cung trong dropdown actions de tranh nham lan.
 
 - **Những gì cần làm tiếp:**
   - Hoàn thiện trang "Thị trường việc làm" (Job Market)
