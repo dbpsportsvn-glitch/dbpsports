@@ -533,7 +533,7 @@
   </script>
 </head>
 
-<body>
+<body data-user-authenticated="{% if user.is_authenticated %}True{% else %}False{% endif %}">
 <header class="site-header sticky-top">
   <nav class="navbar navbar-expand-lg" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59, 130, 246, 0.2);">
     <div class="container">
@@ -1614,27 +1614,63 @@
   height: 60px;
   object-fit: cover;
   border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.cart-item-link {
+  text-decoration: none;
+  display: block;
+}
+
+.cart-item-link:hover .cart-item-image {
+  transform: scale(1.05);
 }
 
 .cart-item-details {
   flex: 1;
 }
 
+.cart-item-name-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 .cart-item-name {
   font-weight: 600;
   margin-bottom: 5px;
   font-size: 14px;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.cart-item-name-link:hover .cart-item-name {
+  color: #60a5fa;
 }
 
 .cart-item-size {
   font-size: 12px;
-  color: #666;
+  color: #cbd5e1;
   margin-bottom: 5px;
 }
 
 .cart-item-price {
   font-weight: 600;
   color: #dc3545;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.price-per-item {
+  font-size: 12px;
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.price-total {
+  font-size: 14px;
+  color: #dc3545;
+  font-weight: 600;
 }
 
 .cart-item-controls {
@@ -1806,13 +1842,23 @@ function updateCartPopup(cartData) {
   if (cartData.items && cartData.items.length > 0) {
     let html = '';
     cartData.items.forEach(item => {
+      // Tính tổng tiền cho từng sản phẩm
+      const itemTotal = item.price * item.quantity;
+      
       html += `
         <div class="cart-item">
-          <img src="${item.image || '/static/images/no-image.png'}" alt="${item.name}" class="cart-item-image">
+          <a href="/shop/products/${item.slug || ''}" class="cart-item-link">
+            <img src="${item.image || '/static/images/no-image.png'}" alt="${item.name}" class="cart-item-image">
+          </a>
           <div class="cart-item-details">
-            <div class="cart-item-name">${item.name}</div>
+            <a href="/shop/products/${item.slug || ''}" class="cart-item-name-link">
+              <div class="cart-item-name">${item.name}</div>
+            </a>
             ${item.size ? `<div class="cart-item-size">Size: ${item.size}</div>` : ''}
-            <div class="cart-item-price">${item.price.toLocaleString()} VNĐ</div>
+            <div class="cart-item-price">
+              <span class="price-per-item">${item.price.toLocaleString()} VNĐ</span>
+              <span class="price-total">× ${item.quantity} = ${itemTotal.toLocaleString()} VNĐ</span>
+            </div>
           </div>
           <div class="cart-item-controls">
             <div class="quantity-controls">
@@ -2004,6 +2050,185 @@ function forceRefreshCartCount() {
   });
 }
 </script>
+
+<!-- Add to Cart Popup -->
+<div class="modal fade" id="addToCartModal" tabindex="-1" aria-labelledby="addToCartModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addToCartModalLabel">
+          <i class="fas fa-shopping-cart me-2"></i>
+          Thêm vào giỏ hàng
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <div id="product-info" class="product-info-popup">
+          <!-- Product info will be loaded here -->
+        </div>
+        
+        <div class="size-selection" id="size-selection" style="display: none;">
+          <h6 class="mb-3">Chọn size:</h6>
+          <div class="size-options" id="size-options">
+            <!-- Size options will be loaded here -->
+          </div>
+        </div>
+        
+        <div class="quantity-selection mt-4">
+          <h6 class="mb-3">Số lượng:</h6>
+          <div class="quantity-controls-popup">
+            <button type="button" class="btn btn-outline-secondary" id="decrease-qty">-</button>
+            <input type="number" class="form-control text-center" id="quantity-input" value="1" min="1" max="10">
+            <button type="button" class="btn btn-outline-secondary" id="increase-qty">+</button>
+          </div>
+          <div class="stock-info mt-2">
+            <small class="text-muted" id="stock-info">Còn hàng</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="confirm-add-to-cart">
+          <i class="fas fa-shopping-cart me-2"></i>
+          Thêm vào giỏ
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Add to Cart Popup Styles */
+.product-info-popup {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.product-image-popup {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.product-details-popup {
+  flex: 1;
+}
+
+.product-name-popup {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.product-price-popup {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #dc3545;
+}
+
+.product-price-popup .original-price {
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-decoration: line-through;
+  margin-left: 0.5rem;
+}
+
+.size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.size-option {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  min-width: 60px;
+  text-align: center;
+}
+
+.size-option:hover {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
+
+.size-option.selected {
+  border-color: #dc3545;
+  background: #dc3545;
+  color: white;
+}
+
+.size-option.out-of-stock {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+.quantity-controls-popup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 150px;
+}
+
+.quantity-controls-popup button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.quantity-controls-popup input {
+  width: 60px;
+  height: 40px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.stock-info {
+  font-size: 0.9rem;
+}
+
+.stock-info.low-stock {
+  color: #f59e0b;
+}
+
+.stock-info.out-of-stock {
+  color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .product-info-popup {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .product-image-popup {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+  }
+  
+  .size-options {
+    justify-content: center;
+  }
+  
+  .quantity-controls-popup {
+    margin: 0 auto;
+  }
+}
+</style>
 
 {% block extra_js %}{% endblock %}
 </body>

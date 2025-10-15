@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from .models import (
     Product, Category, Cart, CartItem, Order, OrderItem, ShopBanner, ProductImport,
     PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
-    CustomerShippingInfo, ContactSettings
+    CustomerShippingInfo, ContactSettings, ProductSize, ProductVariant
 )
 # NEW: Sử dụng email service mới - đơn giản và hoạt động tốt
 from .email_service import send_order_emails
@@ -421,6 +421,7 @@ def cart_api(request):
             item_data = {
                 'id': item.id,
                 'name': item.product.name,
+                'slug': item.product.slug,
                 'price': float(item.product.current_price),
                 'quantity': item.quantity,
                 'size': item.size.name if item.size else None,
@@ -447,6 +448,72 @@ def cart_api(request):
         response = JsonResponse({
             'success': False,
             'message': 'Có lỗi xảy ra khi tải giỏ hàng'
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+
+
+def product_info_api(request, product_id):
+    """API để lấy thông tin sản phẩm (size, stock) cho popup thêm giỏ hàng"""
+    try:
+        product = get_object_or_404(Product, id=product_id, status='published')
+        
+        # Lấy thông tin size có sẵn
+        sizes = []
+        
+        if product.has_sizes and product.available_sizes.exists():
+            for size in product.available_sizes.filter(is_active=True):
+                # Kiểm tra stock của variant nếu có
+                variant_stock = product.stock_quantity
+                try:
+                    variant = ProductVariant.objects.get(product=product, size=size, is_active=True)
+                    variant_stock = variant.stock_quantity
+                except ProductVariant.DoesNotExist:
+                    pass
+                
+                sizes.append({
+                    'id': size.id,
+                    'name': size.name,
+                    'stock': variant_stock
+                })
+        
+        product_data = {
+            'id': product.id,
+            'name': product.name,
+            'slug': product.slug,
+            'price': float(product.current_price),
+            'original_price': float(product.price),
+            'sale_price': float(product.sale_price) if product.sale_price else None,
+            'is_on_sale': product.is_on_sale,
+            'stock_quantity': product.stock_quantity,
+            'has_sizes': product.has_sizes,
+            'sizes': sizes,
+            'image': product.main_image.url if product.main_image else None,
+            'description': product.short_description
+        }
+        
+        
+        response = JsonResponse({
+            'success': True,
+            'product': product_data
+        })
+        
+        # Add cache-busting headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
+        
+    except Exception as e:
+        response = JsonResponse({
+            'success': False,
+            'message': 'Có lỗi xảy ra khi tải thông tin sản phẩm'
         })
         
         # Add cache-busting headers

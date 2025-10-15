@@ -23,6 +23,9 @@ urlpatterns = [
     path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     
+    # API sản phẩm
+    path('api/product/<int:product_id>/', views.product_info_api, name='product_info_api'),
+    
     # Thanh toán và đơn hàng
     path('checkout/', views.checkout, name='checkout'),
     path('order/confirm/', views.order_confirm, name='order_confirm'),
