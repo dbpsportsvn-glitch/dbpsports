@@ -317,7 +317,7 @@
 .sponsor-ticker__item {
     display: flex;
     align-items: center;
-    padding: 0 50px;
+    padding: 0 0 0 50px;
     flex-shrink: 0;
 }
 
@@ -336,10 +336,10 @@
 
 @keyframes scroll-infinite {
     0% {
-        transform: translateX(0);
+        transform: translateX(100vw);
     }
     100% {
-        transform: translateX(-33.3333%);
+        transform: translateX(-100%);
     }
 }
 
