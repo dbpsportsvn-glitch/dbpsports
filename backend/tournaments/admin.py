@@ -327,7 +327,7 @@ class TeamRegistrationAdmin(ModelAdmin):
     list_editable = ('payment_status', 'group')
     autocomplete_fields = ('team', 'tournament', 'group')
     list_select_related = ('team', 'tournament', 'group')
-    actions = ['approve_payments']
+    actions = ['reject_payments', 'approve_payments', 'remove_team_from_tournament']
     
     class Meta:
         verbose_name = "Đăng ký đội"
@@ -352,15 +352,67 @@ class TeamRegistrationAdmin(ModelAdmin):
                 )
         self.message_user(request, f'Đã duyệt thành công thanh toán cho {updated_count} đội.')
     
+    @admin.action(description='Từ chối thanh toán cho các đăng ký đã chọn')
+    def reject_payments(self, request, queryset):
+        rejected_count = 0
+        for reg in queryset.filter(payment_status='PENDING'):
+            reg.payment_status = 'UNPAID'
+            reg.payment_proof = None  # Xóa bằng chứng thanh toán
+            reg.save()
+            rejected_count += 1
+            
+            # Gửi email thông báo từ chối cho đội trưởng
+            if reg.team.captain.email:
+                send_notification_email(
+                    subject=f"Thanh toán không hợp lệ cho đội {reg.team.name}",
+                    template_name='tournaments/emails/payment_rejected.html',
+                    context={'team': reg.team, 'tournament': reg.tournament, 'registration': reg},
+                    recipient_list=[reg.team.captain.email]
+                )
+        
+        self.message_user(request, f'Đã từ chối thanh toán cho {rejected_count} đội và gửi email thông báo.')
+    
+    @admin.action(description='Gỡ đội khỏi giải đấu (trả về trạng thái tự do)')
+    def remove_team_from_tournament(self, request, queryset):
+        removed_count = 0
+        for registration in queryset:
+            team_name = registration.team.name
+            tournament_name = registration.tournament.name
+            registration.delete()
+            removed_count += 1
+            
+            # Gửi email thông báo cho đội trưởng
+            if registration.team.captain.email:
+                send_notification_email(
+                    subject=f"Đội {team_name} đã được gỡ khỏi giải {tournament_name}",
+                    template_name='tournaments/emails/team_removed_from_tournament.html',
+                    context={'team': registration.team, 'tournament': registration.tournament},
+                    recipient_list=[registration.team.captain.email]
+                )
+        
+        self.message_user(request, f'Đã gỡ thành công {removed_count} đội khỏi các giải đấu. Các đội này đã trở về trạng thái tự do.')
+    
     def save_model(self, request, obj, form, change):
         old_obj = TeamRegistration.objects.get(pk=obj.pk) if obj.pk else None
         super().save_model(request, obj, form, change)
+        
+        # Gửi email khi duyệt thanh toán
         if old_obj and old_obj.payment_status != 'PAID' and obj.payment_status == 'PAID':
             if obj.team.captain.email:
                 send_notification_email(
                     subject=f"Xác nhận thanh toán thành công cho đội {obj.team.name}",
                     template_name='tournaments/emails/payment_confirmed.html',
                     context={'team': obj.team, 'tournament': obj.tournament},
+                    recipient_list=[obj.team.captain.email]
+                )
+        
+        # Gửi email khi từ chối thanh toán
+        if old_obj and old_obj.payment_status != 'REJECTED' and obj.payment_status == 'REJECTED':
+            if obj.team.captain.email:
+                send_notification_email(
+                    subject=f"Thanh toán không hợp lệ cho đội {obj.team.name}",
+                    template_name='tournaments/emails/payment_rejected.html',
+                    context={'team': obj.team, 'tournament': obj.tournament, 'registration': obj},
                     recipient_list=[obj.team.captain.email]
                 )
 

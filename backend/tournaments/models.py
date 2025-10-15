@@ -144,7 +144,7 @@ class Group(models.Model):
         return sorted_standings
 
 class Team(models.Model):
-    PAYMENT_STATUS_CHOICES = [('UNPAID', 'Chưa thanh toán'), ('PENDING', 'Chờ xác nhận'), ('PAID', 'Đã thanh toán')]
+    PAYMENT_STATUS_CHOICES = [('UNPAID', 'Chưa thanh toán'), ('PENDING', 'Chờ xác nhận'), ('PAID', 'Đã thanh toán'), ('REJECTED', 'Từ chối')]
     name = models.CharField(max_length=100)
     coach_name = models.CharField(max_length=100, blank=True, help_text="Tên HLV (sử dụng cho dữ liệu cũ, nên dùng trường 'coach' bên dưới)")
     coach = models.ForeignKey(

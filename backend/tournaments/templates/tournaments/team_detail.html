@@ -273,6 +273,8 @@
                     </div>
 
                     <h6 class="mt-3">Các giải đấu đã đăng ký:</h6>
+                    <!-- Debug info -->
+                    <small class="text-muted">(Cập nhật lần cuối: {{ "now"|date:"H:i:s" }})</small>
                     {% if registrations %}
                         <div class="list-group list-group-flush">
                         {% for reg in registrations %}
@@ -285,11 +287,17 @@
                                         <span class="badge bg-warning text-dark">Chờ xác nhận</span>
                                     {% elif reg.payment_status == 'PAID' %}
                                         <span class="badge bg-success">Đã duyệt</span>
+                                    {% elif reg.payment_status == 'REJECTED' %}
+                                        <span class="badge bg-danger">Từ chối</span>
                                     {% endif %}
                                 </div>
                                 {% if reg.payment_status == 'UNPAID' and user == team.captain %}
                                     <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-success mt-2 w-100">
                                         <i class="bi bi-credit-card-fill"></i> Thanh toán lệ phí giải này
+                                    </a>
+                                {% elif reg.payment_status == 'REJECTED' and user == team.captain %}
+                                    <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-warning mt-2 w-100">
+                                        <i class="bi bi-arrow-clockwise"></i> Tải lại hóa đơn
                                     </a>
                                 {% endif %}
                             </div>

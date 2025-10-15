@@ -10,10 +10,9 @@ from .utils import send_schedule_notification
 from organizations.models import JobPosting
 from .models import Sponsorship
 
-@receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group, JobPosting])
+@receiver([post_save, post_delete], sender=[HomeBanner, Tournament, Match, Group, JobPosting, TeamRegistration])
 def clear_cache_on_data_change(sender, instance, **kwargs):
     cache.clear()
-    print(f"Cache đã được xóa do có thay đổi trong model: {sender.__name__}")
 
 @receiver(pre_delete, sender=Group)
 def delete_all_tournament_matches_on_group_delete(sender, instance, **kwargs):

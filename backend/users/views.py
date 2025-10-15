@@ -116,7 +116,7 @@ def dashboard(request):
     if player_profile and not player_profile_form:
         player_profile_form = PlayerCreationForm(instance=player_profile)
 
-    managed_teams = Team.objects.filter(captain=request.user)
+    managed_teams = Team.objects.filter(captain=request.user).prefetch_related('registrations')
     # === THÊM TRUY VẤN NÀY VÀO ===
     scouting_list = ScoutingList.objects.filter(
         team__in=managed_teams

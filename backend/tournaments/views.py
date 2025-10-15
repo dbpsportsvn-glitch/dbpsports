@@ -510,6 +510,7 @@ def add_free_agent(request, team_pk, player_pk):
 def team_detail(request, pk):
     team = get_object_or_404(Team, pk=pk)
     registrations = TeamRegistration.objects.filter(team=team).select_related('tournament').order_by('-tournament__start_date')
+    
     player_form = PlayerCreationForm()
     search_query = request.GET.get('q', '')
     search_results = []
@@ -566,15 +567,14 @@ def team_detail(request, pk):
 @login_required
 @never_cache
 def create_team(request, tournament_pk):
-    # --- THÊM LOGIC GIỚI HẠN ---
-    TEAM_LIMIT = 3
-    if Team.objects.filter(captain=request.user).count() >= TEAM_LIMIT:
-        messages.error(request, f"Bạn đã đạt đến giới hạn tối đa ({TEAM_LIMIT}) đội bóng được phép tạo.")
-        return redirect('tournament_detail', pk=tournament_pk)
-    # --- KẾT THÚC LOGIC GIỚI HẠN ---
-
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     existing_teams = Team.objects.filter(captain=request.user).exclude(registrations__tournament=tournament)
+    
+    # Kiểm tra giới hạn chỉ khi tạo đội mới (POST request)
+    TEAM_LIMIT = 3
+    if request.method == 'POST' and Team.objects.filter(captain=request.user).count() >= TEAM_LIMIT:
+        messages.error(request, f"Bạn đã đạt đến giới hạn tối đa ({TEAM_LIMIT}) đội bóng được phép tạo.")
+        return redirect('tournament_detail', pk=tournament_pk)
 
     if request.method == 'POST':
         form = TeamCreationForm(request.POST, request.FILES, user=request.user)
@@ -599,7 +599,7 @@ def create_team(request, tournament_pk):
                     recipient_list = [email for email in recipient_list if email and email != 'admin@example.com']
                     
                     if recipient_list:
-                        send_notification_email(
+                        email_sent = send_notification_email(
                             subject=f"Đội mới đăng ký: {team.name} - {tournament.name}",
                             template_name='tournaments/emails/new_team_registration.html',
                             context={'team': team, 'tournament': tournament, 'registration': registration},
@@ -2372,7 +2372,27 @@ def register_existing_team(request, tournament_pk, team_pk):
         messages.warning(request, f"Đội '{team.name}' đã được đăng ký vào giải này rồi.")
         return redirect('tournament_detail', pk=tournament_pk)
 
-    TeamRegistration.objects.create(team=team, tournament=tournament)
+    registration = TeamRegistration.objects.create(team=team, tournament=tournament)
+    
+    # Gửi email thông báo cho admin và BTC
+    admin_emails = getattr(settings, 'ADMIN_EMAILS', [settings.ADMIN_EMAIL])
+    btc_emails = []
+    
+    # Lấy email của BTC members
+    if tournament.organization:
+        btc_emails = [member.email for member in tournament.organization.members.all() if member.email]
+    
+    # Gộp danh sách email và loại bỏ trùng lặp
+    recipient_list = list(set(admin_emails + btc_emails))
+    recipient_list = [email for email in recipient_list if email and email != 'admin@example.com']
+    
+    if recipient_list:
+        email_sent = send_notification_email(
+            subject=f"Đội đăng ký giải đấu: {team.name} - {tournament.name}",
+            template_name='tournaments/emails/new_team_registration.html',
+            context={'team': team, 'tournament': tournament, 'registration': registration},
+            recipient_list=recipient_list
+        )
 
     messages.success(request, f"Đã đăng ký thành công đội '{team.name}' vào giải đấu. Vui lòng hoàn tất lệ phí.")
     return redirect('team_detail', pk=team.pk)

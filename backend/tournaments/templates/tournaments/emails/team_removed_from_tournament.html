@@ -1,0 +1,39 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Đội bóng đã được gỡ khỏi giải đấu{% endblock %}
+
+{% block content %}
+<div class="email-content">
+    <div class="alert alert-warning">
+        <h3><i class="bi bi-exclamation-triangle"></i> Thông báo quan trọng</h3>
+        <p><strong>Đội bóng {{ team.name }}</strong> đã được Ban Tổ chức gỡ khỏi giải đấu <strong>{{ tournament.name }}</strong>.</p>
+    </div>
+
+    <div class="info-section">
+        <h4>Chi tiết:</h4>
+        <ul>
+            <li><strong>Đội bóng:</strong> {{ team.name }}</li>
+            <li><strong>Giải đấu:</strong> {{ tournament.name }}</li>
+            <li><strong>Thời gian:</strong> {{ "now"|date:"d/m/Y H:i" }}</li>
+        </ul>
+    </div>
+
+    <div class="next-steps">
+        <h4>Bước tiếp theo:</h4>
+        <p>Đội bóng của bạn hiện đã trở về <strong>trạng thái tự do</strong> và có thể đăng ký tham gia các giải đấu khác.</p>
+        
+        <div class="action-buttons">
+            <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'dashboard' %}" class="btn btn-primary">
+                <i class="bi bi-house"></i> Về trang quản lý
+            </a>
+            <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'active_list' %}" class="btn btn-success">
+                <i class="bi bi-trophy"></i> Xem giải đấu khác
+            </a>
+        </div>
+    </div>
+
+    <div class="contact-info">
+        <p>Nếu bạn có thắc mắc về quyết định này, vui lòng liên hệ với Ban Tổ chức giải đấu.</p>
+    </div>
+</div>
+{% endblock %}
