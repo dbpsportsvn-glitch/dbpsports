@@ -328,42 +328,45 @@
 
 {% block content %}
 <!-- Hero Section -->
-<div class="hero-section text-white py-5 mb-4">
+<div class="hero-section text-white py-5 mb-4 position-relative">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <div class="d-flex align-items-center mb-3">
                     {% if team.logo %}
-                        <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="me-3" style="width: 80px; height: 80px; object-fit: contain; border-radius: 12px; background: rgba(255,255,255,0.1); padding: 8px;">
+                        <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="me-4 ms-4" style="width: 120px; height: 120px; object-fit: contain; border-radius: 12px; background: rgba(255,255,255,0.1); padding: 8px;">
                     {% else %}
-                        <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                            <i class="bi bi-shield-fill text-muted" style="font-size: 2rem;"></i>
+                        <div class="me-4 ms-4 bg-light rounded d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                            <i class="bi bi-shield-fill text-muted" style="font-size: 3rem;"></i>
                         </div>
                     {% endif %}
-                    <div>
-                        <h1 class="display-6 fw-bold mb-2">{{ team.name }}</h1>
-                        <p class="lead mb-0">Đội trưởng: {{ team.captain.username }}</p>
+                    <div class="flex-grow-1">
+                        <h1 class="display-4 fw-bold mb-1 text-start">Quản lý Đội bóng</h1>
+                        <h2 class="display-6 fw-semibold mb-1 text-start text-break">Đội: {{ team.name }}</h2>
+                        <p class="h5 mb-0 opacity-75 text-start text-break">Đội trưởng: {{ team.captain.username }}</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="d-flex gap-2 justify-content-end">
-                    {% if registrations.first.tournament %}
-                        <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-light">
-                            <i class="bi bi-arrow-left"></i> Về giải đấu
-                        </a>
-                    {% else %}
-                        <a href="{% url 'dashboard' %}" class="btn btn-light">
-                            <i class="bi bi-arrow-left"></i> Về trang cá nhân
-                        </a>
-                    {% endif %}
-                    {% if request.user == team.captain %}
-                        <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-light">
-                            <i class="bi bi-pencil-fill"></i> Chỉnh sửa
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons - Bottom Right -->
+    <div class="position-absolute bottom-0 end-0 p-3">
+        <div class="d-flex gap-2">
+            {% if registrations.first.tournament %}
+                <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Về giải đấu
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Về trang cá nhân
+                </a>
+            {% endif %}
+            {% if request.user == team.captain %}
+                <a href="{% url 'update_team' pk=team.pk %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-pencil-fill"></i> Chỉnh sửa
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
