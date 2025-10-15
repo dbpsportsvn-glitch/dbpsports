@@ -8,21 +8,22 @@
 {% endblock %}
 
 {% block management_content %}
-
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
-        <h2 class="mb-0">Dashboard Nhà tài trợ</h2>
-        <p class="text-muted mb-0">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+<div class="card shadow-sm">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h4 class="mb-0"><i class="bi bi-bar-chart-steps me-2"></i>Dashboard Nhà tài trợ</h4>
+            <p class="mb-0 mt-2">Giải đấu: <strong>{{ tournament.name }}</strong></p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#sponsorAnnouncementModal">
+                <i class="bi bi-megaphone"></i> Gửi thông báo
+            </button>
+            <a href="{% url 'organizations:manage_sponsors' tournament_pk=tournament.pk %}" class="btn btn-light">
+                <i class="bi bi-plus-circle"></i> Thêm/Sửa Nhà tài trợ
+            </a>
+        </div>
     </div>
-    <div class="d-flex gap-2">
-        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#sponsorAnnouncementModal">
-            <i class="bi bi-megaphone"></i> Gửi thông báo
-        </button>
-        <a href="{% url 'organizations:manage_sponsors' tournament_pk=tournament.pk %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Thêm/Sửa Nhà tài trợ
-        </a>
-    </div>
-</div>
+    <div class="card-body p-4">
 
 <div class="kanban-board-wrapper">
     <div class="kanban-board">
@@ -188,5 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+    </div>
+</div>
 
 {% endblock %}

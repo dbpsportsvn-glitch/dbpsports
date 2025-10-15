@@ -7,90 +7,116 @@
 {% endblock %}
 
 {% block management_content %}
-    <div class="card">
+    <div class="card shadow-sm">
+        <div class="card-header {% if active_page == 'overview' %}bg-info{% elif active_page == 'teams' %}bg-primary{% elif active_page == 'matches' %}bg-warning text-dark{% elif active_page == 'players' %}bg-success{% elif active_page == 'groups' %}bg-dark{% elif active_page == 'announcements' %}bg-info{% elif active_page == 'staff' %}bg-secondary{% else %}bg-primary{% endif %} text-white">
+            <h4 class="mb-0">
+                {% if active_page == 'overview' %}
+                    <i class="bi bi-bar-chart-fill me-2"></i>Tổng quan Giải đấu
+                {% elif active_page == 'teams' %}
+                    <i class="bi bi-people-fill me-2"></i>Quản lý Đội đăng ký
+                {% elif active_page == 'matches' %}
+                    <i class="bi bi-calendar2-event-fill me-2"></i>Quản lý Trận đấu
+                {% elif active_page == 'players' %}
+                    <i class="bi bi-person-badge-fill me-2"></i>Quản lý Cầu thủ
+                {% elif active_page == 'groups' %}
+                    <i class="bi bi-grid-fill me-2"></i>Quản lý Bảng đấu
+                {% elif active_page == 'announcements' %}
+                    <i class="bi bi-megaphone-fill me-2"></i>Gửi Thông báo
+                {% elif active_page == 'staff' %}
+                    <i class="bi bi-person-lines-fill me-2"></i>Quản lý Nhân sự
+                {% else %}
+                    <i class="bi bi-gear-fill me-2"></i>Quản lý Giải đấu
+                {% endif %}
+            </h4>
+        </div>
         <div class="card-body p-4">
             {% if active_page == 'overview' %}
-                <style>
-                    .stat-card {
-                        border-left: 5px solid;
-                        transition: transform 0.2s ease, box-shadow 0.2s ease;
-                    }
-                    .stat-card:hover {
-                        transform: translateY(-5px);
-                        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,.1);
-                    }
-                    .stat-card-teams { border-color: #0d6efd; }
-                    .stat-card-pending { border-color: #ffc107; }
-                    .stat-card-matches { border-color: #198754; }
-                </style>
-
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-                        <div class="card stat-card stat-card-teams h-100">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <h6 class="card-subtitle text-muted">Tổng số đội</h6>
-                                        <p class="display-5 mb-0">{{ stats.total_teams }}</p>
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-graph-up text-info"></i>
+                        Thống kê tổng quan
+                    </h5>
+                    <p class="text-muted mb-4">Các chỉ số quan trọng của giải đấu {{ tournament.name }}.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-subtitle text-muted">Tổng số đội</h6>
+                                            <p class="display-5 mb-0 text-primary">{{ stats.total_teams }}</p>
+                                        </div>
+                                        <i class="bi bi-people-fill fs-1 text-primary opacity-50"></i>
                                     </div>
-                                    <i class="bi bi-people-fill fs-1 text-primary opacity-50"></i>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card stat-card stat-card-pending h-100">
-                            <div class="card-body">
-                                 <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <h6 class="card-subtitle text-muted">Đội chờ duyệt</h6>
-                                        <p class="display-5 mb-0">{{ stats.pending_teams_count }}</p>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                     <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-subtitle text-muted">Đội chờ duyệt</h6>
+                                            <p class="display-5 mb-0 text-warning">{{ stats.pending_teams_count }}</p>
+                                        </div>
+                                        <i class="bi bi-hourglass-split fs-1 text-warning opacity-50"></i>
                                     </div>
-                                    <i class="bi bi-hourglass-split fs-1 text-warning opacity-50"></i>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card stat-card stat-card-matches h-100">
-                            <div class="card-body">
-                                 <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <h6 class="card-subtitle text-muted">Tổng số trận</h6>
-                                        <p class="display-5 mb-0">{{ stats.total_matches }}</p>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body">
+                                     <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-subtitle text-muted">Tổng số trận</h6>
+                                            <p class="display-5 mb-0 text-success">{{ stats.total_matches }}</p>
+                                        </div>
+                                        <i class="bi bi-calendar2-event-fill fs-1 text-success opacity-50"></i>
                                     </div>
-                                    <i class="bi bi-calendar2-event-fill fs-1 text-success opacity-50"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <hr class="my-4">
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-lightning text-warning"></i>
+                        Thao tác nhanh
+                    </h5>
+                    <p class="text-muted mb-4">Các công cụ quản lý giải đấu quan trọng.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
+                        <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
+                            <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
+                        </a>
+                        {% endif %}
 
-                <h5>Các thao tác nhanh</h5>
-                <div class="d-flex flex-wrap gap-2 mt-3">
-                    {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
-                    <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
-                        <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
-                    </a>
-                    {% endif %}
+                        {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not unassigned_teams and not tournament.matches.exists %}
+                        <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
+                            <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
+                        </a>
+                        {% endif %}
 
-                    {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not unassigned_teams and not tournament.matches.exists %}
-                    <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
-                        <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
-                    </a>
-                    {% endif %}
-
-                    <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
-                        <i class="bi bi-images"></i> Tải ảnh hàng loạt
-                    </a>
+                        <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
+                            <i class="bi bi-images"></i> Tải ảnh hàng loạt
+                        </a>
+                    </div>
                 </div>
 
             {% elif active_page == 'teams' %}
-                <h5>Duyệt Đội đăng ký</h5>
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-search text-primary"></i>
+                        Tìm kiếm và lọc đội đăng ký
+                    </h5>
+                    <p class="text-muted mb-4">Tìm kiếm và lọc các đội đã đăng ký tham gia giải đấu.</p>
+                </div>
 
-                <div class="card card-body mb-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
                     <form method="get" class="row g-3 align-items-end">
                         <input type="hidden" name="view" value="teams">
                         <div class="col-md-6">
@@ -110,10 +136,15 @@
                             <button type="submit" class="btn btn-primary w-100">Lọc</button>
                         </div>
                     </form>
+                    </div>
                 </div>
-                <hr>
 
-                <h6><i class="bi bi-exclamation-triangle-fill text-danger"></i> Các đội chưa thanh toán</h6>
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                        Các đội chưa thanh toán
+                    </h5>
+                    <p class="text-muted mb-4">Danh sách các đội chưa hoàn thành thanh toán phí tham gia.</p>
                 {% if unpaid_regs %}
                     <ul class="list-group mb-4">
                         {% for reg in unpaid_regs %}
@@ -132,8 +163,14 @@
                 {% else %}
                     <p class="text-muted">Không có đội nào chưa thanh toán.</p>
                 {% endif %}
+                </div>
 
-                <h6>Các đội chờ xác nhận thanh toán</h6>
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-hourglass-split text-warning"></i>
+                        Các đội chờ xác nhận thanh toán
+                    </h5>
+                    <p class="text-muted mb-4">Danh sách các đội đã gửi chứng từ thanh toán và đang chờ xác nhận.</p>
                 {% if pending_regs %}
                     <ul class="list-group">
                         {% for reg in pending_regs %}
