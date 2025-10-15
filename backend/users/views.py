@@ -247,7 +247,8 @@ def select_roles_view(request):
 
 @login_required
 def profile_setup_view(request):
-    profile = request.user.profile
+    # Tạo profile nếu chưa có
+    profile, created = Profile.objects.get_or_create(user=request.user)
     
     if profile.is_profile_complete:
         return redirect('home')

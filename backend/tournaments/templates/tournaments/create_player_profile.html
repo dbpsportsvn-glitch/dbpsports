@@ -1,89 +1,299 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block extra_css %}
+    <style>
+    /* Player Creation Form Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 12px;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    
+    .stats-box {
+        backdrop-filter: blur(10px);
+    }
+    
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #dee2e6;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .qr-preview {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .player-stats {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem !important;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .player-stats {
+            margin-top: 1rem;
+        }
+    }
+    </style>
+{% endblock %}
+
 {% block title %}Tạo Hồ sơ Cầu thủ Tự do{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-person-plus me-2"></i>Tạo Hồ sơ Cầu thủ Tự do
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-4">
-                        <h5 class="alert-heading">
-                            <i class="bi bi-info-circle me-2"></i>Chào mừng bạn đến với DBP Sports!
-                        </h5>
-                        <p class="mb-0">
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">
+                            <i class="bi bi-person-plus me-3"></i>Tạo Hồ sơ Cầu thủ Tự do
+                        </h1>
+                        <p class="lead mb-0">
                             Tạo hồ sơ cầu thủ tự do để các đội bóng có thể tìm thấy và mời bạn vào đội của họ.
                             Bạn có thể tham gia các giải đấu khi được đội bóng mời.
                         </p>
                     </div>
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-number">1</div>
+                                    <div class="stat-label">Hồ sơ</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">∞</div>
+                                    <div class="stat-label">Đội</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">∞</div>
+                                    <div class="stat-label">Giải</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Thông tin cầu thủ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Chào mừng bạn đến với DBP Sports!</strong> Điền đầy đủ thông tin để tạo hồ sơ cầu thủ chuyên nghiệp.
+                    </div>
 
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.full_name|as_crispy_field }}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {{ form.non_field_errors|join:", " }}
                             </div>
-                            <div class="col-md-6">
-                                {{ form.jersey_number|as_crispy_field }}
+                        {% endif %}
+
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-person"></i>
+                                Thông tin cơ bản
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    {{ form.full_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.jersey_number|as_crispy_field }}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.position|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.preferred_foot|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.height|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.weight|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.date_of_birth|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.preferred_foot|as_crispy_field }}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.date_of_birth|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.preferred_foot|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.region|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.location_detail|as_crispy_field }}
+
+                        <!-- Physical Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-rulers"></i>
+                                Thông số thể chất
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.height|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.weight|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                        
-                        {{ form.specialty_position|as_crispy_field }}
-                        {{ form.agent_contact|as_crispy_field }}
-                        {{ form.avatar|as_crispy_field }}
-                        {{ form.donation_qr_code|as_crispy_field }}
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'dashboard' %}" class="btn btn-secondary me-md-2">
-                                <i class="bi bi-arrow-left me-1"></i>Quay lại Dashboard
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i>Tạo Hồ sơ Cầu thủ
+
+                        <!-- Position Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-geo-alt"></i>
+                                Vị trí thi đấu
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.position|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.specialty_position|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                Thông tin địa điểm
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.region|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.location_detail|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-telephone"></i>
+                                Thông tin liên hệ
+                            </h6>
+                            {{ form.agent_contact|as_crispy_field }}
+                        </div>
+
+                        <!-- Media Files -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-image"></i>
+                                Hình ảnh & Tài liệu
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.avatar|as_crispy_field }}
+                                    <div id="avatar-preview-container" class="text-center mt-2" style="display: none;">
+                                        <img id="avatar-preview" class="avatar-preview" alt="Avatar Preview">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.donation_qr_code|as_crispy_field }}
+                                    <div id="qr-preview-container" class="text-center mt-2" style="display: none;">
+                                        <img id="qr-preview" class="qr-preview" alt="QR Code Preview">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-person-plus-fill me-2"></i>Tạo Hồ sơ Cầu thủ
                             </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Quay lại Dashboard
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -91,4 +301,86 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Avatar preview functionality
+    const avatarInput = document.querySelector('input[name="avatar"]');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const avatarPreviewContainer = document.getElementById('avatar-preview-container');
+    
+    if (avatarInput && avatarPreview) {
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                    avatarPreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                avatarPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // QR code preview functionality
+    const qrInput = document.querySelector('input[name="donation_qr_code"]');
+    const qrPreview = document.getElementById('qr-preview');
+    const qrPreviewContainer = document.getElementById('qr-preview-container');
+    
+    if (qrInput && qrPreview) {
+        qrInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    qrPreview.src = e.target.result;
+                    qrPreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                qrPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const jerseyNumber = document.querySelector('input[name="jersey_number"]');
+            if (jerseyNumber) {
+                const value = parseInt(jerseyNumber.value);
+                if (value && (value < 1 || value > 99)) {
+                    e.preventDefault();
+                    alert('Số áo phải là một số trong khoảng từ 1 đến 99.');
+                    jerseyNumber.focus();
+                    return false;
+                }
+            }
+        });
+    }
+    
+    // Auto-calculate age from date of birth
+    const dateOfBirthInput = document.querySelector('input[name="date_of_birth"]');
+    if (dateOfBirthInput) {
+        dateOfBirthInput.addEventListener('change', function() {
+            const birthDate = new Date(this.value);
+            const today = new Date();
+            const age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if (age < 16) {
+                alert('Cầu thủ phải từ 16 tuổi trở lên để tham gia.');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

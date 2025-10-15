@@ -25,6 +25,84 @@
   --border-radius-lg: 1rem;
 }
 
+/* Checkout Form Styles - Enhanced */
+.hero-section {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.form-check-input:checked {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+}
+
+.form-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 8px;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.stats-box {
+  backdrop-filter: blur(10px);
+}
+
+.checkout-stats {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Payment Info Button Styles */
 .payment-info-btn-wrapper {
   position: relative;
@@ -305,28 +383,7 @@
   transform: none;
 }
 
-.back-to-cart {
-  width: 100%;
-  background: transparent;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-  padding: 1rem;
-  border-radius: var(--border-radius);
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-top: 1rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-}
-
-.back-to-cart:hover {
-  background: var(--primary);
-  color: white;
-}
+/* Removed old back-to-cart styles - now using Bootstrap btn classes */
 
 /* Payment Methods */
 .payment-methods {
@@ -679,6 +736,18 @@
     width: 50px;
     height: 50px;
   }
+  
+  .hero-section {
+    padding: 1rem !important;
+  }
+  
+  .form-section {
+    padding: 1rem;
+  }
+  
+  .checkout-stats {
+    margin-top: 1rem;
+  }
 }
 </style>
 {% endblock %}
@@ -689,19 +758,41 @@
   <div class="container">
     <!-- Back to Shop Button -->
     <div class="back-to-shop">
-      <a href="{% url 'shop:home' %}" class="btn btn-outline-light" style="display: flex !important; align-items: center !important;">
-        <span style="font-size: 1rem !important; color: inherit !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-right: 0.5rem !important;">←</span>
+      <a href="{% url 'shop:home' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-2"></i>
         Quay lại shop
       </a>
     </div>
     
-    <div class="row">
-      <div class="col-12 text-center">
+    <div class="row align-items-center">
+      <div class="col-md-8">
         <h1 class="page-title">Thanh toán</h1>
-        <p class="page-subtitle">Hoàn tất đơn hàng của bạn</p>
-        
-        <!-- Payment Info Button -->
-        <div class="mt-4 payment-info-btn-wrapper">
+        <p class="page-subtitle">Hoàn tất đơn hàng của bạn một cách an toàn và nhanh chóng</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+          <div class="row text-center">
+            <div class="col-4">
+              <div class="stat-number">{{ cart.total_items }}</div>
+              <div class="stat-label">Sản phẩm</div>
+            </div>
+            <div class="col-4">
+              <div class="stat-number">{{ cart.total_price|vnd_format }}</div>
+              <div class="stat-label">Tổng tiền</div>
+            </div>
+            <div class="col-4">
+              <div class="stat-number">24/7</div>
+              <div class="stat-label">Hỗ trợ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Payment Info Button -->
+    <div class="row mt-4">
+      <div class="col-12 text-center">
+        <div class="payment-info-btn-wrapper">
           <a href="{% url 'shop:payment_info' %}" class="btn btn-outline-light btn-lg payment-info-btn">
             <i class="fas fa-credit-card me-2"></i>
             Thông tin thanh toán
@@ -720,11 +811,16 @@
         <div class="col-lg-8">
           <!-- Customer Information -->
           <div class="checkout-form">
+            <div class="alert alert-info">
+              <i class="bi bi-lightbulb me-2"></i>
+              <strong>Chào mừng bạn đến với DBP Sports!</strong> Điền đầy đủ thông tin để hoàn tất đơn hàng.
+            </div>
+            
             <div class="form-section">
-              <h2 class="section-title">
-                <i class="fas fa-user"></i>
+              <h6 class="section-title">
+                <i class="bi bi-person"></i>
                 Thông tin khách hàng
-              </h2>
+              </h6>
               
               <div class="row">
                 <div class="col-md-6">
@@ -755,10 +851,10 @@
 
             <!-- Shipping Address -->
             <div class="form-section">
-              <h2 class="section-title">
-                <i class="fas fa-map-marker-alt"></i>
+              <h6 class="section-title">
+                <i class="bi bi-geo-alt"></i>
                 Địa chỉ giao hàng
-              </h2>
+              </h6>
               
               <div class="form-group">
                 <label class="form-label">Địa chỉ chi tiết *</label>
@@ -853,14 +949,14 @@
 
             <!-- Payment Methods -->
             <div class="form-section">
-              <h2 class="section-title">
-                <i class="fas fa-credit-card"></i>
+              <h6 class="section-title">
+                <i class="bi bi-credit-card"></i>
                 Phương thức thanh toán
                 <a href="{% url 'shop:payment_info' %}" class="payment-info-link" target="_blank">
-                  <i class="fas fa-info-circle"></i>
+                  <i class="bi bi-info-circle"></i>
                   Xem thông tin chi tiết
                 </a>
-              </h2>
+              </h6>
               
               <div class="payment-methods">
                 {% for payment_method in payment_methods %}
@@ -1026,10 +1122,10 @@
 
             <!-- Notes -->
             <div class="form-section">
-              <h2 class="section-title">
-                <i class="fas fa-sticky-note"></i>
+              <h6 class="section-title">
+                <i class="bi bi-sticky"></i>
                 Ghi chú đơn hàng
-              </h2>
+              </h6>
               
               <div class="form-group">
                 <label class="form-label">Ghi chú (tùy chọn)</label>
@@ -1116,13 +1212,13 @@
             </div>
             {% endif %}
             
-            <button type="submit" class="checkout-btn" id="checkout-btn">
-              <i class="fas fa-arrow-right me-2"></i>
-              Đặt hàng
+            <button type="submit" class="checkout-btn btn-lg" id="checkout-btn">
+              <i class="bi bi-check-circle me-2"></i>
+              Đặt hàng ngay
             </button>
             
-            <a href="{% url 'shop:cart' %}" class="back-to-cart">
-              <i class="fas fa-arrow-left me-2"></i>
+            <a href="{% url 'shop:cart' %}" class="btn btn-outline-secondary btn-lg w-100 mt-3">
+              <i class="bi bi-arrow-left me-2"></i>
               Quay lại giỏ hàng
             </a>
           </div>

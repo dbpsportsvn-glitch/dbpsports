@@ -39,7 +39,5 @@ urlpatterns = [
     path('professional/applications/', views.professional_job_applications, name='professional_job_applications'),
     path('professional/application/<int:application_pk>/', views.professional_job_application_detail, name='professional_job_application_detail'),
     
-    # Để allauth xử lý mọi thứ liên quan đến tài khoản
-    # URL của allauth đã bao gồm login, logout, register, password reset...
-    path('', include('allauth.urls')),
+    # Allauth URLs đã được include trong dbpsports_core/urls.py
 ]

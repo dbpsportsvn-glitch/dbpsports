@@ -1,76 +1,317 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Hoàn tất Hồ sơ của bạn{% endblock %}
-
 {% block extra_css %}
-<style>
-    .setup-container {
+    <style>
+    /* Profile Setup Form Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        padding-top: 3rem;
-        padding-bottom: 3rem;
+        gap: 0.5rem;
     }
-    .setup-card {
-        width: 100%;
-        max-width: 720px;
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .alert {
+        border-radius: 8px;
         border: none;
-        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
-        border-radius: 0.75rem;
     }
-</style>
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 12px;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    
+    .stats-box {
+        backdrop-filter: blur(10px);
+    }
+    
+    .role-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.25rem;
+    }
+    
+    .role-referee { background: #f8d7da; color: #721c24; }
+    .role-sponsor { background: #fff3cd; color: #856404; }
+    .role-media { background: #e2e3e5; color: #383d41; }
+    .role-photographer { background: #d1ecf1; color: #0c5460; }
+    
+    .setup-progress {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .progress-step {
+        text-align: center;
+        padding: 0.5rem;
+    }
+    
+    .step-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .step-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem !important;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+    }
+    </style>
 {% endblock %}
 
+{% block title %}Hoàn tất Hồ sơ của bạn{% endblock %}
+
 {% block content %}
-<div class="setup-container">
-    <div class="card setup-card">
-        <div class="card-body p-4 p-md-5">
-            <div class="text-center mb-4">
-                <h1 class="h3">Hoàn tất Hồ sơ của bạn</h1>
-                <p class="lead text-muted">
-                    Hãy dành chút thời gian để cập nhật hồ sơ. Một hồ sơ đầy đủ và chuyên nghiệp sẽ giúp các <strong>Ban tổ chức</strong> chú ý và liên hệ với bạn, cũng như giúp các <strong>đội trưởng</strong> khác dễ dàng tìm thấy và chiêu mộ bạn!
-                </p>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">
+                            <i class="bi bi-person-check me-3"></i>Hoàn tất Hồ sơ của bạn
+                        </h1>
+                        <p class="lead mb-0">
+                            Hãy dành chút thời gian để cập nhật hồ sơ. Một hồ sơ đầy đủ và chuyên nghiệp sẽ giúp các <strong>Ban tổ chức</strong> chú ý và liên hệ với bạn, cũng như giúp các <strong>đội trưởng</strong> khác dễ dàng tìm thấy và chiêu mộ bạn!
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="step-number">1</div>
+                                    <div class="step-label">Chọn vai trò</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="step-number">2</div>
+                                    <div class="step-label">Hoàn tất hồ sơ</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="step-number">3</div>
+                                    <div class="step-label">Bắt đầu</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>Thông tin hồ sơ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Chào mừng bạn đến với DBP Sports!</strong> Điền thông tin để hoàn tất hồ sơ của bạn.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {{ form.non_field_errors|join:", " }}
+                            </div>
+                        {% endif %}
+
+                        <!-- General Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-info-circle"></i>
+                                Thông tin chung (tùy chọn)
+                            </h6>
+                            {{ form.bio|as_crispy_field }}
+                            <div class="row">
+                                <div class="col-md-6">{{ form.location|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.experience|as_crispy_field }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Role-specific Information -->
+                        {% if 'REFEREE' in user_role_ids %}
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-whistle"></i>
+                                Thông tin Trọng tài
+                            </h6>
+                            {{ form.referee_level|as_crispy_field }}
+                        </div>
+                        {% endif %}
+
+                        {% if 'SPONSOR' in user_role_ids %}
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-award"></i>
+                                Thông tin Nhà tài trợ
+                            </h6>
+                            {{ form.brand_website|as_crispy_field }}
+                            {{ form.sponsorship_interests|as_crispy_field }}
+                        </div>
+                        {% endif %}
+
+                        {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-camera"></i>
+                                Thông tin Media/Nhiếp ảnh
+                            </h6>
+                            {{ form.equipment|as_crispy_field }}
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Lưu và Tiếp tục
+                            </button>
+                            
+                            {% if is_player %}
+                                <a href="?action=create_team" class="btn btn-success">
+                                    <i class="bi bi-shield-check me-2"></i>Tạo đội bóng ngay (Bỏ qua cập nhật hồ sơ)
+                                </a>
+                            {% endif %}
+                            
+                            <a href="?action=skip" class="btn btn-outline-secondary">
+                                <i class="bi bi-skip-forward me-2"></i>Bỏ qua và về trang chủ
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <form method="post">
-                {% csrf_token %}
-                
-                <h5 class="mb-3">Thông tin chung (tùy chọn)</h5>
-                {{ form.bio|as_crispy_field }}
-                {{ form.location|as_crispy_field }}
-                {{ form.experience|as_crispy_field }}
-
-                {# === BẮT ĐẦU VÙNG LOGIC HIỂN THỊ CÓ ĐIỀU KIỆN === #}
-                {% if 'REFEREE' in user_role_ids %}
-                    <hr><h5 class="mt-3">Thông tin Trọng tài</h5>
-                    {{ form.referee_level|as_crispy_field }}
-                {% endif %}
-
-                {% if 'SPONSOR' in user_role_ids %}
-                    <hr><h5 class="mt-3">Thông tin Nhà tài trợ</h5>
-                    {{ form.brand_website|as_crispy_field }}
-                    {{ form.sponsorship_interests|as_crispy_field }}
-                {% endif %}
-
-                {% if 'PHOTOGRAPHER' in user_role_ids or 'MEDIA' in user_role_ids %}
-                    <hr><h5 class="mt-3">Thông tin Media/Nhiếp ảnh</h5>
-                    {{ form.equipment|as_crispy_field }}
-                {% endif %}
-                {# === KẾT THÚC VÙNG LOGIC === #}
-
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Lưu và Tiếp tục</button>
+            <!-- Role Information -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Vai trò đã chọn
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for role_id in user_role_ids %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="role-badge role-{{ role_id|lower }}">
+                                {% if role_id == 'REFEREE' %}
+                                    <i class="bi bi-whistle"></i>
+                                    <span>Trọng tài</span>
+                                {% elif role_id == 'SPONSOR' %}
+                                    <i class="bi bi-award"></i>
+                                    <span>Nhà tài trợ</span>
+                                {% elif role_id == 'MEDIA' %}
+                                    <i class="bi bi-camera"></i>
+                                    <span>Media</span>
+                                {% elif role_id == 'PHOTOGRAPHER' %}
+                                    <i class="bi bi-camera-reels"></i>
+                                    <span>Nhiếp ảnh gia</span>
+                                {% else %}
+                                    <i class="bi bi-person"></i>
+                                    <span>{{ role_id }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                     
-                    {% if is_player %}
-                        <a href="?action=create_team" class="btn btn-success">Tạo đội bóng ngay (Bỏ qua cập nhật hồ sơ)</a>
-                    {% endif %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Mẹo:</strong> Bạn có thể cập nhật thông tin này sau tại 
+                        <a href="{% url 'dashboard' %}?tab=public-profile" class="alert-link">Khu vực cá nhân</a>.
+                    </div>
                 </div>
-                <div class="d-grid gap-2 mt-2">
-                    <a href="?action=skip" class="btn btn-outline-secondary">Bỏ qua và về trang chủ</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Profile setup form submitted successfully');
+        });
+    }
+    
+    // Add smooth scrolling for better UX
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -3,9 +3,31 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
+from allauth.account.forms import SignupForm
 from .models import Profile, Role, CoachProfile, StadiumProfile, SponsorProfile
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Div, HTML, Fieldset, Submit
+
+class CustomSignupForm(SignupForm):
+    """Custom signup form for allauth"""
+    
+    terms = forms.BooleanField(
+        required=True,
+        label="Tôi đồng ý với",
+        help_text="<a href='/terms-of-service/' target='_blank'>Điều khoản sử dụng</a> và <a href='/privacy-policy/' target='_blank'>Chính sách bảo mật</a>"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Customize form fields if needed
+        self.fields['email'].label = 'Email'
+        self.fields['password1'].label = 'Mật khẩu'
+        self.fields['password2'].label = 'Nhập lại mật khẩu'
+    
+    def save(self, request):
+        # Call parent save method
+        user = super().save(request)
+        return user
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
@@ -95,6 +117,11 @@ class ProfileSetupForm(forms.ModelForm):
             'bio': forms.Textarea(attrs={'rows': 4}),
             'equipment': forms.Textarea(attrs={'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        # Remove user parameter if it exists
+        kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
         profile = super().save(commit=True)

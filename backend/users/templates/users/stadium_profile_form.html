@@ -1,111 +1,304 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block extra_css %}
+    <style>
+    /* Stadium Profile Form Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 12px;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    
+    .stats-box {
+        backdrop-filter: blur(10px);
+    }
+    
+    .logo-preview {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .qr-preview {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .stadium-stats {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem !important;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .stadium-stats {
+            margin-top: 1rem;
+        }
+    }
+    </style>
+{% endblock %}
+
 {% block title %}{{ is_new|yesno:"Tạo,Cập nhật" }} Hồ sơ Sân bóng{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">
+                            <i class="bi bi-house me-3"></i>
+                            {% if is_new %}Tạo{% else %}Cập nhật{% endif %} Hồ sơ Sân bóng
+                        </h1>
+                        <p class="lead mb-0">
+                            {% if is_new %}
+                                Tạo hồ sơ sân bóng để quản lý thông tin và thu hút khách hàng.
+                            {% else %}
+                                Cập nhật thông tin sân bóng để duy trì hồ sơ chuyên nghiệp.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-number">1</div>
+                                    <div class="stat-label">Sân</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">∞</div>
+                                    <div class="stat-label">Khách</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">24/7</div>
+                                    <div class="stat-label">Hỗ trợ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <div class="row justify-content-center">
-        <div class="col-lg-9">
-            <div class="card shadow">
+        <div class="col-lg-10">
+            <!-- Form -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">
-                        <i class="bi bi-house"></i>
-                        {% if is_new %}Tạo{% else %}Cập nhật{% endif %} Hồ sơ Sân bóng
-                    </h4>
+                    <h5 class="mb-0">
+                        <i class="bi bi-house me-2"></i>Thông tin sân bóng
+                    </h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Chào mừng bạn đến với DBP Sports!</strong> Điền đầy đủ thông tin để tạo hồ sơ sân bóng chuyên nghiệp.
+                    </div>
+
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
-                        {# Thông tin cơ bản #}
-                        <h5 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-info-circle"></i> Thông tin cơ bản
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-8">
-                                {{ form.stadium_name|as_crispy_field }}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {{ form.non_field_errors|join:", " }}
                             </div>
-                            <div class="col-md-4">
-                                {{ form.field_type|as_crispy_field }}
+                        {% endif %}
+
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-info-circle"></i>
+                                Thông tin cơ bản
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    {{ form.stadium_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.field_type|as_crispy_field }}
+                                </div>
                             </div>
-                        </div>
-                        
-                        {{ form.logo|as_crispy_field }}
-                        {{ form.description|as_crispy_field }}
-                        
-                        {# Địa chỉ & Liên hệ #}
-                        <h5 class="border-bottom pb-2 mb-3 mt-4">
-                            <i class="bi bi-geo-alt"></i> Địa chỉ & Liên hệ
-                        </h5>
-                        {{ form.address|as_crispy_field }}
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form.region|as_crispy_field }}
-                            </div>
-                            <div class="col-md-6">
-                                {{ form.location_detail|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4">
-                                {{ form.phone_number|as_crispy_field }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form.email|as_crispy_field }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form.website|as_crispy_field }}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.logo|as_crispy_field }}
+                                    <div id="logo-preview-container" class="text-center mt-2" style="display: none;">
+                                        <img id="logo-preview" class="logo-preview" alt="Logo Preview">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.description|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                        
-                        {# Thông tin sân #}
-                        <h5 class="border-bottom pb-2 mb-3 mt-4">
-                            <i class="bi bi-diagram-3"></i> Thông tin sân
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                {{ form.capacity|as_crispy_field }}
+
+                        <!-- Address & Contact -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-geo-alt"></i>
+                                Địa chỉ & Liên hệ
+                            </h6>
+                            {{ form.address|as_crispy_field }}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.region|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.location_detail|as_crispy_field }}
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                {{ form.number_of_fields|as_crispy_field }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form.rental_price_range|as_crispy_field }}
-                            </div>
-                        </div>
-                        
-                        {{ form.amenities|as_crispy_field }}
-                        {{ form.operating_hours|as_crispy_field }}
-                        
-                        {# Thanh toán #}
-                        <h5 class="border-bottom pb-2 mb-3 mt-4">
-                            <i class="bi bi-credit-card"></i> Thông tin thanh toán
-                        </h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                {{ form.bank_name|as_crispy_field }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form.bank_account_number|as_crispy_field }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form.bank_account_name|as_crispy_field }}
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ form.phone_number|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.email|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.website|as_crispy_field }}
+                                </div>
                             </div>
                         </div>
-                        
-                        {{ form.payment_qr_code|as_crispy_field }}
-                        
-                        {# Buttons #}
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-success flex-grow-1">
-                                <i class="bi bi-save"></i>
-                                {% if is_new %}Tạo hồ sơ{% else %}Cập nhật{% endif %}
+
+                        <!-- Stadium Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-diagram-3"></i>
+                                Thông tin sân
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ form.capacity|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.number_of_fields|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.rental_price_range|as_crispy_field }}
+                                </div>
+                            </div>
+                            {{ form.amenities|as_crispy_field }}
+                            {{ form.operating_hours|as_crispy_field }}
+                        </div>
+
+                        <!-- Payment Information -->
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-credit-card"></i>
+                                Thông tin thanh toán
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ form.bank_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.bank_account_number|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.bank_account_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.payment_qr_code|as_crispy_field }}
+                                    <div id="qr-preview-container" class="text-center mt-2" style="display: none;">
+                                        <img id="qr-preview" class="qr-preview" alt="QR Code Preview">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-save me-2"></i>
+                                {% if is_new %}Tạo hồ sơ sân bóng{% else %}Cập nhật hồ sơ{% endif %}
                             </button>
                             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Hủy
+                                <i class="bi bi-arrow-left me-2"></i>Quay lại Dashboard
                             </a>
                         </div>
                     </form>
@@ -113,19 +306,30 @@
             </div>
             
             {% if not is_new and stadium_profile %}
-            <div class="card shadow mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Quản lý sân</h5>
+            <!-- Management Section -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-speedometer2 me-2"></i>Quản lý sân
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-3">Truy cập dashboard để quản lý tin tuyển dụng và ứng viên:</p>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'stadium_dashboard' %}" class="btn btn-success">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                        <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-outline-primary">
-                            <i class="bi bi-megaphone"></i> Đăng tin tuyển dụng
-                        </a>
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Quản lý chuyên nghiệp:</strong> Truy cập dashboard để quản lý tin tuyển dụng và ứng viên.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'stadium_dashboard' %}" class="btn btn-success w-100">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Quản lý
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="{% url 'create_stadium_job_posting' %}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-megaphone me-2"></i>Đăng tin tuyển dụng
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -133,5 +337,75 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Logo preview functionality
+    const logoInput = document.querySelector('input[name="logo"]');
+    const logoPreview = document.getElementById('logo-preview');
+    const logoPreviewContainer = document.getElementById('logo-preview-container');
+    
+    if (logoInput && logoPreview) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoPreview.src = e.target.result;
+                    logoPreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                logoPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // QR code preview functionality
+    const qrInput = document.querySelector('input[name="payment_qr_code"]');
+    const qrPreview = document.getElementById('qr-preview');
+    const qrPreviewContainer = document.getElementById('qr-preview-container');
+    
+    if (qrInput && qrPreview) {
+        qrInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    qrPreview.src = e.target.result;
+                    qrPreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                qrPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Stadium profile form submitted successfully');
+        });
+    }
+    
+    // Auto-format phone number
+    const phoneInput = document.querySelector('input[name="phone_number"]');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                if (value.startsWith('0')) {
+                    value = value.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+                } else if (value.startsWith('84')) {
+                    value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{3})/, '+$1 $2 $3 $4');
+                }
+            }
+            e.target.value = value;
+        });
+    }
+});
+</script>
 {% endblock %}
 

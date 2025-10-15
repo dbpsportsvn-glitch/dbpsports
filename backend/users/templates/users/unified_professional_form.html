@@ -1,50 +1,170 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block extra_css %}
+    <style>
+    /* Professional Form Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 12px;
+    }
+    
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    
+    .stats-box {
+        backdrop-filter: blur(10px);
+    }
+    
+    .role-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.25rem;
+    }
+    
+    .role-coach { background: #d4edda; color: #155724; }
+    .role-stadium { background: #cce7ff; color: #004085; }
+    .role-sponsor { background: #fff3cd; color: #856404; }
+    .role-referee { background: #f8d7da; color: #721c24; }
+    .role-media { background: #e2e3e5; color: #383d41; }
+    .role-photographer { background: #d1ecf1; color: #0c5460; }
+    .role-commentator { background: #f5c6cb; color: #721c24; }
+    
+    .logo-preview {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem !important;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+    }
+    </style>
+{% endblock %}
+
 {% block title %}Chỉnh sửa Thông tin Chuyên môn{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Header -->
-            <div class="card border-primary mb-4">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">
-                            <i class="bi bi-gear me-2"></i>Chỉnh sửa Thông tin Chuyên môn
-                        </h4>
-                        <a href="{% url 'public_profile' username=user.username|default:user.email %}#professional" class="btn btn-light btn-sm">
-                            <i class="bi bi-arrow-left me-1"></i>Quay lại Hồ sơ
-                        </a>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">
+                            <i class="bi bi-gear me-3"></i>Chỉnh sửa Thông tin Chuyên môn
+                        </h1>
+                        <p class="lead mb-0">
+                            Cập nhật thông tin chuyên môn của bạn. Form sẽ hiển thị các trường phù hợp với vai trò bạn đã chọn.
+                        </p>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <p class="text-muted mb-0">
-                                <i class="bi bi-info-circle me-2"></i>
-                                Cập nhật thông tin chuyên môn của bạn. Form sẽ hiển thị các trường phù hợp với vai trò bạn đã chọn.
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="badge bg-info me-2">
-                                <i class="bi bi-person-badge me-1"></i>{{ user_roles|length }} vai trò
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-12">
+                                    <div class="h4 mb-1">{{ user_roles|length }}</div>
+                                    <small>Vai trò đã chọn</small>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
             <!-- Form -->
-            <div class="card">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-lines-fill me-2"></i>Thông tin chuyên môn
+                    </h5>
+                </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {{ form.non_field_errors|join:", " }}
+                            </div>
+                        {% endif %}
+
                         <!-- General Professional Info -->
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-person-lines-fill me-2"></i>Thông tin chung</legend>
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-person-lines-fill"></i>
+                                Thông tin chung
+                            </h6>
                             {{ form.bio|as_crispy_field }}
                             <div class="row">
                                 <div class="col-md-6">{{ form.location|as_crispy_field }}</div>
@@ -53,124 +173,144 @@
                             {% if form.equipment %}
                                 {{ form.equipment|as_crispy_field }}
                             {% endif %}
-                        </fieldset>
+                        </div>
 
                         <!-- Coach Specific Fields -->
                         {% if 'COACH' in user_roles %}
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-clipboard-check me-2"></i>Thông tin Huấn luyện viên</legend>
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-clipboard-check"></i>
+                                Thông tin Huấn luyện viên
+                            </h6>
                             {{ form.coach_specialization|as_crispy_field }}
                             <div class="row">
                                 <div class="col-md-6">{{ form.coach_hourly_rate|as_crispy_field }}</div>
                                 <div class="col-md-6">{{ form.coach_is_available|as_crispy_field }}</div>
                             </div>
-                        </fieldset>
+                        </div>
                         {% endif %}
 
                         <!-- Stadium Specific Fields -->
                         {% if 'STADIUM' in user_roles %}
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-house me-2"></i>Thông tin Sân bóng</legend>
-                            {{ form.stadium_name|as_crispy_field }}
-                            {{ form.stadium_address|as_crispy_field }}
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-house"></i>
+                                Thông tin Sân bóng
+                            </h6>
                             <div class="row">
-                                <div class="col-md-6">{{ form.stadium_phone|as_crispy_field }}</div>
+                                <div class="col-md-8">{{ form.stadium_name|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.stadium_phone|as_crispy_field }}</div>
                             </div>
+                            {{ form.stadium_address|as_crispy_field }}
                             {{ form.stadium_description|as_crispy_field }}
-                        </fieldset>
+                        </div>
                         {% endif %}
 
                         <!-- Sponsor Specific Fields -->
                         {% if 'SPONSOR' in user_roles %}
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-award me-2"></i>Thông tin Nhà tài trợ</legend>
-                            {{ form.sponsor_brand_name|as_crispy_field }}
-                            {{ form.sponsor_brand_logo|as_crispy_field }}
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-award"></i>
+                                Thông tin Nhà tài trợ
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-8">{{ form.sponsor_brand_name|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.sponsor_brand_logo|as_crispy_field }}</div>
+                            </div>
                             {{ form.sponsor_tagline|as_crispy_field }}
                             {{ form.sponsor_description|as_crispy_field }}
                             <div class="row">
                                 <div class="col-md-6">{{ form.sponsor_website_url|as_crispy_field }}</div>
                                 <div class="col-md-6">{{ form.sponsor_phone_number|as_crispy_field }}</div>
                             </div>
-                        </fieldset>
+                            <div id="logo-preview-container" class="text-center mt-2" style="display: none;">
+                                <img id="logo-preview" class="logo-preview" alt="Logo Preview">
+                            </div>
+                        </div>
                         {% endif %}
 
                         <!-- Referee Specific Fields -->
                         {% if 'REFEREE' in user_roles %}
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-whistle me-2"></i>Thông tin Trọng tài</legend>
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-whistle"></i>
+                                Thông tin Trọng tài
+                            </h6>
                             {{ form.referee_level|as_crispy_field }}
-                        </fieldset>
+                        </div>
                         {% endif %}
 
                         <!-- Sponsor Interests (from Profile) -->
                         {% if 'SPONSOR' in user_roles %}
-                        <fieldset class="form-group border p-3 mb-4 rounded">
-                            <legend class="w-auto px-2 fs-5"><i class="bi bi-gem me-2"></i>Lĩnh vực Tài trợ</legend>
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-gem"></i>
+                                Lĩnh vực Tài trợ
+                            </h6>
                             {{ form.brand_website|as_crispy_field }}
                             {{ form.sponsorship_interests|as_crispy_field }}
-                        </fieldset>
+                        </div>
                         {% endif %}
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'public_profile' username=user.username|default:user.email %}#professional" class="btn btn-secondary me-md-2">
-                                <i class="bi bi-x-circle me-1"></i>Hủy
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i>Lưu thay đổi
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save me-2"></i>Lưu thay đổi
                             </button>
+                            <a href="{% url 'public_profile' username=user.username|default:user.email %}#professional" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Quay lại Hồ sơ
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- Role Information -->
-            <div class="card mt-4">
-                <div class="card-header">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
                         <i class="bi bi-info-circle me-2"></i>Thông tin Vai trò
                     </h5>
                 </div>
                 <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Mẹo:</strong> Để thay đổi vai trò, hãy truy cập 
+                        <a href="{% url 'dashboard' %}?tab=public-profile" class="alert-link">Khu vực cá nhân</a> 
+                        và cập nhật trong phần "Hồ sơ công khai".
+                    </div>
+                    
                     <div class="row">
                         {% for role_id in user_roles %}
                         <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="d-flex align-items-center">
+                            <div class="role-badge role-{{ role_id|lower }}">
                                 {% if role_id == 'COACH' %}
-                                    <i class="bi bi-clipboard-check text-success me-2"></i>
+                                    <i class="bi bi-clipboard-check"></i>
                                     <span>Huấn luyện viên</span>
                                 {% elif role_id == 'STADIUM' %}
-                                    <i class="bi bi-house text-info me-2"></i>
+                                    <i class="bi bi-house"></i>
                                     <span>Sân bóng</span>
                                 {% elif role_id == 'SPONSOR' %}
-                                    <i class="bi bi-award text-warning me-2"></i>
+                                    <i class="bi bi-award"></i>
                                     <span>Nhà tài trợ</span>
                                 {% elif role_id == 'COMMENTATOR' %}
-                                    <i class="bi bi-mic text-danger me-2"></i>
+                                    <i class="bi bi-mic"></i>
                                     <span>Bình luận viên</span>
                                 {% elif role_id == 'MEDIA' %}
-                                    <i class="bi bi-camera text-success me-2"></i>
+                                    <i class="bi bi-camera"></i>
                                     <span>Media</span>
                                 {% elif role_id == 'PHOTOGRAPHER' %}
-                                    <i class="bi bi-camera-reels text-primary me-2"></i>
+                                    <i class="bi bi-camera-reels"></i>
                                     <span>Nhiếp ảnh gia</span>
                                 {% elif role_id == 'REFEREE' %}
-                                    <i class="bi bi-whistle text-warning me-2"></i>
+                                    <i class="bi bi-whistle"></i>
                                     <span>Trọng tài</span>
                                 {% else %}
-                                    <i class="bi bi-person text-muted me-2"></i>
+                                    <i class="bi bi-person"></i>
                                     <span>{{ role_id }}</span>
                                 {% endif %}
                             </div>
                         </div>
                         {% endfor %}
-                    </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="bi bi-lightbulb me-2"></i>
-                        <strong>Mẹo:</strong> Để thay đổi vai trò, hãy truy cập 
-                        <a href="{% url 'dashboard' %}?tab=public-profile" class="alert-link">Khu vực cá nhân</a> 
-                        và cập nhật trong phần "Hồ sơ công khai".
                     </div>
                 </div>
             </div>
@@ -178,34 +318,37 @@
     </div>
 </div>
 
-<style>
-.fieldset {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    background-color: #f8f9fa;
-}
-
-.fieldset legend {
-    font-weight: 600;
-    color: #495057;
-    padding: 0 10px;
-    margin-bottom: 15px;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.card-header {
-    background-color: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-}
-</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Logo preview functionality
+    const logoInput = document.querySelector('input[name="sponsor_brand_logo"]');
+    const logoPreview = document.getElementById('logo-preview');
+    const logoPreviewContainer = document.getElementById('logo-preview-container');
+    
+    if (logoInput && logoPreview) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoPreview.src = e.target.result;
+                    logoPreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                logoPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Add any specific validation here if needed
+            console.log('Form submitted successfully');
+        });
+    }
+});
+</script>
 {% endblock %}

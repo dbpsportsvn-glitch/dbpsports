@@ -10,6 +10,7 @@ import dbpsports_core.admin_custom
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
     path('users/', include('users.urls')),
     path('orgs/', include('organizations.urls')),
     path('sponsors/', include('sponsors.urls')),

@@ -3,150 +3,410 @@
 {% load crispy_forms_tags %}
 
 {% block extra_css %}
-{# Sao chép CSS từ trang đăng nhập để đảm bảo đồng bộ #}
 <style>
-    .signup-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-top: 3rem;
-        padding-bottom: 3rem;
-    }
-    .signup-card {
-        width: 100%;
-        max-width: 480px; /* Rộng hơn một chút cho 2 trường mật khẩu */
-        border: none;
-        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
-        border-radius: 0.75rem;
-    }
-    .btn-social {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        font-weight: 500;
-    }
-    .btn-google {
-        background-color: #fff;
-        border-color: #ddd;
-        color: #444;
-    }
-    .btn-google:hover {
-        background-color: #f8f9fa;
-        border-color: #ccc;
-    }
-    .btn-facebook {
-        background-color: #1877F2;
-        color: #fff;
-        border: none;
-    }
-    .btn-facebook:hover {
-        background-color: #166fe5;
-        color: #fff;
-    }
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+/* Signup Form Styles - Enhanced */
+.hero-section {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.form-check-input:checked {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+}
+
+.form-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 8px;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.stats-box {
+  backdrop-filter: blur(10px);
+}
+
+.signup-stats {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.signup-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 480px;
+  border: none;
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+  border-radius: 0.75rem;
+}
+
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.btn-google {
+  background-color: #fff;
+  border-color: #ddd;
+  color: #444;
+}
+
+.btn-google:hover {
+  background-color: #f8f9fa;
+  border-color: #ccc;
+}
+
+.btn-facebook {
+  background-color: #1877F2;
+  color: #fff;
+  border: none;
+}
+
+.btn-facebook:hover {
+  background-color: #166fe5;
+  color: #fff;
+}
+
 .or-divider {
-        display: flex;
-        align-items: center;
-        color: #999;
-        margin: 1.5rem 0;
-    }
-    .or-divider::before, .or-divider::after {
-        content: '';
-        flex-grow: 1;
-        height: 1px;
-        background: #ddd;
-    }
-    .or-divider::before {
-        margin-right: 1rem;
-    }
-    .or-divider::after {
-        margin-left: 1rem;
-    }
-    .divider-text:before { right: 100%; margin-right: 15px; }
-    .divider-text:after { left: 100%; margin-left: 15px; }
+  display: flex;
+  align-items: center;
+  color: #999;
+  margin: 1.5rem 0;
+}
+
+.or-divider::before, .or-divider::after {
+  content: '';
+  flex-grow: 1;
+  height: 1px;
+  background: #ddd;
+}
+
+.or-divider::before {
+  margin-right: 1rem;
+}
+
+.or-divider::after {
+  margin-left: 1rem;
+}
+
+/* Google brand styling */
+.google-logo { display: inline-flex; align-items: center }
+.google-logo svg { width: 18px; height: 18px }
+.google-word .g-b{ color:#4285F4 }
+.google-word .g-r{ color:#DB4437 }
+.google-word .g-y{ color:#F4B400 }
+.google-word .g-g{ color:#0F9D58 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 1rem !important;
+  }
+  
+  .form-section {
+    padding: 1rem;
+  }
+  
+  .signup-stats {
+    margin-top: 1rem;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="signup-container">
-    <div class="card signup-card">
-        <div class="card-body p-4 p-md-5">
-            <div class="text-center mb-4">
-                <img src="{% static 'images/logo.png' %}" alt="DBP Sports Logo" style="height: 60px;">
-                <h3 class="mt-3">Tạo tài khoản mới</h3>
-            </div>
-
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-            {% endif %}
-
-            <form method="post" action="{% url 'account_signup' %}" novalidate>
-                {% csrf_token %}
-
-                <div class="mb-3">
-                    <input type="email" name="email" placeholder="Email" value="{{ form.email.value|default_if_none:'' }}"
-                           class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
-                    {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                </div>
-
-                {# === DÁN KHỐI NÀY VÀO (Mật khẩu) === #}
-                <div class="mb-3">
-                    <label class="form-label visually-hidden" for="{{ form.password1.id_for_label }}">Mật khẩu</label>
-                    <div class="input-group has-validation">
-                        <input type="password" name="{{ form.password1.name }}" placeholder="Mật khẩu"
-                            class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required
-                            id="{{ form.password1.id_for_label }}">
-                        <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
-                            <i class="bi bi-eye-slash"></i>
-                        </button>
-                        {% for error in form.password1.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-6 fw-bold mb-3">
+                            <i class="bi bi-person-plus me-3"></i>
+                            Tạo tài khoản mới
+                        </h1>
+                        <p class="lead mb-0">
+                            Tham gia cộng đồng DBP Sports để trải nghiệm đầy đủ tính năng.
+                        </p>
                     </div>
-                    {% if form.password1.help_text %}
-                        <div class="form-text" style="font-size: 0.8rem; margin-top: 4px;">{{ form.password1.help_text|safe }}</div>
+                    <div class="col-md-4 text-end">
+                        <div class="stats-box bg-white bg-opacity-10 rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-number">∞</div>
+                                    <div class="stat-label">Tính năng</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">24/7</div>
+                                    <div class="stat-label">Hỗ trợ</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-number">100%</div>
+                                    <div class="stat-label">Miễn phí</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>Thông tin đăng ký
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Chào mừng bạn đến với DBP Sports!</strong> Tạo tài khoản để bắt đầu hành trình thể thao.
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ form.non_field_errors|join:", " }}
+                        </div>
                     {% endif %}
-                </div>
 
-                {# === DÁN KHỐI NÀY VÀO (Nhập lại mật khẩu) === #}
-                <div class="mb-3">
-                    <label class="form-label visually-hidden" for="{{ form.password2.id_for_label }}">Nhập lại mật khẩu</label>
-                    <div class="input-group has-validation">
-                        <input type="password" name="{{ form.password2.name }}" placeholder="Nhập lại mật khẩu"
-                            class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required
-                            id="{{ form.password2.id_for_label }}">
-                        <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
-                            <i class="bi bi-eye-slash"></i>
-                        </button>
-                        {% for error in form.password2.errors %}
-                            <div class="invalid-feedback">{{ error }}</div>
-                        {% endfor %}
+                    <form method="post" action="{% url 'account_signup' %}" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="bi bi-envelope"></i>
+                                Thông tin tài khoản
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="email" placeholder="Nhập địa chỉ email" value="{{ form.email.value|default_if_none:'' }}"
+                                       class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
+                                {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mật khẩu *</label>
+                                <div class="input-group">
+                                    <input type="password" name="{{ form.password1.name }}" placeholder="Nhập mật khẩu"
+                                        class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required
+                                        id="{{ form.password1.id_for_label }}">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
+                                {% for error in form.password1.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                                {% if form.password1.help_text %}
+                                    <div class="form-text" style="font-size: 0.8rem; margin-top: 4px;">{{ form.password1.help_text|safe }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nhập lại mật khẩu *</label>
+                                <div class="input-group">
+                                    <input type="password" name="{{ form.password2.name }}" placeholder="Nhập lại mật khẩu"
+                                        class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required
+                                        id="{{ form.password2.id_for_label }}">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
+                                {% for error in form.password2.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form.terms|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Tạo tài khoản
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="or-divider">hoặc</div>
+
+                    <div class="d-grid gap-2">
+                        <a class="btn btn-social btn-google" href="{% provider_login_url 'google' process='signup' %}" aria-label="Đăng ký bằng Google">
+                            <span class="google-logo" aria-hidden="true">
+                                <!-- Official Google G logo SVG -->
+                                <svg viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" role="img">
+                                    <path d="M533.5 278.4c0-18.5-1.7-36.4-4.9-53.6H272.1v101.5h146.9c-6.3 34.2-25.1 63.2-53.5 82.6v68h86.6c50.7-46.7 81.4-115.4 81.4-198.5z" fill="#4285F4"/>
+                                    <path d="M272.1 544.3c72.9 0 134.1-24.1 178.8-65.4l-86.6-68c-24.1 16.2-55.1 25.8-92.2 25.8-70.9 0-131-47.8-152.5-112.1h-89.5v70.5c44.5 88 135.5 149.2 242 149.2z" fill="#34A853"/>
+                                    <path d="M119.6 324.6c-10.1-30-10.1-62.5 0-92.5v-70.5H30.1c-40.3 79.9-40.3 154 0 233.9l89.5-70.9z" fill="#FBBC04"/>
+                                    <path d="M272.1 107.7c39.6-.6 77.7 14 106.6 41.2l79.6-79.6C403.7 25 342.6 0 272.1 0 165.6 0 74.6 61.2 30.1 149.3l89.5 70.5C141.1 155.5 201.2 107.7 272.1 107.7z" fill="#EA4335"/>
+                                </svg>
+                            </span>
+                            <span class="google-word">
+                                <span class="g-b">G</span><span class="g-r">o</span><span class="g-y">o</span><span class="g-b">g</span><span class="g-g">l</span><span class="g-r">e</span>
+                            </span>
+                        </a>
+                        <a class="btn btn-social btn-facebook" href="{% provider_login_url 'facebook' process='signup' %}">
+                            <i class="bi bi-facebook"></i> Đăng ký với Facebook
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-0">
+                            Đã có tài khoản?
+                            <a href="{% url 'account_login' %}" class="text-decoration-none fw-bold">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập ngay
+                            </a>
+                        </p>
                     </div>
                 </div>
-
-                {{ form.terms|as_crispy_field }}             
-
-                <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Đăng ký</button>
-                </div>
-            </form>
-
-            <div class="or-divider">hoặc</div>
-
-            <div class="d-grid gap-2">
-                <a class="btn btn-social btn-google" href="{% provider_login_url 'google' process='signup' %}">
-                    <i class="bi bi-google"></i> Đăng ký với Google
-                </a>
-                <a class="btn btn-social btn-facebook" href="{% provider_login_url 'facebook' process='signup' %}">
-                    <i class="bi bi-facebook"></i> Đăng ký với Facebook
-                </a>
             </div>
-
-            <p class="mt-4 text-center small">
-                Đã có tài khoản?
-                <a href="{% url 'account_login' %}">Đăng nhập ngay</a>
-            </p>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility for password1
+    const togglePassword1 = document.getElementById('togglePassword1');
+    const password1Input = document.querySelector('input[name="password1"]');
+    
+    if (togglePassword1 && password1Input) {
+        togglePassword1.addEventListener('click', function() {
+            const type = password1Input.getAttribute('type') === 'password' ? 'text' : 'password';
+            password1Input.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('bi-eye-slash');
+            icon.classList.toggle('bi-eye');
+        });
+    }
+    
+    // Toggle password visibility for password2
+    const togglePassword2 = document.getElementById('togglePassword2');
+    const password2Input = document.querySelector('input[name="password2"]');
+    
+    if (togglePassword2 && password2Input) {
+        togglePassword2.addEventListener('click', function() {
+            const type = password2Input.getAttribute('type') === 'password' ? 'text' : 'password';
+            password2Input.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('bi-eye-slash');
+            icon.classList.toggle('bi-eye');
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Signup form submitted successfully');
+        });
+    }
+    
+    // Password confirmation validation
+    const password1 = document.querySelector('input[name="password1"]');
+    const password2 = document.querySelector('input[name="password2"]');
+    
+    if (password1 && password2) {
+        function validatePasswordMatch() {
+            if (password2.value && password1.value !== password2.value) {
+                password2.setCustomValidity('Mật khẩu không khớp');
+            } else {
+                password2.setCustomValidity('');
+            }
+        }
+        
+        password1.addEventListener('input', validatePasswordMatch);
+        password2.addEventListener('input', validatePasswordMatch);
+    }
+});
+</script>
 {% endblock %}
