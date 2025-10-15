@@ -1,7 +1,141 @@
-<h3>Cập nhật trạng thái đơn ứng tuyển</h3>
-<p>Chào {{ applicant.get_full_name|default:applicant.username }},</p>
-<p>Đơn ứng tuyển của bạn cho vị trí <strong>{{ job.title }}</strong> tại giải đấu <strong>{{ job.tournament.name }}</strong> đã được cập nhật.</p>
-<ul>
-    <li><strong>Trạng thái mới:</strong> {{ application.get_status_display }}</li>
-</ul>
-<p>Cảm ơn bạn đã quan tâm.<br>Ban Tổ Chức giải đấu.</p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Cập nhật trạng thái ứng tuyển - {{ job.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ Ban Tổ chức{% endblock %}
+
+{% block content %}
+{% if application.status == 'APPROVED' %}
+<div class="success-box">
+    <h2>🎉 Chúc mừng! Đơn ứng tuyển được chấp thuận!</h2>
+    <p>{{ applicant.get_full_name|default:applicant.username }} đã được chọn cho {{ job.title }}</p>
+</div>
+{% elif application.status == 'REJECTED' %}
+<div class="alert-box">
+    <h2>❌ Đơn ứng tuyển không được chấp thuận</h2>
+    <p>Đơn ứng tuyển cho {{ job.title }} đã bị từ chối</p>
+</div>
+{% else %}
+<div class="info-box">
+    <h2>📋 Cập nhật trạng thái ứng tuyển</h2>
+    <p>Đơn ứng tuyển cho {{ job.title }} đã được cập nhật</p>
+</div>
+{% endif %}
+
+<p style="font-size: 16px; color: #374151;">
+    Chào {{ applicant.get_full_name|default:applicant.username }},
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Đơn ứng tuyển của bạn cho vị trí <strong>{{ job.title }}</strong> tại giải đấu 
+    <strong>{{ job.tournament.name }}</strong> đã được cập nhật trạng thái.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin ứng tuyển</h3>
+    <div class="info-row">
+        <span class="info-label">Ứng viên:</span>
+        <span class="info-value"><strong>{{ applicant.get_full_name|default:applicant.username }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vị trí ứng tuyển:</span>
+        <span class="info-value">{{ job.title }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ job.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái mới:</span>
+        <span class="info-value">
+            {% if application.status == 'APPROVED' %}
+                <span class="status-badge">Được chấp thuận</span>
+            {% elif application.status == 'REJECTED' %}
+                <span class="status-badge" style="background: #ef4444;">Bị từ chối</span>
+            {% elif application.status == 'PENDING' %}
+                <span class="status-badge" style="background: #f59e0b;">Chờ xem xét</span>
+            {% else %}
+                <span class="status-badge">{{ application.get_status_display }}</span>
+            {% endif %}
+        </span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian cập nhật:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+</div>
+
+{% if application.status == 'APPROVED' %}
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🎉 Chúc mừng!</strong> Bạn đã được chọn cho vị trí {{ job.title }} tại giải đấu 
+        {{ job.tournament.name }}. Ban Tổ chức sẽ liên hệ với bạn để thông báo chi tiết công việc.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>📅 Những gì sẽ diễn ra tiếp theo</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Ban Tổ chức sẽ liên hệ trực tiếp với bạn<br>
+            <strong>•</strong> Thảo luận chi tiết về công việc và thời gian<br>
+            <strong>•</strong> Ký kết hợp đồng làm việc<br>
+            <strong>•</strong> Nhận nhiệm vụ cụ thể từ Ban Tổ chức<br>
+            <strong>•</strong> Bắt đầu công việc tại giải đấu
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/tournaments/{{ job.tournament.id }}/jobs/{{ job.id }}/" class="action-button">
+        🔗 Xem chi tiết công việc
+    </a>
+</div>
+
+{% elif application.status == 'REJECTED' %}
+<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #dc2626; font-size: 16px; line-height: 1.8;">
+        <strong>Rất tiếc:</strong> Đơn ứng tuyển của bạn cho vị trí {{ job.title }} không được chấp thuận 
+        tại thời điểm này. Chúng tôi đánh giá cao sự quan tâm của bạn.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>💡 Cơ hội khác</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Theo dõi các vị trí tuyển dụng khác<br>
+            <strong>•</strong> Cập nhật hồ sơ và kinh nghiệm<br>
+            <strong>•</strong> Tham gia các hoạt động thể thao<br>
+            <strong>•</strong> Xây dựng mạng lưới quan hệ<br>
+            <strong>•</strong> Chuẩn bị cho cơ hội tiếp theo
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/jobs/" class="action-button">
+        🔗 Xem các vị trí tuyển dụng khác
+    </a>
+</div>
+
+{% else %}
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>Thông báo:</strong> Đơn ứng tuyển của bạn đang được xem xét. 
+        Ban Tổ chức sẽ thông báo kết quả trong thời gian sớm nhất.
+    </p>
+</div>
+{% endif %}
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Ban Tổ chức {{ job.tournament.name }}</strong>
+</p>
+
+<div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+    <p style="margin: 5px 0; color: #9ca3af; font-size: 14px;">
+        📞 Nếu có thắc mắc, vui lòng liên hệ với Ban Tổ chức
+    </p>
+</div>
+{% endblock %}

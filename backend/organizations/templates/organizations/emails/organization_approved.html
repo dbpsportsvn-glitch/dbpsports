@@ -1,5 +1,84 @@
-<h3>Yêu cầu của bạn đã được duyệt!</h3>
-<p>Chào {{ owner.username }},</p>
-<p>Chúc mừng! Yêu cầu tạo đơn vị tổ chức <strong>{{ organization.name }}</strong> của bạn đã được Ban quản trị DBP Sports phê duyệt.</p>
-<p>Bây giờ bạn có thể đăng nhập và bắt đầu tạo các giải đấu của riêng mình.</p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Đơn vị tổ chức đã được duyệt - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Chúc mừng! Đơn đăng ký đã được phê duyệt{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Chúc mừng! Đơn đăng ký đã được duyệt!</h2>
+    <p>{{ organization.name }} đã chính thức được phê duyệt</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi {{ owner.get_full_name|default:owner.username }},
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúc mừng! Yêu cầu tạo đơn vị tổ chức <strong>{{ organization.name }}</strong> của bạn đã được 
+    Ban quản trị DBP Sports phê duyệt. Chúng tôi chân thành cảm ơn sự tin tưởng của bạn!
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin đơn vị</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đơn vị:</span>
+        <span class="info-value"><strong>{{ organization.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Người đăng ký:</span>
+        <span class="info-value">{{ owner.get_full_name|default:owner.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value">{{ owner.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian duyệt:</span>
+        <span class="info-value">{{ organization.approved_at|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Đã duyệt</span></span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🚀 Bắt đầu hoạt động:</strong> Bây giờ bạn có thể đăng nhập và bắt đầu tạo các giải đấu của riêng mình. 
+        Đơn vị tổ chức của bạn đã sẵn sàng hoạt động trên nền tảng DBP Sports.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>⚽ Tính năng có thể sử dụng</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Tạo và quản lý giải đấu<br>
+            <strong>•</strong> Mời đội bóng tham gia<br>
+            <strong>•</strong> Quản lý lịch thi đấu<br>
+            <strong>•</strong> Cập nhật kết quả trận đấu<br>
+            <strong>•</strong> Tuyển dụng các vị trí cần thiết<br>
+            <strong>•</strong> Quản lý ngân sách giải đấu
+        </p>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>💡 Hỗ trợ:</strong> Nếu bạn cần hỗ trợ trong quá trình sử dụng hệ thống, 
+        vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.
+    </p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/dashboard/" class="action-button">
+        🏠 Truy cập Dashboard
+    </a>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Ban quản trị DBP Sports</strong>
+</p>
+{% endblock %}

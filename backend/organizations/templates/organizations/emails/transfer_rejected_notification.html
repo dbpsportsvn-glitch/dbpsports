@@ -1,10 +1,124 @@
-<h3>Lời mời chuyển nhượng bị từ chối</h3>
-<p>Chào đội trưởng đội {{ inviting_team.name }},</p>
-<p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Chuyển nhượng bị từ chối - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ thị trường chuyển nhượng{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>❌ Chuyển nhượng bị từ chối</h2>
+    <p>Đội {{ current_team.name }} đã từ chối lời mời cho {{ player.full_name }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi đội trưởng đội <strong>{{ inviting_team.name }}</strong>,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
     Rất tiếc, đội <strong>{{ current_team.name }}</strong> đã từ chối lời mời chuyển nhượng 
-    của bạn cho cầu thủ <strong>{{ player.full_name }}</strong>.
+    cho cầu thủ <strong>{{ player.full_name }}</strong>. Lời mời này đã được hủy bỏ.
 </p>
-<p>
-    Bạn có thể tìm kiếm và gửi lời mời đến các cầu thủ khác, hoặc liên hệ trực tiếp với quản lý của cầu thủ ở trang chi tiết cầu thủ.
+
+<div class="info-box">
+    <h3>📋 Thông tin lời mời</h3>
+    <div class="info-row">
+        <span class="info-label">Cầu thủ:</span>
+        <span class="info-value"><strong>{{ player.full_name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội hiện tại:</span>
+        <span class="info-value">{{ current_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội mời:</span>
+        <span class="info-value">{{ inviting_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Loại hình:</span>
+        <span class="info-value">{{ transfer.get_transfer_type_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số tiền đề nghị:</span>
+        <span class="info-value">{{ transfer.offer_amount|floatformat:0 }}đ</span>
+    </div>
+    {% if transfer.transfer_type == 'LOAN' and transfer.loan_end_date %}
+    <div class="info-row">
+        <span class="info-label">Ngày hết hạn:</span>
+        <span class="info-value">{{ transfer.loan_end_date|date:"d/m/Y" }}</span>
+    </div>
+    {% endif %}
+    <div class="info-row">
+        <span class="info-label">Thời gian từ chối:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #ef4444;">Bị từ chối</span></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>👤 Thông tin cầu thủ</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đầy đủ:</span>
+        <span class="info-value">{{ player.full_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vị trí:</span>
+        <span class="info-value">{{ player.get_position_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Tuổi:</span>
+        <span class="info-value">{{ player.age }} tuổi</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giá trị thị trường:</span>
+        <span class="info-value">{{ player.market_value|floatformat:0 }}đ</span>
+    </div>
+</div>
+
+<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #dc2626; font-size: 16px; line-height: 1.8;">
+        <strong>ℹ️ Thông tin:</strong> Đội {{ current_team.name }} đã quyết định giữ lại cầu thủ 
+        {{ player.full_name }} và không đồng ý với điều kiện chuyển nhượng của bạn.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>💡 Gợi ý tiếp theo</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Tìm kiếm cầu thủ khác phù hợp<br>
+            <strong>•</strong> Điều chỉnh điều kiện chuyển nhượng<br>
+            <strong>•</strong> Liên hệ trực tiếp với đội {{ current_team.name }}<br>
+            <strong>•</strong> Theo dõi thị trường chuyển nhượng<br>
+            <strong>•</strong> Cập nhật danh sách theo dõi
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/transfer-market/" class="action-button">
+        🔗 Khám phá thị trường chuyển nhượng
+    </a>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🔄 Cơ hội khác:</strong> Thị trường chuyển nhượng luôn có nhiều cầu thủ tài năng đang chờ đợi. 
+        Hãy tiếp tục tìm kiếm và đưa ra những lời mời hấp dẫn!
+    </p>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>📧 Thông báo:</strong> Cầu thủ {{ player.full_name }} sẽ tiếp tục thi đấu cho đội 
+        {{ current_team.name }} như bình thường. Bạn có thể theo dõi cầu thủ này để có cơ hội trong tương lai.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
 </p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+{% endblock %}

@@ -1,11 +1,117 @@
-<h3>Bạn có lời mời chuyển nhượng cầu thủ</h3>
-<p>Chào đội trưởng đội {{ current_team.name }},</p>
-<p>
-    Hệ thống DBP Sports xin thông báo, đội <strong>{{ inviting_team.name }}</strong> vừa gửi một lời mời
-    chuyển nhượng cho cầu thủ <strong>{{ player.full_name }}</strong> của bạn.
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Lời mời chuyển nhượng mới - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ thị trường chuyển nhượng{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>⚽ Lời mời chuyển nhượng mới!</h2>
+    <p>Đội {{ inviting_team.name }} muốn chuyển nhượng {{ player.full_name }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi đội trưởng đội <strong>{{ current_team.name }}</strong>,
 </p>
-<p>
-    Vui lòng đăng nhập vào "Khu vực Cá nhân", chọn tab "Chuyển nhượng" để xem chi tiết và
-    phản hồi lời mời này.
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Đội <strong>{{ inviting_team.name }}</strong> vừa gửi lời mời chuyển nhượng cho cầu thủ 
+    <strong>{{ player.full_name }}</strong> của đội bạn. Vui lòng xem xét và phản hồi lời mời này.
 </p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin chuyển nhượng</h3>
+    <div class="info-row">
+        <span class="info-label">Cầu thủ:</span>
+        <span class="info-value"><strong>{{ player.full_name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội hiện tại:</span>
+        <span class="info-value">{{ current_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội mời:</span>
+        <span class="info-value">{{ inviting_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Loại hình:</span>
+        <span class="info-value">{{ transfer.get_transfer_type_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số tiền đề nghị:</span>
+        <span class="info-value">{{ transfer.offer_amount|floatformat:0 }}đ</span>
+    </div>
+    {% if transfer.transfer_type == 'LOAN' and transfer.loan_end_date %}
+    <div class="info-row">
+        <span class="info-label">Ngày hết hạn:</span>
+        <span class="info-value">{{ transfer.loan_end_date|date:"d/m/Y" }}</span>
+    </div>
+    {% endif %}
+    <div class="info-row">
+        <span class="info-label">Thời gian gửi:</span>
+        <span class="info-value">{{ transfer.created_at|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ phản hồi</span></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>👤 Thông tin cầu thủ</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đầy đủ:</span>
+        <span class="info-value">{{ player.full_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vị trí:</span>
+        <span class="info-value">{{ player.get_position_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Tuổi:</span>
+        <span class="info-value">{{ player.age }} tuổi</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giá trị hiện tại:</span>
+        <span class="info-value">{{ player.market_value|floatformat:0 }}đ</span>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⏰ Thời gian phản hồi:</strong> Bạn có 7 ngày để xem xét và phản hồi lời mời này. 
+        Sau thời gian này, lời mời sẽ tự động hết hạn.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn phản hồi</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Truy cập trang Dashboard của đội<br>
+            <strong>2.</strong> Vào tab "Chuyển nhượng"<br>
+            <strong>3.</strong> Xem chi tiết lời mời<br>
+            <strong>4.</strong> Chọn "Chấp nhận" hoặc "Từ chối"<br>
+            <strong>5.</strong> Xác nhận quyết định
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/dashboard/?tab=transfers" class="action-button">
+        🔗 Xem chi tiết lời mời
+    </a>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>💡 Lưu ý:</strong> Khi chấp nhận chuyển nhượng, cầu thủ sẽ chính thức chuyển sang đội mới 
+        và không thể hoàn tác. Hãy cân nhắc kỹ trước khi đưa ra quyết định.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

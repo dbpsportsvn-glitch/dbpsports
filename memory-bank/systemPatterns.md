@@ -66,6 +66,14 @@
   - Email notifications với `send_notification_email()` utility
   - Real-time count trong navbar via context processor
 
+- **Email System:**
+  - Base template `emails/base_email.html` với gradient header mau tim
+  - Responsive design voi CSS inline tuong thich email clients
+  - 19 email templates duoc chia thanh 4 nhom: Shop (3), Tournament (8), Organization (6), Account (2)
+  - Logic gui email trong views va admin actions
+  - Context processors de truyen du lieu vao templates
+  - SMTP configuration trong settings.py
+
 - **Business Logic Location:**
   - Complex queries → Model Managers
   - Data manipulation → Model methods

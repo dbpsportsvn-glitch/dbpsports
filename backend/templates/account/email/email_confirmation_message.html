@@ -1,0 +1,74 @@
+{% extends 'emails/base_email.html' %}
+{% load i18n %}
+
+{% block title %}Xác nhận đăng ký tài khoản - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Chào mừng bạn đến với DBP Sports{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Chào mừng bạn đến với DBP Sports!</h2>
+    <p>Cảm ơn bạn đã đăng ký tài khoản</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Chào bạn,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Cảm ơn bạn đã đăng ký tài khoản tại <strong>DBP Sports</strong> - Nền tảng Quản lý Thể thao Chuyên nghiệp. 
+    Chúng tôi rất vui được chào đón bạn tham gia vào cộng đồng thể thao của chúng tôi!
+</p>
+
+<div class="info-box">
+    <h3>🔐 Xác nhận tài khoản</h3>
+    <p style="color: #6b7280; line-height: 1.8;">
+        Để hoàn tất việc đăng ký và kích hoạt tài khoản của bạn, vui lòng nhấp vào nút bên dưới:
+    </p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ activate_url }}" class="action-button">
+            🔗 Kích hoạt tài khoản
+        </a>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Lưu ý quan trọng:</strong> Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này. 
+        Link kích hoạt sẽ hết hạn sau 24 giờ.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>⚽ Tính năng của DBP Sports</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Tham gia các giải đấu thể thao<br>
+            <strong>•</strong> Quản lý đội bóng và cầu thủ<br>
+            <strong>•</strong> Theo dõi lịch thi đấu và kết quả<br>
+            <strong>•</strong> Mua sắm dụng cụ thể thao<br>
+            <strong>•</strong> Kết nối với cộng đồng thể thao<br>
+            <strong>•</strong> Xây dựng hồ sơ chuyên nghiệp
+        </p>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🚀 Bắt đầu hành trình:</strong> Sau khi kích hoạt tài khoản, bạn có thể chọn vai trò phù hợp 
+        và bắt đầu khám phá các tính năng của DBP Sports.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Đội ngũ DBP Sports</strong>
+</p>
+
+<div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+    <p style="margin: 5px 0; color: #9ca3af; font-size: 14px;">
+        📞 Nếu cần hỗ trợ, vui lòng liên hệ với chúng tôi
+    </p>
+</div>
+{% endblock %}

@@ -1,10 +1,123 @@
-<h3>Lời mời chuyển nhượng được chấp nhận!</h3>
-<p>Chào đội trưởng đội {{ inviting_team.name }},</p>
-<p>
-    Chúc mừng! Đội <strong>{{ current_team.name }}</strong> đã đồng ý cho cầu thủ 
-    <strong>{{ player.full_name }}</strong> chuyển sang đội của bạn.
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Chuyển nhượng được chấp nhận - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ thị trường chuyển nhượng{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>✅ Chuyển nhượng được chấp nhận!</h2>
+    <p>{{ player.full_name }} sẽ chuyển sang {{ inviting_team.name }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi đội trưởng đội <strong>{{ inviting_team.name }}</strong>,
 </p>
-<p>
-    Bạn có thể vào trang quản lý đội để xem lại đội hình cập nhật.
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúc mừng! Đội <strong>{{ current_team.name }}</strong> đã đồng ý chuyển nhượng cầu thủ 
+    <strong>{{ player.full_name }}</strong> sang đội của bạn. Chuyển nhượng đã được hoàn tất thành công.
 </p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin chuyển nhượng</h3>
+    <div class="info-row">
+        <span class="info-label">Cầu thủ:</span>
+        <span class="info-value"><strong>{{ player.full_name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội cũ:</span>
+        <span class="info-value">{{ current_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội mới:</span>
+        <span class="info-value">{{ inviting_team.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Loại hình:</span>
+        <span class="info-value">{{ transfer.get_transfer_type_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số tiền:</span>
+        <span class="info-value">{{ transfer.offer_amount|floatformat:0 }}đ</span>
+    </div>
+    {% if transfer.transfer_type == 'LOAN' and transfer.loan_end_date %}
+    <div class="info-row">
+        <span class="info-label">Ngày hết hạn:</span>
+        <span class="info-value">{{ transfer.loan_end_date|date:"d/m/Y" }}</span>
+    </div>
+    {% endif %}
+    <div class="info-row">
+        <span class="info-label">Thời gian hoàn tất:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Hoàn tất</span></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>👤 Thông tin cầu thủ</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đầy đủ:</span>
+        <span class="info-value">{{ player.full_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vị trí:</span>
+        <span class="info-value">{{ player.get_position_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Tuổi:</span>
+        <span class="info-value">{{ player.age }} tuổi</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giá trị thị trường:</span>
+        <span class="info-value">{{ player.market_value|floatformat:0 }}đ</span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🎉 Chuyển nhượng thành công:</strong> Cầu thủ {{ player.full_name }} đã chính thức 
+        trở thành thành viên của đội {{ inviting_team.name }}. Bạn có thể quản lý đội hình ngay bây giờ.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>📅 Những gì sẽ diễn ra tiếp theo</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Cầu thủ sẽ xuất hiện trong đội hình của bạn<br>
+            <strong>•</strong> Bạn có thể chỉ định cầu thủ vào các trận đấu<br>
+            <strong>•</strong> Cầu thủ sẽ nhận được thông báo về việc chuyển đội<br>
+            <strong>•</strong> Lịch sử chuyển nhượng được ghi nhận<br>
+            {% if transfer.transfer_type == 'LOAN' %}
+            <strong>•</strong> Hợp đồng cho mượn sẽ tự động kết thúc vào {{ transfer.loan_end_date|date:"d/m/Y" }}
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/teams/{{ inviting_team.id }}/" class="action-button">
+        🔗 Quản lý đội hình
+    </a>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>💡 Lưu ý:</strong> Cầu thủ sẽ không thể thi đấu cho đội cũ nữa. 
+        {% if transfer.transfer_type == 'LOAN' %}
+        Sau khi hợp đồng cho mượn kết thúc, cầu thủ sẽ tự động quay về đội cũ.
+        {% else %}
+        Đây là chuyển nhượng vĩnh viễn.
+        {% endif %}
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

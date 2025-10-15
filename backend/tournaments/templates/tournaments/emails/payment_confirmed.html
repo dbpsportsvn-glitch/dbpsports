@@ -1,6 +1,72 @@
-<h3>Thanh toán Lệ phí Thành công!</h3>
-<p>Chào đội trưởng đội {{ team.name }},</p>
-<p>Ban tổ chức giải đấu <strong>{{ team.tournament.name }}</strong> xin xác nhận đã nhận được thanh toán lệ phí của đội bạn.</p>
-<p>Các chức năng quản lý đội hình (thêm/sửa/xóa cầu thủ) đã được mở khóa. Bạn có thể truy cập trang chi tiết đội để bắt đầu xây dựng đội hình.</p>
-<p>Chúc đội bạn thi đấu thành công!</p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Xác nhận thanh toán thành công - {{ team.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Xác nhận thanh toán lệ phí{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Thanh toán thành công!</h2>
+    <p>Đội {{ team.name }} đã hoàn tất thanh toán lệ phí</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi đội trưởng đội <strong>{{ team.name }}</strong>,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Ban tổ chức giải đấu <strong>{{ team.tournament.name }}</strong> xin xác nhận đã nhận được thanh toán lệ phí của đội bạn. 
+    Chúng tôi chân thành cảm ơn sự tin tưởng và hợp tác của đội bạn.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin thanh toán</h3>
+    <div class="info-row">
+        <span class="info-label">Đội bóng:</span>
+        <span class="info-value"><strong>{{ team.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ team.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Lệ phí tham gia:</span>
+        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Đã thanh toán</span></span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🔓 Mở khóa tính năng:</strong> Các chức năng quản lý đội hình (thêm/sửa/xóa cầu thủ) đã được mở khóa. 
+        Bạn có thể truy cập trang chi tiết đội để bắt đầu xây dựng đội hình thi đấu.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>⚽ Bước tiếp theo</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Truy cập trang chi tiết đội của bạn<br>
+            <strong>2.</strong> Thêm thông tin các cầu thủ<br>
+            <strong>3.</strong> Cập nhật đội hình thi đấu<br>
+            <strong>4.</strong> Theo dõi lịch thi đấu và thông báo từ BTC
+        </p>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>🏆 Chúc mừng!</strong> Đội bạn đã chính thức tham gia giải đấu. 
+        Chúc đội bạn thi đấu thành công và đạt được kết quả tốt nhất!
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Ban tổ chức {{ team.tournament.name }}</strong>
+</p>
+{% endblock %}

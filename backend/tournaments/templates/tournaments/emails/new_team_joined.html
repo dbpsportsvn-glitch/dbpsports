@@ -1,0 +1,107 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Đội mới tham gia - {{ team.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Cập nhật từ giải đấu{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>⚽ Đội mới tham gia giải đấu!</h2>
+    <p>{{ team.name }} đã chính thức tham gia {{ team.tournament.name }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Chào bạn,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Giải đấu <strong>{{ team.tournament.name }}</strong> vừa có thêm một đội mới tham gia: 
+    <strong>{{ team.name }}</strong>. Đây là thông tin cập nhật từ giải đấu mà bạn đang theo dõi.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin đội mới</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đội:</span>
+        <span class="info-value"><strong>{{ team.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội trưởng:</span>
+        <span class="info-value">{{ team.captain.get_full_name|default:team.captain.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ team.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số lượng cầu thủ:</span>
+        <span class="info-value">{{ team.players.count }} cầu thủ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian tham gia:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Đã duyệt</span></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>🏆 Thông tin giải đấu</h3>
+    <div class="info-row">
+        <span class="info-label">Tên giải:</span>
+        <span class="info-value">{{ team.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số đội hiện tại:</span>
+        <span class="info-value">{{ tournament.total_teams }} đội</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thể thức:</span>
+        <span class="info-value">{{ team.tournament.get_format_display }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Khu vực:</span>
+        <span class="info-value">{{ team.tournament.get_region_display }}</span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🎯 Cập nhật quan trọng:</strong> Với đội mới này, giải đấu sẽ có thêm sự cạnh tranh và hấp dẫn hơn. 
+        Hãy theo dõi để không bỏ lỡ những trận đấu thú vị!
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>📅 Những gì sẽ diễn ra tiếp theo</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Ban tổ chức sẽ tiến hành bốc thăm chia bảng<br>
+            <strong>•</strong> Lịch thi đấu sẽ được công bố<br>
+            <strong>•</strong> Các trận đấu sẽ được diễn ra theo lịch<br>
+            <strong>•</strong> Kết quả sẽ được cập nhật real-time<br>
+            <strong>•</strong> Bảng xếp hạng sẽ được tính toán tự động
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/tournaments/{{ team.tournament.id }}/" class="action-button">
+        🔗 Xem chi tiết giải đấu
+    </a>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>🔔 Thông báo:</strong> Bạn đang nhận email này vì đã bật tính năng thông báo đội mới 
+        cho giải đấu này. Bạn có thể tắt tính năng này trong cài đặt tài khoản.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Ban tổ chức {{ team.tournament.name }}</strong>
+</p>
+{% endblock %}

@@ -584,7 +584,28 @@ def create_team(request, tournament_pk):
                     team = form.save(commit=False)
                     team.captain = request.user
                     team.save()
-                    TeamRegistration.objects.create(team=team, tournament=tournament)
+                    registration = TeamRegistration.objects.create(team=team, tournament=tournament)
+                    
+                    # Gửi email thông báo cho admin và BTC
+                    admin_emails = getattr(settings, 'ADMIN_EMAILS', [settings.ADMIN_EMAIL])
+                    btc_emails = []
+                    
+                    # Lấy email của BTC members
+                    if tournament.organization:
+                        btc_emails = [member.email for member in tournament.organization.members.all() if member.email]
+                    
+                    # Gộp danh sách email và loại bỏ trùng lặp
+                    recipient_list = list(set(admin_emails + btc_emails))
+                    recipient_list = [email for email in recipient_list if email and email != 'admin@example.com']
+                    
+                    if recipient_list:
+                        send_notification_email(
+                            subject=f"Đội mới đăng ký: {team.name} - {tournament.name}",
+                            template_name='tournaments/emails/new_team_registration.html',
+                            context={'team': team, 'tournament': tournament, 'registration': registration},
+                            recipient_list=recipient_list
+                        )
+                
                 messages.success(request, f"Đã tạo và đăng ký thành công đội '{team.name}'!")
                 return redirect('team_detail', pk=team.pk)
             except IntegrityError:
@@ -856,7 +877,7 @@ def team_payment(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -864,7 +885,7 @@ def team_payment(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                     recipient_list=[team.captain.email]
                 )
 
@@ -3720,7 +3741,7 @@ def payment_with_shop(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -3728,7 +3749,7 @@ def payment_with_shop(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
                     recipient_list=[team.captain.email]
                 )
 

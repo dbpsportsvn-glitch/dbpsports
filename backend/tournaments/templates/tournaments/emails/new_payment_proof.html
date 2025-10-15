@@ -1,5 +1,76 @@
-<h3>Thông báo Thanh toán Mới</h3>
-<p>Chào Admin,</p>
-<p>Đội <strong>{{ team.name }}</strong> vừa tải lên hóa đơn xác nhận thanh toán cho giải <strong>{{ team.tournament.name }}</strong>.</p>
-<p>Vui lòng truy cập trang quản trị để xem hóa đơn và xác nhận thanh toán.</p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Thông báo thanh toán mới - {{ tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>🔔 Có thanh toán mới cần xử lý!</h2>
+    <p>Đội {{ team.name }} vừa tải lên hóa đơn thanh toán</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi Quản trị viên,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Đội <strong>{{ team.name }}</strong> vừa tải lên hóa đơn xác nhận thanh toán cho giải đấu 
+    <strong>{{ tournament.name }}</strong>. Vui lòng kiểm tra và xác nhận thanh toán.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin thanh toán</h3>
+    <div class="info-row">
+        <span class="info-label">Đội bóng:</span>
+        <span class="info-value"><strong>{{ team.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Lệ phí tham gia:</span>
+        <span class="info-value">{{ tournament.registration_fee|floatformat:0 }}đ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ xác nhận</span></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian tải lên:</span>
+        <span class="info-value">{{ team.payment_proof_uploaded_at|date:"d/m/Y H:i" }}</span>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Hành động cần thiết:</strong> Vui lòng truy cập trang quản trị để xem hóa đơn và xác nhận thanh toán. 
+        Sau khi xác nhận, đội sẽ được mở khóa các tính năng quản lý đội hình.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn xử lý</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Truy cập trang quản trị Django Admin<br>
+            <strong>2.</strong> Tìm đội <strong>{{ team.name }}</strong> trong danh sách<br>
+            <strong>3.</strong> Kiểm tra hóa đơn thanh toán đã tải lên<br>
+            <strong>4.</strong> Xác nhận thanh toán nếu hợp lệ<br>
+            <strong>5.</strong> Hệ thống sẽ tự động gửi email xác nhận cho đội
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/admin/tournaments/team/{{ team.id }}/change/" class="action-button">
+        🔗 Xem chi tiết đội trong Admin
+    </a>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

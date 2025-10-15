@@ -1,21 +1,78 @@
-<h3>Có đơn vị tổ chức mới đăng ký</h3>
-<p>Chào Admin,</p>
-<p>Một đơn vị tổ chức mới vừa đăng ký trên hệ thống DBP Sports:</p>
-<ul>
-    <li><strong>Tên đơn vị:</strong> {{ organization.name }}</li>
+{% extends 'emails/base_email.html' %}
 
-    {# === THAY THẾ DÒNG DƯỚI ĐÂY === #}
-    <li>
-        <strong>Người đăng ký:</strong>
-        {% if organization.owner.get_full_name %}
-            {{ organization.owner.get_full_name }} ({{ organization.owner.email }})
-        {% else %}
-            {{ organization.owner.email }}
-        {% endif %}
-    </li>
-    {# === KẾT THÚC THAY THẾ === #}
+{% block title %}Đơn vị tổ chức mới đăng ký - DBP Sports{% endblock %}
 
-    <li><strong>Thời gian:</strong> {{ organization.created_at|date:"H:i, d/m/Y" }}</li>
-</ul>
-<p>Vui lòng truy cập trang quản trị để xem xét và duyệt đơn vị này.</p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+{% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>🏢 Có đơn vị tổ chức mới đăng ký!</h2>
+    <p>{{ organization.name }} vừa đăng ký trên hệ thống</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi Quản trị viên,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Một đơn vị tổ chức mới vừa đăng ký trên hệ thống DBP Sports. 
+    Vui lòng kiểm tra và xem xét đơn đăng ký này.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin đăng ký</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đơn vị:</span>
+        <span class="info-value"><strong>{{ organization.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Người đăng ký:</span>
+        <span class="info-value">
+            {% if organization.owner.get_full_name %}
+                {{ organization.owner.get_full_name }} ({{ organization.owner.email }})
+            {% else %}
+                {{ organization.owner.email }}
+            {% endif %}
+        </span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian đăng ký:</span>
+        <span class="info-value">{{ organization.created_at|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ duyệt</span></span>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Hành động cần thiết:</strong> Vui lòng truy cập trang quản trị để xem xét và duyệt đơn vị tổ chức này. 
+        Sau khi duyệt, đơn vị sẽ có thể tạo và quản lý các giải đấu.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn xử lý</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Truy cập trang quản trị Django Admin<br>
+            <strong>2.</strong> Tìm đơn vị <strong>{{ organization.name }}</strong> trong danh sách<br>
+            <strong>3.</strong> Kiểm tra thông tin đăng ký<br>
+            <strong>4.</strong> Duyệt hoặc từ chối đơn đăng ký<br>
+            <strong>5.</strong> Hệ thống sẽ tự động gửi email thông báo cho người đăng ký
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/admin/organizations/organization/{{ organization.id }}/change/" class="action-button">
+        🔗 Xem chi tiết đơn vị trong Admin
+    </a>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

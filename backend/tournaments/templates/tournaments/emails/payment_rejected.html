@@ -1,0 +1,109 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Thanh toán không hợp lệ - {{ team.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ Ban Tổ chức{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>❌ Thanh toán không hợp lệ!</h2>
+    <p>Hóa đơn của đội {{ team.name }} không đạt yêu cầu</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi đội trưởng đội <strong>{{ team.name }}</strong>,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúng tôi đã kiểm tra hóa đơn thanh toán của đội bạn cho giải đấu 
+    <strong>{{ team.tournament.name }}</strong>. Rất tiếc, hóa đơn này không đạt yêu cầu và cần được xử lý lại.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin đăng ký</h3>
+    <div class="info-row">
+        <span class="info-label">Đội bóng:</span>
+        <span class="info-value"><strong>{{ team.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ team.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Lệ phí tham gia:</span>
+        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #ef4444;">Không hợp lệ</span></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian kiểm tra:</span>
+        <span class="info-value">{{ "now"|date:"d/m/Y H:i" }}</span>
+    </div>
+</div>
+
+<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #dc2626; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Lý do từ chối:</strong> {{ rejection_reason|default:"Hóa đơn không rõ ràng hoặc không đúng số tiền. Vui lòng kiểm tra lại và tải lên hóa đơn mới." }}
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>📝 Yêu cầu hóa đơn hợp lệ</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> Hóa đơn phải rõ ràng, không bị mờ<br>
+            <strong>•</strong> Số tiền phải đúng với lệ phí tham gia<br>
+            <strong>•</strong> Thông tin người chuyển khoản phải khớp<br>
+            <strong>•</strong> Thời gian chuyển khoản trong vòng 7 ngày<br>
+            <strong>•</strong> Hóa đơn phải là file ảnh (JPG, PNG)<br>
+            <strong>•</strong> Kích thước file không quá 5MB
+        </p>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⏰ Thời gian xử lý:</strong> Bạn có thể tải lên hóa đơn mới ngay lập tức. 
+        Chúng tôi sẽ kiểm tra và xử lý trong vòng 1-2 ngày làm việc.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn tải lại hóa đơn</h3>
+    <div style="background: #f0fdf4; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #065f46;">
+            <strong>1.</strong> Kiểm tra lại hóa đơn đã tải lên<br>
+            <strong>2.</strong> Chuẩn bị hóa đơn mới đúng yêu cầu<br>
+            <strong>3.</strong> Truy cập trang thanh toán của đội<br>
+            <strong>4.</strong> Tải lên hóa đơn mới<br>
+            <strong>5.</strong> Chờ xác nhận từ Ban Tổ chức
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/teams/{{ team.id }}/" class="action-button">
+        🔗 Truy cập trang đội để tải lại hóa đơn
+    </a>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>💡 Lưu ý:</strong> Nếu bạn gặp khó khăn trong việc chuẩn bị hóa đơn, 
+        vui lòng liên hệ trực tiếp với Ban Tổ chức để được hỗ trợ.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Ban Tổ chức {{ team.tournament.name }}</strong>
+</p>
+
+<div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+    <p style="margin: 5px 0; color: #9ca3af; font-size: 14px;">
+        📞 Liên hệ hỗ trợ: admin@dbpsports.com
+    </p>
+</div>
+{% endblock %}

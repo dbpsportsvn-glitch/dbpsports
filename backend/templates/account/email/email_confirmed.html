@@ -1,0 +1,77 @@
+{% extends 'emails/base_email.html' %}
+{% load i18n %}
+
+{% block title %}Xác nhận email thành công - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Chúc mừng! Tài khoản đã được kích hoạt{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Chúc mừng! Tài khoản đã được kích hoạt!</h2>
+    <p>Email {{ email }} đã được xác nhận thành công</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Chào bạn,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúc mừng! Tài khoản của bạn với email <strong>{{ email }}</strong> đã được kích hoạt thành công. 
+    Bạn có thể bắt đầu sử dụng tất cả các tính năng của DBP Sports ngay bây giờ!
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin tài khoản</h3>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value"><strong>{{ email }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Đã kích hoạt</span></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian kích hoạt:</span>
+        <span class="info-value">{{ "now"|date:"d/m/Y H:i" }}</span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        <strong>🚀 Bước tiếp theo:</strong> Bạn có thể đăng nhập và chọn vai trò phù hợp để bắt đầu 
+        khám phá các tính năng của DBP Sports.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>⚽ Các vai trò có thể chọn</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>•</strong> <strong>Cầu thủ:</strong> Tham gia đội bóng, thi đấu<br>
+            <strong>•</strong> <strong>Huấn luyện viên:</strong> Dẫn dắt đội bóng<br>
+            <strong>•</strong> <strong>Trọng tài:</strong> Điều hành trận đấu<br>
+            <strong>•</strong> <strong>Ban tổ chức:</strong> Tạo và quản lý giải đấu<br>
+            <strong>•</strong> <strong>Nhà tài trợ:</strong> Tài trợ giải đấu<br>
+            <strong>•</strong> <strong>Sân bóng:</strong> Cung cấp địa điểm thi đấu
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/accounts/login/" class="action-button">
+        🏠 Đăng nhập ngay
+    </a>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>💡 Mẹo:</strong> Bạn có thể chọn nhiều vai trò để có trải nghiệm đầy đủ nhất trên DBP Sports. 
+        Mỗi vai trò sẽ mở khóa các tính năng riêng biệt.
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Đội ngũ DBP Sports</strong>
+</p>
+{% endblock %}

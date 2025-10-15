@@ -1,0 +1,100 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Đội mới đăng ký - {{ team.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>⚽ Có đội mới đăng ký!</h2>
+    <p>{{ team.name }} vừa đăng ký tham gia {{ team.tournament.name }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi Quản trị viên,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Đội <strong>{{ team.name }}</strong> vừa đăng ký tham gia giải đấu 
+    <strong>{{ team.tournament.name }}</strong>. Vui lòng kiểm tra và xử lý đăng ký này.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin đăng ký</h3>
+    <div class="info-row">
+        <span class="info-label">Tên đội:</span>
+        <span class="info-value"><strong>{{ team.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Đội trưởng:</span>
+        <span class="info-value">{{ team.captain.get_full_name|default:team.captain.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email đội trưởng:</span>
+        <span class="info-value">{{ team.captain.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ team.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Lệ phí tham gia:</span>
+        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian đăng ký:</span>
+        <span class="info-value">{{ registration.registered_at|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ thanh toán</span></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>👥 Thông tin đội bóng</h3>
+    <div class="info-row">
+        <span class="info-label">Số lượng cầu thủ:</span>
+        <span class="info-value">{{ team.players.count }} cầu thủ</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Địa chỉ:</span>
+        <span class="info-value">{{ team.address|default:"Chưa cập nhật" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Số điện thoại:</span>
+        <span class="info-value">{{ team.phone|default:"Chưa cập nhật" }}</span>
+    </div>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Hành động cần thiết:</strong> Đội này cần thanh toán lệ phí tham gia để được duyệt. 
+        Sau khi đội trưởng tải lên hóa đơn thanh toán, bạn sẽ nhận được email thông báo khác.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn xử lý</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Đội sẽ tự động nhận được email hướng dẫn thanh toán<br>
+            <strong>2.</strong> Đội trưởng sẽ tải lên hóa đơn thanh toán<br>
+            <strong>3.</strong> Bạn sẽ nhận email thông báo thanh toán mới<br>
+            <strong>4.</strong> Kiểm tra và xác nhận thanh toán<br>
+            <strong>5.</strong> Đội sẽ được duyệt và mở khóa tính năng
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/admin/tournaments/team/{{ team.id }}/change/" class="action-button">
+        🔗 Xem chi tiết đội trong Admin
+    </a>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

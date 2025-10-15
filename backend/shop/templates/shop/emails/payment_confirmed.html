@@ -1,219 +1,109 @@
+{% extends 'emails/base_email.html' %}
 {% load shop_filters %}
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { 
-            background: linear-gradient(135deg, #059669 0%, #047857 100%); 
-            color: white; 
-            padding: 30px 20px; 
-            text-align: center; 
-            border-radius: 8px 8px 0 0;
-        }
-        .header h1 { margin: 0; font-size: 28px; }
-        .header p { margin: 10px 0 0 0; font-size: 16px; opacity: 0.95; }
-        .content { background: #f9f9f9; padding: 30px 20px; }
-        .thank-you-box {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border-left: 5px solid #059669;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .thank-you-box h2 {
-            color: #065f46;
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
-        .thank-you-box p {
-            color: #047857;
-            margin: 0;
-            font-size: 16px;
-        }
-        .order-info { 
-            background: white; 
-            padding: 20px; 
-            margin: 20px 0; 
-            border-left: 4px solid #059669;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .order-info h3 {
-            color: #059669;
-            margin-top: 0;
-            border-bottom: 2px solid #d1fae5;
-            padding-bottom: 10px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .info-row:last-child { border-bottom: none; }
-        .info-label { font-weight: 600; color: #4b5563; }
-        .info-value { color: #1f2937; }
-        .product { 
-            border-bottom: 1px solid #e5e7eb; 
-            padding: 15px 0; 
-        }
-        .product:last-child { border-bottom: none; }
-        .product-name { 
-            font-weight: 600; 
-            color: #1f2937;
-            margin-bottom: 5px;
-        }
-        .product-details {
-            color: #6b7280;
-            font-size: 14px;
-        }
-        .total { 
-            font-size: 22px; 
-            font-weight: bold; 
-            color: #059669; 
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 2px solid #d1fae5;
-            text-align: right;
-        }
-        .status-badge {
-            display: inline-block;
-            background: #059669;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .footer { 
-            text-align: center; 
-            padding: 20px; 
-            color: #6b7280;
-            background: #f3f4f6;
-            border-radius: 0 0 8px 8px;
-        }
-        .footer p { margin: 5px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1 style="font-size: 40px; font-weight: 900; letter-spacing: 2px;">Hệ thống DBP Shop</h1>
-        </div>
-        
-        <div class="content">
-            <div class="thank-you-box">
-                <p style="font-size: 16px; line-height: 1.8; margin-bottom: 15px;">Ngoài kia có rất nhiều sự lựa chọn có thể tốt hơn... Cảm ơn quý khách đã tin tưởng và lựa chọn sản phẩm của chúng tôi.</p>
-                <h2 style="margin-top: 10px;">🎉 Trân trọng cảm ơn quý khách!</h2>
-            </div>
-            
-            <p style="font-size: 16px; color: #374151;">
-                Kính gửi quý khách <strong>{{ order.customer_name }}</strong>,
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.8;">
-                Chúng tôi xin chân thành cảm ơn quý khách đã tin tưởng và lựa chọn sản phẩm tại DBP Sports. 
-                Đơn hàng <strong>{{ order.order_number }}</strong> của quý khách đã được hoàn tất.
-            </p>
-            
-            <p style="color: #6b7280; line-height: 1.8;">
-                Sự hài lòng của quý khách là niềm vinh hạnh và động lực để chúng tôi không ngừng phát triển, 
-                mang đến những sản phẩm và dịch vụ tốt nhất.
-            </p>
-            
-            <div class="order-info">
-                <h3>📦 Thông tin đơn hàng</h3>
-                <div class="info-row">
-                    <span class="info-label">Mã đơn hàng:</span>
-                    <span class="info-value"><strong>{{ order.order_number }}</strong></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Ngày đặt:</span>
-                    <span class="info-value">{{ order.created_at|date:"d/m/Y H:i" }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Trạng thái đơn hàng:</span>
-                    <span class="info-value"><span class="status-badge">Hoàn tất</span></span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Phương thức thanh toán:</span>
-                    <span class="info-value">{{ order.get_payment_method_display }}</span>
-                </div>
-            </div>
-            
-            <div class="order-info">
-                <h3>🛍️ Sản phẩm</h3>
-                {% for item in order.items.all %}
-                <div class="product">
-                    <div class="product-name">{{ item.product.name }}</div>
-                    <div class="product-details">
-                        Số lượng: {{ item.quantity }} × {{ item.price|floatformat:0|vnd }}đ = 
-                        <strong>{{ item.total_price|floatformat:0|vnd }}đ</strong>
-                    </div>
-                </div>
-                {% endfor %}
-                
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
-                    <div class="info-row">
-                        <span class="info-label">Tạm tính:</span>
-                        <span class="info-value">{{ order.subtotal|floatformat:0|vnd }}đ</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Phí vận chuyển:</span>
-                        <span class="info-value">{{ order.shipping_fee|floatformat:0|vnd }}đ</span>
-                    </div>
-                </div>
-                
-                <div class="total">Tổng cộng: {{ order.total_amount|floatformat:0|vnd }}đ</div>
-            </div>
-            
-            <div class="order-info">
-                <h3>🚚 Địa chỉ giao hàng</h3>
-                <div class="info-row">
-                    <span class="info-label">Người nhận:</span>
-                    <span class="info-value">{{ order.customer_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Điện thoại:</span>
-                    <span class="info-value">{{ order.customer_phone }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Địa chỉ:</span>
-                    <span class="info-value">{{ order.shipping_address }}, {{ order.shipping_district }}, {{ order.shipping_city }}</span>
-                </div>
-            </div>
-            
-            <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center;">
-                <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
-                    Rất mong được tiếp tục phục vụ quý khách trong tương lai.<br>
-                    Chúc quý khách luôn khỏe mạnh và thành công! 🏆
-                </p>
-            </div>
-            
-            <p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
-                <strong>Trân trọng,</strong><br>
-                <strong style="color: #059669;">Đội ngũ DBP Sports</strong>
-            </p>
-            
-            <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 5px 0; color: #9ca3af; font-size: 14px;">
-                    📞 Nếu cần hỗ trợ, vui lòng liên hệ hotline hoặc email của chúng tôi
-                </p>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p><strong>DBP Sports</strong></p>
-            <p>Chuyên cung cấp dụng cụ thể thao chất lượng cao</p>
-            <p style="font-size: 12px; margin-top: 15px;">
-                Email này được gửi tự động, vui lòng không trả lời.
-            </p>
+
+{% block title %}Cảm ơn quý khách - Đơn hàng #{{ order.order_number }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Trân trọng cảm ơn quý khách{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Trân trọng cảm ơn quý khách!</h2>
+    <p>Đơn hàng #{{ order.order_number }} đã hoàn tất</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi quý khách <strong>{{ order.customer_name }}</strong>,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Ngoài kia có rất nhiều sự lựa chọn có thể tốt hơn... Cảm ơn quý khách đã tin tưởng và lựa chọn sản phẩm của chúng tôi. 
+    Đơn hàng <strong>{{ order.order_number }}</strong> của quý khách đã được hoàn tất.
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Sự hài lòng của quý khách là niềm vinh hạnh và động lực để chúng tôi không ngừng phát triển, 
+    mang đến những sản phẩm và dịch vụ tốt nhất.
+</p>
+
+<div class="info-box">
+    <h3>📦 Thông tin đơn hàng</h3>
+    <div class="info-row">
+        <span class="info-label">Mã đơn hàng:</span>
+        <span class="info-value"><strong>{{ order.order_number }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Ngày đặt:</span>
+        <span class="info-value">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái đơn hàng:</span>
+        <span class="info-value"><span class="status-badge">Hoàn tất</span></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Phương thức thanh toán:</span>
+        <span class="info-value">{{ order.get_payment_method_display }}</span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>🛍️ Sản phẩm</h3>
+    {% for item in order.items.all %}
+    <div style="border-bottom: 1px solid #e5e7eb; padding: 15px 0;">
+        <div style="font-weight: 600; color: #1f2937; margin-bottom: 5px;">{{ item.product.name }}</div>
+        <div style="color: #6b7280; font-size: 14px;">
+            Số lượng: {{ item.quantity }} × {{ item.price|floatformat:0|vnd }}đ = 
+            <strong>{{ item.total_price|floatformat:0|vnd }}đ</strong>
         </div>
     </div>
-</body>
-</html>
+    {% endfor %}
+    
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
+        <div class="info-row">
+            <span class="info-label">Tạm tính:</span>
+            <span class="info-value">{{ order.subtotal|floatformat:0|vnd }}đ</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Phí vận chuyển:</span>
+            <span class="info-value">{{ order.shipping_fee|floatformat:0|vnd }}đ</span>
+        </div>
+    </div>
+    
+    <div style="font-size: 22px; font-weight: bold; color: #667eea; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e0e7ff; text-align: right;">
+        Tổng cộng: {{ order.total_amount|floatformat:0|vnd }}đ
+    </div>
+</div>
 
+<div class="info-box">
+    <h3>🚚 Địa chỉ giao hàng</h3>
+    <div class="info-row">
+        <span class="info-label">Người nhận:</span>
+        <span class="info-value">{{ order.customer_name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Điện thoại:</span>
+        <span class="info-value">{{ order.customer_phone }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Địa chỉ:</span>
+        <span class="info-value">{{ order.shipping_address }}, {{ order.shipping_district }}, {{ order.shipping_city }}</span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center;">
+    <p style="margin: 0; color: #065f46; font-size: 16px; line-height: 1.8;">
+        Rất mong được tiếp tục phục vụ quý khách trong tương lai.<br>
+        Chúc quý khách luôn khỏe mạnh và thành công! 🏆
+    </p>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Đội ngũ DBP Sports</strong>
+</p>
+
+<div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+    <p style="margin: 5px 0; color: #9ca3af; font-size: 14px;">
+        📞 Nếu cần hỗ trợ, vui lòng liên hệ hotline hoặc email của chúng tôi
+    </p>
+</div>
+{% endblock %}

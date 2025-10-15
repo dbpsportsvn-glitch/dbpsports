@@ -63,6 +63,7 @@
   - **QR Code Integration:** Thêm mã QR thanh toán vào Stadium Profile Card trong tab chuyên môn với thiết kế center alignment, kích thước 120px và styling đẹp mắt.
   - **SEO Optimization - Structured Data Event:** Hoàn thành việc khắc phục các vấn đề Structured Data Event mà Google Analytics báo cáo. Đã thêm đầy đủ các trường bắt buộc (offers, image, endDate, organizer, performer) vào các template: tournament_detail.html, match_detail.html, home.html, active_list.html, archive.html. Sử dụng Schema.org Event với JSON-LD format để cải thiện SEO và hiển thị rich results trên Google.
   - **Viet hoa va sap xep lai trang quan tri admin:** Hoan thanh viet hoa toan bo trang quan tri Django admin voi tieu de "DBP Sports - Trung tam Quan tri", sap xep lai thu tu cac app theo logic nghiep vu (Giai dau → To chuc → Nguoi dung → Nha tai tro → Cua hang → Tin tuc), viet hoa ten hien thi tat ca cac models trong moi app, them emoji icons de phan biet cac model, va di chuyen action "Xoa" xuong cuoi cung trong dropdown actions de tranh nham lan.
+  - **Hoan thanh thiet ke lai toan bo email templates:** Thiet ke lai tat ca 19 email templates theo mau thong nhat voi base template co gradient header mau tim, responsive design, CSS inline tuong thich voi email clients. Bao gom: Shop emails (3), Tournament emails (8), Organization emails (6), Account emails (2). Da them logic gui email cho admin/BTC khi co doi dang ky giai dau va sua loi hien thi ten giai dau trong email thanh toan moi.
 
 - **Những gì cần làm tiếp:**
   - Hoàn thiện trang "Thị trường việc làm" (Job Market)

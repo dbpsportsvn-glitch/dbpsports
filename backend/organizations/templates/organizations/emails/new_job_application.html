@@ -1,13 +1,90 @@
-<h3>Có đơn ứng tuyển mới</h3>
-<p>Chào Ban Tổ Chức,</p>
-<p><strong>{{ applicant.get_full_name|default:applicant.username }}</strong> vừa ứng tuyển vào vị trí <strong>{{ job.title }}</strong> cho giải đấu <strong>{{ job.tournament.name }}</strong>.</p>
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Đơn ứng tuyển mới - {{ job.tournament.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>👤 Có đơn ứng tuyển mới!</h2>
+    <p>{{ applicant.get_full_name|default:applicant.username }} ứng tuyển vào {{ job.title }}</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi Ban Tổ Chức,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    <strong>{{ applicant.get_full_name|default:applicant.username }}</strong> vừa ứng tuyển vào vị trí 
+    <strong>{{ job.title }}</strong> cho giải đấu <strong>{{ job.tournament.name }}</strong>. 
+    Vui lòng kiểm tra và xem xét đơn ứng tuyển này.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin ứng tuyển</h3>
+    <div class="info-row">
+        <span class="info-label">Ứng viên:</span>
+        <span class="info-value"><strong>{{ applicant.get_full_name|default:applicant.username }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value">{{ applicant.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Vị trí ứng tuyển:</span>
+        <span class="info-value">{{ job.title }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Giải đấu:</span>
+        <span class="info-value">{{ job.tournament.name }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian ứng tuyển:</span>
+        <span class="info-value">{{ application.created_at|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ xem xét</span></span>
+    </div>
+</div>
 
 {% if application.message %}
-<p><strong>Lời nhắn từ ứng viên:</strong></p>
-<blockquote style="border-left: 3px solid #ccc; padding-left: 15px; margin-left: 10px;">
-    {{ application.message|linebreaks }}
-</blockquote>
+<div class="info-box">
+    <h3>💬 Lời nhắn từ ứng viên</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 3px solid #667eea;">
+        {{ application.message|linebreaks }}
+    </div>
+</div>
 {% endif %}
 
-<p>Vui lòng truy cập trang quản lý tuyển dụng để xem xét đơn ứng tuyển này.</p>
-<p>Trân trọng,<br>Hệ thống DBP Sports</p>
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.8;">
+        <strong>⚠️ Hành động cần thiết:</strong> Vui lòng truy cập trang quản lý tuyển dụng để xem xét đơn ứng tuyển này. 
+        Bạn có thể liên hệ với ứng viên hoặc cập nhật trạng thái ứng tuyển.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔧 Hướng dẫn xử lý</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="margin: 0 0 10px 0; color: #374151;">
+            <strong>1.</strong> Truy cập trang quản lý tuyển dụng<br>
+            <strong>2.</strong> Xem chi tiết đơn ứng tuyển<br>
+            <strong>3.</strong> Kiểm tra hồ sơ ứng viên<br>
+            <strong>4.</strong> Liên hệ với ứng viên nếu cần<br>
+            <strong>5.</strong> Cập nhật trạng thái ứng tuyển
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="http://localhost:8000/tournaments/{{ job.tournament.id }}/jobs/{{ job.id }}/applications/" class="action-button">
+        🔗 Xem danh sách ứng tuyển
+    </a>
+</div>
+
+<p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
+    <strong>Trân trọng,</strong><br>
+    <strong style="color: #667eea;">Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}
