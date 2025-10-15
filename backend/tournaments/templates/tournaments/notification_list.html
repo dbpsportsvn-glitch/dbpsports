@@ -4,75 +4,219 @@
 
 {% block extra_css %}
 <style>
-    /* CSS MỚI: Hiệu ứng cho thông báo chưa đọc */
-    .notification-item.unread {
-        background-color: #f8f9fa; /* Màu nền sáng hơn một chút */
-        border-left: 5px solid #0d6efd; /* Viền xanh bên trái */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
     }
-
-    /* CSS MỚI: Nút xóa nhỏ ở góc */
+    
+    .dashboard-stats {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .notification-card {
+        transition: transform 0.2s ease-in-out;
+        position: relative;
+    }
+    
+    .notification-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .notification-card.unread {
+        border-left: 4px solid #0d6efd;
+        background-color: #f8f9fa;
+    }
+    
     .delete-notification-btn {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
         opacity: 0.2;
         transition: opacity 0.2s ease-in-out;
-        z-index: 2; /* <-- THÊM DÒNG QUAN TRỌNG NÀY VÀO ĐÂY */
+        z-index: 2;
     }
-    .notification-item:hover .delete-notification-btn {
+    
+    .notification-card:hover .delete-notification-btn {
         opacity: 1;
+    }
+    
+    .notification-type-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .action-buttons {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        backdrop-filter: blur(10px);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-            <h1><i class="bi bi-bell-fill"></i> Thông báo của bạn</h1>
-            <p class="lead mb-0">Tất cả các cập nhật từ những giải đấu bạn quan tâm.</p>
-        </div>
-        
-        {% if notifications %}
-        <div class="d-flex gap-2">
-            <form action="{% url 'mark_all_notifications_as_read' %}" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-all"></i> Đánh dấu đã đọc
-                </button>
-            </form>
-            <form action="{% url 'delete_all_notifications' %}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa TẤT CẢ thông báo không?');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-trash3-fill"></i> Xóa tất cả
-                </button>
-            </form>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="list-group">
-        {% for notif in notifications %}
-            <div class="list-group-item list-group-item-action notification-item {% if not notif.is_read %}unread{% endif %} position-relative">
-                <a href="{{ notif.related_url|default:'#' }}" class="text-decoration-none text-reset stretched-link">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ notif.title }}</h5>
-                        <small class="text-muted">{{ notif.created_at|timesince }} trước</small>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3 bg-light rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="bi bi-bell-fill text-primary" style="font-size: 2rem;"></i>
                     </div>
-                    <p class="mb-1 me-4">{{ notif.message }}</p>
-                </a>
-                
-                {# === ĐÂY LÀ KHỐI CODE QUAN TRỌNG CẦN KIỂM TRA === #}
-                <form action="{% url 'delete_notification' pk=notif.pk %}" method="post" class="delete-notification-btn">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-close" title="Xóa thông báo này"></button>
-                </form>
+                    <div>
+                        <h1 class="display-5 fw-bold mb-2">Thông báo của bạn</h1>
+                        <p class="lead mb-0">Tất cả các cập nhật từ những giải đấu bạn quan tâm</p>
+                    </div>
+                </div>
             </div>
-        {% empty %}
-            <div class="list-group-item text-center text-muted">
-                <p class="mb-0">Bạn chưa có thông báo nào.</p>
+            <div class="col-lg-4">
+                <div class="dashboard-stats">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ notifications|length }}</span>
+                                <span class="stat-label">Tổng số</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ notifications|length|add:"-1"|default:"0" }}</span>
+                                <span class="stat-label">Đã đọc</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <span class="stat-number">1</span>
+                                <span class="stat-label">Mới nhất</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        {% endfor %}
+        </div>
     </div>
+</div>
+
+<div class="container">
+    {% if notifications %}
+        <!-- Action Buttons -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <div class="action-buttons">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <form action="{% url 'mark_all_notifications_as_read' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-light btn-sm">
+                                <i class="bi bi-check-all me-2"></i>Đánh dấu đã đọc
+                            </button>
+                        </form>
+                        <form action="{% url 'delete_all_notifications' %}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa TẤT CẢ thông báo không?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                <i class="bi bi-trash3-fill me-2"></i>Xóa tất cả
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="row">
+            {% for notif in notifications %}
+                <div class="col-lg-8 mx-auto mb-3">
+                    <div class="card shadow-sm notification-card {% if not notif.is_read %}unread{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="card-title mb-1">
+                                        <i class="bi bi-bell-fill text-primary me-2"></i>{{ notif.title }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>{{ notif.created_at|timesince }} trước
+                                    </small>
+                                </div>
+                                <span class="notification-type-badge bg-primary text-white">
+                                    {% if 'match' in notif.title|lower %}
+                                        <i class="bi bi-trophy me-1"></i>Trận đấu
+                                    {% elif 'team' in notif.title|lower %}
+                                        <i class="bi bi-people me-1"></i>Đội bóng
+                                    {% elif 'tournament' in notif.title|lower %}
+                                        <i class="bi bi-cup me-1"></i>Giải đấu
+                                    {% else %}
+                                        <i class="bi bi-info-circle me-1"></i>Thông báo
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <p class="card-text mb-3">{{ notif.message }}</p>
+                            
+                            {% if notif.related_url %}
+                                <a href="{{ notif.related_url }}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Xem chi tiết
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Delete Button -->
+                        <form action="{% url 'delete_notification' pk=notif.pk %}" method="post" class="delete-notification-btn">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-close" title="Xóa thông báo này"></button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="empty-state">
+                            <i class="bi bi-bell-slash"></i>
+                            <h4>Chưa có thông báo!</h4>
+                            <p class="mb-4">Bạn chưa có thông báo nào từ các giải đấu.</p>
+                            <a href="{% url 'tournaments_active' %}" class="btn btn-primary">
+                                <i class="bi bi-trophy me-2"></i>Xem các giải đấu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
