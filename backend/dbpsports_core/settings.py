@@ -215,10 +215,5 @@ SOCIALACCOUNT_PROVIDERS = {
         'METHOD': 'oauth2',
         'SCOPE': ['email', 'public_profile'],
         'FIELDS': ['id', 'email', 'name', 'first_name', 'last_name'],
-        'APP': {
-            'client_id': env('FACEBOOK_APP_ID'),
-            'secret': env('FACEBOOK_SECRET_KEY'),
-            'key': ''
-        }
     }
 }

@@ -2,126 +2,317 @@
 
 {% block title %}{% if is_edit %}Chỉnh sửa tin tuyển dụng{% else %}Đăng tin tuyển dụng{% endif %} - {{ stadium.stadium_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+:root {
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
+  --secondary: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  --light: #f8fafc;
+  --dark: #1f2937;
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --gradient-hero: linear-gradient(135deg, #f59e0b 0%, #dc2626 50%, #b91c1c 100%);
+  --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 1rem;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.form-check-input:checked {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 38, 38, 0.25);
+}
+
+.form-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 8px;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.stats-box {
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-stats {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 1rem !important;
+  }
+  
+  .form-section {
+    padding: 1rem;
+  }
+  
+  .dashboard-stats {
+    margin-top: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container my-5">
+<!-- Hero Section -->
+<div class="hero-section text-white py-5 mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-megaphone me-3" style="font-size: 3rem;"></i>
+                    <div>
+                        <h1 class="display-6 fw-bold mb-2">
+                            {% if is_edit %}Chỉnh sửa tin tuyển dụng{% else %}Đăng tin tuyển dụng{% endif %}
+                        </h1>
+                        <p class="lead mb-0">Tìm kiếm chuyên gia phù hợp cho sân bóng của bạn</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="dashboard-stats">
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">8</div>
+                                <div class="stat-label">Loại sân</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ roles.count|default:0 }}</div>
+                                <div class="stat-label">Vai trò</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">1</div>
+                                <div class="stat-label">Tin đăng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
                 <div class="card-header bg-success text-white">
                     <h4 class="mb-0">
-                        <i class="bi bi-megaphone"></i> 
+                        <i class="bi bi-megaphone me-2"></i>
                         {% if is_edit %}Chỉnh sửa tin tuyển dụng{% else %}Đăng tin tuyển dụng{% endif %}
                     </h4>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-4">
-                        <i class="bi bi-info-circle"></i>
-                        Tin tuyển dụng của bạn sẽ hiển thị trong <strong>Thị trường việc làm</strong> để các chuyên gia có thể ứng tuyển.
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Thông báo:</strong> Tin tuyển dụng của bạn sẽ hiển thị trong <strong>Thị trường việc làm</strong> để các chuyên gia có thể ứng tuyển.
                     </div>
                     
                     <form method="post">
                         {% csrf_token %}
                         
-                        <div class="mb-3">
-                            <label class="form-label">
-                                <i class="bi bi-person-badge"></i> Vai trò cần tuyển *
-                            </label>
-                            <select name="role_required" class="form-select" required>
-                                <option value="">-- Chọn vai trò --</option>
-                                {% for role in roles %}
-                                <option value="{{ role.id }}">
-                                    {{ role.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <div class="form-text">
-                                Chọn vai trò phù hợp với công việc bạn cần tuyển
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">
-                                <i class="bi bi-card-heading"></i> Tiêu đề công việc *
-                            </label>
-                            <input type="text" name="title" class="form-control" required 
-                                   placeholder="Ví dụ: Tuyển Bình luận viên cho sân bóng X">
-                            <div class="form-text">
-                                Tiêu đề ngắn gọn, rõ ràng về công việc
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">
-                                <i class="bi bi-file-text"></i> Mô tả chi tiết *
-                            </label>
-                            <textarea name="description" class="form-control" rows="6" required 
-                                      placeholder="Mô tả chi tiết về công việc, yêu cầu, quyền lợi..."></textarea>
-                            <div class="form-text">
-                                Mô tả càng chi tiết càng thu hút ứng viên chất lượng
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="bi bi-person-badge text-success"></i>
+                                Thông tin công việc
+                            </h5>
+                            
+                            <div class="mb-3">
                                 <label class="form-label">
-                                    <i class="bi bi-cash-coin"></i> Mức kinh phí
+                                    <i class="bi bi-person-badge me-2"></i>Vai trò cần tuyển *
                                 </label>
-                                <input type="text" name="budget" class="form-control" 
-                                       placeholder="Ví dụ: 500.000 VNĐ/trận hoặc Thỏa thuận">
+                                <select name="role_required" class="form-select" required>
+                                    <option value="">-- Chọn vai trò --</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role.id }}">
+                                        {{ role.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
                                 <div class="form-text">
-                                    Có thể để trống hoặc ghi "Thỏa thuận"
+                                    Chọn vai trò phù hợp với công việc bạn cần tuyển
                                 </div>
                             </div>
                             
-                            <div class="col-md-6 mb-3">
+                            <div class="mb-3">
                                 <label class="form-label">
-                                    <i class="bi bi-geo-alt"></i> Địa điểm làm việc
+                                    <i class="bi bi-card-heading me-2"></i>Tiêu đề công việc *
                                 </label>
-                                <input type="text" name="location_detail" class="form-control" 
-                                       value="{{ stadium.location_detail }}" 
-                                       placeholder="Tỉnh/Thành phố">
+                                <input type="text" name="title" class="form-control" required 
+                                       placeholder="Ví dụ: Tuyển Bình luận viên cho sân bóng X">
                                 <div class="form-text">
-                                    Mặc định lấy từ hồ sơ sân
+                                    Tiêu đề ngắn gọn, rõ ràng về công việc
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-file-text me-2"></i>Mô tả chi tiết *
+                                </label>
+                                <textarea name="description" class="form-control" rows="6" required 
+                                          placeholder="Mô tả chi tiết về công việc, yêu cầu, quyền lợi..."></textarea>
+                                <div class="form-text">
+                                    Mô tả càng chi tiết càng thu hút ứng viên chất lượng
                                 </div>
                             </div>
                         </div>
                         
-                        <hr class="my-4">
-                        
-                        <div class="alert alert-light">
-                            <h6><i class="bi bi-house"></i> Thông tin sân của bạn:</h6>
-                            <p class="mb-1"><strong>{{ stadium.stadium_name }}</strong></p>
-                            <p class="mb-1 text-muted">{{ stadium.get_field_type_display }}</p>
-                            <p class="mb-0 text-muted">
-                                <i class="bi bi-geo-alt"></i> {{ stadium.address }}
-                            </p>
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="bi bi-geo-alt text-info"></i>
+                                Thông tin bổ sung
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-cash-coin me-2"></i>Mức kinh phí
+                                    </label>
+                                    <input type="text" name="budget" class="form-control" 
+                                           placeholder="Ví dụ: 500.000 VNĐ/trận hoặc Thỏa thuận">
+                                    <div class="form-text">
+                                        Có thể để trống hoặc ghi "Thỏa thuận"
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-geo-alt me-2"></i>Địa điểm làm việc
+                                    </label>
+                                    <input type="text" name="location_detail" class="form-control" 
+                                           value="{{ stadium.location_detail }}" 
+                                           placeholder="Tỉnh/Thành phố">
+                                    <div class="form-text">
+                                        Mặc định lấy từ hồ sơ sân
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-success flex-grow-1">
-                                <i class="bi bi-send"></i> 
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="bi bi-house text-warning"></i>
+                                Thông tin sân bóng
+                            </h5>
+                            
+                            <div class="alert alert-light">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-house me-2"></i>
+                                    <h6 class="mb-0">Sân của bạn</h6>
+                                </div>
+                                <p class="mb-1"><strong>{{ stadium.stadium_name }}</strong></p>
+                                <p class="mb-1 text-muted">{{ stadium.get_field_type_display }}</p>
+                                <p class="mb-0 text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ stadium.address }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-send me-2"></i>
                                 {% if is_edit %}Cập nhật tin{% else %}Đăng tin{% endif %}
                             </button>
-                            <a href="{% url 'stadium_dashboard' %}" class="btn btn-outline-secondary">
-                                <i class="bi bi-x-circle"></i> Hủy
+                            <a href="{% url 'stadium_dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle me-2"></i>Hủy
                             </a>
                         </div>
                     </form>
                 </div>
             </div>
             
-            <div class="card shadow mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Gợi ý viết tin tuyển dụng</h5>
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>Gợi ý viết tin tuyển dụng
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <ul class="mb-0">
-                        <li>Mô tả rõ công việc cụ thể (livestream, bình luận, chụp ảnh...)</li>
-                        <li>Nêu yêu cầu về kinh nghiệm và kỹ năng</li>
-                        <li>Ghi rõ thời gian làm việc (ngày/giờ, bao lâu...)</li>
-                        <li>Nêu rõ quyền lợi (lương/thù lao, ăn uống, di chuyển...)</li>
-                        <li>Thêm thông tin liên hệ nếu cần (email, SĐT...)</li>
-                    </ul>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-info">Nội dung cần có:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Mô tả rõ công việc cụ thể</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Yêu cầu kinh nghiệm và kỹ năng</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Thời gian làm việc</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info">Thông tin bổ sung:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Quyền lợi và thù lao</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Thông tin liên hệ</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Địa điểm và phương tiện</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
