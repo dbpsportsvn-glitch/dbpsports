@@ -455,54 +455,102 @@
 
         <!-- Comments Section -->
         <div class="comments-section">
-          <h3><i class="fas fa-comments me-2"></i>Bình Luận</h3>
-          
-          <!-- Comment Form -->
-          <div class="comment-form">
-            <h4><i class="fas fa-edit me-2"></i>Viết Bình Luận</h4>
-            <form id="commentForm" method="post" action="{% url 'blog:add_comment' post.slug %}">
-              {% csrf_token %}
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="author_name">Tên của bạn *</label>
-                    <input type="text" id="author_name" name="author_name" required>
-                  </div>
+          <div class="card shadow-sm border-0" style="border-radius: 1.5rem;">
+            <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 1.5rem 1.5rem 0 0;">
+              <h3 class="mb-0">
+                <i class="bi bi-chat-dots-fill me-2"></i>
+                Bình Luận
+              </h3>
+            </div>
+            
+            <!-- Comment Form -->
+            <div class="card-body p-4">
+              <div class="comment-form-section" style="background: #f8f9fa; padding: 2rem; border-radius: 1rem; border-left: 4px solid #4facfe;">
+                <div class="section-title mb-4" style="color: #495057; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="bi bi-pencil-square-fill text-primary"></i>
+                  Viết Bình Luận
                 </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="author_email">Email *</label>
-                    <input type="email" id="author_email" name="author_email" required>
+                
+                <form id="commentForm" method="post" action="{% url 'blog:add_comment' post.slug %}">
+                  {% csrf_token %}
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label for="author_name" class="form-label" style="font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+                          <i class="bi bi-person me-1"></i>
+                          Tên của bạn *
+                        </label>
+                        <input type="text" id="author_name" name="author_name" required 
+                               class="form-control" style="border: 2px solid #e9ecef; border-radius: 0.75rem; padding: 0.75rem 1rem; transition: all 0.3s ease;"
+                               placeholder="Nhập tên của bạn">
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label for="author_email" class="form-label" style="font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+                          <i class="bi bi-envelope me-1"></i>
+                          Email *
+                        </label>
+                        <input type="email" id="author_email" name="author_email" required 
+                               class="form-control" style="border: 2px solid #e9ecef; border-radius: 0.75rem; padding: 0.75rem 1rem; transition: all 0.3s ease;"
+                               placeholder="Nhập email của bạn">
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  <div class="form-group mb-4">
+                    <label for="content" class="form-label" style="font-weight: 600; color: #495057; margin-bottom: 0.5rem;">
+                      <i class="bi bi-chat-text me-1"></i>
+                      Nội dung bình luận *
+                    </label>
+                    <textarea id="content" name="content" rows="4" required 
+                              class="form-control" style="border: 2px solid #e9ecef; border-radius: 0.75rem; padding: 0.75rem 1rem; transition: all 0.3s ease; resize: vertical;"
+                              placeholder="Viết bình luận của bạn..."></textarea>
+                  </div>
+                  <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-lg px-4" 
+                            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none; border-radius: 0.75rem; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
+                      <i class="bi bi-send-fill me-2"></i>
+                      Gửi Bình Luận
+                    </button>
+                  </div>
+                </form>
               </div>
-              <div class="form-group">
-                <label for="content">Nội dung bình luận *</label>
-                <textarea id="content" name="content" rows="4" required placeholder="Viết bình luận của bạn..."></textarea>
-              </div>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-paper-plane me-2"></i>Gửi Bình Luận
-              </button>
-            </form>
+            </div>
           </div>
 
           <!-- Comments List -->
-          {% if post.comments.all %}
-          <ul class="comment-list">
-            {% for comment in post.comments.all %}
-            <li class="comment-item">
-              <div class="comment-author">{{ comment.author.email }}</div>
-              <div class="comment-date">{{ comment.created_at|date:"d/m/Y H:i" }}</div>
-              <div class="comment-content">{{ comment.content|linebreaks }}</div>
-            </li>
-            {% endfor %}
-          </ul>
-          {% else %}
-          <div class="text-center text-muted py-4">
-            <i class="fas fa-comment-slash fa-3x mb-3"></i>
-            <p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+          <div class="mt-4">
+            {% if post.comments.all %}
+              <div class="comments-list">
+                {% for comment in post.comments.all %}
+                <div class="comment-item mb-3 p-3" style="background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 4px solid #4facfe;">
+                  <div class="d-flex align-items-start">
+                    <div class="flex-shrink-0 me-3">
+                      <div class="avatar-circle" style="width: 40px; height: 40px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        {{ comment.author.email|first|upper }}
+                      </div>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="comment-header mb-2">
+                        <strong class="comment-author" style="color: #495057; font-size: 1rem;">{{ comment.author.email }}</strong>
+                        <small class="comment-date text-muted ms-2">
+                          <i class="bi bi-clock me-1"></i>
+                          {{ comment.created_at|date:"d/m/Y H:i" }}
+                        </small>
+                      </div>
+                      <div class="comment-content" style="color: #6c757d; line-height: 1.6;">{{ comment.content|linebreaks }}</div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center text-muted py-5" style="background: #f8f9fa; border-radius: 1rem;">
+                <i class="bi bi-chat-dots" style="font-size: 3rem; color: #dee2e6;"></i>
+                <p class="mt-3 mb-0" style="font-size: 1.1rem;">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+              </div>
+            {% endif %}
           </div>
-          {% endif %}
         </div>
       </div>
 
@@ -561,12 +609,59 @@
   </div>
 </section>
 
+<style>
+/* Comment Form Enhancements */
+.form-control:focus {
+  border-color: #4facfe !important;
+  box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25) !important;
+}
+
+.form-control:hover {
+  border-color: #4facfe !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4) !important;
+}
+
+.comment-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.avatar-circle {
+  transition: all 0.3s ease;
+}
+
+.comment-item:hover .avatar-circle {
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .comment-form-section {
+    padding: 1.5rem !important;
+  }
+  
+  .comment-item {
+    padding: 1rem !important;
+  }
+}
+</style>
+
 <script>
 // Comment form submission
 document.getElementById('commentForm').addEventListener('submit', function(e) {
   e.preventDefault();
   
   const formData = new FormData(this);
+  const submitBtn = this.querySelector('button[type="submit"]');
+  const originalText = submitBtn.innerHTML;
+  
+  // Show loading state
+  submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Đang gửi...';
+  submitBtn.disabled = true;
   
   fetch(this.action, {
     method: 'POST',
@@ -578,15 +673,56 @@ document.getElementById('commentForm').addEventListener('submit', function(e) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(data.message);
+      // Show success message
+      const successAlert = document.createElement('div');
+      successAlert.className = 'alert alert-success alert-dismissible fade show';
+      successAlert.innerHTML = `
+        <i class="bi bi-check-circle-fill me-2"></i>
+        ${data.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      // Insert success message before form
+      this.parentNode.insertBefore(successAlert, this);
+      
+      // Reset form
       this.reset();
+      
+      // Reload page after 2 seconds to show new comment
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } else {
-      alert(data.message);
+      // Show error message
+      const errorAlert = document.createElement('div');
+      errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+      errorAlert.innerHTML = `
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        ${data.message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      // Insert error message before form
+      this.parentNode.insertBefore(errorAlert, this);
     }
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Có lỗi xảy ra khi gửi bình luận.');
+    const errorAlert = document.createElement('div');
+    errorAlert.className = 'alert alert-danger alert-dismissible fade show';
+    errorAlert.innerHTML = `
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      Có lỗi xảy ra khi gửi bình luận. Vui lòng thử lại.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert error message before form
+    this.parentNode.insertBefore(errorAlert, this);
+  })
+  .finally(() => {
+    // Restore button state
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
   });
 });
 
