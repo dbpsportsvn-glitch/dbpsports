@@ -288,38 +288,49 @@
     
     <div class="profile-banner-content">
         <div class="container">
-            <div class="d-flex align-items-end gap-4 flex-wrap">
-                <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="profile-avatar-large">
-                
-                <div class="flex-grow-1">
-                    <h1 class="profile-name"><strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}</h1>
-                    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-                        <span class="badge role-badge">
-                            <i class="bi bi-person-badge-fill"></i> {{ player.get_position_display }}
-                        </span>
-                        {% if player.team %}
-                            <a href="{% url 'public_team_detail' pk=player.team.pk %}" class="badge role-badge text-decoration-none">
-                                {% if player.team.logo %}
-                                    <img src="{{ player.team.logo.url }}" style="width: 16px; height: 16px; object-fit: contain; margin-right: 0.25rem;">
-                                {% endif %}
-                                {{ player.team.name }}
-                            </a>
-                        {% else %}
-                            <span class="badge role-badge">
-                                <i class="bi bi-person-check-fill"></i> Cầu thủ tự do
-                            </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Transfer Value & Voting -->
-                    <div class="d-flex align-items-center gap-4 flex-wrap">
-                        <div>
-                            <h5 class="fw-light mb-0">Giá trị Chuyển nhượng</h5>
-                            <h3 class="text-warning mb-0" title="Giá trị gốc: {{ player.transfer_value }} + Giá trị từ phiếu bầu: {{ value_from_votes }}">
-                                {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-5">Chưa định giá</span>{% endif %}
-                            </h3>
+            <div class="row align-items-end">
+                <!-- Left Side: Avatar, Title, Player Info, Transfer Value -->
+                <div class="col-md-6 text-center text-md-start">
+                    <div class="d-flex flex-column align-items-center align-items-md-start">
+                        <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="{{ player.full_name }}" class="profile-avatar-large mb-3">
+                        
+                        <h1 class="profile-name text-center text-md-start mb-3"><strong>#{{ player.jersey_number }}</strong> {{ player.full_name }}</h1>
+                        
+                        <!-- Transfer Value -->
+                        <div class="d-flex justify-content-center justify-content-md-start mb-3">
+                            <div class="text-center text-md-start">
+                                <h4 class="fw-light mb-1">Giá trị Chuyển nhượng</h4>
+                                <h3 class="text-warning mb-0" title="Giá trị gốc: {{ player.transfer_value }} + Giá trị từ phiếu bầu: {{ value_from_votes }}">
+                                    {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-5">Chưa định giá</span>{% endif %}
+                                </h3>
+                            </div>
                         </div>
                         
+                        <!-- Player Info -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center justify-content-md-start">
+                            <span class="badge role-badge">
+                                <i class="bi bi-person-badge-fill"></i> {{ player.get_position_display }}
+                            </span>
+                            {% if player.team %}
+                                <a href="{% url 'public_team_detail' pk=player.team.pk %}" class="badge role-badge text-decoration-none">
+                                    {% if player.team.logo %}
+                                        <img src="{{ player.team.logo.url }}" style="width: 16px; height: 16px; object-fit: contain; margin-right: 0.25rem;">
+                                    {% endif %}
+                                    {{ player.team.name }}
+                                </a>
+                            {% else %}
+                                <span class="badge role-badge">
+                                    <i class="bi bi-person-check-fill"></i> Cầu thủ tự do
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Side: Action Buttons -->
+                <div class="col-md-6 text-center text-md-end">
+                    <div class="d-flex flex-column align-items-center align-items-md-end justify-content-end h-100">
+                        <!-- Action Buttons -->
                         <div class="vote-area">
                             <span id="vote-badge" class="badge bg-primary rounded-pill fs-6 vote-badge">
                                 <i class="bi bi-hand-thumbs-up-fill"></i>
