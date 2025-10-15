@@ -271,34 +271,24 @@
     
     <div class="profile-banner-content">
         <div class="container">
-            <div class="d-flex align-items-end gap-4 flex-wrap">
+            <div class="row align-items-end">
+                <!-- Left Side: Logo, Title, Colors, Team Info -->
+                <div class="col-md-6 text-center text-md-start">
+                    <div class="d-flex flex-column align-items-center align-items-md-start">
         {% if team.logo %}
-                    <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="profile-avatar-large">
+                            <img src="{{ team.logo.url }}" alt="{{ team.name }}" class="profile-avatar-large mb-3">
         {% else %}
-                    <div class="profile-avatar-large bg-primary d-flex justify-content-center align-items-center fs-1 fw-bold text-white">
+                            <div class="profile-avatar-large bg-primary d-flex justify-content-center align-items-center fs-1 fw-bold text-white mb-3">
                 {{ team.name|first|upper }}
             </div>
         {% endif %}
 
-        <div class="flex-grow-1">
-                    <h1 class="profile-name"><strong>{{ team.name }}</strong></h1>
-                    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-                        <span class="badge role-badge">
-                            <i class="bi bi-people-fill"></i> Đội trưởng: {{ team.captain.get_full_name|default:team.captain.username }}
-                        </span>
-                        {% if team.coach %}
-                        <span class="badge role-badge">
-                            <i class="bi bi-person-badge-fill"></i> HLV: {{ team.coach.full_name }}
-                        </span>
-                        {% endif %}
-                        <span class="badge role-badge">
-                            <i class="bi bi-wallet-fill"></i> Ngân sách: {{ team.budget|vnd_format }}
-                        </span>
-                    </div>
-                    
-                    <!-- Team Colors & Transfer Value -->
-                    <div class="d-flex align-items-center gap-4 flex-wrap">
-                        <div class="d-flex align-items-center gap-3">
+                        <h1 class="profile-name text-center text-md-start mb-3"><strong>{{ team.name }}</strong></h1>
+                        
+                        <!-- Team Colors & Transfer Value -->
+                        <div class="d-flex align-items-center gap-4 justify-content-center justify-content-md-start mb-3 flex-wrap">
+                            <!-- Team Colors -->
+                            <div class="d-flex align-items-center gap-3">
                     <div class="text-center">
                         <div title="Màu áo sân nhà: {{ team.kit_home_color }}" style="width: 40px; height: 40px; background-color: {{ team.kit_home_color }}; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%;"></div>
                         <small class="text-white-50 d-block mt-1">Sân nhà</small>
@@ -309,8 +299,9 @@
             </div>
         </div>
 
-                        <div>
-            <h5 class="fw-light mb-0">Giá trị Đội bóng
+                            <!-- Transfer Value -->
+                            <div class="text-center text-md-start">
+                                <h4 class="fw-light mb-1">Giá trị Đội bóng
                 <i class="bi bi-info-circle-fill"
                    data-bs-toggle="popover"
                    data-bs-trigger="hover"
@@ -323,12 +314,33 @@
                        Thưởng Phong độ: {{ value_breakdown.performance_bonus|vnd_format }} <br>
                        Giá trị Phiếu bầu: {{ value_breakdown.team_vote_value|vnd_format }}
                    "></i>
-            </h5>
-                            <h3 class="text-warning mb-0">
-                                {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-5">Chưa định giá</span>{% endif %}
-                            </h3>
+                                </h4>
+                                <h3 class="text-warning mb-0">
+                                    {% if total_value > 0 %}{{ total_value|vnd_format }}{% else %}<span class="fs-5">Chưa định giá</span>{% endif %}
+                                </h3>
+                            </div>
                         </div>
                         
+                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center justify-content-md-start">
+                            <span class="badge role-badge">
+                                <i class="bi bi-people-fill"></i> Đội trưởng: {{ team.captain.get_full_name|default:team.captain.username }}
+                            </span>
+                            {% if team.coach %}
+                            <span class="badge role-badge">
+                                <i class="bi bi-person-badge-fill"></i> HLV: {{ team.coach.full_name }}
+                            </span>
+                            {% endif %}
+                            <span class="badge role-badge">
+                                <i class="bi bi-wallet-fill"></i> Ngân sách: {{ team.budget|vnd_format }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Side: Action Buttons -->
+                <div class="col-md-6 text-center text-md-end">
+                    <div class="d-flex flex-column align-items-center align-items-md-end justify-content-end h-100">
+                        <!-- Action Buttons -->
                         <div class="vote-area">
                             <span id="vote-badge" class="badge bg-primary rounded-pill fs-6 vote-badge">
                     <i class="bi bi-hand-thumbs-up-fill"></i>
