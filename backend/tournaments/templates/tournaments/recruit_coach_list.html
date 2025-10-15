@@ -3,147 +3,442 @@
 
 {% block title %}Chiêu mộ Huấn luyện viên - {{ team.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ========================================
+   MODERN FILTER SECTION
+   ======================================== */
+.filter-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.filter-section h3 {
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-section h3::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 2px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-select, .form-control {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.filter-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px solid #f1f5f9;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 2px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page-title::before {
+  content: '👨‍💼';
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.page-subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+/* ========================================
+   COACH CARDS
+   ======================================== */
+.coach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.coach-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.coach-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: #8b5cf6;
+}
+
+.coach-header {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 1.5rem;
+  color: white;
+  position: relative;
+}
+
+.coach-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.coach-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.coach-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.coach-location {
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.coach-body {
+  padding: 1.5rem;
+}
+
+.coach-info {
+  margin-bottom: 1rem;
+}
+
+.coach-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.coach-info-item i {
+  width: 16px;
+  color: #6366f1;
+}
+
+.coach-bio {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.coach-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-coach {
+  flex: 1;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-coach-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+}
+
+.btn-coach-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  color: white;
+}
+
+.btn-coach-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: white;
+}
+
+.btn-coach-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  color: white;
+}
+
+.btn-coach-secondary {
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.btn-coach-secondary:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 20px;
+  margin-top: 2rem;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.6;
+}
+
+.empty-state h5 {
+  color: #1e293b;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .coach-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .filter-section {
+    padding: 1.5rem;
+  }
+  
+  .coach-actions {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container my-5">
-    <div class="row mb-4">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'team_detail' team.pk %}">{{ team.name }}</a></li>
-                    <li class="breadcrumb-item active">Chiêu mộ HLV</li>
-                </ol>
-            </nav>
-            
-            <h2><i class="bi bi-search"></i> Tìm Huấn luyện viên</h2>
-            <p class="text-muted">Tìm kiếm và gửi lời mời cho HLV phù hợp với đội bóng {{ team.name }}</p>
-        </div>
+    <!-- Page Header -->
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'team_detail' team.pk %}">{{ team.name }}</a></li>
+                <li class="breadcrumb-item active">Chiêu mộ HLV</li>
+            </ol>
+        </nav>
+        
+        <h1 class="page-title">Tìm Huấn luyện viên</h1>
+        <p class="page-subtitle">Tìm kiếm và gửi lời mời cho HLV phù hợp với đội bóng {{ team.name }}</p>
     </div>
     
-    {# Filters #}
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="get" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-geo-alt"></i> Khu vực</label>
-                            <select name="region" class="form-select">
-                                <option value="">Tất cả</option>
-                                {% for value, label in region_choices %}
-                                <option value="{{ value }}" {% if current_region == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-graph-up"></i> Kinh nghiệm</label>
-                            <select name="experience" class="form-select">
-                                <option value="">Tất cả</option>
-                                <option value="5+" {% if current_exp == '5+' %}selected{% endif %}>Từ 5 năm</option>
-                                <option value="10+" {% if current_exp == '10+' %}selected{% endif %}>Từ 10 năm</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label"><i class="bi bi-search"></i> Tìm kiếm</label>
-                            <input type="text" name="q" class="form-control" placeholder="Tên, chứng chỉ, chuyên môn..." value="{{ search_query }}">
-                        </div>
-                        
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-funnel"></i> Lọc
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h3><i class="bi bi-funnel"></i> Bộ lọc tìm kiếm</h3>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-geo-alt"></i> Khu vực</label>
+                <select name="region" class="form-select">
+                    <option value="">Tất cả</option>
+                    {% for value, label in region_choices %}
+                    <option value="{{ value }}" {% if current_region == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
-        </div>
+            
+            <div class="col-md-3">
+                <label class="form-label"><i class="bi bi-graph-up"></i> Kinh nghiệm</label>
+                <select name="experience" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="5+" {% if current_exp == '5+' %}selected{% endif %}>Từ 5 năm</option>
+                    <option value="10+" {% if current_exp == '10+' %}selected{% endif %}>Từ 10 năm</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label"><i class="bi bi-search"></i> Tìm kiếm</label>
+                <input type="text" name="q" class="form-control" placeholder="Tên, chứng chỉ, chuyên môn..." value="{{ search_query }}">
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn filter-btn w-100">
+                    <i class="bi bi-funnel"></i> Lọc
+                </button>
+            </div>
+        </form>
     </div>
     
-    {# Danh sách HLV #}
-    <div class="row">
-        {% if coaches %}
+    <!-- Coach Grid -->
+    {% if coaches %}
+        <div class="coach-grid">
             {% for coach in coaches %}
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            {% if coach.avatar %}
-                            <img src="{{ coach.avatar.url }}" class="rounded-circle me-3" width="70" height="70" style="object-fit: cover;">
-                            {% else %}
-                            <div class="rounded-circle me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                <i class="bi bi-person-badge text-white fs-3"></i>
-                            </div>
-                            {% endif %}
-                            
-                            <div>
-                                <h6 class="mb-0">{{ coach.full_name }}</h6>
-                                <small class="text-muted">{{ coach.get_region_display }}</small>
-                                {% if coach.location_detail %}
-                                <br><small class="text-muted">{{ coach.location_detail }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
+            <div class="coach-card">
+                <div class="coach-header">
+                    {% if coach.avatar %}
+                    <img src="{{ coach.avatar.url }}" class="coach-avatar" alt="{{ coach.full_name }}">
+                    {% else %}
+                    <div class="coach-avatar-placeholder">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="coach-name">{{ coach.full_name }}</div>
+                    <div class="coach-location">
+                        {{ coach.get_region_display }}
+                        {% if coach.location_detail %} - {{ coach.location_detail }}{% endif %}
+                    </div>
+                </div>
+                
+                <div class="coach-body">
+                    <div class="coach-info">
                         {% if coach.coaching_license %}
-                        <p class="mb-1">
-                            <i class="bi bi-award text-warning"></i>
+                        <div class="coach-info-item">
+                            <i class="bi bi-award"></i>
                             <strong>{{ coach.coaching_license }}</strong>
-                        </p>
+                        </div>
                         {% endif %}
                         
                         {% if coach.years_of_experience %}
-                        <p class="mb-1">
-                            <i class="bi bi-calendar-check text-info"></i>
+                        <div class="coach-info-item">
+                            <i class="bi bi-calendar-check"></i>
                             {{ coach.years_of_experience }} năm kinh nghiệm
-                        </p>
+                        </div>
                         {% endif %}
                         
                         {% if coach.specialization %}
-                        <p class="mb-2 text-muted small">
+                        <div class="coach-info-item">
                             <i class="bi bi-star"></i>
                             {{ coach.specialization }}
-                        </p>
-                        {% endif %}
-                        
-                        {% if coach.bio %}
-                        <p class="text-muted small mb-3" style="line-height: 1.4;">
-                            {{ coach.bio|truncatewords:20 }}
-                        </p>
-                        {% endif %}
-                        
-                        <div class="d-flex gap-2 mt-3">
-                            <a href="{% url 'coach_profile_detail' coach.pk %}" class="btn btn-sm btn-outline-primary flex-grow-1" target="_blank">
-                                <i class="bi bi-eye"></i> Xem hồ sơ
-                            </a>
-                            
-                            {% if coach.id in sent_offers %}
-                            <button class="btn btn-sm btn-secondary flex-grow-1" disabled>
-                                <i class="bi bi-check-circle"></i> Đã gửi
-                            </button>
-                            {% else %}
-                            <button class="btn btn-sm btn-success flex-grow-1" onclick="sendOffer({{ coach.pk }}, '{{ coach.full_name|escapejs }}')">
-                                <i class="bi bi-envelope"></i> Gửi lời mời
-                            </button>
-                            {% endif %}
                         </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if coach.bio %}
+                    <div class="coach-bio">
+                        {{ coach.bio|truncatewords:20 }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="coach-actions">
+                        <a href="{% url 'coach_profile_detail' coach.pk %}" class="btn btn-coach btn-coach-primary" target="_blank">
+                            <i class="bi bi-eye"></i> Xem hồ sơ
+                        </a>
+                        
+                        {% if coach.id in sent_offers %}
+                        <button class="btn btn-coach btn-coach-secondary" disabled>
+                            <i class="bi bi-check-circle"></i> Đã gửi
+                        </button>
+                        {% else %}
+                        <button class="btn btn-coach btn-coach-success" onclick="sendOffer({{ coach.pk }}, '{{ coach.full_name|escapejs }}')">
+                            <i class="bi bi-envelope"></i> Gửi lời mời
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <div class="alert alert-info text-center py-5">
-                    <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
-                    <h5>Không tìm thấy HLV phù hợp</h5>
-                    <p class="mb-0">Thử thay đổi bộ lọc hoặc quay lại sau.</p>
-                </div>
-            </div>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">👨‍💼</div>
+            <h5>Không tìm thấy HLV phù hợp</h5>
+            <p>Thử thay đổi bộ lọc hoặc quay lại sau.</p>
+        </div>
+    {% endif %}
     
-    <div class="text-center mt-4">
-        <a href="{% url 'team_detail' team.pk %}" class="btn btn-outline-secondary">
+    <!-- Back Button -->
+    <div class="text-center mt-5">
+        <a href="{% url 'team_detail' team.pk %}" class="btn filter-btn">
             <i class="bi bi-arrow-left"></i> Quay lại đội
         </a>
     </div>
