@@ -16,13 +16,21 @@
     <div class="live-hero-main">
       <div class="live-hero-teams">
         <div class="team">
-          <div class="logo">{{ live_match.team1.name|slice:":2" }}</div>
+          {% if live_match.team1.logo %}
+            <img src="{{ live_match.team1.logo.url }}" alt="{{ live_match.team1.name }}" class="team-logo">
+          {% else %}
+            <div class="logo">{{ live_match.team1.name|slice:":2" }}</div>
+          {% endif %}
           <strong class="h5 mb-0">{{ live_match.team1.name }}</strong>
         </div>
         <span class="vsep">vs</span>
         <div class="team">
-          <div class="logo">{{ live_match.team2.name|slice:":2" }}</div>
           <strong class="h5 mb-0">{{ live_match.team2.name }}</strong>
+          {% if live_match.team2.logo %}
+            <img src="{{ live_match.team2.logo.url }}" alt="{{ live_match.team2.name }}" class="team-logo">
+          {% else %}
+            <div class="logo">{{ live_match.team2.name|slice:":2" }}</div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -62,26 +70,29 @@
       </div>
 
       {# ======= TABS & ACTIONS (ĐÃ TÁI CẤU TRÚC) ======= #}
-      <div class="tabbar d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-        
-        {# Bên trái: Các Tab #}
-        <div class="d-flex gap-2">
-            <button class="tab active" data-tab="info" type="button"><i class="bi bi-info-circle"></i> Thông tin</button>
-            <button class="tab" data-tab="comments" type="button"><i class="bi bi-chat-dots"></i> Bình luận</button>
-            <button class="tab" data-tab="schedule" type="button"><i class="bi bi-calendar2-week"></i> Lịch</button>
+      <div class="tabbar mt-4">
+        <div class="tabbar-left">
+          <button class="tab active" data-tab="info" type="button">
+            <i class="bi bi-info-circle"></i> Thông tin
+          </button>
+          <button class="tab" data-tab="comments" type="button">
+            <i class="bi bi-chat-dots"></i> Bình luận
+          </button>
+          <button class="tab" data-tab="schedule" type="button">
+            <i class="bi bi-calendar2-week"></i> Lịch
+          </button>
         </div>
-
-        {# Bên phải: Các nút hành động #}
-        <div class="live-hero-actions d-flex align-items-center gap-2">
-            <span class="badge-live">LIVE</span>
-            <button id="shareBtn" class="small-btn" type="button">
-                <i class="bi bi-share"></i> Chia sẻ
-            </button>
+        
+        <div class="tabbar-right">
+          <span class="badge-live">LIVE</span>
+          <button id="shareBtn" class="small-btn" type="button">
+            <i class="bi bi-share"></i> Chia sẻ
+          </button>
         </div>
       </div>
 
       {# ======= PANELS (giữ nguyên) ======= #}
-      <div id="tab-info" class="tab-panel mt-3" style="display:block">
+      <div id="tab-info" class="tab-panel mt-4" style="display:block">
         <div class="stat-grid">
           <div class="stat">
             <div class="kv">Giải đấu</div>
@@ -98,51 +109,77 @@
         </div>
       </div>
 
-      <div id="tab-comments" class="tab-panel mt-3" style="display:none">
-        <div class="card shadow-sm">
+      <div id="tab-comments" class="tab-panel mt-4" style="display:none">
+        <div class="card">
           <div class="card-header">
             <h6 class="mb-0"><i class="bi bi-chat-left-text"></i> Bình luận</h6>
           </div>
           <div class="card-body">
-            <div class="comment-list mb-3" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+            <div class="comment-list mb-4">
               {% for comment in comments %}
-                <div class="d-flex mb-3">
+                <div class="d-flex mb-4">
                   <div class="flex-shrink-0">
                     <span class="avatar-ph">{{ comment.user.username|first|upper }}</span>
                   </div>
                   <div class="flex-grow-1 ms-3">
-                    <strong class="d-block">{{ comment.user.username }}</strong>
-                    <div style="white-space: pre-wrap; word-wrap: break-word;">{{ comment.text }}</div>
-                    <small class="text-muted">{{ comment.created_at|timesince }} trước</small>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <strong class="text-white">{{ comment.user.username }}</strong>
+                      <small class="text-muted">{{ comment.created_at|timesince }} trước</small>
+                    </div>
+                    <div class="comment-text" style="white-space: pre-wrap; word-wrap: break-word; color: var(--text);">{{ comment.text }}</div>
                   </div>
                 </div>
               {% empty %}
-                <p class="text-muted text-center">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                <div class="text-center py-4">
+                  <i class="bi bi-chat-dots text-muted" style="font-size: 3rem;"></i>
+                  <p class="text-muted mt-3">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+                </div>
               {% endfor %}
             </div>
 
-            <hr>
+            <hr class="border-secondary">
 
             {% if user.is_authenticated %}
-              <form method="post" action="">
+              <form method="post" action="" class="comment-form">
                 {% csrf_token %}
-                {{ comment_form.text }}
+                <div class="mb-3">
+                  {{ comment_form.text }}
+                </div>
                 <div class="text-end">
-                    <button type="submit" class="btn btn-primary btn-sm mt-2">Gửi</button>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-send me-2"></i>Gửi bình luận
+                    </button>
                 </div>
               </form>
             {% else %}
-              <p class="text-muted text-center">
-                Vui lòng <a href="{% url 'account_login' %}?next={{ request.path }}">đăng nhập</a> để bình luận.
-              </p>
+              <div class="text-center py-3">
+                <p class="text-muted mb-3">
+                  Vui lòng <a href="{% url 'account_login' %}?next={{ request.path }}" class="text-primary">đăng nhập</a> để bình luận.
+                </p>
+              </div>
             {% endif %}
           </div>
         </div>
       </div>
 
       {# Thêm một tab-panel trống cho 'schedule' nếu cần, hoặc để JS xử lý #}
-      <div id="tab-schedule" class="tab-panel mt-3" style="display:none">
-        <p class="text-muted">Vui lòng xem lịch ở cột bên phải.</p>
+      <div id="tab-schedule" class="tab-panel mt-4" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="bi bi-calendar2-week"></i> Lịch thi đấu</h6>
+          </div>
+          <div class="card-body">
+            <div class="text-center py-4">
+              <i class="bi bi-calendar-check text-muted" style="font-size: 3rem;"></i>
+              <p class="text-muted mt-3">Vui lòng xem lịch thi đấu chi tiết ở cột bên phải.</p>
+              {% if live_match %}
+                <a href="{% url 'tournament_detail' pk=live_match.tournament.pk %}?tab=schedule#schedule" class="btn btn-primary">
+                  <i class="bi bi-calendar-event me-2"></i>Xem lịch đầy đủ
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -150,30 +187,56 @@
     {# ======= SIDEBAR (giữ nguyên) ======= #}
     <div class="col-xl-4">
       <div class="sticky-col">
-        <div class="card shadow-sm">
+        <div class="card">
           <div class="card-header d-flex align-items-center">
             <h6 class="mb-0"><i class="bi bi-hourglass-split"></i> Sắp diễn ra</h6>
             {% if live_match %}
-              <a class="small text-muted ms-auto" href="{% url 'tournament_detail' pk=live_match.tournament.pk %}?tab=schedule#schedule">
+              <a class="small text-white ms-auto" href="{% url 'tournament_detail' pk=live_match.tournament.pk %}?tab=schedule#schedule">
                 Xem tất cả
               </a>
             {% endif %}
           </div>
-          <div class="list-group list-group-flush">
+          <div class="card-body p-0">
             {% for match in upcoming_matches %}
-              <a class="match-item" href="{% url 'livestream_match' pk=match.pk %}">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <strong>{{ match.team1.name }}</strong>
-                    <span class="text-muted"> vs </span>
-                    <strong>{{ match.team2.name }}</strong>
+              <a class="upcoming-match-item" href="{% url 'livestream_match' pk=match.pk %}">
+                <div class="match-teams">
+                  <div class="team-info">
+                    {% if match.team1.logo %}
+                      <img src="{{ match.team1.logo.url }}" alt="{{ match.team1.name }}" class="team-logo-small">
+                    {% else %}
+                      <div class="team-logo-placeholder">{{ match.team1.name|slice:":2" }}</div>
+                    {% endif %}
+                    <span class="team-name">{{ match.team1.name }}</span>
                   </div>
-                  <span class="badge bg-dark border">{{ match.get_match_round_display }}</span>
+                  
+                  <div class="match-vs">
+                    <span class="vs-text">VS</span>
+                    <div class="match-time">
+                      <i class="bi bi-clock"></i>
+                      <span>{{ match.match_time|date:"H:i" }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="team-info">
+                    <span class="team-name">{{ match.team2.name }}</span>
+                    {% if match.team2.logo %}
+                      <img src="{{ match.team2.logo.url }}" alt="{{ match.team2.name }}" class="team-logo-small">
+                    {% else %}
+                      <div class="team-logo-placeholder">{{ match.team2.name|slice:":2" }}</div>
+                    {% endif %}
+                  </div>
                 </div>
-                <div class="kv mt-1"><i class="bi bi-clock"></i> {{ match.match_time|date:"H:i, d/m/Y" }}</div>
+                
+                <div class="match-meta">
+                  <span class="match-round">{{ match.get_match_round_display }}</span>
+                  <span class="match-date">{{ match.match_time|date:"d/m/Y" }}</span>
+                </div>
               </a>
             {% empty %}
-              <div class="list-group-item"><small class="text-muted">Không có trận đấu nào.</small></div>
+              <div class="empty-upcoming-matches">
+                <i class="bi bi-calendar-x"></i>
+                <p>Không có trận đấu nào sắp diễn ra</p>
+              </div>
             {% endfor %}
           </div>
         </div>

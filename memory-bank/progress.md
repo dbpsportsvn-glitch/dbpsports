@@ -70,6 +70,7 @@
   - **Sua loi checkbox khuyen mai trong form thanh toan:** Da xac dinh va huong dan khac phuc loi checkbox khuyen mai khong hien thi cho cac doi thu 2, 3. Nguyen nhan la cac giai dau co shop_discount_percentage = 0, can cap nhat trong Django admin de hien thi checkbox.
   - **Cap nhat template tim huan luyen vien:** Da thiet ke lai template recruit_coach_list.html dong bo voi trang luu tru giai dau, bao gom gradient styling, coach cards hien dai, filter section dep mat, responsive design, va empty state chuyen nghiep.
   - **Toi uu trang thi truong chuyen nhuong:** Da cap nhat layout trang thi truong chuyen nhuong voi nut "Lich su" mau trang dat o goc duoi ben phai banner, xoa khoi tim kiem thua, di chuyen khoi tim kiem xuong duoi bang thong ke, va cap nhat template form moi voi layout 2 cot gon gang dong bo voi cac template form khac trong he thong.
+  - **Nang cap trang live stream:** Hoan thanh nang cap trang live stream dong bo voi giao dien he thong voi gradient tim (#667eea → #764ba2), responsive design, animation effects, va hover states. Cap nhat layout header voi logo doi bong, can giua ten doi, di chuyen nut LIVE va Chia se ve tabbar, thiet ke lai phan tran dau sap dien ra voi layout 3 cot dep mat va de nhin hon. Them CSS variables, backdrop-filter, box-shadow, va loading states de tao ra trai nghiem nguoi dung chuyen nghiep.
 
 - **Những gì cần làm tiếp:**
   - Hoàn thiện trang "Thị trường việc làm" (Job Market)
