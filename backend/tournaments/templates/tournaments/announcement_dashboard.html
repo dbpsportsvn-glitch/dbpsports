@@ -9,7 +9,15 @@
         color: white;
         padding: 3rem 0;
         margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
     }
+    
+    /* Ensure navbar is always on top */
+    .site-header {
+        z-index: 1030 !important;
+    }
+    
     
     .dashboard-stats {
         background: rgba(255, 255, 255, 0.1);
@@ -57,6 +65,12 @@
         margin-bottom: 1rem;
         opacity: 0.5;
     }
+    
+    .announcement-card.deleted {
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.3s ease-in-out;
+    }
 </style>
 {% endblock %}
 
@@ -81,20 +95,20 @@
                     <div class="row text-center">
                         <div class="col-4">
                             <div class="stat-item">
-                                <span class="stat-number">{{ announcements|length }}</span>
+                                <span class="stat-number" id="total-announcements">{{ announcements|length }}</span>
                                 <span class="stat-label">Thông báo</span>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="stat-item">
-                                <span class="stat-number">{{ announcements|length|add:"-1"|default:"0" }}</span>
+                                <span class="stat-number" id="read-announcements">{{ announcements|length }}</span>
                                 <span class="stat-label">Đã đọc</span>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="stat-item">
-                                <span class="stat-number">1</span>
-                                <span class="stat-label">Mới nhất</span>
+                                <span class="stat-number" id="current-announcements">{{ announcements|length }}</span>
+                                <span class="stat-label">Hiện tại</span>
                             </div>
                         </div>
                     </div>
@@ -109,16 +123,19 @@
         <div class="row">
             {% for announcement in announcements %}
                 <div class="col-lg-8 mx-auto mb-4">
-                    <div class="card shadow-sm announcement-card">
+                    <div class="card shadow-sm announcement-card position-relative">
                         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-0">
                                     <i class="bi bi-bullhorn me-2"></i>{{ announcement.title }}
                                 </h5>
                             </div>
-                            <span class="tournament-badge bg-light text-primary">
-                                {{ announcement.tournament.name }}
-                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="tournament-badge bg-light text-primary">
+                                    {{ announcement.tournament.name }}
+                                </span>
+                                <button type="button" class="btn-close btn-close-white" onclick="hideAnnouncement(this)" title="Ẩn thông báo này"></button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -163,4 +180,64 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+function hideAnnouncement(button) {
+    // Tìm card chứa button này
+    const card = button.closest('.announcement-card');
+    
+    // Thêm class deleted để animate
+    card.classList.add('deleted');
+    
+    // Cập nhật số liệu sau animation
+    setTimeout(() => {
+        updateAnnouncementStats();
+        
+        // Xóa card khỏi DOM
+        card.remove();
+    }, 300);
+}
+
+function updateAnnouncementStats() {
+    const totalAnnouncements = document.querySelectorAll('.announcement-card:not(.deleted)').length;
+    
+    // Cập nhật tất cả số liệu
+    document.getElementById('total-announcements').textContent = totalAnnouncements;
+    document.getElementById('read-announcements').textContent = totalAnnouncements;
+    document.getElementById('current-announcements').textContent = totalAnnouncements;
+    
+    // Nếu không còn thông báo nào, hiển thị empty state mà không reload
+    if (totalAnnouncements === 0) {
+        // Tìm container chứa announcements (container chính)
+        const mainContainer = document.querySelector('.container');
+        if (mainContainer) {
+            // Tìm phần announcements list để thay thế
+            const announcementsSection = mainContainer.querySelector('.row:last-child');
+            if (announcementsSection) {
+                announcementsSection.innerHTML = `
+                    <div class="col-lg-8 mx-auto">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="empty-state">
+                                    <i class="bi bi-megaphone"></i>
+                                    <h4>Chưa có thông báo!</h4>
+                                    <p class="mb-4">Hiện tại chưa có thông báo nào từ Ban tổ chức.</p>
+                                    <a href="/tournaments/active/" class="btn btn-primary">
+                                        <i class="bi bi-trophy me-2"></i>Xem các giải đấu
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+}
+
+// Cập nhật số liệu khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    updateAnnouncementStats();
+});
+</script>
 {% endblock %}
