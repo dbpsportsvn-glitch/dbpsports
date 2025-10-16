@@ -5,127 +5,415 @@
 
 {% block extra_css %}
 <style>
+    /* Modern Hero Section */
     .org-shop-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 3rem 0;
-        margin-bottom: 2rem;
-    }
-    
-    .org-shop-logo {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 4px solid rgba(255,255,255,0.3);
-        object-fit: cover;
-    }
-    
-    .product-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-        border-radius: 12px;
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+        position: relative;
         overflow: hidden;
     }
     
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    .org-shop-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
     }
     
-    .product-image {
-        height: 200px;
+    .org-shop-logo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid rgba(255,255,255,0.3);
         object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
         transition: transform 0.3s ease;
     }
     
-    .product-card:hover .product-image {
+    .org-shop-logo:hover {
         transform: scale(1.05);
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+    
+    .hero-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    /* BTC Management Button */
+    .btc-management-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btc-management-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(40, 167, 69, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btc-management-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .btc-management-btn span {
+        font-size: 0.9rem;
+    }
+    
+    /* Modern Cards */
+    .product-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .product-image {
+        height: 220px;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+    
+    .product-card:hover .product-image {
+        transform: scale(1.08);
     }
     
     .price-tag {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: bold;
+        padding: 0.6rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 700;
         font-size: 1.1rem;
+        box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
     }
     
     .sale-price {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
     }
     
     .category-card {
         background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 2rem;
         text-align: center;
         transition: all 0.3s ease;
         border: 2px solid transparent;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .category-card:hover::before {
+        left: 100%;
     }
     
     .category-card:hover {
         border-color: #667eea;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
     }
     
     .category-image {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         object-fit: cover;
-        margin: 0 auto 1rem;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .category-card:hover .category-image {
+        transform: scale(1.1);
     }
     
     .section-title {
         color: #2c3e50;
-        font-weight: bold;
-        margin-bottom: 2rem;
+        font-weight: 700;
+        margin-bottom: 3rem;
         position: relative;
+        font-size: 2.5rem;
+        text-align: center;
     }
     
     .section-title::after {
         content: '';
         position: absolute;
-        bottom: -8px;
-        left: 0;
-        width: 50px;
-        height: 3px;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 2px;
+    }
+    
+    /* Modern Buttons */
+    .btn-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-modern.secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        box-shadow: 0 4px 20px rgba(108, 117, 125, 0.3);
+    }
+    
+    .btn-modern.secondary:hover {
+        box-shadow: 0 6px 25px rgba(108, 117, 125, 0.4);
+    }
+    
+    /* Contact Section */
+    .contact-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 3rem;
+        margin: 3rem 0;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    
+    .contact-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+    }
+    
+    .contact-item {
+        padding: 1.5rem 1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .contact-item:hover {
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .contact-item h5 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .contact-item p {
+        color: #34495e;
+        font-weight: 500;
+        font-size: 1rem;
+        line-height: 1.4;
+        margin-bottom: 0;
+    }
+    
+    .contact-item i {
+        color: #667eea !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Floating Elements */
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-stats {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btc-management-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 0.6rem 1rem;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .btc-management-btn span {
+            font-size: 0.8rem;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Organization Shop Header -->
+<!-- BTC Management Button -->
+{% if user.is_authenticated %}
+    {% if is_btc_member %}
+    <a href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}" class="btc-management-btn">
+        <i class="fas fa-cog"></i>
+        <span>Quản Lý Shop</span>
+    </a>
+    {% endif %}
+{% endif %}
+
+<!-- Modern Hero Section -->
 <div class="org-shop-header">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-2 text-center">
-                {% if shop_settings.shop_logo %}
-                    <img src="{{ shop_settings.shop_logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
-                {% else %}
-                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
-                {% endif %}
-            </div>
-            <div class="col-md-8">
-                <h1 class="mb-2">{{ shop_settings.shop_name|default:organization.name }}</h1>
-                {% if shop_settings.shop_description %}
-                    <p class="mb-0 opacity-75">{{ shop_settings.shop_description }}</p>
-                {% endif %}
-            </div>
-            <div class="col-md-2 text-end">
-                <div class="btn-group-vertical" role="group">
-                    <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light btn-lg mb-2">
-                        <i class="fas fa-shopping-bag me-2"></i>Xem Tất Cả
-                    </a>
-                    {% if user.is_authenticated %}
-                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-list me-2"></i>Đơn Hàng Của Tôi
-                    </a>
+        <div class="hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-3 col-md-4 text-center">
+                    <div class="floating-element">
+                        {% if shop_settings.shop_logo %}
+                            <img src="{{ shop_settings.shop_logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                        {% else %}
+                            <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-8 text-center text-md-start">
+                    <h1 class="hero-title">{{ shop_settings.shop_name|default:organization.name }}</h1>
+                    {% if shop_settings.shop_description %}
+                        <p class="hero-subtitle">{{ shop_settings.shop_description }}</p>
                     {% endif %}
+                    
+                    <!-- Shop Stats -->
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ total_products|default:0 }}</span>
+                            <span class="stat-label">Sản Phẩm</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ total_orders|default:0 }}</span>
+                            <span class="stat-label">Đơn Hàng</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ total_customers|default:0 }}</span>
+                            <span class="stat-label">Khách Hàng</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 text-center text-lg-end">
+                    <div class="d-flex flex-column gap-3">
+                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn-modern">
+                            <i class="fas fa-shopping-bag"></i>
+                            <span>Xem Tất Cả</span>
+                        </a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn-modern secondary">
+                            <i class="fas fa-list"></i>
+                            <span>Đơn Hàng Của Tôi</span>
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -204,8 +492,9 @@
                             </div>
                             <div class="d-grid gap-2">
                                 <a href="{% url 'shop:organization_shop:product_detail' org_slug=organization.slug product_slug=product.slug %}" 
-                                   class="btn btn-outline-primary">
-                                    <i class="fas fa-eye me-2"></i>Xem Chi Tiết
+                                   class="btn-modern secondary">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Xem Chi Tiết</span>
                                 </a>
                             </div>
                         </div>
@@ -215,8 +504,9 @@
             {% endfor %}
         </div>
         <div class="text-center mt-4">
-            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}?sort=bestseller" class="btn btn-primary btn-lg">
-                <i class="fas fa-star me-2"></i>Xem Tất Cả Sản Phẩm Nổi Bật
+            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}?sort=bestseller" class="btn-modern">
+                <i class="fas fa-star"></i>
+                <span>Xem Tất Cả Sản Phẩm Nổi Bật</span>
             </a>
         </div>
     </section>
@@ -263,8 +553,9 @@
                             </div>
                             <div class="d-grid gap-2">
                                 <a href="{% url 'shop:organization_shop:product_detail' org_slug=organization.slug product_slug=product.slug %}" 
-                                   class="btn btn-outline-primary">
-                                    <i class="fas fa-eye me-2"></i>Xem Chi Tiết
+                                   class="btn-modern secondary">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Xem Chi Tiết</span>
                                 </a>
                             </div>
                         </div>
@@ -274,8 +565,9 @@
             {% endfor %}
         </div>
         <div class="text-center mt-4">
-            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}?sort=bestseller" class="btn btn-primary btn-lg">
-                <i class="fas fa-fire me-2"></i>Xem Tất Cả Sản Phẩm Bán Chạy
+            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}?sort=bestseller" class="btn-modern">
+                <i class="fas fa-fire"></i>
+                <span>Xem Tất Cả Sản Phẩm Bán Chạy</span>
             </a>
         </div>
     </section>
@@ -283,33 +575,50 @@
 
     <!-- Contact Information -->
     {% if shop_settings.contact_phone or shop_settings.contact_email %}
-    <section class="mb-5">
-        <div class="card bg-light">
-            <div class="card-body text-center">
-                <h4 class="card-title mb-3">
-                    <i class="fas fa-headset me-2 text-primary"></i>Liên Hệ Hỗ Trợ
-                </h4>
-                <div class="row">
-                    {% if shop_settings.contact_phone %}
-                    <div class="col-md-6 mb-3">
-                        <i class="fas fa-phone text-primary me-2"></i>
-                        <strong>{{ shop_settings.contact_phone }}</strong>
-                    </div>
-                    {% endif %}
-                    {% if shop_settings.contact_email %}
-                    <div class="col-md-6 mb-3">
-                        <i class="fas fa-envelope text-primary me-2"></i>
-                        <strong>{{ shop_settings.contact_email }}</strong>
-                    </div>
-                    {% endif %}
-                </div>
-                {% if shop_settings.contact_address %}
-                <div class="mt-2">
-                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                    <span>{{ shop_settings.contact_address }}</span>
-                </div>
-                {% endif %}
+    <section class="contact-section">
+        <div class="text-center mb-4">
+            <div class="contact-icon">
+                <i class="fas fa-headset"></i>
             </div>
+            <h3 class="mb-3">Liên Hệ Hỗ Trợ</h3>
+            <p style="color: #6c757d; font-size: 1.1rem;">Chúng tôi luôn sẵn sàng hỗ trợ bạn!</p>
+        </div>
+        
+        <div class="row">
+            {% if shop_settings.contact_phone %}
+            <div class="col-md-4 mb-4">
+                <div class="contact-item">
+                    <i class="fas fa-phone fa-2x"></i>
+                    <h5>Điện Thoại</h5>
+                    <p>{{ shop_settings.contact_phone }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if shop_settings.contact_email %}
+            <div class="col-md-4 mb-4">
+                <div class="contact-item">
+                    <i class="fas fa-envelope fa-2x"></i>
+                    <h5>Email</h5>
+                    <p>{{ shop_settings.contact_email }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if shop_settings.contact_address %}
+            <div class="col-md-4 mb-4">
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt fa-2x"></i>
+                    <h5>Địa Chỉ</h5>
+                    <p>{{ shop_settings.contact_address }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn-modern">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Bắt Đầu Mua Sắm</span>
+            </a>
         </div>
     </section>
     {% endif %}

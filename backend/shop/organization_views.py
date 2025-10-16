@@ -57,12 +57,35 @@ def organization_shop_home(request, org_slug):
         is_active=True
     )[:8]
     
+    # Thống kê shop
+    total_products = OrganizationProduct.objects.filter(
+        organization=organization,
+        status='published'
+    ).count()
+    
+    total_orders = OrganizationOrder.objects.filter(
+        organization=organization
+    ).count()
+    
+    total_customers = OrganizationOrder.objects.filter(
+        organization=organization
+    ).values('user').distinct().count()
+    
+    # Kiểm tra user có phải BTC member không
+    is_btc_member = False
+    if request.user.is_authenticated:
+        is_btc_member = organization.members.filter(id=request.user.id).exists()
+    
     context = {
         'organization': organization,
         'shop_settings': shop_settings,
         'featured_products': featured_products,
         'bestseller_products': bestseller_products,
         'categories': categories,
+        'total_products': total_products,
+        'total_orders': total_orders,
+        'total_customers': total_customers,
+        'is_btc_member': is_btc_member,
     }
     
     return render(request, 'shop/organization/shop_home.html', context)
