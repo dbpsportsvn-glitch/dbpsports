@@ -56,6 +56,13 @@
         border: 1px solid rgba(255,255,255,0.3);
     }
     
+    .change-banner-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+    }
+    
     /* Modern Profile Navigation */
     .modern-profile-nav {
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -250,8 +257,14 @@
 
 {% block content %}
 <!-- Profile Banner -->
-<div class="profile-banner" style="background-image: url('{% if player.team.main_photo %}{{ player.team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');">
+<div class="profile-banner" style="background-image: url('{% if player.banner_image %}{{ player.banner_image.url }}{% elif player.team.banner_image %}{{ player.team.banner_image.url }}{% elif player.team.main_photo %}{{ player.team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');">
     <div class="profile-banner-overlay"></div>
+    
+    {% if request.user == player.user %}
+    <button class="btn btn-light change-banner-btn" data-bs-toggle="modal" data-bs-target="#changeBannerModal">
+        <i class="bi bi-camera"></i> Đổi ảnh bìa
+    </button>
+    {% endif %}
     
     <!-- Action Buttons -->
     {% if user.is_authenticated and not player.user and not user.player_profile %}
@@ -775,6 +788,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<!-- Change Banner Modal -->
+{% if request.user == player.user %}
+<div class="modal fade" id="changeBannerModal" tabindex="-1" aria-labelledby="changeBannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeBannerModalLabel">
+                    <i class="bi bi-camera me-2"></i>Thay đổi ảnh bìa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'upload_player_banner' player_pk=player.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="banner_image" class="form-label">Chọn ảnh bìa mới</label>
+                        <input type="file" class="form-control" id="banner_image" name="banner_image" accept="image/*" required>
+                        <div class="form-text">Khuyến nghị: ảnh có kích thước 1920x400px</div>
+                    </div>
+                    {% if player.banner_image %}
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh bìa hiện tại:</label>
+                        <div class="text-center">
+                            <img src="{{ player.banner_image.url }}" alt="Banner hiện tại" class="img-fluid rounded" style="max-height: 150px;">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-2"></i>Cập nhật ảnh bìa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% endblock %}

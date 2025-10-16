@@ -252,6 +252,14 @@ class Player(models.Model):
         blank=True, 
         help_text="Tải lên ảnh mã QR cá nhân (Momo, VNPAY,...) để nhận donate từ người hâm mộ."
     )
+    
+    banner_image = models.ImageField(
+        "Ảnh bìa hồ sơ", 
+        upload_to='player_banners/', 
+        null=True, 
+        blank=True, 
+        help_text="Ảnh bìa hiển thị ở đầu trang hồ sơ (khuyến nghị: 1920x400px)"
+    )
 
     class Meta:
         constraints = [

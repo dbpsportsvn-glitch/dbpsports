@@ -2635,7 +2635,14 @@ def public_team_detail(request, pk):
 def upload_team_banner(request, team_pk):
     """Upload team banner image"""
     try:
-        team = Team.objects.get(pk=team_pk, captain=request.user)
+        team = Team.objects.get(pk=team_pk)
+        # Kiểm tra quyền: đội trưởng hoặc cầu thủ trong đội
+        is_captain = team.captain == request.user
+        is_player_in_team = Player.objects.filter(team=team, user=request.user).exists()
+        
+        if not (is_captain or is_player_in_team):
+            messages.error(request, "Không tìm thấy đội bóng hoặc bạn không có quyền chỉnh sửa.")
+            return redirect('dashboard')
     except Team.DoesNotExist:
         messages.error(request, "Không tìm thấy đội bóng hoặc bạn không có quyền chỉnh sửa.")
         return redirect('dashboard')
@@ -2655,12 +2662,66 @@ def upload_team_banner(request, team_pk):
                 team.banner_image = compressed_image
                 team.save()
                 
-                messages.success(request, "Đã cập nhật ảnh bìa hồ sơ đội bóng thành công! Ảnh đã được tự động nén để tối ưu.")
+                if is_captain:
+                    messages.success(request, "Đã cập nhật ảnh bìa hồ sơ đội bóng thành công! Ảnh đã được tự động nén để tối ưu.")
+                else:
+                    messages.success(request, "Đã cập nhật ảnh bìa hồ sơ cầu thủ thành công! Ảnh đã được tự động nén để tối ưu.")
             except Exception as e:
                 messages.error(request, f"Có lỗi xảy ra khi xử lý ảnh: {str(e)}")
-                return redirect('public_team_detail', pk=team_pk)
+                # Redirect về trang phù hợp
+                if is_captain:
+                    return redirect('public_team_detail', pk=team_pk)
+                else:
+                    # Tìm player của user này trong team
+                    try:
+                        player = Player.objects.get(team=team, user=request.user)
+                        return redirect('player_detail', pk=player.pk)
+                    except Player.DoesNotExist:
+                        return redirect('public_team_detail', pk=team_pk)
     
-    return redirect('public_team_detail', pk=team_pk)  
+    # Redirect về trang phù hợp
+    if is_captain:
+        return redirect('public_team_detail', pk=team_pk)
+    else:
+        # Tìm player của user này trong team
+        try:
+            player = Player.objects.get(team=team, user=request.user)
+            return redirect('player_detail', pk=player.pk)
+        except Player.DoesNotExist:
+            return redirect('public_team_detail', pk=team_pk)  
+
+
+@login_required
+def upload_player_banner(request, player_pk):
+    """Upload player banner image"""
+    try:
+        player = Player.objects.get(pk=player_pk, user=request.user)
+    except Player.DoesNotExist:
+        messages.error(request, "Không tìm thấy hồ sơ cầu thủ hoặc bạn không có quyền chỉnh sửa.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        banner_image = request.FILES.get('banner_image')
+        if banner_image:
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            if banner_image.content_type not in allowed_types:
+                messages.error(request, "Chỉ chấp nhận file ảnh (JPG, PNG, WebP).")
+                return redirect('player_detail', pk=player_pk)
+            
+            # Tự động nén ảnh để giảm kích thước
+            try:
+                compressed_image = compress_banner_image(banner_image)
+                player.banner_image = compressed_image
+                player.save()
+                
+                messages.success(request, "Đã cập nhật ảnh bìa hồ sơ cầu thủ thành công! Ảnh đã được tự động nén để tối ưu.")
+            except Exception as e:
+                messages.error(request, f"Có lỗi xảy ra khi xử lý ảnh: {str(e)}")
+                return redirect('player_detail', pk=player_pk)
+    
+    return redirect('player_detail', pk=player_pk)
+
 
 @login_required
 @require_POST
