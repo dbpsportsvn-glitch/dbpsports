@@ -8,10 +8,11 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction, models
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from django.urls import reverse
 from django.utils import timezone
 from decimal import Decimal
+from datetime import datetime, timedelta
 import json
 
 from organizations.models import Organization
@@ -227,6 +228,7 @@ def organization_add_to_cart(request, org_slug):
         product_id = data.get('product_id')
         quantity = int(data.get('quantity', 1))
         size_id = data.get('size_id')
+        buy_now = data.get('buy_now', False)  # Flag for buy now functionality
         
         product = get_object_or_404(OrganizationProduct, id=product_id, organization=organization)
         
@@ -244,6 +246,10 @@ def organization_add_to_cart(request, org_slug):
             user=request.user,
             organization=organization
         )
+        
+        # Nếu là "Mua Ngay", xóa tất cả items trong cart trước
+        if buy_now:
+            cart.items.all().delete()
         
         # Lấy hoặc tạo cart item
         size = None
@@ -264,7 +270,8 @@ def organization_add_to_cart(request, org_slug):
         return JsonResponse({
             'success': True, 
             'message': f'Đã thêm {product.name} vào giỏ hàng',
-            'cart_total': cart.total_items
+            'cart_total': cart.total_items,
+            'buy_now': buy_now
         })
         
     except Exception as e:
@@ -406,8 +413,6 @@ def organization_place_order(request, org_slug):
         return JsonResponse({'success': False, 'error': 'Shop chưa được thiết lập'})
     
     try:
-        data = json.loads(request.body)
-        
         # Lấy cart
         cart = OrganizationCart.objects.get(user=request.user, organization=organization)
         cart_items = cart.items.all()
@@ -429,18 +434,23 @@ def organization_place_order(request, org_slug):
             order = OrganizationOrder.objects.create(
                 organization=organization,
                 user=request.user,
-                customer_name=data.get('customer_name', request.user.get_full_name() or request.user.username),
-                customer_email=data.get('customer_email', request.user.email),
-                customer_phone=data.get('customer_phone', ''),
-                shipping_address=data.get('shipping_address', ''),
-                shipping_city=data.get('shipping_city', ''),
-                shipping_district=data.get('shipping_district', ''),
+                customer_name=request.POST.get('customer_name', request.user.get_full_name() or request.user.username),
+                customer_email=request.POST.get('customer_email', request.user.email),
+                customer_phone=request.POST.get('customer_phone', ''),
+                shipping_address=request.POST.get('shipping_address', ''),
+                shipping_city=request.POST.get('shipping_city', ''),
+                shipping_district=request.POST.get('shipping_district', ''),
                 subtotal=subtotal,
                 shipping_fee=shipping_fee,
                 total_amount=total_amount,
-                payment_method=data.get('payment_method', 'cod'),
-                notes=data.get('notes', ''),
+                payment_method=request.POST.get('payment_method', 'cod'),
+                notes=request.POST.get('notes', ''),
             )
+            
+            # Xử lý payment proof upload
+            if 'payment_proof' in request.FILES:
+                order.payment_proof = request.FILES['payment_proof']
+                order.save()
             
             # Tạo order items
             for cart_item in cart_items:
@@ -1013,3 +1023,136 @@ def delete_category(request, org_slug, category_id):
     }
     
     return render(request, 'shop/organization/delete_category.html', context)
+
+
+@login_required
+def organization_shop_dashboard(request, org_slug):
+    """Dashboard quản lý shop của Organization"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        return render(request, 'shop/organization/access_denied.html', {
+            'organization': organization
+        })
+    
+    # Thống kê tổng quan
+    today = timezone.now().date()
+    this_month = today.replace(day=1)
+    last_month = (this_month - timedelta(days=1)).replace(day=1)
+    
+    # Đơn hàng
+    total_orders = OrganizationOrder.objects.filter(organization=organization).count()
+    pending_orders = OrganizationOrder.objects.filter(
+        organization=organization, status='pending'
+    ).count()
+    processing_orders = OrganizationOrder.objects.filter(
+        organization=organization, status='processing'
+    ).count()
+    completed_orders = OrganizationOrder.objects.filter(
+        organization=organization, status='delivered'
+    ).count()
+    
+    # Doanh thu
+    total_revenue = OrganizationOrder.objects.filter(
+        organization=organization,
+        payment_status='paid'
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    monthly_revenue = OrganizationOrder.objects.filter(
+        organization=organization,
+        payment_status='paid',
+        created_at__gte=this_month
+    ).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    # Sản phẩm
+    total_products = OrganizationProduct.objects.filter(organization=organization).count()
+    out_of_stock = OrganizationProduct.objects.filter(
+        organization=organization, stock_quantity=0
+    ).count()
+    low_stock = OrganizationProduct.objects.filter(
+        organization=organization, 
+        stock_quantity__lte=10, 
+        stock_quantity__gt=0
+    ).count()
+    
+    # Đơn hàng gần đây
+    recent_orders = OrganizationOrder.objects.filter(
+        organization=organization
+    ).select_related('user').order_by('-created_at')[:10]
+    
+    # Sản phẩm bán chạy
+    bestseller_products = OrganizationProduct.objects.filter(
+        organization=organization
+    ).annotate(
+        total_sold=Sum('organizationorderitem__quantity')
+    ).order_by('-total_sold')[:5]
+    
+    # Thống kê theo tháng (7 tháng gần nhất)
+    monthly_stats = []
+    for i in range(7):
+        month_date = today.replace(day=1) - timedelta(days=30*i)
+        next_month = (month_date + timedelta(days=32)).replace(day=1)
+        
+        month_orders = OrganizationOrder.objects.filter(
+            organization=organization,
+            created_at__gte=month_date,
+            created_at__lt=next_month
+        ).count()
+        
+        month_revenue = OrganizationOrder.objects.filter(
+            organization=organization,
+            created_at__gte=month_date,
+            created_at__lt=next_month,
+            payment_status='paid'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        monthly_stats.append({
+            'month': month_date.strftime('%m/%Y'),
+            'orders': month_orders,
+            'revenue': month_revenue
+        })
+    
+    monthly_stats.reverse()  # Từ cũ đến mới
+    
+    # Thống kê theo trạng thái thanh toán
+    payment_stats = OrganizationOrder.objects.filter(
+        organization=organization
+    ).values('payment_status').annotate(
+        count=Count('id'),
+        total=Sum('total_amount')
+    ).order_by('payment_status')
+    
+    # Top categories
+    top_categories = OrganizationCategory.objects.filter(
+        organization=organization
+    ).annotate(
+        product_count=Count('products'),
+        order_count=Sum('products__organizationorderitem__quantity')
+    ).order_by('-order_count')[:5]
+    
+    # Shop settings
+    shop_settings, created = OrganizationShopSettings.objects.get_or_create(
+        organization=organization
+    )
+    
+    context = {
+        'organization': organization,
+        'shop_settings': shop_settings,
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        'processing_orders': processing_orders,
+        'completed_orders': completed_orders,
+        'total_revenue': total_revenue,
+        'monthly_revenue': monthly_revenue,
+        'total_products': total_products,
+        'out_of_stock': out_of_stock,
+        'low_stock': low_stock,
+        'recent_orders': recent_orders,
+        'bestseller_products': bestseller_products,
+        'monthly_stats': monthly_stats,
+        'payment_stats': payment_stats,
+        'top_categories': top_categories,
+    }
+    
+    return render(request, 'shop/organization/dashboard.html', context)

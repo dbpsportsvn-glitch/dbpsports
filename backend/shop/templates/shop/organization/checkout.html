@@ -179,6 +179,124 @@
         font-size: 0.875rem;
         margin-top: 0.25rem;
     }
+    
+    .bank-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1rem;
+    }
+    
+    .info-label {
+        font-weight: bold;
+        color: #495057;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        color: #212529;
+        font-family: 'Courier New', monospace;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        display: inline-block;
+        min-width: 200px;
+    }
+    
+    .qr-code-container {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .qr-code-image {
+        max-width: 200px;
+        max-height: 200px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .copy-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .copy-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .info-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-text {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #212529;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Payment Proof Upload */
+    .payment-proof-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .proof-title {
+        color: #667eea;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    
+    .proof-upload {
+        margin-bottom: 1rem;
+    }
+    
+    .proof-input {
+        display: none;
+    }
+    
+    .proof-label {
+        display: inline-flex;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+    
+    .proof-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .proof-preview {
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .proof-note {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
@@ -230,27 +348,20 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.customer_name.id_for_label }}" class="form-label required-field">Họ và tên</label>
-                                {{ form.customer_name }}
-                                {% if form.customer_name.errors %}
-                                    <div class="form-error">{{ form.customer_name.errors.0 }}</div>
-                                {% endif %}
+                                <label for="customer_name" class="form-label required-field">Họ và tên</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                       value="{{ request.user.get_full_name|default:request.user.username }}" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.customer_phone.id_for_label }}" class="form-label required-field">Số điện thoại</label>
-                                {{ form.customer_phone }}
-                                {% if form.customer_phone.errors %}
-                                    <div class="form-error">{{ form.customer_phone.errors.0 }}</div>
-                                {% endif %}
+                                <label for="customer_phone" class="form-label required-field">Số điện thoại</label>
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.customer_email.id_for_label }}" class="form-label">Email</label>
-                            {{ form.customer_email }}
-                            {% if form.customer_email.errors %}
-                                <div class="form-error">{{ form.customer_email.errors.0 }}</div>
-                            {% endif %}
+                            <label for="customer_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                                   value="{{ request.user.email }}">
                         </div>
                     </div>
                 </div>
@@ -261,36 +372,46 @@
                         <h4 class="section-title">Thông Tin Giao Hàng</h4>
                         
                         <div class="mb-3">
-                            <label for="{{ form.shipping_address.id_for_label }}" class="form-label required-field">Địa chỉ giao hàng</label>
-                            {{ form.shipping_address }}
-                            {% if form.shipping_address.errors %}
-                                <div class="form-error">{{ form.shipping_address.errors.0 }}</div>
-                            {% endif %}
+                            <label for="shipping_address" class="form-label required-field">Địa chỉ giao hàng</label>
+                            <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required></textarea>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.shipping_city.id_for_label }}" class="form-label required-field">Thành phố/Tỉnh</label>
-                                {{ form.shipping_city }}
-                                {% if form.shipping_city.errors %}
-                                    <div class="form-error">{{ form.shipping_city.errors.0 }}</div>
-                                {% endif %}
+                                <label for="shipping_city" class="form-label required-field">Thành phố/Tỉnh</label>
+                                <input type="text" class="form-control" id="shipping_city" name="shipping_city" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.shipping_district.id_for_label }}" class="form-label required-field">Quận/Huyện</label>
-                                {{ form.shipping_district }}
-                                {% if form.shipping_district.errors %}
-                                    <div class="form-error">{{ form.shipping_district.errors.0 }}</div>
-                                {% endif %}
+                                <label for="shipping_district" class="form-label required-field">Quận/Huyện</label>
+                                <input type="text" class="form-control" id="shipping_district" name="shipping_district" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.shipping_notes.id_for_label }}" class="form-label">Ghi chú giao hàng</label>
-                            {{ form.shipping_notes }}
-                            {% if form.shipping_notes.errors %}
-                                <div class="form-error">{{ form.shipping_notes.errors.0 }}</div>
-                            {% endif %}
+                            <label for="notes" class="form-label">Ghi chú giao hàng</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Proof Upload -->
+                <div class="card checkout-card" id="payment-proof-section" style="display: none;">
+                    <div class="card-body">
+                        <h4 class="section-title">Upload Hóa Đơn Thanh Toán</h4>
+                        
+                        <div class="payment-proof-section">
+                            <div class="proof-upload">
+                                <input type="file" id="payment-proof" name="payment_proof" accept="image/*,.pdf" class="proof-input">
+                                <label for="payment-proof" class="proof-label">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                                    Chọn file hóa đơn (JPG, PNG, PDF)
+                                </label>
+                                <div class="proof-preview" id="proof-preview"></div>
+                            </div>
+                            <p class="proof-note">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Vui lòng upload hóa đơn chuyển khoản để chúng tôi xác nhận đơn hàng nhanh hơn
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -321,6 +442,90 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Bank Transfer Information -->
+                <div class="card checkout-card" id="bank-info-card" style="display: none;">
+                    <div class="card-body">
+                        <h4 class="section-title">Thông Tin Chuyển Khoản</h4>
+                        
+                        {% if shop_settings.bank_name and shop_settings.bank_account_number %}
+                        <div class="bank-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="info-label">Ngân hàng:</label>
+                                        <span class="info-value">{{ shop_settings.bank_name }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="info-label">Số tài khoản:</label>
+                                        <span class="info-value">{{ shop_settings.bank_account_number }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-btn" onclick="copyToClipboard('{{ shop_settings.bank_account_number }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info ms-1" onclick="showBankInfoModal()">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if shop_settings.bank_account_name %}
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="info-label">Tên chủ tài khoản:</label>
+                                        <span class="info-value">{{ shop_settings.bank_account_name }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-btn" onclick="copyToClipboard('{{ shop_settings.bank_account_name }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="info-label">Số tiền:</label>
+                                        <span class="info-value text-danger fw-bold">{{ total_amount|floatformat:0 }}đ</span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2 copy-btn" onclick="copyToClipboard('{{ total_amount|floatformat:0 }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if shop_settings.payment_qr_code %}
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <label class="info-label">QR Code:</label>
+                                        <div class="qr-code-container">
+                                            <img src="{{ shop_settings.payment_qr_code.url }}" alt="QR Code thanh toán" class="qr-code-image">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Hướng dẫn:</strong>
+                                <ol class="mb-0 mt-2">
+                                    <li>Chuyển khoản đúng số tiền: <strong>{{ total_amount|floatformat:0 }}đ</strong></li>
+                                    <li>Nội dung chuyển khoản: <strong>{{ organization.name }} - {{ request.user.get_full_name|default:request.user.username }}</strong></li>
+                                    <li>Sau khi chuyển khoản, vui lòng chụp ảnh biên lai và gửi cho shop</li>
+                                    <li>Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán</li>
+                                </ol>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Shop chưa cập nhật thông tin ngân hàng. Vui lòng liên hệ trực tiếp với shop để được hướng dẫn thanh toán.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             
             <!-- Order Summary -->
@@ -334,7 +539,13 @@
                         <div class="order-item">
                             <div class="row align-items-center">
                                 <div class="col-3">
-                                    <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+                                    {% if item.product.main_image %}
+                                        <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+                                    {% else %}
+                                        <div class="order-item-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <div class="col-6">
                                     <h6 class="mb-1">{{ item.product.name }}</h6>
@@ -358,24 +569,17 @@
                         <!-- Order Summary -->
                         <div class="summary-row">
                             <span>Tạm tính:</span>
-                            <span>{{ cart.subtotal|floatformat:0 }}đ</span>
+                            <span>{{ subtotal|floatformat:0 }}đ</span>
                         </div>
-                        
-                        {% if cart.discount_amount > 0 %}
-                        <div class="summary-row">
-                            <span>Giảm giá:</span>
-                            <span class="text-success">-{{ cart.discount_amount|floatformat:0 }}đ</span>
-                        </div>
-                        {% endif %}
                         
                         <div class="summary-row">
                             <span>Phí vận chuyển:</span>
-                            <span>{{ cart.shipping_fee|floatformat:0 }}đ</span>
+                            <span>{{ shipping_fee|floatformat:0 }}đ</span>
                         </div>
                         
                         <div class="summary-row">
                             <span>Tổng cộng:</span>
-                            <span>{{ cart.total|floatformat:0 }}đ</span>
+                            <span>{{ total_amount|floatformat:0 }}đ</span>
                         </div>
                         
                         <div class="mt-4">
@@ -396,6 +600,89 @@
         </div>
     </form>
 </div>
+
+<!-- Bank Info Modal -->
+<div class="modal fade" id="bankInfoModal" tabindex="-1" aria-labelledby="bankInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bankInfoModalLabel">
+                    <i class="fas fa-university me-2"></i>Thông Tin Chuyển Khoản
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6><i class="fas fa-building me-2"></i>Ngân hàng</h6>
+                            <p class="info-text">{{ shop_settings.bank_name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6><i class="fas fa-credit-card me-2"></i>Số tài khoản</h6>
+                            <p class="info-text">{{ shop_settings.bank_account_number }}</p>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="copyToClipboard('{{ shop_settings.bank_account_number }}')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if shop_settings.bank_account_name %}
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6><i class="fas fa-user me-2"></i>Tên chủ tài khoản</h6>
+                            <p class="info-text">{{ shop_settings.bank_account_name }}</p>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="copyToClipboard('{{ shop_settings.bank_account_name }}')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <h6><i class="fas fa-money-bill-wave me-2"></i>Số tiền</h6>
+                            <p class="info-text text-danger fw-bold">{{ total_amount|floatformat:0 }}đ</p>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="copyToClipboard('{{ total_amount|floatformat:0 }}')">
+                                <i class="fas fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if shop_settings.payment_qr_code %}
+                <div class="row mt-3">
+                    <div class="col-md-12 text-center">
+                        <div class="info-card">
+                            <h6><i class="fas fa-qrcode me-2"></i>QR Code</h6>
+                            <img src="{{ shop_settings.payment_qr_code.url }}" alt="QR Code thanh toán" class="qr-code-image">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>Hướng dẫn chuyển khoản:</h6>
+                    <ol class="mb-0">
+                        <li>Chuyển khoản đúng số tiền: <strong>{{ total_amount|floatformat:0 }}đ</strong></li>
+                        <li>Nội dung chuyển khoản: <strong>{{ organization.name }} - {{ request.user.get_full_name|default:request.user.username }}</strong></li>
+                        <li>Sau khi chuyển khoản, chụp ảnh biên lai và gửi cho shop</li>
+                        <li>Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="copyAllBankInfo()">
+                    <i class="fas fa-copy me-2"></i>Copy Tất Cả
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -403,15 +690,200 @@
     // Payment method selection
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
         radio.addEventListener('change', function() {
+            // Remove selected class from all payment methods
             document.querySelectorAll('.payment-method').forEach(method => {
                 method.classList.remove('selected');
             });
+            
+            // Add selected class to current method
             this.closest('.payment-method').classList.add('selected');
+            
+            // Show/hide bank info card and payment proof section
+            const bankInfoCard = document.getElementById('bank-info-card');
+            const paymentProofSection = document.getElementById('payment-proof-section');
+            
+            if (this.value === 'BANK_TRANSFER') {
+                bankInfoCard.style.display = 'block';
+                paymentProofSection.style.display = 'block';
+            } else {
+                bankInfoCard.style.display = 'none';
+                paymentProofSection.style.display = 'none';
+            }
         });
     });
     
     // Set initial selected state
     document.querySelector('input[name="payment_method"]:checked').closest('.payment-method').classList.add('selected');
+    
+    // Copy to clipboard function with fallback
+    function copyToClipboard(text) {
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function() {
+                showCopySuccess(event.target.closest('button'));
+            }).catch(function(err) {
+                console.error('Clipboard API failed:', err);
+                fallbackCopyTextToClipboard(text);
+            });
+        } else {
+            // Fallback for older browsers or non-HTTPS
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+    
+    // Fallback copy function
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        
+        // Avoid scrolling to bottom
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(event.target.closest('button'));
+            } else {
+                showCopyError(text);
+            }
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            showCopyError(text);
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    // Show copy success
+    function showCopySuccess(btn) {
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }
+    
+    // Show copy error
+    function showCopyError(text) {
+        // Create a better copy interface
+        const copyContainer = document.createElement('div');
+        copyContainer.style.position = 'fixed';
+        copyContainer.style.top = '50%';
+        copyContainer.style.left = '50%';
+        copyContainer.style.transform = 'translate(-50%, -50%)';
+        copyContainer.style.zIndex = '9999';
+        copyContainer.style.backgroundColor = 'white';
+        copyContainer.style.border = '2px solid #dc3545';
+        copyContainer.style.borderRadius = '10px';
+        copyContainer.style.padding = '20px';
+        copyContainer.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+        copyContainer.style.maxWidth = '400px';
+        copyContainer.style.width = '90%';
+        
+        copyContainer.innerHTML = `
+            <div class="text-center mb-3">
+                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                <h5 class="mt-2">Copy Thủ Công</h5>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nội dung cần copy:</label>
+                <textarea readonly class="form-control" rows="3" style="font-family: monospace; font-size: 14px;">${text}</textarea>
+            </div>
+            <div class="text-center">
+                <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-check me-2"></i>Đã Copy Xong
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(copyContainer);
+        
+        // Auto-select text in textarea
+        const textarea = copyContainer.querySelector('textarea');
+        textarea.select();
+        textarea.focus();
+        
+        // Remove container when clicking outside
+        setTimeout(() => {
+            copyContainer.addEventListener('click', function(e) {
+                if (e.target === copyContainer) {
+                    copyContainer.remove();
+                }
+            });
+        }, 100);
+    }
+    
+    // Show bank info modal
+    function showBankInfoModal() {
+        const modal = new bootstrap.Modal(document.getElementById('bankInfoModal'));
+        modal.show();
+    }
+    
+    // Copy all bank info
+    function copyAllBankInfo() {
+        const bankInfo = `THÔNG TIN CHUYỂN KHOẢN
+Ngân hàng: {{ shop_settings.bank_name }}
+Số tài khoản: {{ shop_settings.bank_account_number }}
+Tên chủ tài khoản: {{ shop_settings.bank_account_name }}
+Số tiền: {{ total_amount|floatformat:0 }}đ
+Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:request.user.username }}`;
+        
+        copyToClipboard(bankInfo);
+    }
+    
+    // Payment proof upload handling
+    const paymentProofInput = document.getElementById('payment-proof');
+    const proofPreview = document.getElementById('proof-preview');
+    
+    if (paymentProofInput) {
+        paymentProofInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    proofPreview.innerHTML = `
+                        <div class="d-flex align-items-center gap-3">
+                            ${file.type.startsWith('image/') ? 
+                                `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
+                                `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
+                            }
+                            <div class="file-info">
+                                <div class="fw-bold">${file.name}</div>
+                                <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeProof('payment-proof')">
+                                    <i class="fas fa-trash me-1"></i>Xóa
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    proofPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Remove proof function
+    function removeProof(inputId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById('proof-preview');
+        
+        input.value = '';
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+    }
     
     // Form submission
     document.getElementById('checkout-form').addEventListener('submit', function(e) {
@@ -452,6 +924,58 @@
             } else {
                 this.classList.remove('is-invalid');
             }
+        });
+    });
+    
+    // Handle form submission
+    document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+            return;
+        }
+        
+        const formData = new FormData(this);
+        const data = {
+            customer_name: formData.get('customer_name'),
+            customer_email: formData.get('customer_email'),
+            customer_phone: formData.get('customer_phone'),
+            shipping_address: formData.get('shipping_address'),
+            shipping_city: formData.get('shipping_city'),
+            shipping_district: formData.get('shipping_district'),
+            payment_method: formData.get('payment_method'),
+            notes: formData.get('notes')
+        };
+        
+        const submitBtn = document.getElementById('place-order-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+        submitBtn.disabled = true;
+        
+        fetch('{% url "shop:organization_shop:place_order" org_slug=organization.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.error || 'Có lỗi xảy ra khi đặt hàng');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi đặt hàng');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         });
     });
 </script>

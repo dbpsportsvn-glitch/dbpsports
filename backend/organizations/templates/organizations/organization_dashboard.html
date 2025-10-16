@@ -5,6 +5,61 @@
 
 {% block extra_css %}
 <style>
+/* Shop Dropdown Styling */
+.dropdown {
+    width: 100%;
+}
+
+.dropdown-toggle {
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.dropdown-toggle:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.dropdown-toggle:focus {
+    box-shadow: none;
+    background-color: #e9ecef;
+}
+
+.dropdown-toggle::after {
+    float: right;
+    margin-top: 0.3rem;
+}
+
+.dropdown-menu {
+    width: 100%;
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
 :root {
   --primary: #dc2626;
   --primary-dark: #b91c1c;
@@ -280,8 +335,24 @@
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link active" id="tournaments-tab" data-bs-toggle="pill" href="#tournaments" role="tab"><i class="bi bi-trophy-fill"></i>Các giải đấu</a>
                 <a class="nav-link" id="members-tab" data-bs-toggle="pill" href="#members" role="tab"><i class="bi bi-people-fill"></i>Thành viên BTC</a>
-                <a class="nav-link" href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" target="_blank"><i class="bi bi-shop"></i>Shop của BTC</a>
-                <a class="nav-link" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}"><i class="bi bi-gear-fill"></i>Quản lý Shop</a>
+                
+                <!-- Shop Dropdown -->
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-shop"></i>Shop BTC
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" target="_blank">
+                            <i class="bi bi-shop me-2"></i>Shop của BTC
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}">
+                            <i class="bi bi-graph-up me-2"></i>Dashboard Shop
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
+                            <i class="bi bi-gear-fill me-2"></i>Quản lý Shop
+                        </a></li>
+                    </ul>
+                </div>
             </div>
         </aside>
 

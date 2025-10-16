@@ -358,12 +358,17 @@
                         </div>
                     </div>
                     
-                    <!-- Add to Cart Button -->
+                    <!-- Action Buttons -->
                     <div class="mb-4">
                         {% if product.stock_quantity > 0 %}
-                            <button type="button" class="btn add-to-cart-btn w-100" onclick="addToCart()">
-                                <i class="fas fa-shopping-cart me-2"></i>Thêm Vào Giỏ Hàng
-                            </button>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-danger btn-lg" onclick="buyNow()">
+                                    <i class="fas fa-bolt me-2"></i>Mua Ngay
+                                </button>
+                                <button type="button" class="btn add-to-cart-btn" onclick="addToCart()">
+                                    <i class="fas fa-shopping-cart me-2"></i>Thêm Vào Giỏ Hàng
+                                </button>
+                            </div>
                         {% else %}
                             <button type="button" class="btn btn-secondary w-100" disabled>
                                 <i class="fas fa-times me-2"></i>Hết Hàng
@@ -434,6 +439,7 @@
 {% endblock %}
 
 {% block extra_js %}
+{% csrf_token %}
 <script>
     let selectedSize = null;
     let selectedVariant = null;
@@ -543,6 +549,52 @@
         .catch(error => {
             console.error('Error:', error);
             alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+        });
+    }
+    
+    // Buy Now function - redirect to checkout with single item
+    function buyNow() {
+        const quantity = parseInt(document.getElementById('quantity').value);
+        {% if product.has_sizes and variants %}
+        const selectedSize = document.querySelector('.size-option.selected');
+        if (!selectedSize) {
+            alert('Vui lòng chọn size');
+            return;
+        }
+        {% endif %}
+        
+        const data = {
+            product_id: {{ product.id }},
+            quantity: quantity,
+            buy_now: true  // Flag to indicate buy now
+        };
+        
+        {% if product.has_sizes and variants %}
+        if (selectedSize) {
+            data.size_id = selectedSize.dataset.size;
+        }
+        {% endif %}
+        
+        fetch('{% url "shop:organization_shop:add_to_cart" org_slug=organization.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Redirect to checkout immediately
+                window.location.href = '{% url "shop:organization_shop:checkout" org_slug=organization.slug %}';
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi mua ngay');
         });
     }
     
