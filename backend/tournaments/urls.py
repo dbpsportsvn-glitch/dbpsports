@@ -111,7 +111,6 @@ urlpatterns = [
     # --- URL cho quản lý tiền công nhân viên ---
     path('tournament/<int:tournament_pk>/staff-payments/', staff_payment_views.staff_payment_list, name='staff_payment_list'),
     path('tournament/<int:tournament_pk>/staff-payments/add/', staff_payment_views.add_staff_payment, name='add_staff_payment'),
-    path('tournament/<int:tournament_pk>/staff-payments/quick-add/', staff_payment_views.add_staff_payment_quick, name='add_staff_payment_quick'),
     path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/status/', staff_payment_views.update_staff_payment_status, name='update_staff_payment_status'),
     path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/edit/', staff_payment_views.edit_staff_payment, name='edit_staff_payment'),
     path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/delete/', staff_payment_views.delete_staff_payment, name='delete_staff_payment'),

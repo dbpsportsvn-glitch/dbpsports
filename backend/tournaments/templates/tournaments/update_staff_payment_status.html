@@ -21,8 +21,11 @@
                     </p>
                 </div>
                 <div>
-                    <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Quay lại
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Quản lý giải đấu
+                    </a>
+                    <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-info">
+                        <i class="bi bi-arrow-left"></i> Danh sách
                     </a>
                 </div>
             </div>

@@ -120,7 +120,6 @@ from .forms import (
     PlayerTransferForm,
     RevenueItemForm,
     StaffPaymentForm,
-    StaffPaymentQuickForm,
     StaffPaymentStatusForm,
     TournamentBudgetForm,
     ScheduleGenerationForm,

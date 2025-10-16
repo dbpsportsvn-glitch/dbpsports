@@ -17,14 +17,14 @@
                     <p class="text-muted mb-0">{{ tournament.name }}</p>
                 </div>
                 <div>
-                    <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-arrow-left"></i> Quay lại
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Quản lý giải đấu
                     </a>
-                    <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary me-2">
+                    <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="btn btn-outline-info me-2">
+                        <i class="bi bi-graph-up"></i> Tài chính
+                    </a>
+                    <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Thêm tiền công
-                    </a>
-                    <a href="{% url 'add_staff_payment_quick' tournament_pk=tournament.pk %}" class="btn btn-success">
-                        <i class="bi bi-lightning"></i> Thêm nhanh
                     </a>
                 </div>
             </div>
@@ -172,11 +172,8 @@
                             <h5 class="text-muted mt-3">Chưa có tiền công nhân viên nào</h5>
                             <p class="text-muted">Hãy thêm tiền công cho các chuyên gia trong giải đấu</p>
                             <div class="mt-3">
-                                <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary me-2">
+                                <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary">
                                     <i class="bi bi-plus-circle"></i> Thêm tiền công
-                                </a>
-                                <a href="{% url 'add_staff_payment_quick' tournament_pk=tournament.pk %}" class="btn btn-success">
-                                    <i class="bi bi-lightning"></i> Thêm nhanh
                                 </a>
                             </div>
                         </div>

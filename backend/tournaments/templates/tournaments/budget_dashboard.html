@@ -19,8 +19,8 @@
                     <p class="text-muted mb-0">{{ tournament.name }}</p>
                 </div>
                 <div>
-                    <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-arrow-left"></i> Quay lại
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Quản lý giải đấu
                     </a>
                     <button onclick="refreshBudget()" class="btn btn-outline-info">
                         <i class="bi bi-arrow-clockwise"></i> Cập nhật tự động
@@ -487,8 +487,8 @@ function deleteItem(type, itemId) {
 
 function deleteStaffPayment(paymentId) {
     if (confirm('Bạn có chắc chắn muốn xóa tiền công nhân viên này?')) {
-        // Tạo URL xóa staff payment
-        const deleteUrl = '{% url "budget_dashboard" tournament_pk=tournament.pk %}'.replace('/budget/', '/staff-payments/' + paymentId + '/delete/');
+        // Tạo URL xóa staff payment với redirect_to parameter
+        const deleteUrl = '{% url "budget_dashboard" tournament_pk=tournament.pk %}'.replace('/budget/', '/staff-payments/' + paymentId + '/delete/?redirect_to=budget_dashboard');
         
         // Tạo form để gửi POST request
         const form = document.createElement('form');

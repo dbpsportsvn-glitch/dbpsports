@@ -3,6 +3,18 @@
 
 {% block title %}Thêm tiền công nhân viên - {{ tournament.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Ẩn các trường không cần thiết thay vì dùng display: none */
+.hidden-field {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <!-- Header -->
@@ -17,8 +29,11 @@
                     <p class="text-muted mb-0">{{ tournament.name }}</p>
                 </div>
                 <div>
-                    <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Quay lại
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Quản lý giải đấu
+                    </a>
+                    <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-info">
+                        <i class="bi bi-arrow-left"></i> Danh sách
                     </a>
                 </div>
             </div>
@@ -38,10 +53,31 @@
                     <form method="post">
                         {% csrf_token %}
                         
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                        <!-- Chế độ thêm tiền công -->
+                        <div class="mb-4">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="mode" id="mode_single" value="single" checked>
+                                <label class="btn btn-outline-primary" for="mode_single">
+                                    <i class="bi bi-person"></i> Thêm đơn lẻ
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="mode" id="mode_batch" value="batch">
+                                <label class="btn btn-outline-success" for="mode_batch">
+                                    <i class="bi bi-people"></i> Thêm hàng loạt
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                <strong>Thêm đơn lẻ:</strong> Chọn 1 nhân viên và nhập giá riêng • 
+                                <strong>Thêm hàng loạt:</strong> Chọn nhiều nhân viên với giá chung
+                            </div>
+                        </div>
+                        
+                        <!-- Chọn nhân viên -->
+                        <div class="mb-4" id="staff-selection">
+                            <!-- Chế độ đơn lẻ -->
+                            <div id="single-mode">
                                 <label for="{{ form.staff_member.id_for_label }}" class="form-label">
-                                    {{ form.staff_member.label }}
+                                    <i class="bi bi-person"></i> Chọn nhân viên
                                     <span class="text-danger">*</span>
                                 </label>
                                 {{ form.staff_member }}
@@ -54,6 +90,49 @@
                                 {% endif %}
                             </div>
                             
+                            <!-- Chế độ hàng loạt -->
+                            <div id="batch-mode" style="display: none;">
+                                <label class="form-label">
+                                    <i class="bi bi-people"></i> Chọn nhân viên
+                                    <span class="text-danger">*</span>
+                                </label>
+                                
+                                {% if staff_choices %}
+                                    <div class="row">
+                                        {% for choice in staff_choices %}
+                                            <div class="col-md-6 col-lg-4 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" 
+                                                           name="staff_members_batch" value="{{ choice.0 }}" 
+                                                           id="staff_batch_{{ choice.0 }}">
+                                                    <label class="form-check-label" for="staff_batch_{{ choice.0 }}">
+                                                        {{ choice.1 }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <!-- Nút chọn tất cả -->
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllStaff()">
+                                            <i class="bi bi-check-all"></i> Chọn tất cả
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="deselectAllStaff()">
+                                            <i class="bi bi-x-square"></i> Bỏ chọn tất cả
+                                        </button>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        Chưa có nhân viên nào trong giải đấu này.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Thông tin giá tiền -->
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.rate_per_unit.id_for_label }}" class="form-label">
                                     {{ form.rate_per_unit.label }}
@@ -68,9 +147,7 @@
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
-                        
-                        <div class="row">
+                            
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.payment_unit.id_for_label }}" class="form-label">
                                     {{ form.payment_unit.label }}
@@ -85,7 +162,9 @@
                                     </div>
                                 {% endif %}
                             </div>
-                            
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.number_of_units.id_for_label }}" class="form-label">
                                     {{ form.number_of_units.label }}
@@ -103,9 +182,7 @@
                                     Ví dụ: số trận, số ngày, số giờ...
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="row">
+                            
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.status.id_for_label }}" class="form-label">
                                     {{ form.status.label }}
@@ -123,8 +200,10 @@
                                     Chọn trạng thái thanh toán cho nhân viên này
                                 </div>
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3" id="payment-date-group">
                                 <label for="{{ form.payment_date.id_for_label }}" class="form-label">
                                     {{ form.payment_date.label }}
                                 </label>
@@ -159,17 +238,54 @@
                         <!-- Tổng tiền tự động tính -->
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Tổng tiền công:</strong>
-                            <span id="total-amount" class="fw-bold">0 VNĐ</span>
+                            <strong>Tổng tiền công cho mỗi nhân viên:</strong>
+                            <span id="total-per-person" class="fw-bold">0 VNĐ</span>
                             <br>
-                            <small>Tổng tiền sẽ được tự động tính = Giá/đơn vị × Số đơn vị</small>
+                            <small>Tổng tiền = Giá/đơn vị × Số đơn vị</small>
                         </div>
+                        
+                        <!-- Tổng kết cho chế độ hàng loạt -->
+                        <div class="alert alert-success" id="batch-summary" style="display: none;">
+                            <h6><i class="bi bi-info-circle"></i> Tổng kết:</h6>
+                            <p class="mb-1">
+                                <strong>Số nhân viên được chọn:</strong> 
+                                <span id="selected-count" class="badge bg-primary">0</span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Tổng tiền cần chi:</strong> 
+                                <span id="total-amount" class="fw-bold text-success">0 VNĐ</span>
+                            </p>
+                        </div>
+                        
+                        <!-- Debug info -->
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <!-- Form errors -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <h6><i class="bi bi-exclamation-triangle"></i> Có lỗi xảy ra:</h6>
+                                <ul class="mb-0">
+                                    {% for field, errors in form.errors.items %}
+                                        {% for error in errors %}
+                                            <li><strong>{{ field }}:</strong> {{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
                         
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Hủy
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
                                 <i class="bi bi-check-circle"></i> Thêm tiền công
                             </button>
                         </div>
@@ -184,23 +300,97 @@
 document.addEventListener('DOMContentLoaded', function() {
     const rateInput = document.getElementById('id_rate_per_unit');
     const unitsInput = document.getElementById('id_number_of_units');
-    const totalSpan = document.getElementById('total-amount');
+    const totalPerPersonSpan = document.getElementById('total-per-person');
+    const selectedCountSpan = document.getElementById('selected-count');
+    const totalAmountSpan = document.getElementById('total-amount');
     const statusSelect = document.getElementById('id_status');
     const paymentDateInput = document.getElementById('id_payment_date');
     const paymentDateLabel = paymentDateInput.previousElementSibling;
-    const paymentDateFormGroup = paymentDateInput.closest('.mb-3');
+    const paymentDateFormGroup = document.getElementById('payment-date-group');
     
-    function calculateTotal() {
+    // Chế độ form
+    const modeSingle = document.getElementById('mode_single');
+    const modeBatch = document.getElementById('mode_batch');
+    const singleMode = document.getElementById('single-mode');
+    const batchMode = document.getElementById('batch-mode');
+    const batchSummary = document.getElementById('batch-summary');
+    
+    function calculateTotals() {
         const rate = parseFloat(rateInput.value) || 0;
         const units = parseInt(unitsInput.value) || 0;
-        const total = rate * units;
+        const totalPerPerson = rate * units;
         
-        if (total > 0) {
-            totalSpan.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
-            totalSpan.className = 'fw-bold text-success';
+        // Cập nhật tổng tiền cho mỗi người
+        if (totalPerPerson > 0) {
+            totalPerPersonSpan.textContent = totalPerPerson.toLocaleString('vi-VN') + ' VNĐ';
+            totalPerPersonSpan.className = 'fw-bold text-success';
         } else {
-            totalSpan.textContent = '0 VNĐ';
-            totalSpan.className = 'fw-bold text-muted';
+            totalPerPersonSpan.textContent = '0 VNĐ';
+            totalPerPersonSpan.className = 'fw-bold text-muted';
+        }
+        
+        // Nếu đang ở chế độ hàng loạt, tính tổng
+        if (modeBatch.checked) {
+            const selectedCheckboxes = document.querySelectorAll('input[name="staff_members_batch"]:checked');
+            const selectedCount = selectedCheckboxes.length;
+            const totalAmount = totalPerPerson * selectedCount;
+            
+            selectedCountSpan.textContent = selectedCount;
+            selectedCountSpan.className = selectedCount > 0 ? 'badge bg-primary' : 'badge bg-secondary';
+            
+            if (totalAmount > 0) {
+                totalAmountSpan.textContent = totalAmount.toLocaleString('vi-VN') + ' VNĐ';
+                totalAmountSpan.className = 'fw-bold text-success';
+            } else {
+                totalAmountSpan.textContent = '0 VNĐ';
+                totalAmountSpan.className = 'fw-bold text-muted';
+            }
+        }
+    }
+    
+    function toggleMode() {
+        if (modeSingle.checked) {
+            // Show single mode
+            singleMode.style.display = 'block';
+            batchMode.style.display = 'none';
+            batchSummary.style.display = 'none';
+            
+            // Enable single mode fields
+            const staffMemberSelect = document.getElementById('id_staff_member');
+            if (staffMemberSelect) {
+                staffMemberSelect.required = true;
+                staffMemberSelect.disabled = false;
+                staffMemberSelect.classList.remove('hidden-field');
+            }
+            
+            // Disable batch mode fields
+            const batchCheckboxes = document.querySelectorAll('input[name="staff_members_batch"]');
+            batchCheckboxes.forEach(checkbox => {
+                checkbox.required = false;
+                checkbox.classList.add('hidden-field');
+            });
+        } else {
+            // Show batch mode
+            singleMode.style.display = 'none';
+            batchMode.style.display = 'block';
+            batchSummary.style.display = 'block';
+            calculateTotals();
+            
+            // Disable single mode fields
+            const staffMemberSelect = document.getElementById('id_staff_member');
+            if (staffMemberSelect) {
+                staffMemberSelect.required = false;
+                staffMemberSelect.disabled = true;
+                staffMemberSelect.value = '';
+                staffMemberSelect.classList.add('hidden-field');
+            }
+            
+            // Enable batch mode fields
+            const batchCheckboxes = document.querySelectorAll('input[name="staff_members_batch"]');
+            batchCheckboxes.forEach(checkbox => {
+                checkbox.required = true;
+                checkbox.classList.remove('hidden-field');
+            });
         }
     }
     
@@ -218,13 +408,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    rateInput.addEventListener('input', calculateTotal);
-    unitsInput.addEventListener('input', calculateTotal);
+    function selectAllStaff() {
+        const checkboxes = document.querySelectorAll('input[name="staff_members_batch"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        calculateTotals();
+    }
+    
+    function deselectAllStaff() {
+        const checkboxes = document.querySelectorAll('input[name="staff_members_batch"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        calculateTotals();
+    }
+    
+    // Event listeners
+    rateInput.addEventListener('input', calculateTotals);
+    unitsInput.addEventListener('input', calculateTotals);
     statusSelect.addEventListener('change', togglePaymentDate);
     
+    // Chế độ form
+    modeSingle.addEventListener('change', toggleMode);
+    modeBatch.addEventListener('change', toggleMode);
+    
+    // Listen for checkbox changes
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'staff_members_batch') {
+            calculateTotals();
+        }
+    });
+    
+    // Form submission
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    form.addEventListener('submit', function(e) {
+        console.log('Form submitted');
+        
+        // Validate form before submit
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        
+        if (mode === 'single') {
+            const staffMember = document.getElementById('id_staff_member');
+            if (!staffMember.value) {
+                e.preventDefault();
+                alert('Vui lòng chọn nhân viên!');
+                staffMember.focus();
+                return false;
+            }
+        } else {
+            const selectedStaff = document.querySelectorAll('input[name="staff_members_batch"]:checked');
+            if (selectedStaff.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng chọn ít nhất 1 nhân viên!');
+                return false;
+            }
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+        
+        // Show loading state
+        console.log('Form validation passed, submitting...');
+    });
+    
     // Tính toán ban đầu
-    calculateTotal();
+    calculateTotals();
     togglePaymentDate();
+    toggleMode();
 });
 </script>
 {% endblock %}

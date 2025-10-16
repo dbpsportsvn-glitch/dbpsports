@@ -7,7 +7,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import StaffPaymentForm, StaffPaymentStatusForm, StaffPaymentQuickForm
+from .forms import StaffPaymentForm, StaffPaymentStatusForm
 from .models import StaffPayment, TournamentBudget, BudgetHistory, Tournament, TournamentStaff
 
 
@@ -56,112 +56,121 @@ def add_staff_payment(request, tournament_pk):
         return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
     
     if request.method == 'POST':
-        form = StaffPaymentForm(request.POST, tournament=tournament)
-        if form.is_valid():
-            payment = form.save(commit=False)
-            payment.tournament = tournament
-            payment.role = payment.staff_member.role
-            payment.created_by = request.user
-            
-            # Xử lý payment_date nếu status không phải PAID
-            if payment.status != 'PAID':
-                payment.payment_date = None
-            
-            payment.save()
-            
-            # Ghi lịch sử budget
-            budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
-            BudgetHistory.objects.create(
-                budget=budget,
-                action='ADD_STAFF_PAYMENT',
-                description=f'Thêm tiền công: {payment.staff_member.user.get_full_name()} - {payment.role.name}',
-                amount=payment.total_amount,
-                user=request.user
-            )
-            
-            messages.success(request, "Đã thêm tiền công nhân viên thành công!")
-            return redirect('staff_payment_list', tournament_pk=tournament.pk)
-    else:
-        form = StaffPaymentForm(tournament=tournament)
-    
-    context = {
-        'tournament': tournament,
-        'form': form,
-        'is_organizer': is_organizer,
-    }
-    
-    return render(request, 'tournaments/add_staff_payment.html', context)
-
-
-@login_required
-def add_staff_payment_quick(request, tournament_pk):
-    """Thêm nhanh tiền công cho nhiều nhân viên"""
-    tournament = get_object_or_404(Tournament, pk=tournament_pk)
-    
-    # Kiểm tra quyền truy cập
-    is_organizer = tournament.organization and request.user in tournament.organization.members.all()
-    if not request.user.is_staff and not is_organizer:
-        return HttpResponseForbidden("Bạn không có quyền truy cập trang này.")
-    
-    if request.method == 'POST':
-        form = StaffPaymentQuickForm(request.POST, tournament=tournament)
-        if form.is_valid():
-            staff_member_ids = form.cleaned_data['staff_members']
-            rate_per_unit = form.cleaned_data['rate_per_unit']
-            payment_unit = form.cleaned_data['payment_unit']
-            number_of_units = form.cleaned_data['number_of_units']
-            notes = form.cleaned_data['notes']
-            
-            created_count = 0
-            for staff_member_id in staff_member_ids:
-                staff_member = get_object_or_404(TournamentStaff, pk=staff_member_id)
+        mode = request.POST.get('mode', 'single')
+        print(f"DEBUG: Mode = {mode}")
+        print(f"DEBUG: POST data = {request.POST}")
+        
+        if mode == 'single':
+            # Chế độ đơn lẻ
+            form = StaffPaymentForm(request.POST, tournament=tournament)
+            print(f"DEBUG: Form is_valid = {form.is_valid()}")
+            if not form.is_valid():
+                print(f"DEBUG: Form errors = {form.errors}")
+                messages.error(request, "Vui lòng kiểm tra lại thông tin đã nhập!")
+            else:
+                payment = form.save(commit=False)
+                payment.tournament = tournament
+                payment.role = payment.staff_member.role
+                payment.created_by = request.user
                 
-                # Kiểm tra xem đã có payment cho staff member này chưa
-                existing_payment = StaffPayment.objects.filter(
-                    tournament=tournament,
-                    staff_member=staff_member,
-                    role=staff_member.role
-                ).first()
+                # Xử lý payment_date nếu status không phải PAID
+                if payment.status != 'PAID':
+                    payment.payment_date = None
                 
-                if not existing_payment:
-                    payment = StaffPayment.objects.create(
-                        tournament=tournament,
-                        staff_member=staff_member,
-                        role=staff_member.role,
-                        rate_per_unit=rate_per_unit,
-                        payment_unit=payment_unit,
-                        number_of_units=number_of_units,
-                        notes=notes,
-                        created_by=request.user
-                    )
-                    created_count += 1
-            
-            if created_count > 0:
+                payment.save()
+                
                 # Ghi lịch sử budget
                 budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
                 BudgetHistory.objects.create(
                     budget=budget,
-                    action='ADD_STAFF_PAYMENT_BATCH',
-                    description=f'Thêm tiền công cho {created_count} nhân viên',
-                    amount=rate_per_unit * number_of_units * created_count,
+                    action='ADD_STAFF_PAYMENT',
+                    description=f'Thêm tiền công: {payment.staff_member.user.get_full_name()} - {payment.role.name}',
+                    amount=payment.total_amount,
                     user=request.user
                 )
                 
-                messages.success(request, f"Đã thêm tiền công cho {created_count} nhân viên thành công!")
-            else:
-                messages.warning(request, "Tất cả nhân viên đã được chọn đều đã có tiền công!")
+                messages.success(request, "Đã thêm tiền công nhân viên thành công!")
+                return redirect('staff_payment_list', tournament_pk=tournament.pk)
+        
+        elif mode == 'batch':
+            # Chế độ hàng loạt
+            staff_member_ids = request.POST.getlist('staff_members_batch')
+            rate_per_unit = request.POST.get('rate_per_unit')
+            payment_unit = request.POST.get('payment_unit')
+            number_of_units = request.POST.get('number_of_units')
+            status = request.POST.get('status', 'PENDING')
+            notes = request.POST.get('notes', '')
             
-            return redirect('staff_payment_list', tournament_pk=tournament.pk)
+            if staff_member_ids and rate_per_unit and payment_unit and number_of_units:
+                try:
+                    # Convert to proper data types
+                    rate_per_unit = float(rate_per_unit)
+                    number_of_units = int(number_of_units)
+                except (ValueError, TypeError):
+                    messages.error(request, "Dữ liệu số tiền hoặc số đơn vị không hợp lệ!")
+                    return redirect('add_staff_payment', tournament_pk=tournament.pk)
+                
+                created_count = 0
+                for staff_member_id in staff_member_ids:
+                    staff_member = get_object_or_404(TournamentStaff, pk=staff_member_id)
+                    
+                    # Kiểm tra xem đã có payment cho staff member này chưa
+                    existing_payment = StaffPayment.objects.filter(
+                        tournament=tournament,
+                        staff_member=staff_member,
+                        role=staff_member.role
+                    ).first()
+                    
+                    if not existing_payment:
+                        payment = StaffPayment.objects.create(
+                            tournament=tournament,
+                            staff_member=staff_member,
+                            role=staff_member.role,
+                            rate_per_unit=rate_per_unit,
+                            payment_unit=payment_unit,
+                            number_of_units=number_of_units,
+                            status=status,
+                            notes=notes,
+                            created_by=request.user
+                        )
+                        created_count += 1
+                
+                if created_count > 0:
+                    # Ghi lịch sử budget
+                    budget, created = TournamentBudget.objects.get_or_create(tournament=tournament)
+                    BudgetHistory.objects.create(
+                        budget=budget,
+                        action='ADD_STAFF_PAYMENT_BATCH',
+                        description=f'Thêm tiền công cho {created_count} nhân viên',
+                        amount=rate_per_unit * number_of_units * created_count,
+                        user=request.user
+                    )
+                    
+                    messages.success(request, f"Đã thêm tiền công cho {created_count} nhân viên thành công!")
+                else:
+                    messages.warning(request, "Tất cả nhân viên đã được chọn đều đã có tiền công!")
+                
+                return redirect('staff_payment_list', tournament_pk=tournament.pk)
+            else:
+                messages.error(request, "Vui lòng điền đầy đủ thông tin và chọn ít nhất 1 nhân viên!")
+        
+        # Tạo form mới cho lần render tiếp theo
+        form = StaffPaymentForm(tournament=tournament)
     else:
-        form = StaffPaymentQuickForm(tournament=tournament)
+        form = StaffPaymentForm(tournament=tournament)
+    
+    # Tạo staff_choices cho chế độ hàng loạt
+    staff_choices = [(staff.id, f"{staff.user.get_full_name()} - {staff.role.name}") 
+                     for staff in TournamentStaff.objects.filter(tournament=tournament)]
     
     context = {
         'tournament': tournament,
         'form': form,
+        'staff_choices': staff_choices,
         'is_organizer': is_organizer,
     }
     
-    return render(request, 'tournaments/add_staff_payment_quick.html', context)
+    return render(request, 'tournaments/add_staff_payment.html', context)
 
 
 @login_required
@@ -284,4 +293,10 @@ def delete_staff_payment(request, tournament_pk, payment_pk):
     payment.delete()
     messages.success(request, "Đã xóa tiền công nhân viên thành công!")
     
-    return redirect('staff_payment_list', tournament_pk=tournament.pk)
+    # Kiểm tra nếu request có tham số redirect_to
+    redirect_to = request.GET.get('redirect_to', 'staff_payment_list')
+    
+    if redirect_to == 'budget_dashboard':
+        return redirect('budget_dashboard', tournament_pk=tournament.pk)
+    else:
+        return redirect('staff_payment_list', tournament_pk=tournament.pk)
