@@ -28,6 +28,10 @@ alwaysApply: false
       - Xóa các dòng mô tả công việc vừa hoàn thành khỏi mục "Công việc đang tập trung".
       - Ghi lại các thay đổi quan trọng vào mục "Các thay đổi gần đây".
       - Ghi lại các quyết định kỹ thuật/thiết kế quan trọng vào mục "Các quyết định gần đây" nếu có.
+      - **QUAN TRỌNG:** Duy trì kích thước file hợp lý:
+        - Giữ tối đa 10 mục trong "Các thay đổi gần đây"
+        - Giữ tối đa 7 mục trong "Các quyết định gần đây"
+        - Di chuyển thông tin cũ vào `history.md` khi cần thiết
   5.  **Lưu và thông báo:** Tự động lưu các thay đổi vào file và thông báo cho người dùng theo đúng định dạng trong ví dụ.
 
 ## Examples
