@@ -17,11 +17,11 @@
                     <p class="text-muted mb-0">{{ tournament.name }}</p>
                 </div>
                 <div>
-                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-house"></i> Quản lý giải đấu
-                    </a>
                     <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="btn btn-outline-info me-2">
                         <i class="bi bi-graph-up"></i> Tài chính
+                    </a>
+                    <a href="{% url 'organizations:manage_tournament' pk=tournament.pk %}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-house"></i> Quản lý giải đấu
                     </a>
                     <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary">
                         <i class="bi bi-plus-circle"></i> Thêm tiền công
