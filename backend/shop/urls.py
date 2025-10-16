@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'shop'
@@ -41,4 +41,7 @@ urlpatterns = [
     
     # Admin dashboard (chỉ admin)
     path('admin/dashboard/', views.shop_dashboard, name='admin_dashboard'),
+    
+    # Organization Shop URLs
+    path('org/', include('shop.organization_urls')),
 ]

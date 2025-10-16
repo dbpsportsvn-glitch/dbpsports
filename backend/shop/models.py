@@ -3,6 +3,19 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
+# Import Organization Shop models
+from .organization_models import (
+    OrganizationCategory,
+    OrganizationProduct,
+    OrganizationProductVariant,
+    OrganizationProductImage,
+    OrganizationCart,
+    OrganizationCartItem,
+    OrganizationOrder,
+    OrganizationOrderItem,
+    OrganizationShopSettings,
+)
+
 
 class Category(models.Model):
     """Danh mục sản phẩm"""

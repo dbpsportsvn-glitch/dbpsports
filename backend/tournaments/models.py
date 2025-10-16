@@ -73,7 +73,7 @@ class Tournament(models.Model):
     
     def calculate_shop_discount(self, cart_items):
         """
-        Tính toán số tiền giảm giá từ tiền lãi của sản phẩm trong cart
+        Tính toán số tiền giảm giá từ tiền lãi của sản phẩm trong cart (Global Shop)
         """
         if self.shop_discount_percentage <= 0:
             return 0
@@ -90,13 +90,66 @@ class Tournament(models.Model):
         max_discount = self.registration_fee
         return min(discount_amount, max_discount)
     
-    def get_final_registration_fee(self, cart_items):
+    def calculate_organization_shop_discount(self, org_cart_items):
+        """
+        Tính toán số tiền giảm giá từ tiền lãi của sản phẩm trong Organization Shop cart
+        """
+        if self.shop_discount_percentage <= 0:
+            return 0
+        
+        # Chỉ tính khuyến mãi nếu cart thuộc về cùng organization với tournament
+        if not self.organization:
+            return 0
+        
+        total_profit = 0
+        for item in org_cart_items:
+            # Kiểm tra item thuộc về cùng organization
+            if item.product.organization == self.organization and item.product.cost_price:
+                profit_per_item = item.product.profit_amount
+                total_profit += profit_per_item * item.quantity
+        
+        # Tính phần trăm tiền lãi được trừ vào phí đăng ký
+        discount_amount = total_profit * (self.shop_discount_percentage / 100)
+        # Giới hạn giảm giá tối đa bằng phí đăng ký
+        max_discount = self.registration_fee
+        return min(discount_amount, max_discount)
+    
+    def get_final_registration_fee(self, cart_items=None, org_cart_items=None):
         """
         Tính phí đăng ký cuối cùng sau khi trừ giảm giá từ shop
+        Hỗ trợ cả Global Shop và Organization Shop
         """
-        discount = self.calculate_shop_discount(cart_items)
+        discount = 0
+        
+        # Tính khuyến mãi từ Global Shop
+        if cart_items:
+            discount += self.calculate_shop_discount(cart_items)
+        
+        # Tính khuyến mãi từ Organization Shop
+        if org_cart_items:
+            discount += self.calculate_organization_shop_discount(org_cart_items)
+        
         final_fee = self.registration_fee - discount
         return max(final_fee, 0)  # Không âm
+    
+    def has_organization_shop(self):
+        """
+        Kiểm tra xem tournament có hỗ trợ Organization Shop không
+        """
+        return self.organization is not None and self.shop_discount_percentage > 0
+    
+    def get_organization_shop_settings(self):
+        """
+        Lấy cài đặt shop của organization (nếu có)
+        """
+        if not self.organization:
+            return None
+        
+        from shop.models import OrganizationShopSettings
+        try:
+            return self.organization.shop_settings
+        except OrganizationShopSettings.DoesNotExist:
+            return None
 
 class Group(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='groups')

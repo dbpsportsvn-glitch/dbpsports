@@ -6,7 +6,11 @@ from .models import (
     Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, 
     ShopBanner, ProductImport, ProductSize, ProductVariant,
     PaymentMethod, BankAccount, EWalletAccount, PaymentStep, ContactInfo, PaymentPolicy,
-    CustomerShippingInfo, ContactSettings
+    CustomerShippingInfo, ContactSettings,
+    # Organization Shop models
+    OrganizationCategory, OrganizationProduct, OrganizationProductVariant, 
+    OrganizationProductImage, OrganizationCart, OrganizationCartItem, 
+    OrganizationOrder, OrganizationOrderItem, OrganizationShopSettings
 )
 
 
@@ -806,3 +810,243 @@ class ContactSettingsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Không cho phép xóa
         return False
+
+
+# ==================== ORGANIZATION SHOP ADMIN ====================
+
+@admin.register(OrganizationCategory)
+class OrganizationCategoryAdmin(admin.ModelAdmin):
+    list_display = ['organization', 'name', 'slug', 'is_active', 'created_at']
+    list_filter = ['organization', 'is_active', 'created_at']
+    search_fields = ['organization__name', 'name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Danh mục Shop BTC"
+        verbose_name_plural = "Danh mục Shop BTC"
+
+
+class OrganizationProductImageInline(admin.TabularInline):
+    model = OrganizationProductImage
+    extra = 1
+    fields = ['image', 'alt_text', 'order']
+
+
+class OrganizationProductVariantInline(admin.TabularInline):
+    model = OrganizationProductVariant
+    extra = 0
+    fields = ['size', 'sku', 'stock_quantity', 'price', 'sale_price', 'is_active']
+
+
+@admin.register(OrganizationProduct)
+class OrganizationProductAdmin(admin.ModelAdmin):
+    list_display = ['organization', 'name', 'category', 'current_price', 'stock_quantity', 'status', 'is_featured', 'created_at']
+    list_filter = ['organization', 'status', 'category', 'is_featured', 'is_bestseller', 'created_at']
+    search_fields = ['organization__name', 'name', 'description', 'sku']
+    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ['created_at', 'updated_at', 'published_at']
+    inlines = [OrganizationProductImageInline, OrganizationProductVariantInline]
+    
+    class Meta:
+        verbose_name = "Sản phẩm Shop BTC"
+        verbose_name_plural = "Sản phẩm Shop BTC"
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('organization', 'name', 'slug', 'category', 'sku', 'status')
+        }),
+        ('Mô tả', {
+            'fields': ('description', 'short_description')
+        }),
+        ('Giá cả', {
+            'fields': ('price', 'sale_price', 'cost_price')
+        }),
+        ('Kho hàng', {
+            'fields': ('stock_quantity', 'weight')
+        }),
+        ('Hình ảnh', {
+            'fields': ('main_image',)
+        }),
+        ('Tính năng', {
+            'fields': ('is_featured', 'is_bestseller')
+        }),
+        ('SEO', {
+            'fields': ('meta_title', 'meta_description'),
+            'classes': ('collapse',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at', 'published_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def current_price(self, obj):
+        """Hiển thị giá hiện tại"""
+        if obj.is_on_sale:
+            return format_html(
+                '<span style="color: #dc3545; text-decoration: line-through;">{}</span> '
+                '<span style="color: #28a745; font-weight: bold;">{}</span>',
+                f"{obj.price:,}đ",
+                f"{obj.current_price:,}đ"
+            )
+        return f"{obj.current_price:,}đ"
+    current_price.short_description = "Giá hiện tại"
+
+
+@admin.register(OrganizationCart)
+class OrganizationCartAdmin(admin.ModelAdmin):
+    list_display = ['user', 'organization', 'total_items', 'total_price', 'created_at']
+    list_filter = ['organization', 'created_at']
+    search_fields = ['user__username', 'user__email', 'organization__name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Giỏ hàng Shop BTC"
+        verbose_name_plural = "Giỏ hàng Shop BTC"
+
+    def total_items(self, obj):
+        return obj.total_items
+    total_items.short_description = "Số sản phẩm"
+
+    def total_price(self, obj):
+        return f"{obj.total_price:,}đ"
+    total_price.short_description = "Tổng tiền"
+
+
+class OrganizationOrderItemInline(admin.TabularInline):
+    model = OrganizationOrderItem
+    extra = 0
+    readonly_fields = ['total_price']
+
+
+@admin.register(OrganizationOrder)
+class OrganizationOrderAdmin(admin.ModelAdmin):
+    list_display = ['order_number', 'organization', 'customer_name', 'colored_status', 'colored_payment_status', 'total_amount', 'created_at']
+    list_filter = ['organization', 'status', 'payment_status', 'created_at', 'shipping_city']
+    search_fields = ['order_number', 'organization__name', 'customer_name', 'customer_email', 'customer_phone']
+    readonly_fields = ['order_number', 'created_at', 'updated_at']
+    inlines = [OrganizationOrderItemInline]
+    
+    class Meta:
+        verbose_name = "Đơn hàng Shop BTC"
+        verbose_name_plural = "Đơn hàng Shop BTC"
+    
+    fieldsets = (
+        ('Thông tin đơn hàng', {
+            'fields': ('organization', 'order_number', 'user', 'status', 'payment_status')
+        }),
+        ('Thông tin khách hàng', {
+            'fields': ('customer_name', 'customer_email', 'customer_phone')
+        }),
+        ('Địa chỉ giao hàng', {
+            'fields': ('shipping_address', 'shipping_city', 'shipping_district')
+        }),
+        ('Thông tin thanh toán', {
+            'fields': ('subtotal', 'shipping_fee', 'total_amount', 'payment_proof')
+        }),
+        ('Ghi chú', {
+            'fields': ('notes',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def colored_status(self, obj):
+        """Hiển thị trạng thái đơn hàng với màu sắc"""
+        status_colors = {
+            'pending': '#f59e0b',
+            'processing': '#0ea5e9',
+            'shipped': '#16a34a',
+            'delivered': '#16a34a',
+            'cancelled': '#dc2626',
+        }
+        
+        status_texts = {
+            'pending': 'Chờ xử lý',
+            'processing': 'Đang xử lý',
+            'shipped': 'Đã giao hàng',
+            'delivered': 'Đã nhận hàng',
+            'cancelled': 'Đã hủy',
+        }
+        
+        color = status_colors.get(obj.status, '#6b7280')
+        text = status_texts.get(obj.status, obj.status)
+        
+        return format_html(
+            '<span style="color: {}; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: {}20;">{}</span>',
+            color, color, text
+        )
+    colored_status.short_description = "Trạng thái"
+    colored_status.admin_order_field = 'status'
+    
+    def colored_payment_status(self, obj):
+        """Hiển thị trạng thái thanh toán với màu sắc"""
+        payment_colors = {
+            'pending': '#f59e0b',
+            'paid': '#16a34a',
+            'failed': '#dc2626',
+            'refunded': '#6b7280',
+        }
+        
+        payment_texts = {
+            'pending': 'Chờ thanh toán',
+            'paid': 'Đã thanh toán',
+            'failed': 'Thanh toán thất bại',
+            'refunded': 'Đã hoàn tiền',
+        }
+        
+        color = payment_colors.get(obj.payment_status, '#6b7280')
+        text = payment_texts.get(obj.payment_status, obj.payment_status)
+        
+        return format_html(
+            '<span style="color: {}; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: {}20;">{}</span>',
+            color, color, text
+        )
+    colored_payment_status.short_description = "Thanh toán"
+    colored_payment_status.admin_order_field = 'payment_status'
+    
+    def total_amount(self, obj):
+        """Hiển thị tổng tiền với định dạng đẹp"""
+        return format_html(
+            '<span style="font-weight: bold; color: #16a34a;">{}đ</span>',
+            f"{obj.total_amount:,}"
+        )
+    total_amount.short_description = "Tổng tiền"
+    total_amount.admin_order_field = 'total_amount'
+
+
+@admin.register(OrganizationShopSettings)
+class OrganizationShopSettingsAdmin(admin.ModelAdmin):
+    list_display = ['organization', 'shop_name', 'is_active', 'updated_at']
+    list_filter = ['is_active', 'created_at', 'updated_at']
+    search_fields = ['organization__name', 'shop_name', 'contact_phone', 'contact_email']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    class Meta:
+        verbose_name = "Cài đặt Shop BTC"
+        verbose_name_plural = "Cài đặt Shop BTC"
+    
+    fieldsets = (
+        ('Thông tin shop', {
+            'fields': ('organization', 'shop_name', 'shop_description', 'shop_logo')
+        }),
+        ('Thông tin liên hệ', {
+            'fields': ('contact_phone', 'contact_email', 'contact_address')
+        }),
+        ('Cài đặt thanh toán', {
+            'fields': ('bank_name', 'bank_account_number', 'bank_account_name', 'payment_qr_code')
+        }),
+        ('Cài đặt giao hàng', {
+            'fields': ('shipping_fee', 'free_shipping_threshold')
+        }),
+        ('Trạng thái', {
+            'fields': ('is_active',)
+        }),
+        ('Thời gian', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

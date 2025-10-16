@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.text import slugify
 
 class Organization(models.Model):
     """
@@ -21,6 +22,7 @@ class Organization(models.Model):
     # === KẾT THÚC THÊM MỚI ===
 
     name = models.CharField("Tên đơn vị tổ chức", max_length=150)
+    slug = models.SlugField("Slug", unique=True, blank=True, help_text="URL-friendly version of the name")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -42,6 +44,15 @@ class Organization(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Đảm bảo slug là unique
+            original_slug = self.slug
+            counter = 1
+            while Organization.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        
         is_new = self._state.adding
         super().save(*args, **kwargs)
         if is_new and self.owner:
