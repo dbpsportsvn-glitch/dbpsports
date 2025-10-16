@@ -57,6 +57,13 @@
         border: 1px solid rgba(255,255,255,0.3);
     }
     
+    .change-banner-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+    }
+    
     /* Modern Profile Navigation */
     .modern-profile-nav {
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -266,8 +273,14 @@
 
 {% block content %}
 <!-- Profile Banner -->
-<div class="profile-banner" style="background-image: url('{% if team.main_photo %}{{ team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');">
+<div class="profile-banner" style="background-image: url('{% if team.banner_image %}{{ team.banner_image.url }}{% elif team.main_photo %}{{ team.main_photo.url }}{% else %}/static/images/hero-1.jpg{% endif %}');">
     <div class="profile-banner-overlay"></div>
+    
+    {% if request.user == team.captain %}
+    <button class="btn btn-light change-banner-btn" data-bs-toggle="modal" data-bs-target="#changeBannerModal">
+        <i class="bi bi-camera"></i> Đổi ảnh bìa
+    </button>
+    {% endif %}
     
     <div class="profile-banner-content">
         <div class="container">
@@ -807,4 +820,44 @@ document.addEventListener('DOMContentLoaded', function() {
     [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 });
 </script>
+
+<!-- Change Banner Modal -->
+{% if request.user == team.captain %}
+<div class="modal fade" id="changeBannerModal" tabindex="-1" aria-labelledby="changeBannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeBannerModalLabel">
+                    <i class="bi bi-camera me-2"></i>Thay đổi ảnh bìa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'upload_team_banner' team_pk=team.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="banner_image" class="form-label">Chọn ảnh bìa mới</label>
+                        <input type="file" class="form-control" id="banner_image" name="banner_image" accept="image/*" required>
+                        <div class="form-text">Khuyến nghị: ảnh có kích thước 1920x400px</div>
+                    </div>
+                    {% if team.banner_image %}
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh bìa hiện tại:</label>
+                        <div class="text-center">
+                            <img src="{{ team.banner_image.url }}" alt="Banner hiện tại" class="img-fluid rounded" style="max-height: 150px;">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-2"></i>Cập nhật ảnh bìa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

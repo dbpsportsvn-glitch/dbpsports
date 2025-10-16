@@ -3,112 +3,409 @@
 
 {% block title %}{{ stadium_profile.stadium_name }} - Hồ sơ Sân bóng{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Banner Header Styles */
+    .stadium-banner {
+        position: relative;
+        height: 400px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    
+    .stadium-banner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+    }
+    
+    .stadium-banner-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2rem;
+        color: white;
+    }
+    
+    .stadium-logo-large {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .change-banner-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+    }
+    
+    .review-banner-btn {
+        position: absolute;
+        bottom: 1rem;
+        right: 2rem;
+        z-index: 10;
+    }
+    
+    .review-banner-btn .btn {
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .review-banner-btn .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+    }
+    
+    .stadium-name {
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        margin-bottom: 0.5rem;
+    }
+    
+    .region-badge {
+        font-size: 0.9rem;
+        font-weight: 600;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .rating-banner {
+        font-size: 1rem;
+        font-weight: 600;
+        background: rgba(255,193,7,0.9);
+        color: #000;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,193,7,0.3);
+    }
+    
+    /* Modern Profile Navigation */
+    .modern-profile-nav {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        margin: -20px auto 0;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    
+    .modern-profile-nav .nav-tabs {
+        border: none;
+        padding: 0.5rem;
+    }
+    
+    .modern-profile-nav .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin: 0 0.25rem;
+    }
+    
+    .modern-profile-nav .nav-link:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .modern-profile-nav .nav-link.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .profile-content {
+        margin-top: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: none;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .info-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 16px 16px 0 0;
+        border: none;
+        padding: 1rem 1.5rem;
+    }
+    
+    .info-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .stadium-banner {
+            height: 300px;
+        }
+        
+        .stadium-banner-content {
+            padding: 1rem;
+        }
+        
+        .stadium-logo-large {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .stadium-name {
+            font-size: 1.8rem;
+        }
+        
+        .modern-profile-nav .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <div class="col-lg-4">
-            {# Thông tin cơ bản #}
-            <div class="card shadow mb-3">
-                <div class="card-body text-center">
-                    {% if stadium_profile.logo %}
-                    <img src="{{ stadium_profile.logo.url }}" alt="{{ stadium_profile.stadium_name }}" class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
-                    {% else %}
-                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
-                        <i class="bi bi-house text-white" style="font-size: 3rem;"></i>
+<!-- Stadium Banner -->
+<div class="stadium-banner" style="background-image: url('{% if stadium_profile.banner_image %}{{ stadium_profile.banner_image.url }}{% else %}{% static "images/hero-2.jpg" %}{% endif %}');">
+    <div class="stadium-banner-overlay"></div>
+    
+    {% if can_edit %}
+    <button class="btn btn-light change-banner-btn" data-bs-toggle="modal" data-bs-target="#changeBannerModal">
+        <i class="bi bi-camera"></i> Đổi ảnh bìa
+    </button>
+    {% endif %}
+    
+    <!-- Review Button for All Users -->
+    {% if user.is_authenticated and not can_edit and not user_reviewed %}
+    <div class="review-banner-btn">
+        <a href="{% url 'create_stadium_review' stadium_pk=stadium_profile.pk %}" class="btn btn-warning btn-lg shadow-sm">
+            <i class="bi bi-star-fill me-2"></i>Đánh giá {{ stadium_profile.stadium_name }}
+        </a>
+    </div>
+    {% endif %}
+    
+    <div class="stadium-banner-content">
+        <div class="container">
+            <div class="d-flex align-items-end gap-4 flex-wrap">
+                {% if stadium_profile.logo %}
+                    <img src="{{ stadium_profile.logo.url }}" alt="{{ stadium_profile.stadium_name }}" class="stadium-logo-large">
+                {% else %}
+                    <div class="stadium-logo-large bg-primary d-flex justify-content-center align-items-center fs-1">
+                        <i class="bi bi-house"></i>
                     </div>
-                    {% endif %}
+                {% endif %}
+                
+                <div class="flex-grow-1">
+                    <h1 class="stadium-name">{{ stadium_profile.stadium_name }}</h1>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge region-badge">
+                            <i class="bi bi-geo-alt"></i> {{ stadium_profile.get_region_display }}
+                        </span>
+                        {% if avg_rating > 0 %}
+                        <span class="badge rating-banner">
+                            <i class="bi bi-star-fill"></i> {{ avg_rating }}/5
+                        </span>
+                        {% endif %}
+                        <span class="badge region-badge">
+                            <i class="bi bi-people"></i> {{ stadium_profile.get_field_type_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if can_edit %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'create_stadium_profile' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa hồ sơ
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modern Profile Navigation -->
+<div class="modern-profile-nav">
+    <div class="container">
+        <ul class="nav nav-tabs justify-content-center" id="stadiumTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="bi bi-info-circle me-2"></i>Tổng quan
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="facilities-tab" data-bs-toggle="tab" data-bs-target="#facilities" type="button" role="tab">
+                    <i class="bi bi-geo-alt me-2"></i>Thông tin sân
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                    <i class="bi bi-star me-2"></i>Đánh giá
+                </button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Profile Content -->
+<div class="container profile-content">
+    <div class="tab-content" id="stadiumTabContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-4">
+                    <!-- Contact Info Card -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-telephone me-2"></i>Thông tin liên hệ</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if stadium_profile.phone_number %}
+                            <p class="mb-2"><strong><i class="bi bi-phone me-2"></i>Điện thoại:</strong><br>{{ stadium_profile.phone_number }}</p>
+                            {% endif %}
+                            {% if stadium_profile.email %}
+                            <p class="mb-2"><strong><i class="bi bi-envelope me-2"></i>Email:</strong><br>{{ stadium_profile.email }}</p>
+                            {% endif %}
+                            {% if stadium_profile.website %}
+                            <p class="mb-0"><strong><i class="bi bi-globe me-2"></i>Website:</strong><br><a href="{{ stadium_profile.website }}" target="_blank">{{ stadium_profile.website }}</a></p>
+                            {% endif %}
+                        </div>
+                    </div>
                     
-                    <h4 class="mb-2">{{ stadium_profile.stadium_name }}</h4>
-                    <p class="text-muted mb-3">{{ stadium_profile.get_region_display }}</p>
-                    
-                    {# Rating trung bình #}
-                    {% if avg_rating > 0 %}
-                    <div class="d-flex justify-content-center align-items-center mb-3">
-                        <span class="badge bg-warning text-dark me-2">{{ avg_rating }}/5</span>
-                        <div class="star-rating">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= avg_rating %}
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                {% else %}
-                                    <i class="bi bi-star text-muted"></i>
-                                {% endif %}
-                            {% endfor %}
+                    <!-- Basic Info Card -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin cơ bản</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2"><strong><i class="bi bi-geo-alt me-2"></i>Địa chỉ:</strong><br>{{ stadium_profile.address }}</p>
+                            <p class="mb-2"><strong><i class="bi bi-people me-2"></i>Loại sân:</strong><br>{{ stadium_profile.get_field_type_display }}</p>
+                            {% if stadium_profile.capacity %}
+                            <p class="mb-2"><strong><i class="bi bi-person-badge me-2"></i>Sức chứa:</strong><br>{{ stadium_profile.capacity }} người</p>
+                            {% endif %}
+                            <p class="mb-0"><strong><i class="bi bi-grid me-2"></i>Số sân:</strong><br>{{ stadium_profile.number_of_fields }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <!-- Description Card -->
+                    {% if stadium_profile.description %}
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-file-text me-2"></i>Mô tả sân bóng</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.description }}</p>
                         </div>
                     </div>
                     {% endif %}
                     
-                    {# Nút chỉnh sửa #}
-                    {% if can_edit %}
-                    <a href="{% url 'create_stadium_profile' %}" class="btn btn-primary">
-                        <i class="bi bi-pencil"></i> Chỉnh sửa hồ sơ
-                    </a>
+                    <!-- Amenities Card -->
+                    {% if stadium_profile.amenities %}
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Tiện ích</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.amenities }}</p>
+                        </div>
+                    </div>
                     {% endif %}
-                </div>
-            </div>
-            
-            {# Thông tin liên hệ #}
-            <div class="card shadow mb-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-telephone"></i> Thông tin liên hệ</h6>
-                </div>
-                <div class="card-body">
-                    {% if stadium_profile.phone_number %}
-                    <p class="mb-2"><strong>Điện thoại:</strong> {{ stadium_profile.phone_number }}</p>
-                    {% endif %}
-                    {% if stadium_profile.email %}
-                    <p class="mb-2"><strong>Email:</strong> {{ stadium_profile.email }}</p>
-                    {% endif %}
-                    {% if stadium_profile.website %}
-                    <p class="mb-0"><strong>Website:</strong> <a href="{{ stadium_profile.website }}" target="_blank">{{ stadium_profile.website }}</a></p>
+                    
+                    <!-- Operating Hours Card -->
+                    {% if stadium_profile.operating_hours %}
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-clock me-2"></i>Giờ hoạt động</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.operating_hours }}</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
         
-        <div class="col-lg-8">
-            {# Mô tả #}
-            {% if stadium_profile.description %}
-            <div class="card shadow mb-3">
+        <!-- Facilities Tab -->
+        <div class="tab-pane fade" id="facilities" role="tabpanel">
+            <div class="info-card">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Mô tả</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.description }}</p>
-                </div>
-            </div>
-            {% endif %}
-            
-            {# Thông tin sân #}
-            <div class="card shadow mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Thông tin sân</h5>
+                    <h6 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Thông tin chi tiết sân bóng</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>Địa chỉ:</strong> {{ stadium_profile.address }}</p>
-                            <p><strong>Loại sân:</strong> {{ stadium_profile.get_field_type_display }}</p>
-                            <p><strong>Sức chứa:</strong> {{ stadium_profile.capacity }} người</p>
+                            <div class="mb-3">
+                                <strong><i class="bi bi-geo-alt me-2"></i>Địa chỉ:</strong>
+                                <p class="mt-1">{{ stadium_profile.address }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong><i class="bi bi-people me-2"></i>Loại sân:</strong>
+                                <p class="mt-1">{{ stadium_profile.get_field_type_display }}</p>
+                            </div>
+                            {% if stadium_profile.capacity %}
+                            <div class="mb-3">
+                                <strong><i class="bi bi-person-badge me-2"></i>Sức chứa khán giả:</strong>
+                                <p class="mt-1">{{ stadium_profile.capacity }} người</p>
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Số sân:</strong> {{ stadium_profile.number_of_fields }}</p>
-                            <p><strong>Giá thuê:</strong> {{ stadium_profile.rental_price_range }}</p>
+                            <div class="mb-3">
+                                <strong><i class="bi bi-grid me-2"></i>Số sân:</strong>
+                                <p class="mt-1">{{ stadium_profile.number_of_fields }}</p>
+                            </div>
+                            {% if stadium_profile.rental_price_range %}
+                            <div class="mb-3">
+                                <strong><i class="bi bi-currency-dollar me-2"></i>Giá thuê:</strong>
+                                <p class="mt-1">{{ stadium_profile.rental_price_range }}</p>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <strong><i class="bi bi-geo me-2"></i>Khu vực:</strong>
+                                <p class="mt-1">{{ stadium_profile.get_region_display }}</p>
+                            </div>
                         </div>
                     </div>
                     
                     {% if stadium_profile.amenities %}
-                    <div class="mt-3">
-                        <strong>Tiện ích:</strong>
-                        <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.amenities }}</p>
+                    <div class="mt-4">
+                        <strong><i class="bi bi-list-check me-2"></i>Tiện ích:</strong>
+                        <div class="mt-2 p-3 bg-light rounded">
+                            <p class="mb-0" style="white-space: pre-line;">{{ stadium_profile.amenities }}</p>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
             </div>
-            
-            {# Đánh giá và Reviews #}
-            <div class="card shadow mb-3">
+        </div>
+        
+        <!-- Reviews Tab -->
+        <div class="tab-pane fade" id="reviews" role="tabpanel">
+            <div class="info-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-star-fill"></i> Đánh giá</h5>
+                    <h6 class="mb-0"><i class="bi bi-star-fill me-2"></i>Đánh giá từ khách hàng</h6>
                     {% if avg_rating > 0 %}
                     <div class="d-flex align-items-center">
                         <span class="badge bg-warning text-dark me-2">{{ avg_rating }}/5</span>
@@ -129,12 +426,12 @@
                         <div class="row">
                             {% for review in reviews %}
                             <div class="col-md-6 mb-3">
-                                <div class="border rounded p-3">
+                                <div class="border rounded p-3 h-100">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
                                             <strong>{{ review.reviewer.get_full_name|default:review.reviewer.username }}</strong>
                                             {% if review.team %}
-                                                <small class="text-muted">- {{ review.team.name }}</small>
+                                                <small class="text-muted d-block">- {{ review.team.name }}</small>
                                             {% endif %}
                                         </div>
                                         <div class="star-rating">
@@ -148,22 +445,25 @@
                                         </div>
                                     </div>
                                     {% if review.comment %}
-                                    <p class="mb-0 small">{{ review.comment }}</p>
+                                    <p class="mb-2 small">{{ review.comment }}</p>
                                     {% endif %}
-                                    <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+                                    <small class="text-muted">{{ review.created_at|date:"d/m/Y H:i" }}</small>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-muted mb-0">Chưa có đánh giá nào.</p>
+                        <div class="text-center py-4">
+                            <i class="bi bi-star text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2 mb-0">Chưa có đánh giá nào.</p>
+                        </div>
                     {% endif %}
                     
-                    {# Nút đánh giá #}
+                    <!-- Review Button -->
                     {% if user.is_authenticated and not can_edit and not user_reviewed %}
-                    <div class="mt-3">
-                        <a href="{% url 'create_stadium_review' stadium_pk=stadium_profile.pk %}" class="btn btn-outline-primary">
-                            <i class="bi bi-star"></i> Đánh giá sân bóng này
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'create_stadium_review' stadium_pk=stadium_profile.pk %}" class="btn btn-primary">
+                            <i class="bi bi-star me-2"></i>Đánh giá sân bóng này
                         </a>
                     </div>
                     {% endif %}
@@ -172,4 +472,44 @@
         </div>
     </div>
 </div>
+
+<!-- Change Banner Modal -->
+{% if can_edit %}
+<div class="modal fade" id="changeBannerModal" tabindex="-1" aria-labelledby="changeBannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeBannerModalLabel">
+                    <i class="bi bi-camera me-2"></i>Thay đổi ảnh bìa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'upload_stadium_banner' stadium_pk=stadium_profile.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="banner_image" class="form-label">Chọn ảnh bìa mới</label>
+                        <input type="file" class="form-control" id="banner_image" name="banner_image" accept="image/*" required>
+                        <div class="form-text">Khuyến nghị: ảnh có kích thước 1920x400px</div>
+                    </div>
+                    {% if stadium_profile.banner_image %}
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh bìa hiện tại:</label>
+                        <div class="text-center">
+                            <img src="{{ stadium_profile.banner_image.url }}" alt="Banner hiện tại" class="img-fluid rounded" style="max-height: 150px;">
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-2"></i>Cập nhật ảnh bìa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

@@ -157,6 +157,7 @@ class Team(models.Model):
     )
     captain = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     logo = models.ImageField(upload_to='team_logos/', null=True, blank=True)
+    banner_image = models.ImageField("Ảnh bìa hồ sơ", upload_to='team_banners/', null=True, blank=True, help_text="Ảnh bìa hiển thị ở đầu trang hồ sơ (khuyến nghị: 1920x400px)")
     main_photo = models.ImageField("Ảnh đại diện đội", upload_to='team_main_photos/', null=True, blank=True, help_text="Ảnh toàn đội sẽ hiển thị ở Phòng Truyền thống.")
     kit_home_color = ColorField(verbose_name="Màu áo sân nhà", default='#FFFFFF')
     kit_away_color = ColorField(verbose_name="Màu áo sân khách", default='#1E293B')

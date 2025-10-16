@@ -18,6 +18,74 @@ from django.db.models import Avg, Count
 from django.db import transaction
 from tournaments.forms import PlayerCreationForm
 from tournaments.models import Player
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+import os
+
+def compress_banner_image(image_field):
+    """
+    Nén ảnh banner để giảm kích thước file
+    Target: giảm xuống dưới 2MB với chất lượng 85%
+    """
+    if not image_field or not hasattr(image_field, 'read'):
+        return image_field
+    
+    try:
+        # Reset file pointer to beginning
+        image_field.seek(0)
+        
+        # Mở ảnh với PIL
+        img = Image.open(image_field)
+        
+        # Chuyển đổi sang RGB nếu cần (cho PNG có alpha channel)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        
+        # Tính toán kích thước mới để đảm bảo file < 2MB
+        # Giả sử 1 pixel RGB = 3 bytes, với quality 85% và compression
+        # Target: 2MB = 2,097,152 bytes
+        target_size = 2 * 1024 * 1024  # 2MB
+        current_pixels = img.width * img.height
+        
+        # Nếu ảnh quá lớn, resize để giảm kích thước
+        if current_pixels > 1920 * 1080:  # Nếu lớn hơn Full HD
+            # Tính tỷ lệ để giảm xuống khoảng 1920x1080
+            ratio = min(1920 / img.width, 1080 / img.height)
+            new_width = int(img.width * ratio)
+            new_height = int(img.height * ratio)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Nén ảnh với quality 85%
+        buffer = BytesIO()
+        img.save(buffer, format='JPEG', quality=85, optimize=True)
+        
+        # Kiểm tra kích thước sau khi nén
+        compressed_size = buffer.tell()
+        
+        # Nếu vẫn quá lớn, giảm quality xuống 75%
+        if compressed_size > target_size:
+            buffer = BytesIO()
+            img.save(buffer, format='JPEG', quality=75, optimize=True)
+            compressed_size = buffer.tell()
+        
+        # Nếu vẫn quá lớn, giảm quality xuống 65%
+        if compressed_size > target_size:
+            buffer = BytesIO()
+            img.save(buffer, format='JPEG', quality=65, optimize=True)
+        
+        # Tạo file mới với tên gốc
+        file_name = os.path.basename(image_field.name)
+        if not file_name.lower().endswith('.jpg'):
+            file_name = os.path.splitext(file_name)[0] + '.jpg'
+        
+        new_image = ContentFile(buffer.getvalue(), name=file_name)
+        return new_image
+        
+    except Exception as e:
+        # Nếu có lỗi trong quá trình nén, trả về file gốc
+        print(f"Error compressing image: {e}")
+        return image_field
 
 @login_required
 def dashboard(request):
@@ -1037,24 +1105,56 @@ def upload_profile_banner(request):
     if request.method == 'POST':
         banner_image = request.FILES.get('banner_image')
         if banner_image:
-            # Validate file size (max 5MB)
-            if banner_image.size > 5 * 1024 * 1024:
-                messages.error(request, "Kích thước ảnh không được vượt quá 5MB.")
-                return redirect('public_profile', username=request.user.username or request.user.email)
-            
             # Validate file type
             allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
             if banner_image.content_type not in allowed_types:
                 messages.error(request, "Chỉ chấp nhận file ảnh (JPG, PNG, WebP).")
                 return redirect('public_profile', username=request.user.username or request.user.email)
             
-            # Save to profile
-            profile = request.user.profile
-            profile.banner_image = banner_image
-            profile.save()
-            
-            messages.success(request, "Đã cập nhật ảnh bìa hồ sơ thành công!")
+            # Tự động nén ảnh để giảm kích thước
+            try:
+                compressed_image = compress_banner_image(banner_image)
+                profile = request.user.profile
+                profile.banner_image = compressed_image
+                profile.save()
+                
+                messages.success(request, "Đã cập nhật ảnh bìa hồ sơ thành công! Ảnh đã được tự động nén để tối ưu.")
+            except Exception as e:
+                messages.error(request, f"Có lỗi xảy ra khi xử lý ảnh: {str(e)}")
+                return redirect('public_profile', username=request.user.username or request.user.email)
     return redirect('public_profile', username=request.user.username or request.user.email)
+
+
+@login_required
+def upload_stadium_banner(request, stadium_pk):
+    """Upload stadium banner image"""
+    try:
+        stadium_profile = StadiumProfile.objects.get(pk=stadium_pk, user=request.user)
+    except StadiumProfile.DoesNotExist:
+        messages.error(request, "Không tìm thấy hồ sơ sân bóng hoặc bạn không có quyền chỉnh sửa.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        banner_image = request.FILES.get('banner_image')
+        if banner_image:
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            if banner_image.content_type not in allowed_types:
+                messages.error(request, "Chỉ chấp nhận file ảnh (JPG, PNG, WebP).")
+                return redirect('stadium_profile_detail', pk=stadium_pk)
+            
+            # Tự động nén ảnh để giảm kích thước
+            try:
+                compressed_image = compress_banner_image(banner_image)
+                stadium_profile.banner_image = compressed_image
+                stadium_profile.save()
+                
+                messages.success(request, "Đã cập nhật ảnh bìa hồ sơ sân bóng thành công! Ảnh đã được tự động nén để tối ưu.")
+            except Exception as e:
+                messages.error(request, f"Có lỗi xảy ra khi xử lý ảnh: {str(e)}")
+                return redirect('stadium_profile_detail', pk=stadium_pk)
+    
+    return redirect('stadium_profile_detail', pk=stadium_pk)
 
 
 # === VIEW CHO FORM THỐNG NHẤT ===

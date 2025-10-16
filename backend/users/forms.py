@@ -74,7 +74,7 @@ class StadiumProfileForm(forms.ModelForm):
     class Meta:
         model = StadiumProfile
         fields = [
-            'stadium_name', 'logo', 'description', 
+            'stadium_name', 'logo', 'banner_image', 'description', 
             'address', 'region', 'location_detail', 
             'phone_number', 'email', 'website',
             'field_type', 'capacity', 'number_of_fields',
@@ -85,6 +85,7 @@ class StadiumProfileForm(forms.ModelForm):
         labels = {
             'stadium_name': 'Tên sân bóng',
             'logo': 'Logo/Ảnh sân',
+            'banner_image': 'Ảnh bìa hồ sơ',
             'description': 'Mô tả sân bóng',
             'address': 'Địa chỉ chi tiết',
             'region': 'Khu vực',

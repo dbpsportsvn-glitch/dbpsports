@@ -149,6 +149,7 @@ class StadiumProfile(models.Model):
     # Thông tin cơ bản
     stadium_name = models.CharField("Tên sân", max_length=150)
     logo = models.ImageField("Logo/Ảnh sân", upload_to='stadium_logos/', null=True, blank=True)
+    banner_image = models.ImageField("Ảnh bìa hồ sơ", upload_to='stadium_banners/', null=True, blank=True, help_text="Ảnh bìa hiển thị ở đầu trang hồ sơ (khuyến nghị: 1920x400px)")
     description = models.TextField("Mô tả", blank=True, help_text="Giới thiệu về sân bóng, cơ sở vật chất...")
     
     # Địa chỉ & Liên hệ
