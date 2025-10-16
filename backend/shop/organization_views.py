@@ -420,6 +420,47 @@ def organization_place_order(request, org_slug):
         if not cart_items:
             return JsonResponse({'success': False, 'error': 'Giỏ hàng trống'})
         
+        # Validation required fields
+        customer_name = request.POST.get('customer_name', '').strip()
+        customer_email = request.POST.get('customer_email', '').strip()
+        customer_phone = request.POST.get('customer_phone', '').strip()
+        shipping_address = request.POST.get('shipping_address', '').strip()
+        shipping_city = request.POST.get('shipping_city', '').strip()
+        shipping_district = request.POST.get('shipping_district', '').strip()
+        
+        # Debug logging
+        print(f"DEBUG - Received data:")
+        print(f"  customer_name: '{customer_name}' (len: {len(customer_name)})")
+        print(f"  customer_email: '{customer_email}'")
+        print(f"  customer_phone: '{customer_phone}'")
+        print(f"  shipping_address: '{shipping_address}'")
+        print(f"  shipping_city: '{shipping_city}'")
+        print(f"  shipping_district: '{shipping_district}'")
+        print(f"  POST data: {dict(request.POST)}")
+        
+        if not customer_name:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập họ và tên'})
+        if not customer_email:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập email'})
+        if not customer_phone:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập số điện thoại'})
+        if not shipping_address:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập địa chỉ'})
+        if not shipping_city:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập thành phố'})
+        if not shipping_district:
+            return JsonResponse({'success': False, 'error': 'Vui lòng nhập quận/huyện'})
+        
+        # Kiểm tra tồn kho
+        for cart_item in cart_items:
+            if cart_item.product.has_sizes and cart_item.size:
+                variant = cart_item.product.variants.filter(size=cart_item.size).first()
+                if not variant or variant.stock_quantity < cart_item.quantity:
+                    return JsonResponse({'success': False, 'error': f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho'})
+            else:
+                if cart_item.product.stock_quantity < cart_item.quantity:
+                    return JsonResponse({'success': False, 'error': f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho'})
+        
         # Tính tổng tiền
         subtotal = cart.total_price
         shipping_fee = shop_settings.shipping_fee
@@ -434,12 +475,12 @@ def organization_place_order(request, org_slug):
             order = OrganizationOrder.objects.create(
                 organization=organization,
                 user=request.user,
-                customer_name=request.POST.get('customer_name', request.user.get_full_name() or request.user.username),
-                customer_email=request.POST.get('customer_email', request.user.email),
-                customer_phone=request.POST.get('customer_phone', ''),
-                shipping_address=request.POST.get('shipping_address', ''),
-                shipping_city=request.POST.get('shipping_city', ''),
-                shipping_district=request.POST.get('shipping_district', ''),
+                customer_name=customer_name,
+                customer_email=customer_email,
+                customer_phone=customer_phone,
+                shipping_address=shipping_address,
+                shipping_city=shipping_city,
+                shipping_district=shipping_district,
                 subtotal=subtotal,
                 shipping_fee=shipping_fee,
                 total_amount=total_amount,
@@ -478,7 +519,7 @@ def organization_place_order(request, org_slug):
             'success': True, 
             'message': 'Đặt hàng thành công',
             'order_number': order.order_number,
-            'redirect_url': reverse('organization_order_detail', kwargs={'org_slug': org_slug, 'order_id': order.id})
+            'redirect_url': f'/shop/org/{organization.slug}/orders/{order.order_number}/?success=1'
         })
         
     except Exception as e:
@@ -486,18 +527,59 @@ def organization_place_order(request, org_slug):
 
 
 @login_required
-def organization_order_detail(request, org_slug, order_id):
+def organization_order_detail(request, org_slug, order_number):
     """Chi tiết đơn hàng Organization"""
     organization = get_object_or_404(Organization, slug=org_slug)
-    order = get_object_or_404(
-        OrganizationOrder, 
-        id=order_id,
-        organization=organization,
-        user=request.user
-    )
+    
+    # Debug logging
+    print(f"DEBUG - Order Detail Request:")
+    print(f"  org_slug: {org_slug}")
+    print(f"  order_number: {order_number}")
+    print(f"  user: {request.user}")
+    print(f"  organization: {organization}")
+    
+    # First try to find the order
+    try:
+        order = OrganizationOrder.objects.get(
+            order_number=order_number,
+            organization=organization
+        )
+        print(f"  Found order: {order}")
+        print(f"  Order user: {order.user}")
+        print(f"  Order status: {order.status}")
+        
+        # Check if user has permission to view this order
+        # BTC members can view all orders, customers can only view their own orders
+        is_btc_member = organization.members.filter(id=request.user.id).exists()
+        
+        if not is_btc_member and order.user != request.user:
+            print(f"  Permission denied: Order belongs to {order.user}, requested by {request.user}")
+            return render(request, 'shop/organization/order_detail.html', {
+                'organization': organization,
+                'error': 'Bạn không có quyền xem đơn hàng này'
+            })
+            
+    except OrganizationOrder.DoesNotExist:
+        print(f"  Order not found: {order_number}")
+        # Debug: List all orders for this organization
+        all_orders = OrganizationOrder.objects.filter(organization=organization)
+        print(f"  All orders for {organization.name}:")
+        for o in all_orders:
+            print(f"    - {o.order_number} (user: {o.user})")
+        return render(request, 'shop/organization/order_detail.html', {
+            'organization': organization,
+            'error': 'Đơn hàng không tồn tại'
+        })
+    
+    # Get shop settings for template
+    try:
+        shop_settings = organization.shop_settings
+    except OrganizationShopSettings.DoesNotExist:
+        shop_settings = None
     
     context = {
         'organization': organization,
+        'shop_settings': shop_settings,
         'order': order,
     }
     
@@ -509,14 +591,57 @@ def organization_order_list(request, org_slug):
     """Danh sách đơn hàng Organization"""
     organization = get_object_or_404(Organization, slug=org_slug)
     
+    # Lấy tham số lọc
+    status_filter = request.GET.get('status', '')
+    
+    # Query đơn hàng
     orders = OrganizationOrder.objects.filter(
         organization=organization,
         user=request.user
-    ).order_by('-created_at')
+    )
+    
+    # Lọc theo trạng thái nếu có
+    if status_filter:
+        if status_filter == 'active':
+            # Chỉ hiển thị đơn hàng chưa hủy
+            orders = orders.exclude(status='cancelled')
+        elif status_filter == 'cancelled':
+            # Chỉ hiển thị đơn hàng đã hủy
+            orders = orders.filter(status='cancelled')
+        else:
+            # Lọc theo trạng thái cụ thể
+            orders = orders.filter(status=status_filter)
+    
+    # Sắp xếp: đơn hàng active trước, cancelled sau
+    orders = orders.order_by(
+        'status',  # cancelled sẽ ở cuối
+        '-created_at'
+    )
+    
+    # Thống kê
+    total_orders = OrganizationOrder.objects.filter(
+        organization=organization,
+        user=request.user
+    ).count()
+    
+    active_orders = OrganizationOrder.objects.filter(
+        organization=organization,
+        user=request.user
+    ).exclude(status='cancelled').count()
+    
+    cancelled_orders = OrganizationOrder.objects.filter(
+        organization=organization,
+        user=request.user,
+        status='cancelled'
+    ).count()
     
     context = {
         'organization': organization,
         'orders': orders,
+        'status_filter': status_filter,
+        'total_orders': total_orders,
+        'active_orders': active_orders,
+        'cancelled_orders': cancelled_orders,
     }
     
     return render(request, 'shop/organization/order_list.html', context)
@@ -698,6 +823,41 @@ def manage_orders(request, org_slug):
         messages.error(request, 'Bạn không có quyền truy cập shop này')
         return redirect('organizations:dashboard')
     
+    # Xử lý POST request (cập nhật trạng thái đơn hàng)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+            order_id = data.get('order_id')
+            
+            order = get_object_or_404(OrganizationOrder, id=order_id, organization=organization)
+            
+            if action == 'update_status':
+                new_status = data.get('status')
+                if new_status in ['processing', 'shipped', 'delivered', 'cancelled']:
+                    order.status = new_status
+                    order.save()
+                    return JsonResponse({'success': True, 'message': f'Đã cập nhật trạng thái đơn hàng thành {new_status}'})
+                    
+            elif action == 'confirm_payment':
+                if order.payment_status == 'pending':
+                    order.payment_status = 'paid'
+                    order.save()
+                    return JsonResponse({'success': True, 'message': 'Đã xác nhận thanh toán'})
+                    
+            elif action == 'cancel_order':
+                reason = data.get('reason', '')
+                order.status = 'cancelled'
+                # Cập nhật trạng thái thanh toán khi hủy đơn hàng
+                if order.payment_status == 'pending':
+                    order.payment_status = 'failed'
+                order.notes = f"{order.notes}\n[Hủy đơn hàng] {reason}" if order.notes else f"[Hủy đơn hàng] {reason}"
+                order.save()
+                return JsonResponse({'success': True, 'message': 'Đã hủy đơn hàng'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
     # Lọc đơn hàng
     status = request.GET.get('status', '')
     search = request.GET.get('search', '')
@@ -719,11 +879,24 @@ def manage_orders(request, org_slug):
     page_number = request.GET.get('page')
     orders = paginator.get_page(page_number)
     
+    # Thống kê
+    total_orders = OrganizationOrder.objects.filter(organization=organization).count()
+    pending_orders = OrganizationOrder.objects.filter(organization=organization, status='pending').count()
+    delivered_orders = OrganizationOrder.objects.filter(organization=organization, status='delivered').count()
+    total_revenue = OrganizationOrder.objects.filter(
+        organization=organization, 
+        payment_status='paid'
+    ).aggregate(total=models.Sum('total_amount'))['total'] or 0
+    
     context = {
         'organization': organization,
         'orders': orders,
         'status': status,
         'search': search,
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        'delivered_orders': delivered_orders,
+        'total_revenue': total_revenue,
     }
     
     return render(request, 'shop/organization/manage_orders.html', context)

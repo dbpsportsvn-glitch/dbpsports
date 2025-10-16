@@ -82,11 +82,30 @@
         border-bottom: 1px solid #e9ecef;
     }
     
-    .summary-row:last-child {
+    .summary-row.total {
         border-bottom: none;
+        border-top: 2px solid #ff6b35;
+        padding-top: 1rem;
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+        color: #ff6b35;
         font-weight: bold;
-        font-size: 1.2rem;
-        color: #2c3e50;
+        background: linear-gradient(135deg, #fff5f0 0%, #ffe8e0 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .summary-row.total span {
+        color: #ff6b35;
+        font-weight: bold;
+    }
+    
+    .total-price {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: #ff6b35;
+        text-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
     }
     
     .place-order-btn {
@@ -178,6 +197,16 @@
         color: #dc3545;
         font-size: 0.875rem;
         margin-top: 0.25rem;
+    }
+    
+    .is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
     }
     
     .bank-info {
@@ -297,6 +326,71 @@
         color: #6c757d;
         margin-bottom: 0;
     }
+    
+    .proof-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .proof-actions .btn {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .proof-actions .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+    }
+    
+    .proof-actions .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    
+    .proof-actions .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    /* Toast Notification */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+    
+    .toast {
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        margin-bottom: 10px;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+    
+    .toast.error {
+        background: #dc3545;
+    }
+    
+    .toast.warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .toast.success {
+        background: #28a745;
+    }
 </style>
 {% endblock %}
 
@@ -394,34 +488,13 @@
                     </div>
                 </div>
                 
-                <!-- Payment Proof Upload -->
-                <div class="card checkout-card" id="payment-proof-section" style="display: none;">
-                    <div class="card-body">
-                        <h4 class="section-title">Upload Hóa Đơn Thanh Toán</h4>
-                        
-                        <div class="payment-proof-section">
-                            <div class="proof-upload">
-                                <input type="file" id="payment-proof" name="payment_proof" accept="image/*,.pdf" class="proof-input">
-                                <label for="payment-proof" class="proof-label">
-                                    <i class="fas fa-cloud-upload-alt me-2"></i>
-                                    Chọn file hóa đơn (JPG, PNG, PDF)
-                                </label>
-                                <div class="proof-preview" id="proof-preview"></div>
-                            </div>
-                            <p class="proof-note">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Vui lòng upload hóa đơn chuyển khoản để chúng tôi xác nhận đơn hàng nhanh hơn
-                            </p>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Payment Method -->
                 <div class="card checkout-card">
                     <div class="card-body">
                         <h4 class="section-title">Phương Thức Thanh Toán</h4>
                         
-                        <div class="payment-method">
+                        <div class="payment-method" onclick="selectPaymentMethod('COD')">
                             <input type="radio" name="payment_method" value="COD" id="cod" checked>
                             <label for="cod" class="form-label mb-0">
                                 <i class="fas fa-money-bill-wave me-2"></i>
@@ -431,7 +504,7 @@
                             </label>
                         </div>
                         
-                        <div class="payment-method">
+                        <div class="payment-method" onclick="selectPaymentMethod('BANK_TRANSFER')">
                             <input type="radio" name="payment_method" value="BANK_TRANSFER" id="bank_transfer">
                             <label for="bank_transfer" class="form-label mb-0">
                                 <i class="fas fa-university me-2"></i>
@@ -507,16 +580,44 @@
                             </div>
                             {% endif %}
                             
-                            <div class="alert alert-info mt-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Hướng dẫn:</strong>
-                                <ol class="mb-0 mt-2">
-                                    <li>Chuyển khoản đúng số tiền: <strong>{{ total_amount|floatformat:0 }}đ</strong></li>
-                                    <li>Nội dung chuyển khoản: <strong>{{ organization.name }} - {{ request.user.get_full_name|default:request.user.username }}</strong></li>
-                                    <li>Sau khi chuyển khoản, vui lòng chụp ảnh biên lai và gửi cho shop</li>
-                                    <li>Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán</li>
-                                </ol>
-                            </div>
+                <!-- Payment Proof Upload -->
+                <div class="payment-proof-section mt-3">
+                    <h6 class="proof-title">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload hóa đơn chuyển khoản
+                    </h6>
+                    <div class="proof-upload">
+                        <input type="file" id="payment-proof" name="payment_proof" accept="image/*,.pdf" class="proof-input">
+                        <label for="payment-proof" class="proof-label">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            Chọn file hóa đơn (JPG, PNG, PDF)
+                        </label>
+                        <div class="proof-preview" id="proof-preview"></div>
+                        <div class="proof-actions mt-2" id="proof-actions" style="display: none;">
+                            <button type="button" class="btn btn-success btn-sm me-2" onclick="confirmUpload()">
+                                <i class="fas fa-check me-1"></i>Xác nhận upload
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeProof('payment-proof')">
+                                <i class="fas fa-trash me-1"></i>Xóa file
+                            </button>
+                        </div>
+                    </div>
+                    <p class="proof-note">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Vui lòng upload hóa đơn chuyển khoản để chúng tôi xác nhận đơn hàng nhanh hơn
+                    </p>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Hướng dẫn:</strong>
+                    <ol class="mb-0 mt-2">
+                        <li>Chuyển khoản đúng số tiền: <strong>{{ total_amount|floatformat:0 }}đ</strong></li>
+                        <li>Nội dung chuyển khoản: <strong>{{ organization.name }} - {{ request.user.get_full_name|default:request.user.username }}</strong></li>
+                        <li>Sau khi chuyển khoản, vui lòng chụp ảnh biên lai và upload ở trên</li>
+                        <li>Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán</li>
+                    </ol>
+                </div>
                         </div>
                         {% else %}
                         <div class="alert alert-warning">
@@ -569,17 +670,19 @@
                         <!-- Order Summary -->
                         <div class="summary-row">
                             <span>Tạm tính:</span>
-                            <span>{{ subtotal|floatformat:0 }}đ</span>
+                            <span class="text-end">{{ subtotal|floatformat:0 }}đ</span>
                         </div>
                         
                         <div class="summary-row">
                             <span>Phí vận chuyển:</span>
-                            <span>{{ shipping_fee|floatformat:0 }}đ</span>
+                            <span class="text-end">{{ shipping_fee|floatformat:0 }}đ</span>
                         </div>
                         
-                        <div class="summary-row">
-                            <span>Tổng cộng:</span>
-                            <span>{{ total_amount|floatformat:0 }}đ</span>
+                        <div class="summary-row total">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <span><strong>Tổng cộng:</strong></span>
+                                <span class="total-price">{{ total_amount|floatformat:0 }}đ</span>
+                            </div>
                         </div>
                         
                         <div class="mt-4">
@@ -600,6 +703,9 @@
         </div>
     </form>
 </div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- Bank Info Modal -->
 <div class="modal fade" id="bankInfoModal" tabindex="-1" aria-labelledby="bankInfoModalLabel" aria-hidden="true">
@@ -687,6 +793,37 @@
 
 {% block extra_js %}
 <script>
+    // Payment method selection function
+    function selectPaymentMethod(value) {
+        // Remove selected class from all payment methods
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked method
+        event.currentTarget.classList.add('selected');
+        
+        // Set radio button value
+        const radio = event.currentTarget.querySelector('input[type="radio"]');
+        radio.checked = true;
+        
+        // Show/hide bank info card and payment proof section
+        const bankInfoCard = document.getElementById('bank-info-card');
+        const paymentProofSection = document.querySelector('.payment-proof-section');
+        
+        if (value === 'BANK_TRANSFER') {
+            bankInfoCard.style.display = 'block';
+            if (paymentProofSection) {
+                paymentProofSection.style.display = 'block';
+            }
+        } else {
+            bankInfoCard.style.display = 'none';
+            if (paymentProofSection) {
+                paymentProofSection.style.display = 'none';
+            }
+        }
+    }
+    
     // Payment method selection
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
         radio.addEventListener('change', function() {
@@ -700,14 +837,18 @@
             
             // Show/hide bank info card and payment proof section
             const bankInfoCard = document.getElementById('bank-info-card');
-            const paymentProofSection = document.getElementById('payment-proof-section');
+            const paymentProofSection = document.querySelector('.payment-proof-section');
             
             if (this.value === 'BANK_TRANSFER') {
                 bankInfoCard.style.display = 'block';
-                paymentProofSection.style.display = 'block';
+                if (paymentProofSection) {
+                    paymentProofSection.style.display = 'block';
+                }
             } else {
                 bankInfoCard.style.display = 'none';
-                paymentProofSection.style.display = 'none';
+                if (paymentProofSection) {
+                    paymentProofSection.style.display = 'none';
+                }
             }
         });
     });
@@ -715,12 +856,43 @@
     // Set initial selected state
     document.querySelector('input[name="payment_method"]:checked').closest('.payment-method').classList.add('selected');
     
-    // Copy to clipboard function with fallback
+    // Toast notification system
+    function showToast(message, type = 'success') {
+        const toastContainer = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icon = type === 'success' ? 'fas fa-check-circle' : 
+                    type === 'error' ? 'fas fa-exclamation-circle' : 
+                    'fas fa-info-circle';
+        
+        toast.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${message}</span>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Show toast
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        // Hide toast after 3 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toastContainer.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+    
+    // Copy to clipboard function with toast
     function copyToClipboard(text) {
         // Try modern clipboard API first
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(function() {
-                showCopySuccess(event.target.closest('button'));
+                showToast('Đã copy thành công!', 'success');
             }).catch(function(err) {
                 console.error('Clipboard API failed:', err);
                 fallbackCopyTextToClipboard(text);
@@ -749,80 +921,16 @@
         try {
             const successful = document.execCommand('copy');
             if (successful) {
-                showCopySuccess(event.target.closest('button'));
+                showToast('Đã copy thành công!', 'success');
             } else {
-                showCopyError(text);
+                showToast('Không thể copy tự động. Vui lòng copy thủ công.', 'warning');
             }
         } catch (err) {
             console.error('Fallback copy failed:', err);
-            showCopyError(text);
+            showToast('Không thể copy tự động. Vui lòng copy thủ công.', 'warning');
         }
         
         document.body.removeChild(textArea);
-    }
-    
-    // Show copy success
-    function showCopySuccess(btn) {
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i>';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-outline-secondary');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-outline-secondary');
-        }, 2000);
-    }
-    
-    // Show copy error
-    function showCopyError(text) {
-        // Create a better copy interface
-        const copyContainer = document.createElement('div');
-        copyContainer.style.position = 'fixed';
-        copyContainer.style.top = '50%';
-        copyContainer.style.left = '50%';
-        copyContainer.style.transform = 'translate(-50%, -50%)';
-        copyContainer.style.zIndex = '9999';
-        copyContainer.style.backgroundColor = 'white';
-        copyContainer.style.border = '2px solid #dc3545';
-        copyContainer.style.borderRadius = '10px';
-        copyContainer.style.padding = '20px';
-        copyContainer.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
-        copyContainer.style.maxWidth = '400px';
-        copyContainer.style.width = '90%';
-        
-        copyContainer.innerHTML = `
-            <div class="text-center mb-3">
-                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
-                <h5 class="mt-2">Copy Thủ Công</h5>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Nội dung cần copy:</label>
-                <textarea readonly class="form-control" rows="3" style="font-family: monospace; font-size: 14px;">${text}</textarea>
-            </div>
-            <div class="text-center">
-                <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove()">
-                    <i class="fas fa-check me-2"></i>Đã Copy Xong
-                </button>
-            </div>
-        `;
-        
-        document.body.appendChild(copyContainer);
-        
-        // Auto-select text in textarea
-        const textarea = copyContainer.querySelector('textarea');
-        textarea.select();
-        textarea.focus();
-        
-        // Remove container when clicking outside
-        setTimeout(() => {
-            copyContainer.addEventListener('click', function(e) {
-                if (e.target === copyContainer) {
-                    copyContainer.remove();
-                }
-            });
-        }, 100);
     }
     
     // Show bank info modal
@@ -862,27 +970,43 @@ Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:requ
                             <div class="file-info">
                                 <div class="fw-bold">${file.name}</div>
                                 <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeProof('payment-proof')">
-                                    <i class="fas fa-trash me-1"></i>Xóa
-                                </button>
                             </div>
                         </div>
                     `;
                     proofPreview.style.display = 'block';
+                    document.getElementById('proof-actions').style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             }
         });
     }
     
+    // Confirm upload function
+    function confirmUpload() {
+        const fileInput = document.getElementById('payment-proof');
+        if (fileInput.files.length > 0) {
+            showToast('File đã được xác nhận upload thành công!', 'success');
+            // Disable the file input after confirmation
+            fileInput.disabled = true;
+            // Hide the actions after confirmation
+            document.getElementById('proof-actions').style.display = 'none';
+        } else {
+            showToast('Vui lòng chọn file trước khi xác nhận!', 'error');
+        }
+    }
+    
     // Remove proof function
     function removeProof(inputId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById('proof-preview');
+        const actions = document.getElementById('proof-actions');
         
         input.value = '';
         preview.innerHTML = '';
         preview.style.display = 'none';
+        actions.style.display = 'none';
+        
+        showToast('Đã xóa file thành công!', 'success');
     }
     
     // Form submission
@@ -900,12 +1024,11 @@ Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:requ
     
     // Form validation
     function validateForm() {
-        const requiredFields = document.querySelectorAll('.required-field');
+        const requiredInputs = document.querySelectorAll('input[required], select[required], textarea[required]');
         let isValid = true;
         
-        requiredFields.forEach(field => {
-            const input = field.querySelector('input, select, textarea');
-            if (!input || !input.value.trim()) {
+        requiredInputs.forEach(input => {
+            if (!input.value.trim()) {
                 isValid = false;
                 input.classList.add('is-invalid');
             } else {
@@ -948,6 +1071,10 @@ Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:requ
             notes: formData.get('notes')
         };
         
+        // Debug: Log the data being sent
+        console.log('Form data being sent:', data);
+        console.log('Customer name:', data.customer_name);
+        
         const submitBtn = document.getElementById('place-order-btn');
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
@@ -956,24 +1083,27 @@ Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:requ
         fetch('{% url "shop:organization_shop:place_order" org_slug=organization.slug %}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
-            body: JSON.stringify(data)
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = data.redirect_url;
+                showToast(data.message, 'success');
+                // Redirect to order detail page
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
             } else {
-                alert(data.error || 'Có lỗi xảy ra khi đặt hàng');
+                showToast(data.error || 'Có lỗi xảy ra khi đặt hàng', 'error');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Có lỗi xảy ra khi đặt hàng');
+            showToast('Có lỗi xảy ra khi đặt hàng', 'error');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         });

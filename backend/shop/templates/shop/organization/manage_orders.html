@@ -34,7 +34,7 @@
         color: #856404;
     }
     
-    .status-confirmed {
+    .status-processing {
         background-color: #d1ecf1;
         color: #0c5460;
     }
@@ -140,16 +140,17 @@
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
+            {% csrf_token %}
             <form method="get" class="row g-3">
                 <div class="col-md-3">
                     <label for="status" class="form-label">Trạng Thái</label>
                     <select name="status" id="status" class="form-select">
                         <option value="">Tất Cả</option>
-                        <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Chờ Xử Lý</option>
-                        <option value="CONFIRMED" {% if request.GET.status == 'CONFIRMED' %}selected{% endif %}>Đã Xác Nhận</option>
-                        <option value="SHIPPED" {% if request.GET.status == 'SHIPPED' %}selected{% endif %}>Đang Giao</option>
-                        <option value="DELIVERED" {% if request.GET.status == 'DELIVERED' %}selected{% endif %}>Đã Giao</option>
-                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Đã Hủy</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Chờ Xử Lý</option>
+                        <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Đang Xử Lý</option>
+                        <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Đang Giao</option>
+                        <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>Đã Giao</option>
+                        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Đã Hủy</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -185,21 +186,32 @@
                             <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
                         </div>
                         <span class="order-status status-{{ order.status|lower }}">
-                            {% if order.status == 'PENDING' %}Chờ Xử Lý
-                            {% elif order.status == 'CONFIRMED' %}Đã Xác Nhận
-                            {% elif order.status == 'SHIPPED' %}Đang Giao
-                            {% elif order.status == 'DELIVERED' %}Đã Giao
-                            {% else %}Đã Hủy{% endif %}
+                            {% if order.status == 'pending' %}Chờ Xử Lý
+                            {% elif order.status == 'processing' %}Đang Xử Lý
+                            {% elif order.status == 'shipped' %}Đang Giao
+                            {% elif order.status == 'delivered' %}Đã Giao
+                            {% elif order.status == 'cancelled' %}Đã Hủy
+                            {% else %}{{ order.get_status_display }}{% endif %}
                         </span>
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <strong>Khách Hàng:</strong><br>
                             {{ order.customer_name }}<br>
                             <small class="text-muted">{{ order.customer_phone }}</small>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <strong>Thanh Toán:</strong><br>
+                            <span class="badge {% if order.payment_status == 'paid' %}bg-success{% elif order.payment_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {% if order.payment_status == 'paid' %}Đã TT
+                                {% elif order.payment_status == 'pending' %}Chờ TT
+                                {% elif order.payment_status == 'failed' %}TT TB
+                                {% else %}TT TB{% endif %}
+                            </span><br>
+                            <small class="text-muted">{{ order.get_payment_method_display }}</small>
+                        </div>
+                        <div class="col-md-4">
                             <strong>Địa Chỉ:</strong><br>
                             <small>{{ order.shipping_address }}</small>
                         </div>
@@ -217,26 +229,67 @@
                         </ul>
                     </div>
                     
+                    <div class="mb-3">
+                        <strong>Hóa đơn thanh toán:</strong><br>
+                        {% if order.payment_proof %}
+                        <div class="mt-2">
+                            <a href="{{ order.payment_proof.url }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-file-invoice me-1"></i>Xem hóa đơn
+                            </a>
+                            <a href="{{ order.payment_proof.url }}" download class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download me-1"></i>Tải xuống
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="mt-2">
+                            <span class="text-muted">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {% if order.payment_method == 'cod' %}
+                                    COD - Không cần hóa đơn
+                                {% else %}
+                                    Chưa có hóa đơn thanh toán
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>Tổng Tiền: {{ order.total_amount|floatformat:0 }}đ</strong>
                         </div>
                         <div class="btn-group">
-                            <a href="{% url 'shop:organization_shop:order_detail' org_slug=organization.slug order_id=order.id %}" 
+                            <a href="{% url 'shop:organization_shop:order_detail' org_slug=organization.slug order_number=order.order_number %}" 
                                class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-eye"></i> Xem
                             </a>
-                            {% if order.status == 'PENDING' %}
-                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'CONFIRMED')">
-                                <i class="fas fa-check"></i> Xác Nhận
+                            
+                            <!-- Payment Confirmation -->
+                            {% if order.payment_status == 'pending' and order.payment_method != 'cod' %}
+                            <button class="btn btn-outline-success btn-sm" onclick="confirmPayment({{ order.id }})">
+                                <i class="fas fa-money-check-alt"></i> Xác Nhận TT
                             </button>
-                            {% elif order.status == 'CONFIRMED' %}
-                            <button class="btn btn-outline-info btn-sm" onclick="updateOrderStatus({{ order.id }}, 'SHIPPED')">
+                            {% endif %}
+                            
+                            <!-- Order Status Updates -->
+                            {% if order.status == 'pending' %}
+                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'processing')">
+                                <i class="fas fa-check"></i> Xác Nhận ĐH
+                            </button>
+                            {% elif order.status == 'processing' %}
+                            <button class="btn btn-outline-info btn-sm" onclick="updateOrderStatus({{ order.id }}, 'shipped')">
                                 <i class="fas fa-truck"></i> Giao Hàng
                             </button>
-                            {% elif order.status == 'SHIPPED' %}
-                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'DELIVERED')">
+                            {% elif order.status == 'shipped' %}
+                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'delivered')">
                                 <i class="fas fa-check-circle"></i> Hoàn Thành
+                            </button>
+                            {% endif %}
+                            
+                            <!-- Cancel Order -->
+                            {% if order.status in 'pending,processing' %}
+                            <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ order.id }})">
+                                <i class="fas fa-times"></i> Hủy
                             </button>
                             {% endif %}
                         </div>
@@ -303,9 +356,10 @@
 <script>
 function updateOrderStatus(orderId, newStatus) {
     const statusText = {
-        'CONFIRMED': 'xác nhận',
-        'SHIPPED': 'giao hàng',
-        'DELIVERED': 'hoàn thành'
+        'processing': 'xác nhận đơn hàng',
+        'shipped': 'giao hàng',
+        'delivered': 'hoàn thành',
+        'cancelled': 'hủy'
     };
     
     if (confirm(`Bạn có chắc muốn ${statusText[newStatus]} đơn hàng này?`)) {
@@ -331,6 +385,62 @@ function updateOrderStatus(orderId, newStatus) {
         .catch(error => {
             console.error('Error:', error);
             alert('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+        });
+    }
+}
+
+function confirmPayment(orderId) {
+    if (confirm('Bạn có chắc đã nhận được thanh toán từ khách hàng?')) {
+        fetch('{% url "shop:organization_shop:manage_orders" org_slug=organization.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                'action': 'confirm_payment',
+                'order_id': orderId
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Có lỗi xảy ra khi xác nhận thanh toán');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xác nhận thanh toán');
+        });
+    }
+}
+
+function cancelOrder(orderId) {
+    const reason = prompt('Vui lòng nhập lý do hủy đơn hàng:');
+    if (reason && reason.trim()) {
+        fetch('{% url "shop:organization_shop:manage_orders" org_slug=organization.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                'action': 'cancel_order',
+                'order_id': orderId,
+                'reason': reason.trim()
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Có lỗi xảy ra khi hủy đơn hàng');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi hủy đơn hàng');
         });
     }
 }

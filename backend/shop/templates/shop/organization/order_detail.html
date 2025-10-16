@@ -254,23 +254,51 @@
                         <li class="breadcrumb-item">
                             <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}">Trang Chủ</a>
                         </li>
-                        <li class="breadcrumb-item">
-                            <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}">Đơn Hàng</a>
-                        </li>
+                        {% if request.user in organization.members.all %}
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}">Quản Lý Đơn Hàng</a>
+                            </li>
+                        {% else %}
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}">Đơn Hàng</a>
+                            </li>
+                        {% endif %}
                         <li class="breadcrumb-item active">#{{ order.order_number }}</li>
                     </ol>
                 </nav>
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>Quay Lại
-                </a>
+                {% if request.user in organization.members.all %}
+                    <!-- BTC member - redirect to management -->
+                    <a href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Quay Lại Quản Lý
+                    </a>
+                {% else %}
+                    <!-- Customer - redirect to order list -->
+                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <div class="container">
+    <!-- Success Message for New Orders -->
+    {% if request.GET.success %}
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+            <div>
+                <h5 class="alert-heading mb-1">🎉 Đặt hàng thành công!</h5>
+                <p class="mb-0">Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
     <div class="row">
         <!-- Order Details -->
         <div class="col-lg-8">
@@ -319,7 +347,13 @@
                     <div class="order-item">
                         <div class="row align-items-center">
                             <div class="col-md-2">
-                                <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+                                {% if item.product.main_image %}
+                                    <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+                                {% else %}
+                                    <div class="order-item-image bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6">
                                 <h5 class="mb-1">{{ item.product.name }}</h5>
@@ -330,14 +364,14 @@
                                 <small class="text-muted">Số lượng: {{ item.quantity }}</small>
                             </div>
                             <div class="col-md-2 text-center">
-                                {% if item.product.is_on_sale %}
+                                {% if item.product.on_sale %}
                                     <span class="price-tag sale-price">{{ item.price|floatformat:0 }}đ</span>
                                 {% else %}
                                     <span class="price-tag">{{ item.price|floatformat:0 }}đ</span>
                                 {% endif %}
                             </div>
                             <div class="col-md-2 text-end">
-                                <strong>{{ item.total_price|floatformat:0 }}đ</strong>
+                                <strong>{{ item.price|floatformat:0 }}đ</strong>
                             </div>
                         </div>
                     </div>
@@ -414,7 +448,7 @@
                     
                     <div class="summary-row">
                         <span>Tổng cộng:</span>
-                        <span>{{ order.total|floatformat:0 }}đ</span>
+                        <span>{{ order.total_amount|floatformat:0 }}đ</span>
                     </div>
                 </div>
             </div>
@@ -456,10 +490,10 @@
                         <span class="info-value">{{ order.shipping_district }}</span>
                     </div>
                     
-                    {% if order.shipping_notes %}
+                    {% if order.notes %}
                     <div class="info-row">
                         <span class="info-label">Ghi chú:</span>
-                        <span class="info-value">{{ order.shipping_notes }}</span>
+                        <span class="info-value">{{ order.notes }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -484,15 +518,35 @@
                     <div class="info-row">
                         <span class="info-label">Trạng thái:</span>
                         <span class="info-value">
-                            {% if order.payment_status == 'PENDING' %}
+                            {% if order.payment_status == 'pending' %}
                                 <span class="badge bg-warning">Chờ thanh toán</span>
-                            {% elif order.payment_status == 'PAID' %}
+                            {% elif order.payment_status == 'paid' %}
                                 <span class="badge bg-success">Đã thanh toán</span>
-                            {% elif order.payment_status == 'FAILED' %}
+                            {% elif order.payment_status == 'failed' %}
                                 <span class="badge bg-danger">Thanh toán thất bại</span>
+                            {% elif order.payment_status == 'refunded' %}
+                                <span class="badge bg-info">Đã hoàn tiền</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ order.get_payment_status_display }}</span>
                             {% endif %}
                         </span>
                     </div>
+                    
+                    {% if order.payment_proof %}
+                    <div class="info-row">
+                        <span class="info-label">Hóa đơn thanh toán:</span>
+                        <span class="info-value">
+                            <div class="d-flex gap-2">
+                                <a href="{{ order.payment_proof.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Xem hóa đơn
+                                </a>
+                                <a href="{{ order.payment_proof.url }}" download class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-download me-1"></i>Tải xuống
+                                </a>
+                            </div>
+                        </span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -501,23 +555,38 @@
                 <div class="card-body">
                     <h4 class="section-title">Hành Động</h4>
                     
-                    {% if order.status == 'PENDING' %}
-                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
-                            <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                    {% if request.user in organization.members.all %}
+                        <!-- BTC member actions -->
+                        <a href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                            <i class="fas fa-list me-2"></i>Quản Lý Đơn Hàng
                         </a>
-                    {% elif order.status == 'DELIVERED' %}
-                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn w-100 mb-2">
-                            <i class="fas fa-shopping-bag me-2"></i>Mua Thêm Sản Phẩm
+                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="action-btn w-100">
+                            <i class="fas fa-store me-2"></i>Về Trang Chủ Shop
                         </a>
                     {% else %}
-                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
-                            <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                        <!-- Customer actions -->
+                        <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="action-btn w-100 mb-2">
+                            <i class="fas fa-list me-2"></i>Xem Tất Cả Đơn Hàng
+                        </a>
+                        
+                        {% if order.status == 'pending' %}
+                            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                                <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                            </a>
+                        {% elif order.status == 'delivered' %}
+                            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                                <i class="fas fa-shopping-bag me-2"></i>Mua Thêm Sản Phẩm
+                            </a>
+                        {% else %}
+                            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                                <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="action-btn secondary w-100">
+                            <i class="fas fa-home me-2"></i>Về Trang Chủ Shop
                         </a>
                     {% endif %}
-                    
-                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="action-btn secondary w-100">
-                        <i class="fas fa-list me-2"></i>Xem Tất Cả Đơn Hàng
-                    </a>
                 </div>
             </div>
         </div>

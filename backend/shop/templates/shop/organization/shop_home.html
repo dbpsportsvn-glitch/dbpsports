@@ -117,9 +117,16 @@
                 {% endif %}
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light btn-lg">
-                    <i class="fas fa-shopping-bag me-2"></i>Xem Tất Cả
-                </a>
+                <div class="btn-group-vertical" role="group">
+                    <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light btn-lg mb-2">
+                        <i class="fas fa-shopping-bag me-2"></i>Xem Tất Cả
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-list me-2"></i>Đơn Hàng Của Tôi
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

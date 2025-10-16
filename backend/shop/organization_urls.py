@@ -23,7 +23,7 @@ urlpatterns = [
     path('<slug:org_slug>/checkout/', organization_views.organization_checkout, name='checkout'),
     path('<slug:org_slug>/order/place/', organization_views.organization_place_order, name='place_order'),
     path('<slug:org_slug>/orders/', organization_views.organization_order_list, name='order_list'),
-    path('<slug:org_slug>/orders/<int:order_id>/', organization_views.organization_order_detail, name='order_detail'),
+    path('<slug:org_slug>/orders/<str:order_number>/', organization_views.organization_order_detail, name='order_detail'),
     
     # Dashboard
     path('<slug:org_slug>/dashboard/', organization_views.organization_shop_dashboard, name='dashboard'),

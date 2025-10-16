@@ -181,9 +181,16 @@
                 </nav>
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn btn-light">
-                    <i class="fas fa-shopping-cart me-2"></i>Giỏ Hàng
-                </a>
+                <div class="btn-group-vertical" role="group">
+                    <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn btn-light mb-2">
+                        <i class="fas fa-shopping-cart me-2"></i>Giỏ Hàng
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-outline-light">
+                        <i class="fas fa-list me-2"></i>Đơn Hàng Của Tôi
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
