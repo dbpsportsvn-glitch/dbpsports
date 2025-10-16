@@ -1032,7 +1032,10 @@ class TournamentBudget(models.Model):
     
     def get_total_expenses(self):
         """Tính tổng chi"""
-        return self.expense_items.aggregate(total=Sum('amount'))['total'] or 0
+        expense_total = self.expense_items.aggregate(total=Sum('amount'))['total'] or 0
+        # Chỉ tính staff payments đã thanh toán
+        staff_payment_total = self.tournament.staff_payments.filter(status='PAID').aggregate(total=Sum('total_amount'))['total'] or 0
+        return expense_total + staff_payment_total
     
     def get_profit_loss(self):
         """Tính lời/lỗ"""
@@ -1137,6 +1140,75 @@ class BudgetHistory(models.Model):
     
     def __str__(self):
         return f"{self.action} - {self.description} ({self.timestamp})"
+
+
+class StaffPayment(models.Model):
+    """Quản lý tiền công cho các chuyên gia trong giải đấu"""
+    PAYMENT_STATUS = [
+        ('PENDING', 'Chờ thanh toán'),
+        ('PAID', 'Đã thanh toán'),
+        ('CANCELLED', 'Đã hủy'),
+    ]
+    
+    PAYMENT_UNIT = [
+        ('PER_MATCH', 'Theo trận'),
+        ('PER_DAY', 'Theo ngày'),
+        ('PER_TOURNAMENT', 'Theo giải đấu'),
+        ('HOURLY', 'Theo giờ'),
+    ]
+    
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='staff_payments', verbose_name="Giải đấu")
+    staff_member = models.ForeignKey(TournamentStaff, on_delete=models.CASCADE, related_name='payments', verbose_name="Thành viên")
+    role = models.ForeignKey('users.Role', on_delete=models.CASCADE, verbose_name="Vai trò")
+    
+    # Thông tin thanh toán
+    rate_per_unit = models.DecimalField(max_digits=15, decimal_places=0, verbose_name="Giá tiền/đơn vị")
+    payment_unit = models.CharField(max_length=20, choices=PAYMENT_UNIT, default='PER_MATCH', verbose_name="Đơn vị tính")
+    number_of_units = models.PositiveIntegerField(default=1, verbose_name="Số đơn vị")
+    total_amount = models.DecimalField(max_digits=15, decimal_places=0, verbose_name="Tổng tiền công")
+    
+    # Thông tin quản lý
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='PENDING', verbose_name="Trạng thái")
+    payment_date = models.DateField(null=True, blank=True, verbose_name="Ngày thanh toán")
+    notes = models.TextField(blank=True, verbose_name="Ghi chú")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày tạo")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Ngày cập nhật")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name="Người tạo")
+    
+    class Meta:
+        verbose_name = "Tiền công nhân viên"
+        verbose_name_plural = "Tiền công nhân viên"
+        ordering = ['-created_at']
+        unique_together = ('tournament', 'staff_member', 'role')
+    
+    def __str__(self):
+        return f"{self.staff_member.user.get_full_name()} - {self.role.name}: {self.total_amount:,} VNĐ"
+    
+    def save(self, *args, **kwargs):
+        # Tự động tính tổng tiền công
+        self.total_amount = self.rate_per_unit * self.number_of_units
+        super().save(*args, **kwargs)
+    
+    def get_payment_unit_display_short(self):
+        """Hiển thị ngắn gọn đơn vị thanh toán"""
+        unit_display = {
+            'PER_MATCH': 'trận',
+            'PER_DAY': 'ngày',
+            'PER_TOURNAMENT': 'giải',
+            'HOURLY': 'giờ',
+        }
+        return unit_display.get(self.payment_unit, self.payment_unit)
+    
+    def get_status_badge_class(self):
+        """Trả về CSS class cho status badge"""
+        status_classes = {
+            'PENDING': 'badge-warning',
+            'PAID': 'badge-success',
+            'CANCELLED': 'badge-danger',
+        }
+        return status_classes.get(self.status, 'badge-secondary')
 
 
 class CoachRecruitment(models.Model):

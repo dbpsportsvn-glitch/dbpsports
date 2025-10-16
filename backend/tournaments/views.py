@@ -119,6 +119,9 @@ from .forms import (
     PlayerCreationForm,
     PlayerTransferForm,
     RevenueItemForm,
+    StaffPaymentForm,
+    StaffPaymentQuickForm,
+    StaffPaymentStatusForm,
     TournamentBudgetForm,
     ScheduleGenerationForm,
     TeamCreationForm,
@@ -144,6 +147,7 @@ from .models import (
     ScoutingList,
     SponsorClick,
     Sponsorship,
+    StaffPayment,
     Substitution,
     Team,
     TeamAchievement,
@@ -3236,6 +3240,7 @@ def budget_dashboard(request, tournament_pk):
     # Lấy dữ liệu
     revenue_items = budget.revenue_items.all()
     expense_items = budget.expense_items.all()
+    staff_payments = StaffPayment.objects.filter(tournament=tournament).select_related('staff_member__user', 'staff_member__role', 'role')
     history = budget.history.all()[:10]  # 10 bản ghi gần nhất
     
     # Tính toán tổng quan
@@ -3272,11 +3277,23 @@ def budget_dashboard(request, tournament_pk):
     paid_teams_count = tournament.registrations.filter(payment_status='PAID').count()
     total_teams_count = tournament.registrations.count()
     
+    # Thống kê staff payments
+    staff_payment_stats = {
+        'total_pending': staff_payments.filter(status='PENDING').aggregate(total=Sum('total_amount'))['total'] or 0,
+        'total_paid': staff_payments.filter(status='PAID').aggregate(total=Sum('total_amount'))['total'] or 0,
+        'total_cancelled': staff_payments.filter(status='CANCELLED').aggregate(total=Sum('total_amount'))['total'] or 0,
+        'total_all': staff_payments.filter(status__in=['PENDING', 'PAID']).aggregate(total=Sum('total_amount'))['total'] or 0,
+        'count': staff_payments.count(),
+        'paid_count': staff_payments.filter(status='PAID').count(),
+    }
+    
     context = {
         'tournament': tournament,
         'budget': budget,
         'revenue_items': revenue_items,
         'expense_items': expense_items,
+        'staff_payments': staff_payments[:5],  # Hiển thị 5 staff payment gần nhất
+        'staff_payment_stats': staff_payment_stats,
         'history': history,
         'total_revenue': total_revenue,
         'total_expenses': total_expenses,

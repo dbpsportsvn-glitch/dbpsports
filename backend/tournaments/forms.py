@@ -2,7 +2,7 @@
 from django import forms
 from .models import Team, Player, Comment, Tournament, TeamRegistration
 from .models import MatchNote, TournamentBudget, RevenueItem, ExpenseItem
-from .models import PlayerTransfer, CoachRecruitment
+from .models import PlayerTransfer, CoachRecruitment, StaffPayment, TournamentStaff
 from colorfield.widgets import ColorWidget
 from users.models import CoachProfile
 
@@ -489,3 +489,186 @@ class CoachRecruitmentForm(forms.ModelForm):
                 'placeholder': 'Giới thiệu về đội bóng và kế hoạch phát triển...'
             })
         }
+
+
+# ===== FORMS CHO QUẢN LÝ TIỀN CÔNG NHÂN VIÊN =====
+
+class StaffPaymentForm(forms.ModelForm):
+    """Form tạo/cập nhật tiền công cho nhân viên"""
+    
+    def __init__(self, *args, **kwargs):
+        tournament = kwargs.pop('tournament', None)
+        super().__init__(*args, **kwargs)
+        
+        if tournament:
+            # Chỉ hiển thị các staff member của tournament này
+            self.fields['staff_member'].queryset = TournamentStaff.objects.filter(
+                tournament=tournament
+            ).select_related('user', 'role')
+    
+    class Meta:
+        model = StaffPayment
+        fields = ['staff_member', 'rate_per_unit', 'payment_unit', 'number_of_units', 'status', 'payment_date', 'notes']
+        widgets = {
+            'staff_member': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_staff_member'
+            }),
+            'rate_per_unit': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập giá tiền/đơn vị (VNĐ)',
+                'min': '0',
+                'id': 'id_rate_per_unit'
+            }),
+            'payment_unit': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_payment_unit'
+            }),
+            'number_of_units': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Số trận/ngày/giờ...',
+                'min': '1',
+                'id': 'id_number_of_units'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_status'
+            }),
+            'payment_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'id': 'id_payment_date'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Ghi chú thêm (không bắt buộc)',
+                'id': 'id_notes'
+            })
+        }
+        labels = {
+            'staff_member': 'Thành viên',
+            'rate_per_unit': 'Giá tiền/đơn vị (VNĐ)',
+            'payment_unit': 'Đơn vị tính',
+            'number_of_units': 'Số đơn vị',
+            'status': 'Trạng thái',
+            'payment_date': 'Ngày thanh toán',
+            'notes': 'Ghi chú'
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        rate_per_unit = cleaned_data.get('rate_per_unit')
+        number_of_units = cleaned_data.get('number_of_units')
+        status = cleaned_data.get('status')
+        payment_date = cleaned_data.get('payment_date')
+        
+        # Tính tổng tiền
+        if rate_per_unit and number_of_units:
+            total_amount = rate_per_unit * number_of_units
+            cleaned_data['total_amount'] = total_amount
+        
+        # Validation: Nếu trạng thái là PAID thì phải có ngày thanh toán
+        if status == 'PAID' and not payment_date:
+            raise forms.ValidationError("Khi chọn trạng thái 'Đã thanh toán', bạn phải nhập ngày thanh toán.")
+            
+        # Nếu trạng thái không phải PAID thì không cần ngày thanh toán
+        if status != 'PAID' and payment_date:
+            cleaned_data['payment_date'] = None
+            
+        return cleaned_data
+
+
+class StaffPaymentStatusForm(forms.ModelForm):
+    """Form cập nhật trạng thái thanh toán"""
+    
+    class Meta:
+        model = StaffPayment
+        fields = ['status', 'payment_date']
+        widgets = {
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'payment_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            })
+        }
+        labels = {
+            'status': 'Trạng thái',
+            'payment_date': 'Ngày thanh toán'
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        payment_date = cleaned_data.get('payment_date')
+        
+        # Nếu trạng thái là PAID thì phải có ngày thanh toán
+        if status == 'PAID' and not payment_date:
+            raise forms.ValidationError("Khi đánh dấu đã thanh toán, bạn phải nhập ngày thanh toán.")
+            
+        # Nếu trạng thái không phải PAID thì không cần ngày thanh toán
+        if status != 'PAID' and payment_date:
+            cleaned_data['payment_date'] = None
+            
+        return cleaned_data
+
+
+class StaffPaymentQuickForm(forms.Form):
+    """Form thêm nhanh tiền công cho nhiều nhân viên cùng lúc"""
+    
+    def __init__(self, *args, **kwargs):
+        tournament = kwargs.pop('tournament', None)
+        super().__init__(*args, **kwargs)
+        
+        if tournament:
+            # Tạo choice field cho staff members
+            staff_choices = [(staff.id, f"{staff.user.get_full_name()} - {staff.role.name}") 
+                           for staff in TournamentStaff.objects.filter(tournament=tournament)]
+            self.fields['staff_members'] = forms.MultipleChoiceField(
+                choices=staff_choices,
+                widget=forms.CheckboxSelectMultiple(attrs={
+                    'class': 'form-check-input'
+                }),
+                label='Chọn nhân viên'
+            )
+    
+    rate_per_unit = forms.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nhập giá tiền/đơn vị (VNĐ)',
+            'min': '0'
+        }),
+        label='Giá tiền/đơn vị (VNĐ)'
+    )
+    
+    payment_unit = forms.ChoiceField(
+        choices=StaffPayment.PAYMENT_UNIT,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        }),
+        label='Đơn vị tính'
+    )
+    
+    number_of_units = forms.IntegerField(
+        min_value=1,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Số trận/ngày/giờ...',
+            'min': '1'
+        }),
+        label='Số đơn vị'
+    )
+    
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Ghi chú chung cho tất cả nhân viên (không bắt buộc)'
+        }),
+        label='Ghi chú'
+    )

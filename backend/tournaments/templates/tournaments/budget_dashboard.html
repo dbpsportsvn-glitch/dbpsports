@@ -157,6 +157,11 @@
                                 <i class="bi bi-lightning"></i> Thêm nhanh
                             </a>
                         </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="bi bi-people"></i> Tiền công nhân viên
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -225,10 +230,10 @@
                     <h5 class="card-title mb-0">
                         <i class="bi bi-arrow-down-circle text-danger"></i> Khoản chi
                     </h5>
-                    <span class="badge bg-danger">{{ expense_items.count }} mục</span>
+                        <span class="badge bg-danger">{{ total_expenses|currency_format }} VNĐ</span>
                 </div>
                 <div class="card-body">
-                    {% if expense_items %}
+                    {% if expense_items or staff_payment_stats.paid_count > 0 %}
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
@@ -256,11 +261,140 @@
                                         </td>
                                     </tr>
                                     {% endfor %}
+                                    
+                                    <!-- Hiển thị staff payments đã thanh toán trong section Khoản chi -->
+                                    {% for payment in staff_payments %}
+                                        {% if payment.status == 'PAID' %}
+                                        <tr class="table-info">
+                                            <td>
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-people"></i> Tiền công NV
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>{{ payment.staff_member.user.get_full_name }}</strong> - {{ payment.role.name }}
+                                                {% if payment.notes %}
+                                                    <br><small class="text-muted">{{ payment.notes }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-danger fw-bold">{{ payment.total_amount|currency_format }} VNĐ</td>
+                                            <td>
+                                                {% if payment.payment_date %}
+                                                    {{ payment.payment_date|date:"d/m/Y" }}
+                                                {% else %}
+                                                    {{ payment.created_at|date:"d/m/Y" }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteStaffPayment({{ payment.pk }})" title="Xóa">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                     {% else %}
                         <p class="text-muted text-center">Chưa có khoản chi nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tiền công nhân viên -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people text-info"></i> Tiền công nhân viên
+                    </h5>
+                    <div>
+                        <span class="badge bg-warning me-1">Chờ: {{ staff_payment_stats.total_pending|currency_format }} VNĐ</span>
+                        <span class="badge bg-success me-1">Đã trả: {{ staff_payment_stats.total_paid|currency_format }} VNĐ</span>
+                        <span class="badge bg-primary me-1">Tổng cam kết: {{ staff_payment_stats.total_all|currency_format }} VNĐ</span>
+                        <span class="badge bg-info">{{ staff_payment_stats.count }} nhân viên</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Lưu ý:</strong> Chỉ tiền công nhân viên có trạng thái <span class="badge bg-success">"Đã thanh toán"</span> mới được tính vào <strong>Tổng chi</strong>. 
+                        Tiền công <span class="badge bg-warning">"Chờ thanh toán"</span> chỉ là cam kết chi phí tương lai.
+                    </div>
+                    {% if staff_payments %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Nhân viên</th>
+                                        <th>Vai trò</th>
+                                        <th>Đơn vị tính</th>
+                                        <th>Số đơn vị</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in staff_payments %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ payment.staff_member.user.get_full_name }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ payment.role.name }}</span>
+                                        </td>
+                                        <td>{{ payment.get_payment_unit_display_short }}</td>
+                                        <td>{{ payment.number_of_units }}</td>
+                                        <td class="text-success fw-bold">{{ payment.total_amount|currency_format }} VNĐ</td>
+                                        <td>
+                                            {% if payment.status == 'PENDING' %}
+                                                <span class="badge bg-warning">Chờ thanh toán</span>
+                                            {% elif payment.status == 'PAID' %}
+                                                <span class="badge bg-success">Đã thanh toán</span>
+                                            {% elif payment.status == 'CANCELLED' %}
+                                                <span class="badge bg-danger">Đã hủy</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ payment.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ payment.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'edit_staff_payment' tournament_pk=tournament.pk payment_pk=payment.pk %}" class="btn btn-outline-primary" title="Chỉnh sửa">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'update_staff_payment_status' tournament_pk=tournament.pk payment_pk=payment.pk %}" class="btn btn-outline-warning" title="Cập nhật trạng thái">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                </a>
+                                                <button class="btn btn-outline-danger" onclick="deleteStaffPayment({{ payment.pk }})" title="Xóa">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-info">
+                                <i class="bi bi-eye"></i> Xem tất cả
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">Chưa có tiền công nhân viên nào</p>
+                            <a href="{% url 'add_staff_payment' tournament_pk=tournament.pk %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Thêm tiền công nhân viên
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -331,6 +465,30 @@ function deleteItem(type, itemId) {
         // Tạo URL động
         const baseUrl = '{% url "budget_dashboard" tournament_pk=tournament.pk %}';
         const deleteUrl = baseUrl.replace('/budget/', '/budget/delete/' + type + '/' + itemId + '/');
+        
+        // Tạo form để gửi POST request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        
+        // Thêm CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteStaffPayment(paymentId) {
+    if (confirm('Bạn có chắc chắn muốn xóa tiền công nhân viên này?')) {
+        // Tạo URL xóa staff payment
+        const deleteUrl = '{% url "budget_dashboard" tournament_pk=tournament.pk %}'.replace('/budget/', '/staff-payments/' + paymentId + '/delete/');
         
         // Tạo form để gửi POST request
         const form = document.createElement('form');

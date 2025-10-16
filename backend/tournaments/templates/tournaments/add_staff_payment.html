@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thêm tiền công nhân viên - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-plus-circle text-primary"></i>
+                        Thêm tiền công nhân viên
+                    </h2>
+                    <p class="text-muted mb-0">{{ tournament.name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person-plus"></i> Thông tin tiền công
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.staff_member.id_for_label }}" class="form-label">
+                                    {{ form.staff_member.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.staff_member }}
+                                {% if form.staff_member.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.staff_member.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.rate_per_unit.id_for_label }}" class="form-label">
+                                    {{ form.rate_per_unit.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.rate_per_unit }}
+                                {% if form.rate_per_unit.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.rate_per_unit.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.payment_unit.id_for_label }}" class="form-label">
+                                    {{ form.payment_unit.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.payment_unit }}
+                                {% if form.payment_unit.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.payment_unit.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.number_of_units.id_for_label }}" class="form-label">
+                                    {{ form.number_of_units.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.number_of_units }}
+                                {% if form.number_of_units.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.number_of_units.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Ví dụ: số trận, số ngày, số giờ...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    {{ form.status.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.status.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Chọn trạng thái thanh toán cho nhân viên này
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.payment_date.id_for_label }}" class="form-label">
+                                    {{ form.payment_date.label }}
+                                </label>
+                                {{ form.payment_date }}
+                                {% if form.payment_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.payment_date.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Chỉ cần nhập khi chọn trạng thái "Đã thanh toán"
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.notes.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Tổng tiền tự động tính -->
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Tổng tiền công:</strong>
+                            <span id="total-amount" class="fw-bold">0 VNĐ</span>
+                            <br>
+                            <small>Tổng tiền sẽ được tự động tính = Giá/đơn vị × Số đơn vị</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'staff_payment_list' tournament_pk=tournament.pk %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Thêm tiền công
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rateInput = document.getElementById('id_rate_per_unit');
+    const unitsInput = document.getElementById('id_number_of_units');
+    const totalSpan = document.getElementById('total-amount');
+    const statusSelect = document.getElementById('id_status');
+    const paymentDateInput = document.getElementById('id_payment_date');
+    const paymentDateLabel = paymentDateInput.previousElementSibling;
+    const paymentDateFormGroup = paymentDateInput.closest('.mb-3');
+    
+    function calculateTotal() {
+        const rate = parseFloat(rateInput.value) || 0;
+        const units = parseInt(unitsInput.value) || 0;
+        const total = rate * units;
+        
+        if (total > 0) {
+            totalSpan.textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+            totalSpan.className = 'fw-bold text-success';
+        } else {
+            totalSpan.textContent = '0 VNĐ';
+            totalSpan.className = 'fw-bold text-muted';
+        }
+    }
+    
+    function togglePaymentDate() {
+        const status = statusSelect.value;
+        if (status === 'PAID') {
+            paymentDateFormGroup.style.display = 'block';
+            paymentDateInput.required = true;
+            paymentDateLabel.innerHTML = '{{ form.payment_date.label }} <span class="text-danger">*</span>';
+        } else {
+            paymentDateFormGroup.style.display = 'none';
+            paymentDateInput.required = false;
+            paymentDateInput.value = '';
+            paymentDateLabel.innerHTML = '{{ form.payment_date.label }}';
+        }
+    }
+    
+    rateInput.addEventListener('input', calculateTotal);
+    unitsInput.addEventListener('input', calculateTotal);
+    statusSelect.addEventListener('change', togglePaymentDate);
+    
+    // Tính toán ban đầu
+    calculateTotal();
+    togglePaymentDate();
+});
+</script>
+{% endblock %}

@@ -15,7 +15,7 @@ from django.db.models import Count
 from .models import (Tournament, Team, Player, Match, Lineup, Group, Goal, Card, 
                      HomeBanner, Announcement, TournamentPhoto, Notification, TeamAchievement,
                      TeamRegistration, TournamentBudget, RevenueItem, ExpenseItem, BudgetHistory,
-                     TournamentStaff, MatchNote, CoachRecruitment, PlayerTeamExit) # <-- Import model mới
+                     TournamentStaff, MatchNote, CoachRecruitment, PlayerTeamExit, StaffPayment) # <-- Import model mới
 from .utils import send_notification_email, send_schedule_notification
 
 # Admin configuration
@@ -696,6 +696,53 @@ class MatchNoteAdmin(admin.ModelAdmin):
         }),
         ('Thời gian', {
             'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(StaffPayment)
+class StaffPaymentAdmin(admin.ModelAdmin):
+    list_display = ('staff_member', 'role', 'tournament', 'rate_per_unit', 'number_of_units', 'total_amount', 'status', 'payment_date', 'created_at')
+    list_filter = ('status', 'payment_unit', 'tournament', 'role')
+    search_fields = ('staff_member__user__username', 'staff_member__user__email', 'staff_member__user__first_name', 'staff_member__user__last_name', 'tournament__name', 'role__name')
+    autocomplete_fields = ('tournament', 'staff_member', 'role')
+    list_select_related = ('tournament', 'staff_member__user', 'staff_member__role', 'role')
+    list_per_page = 50
+    readonly_fields = ('total_amount', 'created_at', 'updated_at')
+    
+    class Meta:
+        verbose_name = "Tiền công nhân viên"
+        verbose_name_plural = "Tiền công nhân viên"
+    
+    @admin.display(description='Tên nhân viên', ordering='staff_member__user__first_name')
+    def get_staff_name(self, obj):
+        return obj.staff_member.user.get_full_name()
+    
+    @admin.display(description='Vai trò', ordering='role__name')
+    def get_role_name(self, obj):
+        return obj.role.name
+    
+    @admin.display(description='Giải đấu', ordering='tournament__name')
+    def get_tournament_name(self, obj):
+        return obj.tournament.name
+    
+    @admin.display(description='Tổng tiền công', ordering='total_amount')
+    def get_total_display(self, obj):
+        return f"{obj.total_amount:,} VNĐ"
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('tournament', 'staff_member', 'role')
+        }),
+        ('Thông tin thanh toán', {
+            'fields': ('rate_per_unit', 'payment_unit', 'number_of_units', 'total_amount')
+        }),
+        ('Trạng thái quản lý', {
+            'fields': ('status', 'payment_date', 'notes')
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

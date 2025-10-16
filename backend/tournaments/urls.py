@@ -2,6 +2,7 @@
 from django.urls import path
 from . import views
 from . import player_exit_views
+from . import staff_payment_views
 from .views import tournaments_active
 
 urlpatterns = [
@@ -106,4 +107,12 @@ urlpatterns = [
     path('recruitment/<int:pk>/<str:action>/', views.respond_to_recruitment, name='respond_to_recruitment'),
     path('team/<int:team_pk>/remove-coach/', views.remove_coach_from_team, name='remove_coach_from_team'),
     path('coach/dashboard/', views.coach_dashboard, name='coach_dashboard'),
+    
+    # --- URL cho quản lý tiền công nhân viên ---
+    path('tournament/<int:tournament_pk>/staff-payments/', staff_payment_views.staff_payment_list, name='staff_payment_list'),
+    path('tournament/<int:tournament_pk>/staff-payments/add/', staff_payment_views.add_staff_payment, name='add_staff_payment'),
+    path('tournament/<int:tournament_pk>/staff-payments/quick-add/', staff_payment_views.add_staff_payment_quick, name='add_staff_payment_quick'),
+    path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/status/', staff_payment_views.update_staff_payment_status, name='update_staff_payment_status'),
+    path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/edit/', staff_payment_views.edit_staff_payment, name='edit_staff_payment'),
+    path('tournament/<int:tournament_pk>/staff-payments/<int:payment_pk>/delete/', staff_payment_views.delete_staff_payment, name='delete_staff_payment'),
 ]
