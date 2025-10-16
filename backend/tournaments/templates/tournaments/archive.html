@@ -541,13 +541,7 @@
         </div>
         
         <div class="tournament-image">
-          {% if tournament.image %}
-            <img src="{{ tournament.image.url }}" alt="{{ tournament.name }}">
-          {% else %}
-            <div class="tournament-image-placeholder">
-              <i class="bi bi-trophy"></i>
-            </div>
-          {% endif %}
+          <img src="{% if tournament.image %}{{ tournament.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" alt="{{ tournament.name }}">
           <div class="tournament-overlay"></div>
         </div>
         
@@ -702,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
         "priceCurrency": "VND",
         "availability": "OutOfStock"
       },
-      "image": "{% if tournament.image %}{{ request.scheme }}://{{ request.get_host }}{{ tournament.image.url }}{% else %}https://dbpsports.com/static/images/placeholder_logo.png{% endif %}",
+      "image": "{% if tournament.image %}{{ request.scheme }}://{{ request.get_host }}{{ tournament.image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/Backgroud-1.jpg' %}{% endif %}",
       "url": "{{ request.scheme }}://{{ request.get_host }}{{ tournament.get_absolute_url }}"
     }{% if not forloop.last %},{% endif %}
     {% endfor %}

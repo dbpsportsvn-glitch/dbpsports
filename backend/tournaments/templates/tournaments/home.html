@@ -134,17 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           {% endif %}
           
-          {% if tournament.image %}
           <div class="tournament-image">
-            <img src="{{ tournament.image.url }}" alt="{{ tournament.name }}">
+            <img src="{% if tournament.image %}{{ tournament.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" alt="{{ tournament.name }}">
             <div class="tournament-overlay"></div>
           </div>
-          {% else %}
-          <div class="tournament-image tournament-image-placeholder">
-            <i class="bi bi-trophy"></i>
-            <div class="tournament-overlay"></div>
-          </div>
-          {% endif %}
           
           <div class="tournament-content">
             <h3 class="tournament-name">{{ tournament.name }}</h3>
@@ -228,17 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="bi bi-fire me-1"></i> Hot
           </div>
           
-          {% if tournament.image %}
           <div class="tournament-image compact">
-            <img src="{{ tournament.image.url }}" alt="{{ tournament.name }}">
+            <img src="{% if tournament.image %}{{ tournament.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" alt="{{ tournament.name }}">
             <div class="tournament-overlay"></div>
           </div>
-          {% else %}
-          <div class="tournament-image compact tournament-image-placeholder">
-            <i class="bi bi-trophy"></i>
-            <div class="tournament-overlay"></div>
-          </div>
-          {% endif %}
           
           <div class="tournament-content">
             <h3 class="tournament-name">{{ tournament.name }}</h3>
@@ -305,15 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
       <div class="col-lg-4 col-md-6">
         <div class="tournament-card compact-card" data-aos="fade-up" data-aos-delay="{% cycle '50' '100' '150' '50' '100' '150' '50' '100' '150' '50' '100' '150' %}">
           <div class="tournament-compact-layout">
-            {% if tournament.image %}
             <div class="tournament-thumb">
-              <img src="{{ tournament.image.url }}" alt="{{ tournament.name }}">
+              <img src="{% if tournament.image %}{{ tournament.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" alt="{{ tournament.name }}">
             </div>
-            {% else %}
-            <div class="tournament-thumb tournament-thumb-placeholder">
-              <i class="bi bi-trophy"></i>
-            </div>
-            {% endif %}
             
             <div class="tournament-info">
               <h4 class="tournament-name compact">{{ tournament.name }}</h4>

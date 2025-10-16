@@ -578,13 +578,7 @@
         {% endif %}
         
         <div class="tournament-image">
-          {% if t.image %}
-            <img src="{{ t.image.url }}" alt="{{ t.name }}">
-          {% else %}
-            <div class="tournament-image-placeholder">
-              <i class="bi bi-trophy"></i>
-            </div>
-          {% endif %}
+          <img src="{% if t.image %}{{ t.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" alt="{{ t.name }}">
           <div class="tournament-overlay"></div>
         </div>
         

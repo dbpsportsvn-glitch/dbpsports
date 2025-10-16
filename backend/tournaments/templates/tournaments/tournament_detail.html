@@ -4,9 +4,8 @@
 {% block title %}{{ tournament.name }}{% endblock %}
 
 {% block content %}
-{% if tournament.image %}
 <div class="card shadow-sm mb-4">
-    <img src="{{ tournament.image.url }}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
+    <img src="{% if tournament.image %}{{ tournament.image.url }}{% else %}{% static 'images/Backgroud-1.jpg' %}{% endif %}" class="card-img-top" alt="Banner for {{ tournament.name }}" style="max-height: 400px; object-fit: cover;">
 
     {% if sorted_sponsorships %}
     <div class="sponsor-ticker-overlay">
@@ -56,7 +55,6 @@
     </div>
     {% endif %}
 </div>
-{% endif %}
 
 <!-- Modern Tournament Header -->
 <div class="tournament-header">
