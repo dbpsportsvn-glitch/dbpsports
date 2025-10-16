@@ -280,6 +280,8 @@
             <div class="list-group dashboard-nav nav nav-pills flex-column" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a class="nav-link active" id="tournaments-tab" data-bs-toggle="pill" href="#tournaments" role="tab"><i class="bi bi-trophy-fill"></i>Các giải đấu</a>
                 <a class="nav-link" id="members-tab" data-bs-toggle="pill" href="#members" role="tab"><i class="bi bi-people-fill"></i>Thành viên BTC</a>
+                <a class="nav-link" href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" target="_blank"><i class="bi bi-shop"></i>Shop của BTC</a>
+                <a class="nav-link" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}"><i class="bi bi-gear-fill"></i>Quản lý Shop</a>
             </div>
         </aside>
 

@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Shop - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .org-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-icon.products {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stats-icon.orders {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .stats-icon.revenue {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .management-nav {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-link {
+        color: #495057;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+    
+    .nav-link.active {
+        background: #667eea;
+        color: white;
+    }
+    
+    .recent-orders {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .order-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 0;
+    }
+    
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    
+    .order-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-shipped {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .section-title {
+        color: #2c3e50;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #764ba2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-logo">
+            </div>
+            <div class="col-md-8">
+                <h1 class="mb-2">Quản Lý Shop</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'organizations:dashboard' %}">Dashboard BTC</a>
+                        </li>
+                        <li class="breadcrumb-item active">Quản Lý Shop</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-2 text-end">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon products">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stats-number">{{ total_products }}</div>
+                <div class="stats-label">Sản Phẩm</div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon orders">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="stats-number">{{ total_orders }}</div>
+                <div class="stats-label">Đơn Hàng</div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-icon revenue">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stats-number">{{ total_revenue|floatformat:0 }}đ</div>
+                <div class="stats-label">Doanh Thu</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Management Navigation -->
+        <div class="col-lg-3">
+            <div class="management-nav">
+                <h5 class="section-title">Quản Lý</h5>
+                <nav class="nav flex-column">
+                    <div class="nav-item">
+                        <a class="nav-link active" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Tổng Quan
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}">
+                            <i class="fas fa-box"></i>
+                            Sản Phẩm
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}">
+                            <i class="fas fa-shopping-cart"></i>
+                            Đơn Hàng
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_categories' org_slug=organization.slug %}">
+                            <i class="fas fa-tags"></i>
+                            Danh Mục
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link" href="{% url 'shop:organization_shop:shop_settings' org_slug=organization.slug %}">
+                            <i class="fas fa-cog"></i>
+                            Cài Đặt
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Shop Status -->
+            <div class="stats-card">
+                <h4 class="section-title">Trạng Thái Shop</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if shop_settings.is_active %}
+                                    <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger" style="font-size: 2rem;"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h5 class="mb-1">
+                                    {% if shop_settings.is_active %}
+                                        Shop Đang Hoạt Động
+                                    {% else %}
+                                        Shop Tạm Ngưng
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted mb-0">
+                                    {% if shop_settings.is_active %}
+                                        Khách hàng có thể mua sắm
+                                    {% else %}
+                                        Shop đang bảo trì
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{% url 'shop:organization_shop:shop_settings' org_slug=organization.slug %}" class="btn btn-primary">
+                            <i class="fas fa-cog me-2"></i>Cài Đặt Shop
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Orders -->
+            <div class="recent-orders">
+                <h4 class="section-title">Đơn Hàng Gần Đây</h4>
+                
+                {% if recent_orders %}
+                    {% for order in recent_orders %}
+                    <div class="order-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <strong>#{{ order.order_number }}</strong>
+                                <br>
+                                <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                {{ order.customer_name }}
+                                <br>
+                                <small class="text-muted">{{ order.customer_phone }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="order-status status-{{ order.status|lower }}">
+                                    {% if order.status == 'PENDING' %}
+                                        Chờ Xác Nhận
+                                    {% elif order.status == 'CONFIRMED' %}
+                                        Đã Xác Nhận
+                                    {% elif order.status == 'SHIPPED' %}
+                                        Đang Giao
+                                    {% elif order.status == 'DELIVERED' %}
+                                        Đã Giao
+                                    {% elif order.status == 'CANCELLED' %}
+                                        Đã Hủy
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <strong>{{ order.total_amount|floatformat:0 }}đ</strong>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <a href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}?search={{ order.order_number }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>Xem Tất Cả Đơn Hàng
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-cart text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Chưa có đơn hàng nào</h5>
+                        <p class="text-muted">Khi có đơn hàng, chúng sẽ hiển thị ở đây</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth scrolling for better UX
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}

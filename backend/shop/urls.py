@@ -43,5 +43,5 @@ urlpatterns = [
     path('admin/dashboard/', views.shop_dashboard, name='admin_dashboard'),
     
     # Organization Shop URLs
-    path('org/', include('shop.organization_urls')),
+    path('org/', include('shop.organization_urls', namespace='organization_shop')),
 ]

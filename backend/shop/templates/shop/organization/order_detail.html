@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Đơn Hàng #{{ order.order_number }} - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .org-shop-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .org-shop-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+    }
+    
+    .order-detail-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .order-status {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1rem;
+        display: inline-block;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-shipped {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-delivered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .order-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 0;
+    }
+    
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    
+    .order-item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .price-tag {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .sale-price {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    }
+    
+    .original-price {
+        color: #6c757d;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .summary-row:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #2c3e50;
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #764ba2;
+    }
+    
+    .section-title {
+        color: #2c3e50;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .info-value {
+        color: #6c757d;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 0.25rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #e9ecef;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+    
+    .timeline-item.active::before {
+        background: #667eea;
+        box-shadow: 0 0 0 2px #667eea;
+    }
+    
+    .timeline-item.completed::before {
+        background: #28a745;
+        box-shadow: 0 0 0 2px #28a745;
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .action-btn.secondary {
+        background: #6c757d;
+    }
+    
+    .action-btn.secondary:hover {
+        background: #5a6268;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Organization Shop Header -->
+<div class="org-shop-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                {% if shop_settings.shop_logo %}
+                    <img src="{{ shop_settings.shop_logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                {% else %}
+                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <h1 class="mb-2">Đơn Hàng #{{ order.order_number }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}">Trang Chủ</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}">Đơn Hàng</a>
+                        </li>
+                        <li class="breadcrumb-item active">#{{ order.order_number }}</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-2 text-end">
+                <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Order Details -->
+        <div class="col-lg-8">
+            <!-- Order Status -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="section-title">Trạng Thái Đơn Hàng</h4>
+                            <span class="order-status status-{{ order.status|lower }}">
+                                {% if order.status == 'PENDING' %}
+                                    <i class="fas fa-clock me-2"></i>Chờ Xác Nhận
+                                {% elif order.status == 'CONFIRMED' %}
+                                    <i class="fas fa-check-circle me-2"></i>Đã Xác Nhận
+                                {% elif order.status == 'SHIPPED' %}
+                                    <i class="fas fa-shipping-fast me-2"></i>Đang Giao Hàng
+                                {% elif order.status == 'DELIVERED' %}
+                                    <i class="fas fa-check-double me-2"></i>Đã Giao Hàng
+                                {% elif order.status == 'CANCELLED' %}
+                                    <i class="fas fa-times-circle me-2"></i>Đã Hủy
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="info-row">
+                                <span class="info-label">Ngày đặt:</span>
+                                <span class="info-value">{{ order.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% if order.updated_at != order.created_at %}
+                            <div class="info-row">
+                                <span class="info-label">Cập nhật cuối:</span>
+                                <span class="info-value">{{ order.updated_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Sản Phẩm Đã Đặt</h4>
+                    
+                    {% for item in order.items.all %}
+                    <div class="order-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="order-item-image">
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-1">{{ item.product.name }}</h5>
+                                {% if item.size %}
+                                    <small class="text-muted">Size: {{ item.size.name }}</small>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">Số lượng: {{ item.quantity }}</small>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                {% if item.product.is_on_sale %}
+                                    <span class="price-tag sale-price">{{ item.price|floatformat:0 }}đ</span>
+                                {% else %}
+                                    <span class="price-tag">{{ item.price|floatformat:0 }}đ</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <strong>{{ item.total_price|floatformat:0 }}đ</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Order Timeline -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Lịch Sử Đơn Hàng</h4>
+                    
+                    <div class="timeline">
+                        <div class="timeline-item {% if order.status != 'CANCELLED' %}completed{% endif %}">
+                            <h6 class="mb-1">Đơn hàng đã được tạo</h6>
+                            <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        
+                        {% if order.status in 'CONFIRMED,SHIPPED,DELIVERED' %}
+                        <div class="timeline-item {% if order.status in 'SHIPPED,DELIVERED' %}completed{% elif order.status == 'CONFIRMED' %}active{% endif %}">
+                            <h6 class="mb-1">Đơn hàng đã được xác nhận</h6>
+                            <small class="text-muted">{{ order.updated_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order.status in 'SHIPPED,DELIVERED' %}
+                        <div class="timeline-item {% if order.status == 'DELIVERED' %}completed{% elif order.status == 'SHIPPED' %}active{% endif %}">
+                            <h6 class="mb-1">Đơn hàng đang được giao</h6>
+                            <small class="text-muted">Đang trong quá trình giao hàng</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order.status == 'DELIVERED' %}
+                        <div class="timeline-item completed">
+                            <h6 class="mb-1">Đơn hàng đã được giao</h6>
+                            <small class="text-muted">Giao hàng thành công</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if order.status == 'CANCELLED' %}
+                        <div class="timeline-item completed">
+                            <h6 class="mb-1">Đơn hàng đã bị hủy</h6>
+                            <small class="text-muted">{{ order.updated_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Tóm Tắt Đơn Hàng</h4>
+                    
+                    <div class="summary-row">
+                        <span>Tạm tính:</span>
+                        <span>{{ order.subtotal|floatformat:0 }}đ</span>
+                    </div>
+                    
+                    {% if order.discount_amount > 0 %}
+                    <div class="summary-row">
+                        <span>Giảm giá:</span>
+                        <span class="text-success">-{{ order.discount_amount|floatformat:0 }}đ</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="summary-row">
+                        <span>Phí vận chuyển:</span>
+                        <span>{{ order.shipping_fee|floatformat:0 }}đ</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Tổng cộng:</span>
+                        <span>{{ order.total|floatformat:0 }}đ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Information -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Thông Tin Khách Hàng</h4>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Họ tên:</span>
+                        <span class="info-value">{{ order.customer_name }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Số điện thoại:</span>
+                        <span class="info-value">{{ order.customer_phone }}</span>
+                    </div>
+                    
+                    {% if order.customer_email %}
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">{{ order.customer_email }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="info-row">
+                        <span class="info-label">Địa chỉ:</span>
+                        <span class="info-value">{{ order.shipping_address }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Thành phố:</span>
+                        <span class="info-value">{{ order.shipping_city }}</span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Quận/Huyện:</span>
+                        <span class="info-value">{{ order.shipping_district }}</span>
+                    </div>
+                    
+                    {% if order.shipping_notes %}
+                    <div class="info-row">
+                        <span class="info-label">Ghi chú:</span>
+                        <span class="info-value">{{ order.shipping_notes }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Payment Information -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Thông Tin Thanh Toán</h4>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Phương thức:</span>
+                        <span class="info-value">
+                            {% if order.payment_method == 'COD' %}
+                                <i class="fas fa-money-bill-wave me-1"></i>Thanh toán khi nhận hàng
+                            {% elif order.payment_method == 'BANK_TRANSFER' %}
+                                <i class="fas fa-university me-1"></i>Chuyển khoản ngân hàng
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="info-row">
+                        <span class="info-label">Trạng thái:</span>
+                        <span class="info-value">
+                            {% if order.payment_status == 'PENDING' %}
+                                <span class="badge bg-warning">Chờ thanh toán</span>
+                            {% elif order.payment_status == 'PAID' %}
+                                <span class="badge bg-success">Đã thanh toán</span>
+                            {% elif order.payment_status == 'FAILED' %}
+                                <span class="badge bg-danger">Thanh toán thất bại</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="card order-detail-card">
+                <div class="card-body">
+                    <h4 class="section-title">Hành Động</h4>
+                    
+                    {% if order.status == 'PENDING' %}
+                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                            <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                        </a>
+                    {% elif order.status == 'DELIVERED' %}
+                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn w-100 mb-2">
+                            <i class="fas fa-shopping-bag me-2"></i>Mua Thêm Sản Phẩm
+                        </a>
+                    {% else %}
+                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="action-btn secondary w-100 mb-2">
+                            <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'shop:organization_shop:order_list' org_slug=organization.slug %}" class="action-btn secondary w-100">
+                        <i class="fas fa-list me-2"></i>Xem Tất Cả Đơn Hàng
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth scrolling for better UX
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}

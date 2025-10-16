@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
+from django.db import transaction, models
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.urls import reverse
@@ -92,9 +92,10 @@ def organization_product_list(request, org_slug):
     )
     
     # Lọc theo danh mục
+    current_category = None
     if category_slug:
-        category = get_object_or_404(OrganizationCategory, slug=category_slug, organization=organization)
-        products = products.filter(category=category)
+        current_category = get_object_or_404(OrganizationCategory, slug=category_slug, organization=organization)
+        products = products.filter(category=current_category)
     
     # Tìm kiếm
     if search:
@@ -132,7 +133,7 @@ def organization_product_list(request, org_slug):
         'shop_settings': shop_settings,
         'products': products,
         'categories': categories,
-        'current_category': category_slug,
+        'current_category': current_category,
         'search': search,
         'sort': sort,
     }
@@ -508,3 +509,213 @@ def organization_order_list(request, org_slug):
     }
     
     return render(request, 'shop/organization/order_list.html', context)
+
+
+# ==================== SHOP MANAGEMENT VIEWS ====================
+
+@login_required
+def manage_shop(request, org_slug):
+    """Trang quản lý shop của BTC"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    # Lấy hoặc tạo shop settings
+    shop_settings, created = OrganizationShopSettings.objects.get_or_create(
+        organization=organization,
+        defaults={
+            'shop_name': organization.name,
+            'is_active': True,
+            'shipping_fee': 30000,
+            'free_shipping_threshold': 500000,
+        }
+    )
+    
+    # Thống kê shop
+    total_products = OrganizationProduct.objects.filter(organization=organization).count()
+    total_orders = OrganizationOrder.objects.filter(organization=organization).count()
+    total_revenue = OrganizationOrder.objects.filter(
+        organization=organization, 
+        status='DELIVERED'
+    ).aggregate(total=models.Sum('total_amount'))['total'] or 0
+    
+    # Đơn hàng gần đây
+    recent_orders = OrganizationOrder.objects.filter(
+        organization=organization
+    ).order_by('-created_at')[:5]
+    
+    context = {
+        'organization': organization,
+        'shop_settings': shop_settings,
+        'total_products': total_products,
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'recent_orders': recent_orders,
+    }
+    
+    return render(request, 'shop/organization/manage_shop.html', context)
+
+
+@login_required
+def manage_products(request, org_slug):
+    """Quản lý sản phẩm"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    # Lọc và tìm kiếm
+    search = request.GET.get('search', '')
+    category_id = request.GET.get('category', '')
+    status = request.GET.get('status', '')
+    
+    products = OrganizationProduct.objects.filter(organization=organization)
+    
+    if search:
+        products = products.filter(
+            Q(name__icontains=search) | Q(description__icontains=search)
+        )
+    
+    if category_id:
+        products = products.filter(category_id=category_id)
+    
+    if status:
+        if status == 'active':
+            products = products.filter(is_active=True)
+        elif status == 'inactive':
+            products = products.filter(is_active=False)
+        elif status == 'out_of_stock':
+            products = products.filter(stock_quantity=0)
+    
+    # Phân trang
+    paginator = Paginator(products.order_by('-created_at'), 20)
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+    
+    # Danh mục cho filter
+    categories = OrganizationCategory.objects.filter(organization=organization)
+    
+    context = {
+        'organization': organization,
+        'products': products,
+        'categories': categories,
+        'search': search,
+        'category_id': category_id,
+        'status': status,
+    }
+    
+    return render(request, 'shop/organization/manage_products.html', context)
+
+
+@login_required
+def manage_orders(request, org_slug):
+    """Quản lý đơn hàng"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    # Lọc đơn hàng
+    status = request.GET.get('status', '')
+    search = request.GET.get('search', '')
+    
+    orders = OrganizationOrder.objects.filter(organization=organization)
+    
+    if status:
+        orders = orders.filter(status=status)
+    
+    if search:
+        orders = orders.filter(
+            Q(order_number__icontains=search) |
+            Q(customer_name__icontains=search) |
+            Q(customer_phone__icontains=search)
+        )
+    
+    # Phân trang
+    paginator = Paginator(orders.order_by('-created_at'), 20)
+    page_number = request.GET.get('page')
+    orders = paginator.get_page(page_number)
+    
+    context = {
+        'organization': organization,
+        'orders': orders,
+        'status': status,
+        'search': search,
+    }
+    
+    return render(request, 'shop/organization/manage_orders.html', context)
+
+
+@login_required
+def manage_categories(request, org_slug):
+    """Quản lý danh mục"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    categories = OrganizationCategory.objects.filter(organization=organization).order_by('name')
+    
+    context = {
+        'organization': organization,
+        'categories': categories,
+    }
+    
+    return render(request, 'shop/organization/manage_categories.html', context)
+
+
+@login_required
+def shop_settings(request, org_slug):
+    """Cài đặt shop"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    # Lấy hoặc tạo shop settings
+    shop_settings, created = OrganizationShopSettings.objects.get_or_create(
+        organization=organization,
+        defaults={
+            'shop_name': organization.name,
+            'is_active': True,
+            'shipping_fee': 30000,
+            'free_shipping_threshold': 500000,
+        }
+    )
+    
+    if request.method == 'POST':
+        # Cập nhật settings
+        shop_settings.shop_name = request.POST.get('shop_name', organization.name)
+        shop_settings.shop_description = request.POST.get('shop_description', '')
+        shop_settings.is_active = request.POST.get('is_active') == 'on'
+        shop_settings.shipping_fee = Decimal(request.POST.get('shipping_fee', 0))
+        shop_settings.free_shipping_threshold = Decimal(request.POST.get('free_shipping_threshold', 0))
+        shop_settings.contact_phone = request.POST.get('contact_phone', '')
+        shop_settings.contact_email = request.POST.get('contact_email', '')
+        shop_settings.contact_address = request.POST.get('contact_address', '')
+        
+        # Upload logo nếu có
+        if 'shop_logo' in request.FILES:
+            shop_settings.shop_logo = request.FILES['shop_logo']
+        
+        shop_settings.save()
+        messages.success(request, 'Cài đặt shop đã được cập nhật')
+        return redirect('organization_shop:shop_settings', org_slug=organization.slug)
+    
+    context = {
+        'organization': organization,
+        'shop_settings': shop_settings,
+    }
+    
+    return render(request, 'shop/organization/shop_settings.html', context)

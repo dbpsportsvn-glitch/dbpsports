@@ -12,6 +12,9 @@
   - **Sửa lỗi cập nhật mã QR cho nhà tài trợ:** Đã khắc phục lỗi form không cập nhật được mã QR do conflict giữa 2 model SponsorProfile (cũ và mới). Đã chuyển toàn bộ sang dùng model mới từ users.models với đầy đủ fields bao gồm payment_qr_code.
   - **Tối ưu hiển thị thông tin vai trò:** Đã làm gọn gàng hơn khu vực hiển thị thông tin các vai trò (Coach, Stadium, Sponsor) với layout compact, giảm không gian chiếm dụng và cải thiện UX.
   - **Sửa lỗi NoReverseMatch cho public_profile:** Khắc phục lỗi khi tạo URL cho hồ sơ công khai do `user.username` rỗng. Hệ thống đăng nhập bằng email nên đã cập nhật code để sử dụng `user.email` làm fallback, đảm bảo URL luôn được tạo thành công.
+  - **Hoàn thành tính năng thay ảnh bìa cho tất cả hồ sơ:** Đã thêm nút "Đổi ảnh bìa" vào góc trên bên phải banner cho tất cả 4 loại hồ sơ: hồ sơ người dùng, hồ sơ cầu thủ, hồ sơ đội bóng, và hồ sơ sân bóng. Mỗi hồ sơ có nút riêng với modal upload và logic quyền hạn phù hợp. Tích hợp tính năng tự động nén ảnh xuống dưới 2MB để tránh lỗi kích thước file, hỗ trợ format JPG/PNG/WebP với quality 85% → 75% → 65% adaptive.
+  - **Tạo hệ thống ảnh bìa riêng cho cầu thủ:** Đã thêm trường `banner_image` vào model Player, tạo view `upload_player_banner` riêng, và cập nhật template `player_detail.html` để mỗi cầu thủ có thể đổi ảnh bìa của chính mình. Logic hiển thị ưu tiên: `player.banner_image` → `team.banner_image` → `team.main_photo` → ảnh mặc định. Chỉ cầu thủ sở hữu (`player.user`) mới có quyền thay ảnh, hoàn toàn độc lập với đội bóng.
+  - **Thêm logic ảnh mặc định cho giải đấu:** Đã cập nhật tất cả 4 templates chính (tournament_detail.html, home.html, active_list.html, archive.html) để tự động hiển thị ảnh `Backgroud-1.jpg` khi admin/BTC chưa upload banner giải đấu. Logic ưu tiên: `tournament.image` → `Backgroud-1.jpg`. Cập nhật cả Structured Data JSON-LD trong archive.html để đảm bảo SEO và trải nghiệm người dùng nhất quán trên tất cả các trang hiển thị giải đấu.
   
   **Module Tournaments:**
   - Tạo và quản lý giải đấu (Tournament)
@@ -89,3 +92,11 @@
 
 - **Các vấn đề đã biết:**
   - (Không có vấn đề nghiêm trọng đang track)
+
+- **Organization Shop System - Hoàn thành:**
+  - **Database Models:** Tạo thành công 9 models mới cho Organization Shop bao gồm OrganizationCategory, OrganizationProduct, OrganizationProductVariant, OrganizationProductImage, OrganizationCart, OrganizationCartItem, OrganizationOrder, OrganizationOrderItem, OrganizationShopSettings. Tích hợp vào Django Admin với giao diện quản lý chuyên nghiệp.
+  - **Tournament Integration:** Cập nhật Tournament model để hỗ trợ cả Global Shop và Organization Shop. Thêm method `calculate_organization_shop_discount()` để tính khuyến mãi từ shop của BTC tổ chức giải đấu.
+  - **Views & URLs:** Tạo đầy đủ 12 views cho Organization Shop bao gồm shop_home, product_list, product_detail, cart management, checkout, order management. Tạo URL structure `/shop/org/<org_slug>/` với routing hoàn chỉnh.
+  - **Templates:** Tạo đầy đủ 7 templates cho Organization Shop frontend và 4 templates quản lý với giao diện đẹp mắt và responsive. Bao gồm breadcrumb navigation, stats cards, và modern UI design.
+  - **Sample Data:** Tạo thành công management command và script để tạo dữ liệu mẫu bao gồm 3 danh mục, 3 sản phẩm, shop settings, và product sizes.
+  - **Bug Fixes:** Khắc phục thành công 5 lỗi chính: NoReverseMatch namespace URLs, TemplateSyntaxError với current_category, FieldError với organization.members query, ValueError với main_image, và NoReverseMatch với cart URLs.

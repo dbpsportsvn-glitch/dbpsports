@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Giỏ Hàng - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .org-shop-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .org-shop-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+    }
+    
+    .cart-item-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    
+    .cart-item-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .quantity-btn {
+        width: 35px;
+        height: 35px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quantity-btn:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.25rem;
+    }
+    
+    .price-tag {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .sale-price {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    }
+    
+    .original-price {
+        color: #6c757d;
+        text-decoration: line-through;
+        font-size: 0.9rem;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .summary-row:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #2c3e50;
+    }
+    
+    .checkout-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .remove-btn {
+        background: #dc3545;
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .remove-btn:hover {
+        background: #c82333;
+        transform: translateY(-1px);
+    }
+    
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #764ba2;
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-cart i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .continue-shopping-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        color: white;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .continue-shopping-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Organization Shop Header -->
+<div class="org-shop-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                {% if shop_settings.shop_logo %}
+                    <img src="{{ shop_settings.shop_logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                {% else %}
+                    <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-shop-logo">
+                {% endif %}
+            </div>
+            <div class="col-md-8">
+                <h1 class="mb-2">Giỏ Hàng</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}">Trang Chủ</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}">Sản Phẩm</a>
+                        </li>
+                        <li class="breadcrumb-item active">Giỏ Hàng</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-2 text-end">
+                <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light">
+                    <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if cart_items %}
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            <h3 class="mb-4">Sản Phẩm Trong Giỏ Hàng</h3>
+            
+            {% for item in cart_items %}
+            <div class="card cart-item-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="{{ item.product.main_image.url }}" alt="{{ item.product.name }}" class="cart-item-image">
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="mb-1">{{ item.product.name }}</h5>
+                            {% if item.size %}
+                                <small class="text-muted">Size: {{ item.size.name }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <div class="quantity-controls">
+                                <button type="button" class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'-1' }})">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" id="quantity-{{ item.id }}" class="quantity-input" value="{{ item.quantity }}" min="1" max="{{ item.stock_quantity }}" onchange="updateQuantity({{ item.id }}, this.value)">
+                                <button type="button" class="quantity-btn" onclick="updateQuantity({{ item.id }}, {{ item.quantity|add:'1' }})">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            {% if item.product.is_on_sale %}
+                                <span class="price-tag sale-price">{{ item.total_price|floatformat:0 }}đ</span>
+                                <div class="original-price">{{ item.product.price|floatformat:0 }}đ</div>
+                            {% else %}
+                                <span class="price-tag">{{ item.total_price|floatformat:0 }}đ</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="button" class="btn remove-btn" onclick="removeItem({{ item.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="summary-card">
+                <h4 class="mb-4">Tóm Tắt Đơn Hàng</h4>
+                
+                <div class="summary-row">
+                    <span>Tạm tính:</span>
+                    <span>{{ cart.subtotal|floatformat:0 }}đ</span>
+                </div>
+                
+                {% if cart.discount_amount > 0 %}
+                <div class="summary-row">
+                    <span>Giảm giá:</span>
+                    <span class="text-success">-{{ cart.discount_amount|floatformat:0 }}đ</span>
+                </div>
+                {% endif %}
+                
+                <div class="summary-row">
+                    <span>Phí vận chuyển:</span>
+                    <span>{{ cart.shipping_fee|floatformat:0 }}đ</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>Tổng cộng:</span>
+                    <span>{{ cart.total|floatformat:0 }}đ</span>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'shop:organization_shop:checkout' org_slug=organization.slug %}" class="btn checkout-btn">
+                        <i class="fas fa-credit-card me-2"></i>Thanh Toán
+                    </a>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Thanh toán an toàn và bảo mật
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty Cart -->
+    <div class="empty-cart">
+        <i class="fas fa-shopping-cart"></i>
+        <h3>Giỏ hàng trống</h3>
+        <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="continue-shopping-btn">
+            <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua Sắm
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- CSRF Token for AJAX -->
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update quantity
+    function updateQuantity(itemId, newQuantity) {
+        if (newQuantity < 1) {
+            removeItem(itemId);
+            return;
+        }
+        
+        fetch(`/shop/org/${'{{ organization.slug }}'}/cart/update/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                quantity: parseInt(newQuantity)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the input value
+                document.getElementById('quantity-' + itemId).value = newQuantity;
+                
+                // Reload page to update totals
+                location.reload();
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật số lượng');
+        });
+    }
+    
+    // Remove item
+    function removeItem(itemId) {
+        if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+            return;
+        }
+        
+        fetch(`/shop/org/${'{{ organization.slug }}'}/cart/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                item_id: itemId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the item from DOM
+                const itemElement = document.querySelector(`[onclick="removeItem(${itemId})"]`).closest('.cart-item-card');
+                itemElement.remove();
+                
+                // Check if cart is empty
+                const remainingItems = document.querySelectorAll('.cart-item-card');
+                if (remainingItems.length === 0) {
+                    location.reload();
+                } else {
+                    // Reload to update totals
+                    location.reload();
+                }
+            } else {
+                alert(data.error || 'Có lỗi xảy ra');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa sản phẩm');
+        });
+    }
+    
+    // Prevent quantity input from going below 1
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+            if (parseInt(this.value) < 1) {
+                this.value = 1;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -24,4 +24,11 @@ urlpatterns = [
     path('<slug:org_slug>/order/place/', organization_views.organization_place_order, name='place_order'),
     path('<slug:org_slug>/orders/', organization_views.organization_order_list, name='order_list'),
     path('<slug:org_slug>/orders/<int:order_id>/', organization_views.organization_order_detail, name='order_detail'),
+    
+    # Management URLs
+    path('<slug:org_slug>/manage/', organization_views.manage_shop, name='manage_shop'),
+    path('<slug:org_slug>/manage/products/', organization_views.manage_products, name='manage_products'),
+    path('<slug:org_slug>/manage/orders/', organization_views.manage_orders, name='manage_orders'),
+    path('<slug:org_slug>/manage/categories/', organization_views.manage_categories, name='manage_categories'),
+    path('<slug:org_slug>/manage/settings/', organization_views.shop_settings, name='shop_settings'),
 ]

@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Danh Mục - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .category-card {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .category-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .category-image {
+        height: 150px;
+        object-fit: cover;
+        width: 100%;
+    }
+    
+    .category-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="text-white">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}" class="text-white">Quản Lý</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Danh Mục</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="fas fa-tags me-2"></i>Quản Lý Danh Mục
+                </h1>
+                <p class="mb-0 opacity-75">{{ organization.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg me-2" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                </a>
+                <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="fas fa-plus me-2"></i>Thêm Danh Mục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_categories }}</div>
+                <div>Tổng Danh Mục</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ active_categories }}</div>
+                <div>Đang Hoạt Động</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_products }}</div>
+                <div>Sản Phẩm</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    {% if categories %}
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="category-card">
+                <div class="position-relative">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+                    {% else %}
+                        <div class="category-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-tag fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <span class="category-status status-{% if category.is_active %}active{% else %}inactive{% endif %}">
+                        {% if category.is_active %}Hoạt Động{% else %}Tạm Dừng{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ category.name }}</h5>
+                    <p class="card-text text-muted small">{{ category.description|truncatechars:80 }}</p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">{{ category.products.count }} sản phẩm</small>
+                        <small class="text-muted">{{ category.created_at|date:"d/m/Y" }}</small>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}?category={{ category.slug }}" 
+                           class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="btn btn-outline-warning btn-sm" onclick="editCategory({{ category.id }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteCategory({{ category.id }})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-tags fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">Chưa có danh mục nào</h3>
+        <p class="text-muted mb-4">Hãy thêm danh mục đầu tiên cho shop của bạn</p>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+            <i class="fas fa-plus me-2"></i>Thêm Danh Mục
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Thêm Danh Mục Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên Danh Mục *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">Slug *</label>
+                        <input type="text" class="form-control" id="slug" name="slug" required>
+                        <div class="form-text">URL-friendly version của tên danh mục</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô Tả</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Hình Ảnh</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                            <label class="form-check-label" for="is_active">
+                                Kích hoạt danh mục
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitCategoryForm()">Thêm Danh Mục</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editCategory(categoryId) {
+    // TODO: Implement edit category functionality
+    alert('Chức năng chỉnh sửa danh mục sẽ được triển khai');
+}
+
+function deleteCategory(categoryId) {
+    if (confirm('Bạn có chắc muốn xóa danh mục này? Tất cả sản phẩm trong danh mục sẽ bị ảnh hưởng.')) {
+        // TODO: Implement delete category functionality
+        alert('Chức năng xóa danh mục sẽ được triển khai');
+    }
+}
+
+function submitCategoryForm() {
+    const form = document.querySelector('#addCategoryModal form');
+    const formData = new FormData(form);
+    
+    fetch('{% url "shop:organization_shop:manage_categories" org_slug=organization.slug %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Có lỗi xảy ra khi thêm danh mục');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi thêm danh mục');
+    });
+}
+
+// Auto-generate slug from name
+document.getElementById('name').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim('-');
+    document.getElementById('slug').value = slug;
+});
+</script>
+{% endblock %}

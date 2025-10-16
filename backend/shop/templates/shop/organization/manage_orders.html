@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Đơn Hàng - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .order-card {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .order-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .order-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-confirmed {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-shipped {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-delivered {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="text-white">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}" class="text-white">Quản Lý</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Đơn Hàng</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="fas fa-shopping-cart me-2"></i>Quản Lý Đơn Hàng
+                </h1>
+                <p class="mb-0 opacity-75">{{ organization.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_orders }}</div>
+                <div>Tổng Đơn Hàng</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ pending_orders }}</div>
+                <div>Chờ Xử Lý</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ delivered_orders }}</div>
+                <div>Đã Giao</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_revenue|floatformat:0 }}đ</div>
+                <div>Doanh Thu</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Trạng Thái</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Tất Cả</option>
+                        <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Chờ Xử Lý</option>
+                        <option value="CONFIRMED" {% if request.GET.status == 'CONFIRMED' %}selected{% endif %}>Đã Xác Nhận</option>
+                        <option value="SHIPPED" {% if request.GET.status == 'SHIPPED' %}selected{% endif %}>Đang Giao</option>
+                        <option value="DELIVERED" {% if request.GET.status == 'DELIVERED' %}selected{% endif %}>Đã Giao</option>
+                        <option value="CANCELLED" {% if request.GET.status == 'CANCELLED' %}selected{% endif %}>Đã Hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Từ Ngày</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Đến Ngày</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Lọc
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    {% if orders %}
+    <div class="row">
+        {% for order in orders %}
+        <div class="col-lg-6 mb-4">
+            <div class="order-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title mb-1">Đơn Hàng #{{ order.id }}</h5>
+                            <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        <span class="order-status status-{{ order.status|lower }}">
+                            {% if order.status == 'PENDING' %}Chờ Xử Lý
+                            {% elif order.status == 'CONFIRMED' %}Đã Xác Nhận
+                            {% elif order.status == 'SHIPPED' %}Đang Giao
+                            {% elif order.status == 'DELIVERED' %}Đã Giao
+                            {% else %}Đã Hủy{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Khách Hàng:</strong><br>
+                            {{ order.customer_name }}<br>
+                            <small class="text-muted">{{ order.customer_phone }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Địa Chỉ:</strong><br>
+                            <small>{{ order.shipping_address }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Sản Phẩm:</strong>
+                        <ul class="list-unstyled mt-2">
+                            {% for item in order.items.all %}
+                            <li class="d-flex justify-content-between">
+                                <span>{{ item.product.name }} x{{ item.quantity }}</span>
+                                <span>{{ item.total_price|floatformat:0 }}đ</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Tổng Tiền: {{ order.total_amount|floatformat:0 }}đ</strong>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{% url 'shop:organization_shop:order_detail' org_slug=organization.slug order_id=order.id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Xem
+                            </a>
+                            {% if order.status == 'PENDING' %}
+                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'CONFIRMED')">
+                                <i class="fas fa-check"></i> Xác Nhận
+                            </button>
+                            {% elif order.status == 'CONFIRMED' %}
+                            <button class="btn btn-outline-info btn-sm" onclick="updateOrderStatus({{ order.id }}, 'SHIPPED')">
+                                <i class="fas fa-truck"></i> Giao Hàng
+                            </button>
+                            {% elif order.status == 'SHIPPED' %}
+                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'DELIVERED')">
+                                <i class="fas fa-check-circle"></i> Hoàn Thành
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if orders.has_other_pages %}
+    <nav aria-label="Order pagination">
+        <ul class="pagination justify-content-center">
+            {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Đầu</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Trước</a>
+                </li>
+            {% endif %}
+            
+            {% for num in orders.paginator.page_range %}
+                {% if orders.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Tiếp</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Cuối</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">Chưa có đơn hàng nào</h3>
+        <p class="text-muted mb-4">Các đơn hàng sẽ xuất hiện ở đây khi khách hàng đặt mua</p>
+        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-primary btn-lg" target="_blank">
+            <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateOrderStatus(orderId, newStatus) {
+    const statusText = {
+        'CONFIRMED': 'xác nhận',
+        'SHIPPED': 'giao hàng',
+        'DELIVERED': 'hoàn thành'
+    };
+    
+    if (confirm(`Bạn có chắc muốn ${statusText[newStatus]} đơn hàng này?`)) {
+        fetch('{% url "shop:organization_shop:manage_orders" org_slug=organization.slug %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                'action': 'update_status',
+                'order_id': orderId,
+                'status': newStatus
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+        });
+    }
+}
+</script>
+{% endblock %}

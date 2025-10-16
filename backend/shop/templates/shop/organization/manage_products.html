@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quản Lý Sản Phẩm - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .product-card {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .product-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .product-image {
+        height: 200px;
+        object-fit: cover;
+        width: 100%;
+    }
+    
+    .product-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-published {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-draft {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-archived {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="text-white">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}" class="text-white">Quản Lý</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Sản Phẩm</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="fas fa-box me-2"></i>Quản Lý Sản Phẩm
+                </h1>
+                <p class="mb-0 opacity-75">{{ organization.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg me-2" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                </a>
+                <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus me-2"></i>Thêm Sản Phẩm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_products }}</div>
+                <div>Tổng Sản Phẩm</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ published_products }}</div>
+                <div>Đã Xuất Bản</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ draft_products }}</div>
+                <div>Bản Nháp</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_categories }}</div>
+                <div>Danh Mục</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Trạng Thái</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Tất Cả</option>
+                        <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>Đã Xuất Bản</option>
+                        <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Bản Nháp</option>
+                        <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Lưu Trữ</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Danh Mục</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">Tất Cả</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Tìm Kiếm</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Tên sản phẩm..." value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>Lọc
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    {% if products %}
+    <div class="row">
+        {% for product in products %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="product-card">
+                <div class="position-relative">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                    {% else %}
+                        <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <span class="product-status status-{{ product.status }}">
+                        {% if product.status == 'published' %}Xuất Bản
+                        {% elif product.status == 'draft' %}Nháp
+                        {% else %}Lưu Trữ{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text text-muted small">{{ product.short_description|truncatechars:80 }}</p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            {% if product.sale_price %}
+                                <span class="text-danger fw-bold">{{ product.sale_price|floatformat:0 }}đ</span>
+                                <small class="text-muted text-decoration-line-through">{{ product.price|floatformat:0 }}đ</small>
+                            {% else %}
+                                <span class="fw-bold">{{ product.price|floatformat:0 }}đ</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">Kho: {{ product.stock }}</small>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'shop:organization_shop:product_detail' org_slug=organization.slug product_slug=product.slug %}" 
+                           class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="btn btn-outline-warning btn-sm" onclick="editProduct({{ product.id }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteProduct({{ product.id }})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <nav aria-label="Product pagination">
+        <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Đầu</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Trước</a>
+                </li>
+            {% endif %}
+            
+            {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Tiếp</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Cuối</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-box fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">Chưa có sản phẩm nào</h3>
+        <p class="text-muted mb-4">Hãy thêm sản phẩm đầu tiên cho shop của bạn</p>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="fas fa-plus me-2"></i>Thêm Sản Phẩm
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Thêm Sản Phẩm Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên Sản Phẩm *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Danh Mục *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Chọn danh mục</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Giá *</label>
+                                <input type="number" class="form-control" id="price" name="price" min="0" step="1000" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sale_price" class="form-label">Giá Khuyến Mãi</label>
+                                <input type="number" class="form-control" id="sale_price" name="sale_price" min="0" step="1000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">Số Lượng Tồn Kho</label>
+                                <input type="number" class="form-control" id="stock" name="stock" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Trạng Thái</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="draft">Bản Nháp</option>
+                                    <option value="published">Xuất Bản</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="short_description" class="form-label">Mô Tả Ngắn</label>
+                        <textarea class="form-control" id="short_description" name="short_description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô Tả Chi Tiết</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Hình Ảnh</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_bestseller" name="is_bestseller">
+                            <label class="form-check-label" for="is_bestseller">
+                                Sản phẩm bán chạy
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitProductForm()">Thêm Sản Phẩm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editProduct(productId) {
+    // TODO: Implement edit product functionality
+    alert('Chức năng chỉnh sửa sản phẩm sẽ được triển khai');
+}
+
+function deleteProduct(productId) {
+    if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+        // TODO: Implement delete product functionality
+        alert('Chức năng xóa sản phẩm sẽ được triển khai');
+    }
+}
+
+function submitProductForm() {
+    const form = document.querySelector('#addProductModal form');
+    const formData = new FormData(form);
+    
+    fetch('{% url "shop:organization_shop:manage_products" org_slug=organization.slug %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Có lỗi xảy ra khi thêm sản phẩm');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi thêm sản phẩm');
+    });
+}
+</script>
+{% endblock %}

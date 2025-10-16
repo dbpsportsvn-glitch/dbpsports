@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cài Đặt Shop - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .settings-card {
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .settings-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="text-white">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}" class="text-white">Quản Lý</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Cài Đặt</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="fas fa-cog me-2"></i>Cài Đặt Shop
+                </h1>
+                <p class="mb-0 opacity-75">{{ organization.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg" target="_blank">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Basic Settings -->
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-info-circle me-2"></i>Thông Tin Cơ Bản
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shop_name" class="form-label">Tên Shop *</label>
+                                <input type="text" class="form-control" id="shop_name" name="shop_name" 
+                                       value="{{ shop_settings.shop_name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="contact_email" class="form-label">Email Liên Hệ</label>
+                                <input type="email" class="form-control" id="contact_email" name="contact_email" 
+                                       value="{{ shop_settings.contact_email }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shop_description" class="form-label">Mô Tả Shop</label>
+                        <textarea class="form-control" id="shop_description" name="shop_description" rows="3">{{ shop_settings.shop_description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shop_logo" class="form-label">Logo Shop</label>
+                        <input type="file" class="form-control" id="shop_logo" name="shop_logo" accept="image/*">
+                        {% if shop_settings.shop_logo %}
+                        <div class="mt-2">
+                            <img src="{{ shop_settings.shop_logo.url }}" alt="Current logo" style="max-height: 100px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Shipping Settings -->
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-shipping-fast me-2"></i>Cài Đặt Giao Hàng
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shipping_fee" class="form-label">Phí Giao Hàng (VNĐ)</label>
+                                <input type="number" class="form-control" id="shipping_fee" name="shipping_fee" 
+                                       value="{{ shop_settings.shipping_fee }}" min="0" step="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="free_shipping_threshold" class="form-label">Miễn Phí Giao Hàng Từ (VNĐ)</label>
+                                <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" 
+                                       value="{{ shop_settings.free_shipping_threshold }}" min="0" step="1000">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shipping_policy" class="form-label">Chính Sách Giao Hàng</label>
+                        <textarea class="form-control" id="shipping_policy" name="shipping_policy" rows="3">{{ shop_settings.shipping_policy }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Payment Settings -->
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-credit-card me-2"></i>Cài Đặt Thanh Toán
+                    </h4>
+                    <div class="mb-3">
+                        <label class="form-label">Phương Thức Thanh Toán</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="payment_cod" name="payment_cod" 
+                                   {% if shop_settings.payment_cod %}checked{% endif %}>
+                            <label class="form-check-label" for="payment_cod">
+                                Thanh toán khi nhận hàng (COD)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="payment_bank_transfer" name="payment_bank_transfer" 
+                                   {% if shop_settings.payment_bank_transfer %}checked{% endif %}>
+                            <label class="form-check-label" for="payment_bank_transfer">
+                                Chuyển khoản ngân hàng
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bank_info" class="form-label">Thông Tin Ngân Hàng</label>
+                        <textarea class="form-control" id="bank_info" name="bank_info" rows="3" 
+                                  placeholder="Tên ngân hàng: ...&#10;Số tài khoản: ...&#10;Chủ tài khoản: ...">{{ shop_settings.bank_info }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Shop Status -->
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-toggle-on me-2"></i>Trạng Thái Shop
+                    </h4>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if shop_settings.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Kích hoạt shop
+                            </label>
+                        </div>
+                        <div class="form-text">Khi tắt, shop sẽ không hiển thị cho khách hàng</div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Lưu Cài Đặt
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Shop Preview -->
+            <div class="settings-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-eye me-2"></i>Xem Trước Shop
+                    </h5>
+                    <p class="card-text">Xem shop của bạn sẽ hiển thị như thế nào với khách hàng</p>
+                    <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" 
+                       class="btn btn-outline-primary w-100" target="_blank">
+                        <i class="fas fa-external-link-alt me-2"></i>Xem Shop
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="settings-card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar me-2"></i>Thống Kê Nhanh
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h4 class="text-primary">{{ total_products }}</h4>
+                                <small class="text-muted">Sản Phẩm</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ total_orders }}</h4>
+                            <small class="text-muted">Đơn Hàng</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help -->
+            <div class="settings-card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-question-circle me-2"></i>Trợ Giúp
+                    </h5>
+                    <p class="card-text small">
+                        Cài đặt shop sẽ ảnh hưởng đến cách khách hàng tương tác với shop của bạn. 
+                        Hãy đảm bảo thông tin chính xác và đầy đủ.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-save form data to localStorage
+function saveFormData() {
+    const form = document.querySelector('form');
+    const formData = new FormData(form);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    localStorage.setItem('shop_settings_form', JSON.stringify(data));
+}
+
+// Load form data from localStorage
+function loadFormData() {
+    const savedData = localStorage.getItem('shop_settings_form');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        
+        Object.keys(data).forEach(key => {
+            const element = document.querySelector(`[name="${key}"]`);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = data[key] === 'on';
+                } else {
+                    element.value = data[key];
+                }
+            }
+        });
+    }
+}
+
+// Save form data on input change
+document.addEventListener('DOMContentLoaded', function() {
+    loadFormData();
+    
+    const form = document.querySelector('form');
+    form.addEventListener('input', saveFormData);
+    
+    // Clear saved data on successful submit
+    form.addEventListener('submit', function() {
+        localStorage.removeItem('shop_settings_form');
+    });
+});
+</script>
+{% endblock %}
