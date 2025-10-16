@@ -1,42 +1,637 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Chính sách Quyền riêng tư{% endblock %}
+{% block title %}Chính sách Bảo mật - DBP Sports{% endblock %}
+
+{% block extrahead %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.content-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dc2626;
+}
+
+.section-title i {
+    color: #dc2626;
+    font-size: 1.6rem;
+}
+
+.section-content {
+    color: #4b5563;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.section-content p {
+    margin-bottom: 1rem;
+}
+
+.section-content ul, .section-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.section-content li {
+    margin-bottom: 0.5rem;
+}
+
+.data-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.data-type-card {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border-left: 4px solid #dc2626;
+    transition: all 0.3s ease;
+}
+
+.data-type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.data-type-card h5 {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.data-type-card h5 i {
+    color: #dc2626;
+}
+
+.data-type-card ul {
+    margin-bottom: 0;
+    padding-left: 1rem;
+}
+
+.data-type-card li {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.protection-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #22c55e;
+}
+
+.protection-section h5 {
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.protection-section h5 i {
+    color: #22c55e;
+}
+
+.protection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.protection-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #22c55e;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.protection-item h6 {
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.protection-item p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.warning-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #f59e0b;
+}
+
+.warning-section h5 {
+    color: #92400e;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warning-section h5 i {
+    color: #f59e0b;
+}
+
+.rights-section {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #3b82f6;
+}
+
+.rights-section h5 {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rights-section h5 i {
+    color: #3b82f6;
+}
+
+.contact-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #22c55e;
+    margin-top: 2rem;
+}
+
+.contact-section h4 {
+    color: #166534;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.contact-section p {
+    color: #166534;
+    margin-bottom: 1rem;
+}
+
+.contact-btn {
+    background: #22c55e;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+    background: #16a34a;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .content-section {
+        padding: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+    }
+    
+    .data-type-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .protection-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>Chính sách Quyền riêng tư</h1>
-        <p class="lead">Cập nhật lần cuối: 24 tháng 9, 2025</p>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="bi bi-shield-lock-fill"></i>
+                Chính sách Bảo mật
+            </h1>
+            <p class="hero-subtitle">
+                Cam kết bảo vệ thông tin cá nhân và quyền riêng tư của bạn
+            </p>
+            <p class="mt-3 mb-0">
+                <small><i class="bi bi-calendar-check"></i> Cập nhật lần cuối: {% now "d/m/Y" %}</small>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width: 900px;">
+    <!-- Giới thiệu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-info-circle-fill"></i>
+            Giới thiệu
+        </h2>
+        <div class="section-content">
+            <p>Chào mừng bạn đến với <strong>DBP Sports</strong>. Chúng tôi cam kết bảo vệ thông tin cá nhân và quyền riêng tư của bạn. Chính sách này giải thích cách chúng tôi thu thập, sử dụng, lưu trữ và bảo vệ thông tin của bạn khi sử dụng nền tảng DBP Sports.</p>
+            
+            <div class="protection-section">
+                <h5><i class="bi bi-shield-check"></i> Cam kết của chúng tôi</h5>
+                <p class="mb-0">DBP Sports tuân thủ nghiêm ngặt các quy định pháp luật về bảo vệ dữ liệu cá nhân và áp dụng các biện pháp bảo mật tiên tiến nhất để bảo vệ thông tin của bạn.</p>
+            </div>
+        </div>
     </div>
 
-    <p>Chào mừng bạn đến với DBP Sports ("chúng tôi"). Chúng tôi cam kết bảo vệ thông tin cá nhân của bạn. Chính sách này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn.</p>
+    <!-- Thông tin chúng tôi thu thập -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-database-fill"></i>
+            Thông tin chúng tôi thu thập
+        </h2>
+        <div class="section-content">
+            <p>Chúng tôi thu thập các loại thông tin sau để cung cấp và cải thiện dịch vụ:</p>
+            
+            <div class="data-type-grid">
+                <div class="data-type-card">
+                    <h5><i class="bi bi-person-fill"></i> Thông tin cá nhân</h5>
+                    <ul>
+                        <li>Họ và tên</li>
+                        <li>Địa chỉ email</li>
+                        <li>Số điện thoại</li>
+                        <li>Ảnh đại diện</li>
+                        <li>Ngày sinh (tùy chọn)</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-shield-fill"></i> Thông tin xác thực</h5>
+                    <ul>
+                        <li>Mật khẩu (được mã hóa)</li>
+                        <li>Token đăng nhập</li>
+                        <li>Thông tin từ Google/Facebook</li>
+                        <li>IP address và thiết bị</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-trophy-fill"></i> Thông tin thể thao</h5>
+                    <ul>
+                        <li>Thông tin đội bóng</li>
+                        <li>Danh sách cầu thủ</li>
+                        <li>Kết quả thi đấu</li>
+                        <li>Thống kê cá nhân</li>
+                        <li>Hình ảnh giải đấu</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-shop"></i> Thông tin thương mại</h5>
+                    <ul>
+                        <li>Lịch sử mua hàng</li>
+                        <li>Địa chỉ giao hàng</li>
+                        <li>Thông tin thanh toán</li>
+                        <li>Sở thích mua sắm</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <h4>1. Thông tin chúng tôi thu thập</h4>
-    <p>Chúng tôi thu thập các thông tin sau khi bạn đăng ký tài khoản:</p>
-    <ul>
-        <li><strong>Thông tin bạn cung cấp:</strong> Email, mật khẩu, họ và tên.</li>
-        <li><strong>Thông tin từ Mạng xã hội (Google, Facebook):</strong> Khi bạn đăng nhập bằng các nền tảng này, chúng tôi sẽ thu thập tên, email, và ảnh đại diện công khai của bạn để tự động điền vào hồ sơ trên DBP Sports.</li>
-        <li><strong>Thông tin đội bóng và cầu thủ:</strong> Tên đội, logo, danh sách cầu thủ, số áo, vị trí thi đấu.</li>
+    <!-- Cách chúng tôi sử dụng thông tin -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-gear-fill"></i>
+            Cách chúng tôi sử dụng thông tin
+        </h2>
+        <div class="section-content">
+            <p>Thông tin của bạn được sử dụng cho các mục đích sau:</p>
+            
+            <h5>1. Cung cấp dịch vụ:</h5>
+            <ul>
+                <li>Tạo và quản lý tài khoản người dùng</li>
+                <li>Đăng ký và quản lý đội bóng</li>
+                <li>Tổ chức và theo dõi giải đấu</li>
+                <li>Cung cấp shop thể thao và dịch vụ thương mại</li>
+            </ul>
+
+            <h5>2. Cải thiện trải nghiệm:</h5>
+            <ul>
+                <li>Cá nhân hóa giao diện và nội dung</li>
+                <li>Gợi ý giải đấu và sản phẩm phù hợp</li>
+                <li>Tối ưu hóa hiệu suất và tốc độ</li>
+                <li>Phân tích xu hướng và hành vi người dùng</li>
+            </ul>
+
+            <h5>3. Giao tiếp và hỗ trợ:</h5>
+            <ul>
+                <li>Gửi thông báo quan trọng về giải đấu</li>
+                <li>Cập nhật về đơn hàng và dịch vụ</li>
+                <li>Hỗ trợ kỹ thuật và giải đáp thắc mắc</li>
+                <li>Gửi tin tức và cập nhật về nền tảng</li>
+            </ul>
+
+            <div class="warning-section">
+                <h5><i class="bi bi-exclamation-triangle"></i> Lưu ý quan trọng</h5>
+                <p class="mb-0">Chúng tôi KHÔNG BAO GIỜ bán hoặc cho thuê thông tin cá nhân của bạn cho bên thứ ba vì mục đích thương mại.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chia sẻ thông tin -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-share-fill"></i>
+            Chia sẻ thông tin
+        </h2>
+        <div class="section-content">
+            <p>Chúng tôi chỉ chia sẻ thông tin của bạn trong các trường hợp sau:</p>
+            
+            <h5>1. Với sự đồng ý của bạn:</h5>
+            <ul>
+                <li>Khi bạn đồng ý chia sẻ thông tin với ban tổ chức giải đấu</li>
+                <li>Khi bạn chọn hiển thị thông tin công khai</li>
+                <li>Khi bạn tham gia các chương trình đặc biệt</li>
+            </ul>
+
+            <h5>2. Với ban tổ chức giải đấu:</h5>
+            <ul>
+                <li>Thông tin đội bóng và cầu thủ để quản lý giải đấu</li>
+                <li>Kết quả thi đấu và thống kê</li>
+                <li>Thông tin liên hệ để giao tiếp</li>
+            </ul>
+
+            <h5>3. Với nhà cung cấp dịch vụ:</h5>
+            <ul>
+                <li>Nhà cung cấp hosting và bảo mật</li>
+                <li>Dịch vụ email và thông báo</li>
+                <li>Dịch vụ phân tích và thống kê</li>
+            </ul>
+
+            <h5>4. Theo yêu cầu pháp lý:</h5>
+            <ul>
+                <li>Khi có yêu cầu từ cơ quan nhà nước có thẩm quyền</li>
+                <li>Để bảo vệ quyền lợi hợp pháp của DBP Sports</li>
+                <li>Để tuân thủ các quy định pháp luật</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Bảo mật thông tin -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-shield-lock-fill"></i>
+            Bảo mật thông tin
+        </h2>
+        <div class="section-content">
+            <p>Chúng tôi áp dụng các biện pháp bảo mật đa lớp để bảo vệ thông tin của bạn:</p>
+            
+            <div class="protection-section">
+                <h5><i class="bi bi-shield-check"></i> Biện pháp bảo mật</h5>
+                <div class="protection-grid">
+                    <div class="protection-item">
+                        <h6><i class="bi bi-lock-fill"></i> Mã hóa dữ liệu</h6>
+                        <p>Tất cả dữ liệu được mã hóa SSL/TLS khi truyền tải và mã hóa AES-256 khi lưu trữ.</p>
+                    </div>
+                    <div class="protection-item">
+                        <h6><i class="bi bi-key-fill"></i> Xác thực đa yếu tố</h6>
+                        <p>Hỗ trợ đăng nhập bằng Google/Facebook và các phương thức xác thực an toàn.</p>
+                    </div>
+                    <div class="protection-item">
+                        <h6><i class="bi bi-eye-slash-fill"></i> Kiểm soát truy cập</h6>
+                        <p>Hệ thống phân quyền nghiêm ngặt và kiểm soát truy cập theo vai trò.</p>
+                    </div>
+                    <div class="protection-item">
+                        <h6><i class="bi bi-graph-up"></i> Giám sát liên tục</h6>
+                        <p>Hệ thống giám sát và phát hiện các hoạt động bất thường 24/7.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-section">
+                <h5><i class="bi bi-exclamation-triangle"></i> Trách nhiệm của bạn</h5>
+                <p class="mb-0">Bạn có trách nhiệm bảo mật thông tin đăng nhập và không chia sẻ với người khác. Hãy đăng xuất khỏi các thiết bị công cộng.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quyền của bạn -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-person-check-fill"></i>
+            Quyền của bạn
+        </h2>
+        <div class="section-content">
+            <p>Theo quy định pháp luật về bảo vệ dữ liệu cá nhân, bạn có các quyền sau:</p>
+            
+            <div class="rights-section">
+                <h5><i class="bi bi-person-check"></i> Quyền kiểm soát dữ liệu</h5>
+                <ul>
+                    <li><strong>Quyền truy cập:</strong> Xem thông tin cá nhân mà chúng tôi lưu trữ</li>
+                    <li><strong>Quyền chỉnh sửa:</strong> Cập nhật và sửa đổi thông tin cá nhân</li>
+                    <li><strong>Quyền xóa:</strong> Yêu cầu xóa thông tin cá nhân</li>
+                    <li><strong>Quyền hạn chế:</strong> Hạn chế việc xử lý thông tin cá nhân</li>
+                    <li><strong>Quyền di chuyển:</strong> Xuất dữ liệu cá nhân sang định dạng khác</li>
+                </ul>
+            </div>
+
+            <h5>Cách thực hiện quyền:</h5>
+            <ul>
+                <li>Truy cập phần "Cài đặt tài khoản" để xem và chỉnh sửa thông tin</li>
+                <li>Gửi email đến <strong>dbpsportsvn@gmail.com</strong> để yêu cầu xóa dữ liệu</li>
+                <li>Sử dụng tính năng "Xóa tài khoản" trong phần cài đặt</li>
+                <li>Liên hệ đội ngũ hỗ trợ để được hướng dẫn chi tiết</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Cookie và Công nghệ theo dõi -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-cookie"></i>
+            Cookie và Công nghệ theo dõi
+        </h2>
+        <div class="section-content">
+            <p>Chúng tôi sử dụng cookie và các công nghệ tương tự để:</p>
+            
+            <h5>Cookie cần thiết:</h5>
+            <ul>
+                <li>Duy trì phiên đăng nhập</li>
+                <li>Lưu trữ tùy chọn người dùng</li>
+                <li>Đảm bảo bảo mật và chống gian lận</li>
+            </ul>
+
+            <h5>Cookie phân tích:</h5>
+            <ul>
+                <li>Phân tích cách sử dụng website</li>
+                <li>Cải thiện hiệu suất và trải nghiệm</li>
+                <li>Đo lường hiệu quả các tính năng</li>
+            </ul>
+
+            <h5>Cookie marketing:</h5>
+            <ul>
+                <li>Hiển thị quảng cáo phù hợp</li>
+                <li>Theo dõi hiệu quả chiến dịch</li>
+                <li>Cá nhân hóa nội dung</li>
+            </ul>
+
+            <div class="info-box">
+                <h5><i class="bi bi-info-circle"></i> Quản lý Cookie</h5>
+                <p class="mb-0">Bạn có thể quản lý cookie thông qua cài đặt trình duyệt hoặc phần "Cài đặt Cookie" trên website.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lưu trữ dữ liệu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-hdd-stack-fill"></i>
+            Lưu trữ dữ liệu
+        </h2>
+        <div class="section-content">
+            <h5>Thời gian lưu trữ:</h5>
+            <ul>
+                <li><strong>Thông tin tài khoản:</strong> Cho đến khi bạn xóa tài khoản</li>
+                <li><strong>Dữ liệu giải đấu:</strong> Tối thiểu 5 năm để phục vụ lưu trữ lịch sử</li>
+                <li><strong>Log hệ thống:</strong> 12 tháng để bảo mật và phân tích</li>
+                <li><strong>Dữ liệu thương mại:</strong> Theo quy định pháp luật về thuế</li>
     </ul>
 
-    <h4>2. Cách chúng tôi sử dụng thông tin</h4>
-    <p>Thông tin của bạn được sử dụng để:</p>
-    <ul>
-        <li>Cung cấp và vận hành dịch vụ quản lý giải đấu.</li>
-        <li>Hiển thị thông tin đội bóng, lịch thi đấu, kết quả và bảng xếp hạng.</li>
-        <li>Gửi các thông báo quan trọng liên quan đến giải đấu mà bạn tham gia.</li>
-        <li>Cá nhân hóa trải nghiệm của bạn trên nền tảng.</li>
+            <h5>Địa điểm lưu trữ:</h5>
+            <ul>
+                <li>Dữ liệu được lưu trữ tại các trung tâm dữ liệu tại Việt Nam</li>
+                <li>Sử dụng dịch vụ cloud đáng tin cậy với chứng nhận bảo mật</li>
+                <li>Backup dữ liệu định kỳ để đảm bảo an toàn</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Thay đổi chính sách -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-arrow-clockwise"></i>
+            Thay đổi chính sách
+        </h2>
+        <div class="section-content">
+            <p>Chúng tôi có thể cập nhật chính sách bảo mật này để phản ánh:</p>
+            
+            <ul>
+                <li>Thay đổi trong cách chúng tôi thu thập và sử dụng thông tin</li>
+                <li>Cập nhật các quy định pháp luật mới</li>
+                <li>Cải thiện các biện pháp bảo mật</li>
+                <li>Thêm các tính năng và dịch vụ mới</li>
     </ul>
 
-    <h4>3. Chia sẻ thông tin</h4>
-    <p>Chúng tôi cam kết không bán hoặc cho thuê thông tin cá nhân của bạn cho bất kỳ bên thứ ba nào. Thông tin chỉ được chia sẻ trong các trường hợp sau:</p>
-    <ul>
-        <li>Khi được sự đồng ý của bạn.</li>
-        <li>Cho các ban tổ chức giải đấu mà bạn đã đăng ký tham gia.</li>
-        <li>Khi có yêu cầu pháp lý từ cơ quan nhà nước có thẩm quyền.</li>
+            <h5>Thông báo thay đổi:</h5>
+            <ul>
+                <li>Thông báo qua email trước ít nhất 30 ngày</li>
+                <li>Hiển thị thông báo trên website</li>
+                <li>Cập nhật ngày "Cập nhật lần cuối"</li>
+                <li>Giải thích rõ ràng về các thay đổi</li>
     </ul>
 
-    <h4>4. Liên hệ</h4>
-    <p>Nếu bạn có bất kỳ câu hỏi nào về chính sách này, vui lòng liên hệ với chúng tôi qua email: <strong>dbpsportsvn@gmail.com</strong>.</p>
+            <div class="highlight-box">
+                <h5><i class="bi bi-calendar-check"></i> Phiên bản hiện tại</h5>
+                <p class="mb-0">Chính sách này có hiệu lực từ ngày {% now "d/m/Y" %} và thay thế cho tất cả các phiên bản trước đó.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liên hệ -->
+    <div class="contact-section">
+        <h4><i class="bi bi-headset"></i> Cần hỗ trợ về Bảo mật?</h4>
+        <p>Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật hoặc muốn thực hiện quyền của mình, vui lòng liên hệ với chúng tôi!</p>
+        <a href="mailto:dbpsportsvn@gmail.com" class="contact-btn">
+            <i class="bi bi-envelope-fill"></i>
+            Liên hệ hỗ trợ
+        </a>
+    </div>
 </div>
 {% endblock %}

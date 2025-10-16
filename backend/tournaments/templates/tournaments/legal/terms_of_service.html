@@ -1,27 +1,498 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Điều khoản Dịch vụ{% endblock %}
+{% block title %}Điều khoản Dịch vụ - DBP Sports{% endblock %}
+
+{% block extrahead %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.content-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dc2626;
+}
+
+.section-title i {
+    color: #dc2626;
+    font-size: 1.6rem;
+}
+
+.section-content {
+    color: #4b5563;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.section-content p {
+    margin-bottom: 1rem;
+}
+
+.section-content ul, .section-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.section-content li {
+    margin-bottom: 0.5rem;
+}
+
+.highlight-box {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.highlight-box h5 {
+    color: #92400e;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.highlight-box h5 i {
+    color: #f59e0b;
+}
+
+.warning-box {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 1px solid #ef4444;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.warning-box h5 {
+    color: #dc2626;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warning-box h5 i {
+    color: #dc2626;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1px solid #3b82f6;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.info-box h5 {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-box h5 i {
+    color: #3b82f6;
+}
+
+.contact-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #22c55e;
+    margin-top: 2rem;
+}
+
+.contact-section h4 {
+    color: #166534;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.contact-section p {
+    color: #166534;
+    margin-bottom: 1rem;
+}
+
+.contact-btn {
+    background: #22c55e;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+    background: #16a34a;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .content-section {
+        padding: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>Điều khoản Dịch vụ</h1>
-        <p class="lead">Cập nhật lần cuối: 24 tháng 9, 2025</p>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="bi bi-shield-check-fill"></i>
+                Điều khoản Dịch vụ
+            </h1>
+            <p class="hero-subtitle">
+                Điều khoản và điều kiện sử dụng nền tảng DBP Sports
+            </p>
+            <p class="mt-3 mb-0">
+                <small><i class="bi bi-calendar-check"></i> Cập nhật lần cuối: {% now "d/m/Y" %}</small>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width: 900px;">
+    <!-- Giới thiệu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-info-circle-fill"></i>
+            Giới thiệu
+        </h2>
+        <div class="section-content">
+            <p>Chào mừng bạn đến với <strong>DBP Sports</strong> - nền tảng quản lý thể thao hàng đầu tại Điện Biên. Bằng cách truy cập và sử dụng website, ứng dụng hoặc dịch vụ của chúng tôi, bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu trong tài liệu này.</p>
+            
+            <div class="info-box">
+                <h5><i class="bi bi-lightbulb"></i> Lưu ý quan trọng</h5>
+                <p class="mb-0">Nếu bạn không đồng ý với bất kỳ điều khoản nào trong tài liệu này, vui lòng không sử dụng dịch vụ của chúng tôi. Việc tiếp tục sử dụng dịch vụ được coi là bạn đã chấp nhận đầy đủ các điều khoản này.</p>
+            </div>
+        </div>
     </div>
 
-    <h4>1. Chấp nhận Điều khoản</h4>
-    <p>Bằng cách truy cập và sử dụng website DBP Sports, bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu trong tài liệu này.</p>
+    <!-- Định nghĩa -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-book-fill"></i>
+            Định nghĩa
+        </h2>
+        <div class="section-content">
+            <p>Trong tài liệu này, các thuật ngữ sau được hiểu như sau:</p>
+            <ul>
+                <li><strong>"DBP Sports", "chúng tôi", "công ty"</strong>: Chỉ DBP Sports và các dịch vụ liên quan</li>
+                <li><strong>"Người dùng", "bạn"</strong>: Chỉ cá nhân hoặc tổ chức sử dụng dịch vụ</li>
+                <li><strong>"Dịch vụ"</strong>: Bao gồm website, ứng dụng, và tất cả tính năng của DBP Sports</li>
+                <li><strong>"Nội dung"</strong>: Thông tin, dữ liệu, hình ảnh, video được đăng tải trên nền tảng</li>
+                <li><strong>"Tài khoản"</strong>: Hồ sơ người dùng được tạo trên hệ thống</li>
+            </ul>
+        </div>
+    </div>
 
-    <h4>2. Trách nhiệm của Người dùng</h4>
-    <p>Bạn có trách nhiệm:</p>
-    <ul>
-        <li>Cung cấp thông tin chính xác khi đăng ký tài khoản và đội bóng.</li>
-        <li>Bảo mật thông tin đăng nhập của mình.</li>
-        <li>Không đăng tải nội dung vi phạm pháp luật, thiếu văn hóa hoặc gây tổn hại đến người khác.</li>
-        <li>Tuân thủ các quy định và điều lệ của từng giải đấu mà bạn tham gia.</li>
+    <!-- Quyền và Trách nhiệm của Người dùng -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-person-check-fill"></i>
+            Quyền và Trách nhiệm của Người dùng
+        </h2>
+        <div class="section-content">
+            <h5>Quyền của bạn:</h5>
+            <ul>
+                <li>Truy cập và sử dụng các tính năng miễn phí của nền tảng</li>
+                <li>Tạo và quản lý tài khoản cá nhân</li>
+                <li>Tham gia các giải đấu và hoạt động thể thao</li>
+                <li>Sử dụng shop thể thao và các dịch vụ thương mại</li>
+                <li>Yêu cầu hỗ trợ và phản hồi từ đội ngũ DBP Sports</li>
+            </ul>
+
+            <h5>Trách nhiệm của bạn:</h5>
+            <ul>
+                <li>Cung cấp thông tin chính xác và đầy đủ khi đăng ký tài khoản</li>
+                <li>Bảo mật thông tin đăng nhập và không chia sẻ với người khác</li>
+                <li>Tuân thủ các quy định và điều lệ của từng giải đấu</li>
+                <li>Không đăng tải nội dung vi phạm pháp luật hoặc thiếu văn hóa</li>
+                <li>Tôn trọng quyền riêng tư và danh dự của người khác</li>
+                <li>Thanh toán đầy đủ các khoản phí khi sử dụng dịch vụ có tính phí</li>
+            </ul>
+
+            <div class="warning-box">
+                <h5><i class="bi bi-exclamation-triangle"></i> Cảnh báo</h5>
+                <p class="mb-0">Việc vi phạm các quy định này có thể dẫn đến việc tạm ngưng hoặc chấm dứt tài khoản của bạn mà không cần thông báo trước.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dịch vụ và Tính năng -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-gear-fill"></i>
+            Dịch vụ và Tính năng
+        </h2>
+        <div class="section-content">
+            <p>DBP Sports cung cấp các dịch vụ sau:</p>
+            
+            <h5>Dịch vụ miễn phí:</h5>
+            <ul>
+                <li>Đăng ký và quản lý tài khoản cá nhân</li>
+                <li>Tham gia các giải đấu thể thao</li>
+                <li>Tạo và quản lý đội bóng</li>
+                <li>Truy cập thông tin giải đấu và lịch thi đấu</li>
+                <li>Sử dụng các tính năng cơ bản của shop thể thao</li>
+            </ul>
+
+            <h5>Dịch vụ có tính phí:</h5>
+            <ul>
+                <li>Đăng ký tham gia giải đấu (lệ phí đăng ký)</li>
+                <li>Mua sắm sản phẩm từ shop thể thao</li>
+                <li>Các dịch vụ premium và tính năng nâng cao</li>
+                <li>Dịch vụ livestream và media chuyên nghiệp</li>
+            </ul>
+
+            <div class="highlight-box">
+                <h5><i class="bi bi-star-fill"></i> Tính năng nổi bật</h5>
+                <p class="mb-0">DBP Sports liên tục cập nhật và phát triển các tính năng mới để phục vụ tốt nhất nhu cầu của cộng đồng thể thao Điện Biên.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanh toán và Hoàn tiền -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-credit-card-fill"></i>
+            Thanh toán và Hoàn tiền
+        </h2>
+        <div class="section-content">
+            <h5>Phương thức thanh toán:</h5>
+            <ul>
+                <li>Chuyển khoản ngân hàng</li>
+                <li>Thanh toán qua QR code</li>
+                <li>Các phương thức thanh toán điện tử khác</li>
+            </ul>
+
+            <h5>Chính sách hoàn tiền:</h5>
+            <ul>
+                <li>Hoàn tiền 100% nếu giải đấu bị hủy do lỗi từ phía BTC</li>
+                <li>Hoàn tiền 50% nếu đội bóng hủy tham gia trước ngày khai mạc 7 ngày</li>
+                <li>Không hoàn tiền nếu đội bóng hủy tham gia trong vòng 7 ngày trước khai mạc</li>
+                <li>Hoàn tiền sản phẩm shop theo chính sách của từng BTC</li>
+            </ul>
+
+            <div class="info-box">
+                <h5><i class="bi bi-info-circle"></i> Lưu ý</h5>
+                <p class="mb-0">Tất cả các giao dịch thanh toán đều được ghi nhận và lưu trữ để đảm bảo minh bạch và giải quyết tranh chấp.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảo mật và Quyền riêng tư -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-shield-lock-fill"></i>
+            Bảo mật và Quyền riêng tư
+        </h2>
+        <div class="section-content">
+            <p>DBP Sports cam kết bảo vệ thông tin cá nhân của bạn theo các nguyên tắc sau:</p>
+            
+            <ul>
+                <li>Thu thập và sử dụng thông tin cá nhân một cách hợp pháp và minh bạch</li>
+                <li>Không chia sẻ thông tin cá nhân với bên thứ ba mà không có sự đồng ý</li>
+                <li>Áp dụng các biện pháp bảo mật tiên tiến để bảo vệ dữ liệu</li>
+                <li>Cho phép người dùng kiểm soát và quản lý thông tin cá nhân</li>
+                <li>Tuân thủ các quy định pháp luật về bảo vệ dữ liệu cá nhân</li>
+            </ul>
+
+            <p>Chi tiết về việc thu thập, sử dụng và bảo vệ thông tin cá nhân được quy định trong <a href="{% url 'privacy_policy' %}" class="text-primary">Chính sách Bảo mật</a> của chúng tôi.</p>
+        </div>
+    </div>
+
+    <!-- Miễn trừ Trách nhiệm -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            Miễn trừ Trách nhiệm
+        </h2>
+        <div class="section-content">
+            <p>DBP Sports chỉ là nền tảng cung cấp công cụ quản lý và kết nối. Chúng tôi không chịu trách nhiệm về:</p>
+            
+            <ul>
+                <li>Các tranh chấp, mâu thuẫn xảy ra giữa các đội bóng</li>
+                <li>Các tranh chấp giữa đội bóng và ban tổ chức giải đấu</li>
+                <li>Chất lượng sản phẩm từ shop thể thao của các BTC</li>
+                <li>Các thiệt hại về tài sản hoặc thương tích trong quá trình thi đấu</li>
+                <li>Việc mất mát dữ liệu do lỗi kỹ thuật hoặc tấn công mạng</li>
+                <li>Các dịch vụ của bên thứ ba được tích hợp trên nền tảng</li>
+            </ul>
+
+            <div class="warning-box">
+                <h5><i class="bi bi-shield-exclamation"></i> Giới hạn trách nhiệm</h5>
+                <p class="mb-0">Trong mọi trường hợp, trách nhiệm của DBP Sports không vượt quá số tiền bạn đã thanh toán cho dịch vụ trong 12 tháng gần nhất.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sở hữu Trí tuệ -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-copyright"></i>
+            Sở hữu Trí tuệ
+        </h2>
+        <div class="section-content">
+            <p>Tất cả nội dung trên DBP Sports, bao gồm nhưng không giới hạn:</p>
+            
+            <ul>
+                <li>Logo, thương hiệu, và nhận diện thương hiệu</li>
+                <li>Giao diện người dùng và trải nghiệm người dùng</li>
+                <li>Phần mềm, mã nguồn, và thuật toán</li>
+                <li>Tài liệu hướng dẫn và nội dung giáo dục</li>
+                <li>Dữ liệu và thông tin được tổng hợp</li>
+            </ul>
+
+            <p>Đều thuộc sở hữu của DBP Sports và được bảo vệ bởi luật sở hữu trí tuệ Việt Nam và quốc tế.</p>
+
+            <div class="info-box">
+                <h5><i class="bi bi-lightbulb"></i> Quyền sử dụng</h5>
+                <p class="mb-0">Bạn được cấp quyền sử dụng hạn chế, không độc quyền và không thể chuyển nhượng để truy cập và sử dụng dịch vụ cho mục đích cá nhân và phi thương mại.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chấm dứt Dịch vụ -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-x-circle-fill"></i>
+            Chấm dứt Dịch vụ
+        </h2>
+        <div class="section-content">
+            <h5>Chấm dứt bởi người dùng:</h5>
+            <p>Bạn có thể chấm dứt tài khoản bất kỳ lúc nào bằng cách:</p>
+            <ul>
+                <li>Gửi yêu cầu xóa tài khoản qua email</li>
+                <li>Sử dụng tính năng xóa tài khoản trong phần cài đặt</li>
+                <li>Liên hệ trực tiếp với đội ngũ hỗ trợ</li>
+            </ul>
+
+            <h5>Chấm dứt bởi DBP Sports:</h5>
+            <p>Chúng tôi có quyền chấm dứt hoặc tạm ngưng tài khoản của bạn nếu:</p>
+            <ul>
+                <li>Vi phạm các điều khoản dịch vụ</li>
+                <li>Gian lận hoặc sử dụng dịch vụ không đúng mục đích</li>
+                <li>Không thanh toán các khoản phí đã cam kết</li>
+                <li>Hoạt động gây tổn hại đến cộng đồng hoặc nền tảng</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Thay đổi Điều khoản -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-arrow-clockwise"></i>
+            Thay đổi Điều khoản
+        </h2>
+        <div class="section-content">
+            <p>DBP Sports có quyền cập nhật và thay đổi các điều khoản dịch vụ này bất kỳ lúc nào. Khi có thay đổi quan trọng:</p>
+            
+            <ul>
+                <li>Chúng tôi sẽ thông báo trước ít nhất 30 ngày</li>
+                <li>Thông báo qua email và thông báo trên website</li>
+                <li>Người dùng có quyền từ chối và chấm dứt dịch vụ</li>
+                <li>Việc tiếp tục sử dụng được coi là chấp nhận điều khoản mới</li>
     </ul>
 
-    <h4>3. Miễn trừ Trách nhiệm</h4>
-    <p>DBP Sports chỉ là nền tảng cung cấp công cụ quản lý. Chúng tôi không chịu trách nhiệm về các tranh chấp, mâu thuẫn xảy ra giữa các đội bóng hoặc giữa đội bóng và ban tổ chức.</p>
+            <div class="highlight-box">
+                <h5><i class="bi bi-calendar-check"></i> Phiên bản hiện tại</h5>
+                <p class="mb-0">Điều khoản này có hiệu lực từ ngày {% now "d/m/Y" %} và thay thế cho tất cả các phiên bản trước đó.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liên hệ -->
+    <div class="contact-section">
+        <h4><i class="bi bi-headset"></i> Cần hỗ trợ về Điều khoản?</h4>
+        <p>Nếu bạn có bất kỳ câu hỏi nào về điều khoản dịch vụ, vui lòng liên hệ với chúng tôi!</p>
+        <a href="mailto:dbpsportsvn@gmail.com" class="contact-btn">
+            <i class="bi bi-envelope-fill"></i>
+            Liên hệ hỗ trợ
+        </a>
+    </div>
 </div>
 {% endblock %}

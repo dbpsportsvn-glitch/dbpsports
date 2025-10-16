@@ -1,57 +1,456 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Hướng dẫn & Câu hỏi thường gặp{% endblock %}
+{% block title %}Hướng dẫn Sử dụng DBP Sports{% endblock %}
+
+{% block extrahead %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: white;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.guide-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-title i {
+    color: #dc2626;
+    font-size: 1.8rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.feature-card {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border-left: 4px solid #dc2626;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card h5 {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feature-card h5 i {
+    color: #dc2626;
+}
+
+.feature-card p {
+    color: #6b7280;
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.step-list {
+    counter-reset: step-counter;
+    list-style: none;
+    padding: 0;
+}
+
+.step-list li {
+    counter-increment: step-counter;
+    margin-bottom: 1.5rem;
+    padding-left: 3rem;
+    position: relative;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem 1.5rem 1.5rem 3rem;
+    border: 1px solid #e5e7eb;
+}
+
+.step-list li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 1rem;
+    top: 1.5rem;
+    background: #dc2626;
+    color: white;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.step-list li h6 {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.step-list li p {
+    color: #6b7280;
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.role-section {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #f59e0b;
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.role-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 3px solid #f59e0b;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.role-item h6 {
+    color: #92400e;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.role-item p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+.contact-section {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #3b82f6;
+}
+
+.contact-section h4 {
+    color: #1e40af;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.contact-section p {
+    color: #1e40af;
+    margin-bottom: 1rem;
+}
+
+.contact-btn {
+    background: #3b82f6;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+    background: #2563eb;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .guide-section {
+        padding: 1.5rem;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .step-list li {
+        padding-left: 2.5rem;
+    }
+    
+    .step-list li::before {
+        left: 0.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1><i class="bi bi-question-circle-fill"></i> Hướng dẫn & Câu hỏi thường gặp</h1>
-        <p class="lead">Tất cả những gì đội trưởng cần biết để quản lý đội bóng trên DBP Sports.</p>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="bi bi-book-fill"></i>
+                Hướng dẫn Sử dụng DBP Sports
+            </h1>
+            <p class="hero-subtitle">
+                Khám phá tất cả tính năng của nền tảng quản lý thể thao hàng đầu Điện Biên
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Tổng quan về DBP Sports -->
+    <div class="guide-section">
+        <h2 class="section-title">
+            <i class="bi bi-info-circle-fill"></i>
+            Tổng quan về DBP Sports
+        </h2>
+        <p class="mb-4">DBP Sports là nền tảng quản lý thể thao toàn diện, cung cấp các công cụ chuyên nghiệp để tổ chức và quản lý giải đấu bóng đá phong trào tại Điện Biên. Nền tảng hỗ trợ đầy đủ từ việc đăng ký đội bóng, quản lý cầu thủ, đến tổ chức giải đấu và thương mại hóa.</p>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h5><i class="bi bi-trophy-fill"></i> Quản lý Giải đấu</h5>
+                <p>Tổ chức và quản lý giải đấu với hệ thống đăng ký tự động, lịch thi đấu thông minh, và theo dõi kết quả real-time.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-shop"></i> Shop Thể thao</h5>
+                <p>Cửa hàng trực tuyến với sản phẩm thể thao chất lượng cao, tích hợp thanh toán QR code và quản lý đơn hàng.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-people-fill"></i> Quản lý Đội bóng</h5>
+                <p>Công cụ quản lý đội bóng chuyên nghiệp với hệ thống chuyển nhượng cầu thủ và ngân sách đội.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-broadcast"></i> Livestream & Media</h5>
+                <p>Tích hợp livestream trận đấu, quản lý media và album ảnh cho các giải đấu.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-cash-coin"></i> Hệ thống Tài chính</h5>
+                <p>Quản lý ngân sách giải đấu, thanh toán lệ phí, và hệ thống tiền công nhân viên tự động.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-shield-check"></i> Bảo mật & Phân quyền</h5>
+                <p>Hệ thống phân quyền đa cấp với các vai trò chuyên biệt cho từng loại người dùng.</p>
+            </div>
+        </div>
     </div>
 
-    <div class="accordion" id="faqAccordion">
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                    <strong>Bước 1: Tạo Tài khoản và Đăng ký Đội bóng</strong>
-                </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    <p>Để bắt đầu, bạn cần có một tài khoản. Truy cập trang chủ và chọn "Đăng ký". Chúng tôi khuyến khích sử dụng tùy chọn "Đăng nhập với Google" để quá trình diễn ra nhanh chóng và an toàn nhất.</p>
-                    <p>Sau khi đăng nhập, hãy vào giải đấu bạn muốn tham gia và nhấn "Đăng ký tham gia giải đấu". Điền các thông tin cơ bản như Tên đội, Tên HLV và Logo đội.</p>
-                </div>
-            </div>
-        </div>
+    <!-- Hướng dẫn cho Cầu thủ/Đội trưởng -->
+    <div class="guide-section">
+        <h2 class="section-title">
+            <i class="bi bi-person-fill"></i>
+            Hướng dẫn cho Cầu thủ & Đội trưởng
+        </h2>
+        
+        <ol class="step-list">
+            <li>
+                <h6>Tạo tài khoản và đăng ký đội bóng</h6>
+                <p>Truy cập trang chủ và chọn "Đăng ký". Khuyến khích sử dụng "Đăng nhập với Google/Facebook" để nhanh chóng và an toàn. Sau khi đăng nhập, vào giải đấu muốn tham gia và nhấn "Đăng ký tham gia giải đấu". Điền thông tin đội bóng, HLV và upload logo đội.</p>
+            </li>
+            <li>
+                <h6>Thanh toán lệ phí đăng ký</h6>
+                <p>Tại trang "Quản lý đội", nhấn "Thanh toán Lệ phí". Chuyển khoản theo thông tin BTC và upload bằng chứng thanh toán. BTC sẽ duyệt và kích hoạt đội của bạn.</p>
+            </li>
+            <li>
+                <h6>Quản lý cầu thủ và đội hình</h6>
+                <p>Thêm cầu thủ vào đội hình với đầy đủ thông tin. Trước mỗi trận đấu, đăng ký đội hình thi đấu (chốt trước giờ bóng lăn 2 tiếng). Chọn cầu thủ đá chính và dự bị.</p>
+            </li>
+            <li>
+                <h6>Sử dụng Shop thể thao</h6>
+                <p>Mua sắm trang thiết bị thể thao từ Shop DBP Sports hoặc Shop BTC. Tích hợp thanh toán QR code và theo dõi đơn hàng trực tuyến.</p>
+            </li>
+        </ol>
+    </div>
 
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingTwo">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
-                    <strong>Bước 2: Hoàn tất Lệ phí</strong>
-                </button>
-            </h2>
-            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    <p>Sau khi tạo đội, bạn sẽ được chuyển đến trang "Quản lý đội". Tại đây, hãy nhấn vào nút "Thanh toán Lệ phí".</p>
-                    <p>Hệ thống sẽ hiển thị thông tin tài khoản của Ban tổ chức. Vui lòng chuyển khoản chính xác nội dung được yêu cầu.</p>
-                    <p><strong>QUAN TRỌNG:</strong> Sau khi chuyển khoản thành công, hãy chụp lại màn hình giao dịch và tải ảnh lên ở mục "Tải lên bằng chứng thanh toán". Ban tổ chức sẽ duyệt và kích hoạt đội của bạn.</p>
-                </div>
-            </div>
-        </div>
+    <!-- Hướng dẫn cho Ban Tổ chức -->
+    <div class="guide-section">
+        <h2 class="section-title">
+            <i class="bi bi-shield-fill"></i>
+            Hướng dẫn cho Ban Tổ chức (BTC)
+        </h2>
+        
+        <ol class="step-list">
+            <li>
+                <h6>Đăng ký làm BTC</h6>
+                <p>Truy cập "Đăng ký làm BTC" và điền thông tin tổ chức. Upload logo và các tài liệu cần thiết. Sau khi được duyệt, bạn sẽ có quyền truy cập vào Khu vực BTC.</p>
+            </li>
+            <li>
+                <h6>Tạo và quản lý giải đấu</h6>
+                <p>Tại Khu vực BTC, tạo giải đấu mới với đầy đủ thông tin: tên giải, lệ phí, thời gian, địa điểm. Thiết lập quy định và điều lệ giải đấu.</p>
+            </li>
+            <li>
+                <h6>Quản lý tài chính giải đấu</h6>
+                <p>Sử dụng Budget Dashboard để theo dõi thu chi, quản lý lệ phí đăng ký, và tính toán tiền công nhân viên. Hệ thống tự động cập nhật ngân sách.</p>
+            </li>
+            <li>
+                <h6>Quản lý Shop BTC</h6>
+                <p>Tạo và quản lý shop riêng cho BTC với sản phẩm thể thao. Thiết lập phương thức thanh toán, QR code, và theo dõi đơn hàng.</p>
+            </li>
+            <li>
+                <h6>Điều hành giải đấu</h6>
+                <p>Sử dụng Match Control để điều hành trận đấu real-time, cập nhật kết quả, và quản lý thông tin trận đấu.</p>
+            </li>
+        </ol>
+    </div>
 
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingThree">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
-                    <strong>Bước 3: Quản lý Cầu thủ và Đội hình thi đấu</strong>
-                </button>
-            </h2>
-            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    <p>Khi lệ phí đã được xác nhận, bạn có thể bắt đầu thêm cầu thủ vào đội hình. Tại trang "Quản lý đội", bạn sẽ thấy form để thêm cầu thủ mới. Hãy điền đầy đủ thông tin và nhấn "Thêm vào đội hình".</p>
-                    <p><strong>Đăng ký đội hình thi đấu:</strong> Đây là bước bắt buộc trước mỗi trận đấu. Hãy vào "Lịch thi đấu", chọn trận đấu sắp tới và nhấn "Quản lý Đội hình". Tại đây, bạn sẽ chọn ra các cầu thủ đá chính và dự bị. Lưu ý, đội hình phải được chốt **trước giờ bóng lăn 2 tiếng**.</p>
-                </div>
+    <!-- Các vai trò trong hệ thống -->
+    <div class="role-section">
+        <h2 class="section-title">
+            <i class="bi bi-person-badge-fill"></i>
+            Các Vai trò trong DBP Sports
+        </h2>
+        <p>DBP Sports hỗ trợ nhiều vai trò khác nhau để phục vụ đa dạng nhu cầu của cộng đồng thể thao:</p>
+        
+        <div class="role-grid">
+            <div class="role-item">
+                <h6><i class="bi bi-shield-check"></i> ORGANIZER (Ban Tổ chức)</h6>
+                <p>Đăng cai và quản lý giải đấu với công cụ chuyên nghiệp</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-person-fill"></i> PLAYER (Cầu thủ)</h6>
+                <p>Tham gia đội bóng, ghi nhận thành tích và nhận phiếu bầu</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-person-badge"></i> COACH (Huấn luyện viên)</h6>
+                <p>Dẫn dắt đội bóng và quản lý đội hình</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-whistle"></i> REFEREE (Trọng tài)</h6>
+                <p>Điều hành trận đấu và quản lý luật chơi</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-mic-fill"></i> COMMENTATOR (Bình luận viên)</h6>
+                <p>Bình luận trận đấu và truy cập livestream control</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-camera-fill"></i> PHOTOGRAPHER (Nhiếp ảnh gia)</h6>
+                <p>Tác nghiệp và đăng tải album ảnh giải đấu</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-geo-alt-fill"></i> STADIUM (Sân bóng)</h6>
+                <p>Cung cấp địa điểm tổ chức giải đấu</p>
+            </div>
+            <div class="role-item">
+                <h6><i class="bi bi-cash-coin"></i> SPONSOR (Nhà tài trợ)</h6>
+                <p>Tài trợ giải đấu và tiếp cận khán giả</p>
             </div>
         </div>
+    </div>
+
+    <!-- Tính năng nổi bật -->
+    <div class="guide-section">
+        <h2 class="section-title">
+            <i class="bi bi-star-fill"></i>
+            Tính năng Nổi bật
+        </h2>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h5><i class="bi bi-arrow-left-right"></i> Chuyển nhượng Cầu thủ</h5>
+                <p>Hệ thống chuyển nhượng với ngân sách đội và bình chọn cầu thủ để tăng giá trị chuyển nhượng.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-graph-up"></i> Thống kê & Analytics</h5>
+                <p>Dashboard thống kê chi tiết cho Shop, Budget, và các hoạt động giải đấu.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-briefcase"></i> Thị trường Việc làm</h5>
+                <p>Kết nối HLV với đội bóng và các cơ hội việc làm trong ngành thể thao.</p>
+            </div>
+            <div class="feature-card">
+                <h5><i class="bi bi-chat-dots"></i> Hệ thống Thông báo</h5>
+                <p>Thông báo real-time về giải đấu, đơn hàng, và các hoạt động quan trọng.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liên hệ hỗ trợ -->
+    <div class="contact-section">
+        <h4><i class="bi bi-headset"></i> Cần hỗ trợ thêm?</h4>
+        <p>Nếu bạn có bất kỳ câu hỏi nào về việc sử dụng DBP Sports, đừng ngần ngại liên hệ với chúng tôi!</p>
+        <a href="mailto:dbpsportsvn@gmail.com" class="contact-btn">
+            <i class="bi bi-envelope-fill"></i>
+            Liên hệ hỗ trợ
+        </a>
     </div>
 </div>
 {% endblock %}

@@ -16,9 +16,7 @@
 
 /* =================== HERO =================== */
 .hero-section {
-  background: linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)),
-              url('../images/hero-bg.jpg') no-repeat center center;
-  background-size: cover;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: #fff;
   padding: 100px 0;
   text-align: center;

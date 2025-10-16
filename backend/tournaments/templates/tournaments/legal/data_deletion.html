@@ -1,40 +1,634 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Hướng dẫn Xóa dữ liệu{% endblock %}
+{% block title %}Chính sách Xóa Dữ liệu - DBP Sports{% endblock %}
+
+{% block extrahead %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.content-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dc2626;
+}
+
+.section-title i {
+    color: #dc2626;
+    font-size: 1.6rem;
+}
+
+.section-content {
+    color: #4b5563;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.section-content p {
+    margin-bottom: 1rem;
+}
+
+.section-content ul, .section-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.section-content li {
+    margin-bottom: 0.5rem;
+}
+
+.process-steps {
+    counter-reset: step-counter;
+    list-style: none;
+    padding: 0;
+}
+
+.process-steps li {
+    counter-increment: step-counter;
+    margin-bottom: 1.5rem;
+    padding-left: 3rem;
+    position: relative;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem 1.5rem 1.5rem 3rem;
+    border: 1px solid #e5e7eb;
+}
+
+.process-steps li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 1rem;
+    top: 1.5rem;
+    background: #dc2626;
+    color: white;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.process-steps li h6 {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.process-steps li p {
+    color: #6b7280;
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.data-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.data-type-card {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border-left: 4px solid #dc2626;
+    transition: all 0.3s ease;
+}
+
+.data-type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.data-type-card h5 {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.data-type-card h5 i {
+    color: #dc2626;
+}
+
+.data-type-card ul {
+    margin-bottom: 0;
+    padding-left: 1rem;
+}
+
+.data-type-card li {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.warning-section {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #ef4444;
+}
+
+.warning-section h5 {
+    color: #dc2626;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warning-section h5 i {
+    color: #ef4444;
+}
+
+.info-section {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #3b82f6;
+}
+
+.info-section h5 {
+    color: #1e40af;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-section h5 i {
+    color: #3b82f6;
+}
+
+.success-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    border: 1px solid #22c55e;
+}
+
+.success-section h5 {
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.success-section h5 i {
+    color: #22c55e;
+}
+
+.contact-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #22c55e;
+    margin-top: 2rem;
+}
+
+.contact-section h4 {
+    color: #166534;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.contact-section p {
+    color: #166534;
+    margin-bottom: 1rem;
+}
+
+.contact-btn {
+    background: #22c55e;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+    background: #16a34a;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.email-template {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+}
+
+.email-template .email-header {
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.email-template .email-subject {
+    color: #1f2937;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.email-template .email-body {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .content-section {
+        padding: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+    }
+    
+    .data-type-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .process-steps li {
+        padding-left: 2.5rem;
+    }
+    
+    .process-steps li::before {
+        left: 0.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="pb-3 mb-4 border-bottom">
-        <h1>Hướng dẫn Yêu cầu Xóa dữ liệu</h1>
-        <p class="lead">Cập nhật lần cuối: 24 tháng 9, 2025</p>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="bi bi-trash-fill"></i>
+                Chính sách Xóa Dữ liệu
+            </h1>
+            <p class="hero-subtitle">
+                Quyền xóa dữ liệu cá nhân và hướng dẫn thực hiện
+            </p>
+            <p class="mt-3 mb-0">
+                <small><i class="bi bi-calendar-check"></i> Cập nhật lần cuối: {% now "d/m/Y" %}</small>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width: 900px;">
+    <!-- Giới thiệu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-info-circle-fill"></i>
+            Quyền Xóa Dữ liệu của Bạn
+        </h2>
+        <div class="section-content">
+            <p>DBP Sports tôn trọng quyền riêng tư và tự quyết của bạn. Theo quy định pháp luật về bảo vệ dữ liệu cá nhân, bạn có quyền yêu cầu xóa dữ liệu cá nhân khỏi hệ thống của chúng tôi.</p>
+            
+            <div class="success-section">
+                <h5><i class="bi bi-shield-check"></i> Cam kết của chúng tôi</h5>
+                <p class="mb-0">Chúng tôi cam kết xử lý mọi yêu cầu xóa dữ liệu một cách nhanh chóng, minh bạch và tuân thủ đầy đủ các quy định pháp luật.</p>
+            </div>
+        </div>
     </div>
 
-    <p>DBP Sports tôn trọng quyền riêng tư và cho phép bạn yêu cầu xóa dữ liệu cá nhân của mình khỏi hệ thống của chúng tôi.</p>
+    <!-- Cách gửi yêu cầu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-send-fill"></i>
+            Cách Gửi Yêu cầu Xóa Dữ liệu
+        </h2>
+        <div class="section-content">
+            <p>Có nhiều cách để bạn gửi yêu cầu xóa dữ liệu:</p>
+            
+            <ol class="process-steps">
+                <li>
+                    <h6>Gửi email trực tiếp</h6>
+                    <p>Gửi email đến <strong>dbpsportsvn@gmail.com</strong> với tiêu đề "Yêu cầu Xóa Dữ liệu Người dùng" và nội dung bao gồm email đăng ký tài khoản của bạn.</p>
+                </li>
+                <li>
+                    <h6>Sử dụng tính năng trong tài khoản</h6>
+                    <p>Đăng nhập vào tài khoản, truy cập phần "Cài đặt tài khoản" và chọn "Xóa tài khoản" để tự động gửi yêu cầu xóa dữ liệu.</p>
+                </li>
+                <li>
+                    <h6>Liên hệ qua hỗ trợ</h6>
+                    <p>Sử dụng tính năng "Liên hệ hỗ trợ" trên website hoặc gọi điện thoại để được hướng dẫn chi tiết về quy trình xóa dữ liệu.</p>
+                </li>
+            </ol>
 
-    <h4>Cách gửi yêu cầu</h4>
-    <p>Để yêu cầu xóa dữ liệu tài khoản của bạn, vui lòng gửi một email đến địa chỉ <strong>dbpsportsvn@gmail.com</strong> với các thông tin sau:</p>
-    <ul>
-        <li><strong>Tiêu đề email:</strong> Yêu cầu Xóa Dữ liệu Người dùng</li>
-        <li><strong>Nội dung email:</strong> Vui lòng ghi rõ email bạn đã sử dụng để đăng ký tài khoản trên DBP Sports.</li>
-    </ul>
+            <div class="email-template">
+                <div class="email-header">Gửi đến: dbpsportsvn@gmail.com</div>
+                <div class="email-subject">Tiêu đề: Yêu cầu Xóa Dữ liệu Người dùng</div>
+                <div class="email-body">
+Kính gửi DBP Sports,
 
-    <h4>Dữ liệu nào sẽ được xóa?</h4>
-    <p>Khi nhận được yêu cầu, chúng tôi sẽ xóa các thông tin cá nhân gắn liền với tài khoản của bạn, bao gồm:</p>
-    <ul>
-        <li>Thông tin tài khoản (Tên, email, liên kết mạng xã hội).</li>
-        <li>Tư cách đội trưởng tại các đội bóng bạn đã tạo.</li>
-        <li>Hồ sơ cầu thủ được liên kết với tài khoản của bạn.</li>
-    </ul>
-    <p><strong>Lưu ý:</strong> Tên của bạn với tư cách là một cầu thủ trong một đội bóng (do người khác đăng ký) có thể vẫn được lưu lại như một phần dữ liệu lịch sử của giải đấu.</p>
+Tôi muốn yêu cầu xóa dữ liệu cá nhân khỏi hệ thống của DBP Sports.
 
-    <h4>Xóa dữ liệu liên kết từ Facebook</h4>
-    <p>Chúng tôi sử dụng tính năng Đăng nhập bằng Facebook để xác thực. Chúng tôi không lưu trữ mật khẩu Facebook của bạn. Để gỡ bỏ liên kết ứng dụng DBP Sports khỏi tài khoản Facebook, bạn có thể làm theo các bước sau:</p>
-    <ol>
-        <li>Đăng nhập vào Facebook, vào phần <strong>Cài đặt & quyền riêng tư</strong> > <strong>Cài đặt</strong>.</li>
-        <li>Tìm đến mục <strong>Ứng dụng và trang web</strong>.</li>
-        <li>Tìm ứng dụng có tên "DBP Sports Login" và nhấn nút <strong>Gỡ</strong>.</li>
-    </ol>
+Thông tin tài khoản:
+- Email đăng ký: [email_của_bạn]
+- Tên: [tên_của_bạn]
+- Lý do xóa: [tùy_chọn]
 
-    <p>Chúng tôi sẽ xử lý yêu cầu của bạn trong vòng 30 ngày làm việc.</p>
+Tôi xác nhận rằng tôi hiểu rõ hậu quả của việc xóa dữ liệu và đồng ý với các điều khoản trong chính sách này.
+
+Trân trọng,
+[Tên_của_bạn]
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dữ liệu sẽ được xóa -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-database-fill"></i>
+            Dữ liệu Sẽ được Xóa
+        </h2>
+        <div class="section-content">
+            <p>Khi nhận được yêu cầu hợp lệ, chúng tôi sẽ xóa các thông tin sau:</p>
+            
+            <div class="data-type-grid">
+                <div class="data-type-card">
+                    <h5><i class="bi bi-person-fill"></i> Thông tin tài khoản</h5>
+                    <ul>
+                        <li>Họ và tên</li>
+                        <li>Địa chỉ email</li>
+                        <li>Số điện thoại</li>
+                        <li>Ảnh đại diện</li>
+                        <li>Thông tin đăng nhập</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-shield-fill"></i> Thông tin xác thực</h5>
+                    <ul>
+                        <li>Mật khẩu (đã mã hóa)</li>
+                        <li>Token đăng nhập</li>
+                        <li>Liên kết Google/Facebook</li>
+                        <li>Lịch sử đăng nhập</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-trophy-fill"></i> Dữ liệu đội bóng</h5>
+                    <ul>
+                        <li>Tư cách đội trưởng</li>
+                        <li>Thông tin đội bóng đã tạo</li>
+                        <li>Hồ sơ cầu thủ cá nhân</li>
+                        <li>Lịch sử thi đấu cá nhân</li>
+                    </ul>
+                </div>
+                
+                <div class="data-type-card">
+                    <h5><i class="bi bi-shop"></i> Dữ liệu thương mại</h5>
+                    <ul>
+                        <li>Lịch sử mua hàng cá nhân</li>
+                        <li>Địa chỉ giao hàng</li>
+                        <li>Sở thích mua sắm</li>
+                        <li>Đánh giá sản phẩm</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="warning-section">
+                <h5><i class="bi bi-exclamation-triangle"></i> Dữ liệu không được xóa</h5>
+                <p class="mb-0">Một số dữ liệu có thể được giữ lại để tuân thủ pháp luật hoặc bảo vệ quyền lợi hợp pháp của các bên khác, bao gồm: dữ liệu giải đấu lịch sử, thông tin giao dịch tài chính, và dữ liệu cần thiết cho việc giải quyết tranh chấp.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quy trình xử lý -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-gear-fill"></i>
+            Quy trình Xử lý Yêu cầu
+        </h2>
+        <div class="section-content">
+            <p>Quy trình xử lý yêu cầu xóa dữ liệu của chúng tôi:</p>
+            
+            <ol class="process-steps">
+                <li>
+                    <h6>Tiếp nhận yêu cầu</h6>
+                    <p>Chúng tôi sẽ xác nhận việc nhận được yêu cầu của bạn trong vòng 24 giờ làm việc và cung cấp mã số theo dõi.</p>
+                </li>
+                <li>
+                    <h6>Xác minh danh tính</h6>
+                    <p>Để đảm bảo bảo mật, chúng tôi sẽ xác minh danh tính của bạn thông qua email hoặc các phương thức khác.</p>
+                </li>
+                <li>
+                    <h6>Kiểm tra và phân tích</h6>
+                    <p>Chúng tôi sẽ kiểm tra dữ liệu của bạn và xác định những gì có thể xóa theo quy định pháp luật.</p>
+                </li>
+                <li>
+                    <h6>Thực hiện xóa dữ liệu</h6>
+                    <p>Sau khi được xác nhận, chúng tôi sẽ tiến hành xóa dữ liệu trong vòng 30 ngày làm việc.</p>
+                </li>
+                <li>
+                    <h6>Thông báo kết quả</h6>
+                    <p>Chúng tôi sẽ gửi email xác nhận việc hoàn thành xóa dữ liệu và báo cáo chi tiết về những gì đã được xóa.</p>
+                </li>
+            </ol>
+
+            <div class="info-section">
+                <h5><i class="bi bi-clock"></i> Thời gian xử lý</h5>
+                <p class="mb-0">Chúng tôi cam kết xử lý yêu cầu xóa dữ liệu trong vòng tối đa 30 ngày làm việc kể từ khi nhận được yêu cầu hợp lệ và đã xác minh danh tính.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Xóa liên kết mạng xã hội -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-facebook"></i>
+            Xóa Liên kết Mạng xã hội
+        </h2>
+        <div class="section-content">
+            <p>Nếu bạn đã đăng nhập bằng Google hoặc Facebook, bạn cần thực hiện các bước sau để gỡ bỏ hoàn toàn liên kết:</p>
+            
+            <h5>Đối với Google:</h5>
+            <ol>
+                <li>Truy cập <a href="https://myaccount.google.com/permissions" target="_blank">myaccount.google.com/permissions</a></li>
+                <li>Tìm ứng dụng "DBP Sports" trong danh sách</li>
+                <li>Nhấn "Gỡ quyền truy cập" để ngắt kết nối</li>
+            </ol>
+
+            <h5>Đối với Facebook:</h5>
+            <ol>
+                <li>Đăng nhập Facebook và vào phần "Cài đặt & quyền riêng tư"</li>
+                <li>Chọn "Cài đặt" → "Ứng dụng và trang web"</li>
+                <li>Tìm "DBP Sports Login" và nhấn "Gỡ"</li>
+                <li>Xác nhận việc gỡ bỏ ứng dụng</li>
+            </ol>
+
+            <div class="warning-section">
+                <h5><i class="bi bi-exclamation-triangle"></i> Lưu ý quan trọng</h5>
+                <p class="mb-0">Việc gỡ bỏ liên kết mạng xã hội sẽ không tự động xóa dữ liệu trên DBP Sports. Bạn vẫn cần gửi yêu cầu xóa dữ liệu riêng biệt.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hậu quả của việc xóa dữ liệu -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            Hậu quả của Việc Xóa Dữ liệu
+        </h2>
+        <div class="section-content">
+            <p>Việc xóa dữ liệu sẽ có những tác động sau:</p>
+            
+            <h5>Những gì sẽ mất:</h5>
+            <ul>
+                <li>Không thể đăng nhập vào tài khoản DBP Sports</li>
+                <li>Mất quyền truy cập vào các giải đấu đã tham gia</li>
+                <li>Mất lịch sử thi đấu và thành tích cá nhân</li>
+                <li>Mất quyền truy cập vào shop và lịch sử mua hàng</li>
+                <li>Mất tất cả dữ liệu cá nhân và cài đặt</li>
+            </ul>
+
+            <h5>Những gì vẫn được giữ lại:</h5>
+            <ul>
+                <li>Thông tin đội bóng (nếu bạn là đội trưởng)</li>
+                <li>Kết quả thi đấu trong lịch sử giải đấu</li>
+                <li>Dữ liệu cần thiết cho việc giải quyết tranh chấp</li>
+                <li>Thông tin tuân thủ pháp luật về thuế và kế toán</li>
+            </ul>
+
+            <div class="warning-section">
+                <h5><i class="bi bi-shield-exclamation"></i> Cảnh báo</h5>
+                <p class="mb-0">Việc xóa dữ liệu là KHÔNG THỂ HOÀN TÁC. Sau khi xóa, bạn sẽ không thể khôi phục lại bất kỳ thông tin nào. Hãy cân nhắc kỹ trước khi thực hiện.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quyền của bạn -->
+    <div class="content-section">
+        <h2 class="section-title">
+            <i class="bi bi-person-check-fill"></i>
+            Quyền của Bạn
+        </h2>
+        <div class="section-content">
+            <p>Theo quy định pháp luật, bạn có các quyền sau:</p>
+            
+            <div class="success-section">
+                <h5><i class="bi bi-check-circle"></i> Quyền của bạn</h5>
+                <ul>
+                    <li><strong>Quyền được thông tin:</strong> Biết về việc xử lý dữ liệu cá nhân</li>
+                    <li><strong>Quyền truy cập:</strong> Xem dữ liệu cá nhân được lưu trữ</li>
+                    <li><strong>Quyền chỉnh sửa:</strong> Sửa đổi thông tin không chính xác</li>
+                    <li><strong>Quyền xóa:</strong> Yêu cầu xóa dữ liệu cá nhân</li>
+                    <li><strong>Quyền hạn chế:</strong> Hạn chế việc xử lý dữ liệu</li>
+                    <li><strong>Quyền di chuyển:</strong> Xuất dữ liệu sang định dạng khác</li>
+                </ul>
+            </div>
+
+            <h5>Cách thực hiện quyền:</h5>
+            <ul>
+                <li>Gửi email đến <strong>dbpsportsvn@gmail.com</strong></li>
+                <li>Sử dụng tính năng "Liên hệ hỗ trợ" trên website</li>
+                <li>Truy cập phần "Cài đặt tài khoản" để tự quản lý</li>
+                <li>Liên hệ trực tiếp với đội ngũ hỗ trợ</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Liên hệ -->
+    <div class="contact-section">
+        <h4><i class="bi bi-headset"></i> Cần hỗ trợ về Xóa Dữ liệu?</h4>
+        <p>Nếu bạn có bất kỳ câu hỏi nào về chính sách xóa dữ liệu hoặc cần hỗ trợ trong quá trình thực hiện, vui lòng liên hệ với chúng tôi!</p>
+        <a href="mailto:dbpsportsvn@gmail.com" class="contact-btn">
+            <i class="bi bi-envelope-fill"></i>
+            Liên hệ hỗ trợ
+        </a>
+    </div>
 </div>
 {% endblock %}

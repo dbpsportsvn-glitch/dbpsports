@@ -393,11 +393,11 @@ def organization_checkout(request, org_slug):
         
         if not cart_items:
             messages.warning(request, "Giỏ hàng trống")
-            return redirect('organization_shop_cart', org_slug=org_slug)
+            return redirect('shop:organization_shop:cart', org_slug=org_slug)
             
     except OrganizationCart.DoesNotExist:
         messages.warning(request, "Giỏ hàng trống")
-        return redirect('organization_shop_cart', org_slug=org_slug)
+        return redirect('shop:organization_shop:cart', org_slug=org_slug)
     
     # Tính tổng tiền
     subtotal = cart.total_price
