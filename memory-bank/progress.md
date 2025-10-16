@@ -100,3 +100,6 @@
   - **Templates:** Tạo đầy đủ 7 templates cho Organization Shop frontend và 4 templates quản lý với giao diện đẹp mắt và responsive. Bao gồm breadcrumb navigation, stats cards, và modern UI design.
   - **Sample Data:** Tạo thành công management command và script để tạo dữ liệu mẫu bao gồm 3 danh mục, 3 sản phẩm, shop settings, và product sizes.
   - **Bug Fixes:** Khắc phục thành công 5 lỗi chính: NoReverseMatch namespace URLs, TemplateSyntaxError với current_category, FieldError với organization.members query, ValueError với main_image, và NoReverseMatch với cart URLs.
+  - **Edit/Delete Functions:** Implement đầy đủ chức năng edit/delete cho cả danh mục và sản phẩm với 4 templates mới, 4 view functions với validation đầy đủ, URL routing hoàn chỉnh, và giao diện xác nhận xóa chuyên nghiệp.
+  - **Shop Settings Upgrade:** Nâng cấp giao diện cài đặt shop với đầy đủ các trường thông tin khoa học và chuyên nghiệp. Thêm JavaScript features: auto-save localStorage, format tiền tệ/phone/bank account, preview ảnh, validation real-time.
+  - **Image Upload Fix:** Khắc phục thành công lỗi upload ảnh bằng cách sửa template từ `product.image` thành `product.main_image` để khớp với field name trong model. Upload ảnh hiện hoạt động hoàn hảo.

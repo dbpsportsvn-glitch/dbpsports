@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from decimal import Decimal
 import json
 
 from organizations.models import Organization
@@ -569,6 +570,61 @@ def manage_products(request, org_slug):
         messages.error(request, 'Bạn không có quyền truy cập shop này')
         return redirect('organizations:dashboard')
     
+    # Xử lý POST request (thêm sản phẩm)
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        category_id = request.POST.get('category')
+        price = request.POST.get('price')
+        sale_price = request.POST.get('sale_price', '')
+        stock_quantity = request.POST.get('stock_quantity', 0)
+        short_description = request.POST.get('short_description', '')
+        description = request.POST.get('description', '')
+        status = request.POST.get('status', 'draft')
+        is_bestseller = request.POST.get('is_bestseller') == 'on'
+        
+        if not name or not category_id or not price:
+            messages.error(request, 'Tên sản phẩm, danh mục và giá là bắt buộc')
+        else:
+            try:
+                category = OrganizationCategory.objects.get(id=category_id, organization=organization)
+                
+                # Tạo slug từ tên sản phẩm
+                from django.utils.text import slugify
+                base_slug = slugify(name)
+                slug = base_slug
+                counter = 1
+                while OrganizationProduct.objects.filter(organization=organization, slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                
+                # Tạo SKU
+                sku = f"SKU-{slug.upper()}"
+                
+                # Xử lý file upload
+                main_image = request.FILES.get('image')
+                
+                product = OrganizationProduct.objects.create(
+                    organization=organization,
+                    name=name,
+                    slug=slug,
+                    category=category,
+                    price=Decimal(price),
+                    sale_price=Decimal(sale_price) if sale_price else None,
+                    stock_quantity=int(stock_quantity),
+                    sku=sku,
+                    short_description=short_description,
+                    description=description,
+                    status=status,
+                    is_bestseller=is_bestseller,
+                    main_image=main_image,
+                )
+                messages.success(request, f'Đã tạo sản phẩm "{name}" thành công')
+                return redirect('shop:organization_shop:manage_products', org_slug=org_slug)
+            except OrganizationCategory.DoesNotExist:
+                messages.error(request, 'Danh mục không tồn tại')
+            except Exception as e:
+                messages.error(request, f'Lỗi khi tạo sản phẩm: {str(e)}')
+    
     # Lọc và tìm kiếm
     search = request.GET.get('search', '')
     category_id = request.GET.get('category', '')
@@ -585,12 +641,12 @@ def manage_products(request, org_slug):
         products = products.filter(category_id=category_id)
     
     if status:
-        if status == 'active':
-            products = products.filter(is_active=True)
-        elif status == 'inactive':
-            products = products.filter(is_active=False)
-        elif status == 'out_of_stock':
-            products = products.filter(stock_quantity=0)
+        if status == 'published':
+            products = products.filter(status='published')
+        elif status == 'draft':
+            products = products.filter(status='draft')
+        elif status == 'archived':
+            products = products.filter(status='archived')
     
     # Phân trang
     paginator = Paginator(products.order_by('-created_at'), 20)
@@ -600,6 +656,12 @@ def manage_products(request, org_slug):
     # Danh mục cho filter
     categories = OrganizationCategory.objects.filter(organization=organization)
     
+    # Thống kê
+    total_products = OrganizationProduct.objects.filter(organization=organization).count()
+    published_products = OrganizationProduct.objects.filter(organization=organization, status='published').count()
+    draft_products = OrganizationProduct.objects.filter(organization=organization, status='draft').count()
+    total_categories = categories.count()
+    
     context = {
         'organization': organization,
         'products': products,
@@ -607,6 +669,10 @@ def manage_products(request, org_slug):
         'search': search,
         'category_id': category_id,
         'status': status,
+        'total_products': total_products,
+        'published_products': published_products,
+        'draft_products': draft_products,
+        'total_categories': total_categories,
     }
     
     return render(request, 'shop/organization/manage_products.html', context)
@@ -663,11 +729,50 @@ def manage_categories(request, org_slug):
         messages.error(request, 'Bạn không có quyền truy cập shop này')
         return redirect('organizations:dashboard')
     
+    # Xử lý POST request (thêm danh mục)
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        slug = request.POST.get('slug')
+        description = request.POST.get('description', '')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not name or not slug:
+            messages.error(request, 'Tên danh mục và slug là bắt buộc')
+        else:
+            try:
+                # Kiểm tra slug unique trong organization
+                if OrganizationCategory.objects.filter(organization=organization, slug=slug).exists():
+                    messages.error(request, 'Slug đã tồn tại trong organization này')
+                else:
+                    # Xử lý file upload
+                    image = request.FILES.get('image')
+                    
+                    category = OrganizationCategory.objects.create(
+                        organization=organization,
+                        name=name,
+                        slug=slug,
+                        description=description,
+                        is_active=is_active,
+                        image=image
+                    )
+                    messages.success(request, f'Đã tạo danh mục "{name}" thành công')
+                    return redirect('shop:organization_shop:manage_categories', org_slug=org_slug)
+            except Exception as e:
+                messages.error(request, f'Lỗi khi tạo danh mục: {str(e)}')
+    
     categories = OrganizationCategory.objects.filter(organization=organization).order_by('name')
+    
+    # Thống kê
+    total_categories = categories.count()
+    active_categories = categories.filter(is_active=True).count()
+    total_products = OrganizationProduct.objects.filter(organization=organization).count()
     
     context = {
         'organization': organization,
         'categories': categories,
+        'total_categories': total_categories,
+        'active_categories': active_categories,
+        'total_products': total_products,
     }
     
     return render(request, 'shop/organization/manage_categories.html', context)
@@ -695,23 +800,36 @@ def shop_settings(request, org_slug):
     )
     
     if request.method == 'POST':
-        # Cập nhật settings
+        # Cập nhật thông tin cơ bản
         shop_settings.shop_name = request.POST.get('shop_name', organization.name)
         shop_settings.shop_description = request.POST.get('shop_description', '')
-        shop_settings.is_active = request.POST.get('is_active') == 'on'
-        shop_settings.shipping_fee = Decimal(request.POST.get('shipping_fee', 0))
-        shop_settings.free_shipping_threshold = Decimal(request.POST.get('free_shipping_threshold', 0))
         shop_settings.contact_phone = request.POST.get('contact_phone', '')
         shop_settings.contact_email = request.POST.get('contact_email', '')
         shop_settings.contact_address = request.POST.get('contact_address', '')
         
-        # Upload logo nếu có
+        # Cập nhật thông tin ngân hàng
+        shop_settings.bank_name = request.POST.get('bank_name', '')
+        shop_settings.bank_account_number = request.POST.get('bank_account_number', '')
+        shop_settings.bank_account_name = request.POST.get('bank_account_name', '')
+        
+        # Cập nhật cài đặt giao hàng
+        shop_settings.shipping_fee = Decimal(request.POST.get('shipping_fee', 0))
+        free_shipping = request.POST.get('free_shipping_threshold', '')
+        shop_settings.free_shipping_threshold = Decimal(free_shipping) if free_shipping else None
+        
+        # Cập nhật trạng thái
+        shop_settings.is_active = request.POST.get('is_active') == 'on'
+        
+        # Upload files nếu có
         if 'shop_logo' in request.FILES:
             shop_settings.shop_logo = request.FILES['shop_logo']
         
+        if 'payment_qr_code' in request.FILES:
+            shop_settings.payment_qr_code = request.FILES['payment_qr_code']
+        
         shop_settings.save()
-        messages.success(request, 'Cài đặt shop đã được cập nhật')
-        return redirect('organization_shop:shop_settings', org_slug=organization.slug)
+        messages.success(request, 'Cài đặt shop đã được cập nhật thành công')
+        return redirect('shop:organization_shop:shop_settings', org_slug=organization.slug)
     
     context = {
         'organization': organization,
@@ -719,3 +837,179 @@ def shop_settings(request, org_slug):
     }
     
     return render(request, 'shop/organization/shop_settings.html', context)
+
+
+# ==================== EDIT & DELETE VIEWS ====================
+
+@login_required
+def edit_product(request, org_slug, product_id):
+    """Chỉnh sửa sản phẩm"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    product = get_object_or_404(OrganizationProduct, id=product_id, organization=organization)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        category_id = request.POST.get('category')
+        price = request.POST.get('price')
+        sale_price = request.POST.get('sale_price', '')
+        stock_quantity = request.POST.get('stock_quantity', 0)
+        short_description = request.POST.get('short_description', '')
+        description = request.POST.get('description', '')
+        status = request.POST.get('status', 'draft')
+        is_bestseller = request.POST.get('is_bestseller') == 'on'
+        
+        if not name or not category_id or not price:
+            messages.error(request, 'Tên sản phẩm, danh mục và giá là bắt buộc')
+        else:
+            try:
+                category = OrganizationCategory.objects.get(id=category_id, organization=organization)
+                
+                # Cập nhật thông tin sản phẩm
+                product.name = name
+                product.category = category
+                product.price = Decimal(price)
+                product.sale_price = Decimal(sale_price) if sale_price else None
+                product.stock_quantity = int(stock_quantity)
+                product.short_description = short_description
+                product.description = description
+                product.status = status
+                product.is_bestseller = is_bestseller
+                
+                # Xử lý file upload mới (nếu có)
+                new_image = request.FILES.get('image')
+                if new_image:
+                    product.main_image = new_image
+                
+                product.save()
+                messages.success(request, f'Đã cập nhật sản phẩm "{name}" thành công')
+                return redirect('shop:organization_shop:manage_products', org_slug=org_slug)
+            except OrganizationCategory.DoesNotExist:
+                messages.error(request, 'Danh mục không tồn tại')
+            except Exception as e:
+                messages.error(request, f'Lỗi khi cập nhật sản phẩm: {str(e)}')
+    
+    # Lấy danh mục cho dropdown
+    categories = OrganizationCategory.objects.filter(organization=organization)
+    
+    context = {
+        'organization': organization,
+        'product': product,
+        'categories': categories,
+    }
+    
+    return render(request, 'shop/organization/edit_product.html', context)
+
+
+@login_required
+def delete_product(request, org_slug, product_id):
+    """Xóa sản phẩm"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    product = get_object_or_404(OrganizationProduct, id=product_id, organization=organization)
+    
+    if request.method == 'POST':
+        product_name = product.name
+        product.delete()
+        messages.success(request, f'Đã xóa sản phẩm "{product_name}" thành công')
+        return redirect('shop:organization_shop:manage_products', org_slug=org_slug)
+    
+    context = {
+        'organization': organization,
+        'product': product,
+    }
+    
+    return render(request, 'shop/organization/delete_product.html', context)
+
+
+@login_required
+def edit_category(request, org_slug, category_id):
+    """Chỉnh sửa danh mục"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    category = get_object_or_404(OrganizationCategory, id=category_id, organization=organization)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        slug = request.POST.get('slug')
+        description = request.POST.get('description', '')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not name or not slug:
+            messages.error(request, 'Tên danh mục và slug là bắt buộc')
+        else:
+            try:
+                # Kiểm tra slug unique (trừ danh mục hiện tại)
+                if OrganizationCategory.objects.filter(organization=organization, slug=slug).exclude(id=category_id).exists():
+                    messages.error(request, 'Slug đã tồn tại trong organization này')
+                else:
+                    # Cập nhật thông tin danh mục
+                    category.name = name
+                    category.slug = slug
+                    category.description = description
+                    category.is_active = is_active
+                    
+                    # Xử lý file upload mới (nếu có)
+                    new_image = request.FILES.get('image')
+                    if new_image:
+                        category.image = new_image
+                    
+                    category.save()
+                    messages.success(request, f'Đã cập nhật danh mục "{name}" thành công')
+                    return redirect('shop:organization_shop:manage_categories', org_slug=org_slug)
+            except Exception as e:
+                messages.error(request, f'Lỗi khi cập nhật danh mục: {str(e)}')
+    
+    context = {
+        'organization': organization,
+        'category': category,
+    }
+    
+    return render(request, 'shop/organization/edit_category.html', context)
+
+
+@login_required
+def delete_category(request, org_slug, category_id):
+    """Xóa danh mục"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        messages.error(request, 'Bạn không có quyền truy cập shop này')
+        return redirect('organizations:dashboard')
+    
+    category = get_object_or_404(OrganizationCategory, id=category_id, organization=organization)
+    
+    if request.method == 'POST':
+        category_name = category.name
+        product_count = category.products.count()
+        
+        if product_count > 0:
+            messages.error(request, f'Không thể xóa danh mục "{category_name}" vì còn {product_count} sản phẩm. Hãy chuyển các sản phẩm sang danh mục khác trước.')
+            return redirect('shop:organization_shop:manage_categories', org_slug=org_slug)
+        
+        category.delete()
+        messages.success(request, f'Đã xóa danh mục "{category_name}" thành công')
+        return redirect('shop:organization_shop:manage_categories', org_slug=org_slug)
+    
+    context = {
+        'organization': organization,
+        'category': category,
+    }
+    
+    return render(request, 'shop/organization/delete_category.html', context)

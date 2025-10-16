@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chỉnh Sửa Sản Phẩm - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .management-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        color: #6c757d;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+    
+    .current-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Management Header -->
+<div class="management-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="text-white">Shop</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}" class="text-white">Quản Lý</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}" class="text-white">Sản Phẩm</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">Chỉnh Sửa</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="fas fa-edit me-2"></i>Chỉnh Sửa Sản Phẩm
+                </h1>
+                <p class="mb-0 opacity-75">{{ product.name }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-container">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Current Image -->
+                    {% if product.main_image %}
+                    <div class="mb-4 text-center">
+                        <h5>Hình ảnh hiện tại:</h5>
+                        <img src="{{ product.main_image.url }}" alt="{{ product.name }}" class="current-image">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên Sản Phẩm *</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Danh Mục *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Chọn danh mục</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.id == product.category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Giá *</label>
+                                <input type="number" class="form-control" id="price" name="price" min="0" step="1000" value="{{ product.price }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sale_price" class="form-label">Giá Khuyến Mãi</label>
+                                <input type="number" class="form-control" id="sale_price" name="sale_price" min="0" step="1000" value="{% if product.sale_price %}{{ product.sale_price }}{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock_quantity" class="form-label">Số Lượng Tồn Kho</label>
+                                <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0" value="{{ product.stock_quantity }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Trạng Thái</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="draft" {% if product.status == 'draft' %}selected{% endif %}>Bản Nháp</option>
+                                    <option value="published" {% if product.status == 'published' %}selected{% endif %}>Xuất Bản</option>
+                                    <option value="archived" {% if product.status == 'archived' %}selected{% endif %}>Lưu Trữ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="short_description" class="form-label">Mô Tả Ngắn</label>
+                        <textarea class="form-control" id="short_description" name="short_description" rows="2">{{ product.short_description }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô Tả Chi Tiết</label>
+                        <textarea class="form-control" id="description" name="description" rows="4">{{ product.description }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Hình Ảnh Mới</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <div class="form-text">Để trống nếu không muốn thay đổi hình ảnh</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_bestseller" name="is_bestseller" {% if product.is_bestseller %}checked{% endif %}>
+                            <label class="form-check-label" for="is_bestseller">
+                                Sản phẩm bán chạy
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}" class="btn btn-secondary me-md-2">Hủy</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Cập Nhật Sản Phẩm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

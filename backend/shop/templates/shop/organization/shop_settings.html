@@ -94,6 +94,7 @@
                                 <label for="shop_name" class="form-label">Tên Shop *</label>
                                 <input type="text" class="form-control" id="shop_name" name="shop_name" 
                                        value="{{ shop_settings.shop_name }}" required>
+                                <div class="form-text">Tên hiển thị của shop trên website</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -101,21 +102,44 @@
                                 <label for="contact_email" class="form-label">Email Liên Hệ</label>
                                 <input type="email" class="form-control" id="contact_email" name="contact_email" 
                                        value="{{ shop_settings.contact_email }}">
+                                <div class="form-text">Email để khách hàng liên hệ</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="contact_phone" class="form-label">Số Điện Thoại</label>
+                                <input type="tel" class="form-control" id="contact_phone" name="contact_phone" 
+                                       value="{{ shop_settings.contact_phone }}">
+                                <div class="form-text">Số điện thoại hỗ trợ khách hàng</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shop_logo" class="form-label">Logo Shop</label>
+                                <input type="file" class="form-control" id="shop_logo" name="shop_logo" accept="image/*">
+                                <div class="form-text">Logo sẽ hiển thị trên shop</div>
+                                {% if shop_settings.shop_logo %}
+                                <div class="mt-2">
+                                    <img src="{{ shop_settings.shop_logo.url }}" alt="Current logo" style="max-height: 100px;" class="img-thumbnail">
+                                    <small class="text-muted d-block">Logo hiện tại</small>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="shop_description" class="form-label">Mô Tả Shop</label>
-                        <textarea class="form-control" id="shop_description" name="shop_description" rows="3">{{ shop_settings.shop_description }}</textarea>
+                        <textarea class="form-control" id="shop_description" name="shop_description" rows="3" 
+                                  placeholder="Mô tả ngắn về shop của bạn...">{{ shop_settings.shop_description }}</textarea>
+                        <div class="form-text">Mô tả sẽ hiển thị trên trang chủ shop</div>
                     </div>
                     <div class="mb-3">
-                        <label for="shop_logo" class="form-label">Logo Shop</label>
-                        <input type="file" class="form-control" id="shop_logo" name="shop_logo" accept="image/*">
-                        {% if shop_settings.shop_logo %}
-                        <div class="mt-2">
-                            <img src="{{ shop_settings.shop_logo.url }}" alt="Current logo" style="max-height: 100px;">
-                        </div>
-                        {% endif %}
+                        <label for="contact_address" class="form-label">Địa Chỉ</label>
+                        <textarea class="form-control" id="contact_address" name="contact_address" rows="2" 
+                                  placeholder="Địa chỉ cửa hàng hoặc văn phòng...">{{ shop_settings.contact_address }}</textarea>
+                        <div class="form-text">Địa chỉ để khách hàng biết nơi liên hệ</div>
                     </div>
                 </div>
 
@@ -130,6 +154,7 @@
                                 <label for="shipping_fee" class="form-label">Phí Giao Hàng (VNĐ)</label>
                                 <input type="number" class="form-control" id="shipping_fee" name="shipping_fee" 
                                        value="{{ shop_settings.shipping_fee }}" min="0" step="1000">
+                                <div class="form-text">Phí ship mặc định cho đơn hàng</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -137,12 +162,15 @@
                                 <label for="free_shipping_threshold" class="form-label">Miễn Phí Giao Hàng Từ (VNĐ)</label>
                                 <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" 
                                        value="{{ shop_settings.free_shipping_threshold }}" min="0" step="1000">
+                                <div class="form-text">Đơn hàng từ số tiền này sẽ được miễn phí ship</div>
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="shipping_policy" class="form-label">Chính Sách Giao Hàng</label>
-                        <textarea class="form-control" id="shipping_policy" name="shipping_policy" rows="3">{{ shop_settings.shipping_policy }}</textarea>
+                        <textarea class="form-control" id="shipping_policy" name="shipping_policy" rows="4" 
+                                  placeholder="VD:&#10;- Giao hàng trong nội thành: 1-2 ngày&#10;- Giao hàng ngoại thành: 3-5 ngày&#10;- Miễn phí ship cho đơn hàng từ 500.000đ">{{ shop_settings.shipping_policy }}</textarea>
+                        <div class="form-text">Chính sách giao hàng sẽ hiển thị cho khách hàng</div>
                     </div>
                 </div>
 
@@ -151,27 +179,68 @@
                     <h4 class="section-title">
                         <i class="fas fa-credit-card me-2"></i>Cài Đặt Thanh Toán
                     </h4>
-                    <div class="mb-3">
-                        <label class="form-label">Phương Thức Thanh Toán</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="payment_cod" name="payment_cod" 
-                                   {% if shop_settings.payment_cod %}checked{% endif %}>
-                            <label class="form-check-label" for="payment_cod">
-                                Thanh toán khi nhận hàng (COD)
-                            </label>
+                    
+                    <!-- Bank Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bank_name" class="form-label">Tên Ngân Hàng</label>
+                                <input type="text" class="form-control" id="bank_name" name="bank_name" 
+                                       value="{{ shop_settings.bank_name }}" placeholder="VD: Vietcombank, Techcombank...">
+                                <div class="form-text">Tên ngân hàng nhận thanh toán</div>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="payment_bank_transfer" name="payment_bank_transfer" 
-                                   {% if shop_settings.payment_bank_transfer %}checked{% endif %}>
-                            <label class="form-check-label" for="payment_bank_transfer">
-                                Chuyển khoản ngân hàng
-                            </label>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bank_account_number" class="form-label">Số Tài Khoản</label>
+                                <input type="text" class="form-control" id="bank_account_number" name="bank_account_number" 
+                                       value="{{ shop_settings.bank_account_number }}" placeholder="VD: 1234567890">
+                                <div class="form-text">Số tài khoản ngân hàng</div>
+                            </div>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label for="bank_info" class="form-label">Thông Tin Ngân Hàng</label>
-                        <textarea class="form-control" id="bank_info" name="bank_info" rows="3" 
-                                  placeholder="Tên ngân hàng: ...&#10;Số tài khoản: ...&#10;Chủ tài khoản: ...">{{ shop_settings.bank_info }}</textarea>
+                        <label for="bank_account_name" class="form-label">Tên Chủ Tài Khoản</label>
+                        <input type="text" class="form-control" id="bank_account_name" name="bank_account_name" 
+                               value="{{ shop_settings.bank_account_name }}" placeholder="VD: NGUYEN VAN A">
+                        <div class="form-text">Tên chủ tài khoản (viết hoa, không dấu)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_qr_code" class="form-label">QR Code Thanh Toán</label>
+                        <input type="file" class="form-control" id="payment_qr_code" name="payment_qr_code" accept="image/*">
+                        <div class="form-text">QR Code để khách hàng quét thanh toán</div>
+                        {% if shop_settings.payment_qr_code %}
+                        <div class="mt-2">
+                            <img src="{{ shop_settings.payment_qr_code.url }}" alt="QR Code" style="max-height: 150px;" class="img-thumbnail">
+                            <small class="text-muted d-block">QR Code hiện tại</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Payment Methods -->
+                    <div class="mb-3">
+                        <label class="form-label">Phương Thức Thanh Toán Hỗ Trợ</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="payment_cod" name="payment_cod" checked>
+                                    <label class="form-check-label" for="payment_cod">
+                                        <i class="fas fa-money-bill-wave me-1"></i>Thanh toán khi nhận hàng (COD)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="payment_bank_transfer" name="payment_bank_transfer" checked>
+                                    <label class="form-check-label" for="payment_bank_transfer">
+                                        <i class="fas fa-university me-1"></i>Chuyển khoản ngân hàng
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">Chọn các phương thức thanh toán mà shop hỗ trợ</div>
                     </div>
                 </div>
 
@@ -289,17 +358,124 @@ function loadFormData() {
     }
 }
 
-// Save form data on input change
+// Format currency input
+function formatCurrency(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    if (value) {
+        value = parseInt(value).toLocaleString('vi-VN');
+        input.value = value;
+    }
+}
+
+// Auto-format bank account number
+function formatBankAccount(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    input.value = value;
+}
+
+// Auto-format phone number
+function formatPhoneNumber(input) {
+    let value = input.value.replace(/[^\d]/g, '');
+    if (value.length > 0) {
+        if (value.startsWith('0')) {
+            value = value.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+        } else if (value.startsWith('84')) {
+            value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{3})/, '+$1 $2 $3 $4');
+        }
+    }
+    input.value = value;
+}
+
+// Preview image before upload
+function previewImage(input, previewId) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById(previewId);
+            if (preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Initialize form
 document.addEventListener('DOMContentLoaded', function() {
     loadFormData();
     
     const form = document.querySelector('form');
     form.addEventListener('input', saveFormData);
     
+    // Format currency inputs
+    const currencyInputs = document.querySelectorAll('input[name="shipping_fee"], input[name="free_shipping_threshold"]');
+    currencyInputs.forEach(input => {
+        input.addEventListener('blur', () => formatCurrency(input));
+    });
+    
+    // Format bank account
+    const bankAccountInput = document.querySelector('input[name="bank_account_number"]');
+    if (bankAccountInput) {
+        bankAccountInput.addEventListener('input', () => formatBankAccount(bankAccountInput));
+    }
+    
+    // Format phone number
+    const phoneInput = document.querySelector('input[name="contact_phone"]');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', () => formatPhoneNumber(phoneInput));
+    }
+    
+    // Preview images
+    const logoInput = document.querySelector('input[name="shop_logo"]');
+    if (logoInput) {
+        logoInput.addEventListener('change', () => previewImage(logoInput, 'logo-preview'));
+    }
+    
+    const qrInput = document.querySelector('input[name="payment_qr_code"]');
+    if (qrInput) {
+        qrInput.addEventListener('change', () => previewImage(qrInput, 'qr-preview'));
+    }
+    
     // Clear saved data on successful submit
     form.addEventListener('submit', function() {
         localStorage.removeItem('shop_settings_form');
     });
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const shopName = document.querySelector('input[name="shop_name"]').value.trim();
+        if (!shopName) {
+            e.preventDefault();
+            alert('Vui lòng nhập tên shop');
+            return false;
+        }
+        
+        const email = document.querySelector('input[name="contact_email"]').value.trim();
+        if (email && !isValidEmail(email)) {
+            e.preventDefault();
+            alert('Email không hợp lệ');
+            return false;
+        }
+        
+        const phone = document.querySelector('input[name="contact_phone"]').value.trim();
+        if (phone && !isValidPhone(phone)) {
+            e.preventDefault();
+            alert('Số điện thoại không hợp lệ');
+            return false;
+        }
+    });
 });
+
+// Validation functions
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function isValidPhone(phone) {
+    const phoneRegex = /^(\+84|84|0)[1-9][0-9]{8}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+}
 </script>
 {% endblock %}

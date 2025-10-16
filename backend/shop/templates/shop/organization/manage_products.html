@@ -201,8 +201,8 @@
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
             <div class="product-card">
                 <div class="position-relative">
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                    {% if product.main_image %}
+                        <img src="{{ product.main_image.url }}" alt="{{ product.name }}" class="product-image">
                     {% else %}
                         <div class="product-image bg-light d-flex align-items-center justify-content-center">
                             <i class="fas fa-image fa-3x text-muted"></i>
@@ -226,19 +226,19 @@
                                 <span class="fw-bold">{{ product.price|floatformat:0 }}đ</span>
                             {% endif %}
                         </div>
-                        <small class="text-muted">Kho: {{ product.stock }}</small>
+                        <small class="text-muted">Kho: {{ product.stock_quantity }}</small>
                     </div>
                     <div class="action-buttons">
                         <a href="{% url 'shop:organization_shop:product_detail' org_slug=organization.slug product_slug=product.slug %}" 
                            class="btn btn-outline-primary btn-sm" target="_blank">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <button class="btn btn-outline-warning btn-sm" onclick="editProduct({{ product.id }})">
+                        <a href="{% url 'shop:organization_shop:edit_product' org_slug=organization.slug product_id=product.id %}" class="btn btn-outline-warning btn-sm">
                             <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteProduct({{ product.id }})">
+                        </a>
+                        <a href="{% url 'shop:organization_shop:delete_product' org_slug=organization.slug product_id=product.id %}" class="btn btn-outline-danger btn-sm">
                             <i class="fas fa-trash"></i>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -344,7 +344,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="stock" class="form-label">Số Lượng Tồn Kho</label>
-                                <input type="number" class="form-control" id="stock" name="stock" min="0" value="0">
+                                <input type="number" class="form-control" id="stock" name="stock_quantity" min="0" value="0">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -391,39 +391,33 @@
 
 {% block extra_js %}
 <script>
-function editProduct(productId) {
-    // TODO: Implement edit product functionality
-    alert('Chức năng chỉnh sửa sản phẩm sẽ được triển khai');
-}
-
-function deleteProduct(productId) {
-    if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-        // TODO: Implement delete product functionality
-        alert('Chức năng xóa sản phẩm sẽ được triển khai');
-    }
-}
-
 function submitProductForm() {
     const form = document.querySelector('#addProductModal form');
     const formData = new FormData(form);
+    
+    // Lấy CSRF token từ form
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
     fetch('{% url "shop:organization_shop:manage_products" org_slug=organization.slug %}', {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => {
         if (response.ok) {
             location.reload();
         } else {
-            alert('Có lỗi xảy ra khi thêm sản phẩm');
+            response.text().then(text => {
+                console.error('Server response:', text);
+                alert('Có lỗi xảy ra khi thêm sản phẩm. Kiểm tra console để xem chi tiết.');
+            });
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Có lỗi xảy ra khi thêm sản phẩm');
+        alert('Có lỗi xảy ra khi thêm sản phẩm: ' + error.message);
     });
 }
 </script>

@@ -28,7 +28,11 @@ urlpatterns = [
     # Management URLs
     path('<slug:org_slug>/manage/', organization_views.manage_shop, name='manage_shop'),
     path('<slug:org_slug>/manage/products/', organization_views.manage_products, name='manage_products'),
+    path('<slug:org_slug>/manage/products/edit/<int:product_id>/', organization_views.edit_product, name='edit_product'),
+    path('<slug:org_slug>/manage/products/delete/<int:product_id>/', organization_views.delete_product, name='delete_product'),
     path('<slug:org_slug>/manage/orders/', organization_views.manage_orders, name='manage_orders'),
     path('<slug:org_slug>/manage/categories/', organization_views.manage_categories, name='manage_categories'),
+    path('<slug:org_slug>/manage/categories/edit/<int:category_id>/', organization_views.edit_category, name='edit_category'),
+    path('<slug:org_slug>/manage/categories/delete/<int:category_id>/', organization_views.delete_category, name='delete_category'),
     path('<slug:org_slug>/manage/settings/', organization_views.shop_settings, name='shop_settings'),
 ]
