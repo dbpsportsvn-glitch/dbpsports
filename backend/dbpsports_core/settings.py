@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'dbpsports_core.middleware.PermissionsPolicyMiddleware',  # Permissions Policy cho admin
     'shop.middleware.DisableCacheMiddleware',  # Disable cache cho shop API
     'django.middleware.cache.FetchFromCacheMiddleware',
 ]
@@ -74,6 +75,14 @@ MIDDLEWARE = [
 ROOT_URLCONF = "dbpsports_core.urls"
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# === Permissions Policy ===
+PERMISSIONS_POLICY = {
+    'unload': ['self'],
+    'camera': [],
+    'microphone': [],
+    'geolocation': [],
+}
 
 # === Templates ===
 TEMPLATES = [
