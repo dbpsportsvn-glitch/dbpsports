@@ -30,27 +30,20 @@ def create_main_shop_order_from_registration(request, team, registration):
     """
     from shop.models import Cart, Order, OrderItem
     
-    print(f"DEBUG: Starting create_main_shop_order_from_registration for user {request.user.username}")
-    
     try:
         # Lấy cart của user
         try:
             cart = Cart.objects.get(user=request.user)
             cart_items = cart.items.all()
-            print(f"DEBUG: Found cart with {cart_items.count()} items")
         except Cart.DoesNotExist:
-            print("DEBUG: No cart found for user")
             return None
         
         if not cart_items:
-            print("DEBUG: Cart is empty")
             return None
         
         # Kiểm tra tồn kho
         for cart_item in cart_items:
-            print(f"DEBUG: Checking stock for {cart_item.product.name}: requested={cart_item.quantity}, available={cart_item.product.stock_quantity}")
             if cart_item.product.stock_quantity < cart_item.quantity:
-                print(f"DEBUG: Insufficient stock for {cart_item.product.name}")
                 raise Exception(f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho.')
         
         # Lấy thông tin từ team captain
@@ -61,7 +54,6 @@ def create_main_shop_order_from_registration(request, team, registration):
         total_amount = cart.total_price + shipping_fee
         
         # Tạo đơn hàng
-        print(f"DEBUG: Creating order with total_amount={total_amount}")
         with transaction.atomic():
             order = Order.objects.create(
                 user=request.user,
@@ -78,7 +70,6 @@ def create_main_shop_order_from_registration(request, team, registration):
                 notes=f'Đơn hàng tự động từ thanh toán lệ phí giải đấu - Đội {team.name}',
                 payment_status='pending'
             )
-            print(f"DEBUG: Order created successfully: {order.order_number}")
             
             # Tạo order items
             for cart_item in cart_items:
@@ -94,25 +85,20 @@ def create_main_shop_order_from_registration(request, team, registration):
                 cart_item.product.save()
             
             # Xóa cart
-            print(f"DEBUG: Deleting cart for user {request.user.username}")
             cart.delete()
             
             # Gửi email thông báo đơn hàng
             try:
                 from shop.email_service import send_order_emails
-                print(f"DEBUG: Sending order emails for order {order.order_number}")
                 send_order_emails(order.id)
-                print(f"DEBUG: Order emails sent successfully")
             except Exception as email_error:
-                print(f"DEBUG: Email error (non-critical): {str(email_error)}")
                 # Không raise để không làm fail đơn hàng
+                pass
         
-        print(f"DEBUG: Order creation completed successfully")
         return order
         
     except Exception as e:
-        print(f"DEBUG: Error creating order: {str(e)}")
-        raise Exception(f'Loi tao don hang Main Shop: {str(e)}')
+        raise Exception(f'Lỗi tạo đơn hàng Main Shop: {str(e)}')
 
 
 def create_organization_shop_order_from_registration(request, organization, team, registration):
@@ -122,26 +108,19 @@ def create_organization_shop_order_from_registration(request, organization, team
     from shop.organization_models import OrganizationCart, OrganizationOrder, OrganizationOrderItem
     
     try:
-        print(f"DEBUG: Creating organization shop order for user {request.user.email}, organization {organization.name}")
-        
         # Lấy cart của user
         try:
             cart = OrganizationCart.objects.get(user=request.user, organization=organization)
             cart_items = cart.items.all()
-            print(f"DEBUG: Found cart with {cart_items.count()} items")
         except OrganizationCart.DoesNotExist:
-            print("DEBUG: No organization cart found for user")
             return None
         
         if not cart_items:
-            print("DEBUG: Cart is empty")
             return None
         
         # Kiểm tra tồn kho và tính discount
         total_profit = 0
         for cart_item in cart_items:
-            print(f"DEBUG: Checking item {cart_item.product.name}, quantity {cart_item.quantity}, stock {cart_item.product.stock_quantity}")
-            
             if cart_item.product.stock_quantity < cart_item.quantity:
                 raise Exception(f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho.')
             
@@ -149,9 +128,6 @@ def create_organization_shop_order_from_registration(request, organization, team
             if cart_item.product.cost_price:
                 profit_per_item = cart_item.product.profit_amount
                 total_profit += profit_per_item * cart_item.quantity
-                print(f"DEBUG: Item profit: {profit_per_item} x {cart_item.quantity} = {profit_per_item * cart_item.quantity}")
-        
-        print(f"DEBUG: Total profit from cart: {total_profit}")
         
         # Lấy thông tin từ team captain
         captain = team.captain
@@ -219,19 +195,14 @@ def create_organization_shop_order_from_registration(request, organization, team
             # Gửi email thông báo đơn hàng
             try:
                 from shop.organization_email_service import send_org_order_emails
-                print(f"DEBUG: Sending organization order emails for order {order.order_number}")
                 send_org_order_emails(order.id)
-                print(f"DEBUG: Organization order emails sent successfully")
             except Exception as email_error:
-                print(f"DEBUG: Organization email error (non-critical): {str(email_error)}")
                 # Không raise để không làm fail đơn hàng
+                pass
         
         return order
         
     except Exception as e:
-        print(f"ERROR: Failed to create organization shop order: {str(e)}")
-        print(f"ERROR: User: {request.user.email}, Organization: {organization.name}")
-        print(f"ERROR: Team: {team.name}, Registration: {registration.pk}")
         raise Exception(f'Lỗi tạo đơn hàng Organization Shop: {str(e)}')
 
 
@@ -1156,9 +1127,6 @@ def team_payment(request, pk):
         unavailable_items = tournament.check_cart_stock_availability(cart.items.all())
 
     if request.method == 'POST':
-        print(f"DEBUG: POST data: {request.POST}")
-        print(f"DEBUG: Files: {request.FILES}")
-        
         form = PaymentProofForm(request.POST, request.FILES, instance=registration)
         if form.is_valid():
             reg = form.save(commit=False)
@@ -1167,16 +1135,9 @@ def team_payment(request, pk):
                 reg.payment_status = 'PENDING'
             
             # Xử lý tích hợp shop - Tạo đơn hàng tự động
-            # Sửa vấn đề BooleanField với HiddenInput
             use_shop_discount_list = request.POST.getlist('use_shop_discount')
             use_shop_discount = 'on' in use_shop_discount_list
             shop_order_created = False
-            
-            print(f'DEBUG: use_shop_discount_list = {use_shop_discount_list}')
-            print(f'DEBUG: use_shop_discount = {use_shop_discount}')
-            print(f'DEBUG: tournament.shop_discount_percentage = {tournament.shop_discount_percentage}')
-            print(f'DEBUG: cart_total = {cart_total}')
-            print(f'DEBUG: org_cart_total = {org_cart_total}')
             
             if use_shop_discount and tournament.shop_discount_percentage > 0:
                 if tournament.organization:
@@ -4396,16 +4357,9 @@ def payment_with_shop(request, pk):
                 reg.payment_status = 'PENDING'
             
             # Xử lý tích hợp shop - Tạo đơn hàng tự động
-            # Sửa vấn đề BooleanField với HiddenInput
             use_shop_discount_list = request.POST.getlist('use_shop_discount')
             use_shop_discount = 'on' in use_shop_discount_list
             shop_order_created = False
-            
-            print(f'DEBUG: use_shop_discount_list = {use_shop_discount_list}')
-            print(f'DEBUG: use_shop_discount = {use_shop_discount}')
-            print(f'DEBUG: tournament.shop_discount_percentage = {tournament.shop_discount_percentage}')
-            print(f'DEBUG: cart_total = {cart_total}')
-            print(f'DEBUG: org_cart_total = {org_cart_total}')
             
             if use_shop_discount and tournament.shop_discount_percentage > 0:
                 if tournament.organization:

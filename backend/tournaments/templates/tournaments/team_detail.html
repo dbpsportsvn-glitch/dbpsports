@@ -475,10 +475,6 @@
                                     <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-success mt-2 w-100">
                                         <i class="bi bi-credit-card-fill"></i> Thanh toán lệ phí giải này
                                     </a>
-                                {% elif reg.payment_status == 'PENDING' and user == team.captain %}
-                                    <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-primary mt-2 w-100">
-                                        <i class="bi bi-arrow-clockwise"></i> Cập nhật thanh toán
-                                    </a>
                                 {% elif reg.payment_status == 'REJECTED' and user == team.captain %}
                                     <a href="{% url 'team_payment' pk=reg.pk %}" class="btn btn-sm btn-warning mt-2 w-100">
                                         <i class="bi bi-arrow-clockwise"></i> Tải lại hóa đơn
