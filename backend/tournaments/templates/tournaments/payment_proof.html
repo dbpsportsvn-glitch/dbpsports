@@ -183,13 +183,19 @@ body {
         opacity: 1;
     }
 }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
 </style>
 
 <div class="container-fluid py-4">
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4">
+            <div class="hero-section bg-gradient-primary text-white rounded-3 p-4 mb-4" style="margin-top: 2rem;">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h1 class="display-6 fw-bold mb-3">
@@ -292,11 +298,16 @@ body {
                     
                     <!-- Checkbox để tích hợp shop - chỉ hiển thị khi có discount -->
                     {% if registration.tournament.shop_discount_percentage > 0 %}
-                    <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" id="use_shop_discount_checkbox">
-                        <label class="form-check-label fw-bold fs-5" for="use_shop_discount_checkbox">
+                    <div class="d-flex align-items-center justify-content-between mb-4 p-3 border rounded bg-light">
+                        <label class="fw-bold fs-5 mb-0" for="use_shop_discount_checkbox">
                             <i class="bi bi-cart-plus me-2"></i>Tôi muốn đặt hàng từ shop để được trừ tiền lãi
                         </label>
+                        <div class="badge bg-gradient-primary text-white p-3 rounded-pill" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); animation: pulse 2s infinite;">
+                            <div class="d-flex align-items-center">
+                                <input class="form-check-input me-2" type="checkbox" id="use_shop_discount_checkbox" style="transform: scale(1.3);">
+                                <span class="fw-bold">GIẢM {{ registration.tournament.shop_discount_percentage }}%</span>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
                     
