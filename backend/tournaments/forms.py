@@ -268,7 +268,58 @@ class TournamentForm(forms.ModelForm):
                 'step': '0.01',
                 'placeholder': 'Nhập phần trăm tiền lãi được trừ (0-100)'
             }),
-        }        
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Nếu đây là form edit và có instance, set initial value cho shop_discount_percentage
+        if self.instance and self.instance.pk:
+            self.fields['shop_discount_percentage'].initial = self.instance.shop_discount_percentage
+    
+    def clean_shop_discount_percentage(self):
+        """Custom validation for shop_discount_percentage"""
+        shop_discount_percentage = self.cleaned_data.get('shop_discount_percentage')
+        
+        # Nếu không có giá trị và đây là form edit (có instance), giữ nguyên giá trị cũ
+        if shop_discount_percentage is None and self.instance and self.instance.pk:
+            return self.instance.shop_discount_percentage
+        
+        # Nếu không có giá trị và đây là form tạo mới, đặt mặc định là 0
+        if shop_discount_percentage is None:
+            shop_discount_percentage = 0
+        
+        if shop_discount_percentage < 0 or shop_discount_percentage > 100:
+            raise forms.ValidationError("Phần trăm giảm giá phải từ 0 đến 100.")
+        
+        return shop_discount_percentage
+    
+    def clean_registration_fee(self):
+        """Custom validation for registration_fee"""
+        registration_fee = self.cleaned_data.get('registration_fee')
+        
+        if registration_fee is not None and registration_fee < 0:
+            raise forms.ValidationError("Phí đăng ký không thể âm.")
+        
+        return registration_fee
+    
+    def clean(self):
+        """Custom form validation"""
+        cleaned_data = super().clean()
+        return cleaned_data
+    
+    def save(self, commit=True):
+        """Override save to preserve shop_discount_percentage if not provided"""
+        instance = super().save(commit=False)
+        
+        # Nếu shop_discount_percentage không có trong cleaned_data và đây là edit
+        if 'shop_discount_percentage' not in self.cleaned_data and self.instance and self.instance.pk:
+            instance.shop_discount_percentage = self.instance.shop_discount_percentage
+        
+        if commit:
+            instance.save()
+        
+        return instance        
 
 class TournamentShopSettingsForm(forms.ModelForm):
     """Form cho BTC cài đặt shop discount"""

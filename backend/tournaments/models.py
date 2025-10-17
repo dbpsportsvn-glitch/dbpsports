@@ -54,7 +54,7 @@ class Tournament(models.Model):
     bank_account_name = models.CharField("Tên chủ tài khoản", max_length=100, blank=True)
     payment_qr_code = models.ImageField("Ảnh mã QR", upload_to='qr_codes/', null=True, blank=True)
     registration_fee = models.DecimalField("Phí đăng ký (VNĐ)", max_digits=15, decimal_places=0, default=500000, help_text="Phí đăng ký cho mỗi đội tham gia")
-    shop_discount_percentage = models.DecimalField("Phần trăm tiền lãi từ shop (%)", max_digits=5, decimal_places=2, default=0.00, help_text="Phần trăm tiền lãi từ shop được trừ vào phí đăng ký (0-100%)")
+    shop_discount_percentage = models.DecimalField("Phần trăm tiền lãi từ shop (%)", max_digits=5, decimal_places=2, default=0.00, blank=True, help_text="Phần trăm tiền lãi từ shop được trừ vào phí đăng ký (0-100%)")
     rules = models.TextField("Điều lệ & Thông báo", blank=True, help_text="Nhập các điều lệ, quy định hoặc thông báo của giải đấu tại đây. Bạn có thể sử dụng mã HTML cơ bản để định dạng.")
 
     gallery_url = models.URLField(

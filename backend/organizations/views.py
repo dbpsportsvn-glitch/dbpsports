@@ -531,6 +531,8 @@ def edit_tournament(request, pk):
             form.save()
             messages.success(request, "Đã cập nhật thông tin giải đấu thành công!")
             return redirect('organizations:edit_tournament', pk=pk)
+        else:
+            messages.error(request, "Có lỗi xảy ra khi cập nhật thông tin giải đấu.")
     else:
         form = TournamentForm(instance=tournament)
         

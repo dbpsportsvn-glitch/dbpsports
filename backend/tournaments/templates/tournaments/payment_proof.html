@@ -342,15 +342,19 @@ body {
                             
                             {# Quảng cáo Main Shop cho giải của BTC #}
                             <div class="alert alert-secondary mt-3">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>Shop Chính:</strong> Bạn cũng có thể mua sản phẩm từ shop chính của DBP Sports.
-                                <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
-                                    <i class="bi bi-shop me-1"></i>Xem Shop Chính
-                                </a>
-                                <br><small class="text-muted">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>
-                                    Lưu ý: Sản phẩm từ Shop Chính không được tính vào giảm giá lệ phí đăng ký.
-                                </small>
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Shop Chính:</strong> Bạn cũng có thể mua sản phẩm từ shop chính của DBP Sports.
+                                        <br><small class="text-muted">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            Lưu ý: Sản phẩm từ Shop Chính không được tính vào giảm giá lệ phí đăng ký.
+                                        </small>
+                                    </div>
+                                    <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-outline-secondary ms-3">
+                                        <i class="bi bi-shop me-1"></i>Xem Shop Chính
+                                    </a>
+                                </div>
                             </div>
                         {% else %}
                             {# Giải của Admin: Chỉ hiển thị Main Shop #}
@@ -501,7 +505,7 @@ body {
                     <div class="payment-breakdown">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Lệ phí đăng ký:</span>
-                            <span>{{ registration.tournament.registration_fee|floatformat:0 }} VNĐ</span>
+                            <span class="fw-bold text-primary">{{ registration.tournament.registration_fee|floatformat:0 }} VNĐ</span>
                         </div>
                         
                         <div id="discount-info" class="discount-info" style="display: none;">
@@ -534,6 +538,15 @@ body {
                             <span>Tổng cần thanh toán:</span>
                             <span class="text-primary" id="final-amount">{{ registration.tournament.registration_fee|floatformat:0 }} VNĐ</span>
                         </div>
+                        
+                        <div class="alert alert-success mt-3">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <small>
+                                <strong>Thông tin cập nhật:</strong> Lệ phí đăng ký hiện tại là 
+                                <strong>{{ registration.tournament.registration_fee|floatformat:0 }} VNĐ</strong> 
+                                (đã được BTC cập nhật mới nhất).
+                            </small>
+                        </div>
                     </div>
                     
                     <div class="mt-4">
@@ -563,15 +576,12 @@ body {
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-info" onclick="location.reload()">
-                            <i class="bi bi-arrow-clockwise me-2"></i>Làm mới trang
-                        </button>
                         <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Quay lại đội bóng
                         </a>
                         {% if registration.tournament.shop_discount_percentage > 0 %}
                         <div class="btn-group w-100" role="group">
-                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
+                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới trang và giỏ hàng">
                                 <i class="bi bi-arrow-clockwise me-2"></i>Làm mới
                             </button>
                             {% if registration.tournament.organization %}
@@ -588,7 +598,7 @@ body {
                         </div>
                         {% else %}
                         <div class="btn-group w-100" role="group">
-                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
+                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới trang và giỏ hàng">
                                 <i class="bi bi-arrow-clockwise me-2"></i>Làm mới
                             </button>
                             {% if registration.tournament.organization %}
@@ -625,7 +635,7 @@ body {
         const discountAmount = document.getElementById('discount-amount');
         const finalAmount = document.getElementById('final-amount');
         
-        // Data
+        // Data - Force refresh from server
         const originalFee = parseFloat('{{ registration.tournament.registration_fee|default:0 }}') || 0;
         const currentDiscountAmount = parseFloat('{{ discount_amount|default:0 }}') || 0;
         const currentFinalFee = parseFloat('{{ final_fee|default:0 }}') || 0;
@@ -633,6 +643,13 @@ body {
         const orgDiscount = parseFloat('{{ org_discount|default:0 }}') || 0;
         const cartTotal = parseFloat('{{ cart_total|default:0 }}') || 0;
         const orgCartTotal = parseFloat('{{ org_cart_total|default:0 }}') || 0;
+        
+        // Debug: Log current values
+        console.log('🔄 Payment page loaded with fresh data:');
+        console.log('Tournament ID:', '{{ registration.tournament.pk }}');
+        console.log('Registration fee:', originalFee);
+        console.log('Discount amount:', currentDiscountAmount);
+        console.log('Final fee:', currentFinalFee);
         
         console.log('📊 Data values:');
         console.log('Original fee:', originalFee);
