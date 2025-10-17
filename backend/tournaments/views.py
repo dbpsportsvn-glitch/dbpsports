@@ -525,6 +525,10 @@ def tournament_detail(request, pk):
         key=lambda s: (s.package.order, -s.avg_rating),
     )
     # === KẾT THÚC PHẦN LOGIC MỚI ===
+    # Kiểm tra shop của organization
+    organization_shop_settings = tournament.get_organization_shop_settings()
+    has_organization_shop = organization_shop_settings and organization_shop_settings.is_active
+
     context = {
         'tournament': tournament,
         'is_organizer': is_organizer,
@@ -551,6 +555,8 @@ def tournament_detail(request, pk):
         'team_card_stats': team_card_stats,
         'matches_with_galleries': matches_with_galleries,
         'sorted_sponsorships': sorted_sponsorships,
+        'has_organization_shop': has_organization_shop,
+        'organization_shop_settings': organization_shop_settings,
     }
     return render(request, 'tournaments/tournament_detail.html', context)
 

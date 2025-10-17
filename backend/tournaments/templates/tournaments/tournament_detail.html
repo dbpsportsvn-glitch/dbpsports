@@ -65,6 +65,12 @@
                 <span class="status-badge status-{{ tournament.status|lower }}">
                     {{ tournament.get_status_display }}
                 </span>
+                {% if has_organization_shop %}
+                    <a href="{% url 'shop:organization_shop:shop_home' org_slug=tournament.organization.slug %}" 
+                       class="shop-badge">
+                        <i class="bi bi-shop me-1"></i>Ghé thăm shop BTC
+                    </a>
+                {% endif %}
                 {% if tournament.status == 'REGISTRATION_OPEN' and user.is_authenticated %}
                     <a href="{% url 'create_team' tournament_pk=tournament.pk %}" class="btn btn-primary btn-sm ms-3 registration-quick-btn">
                         <i class="bi bi-pencil-square me-1"></i>Đăng ký ngay
@@ -3027,6 +3033,55 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+
+    .shop-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        margin-left: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .shop-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        color: #FFD700;
+        text-decoration: none;
+    }
+
+    .shop-badge:hover i {
+        color: #FFD700;
+    }
+
+    /* Responsive design cho shop badge */
+    @media (max-width: 768px) {
+        .tournament-status {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .shop-badge {
+            margin-left: 0;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+        }
+        
+        .registration-quick-btn {
+            margin-left: 0 !important;
+            margin-top: 0.5rem;
+        }
     }
 
     .status-registration_open {
