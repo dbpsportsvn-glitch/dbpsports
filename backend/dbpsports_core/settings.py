@@ -152,17 +152,18 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # === Email ===
-# Nếu DEBUG=False (trên host), sử dụng SMTP. Ngược lại (ở máy), dùng console.
-EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+# Cấu hình email thật cho DBP Sports Production
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-ADMIN_EMAIL = env("ADMIN_EMAIL", default="admin@example.com") # Đọc email admin từ file .env
-EMAIL_HOST = env("EMAIL_HOST", default="")
-EMAIL_PORT = env.int("EMAIL_PORT", default=587)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False) # Thêm dòng này
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="DBP Sports <no-reply@example.com>")
+# DBP Sports Email Configuration - Production
+ADMIN_EMAIL = "dbpsportsvn@gmail.com"
+EMAIL_HOST = "mail.dbpsports.com"
+EMAIL_PORT = 465
+EMAIL_HOST_USER = "no-reply@dbpsports.com"
+EMAIL_HOST_PASSWORD = "Thuonghuyen123@"
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+DEFAULT_FROM_EMAIL = "DBP Sports <no-reply@dbpsports.com>"
 
 # Admin emails for notifications
 ADMIN_EMAILS = [

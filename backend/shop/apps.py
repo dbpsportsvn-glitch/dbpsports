@@ -9,3 +9,4 @@ class ShopConfig(AppConfig):
     def ready(self):
         """Import signals khi app ready"""
         import shop.signals
+        import shop.organization_signals

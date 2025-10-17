@@ -616,11 +616,24 @@ def organization_place_order(request, org_slug):
                     cart_item.product.stock_quantity -= cart_item.quantity
                     cart_item.product.save()
             
-            # Xóa cart
-            cart.delete()
+        # Xóa cart
+        cart.delete()
+        
+        # Gửi email thông báo - Sử dụng organization email service
+        try:
+            from .organization_email_service import send_org_order_emails
+            send_org_order_emails(order.id)
+        except Exception as email_error:
+            # Log lỗi email nhưng không làm fail đơn hàng
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"[ERROR] Error sending organization emails for order {order.id}: {str(email_error)}")
+            print(f"[ERROR] LOI GUI EMAIL ORGANIZATION: {str(email_error)}")
+            import traceback
+            traceback.print_exc()
         
         return JsonResponse({
-            'success': True, 
+            'success': True,
             'message': 'Đặt hàng thành công',
             'order_number': order.order_number,
             'redirect_url': f'/shop/org/{organization.slug}/orders/{order.order_number}/?success=1'
