@@ -1,6 +1,6 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Xác nhận thanh toán thành công - {{ team.tournament.name }} - DBP Sports{% endblock %}
+{% block title %}Xác nhận thanh toán thành công - {{ tournament.name }} - DBP Sports{% endblock %}
 
 {% block header_subtitle %}Xác nhận thanh toán lệ phí{% endblock %}
 
@@ -15,7 +15,7 @@
 </p>
 
 <p style="color: #6b7280; line-height: 1.8;">
-    Ban tổ chức giải đấu <strong>{{ team.tournament.name }}</strong> xin xác nhận đã nhận được thanh toán lệ phí của đội bạn. 
+    Ban tổ chức giải đấu <strong>{{ tournament.name }}</strong> xin xác nhận đã nhận được thanh toán lệ phí của đội bạn. 
     Chúng tôi chân thành cảm ơn sự tin tưởng và hợp tác của đội bạn.
 </p>
 
@@ -27,11 +27,11 @@
     </div>
     <div class="info-row">
         <span class="info-label">Giải đấu:</span>
-        <span class="info-value">{{ team.tournament.name }}</span>
+        <span class="info-value">{{ tournament.name }}</span>
     </div>
     <div class="info-row">
         <span class="info-label">Lệ phí tham gia:</span>
-        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+        <span class="info-value">{{ tournament.registration_fee|floatformat:0 }}đ</span>
     </div>
     <div class="info-row">
         <span class="info-label">Trạng thái:</span>
@@ -67,6 +67,6 @@
 
 <p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
     <strong>Trân trọng,</strong><br>
-    <strong style="color: #667eea;">Ban tổ chức {{ team.tournament.name }}</strong>
+    <strong style="color: #667eea;">Ban tổ chức {{ tournament.name }}</strong>
 </p>
 {% endblock %}

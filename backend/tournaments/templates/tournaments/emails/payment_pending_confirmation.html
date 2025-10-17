@@ -1,6 +1,6 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Đã nhận thanh toán - {{ team.tournament.name }} - DBP Sports{% endblock %}
+{% block title %}Đã nhận thanh toán - {{ tournament.name }} - DBP Sports{% endblock %}
 
 {% block header_subtitle %}Xác nhận đã nhận thanh toán{% endblock %}
 
@@ -16,7 +16,7 @@
 
 <p style="color: #6b7280; line-height: 1.8;">
     Chúng tôi đã nhận được hóa đơn thanh toán lệ phí của bạn cho giải đấu 
-    <strong>{{ team.tournament.name }}</strong>. Cảm ơn bạn đã tin tưởng và đăng ký tham gia giải đấu!
+    <strong>{{ tournament.name }}</strong>. Cảm ơn bạn đã tin tưởng và đăng ký tham gia giải đấu!
 </p>
 
 <div class="info-box">
@@ -27,11 +27,11 @@
     </div>
     <div class="info-row">
         <span class="info-label">Giải đấu:</span>
-        <span class="info-value">{{ team.tournament.name }}</span>
+        <span class="info-value">{{ tournament.name }}</span>
     </div>
     <div class="info-row">
         <span class="info-label">Lệ phí tham gia:</span>
-        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+        <span class="info-value">{{ tournament.registration_fee|floatformat:0 }}đ</span>
     </div>
     <div class="info-row">
         <span class="info-label">Trạng thái:</span>
@@ -39,7 +39,7 @@
     </div>
     <div class="info-row">
         <span class="info-label">Thời gian nộp:</span>
-        <span class="info-value">{{ team.payment_proof_uploaded_at|date:"d/m/Y H:i" }}</span>
+        <span class="info-value">{{ upload_time|date:"d/m/Y H:i" }}</span>
     </div>
     {% if use_shop_discount %}
     <div class="info-row">
@@ -82,6 +82,6 @@
 
 <p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
     <strong>Trân trọng,</strong><br>
-    <strong style="color: #667eea;">Ban tổ chức {{ team.tournament.name }}</strong>
+    <strong style="color: #667eea;">Ban tổ chức {{ tournament.name }}</strong>
 </p>
 {% endblock %}

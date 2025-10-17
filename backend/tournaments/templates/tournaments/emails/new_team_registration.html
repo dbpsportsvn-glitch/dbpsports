@@ -1,13 +1,13 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Đội mới đăng ký - {{ team.tournament.name }} - DBP Sports{% endblock %}
+{% block title %}Đội mới đăng ký - {{ tournament.name }} - DBP Sports{% endblock %}
 
 {% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
 
 {% block content %}
 <div class="alert-box">
     <h2>⚽ Có đội mới đăng ký!</h2>
-    <p>{{ team.name }} vừa đăng ký tham gia {{ team.tournament.name }}</p>
+    <p>{{ team.name }} vừa đăng ký tham gia {{ tournament.name }}</p>
 </div>
 
 <p style="font-size: 16px; color: #374151;">
@@ -16,7 +16,7 @@
 
 <p style="color: #6b7280; line-height: 1.8;">
     Đội <strong>{{ team.name }}</strong> vừa đăng ký tham gia giải đấu 
-    <strong>{{ team.tournament.name }}</strong>. Vui lòng kiểm tra và xử lý đăng ký này.
+    <strong>{{ tournament.name }}</strong>. Vui lòng kiểm tra và xử lý đăng ký này.
 </p>
 
 <div class="info-box">
@@ -35,11 +35,11 @@
     </div>
     <div class="info-row">
         <span class="info-label">Giải đấu:</span>
-        <span class="info-value">{{ team.tournament.name }}</span>
+        <span class="info-value">{{ tournament.name }}</span>
     </div>
     <div class="info-row">
         <span class="info-label">Lệ phí tham gia:</span>
-        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+        <span class="info-value">{{ tournament.registration_fee|floatformat:0 }}đ</span>
     </div>
     <div class="info-row">
         <span class="info-label">Thời gian đăng ký:</span>

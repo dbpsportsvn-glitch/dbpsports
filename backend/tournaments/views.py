@@ -1174,7 +1174,7 @@ def team_payment(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created, 'upload_time': timezone.now()},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -1182,7 +1182,7 @@ def team_payment(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
+                    context={'team': team, 'tournament': tournament, 'registration': registration, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created, 'upload_time': timezone.now()},
                     recipient_list=[team.captain.email]
                 )
 
@@ -4396,7 +4396,7 @@ def payment_with_shop(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created, 'upload_time': timezone.now()},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -4404,7 +4404,7 @@ def payment_with_shop(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
+                    context={'team': team, 'tournament': tournament, 'registration': registration, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created, 'upload_time': timezone.now()},
                     recipient_list=[team.captain.email]
                 )
 

@@ -1,6 +1,6 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Thanh toán không hợp lệ - {{ team.tournament.name }} - DBP Sports{% endblock %}
+{% block title %}Thanh toán không hợp lệ - {{ tournament.name }} - DBP Sports{% endblock %}
 
 {% block header_subtitle %}Thông báo từ Ban Tổ chức{% endblock %}
 
@@ -16,7 +16,7 @@
 
 <p style="color: #6b7280; line-height: 1.8;">
     Chúng tôi đã kiểm tra hóa đơn thanh toán của đội bạn cho giải đấu 
-    <strong>{{ team.tournament.name }}</strong>. Rất tiếc, hóa đơn này không đạt yêu cầu và cần được xử lý lại.
+    <strong>{{ tournament.name }}</strong>. Rất tiếc, hóa đơn này không đạt yêu cầu và cần được xử lý lại.
 </p>
 
 <div class="info-box">
@@ -27,11 +27,11 @@
     </div>
     <div class="info-row">
         <span class="info-label">Giải đấu:</span>
-        <span class="info-value">{{ team.tournament.name }}</span>
+        <span class="info-value">{{ tournament.name }}</span>
     </div>
     <div class="info-row">
         <span class="info-label">Lệ phí tham gia:</span>
-        <span class="info-value">{{ team.tournament.registration_fee|floatformat:0 }}đ</span>
+        <span class="info-value">{{ tournament.registration_fee|floatformat:0 }}đ</span>
     </div>
     <div class="info-row">
         <span class="info-label">Trạng thái:</span>
@@ -98,7 +98,7 @@
 
 <p style="text-align: center; color: #6b7280; margin-top: 30px; font-size: 15px; line-height: 1.8;">
     <strong>Trân trọng,</strong><br>
-    <strong style="color: #667eea;">Ban Tổ chức {{ team.tournament.name }}</strong>
+    <strong style="color: #667eea;">Ban Tổ chức {{ tournament.name }}</strong>
 </p>
 
 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
