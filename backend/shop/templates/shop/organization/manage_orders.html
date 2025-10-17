@@ -51,6 +51,54 @@
         color: white;
         padding: 2rem 0;
         margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .management-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.2)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+        background-size: cover;
+        background-position: bottom;
+        z-index: 1;
+    }
+    
+    .management-header h1 {
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+        position: relative;
+        z-index: 5;
+        font-weight: 700;
+    }
+    
+    .management-header .breadcrumb {
+        position: relative;
+        z-index: 5;
+    }
+    
+    .management-header .breadcrumb-item {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .management-header .breadcrumb-item a {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .management-header .breadcrumb-item.active {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .management-header .btn {
+        position: relative;
+        z-index: 5;
     }
     
     .order-card {
@@ -136,6 +184,28 @@
         
         .btc-back-btn span {
             font-size: 0.8rem;
+        }
+        
+        .management-header h1 {
+            font-size: 1.5rem;
+            color: #ffffff !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+        }
+        
+        .management-header .breadcrumb-item {
+            font-size: 0.9rem;
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+        }
+        
+        .management-header .breadcrumb-item a {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+        }
+        
+        .management-header .breadcrumb-item.active {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
         }
     }
     

@@ -11,10 +11,10 @@ cd ..
 python manage.py runserver
 
 git add .
-git commit -m "Memory Bank 19 cong nhan vien"
+git commit -m "Memory Bank 24 Chinh xach và dieu khoan"
 git push
 
-Tuyện! Bạn cập nhật Memory-bank và đẩy lên Git với mô tả bằng tiếng việt không dấu giúp mình nhé! ( Lưu ý: chỉ thực hiện khi mình yêu cầu )
+Tuyện! Bạn cập nhật Memory-bank và đẩy lên Git với mô tả bằng tiếng việt không dấu giúp mình nhé! (Lưu ý: chỉ thực hiện khi mình yêu cầu)
 
 #Cập Nhật Dữ Liệu
 

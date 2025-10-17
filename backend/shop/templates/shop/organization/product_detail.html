@@ -51,6 +51,54 @@
         color: white;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .org-shop-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.2)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+        background-size: cover;
+        background-position: bottom;
+        z-index: 1;
+    }
+    
+    .org-shop-header h1 {
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+        position: relative;
+        z-index: 5;
+        font-weight: 700;
+    }
+    
+    .org-shop-header .breadcrumb {
+        position: relative;
+        z-index: 5;
+    }
+    
+    .org-shop-header .breadcrumb-item {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .org-shop-header .breadcrumb-item a {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .org-shop-header .breadcrumb-item.active {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+    }
+    
+    .org-shop-header .btn {
+        position: relative;
+        z-index: 5;
     }
     
     .org-shop-logo {
