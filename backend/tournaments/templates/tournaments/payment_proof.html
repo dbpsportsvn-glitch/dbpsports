@@ -290,6 +290,16 @@ body {
                         {% endif %}
                     </div>
                     
+                    <!-- Checkbox để tích hợp shop - chỉ hiển thị khi có discount -->
+                    {% if registration.tournament.shop_discount_percentage > 0 %}
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="use_shop_discount_checkbox">
+                        <label class="form-check-label fw-bold fs-5" for="use_shop_discount_checkbox">
+                            <i class="bi bi-cart-plus me-2"></i>Tôi muốn đặt hàng từ shop để được trừ tiền lãi
+                        </label>
+                    </div>
+                    {% endif %}
+                    
                     <div id="shop-cart-section" class="shop-cart-section" style="display: none;">
                         {% if registration.tournament.organization %}
                             {# Giải của BTC: Chỉ hiển thị Organization Shop #}
@@ -521,15 +531,6 @@ body {
                         <!-- Hidden field để JavaScript có thể tham chiếu -->
                         <input type="hidden" id="id_use_shop_discount" name="use_shop_discount" value="">
                         
-                        <!-- Checkbox để tích hợp shop - chỉ hiển thị khi có discount -->
-                        {% if registration.tournament.shop_discount_percentage > 0 %}
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="use_shop_discount_checkbox">
-                            <label class="form-check-label fw-bold" for="use_shop_discount_checkbox">
-                                <i class="bi bi-cart-plus me-2"></i>Tôi muốn đặt hàng từ shop để được trừ tiền lãi
-                            </label>
-                        </div>
-                        {% endif %}
                         <div class="d-grid gap-2 mt-3">
                             <button type="submit" class="btn btn-success btn-lg">
                                 <i class="bi bi-check-circle me-2"></i>Gửi xác nhận thanh toán
