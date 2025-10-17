@@ -1,0 +1,125 @@
+<!-- Organization Shop Banner Partial -->
+{% load static %}
+
+<style>
+    /* Organization Shop Banner Styles */
+    .org-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 200px;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: local;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    
+    .org-banner.custom-banner {
+        background: var(--custom-banner-bg);
+    }
+    
+    .org-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+        z-index: 1;
+    }
+    
+    .org-banner.custom-banner::before {
+        background: rgba(0,0,0,0.4);
+        opacity: 1;
+    }
+    
+    .org-banner-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .org-banner .container {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .org-banner-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        color: white !important;
+    }
+    
+    .org-banner-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        color: white !important;
+    }
+    
+    .org-banner-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.3);
+        object-fit: cover;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .org-banner {
+            padding: 1.5rem 0;
+            min-height: 180px;
+        }
+        
+        .org-banner-title {
+            font-size: 2rem;
+        }
+        
+        .org-banner-subtitle {
+            font-size: 1rem;
+        }
+        
+        .org-banner-logo {
+            width: 60px;
+            height: 60px;
+        }
+    }
+</style>
+
+<div class="org-banner {% if shop_settings.shop_banner %}custom-banner{% endif %}" 
+     {% if shop_settings.shop_banner %}style="background-image: url('{{ shop_settings.shop_banner.url }}');"{% endif %}>
+    <div class="container">
+        <div class="org-banner-content">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    {% if shop_settings.shop_logo %}
+                        <img src="{{ shop_settings.shop_logo.url }}" alt="{{ organization.name }}" class="org-banner-logo">
+                    {% else %}
+                        <img src="{{ organization.logo.url }}" alt="{{ organization.name }}" class="org-banner-logo">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <h1 class="org-banner-title">{{ shop_settings.shop_name|default:organization.name }}</h1>
+                    {% if shop_settings.shop_description %}
+                        <p class="org-banner-subtitle">{{ shop_settings.shop_description }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-home me-1"></i>Trang Chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

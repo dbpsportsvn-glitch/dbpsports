@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Banner - {{ organization.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload me-2"></i>
+                        Upload Banner cho Shop {{ organization.name }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Hướng dẫn Upload Banner:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary"><i class="fas fa-ruler me-1"></i>Kích thước chuẩn:</h6>
+                                <ul class="mb-2">
+                                    <li><strong>1200 x 300 pixels</strong> (tỷ lệ 4:1)</li>
+                                    <li>Định dạng: <strong>JPG, PNG, WebP</strong></li>
+                                    <li>Kích thước file: <strong>tối đa 5MB</strong></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success"><i class="fas fa-magic me-1"></i>Tính năng tự động:</h6>
+                                <ul class="mb-0">
+                                    <li>✅ <strong>Cover Algorithm</strong> - ảnh fill đầy banner hoàn toàn</li>
+                                    <li>✅ <strong>Không bị repeat</strong> hay tile ảnh</li>
+                                    <li>✅ <strong>Crop thông minh</strong> từ center để giữ phần đẹp nhất</li>
+                                    <li>✅ <strong>Nén ảnh</strong> xuống dưới 2MB</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <strong>Tip:</strong> Thuật toán "Cover" sẽ đảm bảo ảnh fill đầy banner, không bị repeat hay tile!
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" id="banner-form">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="shop_banner" class="form-label">
+                                <i class="fas fa-image me-2"></i>Chọn ảnh banner
+                            </label>
+                            <input type="file" 
+                                   class="form-control form-control-lg" 
+                                   id="shop_banner" 
+                                   name="shop_banner" 
+                                   accept="image/*" 
+                                   required
+                                   onchange="previewImage(this)">
+                            <div class="form-text">Kéo thả file vào đây hoặc click để chọn</div>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="image-preview" class="mb-4" style="display: none;">
+                            <h6>Preview:</h6>
+                            <div class="border rounded p-3 text-center">
+                                <img id="preview-img" class="img-fluid" style="max-height: 200px;">
+                                <div class="mt-2">
+                                    <small class="text-muted" id="file-info"></small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>
+                                Upload Banner
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'shop:organization_shop:shop_settings' org_slug=organization.slug %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Quay lại Shop Settings
+                        </a>
+                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-home me-2"></i>
+                            Xem Shop
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const fileInfo = document.getElementById('file-info');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Show file info
+        fileInfo.textContent = `Tên file: ${file.name} | Kích thước: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// Form submission
+document.getElementById('banner-form').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('shop_banner');
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
+    if (!fileInput.files || !fileInput.files[0]) {
+        e.preventDefault();
+        alert('Vui lòng chọn file ảnh banner');
+        return false;
+    }
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang upload...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

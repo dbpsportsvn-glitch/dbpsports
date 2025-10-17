@@ -275,6 +275,29 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Banner Shop</label>
+                                <div class="form-text">
+                                    Banner sẽ hiển thị trên đầu trang shop
+                                    <br><strong>Kích thước chuẩn:</strong> 1200x300px (tỷ lệ 4:1)
+                                    <br><small class="text-success">✅ Hệ thống sẽ tự động resize và nén ảnh về kích thước chuẩn</small>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{% url 'shop:organization_shop:simple_banner_upload' org_slug=organization.slug %}" class="btn btn-primary">
+                                        <i class="fas fa-upload me-2"></i>Upload Banner
+                                    </a>
+                                </div>
+                                {% if shop_settings.shop_banner %}
+                                <div class="mt-2">
+                                    <img src="{{ shop_settings.shop_banner.url }}" alt="Current banner" style="max-height: 150px; width: 100%; object-fit: cover;" class="img-thumbnail">
+                                    <small class="text-muted d-block">Banner hiện tại</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label for="shop_description" class="form-label">Mô Tả Shop</label>
                         <textarea class="form-control" id="shop_description" name="shop_description" rows="3" 
@@ -580,6 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoInput.addEventListener('change', () => previewImage(logoInput, 'logo-preview'));
     }
     
+    
     const qrInput = document.querySelector('input[name="payment_qr_code"]');
     if (qrInput) {
         qrInput.addEventListener('change', () => previewImage(qrInput, 'qr-preview'));
@@ -610,6 +634,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (phone && !isValidPhone(phone)) {
             e.preventDefault();
             alert('Số điện thoại không hợp lệ');
+            return false;
+        }
+        
+        // Ensure CSRF token is present
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken || !csrfToken.value) {
+            e.preventDefault();
+            alert('Lỗi bảo mật. Vui lòng tải lại trang và thử lại.');
             return false;
         }
     });

@@ -1031,7 +1031,7 @@ class OrganizationShopSettingsAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Thông tin shop', {
-            'fields': ('organization', 'shop_name', 'shop_description', 'shop_logo')
+            'fields': ('organization', 'shop_name', 'shop_description', 'shop_logo', 'shop_banner')
         }),
         ('Thông tin liên hệ', {
             'fields': ('contact_phone', 'contact_email', 'contact_address')

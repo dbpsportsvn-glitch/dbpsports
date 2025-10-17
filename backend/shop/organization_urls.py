@@ -38,4 +38,7 @@ urlpatterns = [
     path('<slug:org_slug>/manage/categories/edit/<int:category_id>/', organization_views.edit_category, name='edit_category'),
     path('<slug:org_slug>/manage/categories/delete/<int:category_id>/', organization_views.delete_category, name='delete_category'),
     path('<slug:org_slug>/manage/settings/', organization_views.shop_settings, name='shop_settings'),
+    
+    # Banner upload
+    path('<slug:org_slug>/upload-banner/', organization_views.simple_banner_upload, name='simple_banner_upload'),
 ]

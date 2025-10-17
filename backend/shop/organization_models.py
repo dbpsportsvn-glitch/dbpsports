@@ -364,6 +364,7 @@ class OrganizationShopSettings(models.Model):
     shop_name = models.CharField(max_length=200, verbose_name="Tên shop", help_text="Tên hiển thị của shop")
     shop_description = models.TextField(blank=True, verbose_name="Mô tả shop")
     shop_logo = models.ImageField(upload_to='org_shop/logos/', blank=True, null=True, verbose_name="Logo shop")
+    shop_banner = models.ImageField(upload_to='org_shop/banners/', blank=True, null=True, verbose_name="Banner shop", help_text="Banner hiển thị trên đầu trang shop")
     
     # Thông tin liên hệ
     contact_phone = models.CharField(max_length=20, blank=True, verbose_name="Số điện thoại")

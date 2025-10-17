@@ -9,10 +9,21 @@
     .org-shop-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 4rem 0;
-        margin-bottom: 3rem;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
+        min-height: 200px;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: local;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    
+    .org-shop-header.custom-banner {
+        background: var(--custom-banner-bg);
     }
     
     .org-shop-header::before {
@@ -43,6 +54,11 @@
     .hero-content {
         position: relative;
         z-index: 2;
+    }
+    
+    .org-shop-header .container {
+        border-radius: 15px;
+        overflow: hidden;
     }
     
     .hero-title {
@@ -336,6 +352,11 @@
     
     /* Responsive Design */
     @media (max-width: 768px) {
+        .org-shop-header {
+            padding: 1.5rem 0;
+            min-height: 180px;
+        }
+        
         .hero-title {
             font-size: 2rem;
         }
@@ -400,7 +421,11 @@
 {% endif %}
 
 <!-- Modern Hero Section -->
-<div class="org-shop-header">
+<div class="org-shop-header {% if shop_settings.shop_banner %}custom-banner{% endif %}" 
+     {% if shop_settings.shop_banner %}style="background-image: url('{{ shop_settings.shop_banner.url }}');"{% endif %}>
+    {% if shop_settings.shop_banner %}
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1;"></div>
+    {% endif %}
     <div class="container">
         <div class="hero-content">
             <div class="row align-items-center">
