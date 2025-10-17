@@ -45,6 +45,8 @@ from tournaments.models import (
 )
 from tournaments.utils import send_notification_email, send_schedule_notification
 
+from shop.organization_models import OrganizationShopSettings
+
 from .forms import (
     AnnouncementForm,
     CardForm,
@@ -193,12 +195,19 @@ def organization_dashboard(request):
     members = Membership.objects.filter(organization=organization).select_related('user').order_by('role')
     # Form để mời thành viên
     invite_form = MemberInviteForm()
+    
+    # Lấy shop settings để hiển thị trạng thái khoá
+    try:
+        shop_settings = organization.shop_settings
+    except:
+        shop_settings = None
 
     context = {
         'organization': organization,
         'tournaments': tournaments,
         'members': members,
         'invite_form': invite_form,
+        'shop_settings': shop_settings,
     }
     return render(request, 'organizations/organization_dashboard.html', context)
 

@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}Yêu cầu mở khoá Shop BTC - {{ organization.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .unlock-request-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .unlock-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .unlock-header h1 {
+        color: #dc2626;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .unlock-header .subtitle {
+        color: #6b7280;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    .lock-status-card {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border: 2px solid #fecaca;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .lock-status-card .lock-icon {
+        font-size: 4rem;
+        color: #dc2626;
+        margin-bottom: 1rem;
+    }
+    
+    .lock-status-card h3 {
+        color: #dc2626;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .lock-status-card p {
+        color: #7f1d1d;
+        margin: 0;
+    }
+    
+    .request-form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .request-form-card h3 {
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 1rem;
+        resize: vertical;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+    
+    .form-group .help-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+    }
+    
+    .btn-cancel {
+        background: #f3f4f6;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-cancel:hover {
+        background: #e5e7eb;
+        color: #1f2937;
+        text-decoration: none;
+    }
+    
+    .info-box {
+        background: #f0f9ff;
+        border: 2px solid #0ea5e9;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-box h4 {
+        color: #0369a1;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-box ul {
+        color: #0c4a6e;
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .info-box li {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .unlock-request-container {
+            padding: 1rem;
+        }
+        
+        .unlock-header h1 {
+            font-size: 2rem;
+        }
+        
+        .lock-status-card,
+        .request-form-card {
+            padding: 1.5rem;
+        }
+        
+        .lock-status-card .lock-icon {
+            font-size: 3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unlock-request-container">
+    <!-- Header -->
+    <div class="unlock-header">
+        <h1><i class="fas fa-lock"></i> Yêu cầu mở khoá Shop BTC</h1>
+        <p class="subtitle">
+            Shop BTC của <strong>{{ organization.name }}</strong> hiện đang bị khoá.<br>
+            Vui lòng gửi yêu cầu mở khoá để Admin xem xét và phê duyệt.
+        </p>
+    </div>
+    
+    <!-- Lock Status Card -->
+    <div class="lock-status-card">
+        <div class="lock-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <h3>Shop BTC đang bị khoá</h3>
+        <p>Tính năng Shop BTC cần được Admin phê duyệt trước khi sử dụng</p>
+    </div>
+    
+    <!-- Info Box -->
+    <div class="info-box">
+        <h4><i class="fas fa-info-circle"></i> Thông tin quan trọng</h4>
+        <ul>
+            <li>Shop BTC là tính năng đặc biệt giúp BTC tăng thêm thu nhập</li>
+            <li>Cần có sự đồng ý của Admin để mở khoá tính năng này</li>
+            <li>Admin sẽ xem xét yêu cầu và phản hồi trong thời gian sớm nhất</li>
+            <li>Bạn sẽ nhận được email thông báo khi yêu cầu được xử lý</li>
+        </ul>
+    </div>
+    
+    <!-- Request Form -->
+    <div class="request-form-card">
+        <h3><i class="fas fa-envelope"></i> Gửi yêu cầu mở khoá</h3>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="message">Lời nhắn cho Admin *</label>
+                <textarea 
+                    id="message" 
+                    name="message" 
+                    placeholder="Vui lòng giải thích lý do bạn muốn sử dụng Shop BTC và cách bạn sẽ sử dụng tính năng này để phục vụ cộng đồng..."
+                    required
+                ></textarea>
+                <div class="help-text">
+                    Hãy giải thích chi tiết về mục đích sử dụng Shop BTC và cam kết của bạn
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-paper-plane"></i> Gửi yêu cầu
+                    </button>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <a href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}" class="btn-cancel">
+                        <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

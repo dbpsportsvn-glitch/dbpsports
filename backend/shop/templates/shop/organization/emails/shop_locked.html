@@ -1,0 +1,105 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Shop BTC đã bị khoá - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo quan trọng về Shop BTC{% endblock %}
+
+{% block content %}
+<div class="warning-box">
+    <h2>⚠️ Shop BTC đã bị khoá</h2>
+    <p>{{ organization.name }} không thể sử dụng Shop BTC</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi {{ user.get_full_name|default:user.username }},
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúng tôi thông báo rằng Shop BTC của <strong>{{ organization.name }}</strong> đã bị khoá 
+    bởi Ban quản trị DBP Sports. Tính năng Shop BTC hiện không khả dụng cho tổ chức của bạn.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin Shop BTC</h3>
+    <div class="info-row">
+        <span class="info-label">Tổ chức:</span>
+        <span class="info-value"><strong>{{ organization.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Người được thông báo:</span>
+        <span class="info-value">{{ user.get_full_name|default:user.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value">{{ user.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian khoá:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge warning">Đã bị khoá</span></span>
+    </div>
+</div>
+
+{% if reason %}
+<div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #dc2626; margin-top: 0; margin-bottom: 15px;">
+        <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+        Lý do khoá Shop BTC
+    </h3>
+    <p style="color: #991b1b; margin: 0; line-height: 1.6;">
+        {{ reason }}
+    </p>
+</div>
+{% endif %}
+
+<div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #0369a1; margin-top: 0; margin-bottom: 15px;">
+        <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+        Hành động cần thực hiện
+    </h3>
+    <ul style="color: #0c4a6e; margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Không thể truy cập các tính năng quản lý Shop BTC</li>
+        <li style="margin-bottom: 8px;">Không thể tạo hoặc chỉnh sửa sản phẩm</li>
+        <li style="margin-bottom: 8px;">Không thể xử lý đơn hàng mới</li>
+        <li style="margin-bottom: 8px;">Cần liên hệ Admin để được hỗ trợ</li>
+    </ul>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">
+        <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
+        Làm thế nào để mở khoá lại?
+    </h3>
+    <p style="color: #92400e; margin: 0; line-height: 1.6;">
+        Để mở khoá Shop BTC, bạn cần liên hệ trực tiếp với Ban quản trị DBP Sports và giải thích 
+        về tình hình hiện tại. Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.
+    </p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ dashboard_url }}" 
+       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              color: white; 
+              padding: 15px 30px; 
+              text-decoration: none; 
+              border-radius: 8px; 
+              font-weight: 600; 
+              display: inline-block;">
+        <i class="fas fa-tachometer-alt" style="margin-right: 8px;"></i>
+        Truy cập Dashboard BTC
+    </a>
+</div>
+
+<p style="color: #6b7280; line-height: 1.8; margin-top: 30px;">
+    Nếu bạn có bất kỳ câu hỏi nào về việc khoá Shop BTC, vui lòng liên hệ với chúng tôi qua email 
+    <a href="mailto:support@dbpsports.com" style="color: #667eea;">support@dbpsports.com</a>
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúng tôi hy vọng có thể hỗ trợ bạn sớm nhất có thể.<br>
+    <strong>Đội ngũ DBP Sports</strong>
+</p>
+{% endblock %}

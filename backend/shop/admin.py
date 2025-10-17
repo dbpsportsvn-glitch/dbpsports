@@ -1020,10 +1020,11 @@ class OrganizationOrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrganizationShopSettings)
 class OrganizationShopSettingsAdmin(admin.ModelAdmin):
-    list_display = ['organization', 'shop_name', 'is_active', 'updated_at']
-    list_filter = ['is_active', 'created_at', 'updated_at']
+    list_display = ['organization', 'shop_name', 'is_active', 'shop_locked', 'shop_unlock_requested', 'updated_at']
+    list_filter = ['is_active', 'shop_locked', 'shop_unlock_requested', 'created_at', 'updated_at']
     search_fields = ['organization__name', 'shop_name', 'contact_phone', 'contact_email']
     readonly_fields = ['created_at', 'updated_at']
+    actions = ['lock_shops', 'unlock_shops', 'approve_unlock_requests']
     
     class Meta:
         verbose_name = "Cài đặt Shop BTC"
@@ -1045,8 +1046,124 @@ class OrganizationShopSettingsAdmin(admin.ModelAdmin):
         ('Trạng thái', {
             'fields': ('is_active',)
         }),
+        ('Hệ thống khoá Shop BTC', {
+            'fields': ('shop_locked', 'shop_lock_reason', 'shop_unlock_requested', 'shop_unlock_request_date', 'shop_unlock_request_message'),
+            'description': 'Shop BTC bị khoá mặc định và cần Admin phê duyệt để mở'
+        }),
         ('Thời gian', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+    
+    @admin.action(description='Khoá Shop BTC đã chọn')
+    def lock_shops(self, request, queryset):
+        updated_count = queryset.update(shop_locked=True, shop_unlock_requested=False)
+        
+        # Gửi email thông báo cho các BTC
+        for shop_settings in queryset:
+            if shop_settings.organization:
+                # Lấy tất cả thành viên BTC
+                btc_members = shop_settings.organization.members.all()
+                recipient_list = [member.email for member in btc_members if member.email]
+                
+                if recipient_list:
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    
+                    subject = f"Shop BTC đã bị khoá - {shop_settings.organization.name}"
+                    message_content = f"""
+Shop BTC của {shop_settings.organization.name} đã bị khoá bởi Admin.
+
+Lý do: {shop_settings.shop_lock_reason or 'Không có lý do cụ thể'}
+
+Vui lòng liên hệ Admin để được hỗ trợ.
+"""
+                    
+                    try:
+                        send_mail(
+                            subject=subject,
+                            message=message_content,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=recipient_list,
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        print(f"Error sending lock email: {e}")
+        
+        self.message_user(request, f'Đã khoá {updated_count} Shop BTC.')
+    
+    @admin.action(description='Mở khoá Shop BTC đã chọn')
+    def unlock_shops(self, request, queryset):
+        updated_count = queryset.update(shop_locked=False, shop_unlock_requested=False)
+        
+        # Gửi email thông báo cho các BTC
+        for shop_settings in queryset:
+            if shop_settings.organization:
+                # Lấy tất cả thành viên BTC
+                btc_members = shop_settings.organization.members.all()
+                recipient_list = [member.email for member in btc_members if member.email]
+                
+                if recipient_list:
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    
+                    subject = f"Shop BTC đã được mở khoá - {shop_settings.organization.name}"
+                    message_content = f"""
+Chúc mừng! Shop BTC của {shop_settings.organization.name} đã được Admin mở khoá.
+
+Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để tăng thêm thu nhập cho tổ chức.
+"""
+                    
+                    try:
+                        send_mail(
+                            subject=subject,
+                            message=message_content,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=recipient_list,
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        print(f"Error sending unlock email: {e}")
+        
+        self.message_user(request, f'Đã mở khoá {updated_count} Shop BTC.')
+    
+    @admin.action(description='Duyệt yêu cầu mở khoá Shop BTC')
+    def approve_unlock_requests(self, request, queryset):
+        updated_count = queryset.filter(shop_unlock_requested=True).update(
+            shop_locked=False, 
+            shop_unlock_requested=False,
+            shop_unlock_request_message=''
+        )
+        
+        # Gửi email thông báo cho các BTC được duyệt
+        approved_shops = queryset.filter(shop_unlock_requested=False, shop_locked=False)
+        for shop_settings in approved_shops:
+            if shop_settings.organization:
+                # Lấy tất cả thành viên BTC
+                btc_members = shop_settings.organization.members.all()
+                recipient_list = [member.email for member in btc_members if member.email]
+                
+                if recipient_list:
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    
+                    subject = f"Yêu cầu mở khoá Shop BTC đã được duyệt - {shop_settings.organization.name}"
+                    message_content = f"""
+Chúc mừng! Yêu cầu mở khoá Shop BTC của {shop_settings.organization.name} đã được Admin phê duyệt.
+
+Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để tăng thêm thu nhập cho tổ chức.
+"""
+                    
+                    try:
+                        send_mail(
+                            subject=subject,
+                            message=message_content,
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=recipient_list,
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        print(f"Error sending approval email: {e}")
+        
+        self.message_user(request, f'Đã duyệt {updated_count} yêu cầu mở khoá Shop BTC.')

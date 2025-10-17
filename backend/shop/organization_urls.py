@@ -41,4 +41,7 @@ urlpatterns = [
     
     # Banner upload
     path('<slug:org_slug>/upload-banner/', organization_views.simple_banner_upload, name='simple_banner_upload'),
+    
+    # Shop Unlock Request
+    path('<slug:org_slug>/request-unlock/', organization_views.request_shop_unlock, name='request_unlock'),
 ]

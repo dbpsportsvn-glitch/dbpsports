@@ -378,17 +378,38 @@
                 <div class="dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-shop"></i>Shop BTC
+                        {% if organization.shop_settings.shop_locked %}
+                            <span class="badge bg-warning ms-1" title="Shop BTC đang bị khoá">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success ms-1" title="Shop BTC đã được mở khoá">
+                                <i class="bi bi-unlock-fill"></i>
+                            </span>
+                        {% endif %}
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}">
-                            <i class="bi bi-shop me-2"></i>Shop của BTC
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}">
-                            <i class="bi bi-graph-up me-2"></i>Dashboard Shop
-                        </a></li>
-                        <li><a class="dropdown-item" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
-                            <i class="bi bi-gear-fill me-2"></i>Quản lý Shop
-                        </a></li>
+                        {% if organization.shop_settings.shop_locked %}
+                            {% if organization.shop_settings.shop_unlock_requested %}
+                                <li><span class="dropdown-item disabled">
+                                    <i class="bi bi-clock me-2"></i>Đang chờ Admin duyệt
+                                </span></li>
+                            {% else %}
+                                <li><a class="dropdown-item" href="{% url 'shop:organization_shop:request_unlock' org_slug=organization.slug %}">
+                                    <i class="bi bi-unlock me-2"></i>Yêu cầu mở khoá Shop
+                                </a></li>
+                            {% endif %}
+                        {% else %}
+                            <li><a class="dropdown-item" href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}">
+                                <i class="bi bi-shop me-2"></i>Shop của BTC
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}">
+                                <i class="bi bi-graph-up me-2"></i>Dashboard Shop
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
+                                <i class="bi bi-gear-fill me-2"></i>Quản lý Shop
+                            </a></li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

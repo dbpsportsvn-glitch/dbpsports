@@ -1,0 +1,94 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Shop BTC đã được mở khoá - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Chúc mừng! Shop BTC đã được phê duyệt{% endblock %}
+
+{% block content %}
+<div class="success-box">
+    <h2>🎉 Chúc mừng! Shop BTC đã được mở khoá!</h2>
+    <p>{{ organization.name }} có thể sử dụng Shop BTC</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi {{ user.get_full_name|default:user.username }},
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúc mừng! Yêu cầu mở khoá Shop BTC của <strong>{{ organization.name }}</strong> đã được 
+    Ban quản trị DBP Sports phê duyệt. Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC!
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin Shop BTC</h3>
+    <div class="info-row">
+        <span class="info-label">Tổ chức:</span>
+        <span class="info-value"><strong>{{ organization.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Người được thông báo:</span>
+        <span class="info-value">{{ user.get_full_name|default:user.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value">{{ user.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian mở khoá:</span>
+        <span class="info-value">{{ "now"|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge">Đã mở khoá</span></span>
+    </div>
+</div>
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #059669; margin-top: 0; margin-bottom: 15px;">
+        <i class="fas fa-store" style="margin-right: 8px;"></i>
+        Tính năng Shop BTC
+    </h3>
+    <ul style="color: #065f46; margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Tạo và quản lý sản phẩm của riêng BTC</li>
+        <li style="margin-bottom: 8px;">Thiết lập danh mục sản phẩm</li>
+        <li style="margin-bottom: 8px;">Quản lý đơn hàng và thanh toán</li>
+        <li style="margin-bottom: 8px;">Cài đặt shop với thông tin liên hệ và thanh toán</li>
+        <li style="margin-bottom: 8px;">Tích hợp với hệ thống giảm giá cho giải đấu</li>
+    </ul>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">
+        <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
+        Lời khuyên từ DBP Sports
+    </h3>
+    <p style="color: #92400e; margin: 0; line-height: 1.6;">
+        Shop BTC là tính năng đặc biệt giúp BTC tăng thêm thu nhập và tạo giá trị cho cộng đồng. 
+        Hãy sử dụng tính năng này một cách có trách nhiệm và tuân thủ các quy định của nền tảng.
+    </p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ shop_url }}" 
+       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              color: white; 
+              padding: 15px 30px; 
+              text-decoration: none; 
+              border-radius: 8px; 
+              font-weight: 600; 
+              display: inline-block;">
+        <i class="fas fa-store" style="margin-right: 8px;"></i>
+        Truy cập Shop BTC
+    </a>
+</div>
+
+<p style="color: #6b7280; line-height: 1.8; margin-top: 30px;">
+    Nếu bạn có bất kỳ câu hỏi nào về tính năng Shop BTC, vui lòng liên hệ với chúng tôi qua email 
+    <a href="mailto:support@dbpsports.com" style="color: #667eea;">support@dbpsports.com</a>
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Chúc bạn thành công với Shop BTC!<br>
+    <strong>Đội ngũ DBP Sports</strong>
+</p>
+{% endblock %}

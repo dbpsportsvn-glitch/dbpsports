@@ -1,5 +1,31 @@
 # backend/shop/organization_views.py
 
+from functools import wraps
+
+def check_shop_unlocked(view_func):
+    """Decorator để kiểm tra shop BTC có được mở khoá không"""
+    @wraps(view_func)
+    def wrapper(request, org_slug, *args, **kwargs):
+        organization = get_object_or_404(Organization, slug=org_slug)
+        
+        # Kiểm tra quyền truy cập
+        if not organization.members.filter(id=request.user.id).exists():
+            messages.error(request, 'Bạn không có quyền truy cập shop này')
+            return redirect('organizations:dashboard')
+        
+        # Lấy shop settings
+        try:
+            shop_settings = organization.shop_settings
+            if shop_settings.shop_locked:
+                messages.warning(request, "Shop BTC đang bị khoá. Vui lòng yêu cầu Admin mở khoá để sử dụng tính năng này.")
+                return redirect('shop:organization_shop:dashboard', org_slug=org_slug)
+        except OrganizationShopSettings.DoesNotExist:
+            messages.warning(request, "Shop BTC chưa được thiết lập.")
+            return redirect('shop:organization_shop:dashboard', org_slug=org_slug)
+        
+        return view_func(request, org_slug, *args, **kwargs)
+    return wrapper
+
 def resize_banner_image(image_field, target_width=1200, target_height=300):
     """
     Resize ảnh banner về kích thước chuẩn và nén để tối ưu
@@ -114,6 +140,12 @@ def organization_shop_home(request, org_slug):
         if not shop_settings.is_active:
             messages.warning(request, "Shop của ban tổ chức này hiện đang tạm ngưng hoạt động.")
             return redirect('tournament_detail', pk=organization.tournaments.first().pk)
+        
+        # Kiểm tra shop có bị khoá không
+        if shop_settings.shop_locked:
+            messages.warning(request, "Shop BTC của ban tổ chức này hiện đang bị khoá và cần Admin phê duyệt.")
+            return redirect('tournament_detail', pk=organization.tournaments.first().pk)
+            
     except OrganizationShopSettings.DoesNotExist:
         messages.warning(request, "Ban tổ chức này chưa thiết lập shop.")
         return redirect('tournament_detail', pk=organization.tournaments.first().pk)
@@ -874,14 +906,10 @@ def organization_order_list(request, org_slug):
 # ==================== SHOP MANAGEMENT VIEWS ====================
 
 @login_required
+@check_shop_unlocked
 def manage_shop(request, org_slug):
     """Trang quản lý shop của BTC"""
     organization = get_object_or_404(Organization, slug=org_slug)
-    
-    # Kiểm tra quyền truy cập
-    if not organization.members.filter(id=request.user.id).exists():
-        messages.error(request, 'Bạn không có quyền truy cập shop này')
-        return redirect('organizations:dashboard')
     
     # Lấy hoặc tạo shop settings
     shop_settings, created = OrganizationShopSettings.objects.get_or_create(
@@ -921,6 +949,7 @@ def manage_shop(request, org_slug):
 
 
 @login_required
+@check_shop_unlocked
 def manage_products(request, org_slug):
     """Quản lý sản phẩm"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1042,6 +1071,7 @@ def manage_products(request, org_slug):
 
 
 @login_required
+@check_shop_unlocked
 def manage_orders(request, org_slug):
     """Quản lý đơn hàng"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1132,6 +1162,7 @@ def manage_orders(request, org_slug):
 
 
 @login_required
+@check_shop_unlocked
 def manage_categories(request, org_slug):
     """Quản lý danh mục"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1193,6 +1224,7 @@ def manage_categories(request, org_slug):
 
 @csrf_exempt
 @login_required
+@check_shop_unlocked
 def shop_settings(request, org_slug):
     """Cài đặt shop - CSRF exempt tạm thời để fix lỗi"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1327,6 +1359,7 @@ def simple_banner_upload(request, org_slug):
 # ==================== EDIT & DELETE VIEWS ====================
 
 @login_required
+@check_shop_unlocked
 def edit_product(request, org_slug, product_id):
     """Chỉnh sửa sản phẩm"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1394,6 +1427,7 @@ def edit_product(request, org_slug, product_id):
 
 
 @login_required
+@check_shop_unlocked
 def delete_product(request, org_slug, product_id):
     """Xóa sản phẩm"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1420,6 +1454,7 @@ def delete_product(request, org_slug, product_id):
 
 
 @login_required
+@check_shop_unlocked
 def edit_category(request, org_slug, category_id):
     """Chỉnh sửa danh mục"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1471,6 +1506,7 @@ def edit_category(request, org_slug, category_id):
 
 
 @login_required
+@check_shop_unlocked
 def delete_category(request, org_slug, category_id):
     """Xóa danh mục"""
     organization = get_object_or_404(Organization, slug=org_slug)
@@ -1634,3 +1670,130 @@ def organization_shop_dashboard(request, org_slug):
     }
     
     return render(request, 'shop/organization/dashboard.html', context)
+
+
+@login_required
+def request_shop_unlock(request, org_slug):
+    """BTC yêu cầu mở khoá Shop"""
+    organization = get_object_or_404(Organization, slug=org_slug)
+    
+    # Kiểm tra quyền truy cập
+    if not organization.members.filter(id=request.user.id).exists():
+        return render(request, 'shop/organization/access_denied.html', {
+            'organization': organization
+        })
+    
+    # Lấy shop settings
+    shop_settings, created = OrganizationShopSettings.objects.get_or_create(
+        organization=organization
+    )
+    
+    # Kiểm tra nếu shop đã được mở khoá
+    if not shop_settings.shop_locked:
+        messages.info(request, "Shop BTC của bạn đã được mở khoá!")
+        return redirect('shop:organization_shop:dashboard', org_slug=org_slug)
+    
+    # Kiểm tra nếu đã có yêu cầu mở khoá
+    if shop_settings.shop_unlock_requested:
+        messages.warning(request, "Bạn đã gửi yêu cầu mở khoá Shop BTC. Vui lòng chờ Admin phê duyệt.")
+        return redirect('shop:organization_shop:dashboard', org_slug=org_slug)
+    
+    if request.method == 'POST':
+        message = request.POST.get('message', '').strip()
+        
+        if not message:
+            messages.error(request, "Vui lòng nhập lời nhắn cho Admin.")
+        else:
+            # Cập nhật yêu cầu mở khoá
+            shop_settings.shop_unlock_requested = True
+            shop_settings.shop_unlock_request_date = timezone.now()
+            shop_settings.shop_unlock_request_message = message
+            shop_settings.save()
+            
+            # Gửi email thông báo cho Admin
+            from django.conf import settings
+            from django.core.mail import send_mail
+            
+            # Lấy email Admin từ settings
+            admin_emails = []
+            if hasattr(settings, 'ADMIN_EMAILS') and settings.ADMIN_EMAILS:
+                admin_emails.extend(settings.ADMIN_EMAILS)
+            if hasattr(settings, 'ADMIN_EMAIL') and settings.ADMIN_EMAIL:
+                admin_emails.append(settings.ADMIN_EMAIL)
+            
+            # Loại bỏ email không hợp lệ
+            admin_emails = [email for email in admin_emails if email and email != 'admin@example.com']
+            
+            # Nếu không có admin email, sử dụng email mặc định
+            if not admin_emails:
+                admin_emails = ['admin@dbpsports.com']  # Email mặc định
+            
+            print(f"DEBUG: Sending email to admin emails: {admin_emails}")  # Debug log
+            
+            if admin_emails:
+                subject = f"Yeu cau mo khoa Shop BTC: {organization.name}"
+                message_content = f"""
+BTC {organization.name} da yeu cau mo khoa Shop BTC.
+
+Thong tin chi tiet:
+- To chuc: {organization.name}
+- Nguoi yeu cau: {request.user.get_full_name() or request.user.username}
+- Email: {request.user.email}
+- Thoi gian: {timezone.now().strftime('%H:%M, %d/%m/%Y')}
+
+Loi nhan tu BTC:
+{message}
+
+Vui long dang nhap Django Admin de xem xet va phe duyet yeu cau nay:
+http://127.0.0.1:8000/admin/shop/organizationshopsettings/
+
+---
+DBP Sports Admin Panel
+"""
+                
+                try:
+                    from email.mime.text import MIMEText
+                    from email.mime.multipart import MIMEMultipart
+                    import smtplib
+                    
+                    # Create message with UTF-8 encoding
+                    msg = MIMEMultipart()
+                    msg['From'] = settings.DEFAULT_FROM_EMAIL
+                    msg['To'] = ', '.join(admin_emails)
+                    msg['Subject'] = subject
+                    
+                    # Add body with UTF-8 encoding
+                    msg.attach(MIMEText(message_content, 'plain', 'utf-8'))
+                    
+                    # Send email
+                    server = smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT)
+                    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+                    text = msg.as_string()
+                    server.sendmail(settings.DEFAULT_FROM_EMAIL, admin_emails, text)
+                    server.quit()
+                    
+                    print(f"DEBUG: Email sent successfully with UTF-8 encoding")  # Debug log
+                except Exception as e:
+                    print(f"ERROR: Failed to send email to admin: {e}")  # Debug log
+                    # Fallback to regular send_mail
+                    try:
+                        result = send_mail(
+                            subject=subject.encode('ascii', 'ignore').decode(),
+                            message=message_content.encode('ascii', 'ignore').decode(),
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=admin_emails,
+                            fail_silently=False,
+                        )
+                        print(f"DEBUG: Fallback email sent: {result}")
+                    except Exception as e2:
+                        print(f"ERROR: Fallback email also failed: {e2}")
+            
+            messages.success(request, "Đã gửi yêu cầu mở khoá Shop BTC thành công! Admin sẽ xem xét và phản hồi sớm nhất.")
+            return redirect('shop:organization_shop:dashboard', org_slug=org_slug)
+    
+    context = {
+        'organization': organization,
+        'shop_settings': shop_settings,
+    }
+    
+    return render(request, 'shop/organization/request_unlock.html', context)

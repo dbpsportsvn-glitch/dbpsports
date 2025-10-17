@@ -385,6 +385,13 @@ class OrganizationShopSettings(models.Model):
     # Trạng thái
     is_active = models.BooleanField(default=True, verbose_name="Kích hoạt shop")
     
+    # Shop Lock System
+    shop_locked = models.BooleanField(default=True, verbose_name="Khoá Shop BTC", help_text="Shop BTC bị khoá mặc định và cần Admin phê duyệt để mở")
+    shop_lock_reason = models.TextField(blank=True, verbose_name="Lý do khoá shop", help_text="Ghi chú từ Admin về lý do khoá shop")
+    shop_unlock_requested = models.BooleanField(default=False, verbose_name="BTC đã yêu cầu mở khoá", help_text="BTC đã gửi yêu cầu mở khoá shop")
+    shop_unlock_request_date = models.DateTimeField(blank=True, null=True, verbose_name="Ngày yêu cầu mở khoá")
+    shop_unlock_request_message = models.TextField(blank=True, verbose_name="Lời nhắn từ BTC", help_text="Lời nhắn từ BTC khi yêu cầu mở khoá shop")
+    
     # Thời gian
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
