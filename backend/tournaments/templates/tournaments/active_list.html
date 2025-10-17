@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load custom_filters %}
 {% block title %}Giải đấu · DBP Sports{% endblock %}
 
 {% block extra_css %}
@@ -299,7 +300,7 @@
   margin-bottom: 1.5rem;
 }
 
-.status-badge, .format-badge {
+.status-badge, .format-badge, .fee-badge {
   padding: 0.4rem 0.8rem;
   border-radius: 50px;
   font-size: 0.85rem;
@@ -307,6 +308,18 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+}
+
+.fee-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.fee-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .status-REGISTRATION_OPEN {
@@ -618,6 +631,12 @@
               <i class="bi bi-circle-fill"></i>
               {{ t.get_status_display }}
             </span>
+            {% if t.status == "REGISTRATION_OPEN" %}
+            <span class="fee-badge">
+              <i class="bi bi-currency-dollar"></i>
+              {{ t.registration_fee|vnd_format }}
+            </span>
+            {% endif %}
             <span class="format-badge format-{{ t.format }}">
               {% if t.format == 'CUP' %}
                 <i class="bi bi-trophy"></i>
