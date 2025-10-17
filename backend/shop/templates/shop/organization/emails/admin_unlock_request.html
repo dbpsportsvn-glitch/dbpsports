@@ -1,0 +1,93 @@
+{% extends 'emails/base_email.html' %}
+
+{% block title %}Yêu cầu mở khoá Shop BTC - {{ organization.name }} - DBP Sports{% endblock %}
+
+{% block header_subtitle %}Thông báo từ hệ thống{% endblock %}
+
+{% block content %}
+<div class="alert-box">
+    <h2>🔓 Yêu cầu mở khoá Shop BTC!</h2>
+    <p>{{ organization.name }} muốn sử dụng Shop BTC</p>
+</div>
+
+<p style="font-size: 16px; color: #374151;">
+    Kính gửi Ban quản trị,
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    <strong>{{ organization.name }}</strong> vừa gửi yêu cầu mở khoá Shop BTC. 
+    Vui lòng kiểm tra và xem xét yêu cầu này trong Django Admin Panel.
+</p>
+
+<div class="info-box">
+    <h3>📋 Thông tin yêu cầu</h3>
+    <div class="info-row">
+        <span class="info-label">Tổ chức:</span>
+        <span class="info-value"><strong>{{ organization.name }}</strong></span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Người yêu cầu:</span>
+        <span class="info-value">{{ requester.get_full_name|default:requester.username }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Email:</span>
+        <span class="info-value">{{ requester.email }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Thời gian yêu cầu:</span>
+        <span class="info-value">{{ request_date|date:"H:i, d/m/Y" }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value"><span class="status-badge" style="background: #f59e0b;">Chờ duyệt</span></span>
+    </div>
+</div>
+
+{% if message %}
+<div class="info-box">
+    <h3>💬 Lời nhắn từ BTC</h3>
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 3px solid #667eea;">
+        <p style="margin: 0; color: #374151; line-height: 1.6;">
+            {{ message|linebreaks }}
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #059669; margin-top: 0; margin-bottom: 15px;">
+        🏪 Về tính năng Shop BTC
+    </h3>
+    <ul style="color: #065f46; margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Tính năng đặc biệt giúp BTC tăng thu nhập</li>
+        <li style="margin-bottom: 8px;">Cho phép BTC bán sản phẩm riêng</li>
+        <li style="margin-bottom: 8px;">Tích hợp với hệ thống giảm giá giải đấu</li>
+        <li style="margin-bottom: 8px;">Cần phê duyệt từ Admin để sử dụng</li>
+    </ul>
+</div>
+
+<div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
+    <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">
+        ⚠️ Lưu ý quan trọng
+    </h3>
+    <p style="color: #92400e; margin: 0; line-height: 1.6;">
+        Shop BTC là tính năng đặc biệt và hấp dẫn. Hãy xem xét kỹ lưỡng trước khi phê duyệt 
+        để đảm bảo BTC sử dụng tính năng này một cách có trách nhiệm.
+    </p>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ admin_url }}" class="action-button">
+        🔧 Xem xét trong Admin Panel
+    </a>
+</div>
+
+<p style="color: #6b7280; line-height: 1.8; margin-top: 30px;">
+    Vui lòng đăng nhập Django Admin để xem xét và phê duyệt yêu cầu này.
+</p>
+
+<p style="color: #6b7280; line-height: 1.8;">
+    Trân trọng,<br>
+    <strong>Hệ thống DBP Sports</strong>
+</p>
+{% endblock %}

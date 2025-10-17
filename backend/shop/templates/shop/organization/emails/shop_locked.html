@@ -1,12 +1,12 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Shop BTC đã bị khoá - DBP Sports{% endblock %}
+{% block title %}Shop BTC đã bị khoá - {{ organization.name }} - DBP Sports{% endblock %}
 
-{% block header_subtitle %}Thông báo quan trọng về Shop BTC{% endblock %}
+{% block header_subtitle %}Thông báo từ Ban quản trị{% endblock %}
 
 {% block content %}
-<div class="warning-box">
-    <h2>⚠️ Shop BTC đã bị khoá</h2>
+<div class="alert-box">
+    <h2>🔒 Shop BTC đã bị khoá</h2>
     <p>{{ organization.name }} không thể sử dụng Shop BTC</p>
 </div>
 
@@ -39,7 +39,7 @@
     </div>
     <div class="info-row">
         <span class="info-label">Trạng thái:</span>
-        <span class="info-value"><span class="status-badge warning">Đã bị khoá</span></span>
+        <span class="info-value"><span class="status-badge" style="background: #dc2626;">Đã khoá</span></span>
     </div>
 </div>
 

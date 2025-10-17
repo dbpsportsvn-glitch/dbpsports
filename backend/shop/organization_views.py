@@ -139,16 +139,19 @@ def organization_shop_home(request, org_slug):
         shop_settings = organization.shop_settings
         if not shop_settings.is_active:
             messages.warning(request, "Shop của ban tổ chức này hiện đang tạm ngưng hoạt động.")
-            return redirect('tournament_detail', pk=organization.tournaments.first().pk)
+            # Redirect về dashboard BTC thay vì tournament
+            return redirect('organizations:dashboard', org_slug=org_slug)
         
         # Kiểm tra shop có bị khoá không
         if shop_settings.shop_locked:
             messages.warning(request, "Shop BTC của ban tổ chức này hiện đang bị khoá và cần Admin phê duyệt.")
-            return redirect('tournament_detail', pk=organization.tournaments.first().pk)
+            # Redirect về dashboard BTC thay vì tournament
+            return redirect('organizations:dashboard', org_slug=org_slug)
             
     except OrganizationShopSettings.DoesNotExist:
         messages.warning(request, "Ban tổ chức này chưa thiết lập shop.")
-        return redirect('tournament_detail', pk=organization.tournaments.first().pk)
+        # Redirect về dashboard BTC thay vì tournament
+        return redirect('organizations:dashboard', org_slug=org_slug)
     
     # Lấy sản phẩm nổi bật
     featured_products = OrganizationProduct.objects.filter(
@@ -1712,7 +1715,8 @@ def request_shop_unlock(request, org_slug):
             
             # Gửi email thông báo cho Admin
             from django.conf import settings
-            from django.core.mail import send_mail
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
             
             # Lấy email Admin từ settings
             admin_emails = []
@@ -1731,8 +1735,17 @@ def request_shop_unlock(request, org_slug):
             print(f"DEBUG: Sending email to admin emails: {admin_emails}")  # Debug log
             
             if admin_emails:
-                subject = f"Yeu cau mo khoa Shop BTC: {organization.name}"
-                message_content = f"""
+                # Render HTML template
+                html_content = render_to_string('shop/organization/emails/admin_unlock_request.html', {
+                    'organization': organization,
+                    'requester': request.user,
+                    'message': message,
+                    'request_date': timezone.now(),
+                    'admin_url': f'http://127.0.0.1:8000/admin/shop/organizationshopsettings/',
+                })
+                
+                # Create plain text version
+                text_content = f"""
 BTC {organization.name} da yeu cau mo khoa Shop BTC.
 
 Thong tin chi tiet:
@@ -1752,34 +1765,24 @@ DBP Sports Admin Panel
 """
                 
                 try:
-                    from email.mime.text import MIMEText
-                    from email.mime.multipart import MIMEMultipart
-                    import smtplib
+                    # Create email with HTML content
+                    email = EmailMultiAlternatives(
+                        subject=f"Yeu cau mo khoa Shop BTC: {organization.name}",
+                        body=text_content,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=admin_emails,
+                    )
+                    email.attach_alternative(html_content, "text/html")
+                    email.send()
                     
-                    # Create message with UTF-8 encoding
-                    msg = MIMEMultipart()
-                    msg['From'] = settings.DEFAULT_FROM_EMAIL
-                    msg['To'] = ', '.join(admin_emails)
-                    msg['Subject'] = subject
-                    
-                    # Add body with UTF-8 encoding
-                    msg.attach(MIMEText(message_content, 'plain', 'utf-8'))
-                    
-                    # Send email
-                    server = smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT)
-                    server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-                    text = msg.as_string()
-                    server.sendmail(settings.DEFAULT_FROM_EMAIL, admin_emails, text)
-                    server.quit()
-                    
-                    print(f"DEBUG: Email sent successfully with UTF-8 encoding")  # Debug log
+                    print(f"DEBUG: HTML email sent successfully to admin")  # Debug log
                 except Exception as e:
-                    print(f"ERROR: Failed to send email to admin: {e}")  # Debug log
+                    print(f"ERROR: Failed to send HTML email to admin: {e}")  # Debug log
                     # Fallback to regular send_mail
                     try:
                         result = send_mail(
-                            subject=subject.encode('ascii', 'ignore').decode(),
-                            message=message_content.encode('ascii', 'ignore').decode(),
+                            subject=f"Yeu cau mo khoa Shop BTC: {organization.name}",
+                            message=text_content,
                             from_email=settings.DEFAULT_FROM_EMAIL,
                             recipient_list=admin_emails,
                             fail_silently=False,

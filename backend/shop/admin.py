@@ -1068,11 +1068,14 @@ class OrganizationShopSettingsAdmin(admin.ModelAdmin):
                 recipient_list = [member.email for member in btc_members if member.email]
                 
                 if recipient_list:
-                    from django.core.mail import send_mail
+                    from django.core.mail import EmailMultiAlternatives
+                    from django.template.loader import render_to_string
                     from django.conf import settings
                     
-                    subject = f"Shop BTC đã bị khoá - {shop_settings.organization.name}"
-                    message_content = f"""
+                    # Template sẽ được render riêng cho từng member trong vòng lặp bên dưới
+                    
+                    # Create plain text version
+                    text_content = f"""
 Shop BTC của {shop_settings.organization.name} đã bị khoá bởi Admin.
 
 Lý do: {shop_settings.shop_lock_reason or 'Không có lý do cụ thể'}
@@ -1081,13 +1084,25 @@ Vui lòng liên hệ Admin để được hỗ trợ.
 """
                     
                     try:
-                        send_mail(
-                            subject=subject,
-                            message=message_content,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=recipient_list,
-                            fail_silently=False,
-                        )
+                        # Send HTML email to all BTC members
+                        for member in btc_members:
+                            if member.email:
+                                # Render template riêng cho từng member
+                                member_html_content = render_to_string('shop/organization/emails/shop_locked.html', {
+                                    'organization': shop_settings.organization,
+                                    'user': member,
+                                    'reason': shop_settings.shop_lock_reason,
+                                    'dashboard_url': f'http://127.0.0.1:8000/orgs/{shop_settings.organization.slug}/',
+                                })
+                                
+                                email = EmailMultiAlternatives(
+                                    subject=f"Shop BTC đã bị khoá - {shop_settings.organization.name}",
+                                    body=text_content,
+                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    to=[member.email],
+                                )
+                                email.attach_alternative(member_html_content, "text/html")
+                                email.send()
                     except Exception as e:
                         print(f"Error sending lock email: {e}")
         
@@ -1095,6 +1110,7 @@ Vui lòng liên hệ Admin để được hỗ trợ.
     
     @admin.action(description='Mở khoá Shop BTC đã chọn')
     def unlock_shops(self, request, queryset):
+        # Chỉ mở khoá những Shop Settings đã tồn tại
         updated_count = queryset.update(shop_locked=False, shop_unlock_requested=False)
         
         # Gửi email thông báo cho các BTC
@@ -1105,24 +1121,38 @@ Vui lòng liên hệ Admin để được hỗ trợ.
                 recipient_list = [member.email for member in btc_members if member.email]
                 
                 if recipient_list:
-                    from django.core.mail import send_mail
+                    from django.core.mail import EmailMultiAlternatives
+                    from django.template.loader import render_to_string
                     from django.conf import settings
                     
-                    subject = f"Shop BTC đã được mở khoá - {shop_settings.organization.name}"
-                    message_content = f"""
+                    # Template sẽ được render riêng cho từng member trong vòng lặp bên dưới
+                    
+                    # Create plain text version
+                    text_content = f"""
 Chúc mừng! Shop BTC của {shop_settings.organization.name} đã được Admin mở khoá.
 
 Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để tăng thêm thu nhập cho tổ chức.
 """
                     
                     try:
-                        send_mail(
-                            subject=subject,
-                            message=message_content,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=recipient_list,
-                            fail_silently=False,
-                        )
+                        # Send HTML email to all BTC members
+                        for member in btc_members:
+                            if member.email:
+                                # Render template riêng cho từng member
+                                member_html_content = render_to_string('shop/organization/emails/shop_unlocked.html', {
+                                    'organization': shop_settings.organization,
+                                    'user': member,
+                                    'shop_url': f'http://127.0.0.1:8000/shop/org/{shop_settings.organization.slug}/',
+                                })
+                                
+                                email = EmailMultiAlternatives(
+                                    subject=f"Shop BTC đã được mở khoá - {shop_settings.organization.name}",
+                                    body=text_content,
+                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    to=[member.email],
+                                )
+                                email.attach_alternative(member_html_content, "text/html")
+                                email.send()
                     except Exception as e:
                         print(f"Error sending unlock email: {e}")
         
@@ -1145,24 +1175,38 @@ Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để t
                 recipient_list = [member.email for member in btc_members if member.email]
                 
                 if recipient_list:
-                    from django.core.mail import send_mail
+                    from django.core.mail import EmailMultiAlternatives
+                    from django.template.loader import render_to_string
                     from django.conf import settings
                     
-                    subject = f"Yêu cầu mở khoá Shop BTC đã được duyệt - {shop_settings.organization.name}"
-                    message_content = f"""
+                    # Template sẽ được render riêng cho từng member trong vòng lặp bên dưới
+                    
+                    # Create plain text version
+                    text_content = f"""
 Chúc mừng! Yêu cầu mở khoá Shop BTC của {shop_settings.organization.name} đã được Admin phê duyệt.
 
 Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để tăng thêm thu nhập cho tổ chức.
 """
                     
                     try:
-                        send_mail(
-                            subject=subject,
-                            message=message_content,
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=recipient_list,
-                            fail_silently=False,
-                        )
+                        # Send HTML email to all BTC members
+                        for member in btc_members:
+                            if member.email:
+                                # Render template riêng cho từng member
+                                member_html_content = render_to_string('shop/organization/emails/shop_unlocked.html', {
+                                    'organization': shop_settings.organization,
+                                    'user': member,
+                                    'shop_url': f'http://127.0.0.1:8000/shop/org/{shop_settings.organization.slug}/',
+                                })
+                                
+                                email = EmailMultiAlternatives(
+                                    subject=f"Yêu cầu mở khoá Shop BTC đã được duyệt - {shop_settings.organization.name}",
+                                    body=text_content,
+                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    to=[member.email],
+                                )
+                                email.attach_alternative(member_html_content, "text/html")
+                                email.send()
                     except Exception as e:
                         print(f"Error sending approval email: {e}")
         

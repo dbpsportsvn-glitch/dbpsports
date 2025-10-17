@@ -1,6 +1,6 @@
 {% extends 'emails/base_email.html' %}
 
-{% block title %}Shop BTC đã được mở khoá - DBP Sports{% endblock %}
+{% block title %}Shop BTC đã được mở khoá - {{ organization.name }} - DBP Sports{% endblock %}
 
 {% block header_subtitle %}Chúc mừng! Shop BTC đã được phê duyệt{% endblock %}
 
@@ -45,8 +45,7 @@
 
 <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 20px; margin: 25px 0; border-radius: 8px;">
     <h3 style="color: #059669; margin-top: 0; margin-bottom: 15px;">
-        <i class="fas fa-store" style="margin-right: 8px;"></i>
-        Tính năng Shop BTC
+        🏪 Tính năng Shop BTC
     </h3>
     <ul style="color: #065f46; margin: 0; padding-left: 20px;">
         <li style="margin-bottom: 8px;">Tạo và quản lý sản phẩm của riêng BTC</li>
@@ -59,8 +58,7 @@
 
 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
     <h3 style="color: #92400e; margin-top: 0; margin-bottom: 15px;">
-        <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
-        Lời khuyên từ DBP Sports
+        💡 Lời khuyên từ DBP Sports
     </h3>
     <p style="color: #92400e; margin: 0; line-height: 1.6;">
         Shop BTC là tính năng đặc biệt giúp BTC tăng thêm thu nhập và tạo giá trị cho cộng đồng. 
@@ -69,16 +67,8 @@
 </div>
 
 <div style="text-align: center; margin: 30px 0;">
-    <a href="{{ shop_url }}" 
-       style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-              color: white; 
-              padding: 15px 30px; 
-              text-decoration: none; 
-              border-radius: 8px; 
-              font-weight: 600; 
-              display: inline-block;">
-        <i class="fas fa-store" style="margin-right: 8px;"></i>
-        Truy cập Shop BTC
+    <a href="{{ shop_url }}" class="action-button">
+        🏪 Truy cập Shop BTC
     </a>
 </div>
 

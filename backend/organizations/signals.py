@@ -1,9 +1,10 @@
 # backend/organizations/signals.py
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from tournaments.models import TournamentStaff, Notification
+from .models import Organization
 
 @receiver(post_save, sender=TournamentStaff)
 def notify_user_on_new_role(sender, instance, created, **kwargs):
@@ -33,3 +34,44 @@ def notify_user_on_new_role(sender, instance, created, **kwargs):
             related_url=url
         )
         print(f"Created role assignment notification for {user_to_notify.username}")
+
+# Store old status before save
+@receiver(pre_save, sender=Organization)
+def store_old_status(sender, instance, **kwargs):
+    """Lưu trạng thái cũ của Organization trước khi save"""
+    if instance.pk:
+        try:
+            old_instance = Organization.objects.get(pk=instance.pk)
+            instance._old_status = old_instance.status
+        except Organization.DoesNotExist:
+            instance._old_status = None
+    else:
+        instance._old_status = None
+
+@receiver(post_save, sender=Organization)
+def create_shop_settings_on_approval(sender, instance, created, **kwargs):
+    """
+    Tự động tạo Shop Settings khi Organization được approved.
+    """
+    # Chỉ tạo Shop Settings khi chuyển từ PENDING sang ACTIVE
+    if (not created and 
+        hasattr(instance, '_old_status') and 
+        instance._old_status == Organization.Status.PENDING and 
+        instance.status == Organization.Status.ACTIVE):
+        
+        # Kiểm tra xem Organization có Shop Settings chưa
+        try:
+            instance.shop_settings
+        except:
+            # Nếu chưa có Shop Settings, tạo mới
+            from shop.organization_models import OrganizationShopSettings
+            
+            OrganizationShopSettings.objects.create(
+                organization=instance,
+                shop_name=instance.name,
+                is_active=True,
+                shop_locked=True,  # Mặc định bị khoá, cần Admin mở
+                contact_phone=instance.phone_number or '',
+                contact_email=instance.contact_email or instance.owner.email or '',
+            )
+            print(f"Created Shop Settings for organization: {instance.name}")
