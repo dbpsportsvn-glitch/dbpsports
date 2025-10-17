@@ -190,10 +190,19 @@
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
     }
     
+    .price-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
     .original-price {
         color: #6c757d;
         text-decoration: line-through;
         font-size: 0.9rem;
+        margin-top: 0.25rem;
+        display: block;
     }
     
     .summary-card {
@@ -404,12 +413,14 @@
                             </div>
                         </div>
                         <div class="col-md-2 text-center">
-                            {% if item.product.is_on_sale %}
-                                <span class="price-tag sale-price">{{ item.total_price|floatformat:0 }}đ</span>
-                                <div class="original-price">{{ item.product.price|floatformat:0 }}đ</div>
-                            {% else %}
-                                <span class="price-tag">{{ item.total_price|floatformat:0 }}đ</span>
-                            {% endif %}
+                            <div class="price-container">
+                                {% if item.product.is_on_sale %}
+                                    <span class="price-tag sale-price">{{ item.total_price|floatformat:0 }}đ</span>
+                                    <div class="original-price">{{ item.product.price|floatformat:0 }}đ</div>
+                                {% else %}
+                                    <span class="price-tag">{{ item.total_price|floatformat:0 }}đ</span>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="col-md-2 text-end">
                             <button type="button" class="btn remove-btn" onclick="removeItem({{ item.id }})">
@@ -483,7 +494,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'shop/organization/js/cart-count-updater.js' %}"></script>
+<script src="{% static 'shop/js/unified-cart-count-updater.js' %}"></script>
 <script>
     // Update quantity
     function updateQuantity(itemId, newQuantity) {
@@ -510,7 +521,7 @@
                 document.getElementById('quantity-' + itemId).value = newQuantity;
                 
                 // Update cart count
-                updateCartCount(data.cart_total);
+                updateCartCount(data.cart_total, 'organization');
                 
                 // Reload page to update totals
                 location.reload();
@@ -544,7 +555,7 @@
         .then(data => {
             if (data.success) {
                 // Update cart count
-                updateCartCount(data.cart_total);
+                updateCartCount(data.cart_total, 'organization');
                 
                 // Remove the item from DOM
                 const itemElement = document.querySelector(`[onclick="removeItem(${itemId})"]`).closest('.cart-item-card');

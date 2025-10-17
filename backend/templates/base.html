@@ -1937,7 +1937,7 @@ function updateCartPopup(cartData) {
   cartTotal.textContent = (cartData.total_price || 0).toLocaleString() + ' VNĐ';
   
   // Update cart count everywhere
-  updateCartCount(cartData.total_items || 0);
+  updateMainCartCount(cartData.total_items || 0);
 }
 
 // Update cart item quantity
@@ -2051,7 +2051,7 @@ function clearAllCart() {
 }
 
 // Global function to update cart count everywhere
-function updateCartCount(count) {
+function updateMainCartCount(count) {
   // Update main navigation cart count
   const mainCartCount = document.getElementById('cart-count');
   if (mainCartCount) {
@@ -2089,7 +2089,7 @@ function forceRefreshCartCount() {
   })
   .then(data => {
     if (data.success) {
-      updateCartCount(data.total_items || 0);
+      updateMainCartCount(data.total_items || 0);
     }
   })
   .catch(error => {

@@ -587,7 +587,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'shop/organization/js/cart-count-updater.js' %}"></script>
+<script src="{% static 'shop/js/unified-cart-count-updater.js' %}"></script>
 {% csrf_token %}
 <script>
     let selectedSize = null;
@@ -687,7 +687,7 @@
                 }, 2000);
                 
                 // Update cart count if exists
-                updateCartCount(data.cart_total);
+                updateCartCount(data.cart_total, 'organization');
             } else {
                 alert(data.error || 'Có lỗi xảy ra');
             }

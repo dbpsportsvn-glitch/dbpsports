@@ -1571,10 +1571,18 @@ section.products-section[style*="background: var(--light)"] div.product-actions 
               Trang phục thi đấu đội tuyển bóng đá Việt Nam 2025
               VINH QUANG VIỆT NAM
             </p>
-            <a href="{% url 'shop:product_list' %}" class="banner-btn">
-              <i class="fas fa-shopping-bag me-2"></i>
-              Xem ngay
-            </a>
+            <div class="d-flex gap-3">
+                <a href="{% url 'shop:product_list' %}" class="banner-btn">
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    Xem ngay
+                </a>
+                {% if main_cart_count > 0 %}
+                <a href="{% url 'shop:cart' %}" class="banner-btn main-cart-count-btn">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Giỏ Hàng ({{ main_cart_count }})
+                </a>
+                {% endif %}
+            </div>
           </div>
         </div>
         <div class="col-lg-6 banner-visual-col">
@@ -2353,7 +2361,7 @@ function confirmAddToCart() {
       showNotification(data.message, 'success');
       
       // Update cart count everywhere
-      updateCartCount(data.cart_count);
+      updateMainCartCount(data.cart_count);
       
       // Load cart popup content if it's open
       if (document.getElementById('cartPopup') && document.getElementById('cartPopup').classList.contains('show')) {
@@ -2396,6 +2404,15 @@ function showNotification(message, type) {
 
 // Load cart count when page loads
 document.addEventListener('DOMContentLoaded', function() {
+  // Kiểm tra localStorage trước
+  const storedCartCount = localStorage.getItem('main_cart_count');
+  if (storedCartCount) {
+    const cartCountElement = document.getElementById('cart-count');
+    if (cartCountElement) {
+      cartCountElement.textContent = storedCartCount;
+    }
+  }
+  
   loadCartCount();
   
   // Xử lý nút add-to-cart-btn với data-product-id
@@ -2557,6 +2574,13 @@ function hideSuggestions() {
 }
 
 function loadCartCount() {
+  // Chỉ load cart count nếu chưa có từ context processor
+  const currentCartCount = document.getElementById('cart-count');
+  if (currentCartCount && currentCartCount.textContent !== '0' && currentCartCount.textContent !== '') {
+    // Cart count đã có từ context processor, không cần load lại
+    return;
+  }
+  
   fetch('{% url "shop:cart" %}', {
     method: 'GET',
     headers: {

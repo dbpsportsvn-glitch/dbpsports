@@ -925,6 +925,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'shop/js/unified-cart-count-updater.js' %}"></script>
 {% csrf_token %}
 <script>
 let currentQuantity = 1;
@@ -1039,7 +1040,7 @@ function addToCart(productId = null) {
       }
       
       // Update cart count everywhere
-      updateCartCount(data.cart_count);
+      updateCartCount(data.cart_count, 'main');
       
       // Load cart popup content if it's open
       if (document.getElementById('cartPopup') && document.getElementById('cartPopup').classList.contains('show')) {
