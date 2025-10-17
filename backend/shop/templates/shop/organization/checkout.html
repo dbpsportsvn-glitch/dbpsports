@@ -665,14 +665,6 @@
                             Chọn file hóa đơn (JPG, PNG, PDF)
                         </label>
                         <div class="proof-preview" id="proof-preview"></div>
-                        <div class="proof-actions mt-2" id="proof-actions" style="display: none;">
-                            <button type="button" class="btn btn-success btn-sm me-2" onclick="confirmUpload()">
-                                <i class="fas fa-check me-1"></i>Xác nhận upload
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeProof('payment-proof')">
-                                <i class="fas fa-trash me-1"></i>Xóa file
-                            </button>
-                        </div>
                     </div>
                     <p class="proof-note">
                         <i class="fas fa-info-circle me-1"></i>
@@ -1034,49 +1026,38 @@ Nội dung: {{ organization.name }} - {{ request.user.get_full_name|default:requ
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     proofPreview.innerHTML = `
-                        <div class="d-flex align-items-center gap-3">
-                            ${file.type.startsWith('image/') ? 
-                                `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
-                                `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
-                            }
-                            <div class="file-info">
-                                <div class="fw-bold">${file.name}</div>
-                                <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                ${file.type.startsWith('image/') ? 
+                                    `<img src="${e.target.result}" alt="Preview" style="max-width: 100px; height: auto; border-radius: 4px;">` : 
+                                    `<i class="fas fa-file-pdf fa-3x text-danger"></i>`
+                                }
+                                <div class="file-info">
+                                    <div class="fw-bold">${file.name}</div>
+                                    <div class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                                </div>
                             </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeProof('payment-proof')">
+                                <i class="fas fa-trash me-1"></i>Xóa
+                            </button>
                         </div>
                     `;
                     proofPreview.style.display = 'block';
-                    document.getElementById('proof-actions').style.display = 'flex';
                 };
                 reader.readAsDataURL(file);
             }
         });
     }
     
-    // Confirm upload function
-    function confirmUpload() {
-        const fileInput = document.getElementById('payment-proof');
-        if (fileInput.files.length > 0) {
-            showToast('File đã được xác nhận upload thành công!', 'success');
-            // Disable the file input after confirmation
-            fileInput.disabled = true;
-            // Hide the actions after confirmation
-            document.getElementById('proof-actions').style.display = 'none';
-        } else {
-            showToast('Vui lòng chọn file trước khi xác nhận!', 'error');
-        }
-    }
     
     // Remove proof function
     function removeProof(inputId) {
         const input = document.getElementById(inputId);
         const preview = document.getElementById('proof-preview');
-        const actions = document.getElementById('proof-actions');
         
         input.value = '';
         preview.innerHTML = '';
         preview.style.display = 'none';
-        actions.style.display = 'none';
         
         showToast('Đã xóa file thành công!', 'success');
     }

@@ -544,6 +544,20 @@
                                     <i class="fas fa-download me-1"></i>Tải xuống
                                 </a>
                             </div>
+                            <!-- Debug info -->
+                            <small class="text-muted d-block mt-1">
+                                File: {{ order.payment_proof.name }} | URL: {{ order.payment_proof.url }}
+                            </small>
+                        </span>
+                    </div>
+                    {% elif order.payment_method != 'cod' %}
+                    <div class="info-row">
+                        <span class="info-label">Hóa đơn thanh toán:</span>
+                        <span class="info-value">
+                            <span class="text-muted">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Chưa có hóa đơn thanh toán
+                            </span>
                         </span>
                     </div>
                     {% endif %}
