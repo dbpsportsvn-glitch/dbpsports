@@ -80,12 +80,18 @@ class Tournament(models.Model):
         
         total_profit = 0
         for item in cart_items:
+            # Kiểm tra tồn kho trước khi tính discount
+            if item.product.stock_quantity < item.quantity:
+                # Không đủ hàng, không tính discount cho item này
+                continue
+                
             if item.product.cost_price:
                 profit_per_item = item.product.profit_amount
                 total_profit += profit_per_item * item.quantity
         
         # Tính phần trăm tiền lãi được trừ vào phí đăng ký
-        discount_amount = total_profit * (self.shop_discount_percentage / 100)
+        from decimal import Decimal
+        discount_amount = total_profit * (Decimal(self.shop_discount_percentage) / Decimal(100))
         # Giới hạn giảm giá tối đa bằng phí đăng ký
         max_discount = self.registration_fee
         return min(discount_amount, max_discount)
@@ -105,11 +111,17 @@ class Tournament(models.Model):
         for item in org_cart_items:
             # Kiểm tra item thuộc về cùng organization
             if item.product.organization == self.organization and item.product.cost_price:
+                # Kiểm tra tồn kho trước khi tính discount
+                if item.product.stock_quantity < item.quantity:
+                    # Không đủ hàng, không tính discount cho item này
+                    continue
+                    
                 profit_per_item = item.product.profit_amount
                 total_profit += profit_per_item * item.quantity
         
         # Tính phần trăm tiền lãi được trừ vào phí đăng ký
-        discount_amount = total_profit * (self.shop_discount_percentage / 100)
+        from decimal import Decimal
+        discount_amount = total_profit * (Decimal(self.shop_discount_percentage) / Decimal(100))
         # Giới hạn giảm giá tối đa bằng phí đăng ký
         max_discount = self.registration_fee
         return min(discount_amount, max_discount)
@@ -131,6 +143,36 @@ class Tournament(models.Model):
         
         final_fee = self.registration_fee - discount
         return max(final_fee, 0)  # Không âm
+    
+    def check_cart_stock_availability(self, cart_items):
+        """
+        Kiểm tra tồn kho của các sản phẩm trong cart
+        Trả về danh sách các sản phẩm không đủ hàng
+        """
+        unavailable_items = []
+        for item in cart_items:
+            if item.product.stock_quantity < item.quantity:
+                unavailable_items.append({
+                    'product': item.product,
+                    'requested': item.quantity,
+                    'available': item.product.stock_quantity
+                })
+        return unavailable_items
+    
+    def check_org_cart_stock_availability(self, org_cart_items):
+        """
+        Kiểm tra tồn kho của các sản phẩm trong Organization cart
+        Trả về danh sách các sản phẩm không đủ hàng
+        """
+        unavailable_items = []
+        for item in org_cart_items:
+            if item.product.stock_quantity < item.quantity:
+                unavailable_items.append({
+                    'product': item.product,
+                    'requested': item.quantity,
+                    'available': item.product.stock_quantity
+                })
+        return unavailable_items
     
     def has_organization_shop(self):
         """

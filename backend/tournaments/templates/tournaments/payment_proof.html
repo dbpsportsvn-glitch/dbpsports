@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Thanh toán lệ phí - {{ team.name }}{% endblock %}
+{% block title %}
+    {% if registration.payment_status == 'PENDING' %}
+        Cập nhật thanh toán - {{ team.name }}
+    {% else %}
+        Thanh toán lệ phí - {{ team.name }}
+    {% endif %}
+{% endblock %}
 
 {% block content %}
 <style>
@@ -284,13 +290,6 @@ body {
                         {% endif %}
                     </div>
                     
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="use_shop_discount_checkbox" name="use_shop_discount_checkbox">
-                        <label class="form-check-label fw-bold" for="use_shop_discount_checkbox">
-                            <i class="bi bi-cart-plus me-2"></i>Tôi muốn đặt hàng từ shop để được trừ tiền lãi
-                        </label>
-                    </div>
-                    
                     <div id="shop-cart-section" class="shop-cart-section" style="display: none;">
                         {% if registration.tournament.organization %}
                             {# Giải của BTC: Chỉ hiển thị Organization Shop #}
@@ -307,6 +306,25 @@ body {
                                         </a>
                                     </div>
                                 </div>
+                                
+                                {% if unavailable_items %}
+                                <div class="alert alert-danger mb-3">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Cảnh báo:</strong> Một số sản phẩm trong giỏ hàng không đủ số lượng:
+                                    <ul class="mb-0 mt-2">
+                                        {% for item in unavailable_items %}
+                                        <li>
+                                            <strong>{{ item.product.name }}</strong>: 
+                                            Bạn chọn {{ item.requested }} sản phẩm nhưng chỉ còn {{ item.available }} sản phẩm trong kho.
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Vui lòng giảm số lượng hoặc xóa sản phẩm không đủ hàng để được tính giảm giá.
+                                    </small>
+                                </div>
+                                {% endif %}
                                 <div class="cart-items">
                                     {% for item in org_cart.items.all %}
                                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
@@ -371,6 +389,25 @@ body {
                                         </a>
                                     </div>
                                 </div>
+                                
+                                {% if unavailable_items %}
+                                <div class="alert alert-danger mb-3">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Cảnh báo:</strong> Một số sản phẩm trong giỏ hàng không đủ số lượng:
+                                    <ul class="mb-0 mt-2">
+                                        {% for item in unavailable_items %}
+                                        <li>
+                                            <strong>{{ item.product.name }}</strong>: 
+                                            Bạn chọn {{ item.requested }} sản phẩm nhưng chỉ còn {{ item.available }} sản phẩm trong kho.
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Vui lòng giảm số lượng hoặc xóa sản phẩm không đủ hàng để được tính giảm giá.
+                                    </small>
+                                </div>
+                                {% endif %}
                                 <div class="cart-items">
                                     {% for item in cart.items.all %}
                                     <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
@@ -483,6 +520,16 @@ body {
                         {{ form|crispy }}
                         <!-- Hidden field để JavaScript có thể tham chiếu -->
                         <input type="hidden" id="id_use_shop_discount" name="use_shop_discount" value="">
+                        
+                        <!-- Checkbox để tích hợp shop - chỉ hiển thị khi có discount -->
+                        {% if registration.tournament.shop_discount_percentage > 0 %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="use_shop_discount_checkbox">
+                            <label class="form-check-label fw-bold" for="use_shop_discount_checkbox">
+                                <i class="bi bi-cart-plus me-2"></i>Tôi muốn đặt hàng từ shop để được trừ tiền lãi
+                            </label>
+                        </div>
+                        {% endif %}
                         <div class="d-grid gap-2 mt-3">
                             <button type="submit" class="btn btn-success btn-lg">
                                 <i class="bi bi-check-circle me-2"></i>Gửi xác nhận thanh toán
@@ -552,7 +599,13 @@ body {
                     <div class="mt-4">
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
-                            <small>Sau khi gửi, trạng thái thanh toán sẽ chuyển thành "Chờ xác nhận".</small>
+                            <small>
+                                {% if registration.payment_status == 'PENDING' %}
+                                    Bạn có thể cập nhật hóa đơn thanh toán. Trạng thái sẽ vẫn là "Chờ xác nhận".
+                                {% else %}
+                                    Sau khi gửi, trạng thái thanh toán sẽ chuyển thành "Chờ xác nhận".
+                                {% endif %}
+                            </small>
                         </div>
                         {% if registration.tournament.shop_discount_percentage > 0 %}
                         <div class="alert alert-success">
@@ -651,6 +704,13 @@ body {
         console.log('Discount amount:', currentDiscountAmount);
         console.log('Final fee:', currentFinalFee);
         
+        // Check for unavailable items
+        const unavailableItems = {{ unavailable_items|length|default:0 }};
+        if (unavailableItems > 0) {
+            console.log('⚠️ Warning: Some items in cart have insufficient stock');
+            console.log('Unavailable items count:', unavailableItems);
+        }
+        
         console.log('📊 Data values:');
         console.log('Original fee:', originalFee);
         console.log('Main discount:', mainDiscount);
@@ -675,9 +735,9 @@ body {
         
         // Check if elements exist
         if (!checkbox) {
-            console.error('❌ Checkbox not found');
-            console.log('Available checkboxes:', document.querySelectorAll('input[type="checkbox"]'));
-            return;
+            console.log('ℹ️ Checkbox not found - tournament has no shop discount');
+            console.log('Shop discount percentage:', parseFloat('{{ registration.tournament.shop_discount_percentage|default:0 }}') || 0);
+            // Không return, tiếp tục với logic khác
         }
         
         if (!hiddenField) {
@@ -786,10 +846,15 @@ body {
             console.log('🔍 Final hidden field value:', hiddenField.value);
         }, 100);
         
-        // Listen for checkbox changes
-        checkbox.addEventListener('change', function() {
+        // Listen for checkbox changes - chỉ khi checkbox tồn tại
+        if (checkbox) {
+            checkbox.addEventListener('change', function() {
             console.log(`🎯 Checkbox changed: ${this.checked}`);
             console.log('Hidden field before update:', hiddenField.value);
+            
+            // Force update hidden field immediately
+            hiddenField.value = this.checked ? 'on' : '';
+            console.log('Hidden field after immediate update:', hiddenField.value);
             
             // Add visual feedback
             this.style.transform = 'scale(0.95)';
@@ -807,11 +872,16 @@ body {
             
             // Show feedback message
             if (this.checked) {
-                showToast('Đã bật giảm giá từ shop!', 'success');
+                if (unavailableItems > 0) {
+                    showToast('Cảnh báo: Một số sản phẩm không đủ hàng! Giảm giá có thể không được áp dụng.', 'warning');
+                } else {
+                    showToast('Đã bật giảm giá từ shop!', 'success');
+                }
             } else {
                 showToast('Đã tắt giảm giá từ shop', 'info');
             }
-        });
+            });
+        }
         
         // Clear localStorage on form submit
         const form = document.querySelector('form[method="post"]');
@@ -825,7 +895,13 @@ body {
                 const formData = new FormData(form);
                 console.log('Form data:');
                 for (let [key, value] of formData.entries()) {
-                    console.log(`${key}: ${value}`);
+                    console.log(`  ${key}: ${value}`);
+                }
+                
+                // Ensure hidden field is set before submit
+                if (checkbox.checked && hiddenField.value !== 'on') {
+                    console.log('⚠️ Fixing hidden field value before submit');
+                    hiddenField.value = 'on';
                 }
                 
                 localStorage.removeItem(storageKey);

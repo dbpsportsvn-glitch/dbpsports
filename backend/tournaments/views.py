@@ -11,6 +11,230 @@ from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 
+# Django imports
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.db import transaction
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+def create_main_shop_order_from_registration(request, team, registration):
+    """
+    Tạo đơn hàng Main Shop tự động khi đội trưởng thanh toán lệ phí giải
+    """
+    from shop.models import Cart, Order, OrderItem
+    
+    print(f"DEBUG: Starting create_main_shop_order_from_registration for user {request.user.username}")
+    
+    try:
+        # Lấy cart của user
+        try:
+            cart = Cart.objects.get(user=request.user)
+            cart_items = cart.items.all()
+            print(f"DEBUG: Found cart with {cart_items.count()} items")
+        except Cart.DoesNotExist:
+            print("DEBUG: No cart found for user")
+            return None
+        
+        if not cart_items:
+            print("DEBUG: Cart is empty")
+            return None
+        
+        # Kiểm tra tồn kho
+        for cart_item in cart_items:
+            print(f"DEBUG: Checking stock for {cart_item.product.name}: requested={cart_item.quantity}, available={cart_item.product.stock_quantity}")
+            if cart_item.product.stock_quantity < cart_item.quantity:
+                print(f"DEBUG: Insufficient stock for {cart_item.product.name}")
+                raise Exception(f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho.')
+        
+        # Lấy thông tin từ team captain
+        captain = team.captain
+        
+        # Tính phí vận chuyển
+        shipping_fee = 0 if cart.total_price >= 500000 else 30000
+        total_amount = cart.total_price + shipping_fee
+        
+        # Tạo đơn hàng
+        print(f"DEBUG: Creating order with total_amount={total_amount}")
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
+                customer_name=captain.get_full_name() or captain.username,
+                customer_email=captain.email,
+                customer_phone='',
+                shipping_address='Địa chỉ sẽ được cập nhật',
+                shipping_city='Hồ Chí Minh',
+                shipping_district='Quận 1',
+                payment_method='bank_transfer',
+                subtotal=cart.total_price,
+                shipping_fee=shipping_fee,
+                total_amount=total_amount,
+                notes=f'Đơn hàng tự động từ thanh toán lệ phí giải đấu - Đội {team.name}',
+                payment_status='pending'
+            )
+            print(f"DEBUG: Order created successfully: {order.order_number}")
+            
+            # Tạo order items
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.current_price
+                )
+                
+                # Cập nhật tồn kho
+                cart_item.product.stock_quantity -= cart_item.quantity
+                cart_item.product.save()
+            
+            # Xóa cart
+            print(f"DEBUG: Deleting cart for user {request.user.username}")
+            cart.delete()
+            
+            # Gửi email thông báo đơn hàng
+            try:
+                from shop.email_service import send_order_emails
+                print(f"DEBUG: Sending order emails for order {order.order_number}")
+                send_order_emails(order.id)
+                print(f"DEBUG: Order emails sent successfully")
+            except Exception as email_error:
+                print(f"DEBUG: Email error (non-critical): {str(email_error)}")
+                # Không raise để không làm fail đơn hàng
+        
+        print(f"DEBUG: Order creation completed successfully")
+        return order
+        
+    except Exception as e:
+        print(f"DEBUG: Error creating order: {str(e)}")
+        raise Exception(f'Loi tao don hang Main Shop: {str(e)}')
+
+
+def create_organization_shop_order_from_registration(request, organization, team, registration):
+    """
+    Tạo đơn hàng Organization Shop tự động khi đội trưởng thanh toán lệ phí giải
+    """
+    from shop.organization_models import OrganizationCart, OrganizationOrder, OrganizationOrderItem
+    
+    try:
+        print(f"DEBUG: Creating organization shop order for user {request.user.email}, organization {organization.name}")
+        
+        # Lấy cart của user
+        try:
+            cart = OrganizationCart.objects.get(user=request.user, organization=organization)
+            cart_items = cart.items.all()
+            print(f"DEBUG: Found cart with {cart_items.count()} items")
+        except OrganizationCart.DoesNotExist:
+            print("DEBUG: No organization cart found for user")
+            return None
+        
+        if not cart_items:
+            print("DEBUG: Cart is empty")
+            return None
+        
+        # Kiểm tra tồn kho và tính discount
+        total_profit = 0
+        for cart_item in cart_items:
+            print(f"DEBUG: Checking item {cart_item.product.name}, quantity {cart_item.quantity}, stock {cart_item.product.stock_quantity}")
+            
+            if cart_item.product.stock_quantity < cart_item.quantity:
+                raise Exception(f'Sản phẩm "{cart_item.product.name}" không đủ hàng trong kho.')
+            
+            # Tính profit cho discount
+            if cart_item.product.cost_price:
+                profit_per_item = cart_item.product.profit_amount
+                total_profit += profit_per_item * cart_item.quantity
+                print(f"DEBUG: Item profit: {profit_per_item} x {cart_item.quantity} = {profit_per_item * cart_item.quantity}")
+        
+        print(f"DEBUG: Total profit from cart: {total_profit}")
+        
+        # Lấy thông tin từ team captain
+        captain = team.captain
+        
+        # Tính discount và phí vận chuyển
+        tournament = registration.tournament
+        discount_amount = tournament.calculate_organization_shop_discount(cart_items)
+        
+        subtotal = cart.total_price
+        final_subtotal = subtotal - discount_amount
+        
+        # Phí vận chuyển
+        shipping_fee = 30000
+        try:
+            if organization.shop_settings.free_shipping_threshold and final_subtotal >= organization.shop_settings.free_shipping_threshold:
+                shipping_fee = 0
+        except:
+            # Organization chưa có shop settings, dùng phí mặc định
+            pass
+        
+        total_amount = final_subtotal + shipping_fee
+        
+        # Tạo đơn hàng
+        with transaction.atomic():
+            order = OrganizationOrder.objects.create(
+                organization=organization,
+                user=request.user,
+                customer_name=captain.get_full_name() or captain.username,
+                customer_email=captain.email,
+                customer_phone='',
+                shipping_address='Địa chỉ sẽ được cập nhật',
+                shipping_city='Hồ Chí Minh',
+                shipping_district='Quận 1',
+                subtotal=subtotal,
+                discount_amount=discount_amount,
+                shipping_fee=shipping_fee,
+                total_amount=total_amount,
+                payment_method='bank_transfer',
+                notes=f'Đơn hàng tự động từ thanh toán lệ phí giải đấu - Đội {team.name}',
+                payment_status='pending'
+            )
+            
+            # Tạo order items
+            for cart_item in cart_items:
+                OrganizationOrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.current_price
+                )
+                
+                # Cập nhật tồn kho
+                if cart_item.product.has_sizes and cart_item.size:
+                    variant = cart_item.product.variants.filter(size=cart_item.size).first()
+                    if variant:
+                        variant.stock_quantity -= cart_item.quantity
+                        variant.save()
+                else:
+                    cart_item.product.stock_quantity -= cart_item.quantity
+                    cart_item.product.save()
+            
+            # Xóa cart
+            cart.delete()
+            
+            # Gửi email thông báo đơn hàng
+            try:
+                from shop.organization_email_service import send_org_order_emails
+                print(f"DEBUG: Sending organization order emails for order {order.order_number}")
+                send_org_order_emails(order.id)
+                print(f"DEBUG: Organization order emails sent successfully")
+            except Exception as email_error:
+                print(f"DEBUG: Organization email error (non-critical): {str(email_error)}")
+                # Không raise để không làm fail đơn hàng
+        
+        return order
+        
+    except Exception as e:
+        print(f"ERROR: Failed to create organization shop order: {str(e)}")
+        print(f"ERROR: User: {request.user.email}, Organization: {organization.name}")
+        print(f"ERROR: Team: {team.name}, Registration: {registration.pk}")
+        raise Exception(f'Lỗi tạo đơn hàng Organization Shop: {str(e)}')
+
+
 def compress_banner_image(image_field):
     """
     Nén ảnh banner để giảm kích thước file
@@ -914,6 +1138,12 @@ def team_payment(request, pk):
             final_fee = tournament.get_final_registration_fee(None, org_cart.items.all())
         except OrganizationCart.DoesNotExist:
             pass
+        
+        # Kiểm tra tồn kho Organization Shop
+        if org_cart:
+            unavailable_items = tournament.check_org_cart_stock_availability(org_cart.items.all())
+        else:
+            unavailable_items = []
     else:
         # Giải của Admin: Chỉ sử dụng Main Shop
         cart, created = Cart.objects.get_or_create(user=request.user)
@@ -921,26 +1151,60 @@ def team_payment(request, pk):
         main_discount = tournament.calculate_shop_discount(cart.items.all())
         discount_amount = main_discount
         final_fee = tournament.get_final_registration_fee(cart.items.all(), None)
+        
+        # Kiểm tra tồn kho
+        unavailable_items = tournament.check_cart_stock_availability(cart.items.all())
 
     if request.method == 'POST':
+        print(f"DEBUG: POST data: {request.POST}")
+        print(f"DEBUG: Files: {request.FILES}")
+        
         form = PaymentProofForm(request.POST, request.FILES, instance=registration)
         if form.is_valid():
             reg = form.save(commit=False)
-            reg.payment_status = 'PENDING'
+            # Chỉ cập nhật status nếu đang là UNPAID hoặc REJECTED
+            if reg.payment_status in ['UNPAID', 'REJECTED']:
+                reg.payment_status = 'PENDING'
             
-            # Xử lý tích hợp shop
-            use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
+            # Xử lý tích hợp shop - Tạo đơn hàng tự động
+            # Sửa vấn đề BooleanField với HiddenInput
+            use_shop_discount_list = request.POST.getlist('use_shop_discount')
+            use_shop_discount = 'on' in use_shop_discount_list
+            shop_order_created = False
+            
+            print(f'DEBUG: use_shop_discount_list = {use_shop_discount_list}')
+            print(f'DEBUG: use_shop_discount = {use_shop_discount}')
+            print(f'DEBUG: tournament.shop_discount_percentage = {tournament.shop_discount_percentage}')
+            print(f'DEBUG: cart_total = {cart_total}')
+            print(f'DEBUG: org_cart_total = {org_cart_total}')
+            
             if use_shop_discount and tournament.shop_discount_percentage > 0:
                 if tournament.organization:
-                    # Giải của BTC: Kiểm tra Organization Shop
+                    # Giải của BTC: Tạo đơn hàng Organization Shop
                     if org_cart_total > 0:
-                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop BTC ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                        try:
+                            shop_order = create_organization_shop_order_from_registration(
+                                request, tournament.organization, team, registration
+                            )
+                            if shop_order:
+                                shop_order_created = True
+                                messages.success(request, f'Đã tạo đơn hàng Shop BTC #{shop_order.order_number} với giảm giá {tournament.shop_discount_percentage}%.')
+                        except Exception as e:
+                            messages.error(request, f'Lỗi tạo đơn hàng Shop BTC: {str(e)}')
                     else:
                         messages.warning(request, 'Giỏ hàng Shop BTC của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
                 else:
-                    # Giải của Admin: Kiểm tra Main Shop
+                    # Giải của Admin: Tạo đơn hàng Main Shop
                     if cart_total > 0:
-                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop Chính ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                        try:
+                            shop_order = create_main_shop_order_from_registration(
+                                request, team, registration
+                            )
+                            if shop_order:
+                                shop_order_created = True
+                                messages.success(request, f'Đã tạo đơn hàng Shop Chính #{shop_order.order_number} với giảm giá {tournament.shop_discount_percentage}%.')
+                        except Exception as e:
+                            messages.error(request, f'Lỗi tạo đơn hàng Shop Chính: {str(e)}')
                     else:
                         messages.warning(request, 'Giỏ hàng Shop Chính của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
             
@@ -949,7 +1213,7 @@ def team_payment(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -957,11 +1221,11 @@ def team_payment(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
                     recipient_list=[team.captain.email]
                 )
 
-            messages.success(request, 'Đã tải lên hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
+            messages.success(request, 'Đã cập nhật hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
 
             return redirect('team_detail', pk=team.pk)
     else:
@@ -979,6 +1243,8 @@ def team_payment(request, pk):
         'org_discount': org_discount,
         'discount_amount': discount_amount,
         'final_fee': final_fee,
+        'tournament': tournament,
+        'unavailable_items': unavailable_items,
     }
     
     response = render(request, 'tournaments/payment_proof.html', context)
@@ -4125,21 +4391,49 @@ def payment_with_shop(request, pk):
         form = PaymentProofForm(request.POST, request.FILES, instance=registration)
         if form.is_valid():
             reg = form.save(commit=False)
-            reg.payment_status = 'PENDING'
+            # Chỉ cập nhật status nếu đang là UNPAID hoặc REJECTED
+            if reg.payment_status in ['UNPAID', 'REJECTED']:
+                reg.payment_status = 'PENDING'
             
-            # Xử lý tích hợp shop
-            use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
+            # Xử lý tích hợp shop - Tạo đơn hàng tự động
+            # Sửa vấn đề BooleanField với HiddenInput
+            use_shop_discount_list = request.POST.getlist('use_shop_discount')
+            use_shop_discount = 'on' in use_shop_discount_list
+            shop_order_created = False
+            
+            print(f'DEBUG: use_shop_discount_list = {use_shop_discount_list}')
+            print(f'DEBUG: use_shop_discount = {use_shop_discount}')
+            print(f'DEBUG: tournament.shop_discount_percentage = {tournament.shop_discount_percentage}')
+            print(f'DEBUG: cart_total = {cart_total}')
+            print(f'DEBUG: org_cart_total = {org_cart_total}')
+            
             if use_shop_discount and tournament.shop_discount_percentage > 0:
                 if tournament.organization:
-                    # Giải của BTC: Kiểm tra Organization Shop
+                    # Giải của BTC: Tạo đơn hàng Organization Shop
                     if org_cart_total > 0:
-                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop BTC ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                        try:
+                            shop_order = create_organization_shop_order_from_registration(
+                                request, tournament.organization, team, registration
+                            )
+                            if shop_order:
+                                shop_order_created = True
+                                messages.success(request, f'Đã tạo đơn hàng Shop BTC #{shop_order.order_number} với giảm giá {tournament.shop_discount_percentage}%.')
+                        except Exception as e:
+                            messages.error(request, f'Lỗi tạo đơn hàng Shop BTC: {str(e)}')
                     else:
                         messages.warning(request, 'Giỏ hàng Shop BTC của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
                 else:
-                    # Giải của Admin: Kiểm tra Main Shop
+                    # Giải của Admin: Tạo đơn hàng Main Shop
                     if cart_total > 0:
-                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop Chính ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                        try:
+                            shop_order = create_main_shop_order_from_registration(
+                                request, team, registration
+                            )
+                            if shop_order:
+                                shop_order_created = True
+                                messages.success(request, f'Đã tạo đơn hàng Shop Chính #{shop_order.order_number} với giảm giá {tournament.shop_discount_percentage}%.')
+                        except Exception as e:
+                            messages.error(request, f'Lỗi tạo đơn hàng Shop Chính: {str(e)}')
                     else:
                         messages.warning(request, 'Giỏ hàng Shop Chính của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
             
@@ -4148,7 +4442,7 @@ def payment_with_shop(request, pk):
             send_notification_email(
                 subject=f"Xác nhận thanh toán mới từ đội {team.name}",
                 template_name='tournaments/emails/new_payment_proof.html',
-                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
                 recipient_list=[settings.ADMIN_EMAIL]
             )
 
@@ -4156,11 +4450,11 @@ def payment_with_shop(request, pk):
                 send_notification_email(
                     subject=f"Đã nhận được hóa đơn thanh toán của đội {team.name}",
                     template_name='tournaments/emails/payment_pending_confirmation.html',
-                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total},
+                    context={'team': team, 'tournament': tournament, 'use_shop_discount': use_shop_discount, 'cart_total': cart_total, 'shop_order_created': shop_order_created},
                     recipient_list=[team.captain.email]
                 )
 
-            messages.success(request, 'Đã tải lên hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
+            messages.success(request, 'Đã cập nhật hóa đơn thành công! Vui lòng chờ Ban tổ chức xác nhận.')
 
             return redirect('team_detail', pk=team.pk)
     else:

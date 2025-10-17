@@ -41,6 +41,18 @@
         <span class="info-label">Thời gian tải lên:</span>
         <span class="info-value">{{ team.payment_proof_uploaded_at|date:"d/m/Y H:i" }}</span>
     </div>
+    {% if use_shop_discount %}
+    <div class="info-row">
+        <span class="info-label">Sử dụng giảm giá shop:</span>
+        <span class="info-value"><span class="status-badge" style="background: #10b981;">Có</span></span>
+    </div>
+    {% if shop_order_created %}
+    <div class="info-row">
+        <span class="info-label">Đơn hàng shop:</span>
+        <span class="info-value"><span class="status-badge" style="background: #3b82f6;">Đã tạo tự động</span></span>
+    </div>
+    {% endif %}
+    {% endif %}
 </div>
 
 <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 25px 0; border-radius: 8px;">
