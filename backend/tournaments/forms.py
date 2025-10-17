@@ -259,8 +259,8 @@ class TournamentForm(forms.ModelForm):
             'rules': forms.Textarea(attrs={'rows': 5}),
             'registration_fee': forms.NumberInput(attrs={
                 'min': '0',
-                'step': '100000',
-                'placeholder': 'Nhập phí đăng ký cho mỗi đội'
+                'step': '1',
+                'placeholder': 'VD: 1000000 (1 triệu VNĐ)'
             }),
             'shop_discount_percentage': forms.NumberInput(attrs={
                 'min': '0',
@@ -269,6 +269,28 @@ class TournamentForm(forms.ModelForm):
                 'placeholder': 'Nhập phần trăm tiền lãi được trừ (0-100)'
             }),
         }        
+
+class TournamentShopSettingsForm(forms.ModelForm):
+    """Form cho BTC cài đặt shop discount"""
+    class Meta:
+        model = Tournament
+        fields = ['shop_discount_percentage']
+        labels = {
+            'shop_discount_percentage': 'Phần trăm tiền lãi từ shop được trừ vào phí đăng ký (%)',
+        }
+        widgets = {
+            'shop_discount_percentage': forms.NumberInput(attrs={
+                'min': '0',
+                'max': '100',
+                'step': '0.01',
+                'placeholder': 'Nhập phần trăm tiền lãi được trừ (0-100)',
+                'class': 'form-control'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['shop_discount_percentage'].help_text = 'Phần trăm tiền lãi từ shop sẽ được trừ vào phí đăng ký giải đấu. Ví dụ: 10% có nghĩa là 10% tiền lãi từ sản phẩm shop sẽ được trừ vào phí đăng ký.'
 
 class CommentatorNoteForm(forms.ModelForm):
     class Meta:

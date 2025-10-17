@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Cài đặt Shop Discount - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-shop me-2"></i>Cài đặt Shop Discount
+                    </h2>
+                    <p class="text-muted mb-0">{{ tournament.name }}</p>
+                </div>
+                <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Quay lại giải đấu
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>Cài đặt Shop Discount
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Thông tin:</strong> Cài đặt này cho phép các đội tham gia giải đấu được giảm giá phí đăng ký khi mua sản phẩm từ shop.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Cập nhật cài đặt
+                            </button>
+                            <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-x-circle me-2"></i>Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Current Settings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Cài đặt hiện tại
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Phí đăng ký:</span>
+                        <strong>{{ tournament.registration_fee|floatformat:0 }} VNĐ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shop discount:</span>
+                        <strong class="{% if tournament.shop_discount_percentage > 0 %}text-success{% else %}text-muted{% endif %}">
+                            {{ tournament.shop_discount_percentage }}%
+                        </strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Trạng thái:</span>
+                        <span class="badge {% if tournament.shop_discount_percentage > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if tournament.shop_discount_percentage > 0 %}Đang bật{% else %}Đang tắt{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How it works -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>Cách hoạt động
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-success">📊 Tính toán discount:</h6>
+                        <small class="text-muted">
+                            Discount = (Tiền lãi sản phẩm × Phần trăm) / 100<br>
+                            <strong>Ví dụ:</strong> Sản phẩm lãi 50,000đ, discount 10% = 5,000đ
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-success">🎯 Áp dụng:</h6>
+                        <small class="text-muted">
+                            • Chỉ áp dụng cho <strong>Main Shop</strong> và <strong>Shop BTC</strong><br>
+                            • Giới hạn tối đa bằng <strong>phí đăng ký</strong><br>
+                            • Chỉ áp dụng cho <strong>captain đội</strong>
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="text-success">💰 Lợi ích:</h6>
+                        <small class="text-muted">
+                            • Khuyến khích đội mua sản phẩm<br>
+                            • Tăng doanh thu cho BTC<br>
+                            • Giảm chi phí đăng ký cho đội
+                        </small>
+                    </div>
+
+                    {% if tournament.organization %}
+                    <div class="alert alert-warning alert-sm">
+                        <i class="bi bi-shop me-1"></i>
+                        <small>
+                            <strong>Shop BTC:</strong> Các đội có thể mua từ shop của {{ tournament.organization.name }} để được giảm giá.
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

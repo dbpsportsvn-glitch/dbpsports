@@ -311,12 +311,49 @@ def organization_cart_view(request, org_slug):
     
     cart_items = cart.items.all()
     
+    # Tính toán giảm giá cho các đội đã đóng lệ phí giải đấu
+    discount_amount = 0
+    eligible_for_discount = False
+    
+    # Kiểm tra user có phải là captain của đội đã đóng lệ phí không
+    from tournaments.models import TeamRegistration
+    paid_registrations = TeamRegistration.objects.filter(
+        team__captain=request.user,
+        tournament__organization=organization,
+        payment_status='PAID'
+    )
+    
+    if paid_registrations.exists():
+        eligible_for_discount = True
+        # Tính discount dựa trên profit của sản phẩm
+        total_profit = 0
+        for item in cart_items:
+            if item.product.cost_price:
+                profit_per_item = item.product.profit_amount
+                total_profit += profit_per_item * item.quantity
+        
+        # Lấy tournament để tính discount percentage
+        tournament = organization.tournaments.first()
+        if tournament and tournament.shop_discount_percentage > 0:
+            # Tính phần trăm tiền lãi được trừ vào phí đăng ký
+            discount_amount = total_profit * (tournament.shop_discount_percentage / 100)
+            # Giới hạn giảm giá tối đa bằng phí đăng ký
+            max_discount = tournament.registration_fee
+            discount_amount = min(discount_amount, max_discount)
+    
+    # Tính tổng cuối cùng
+    final_subtotal = cart.total_price - discount_amount
+    
     context = {
         'organization': organization,
         'shop_settings': shop_settings,
         'cart': cart,
         'cart_items': cart_items,
         'cart_count': cart.total_items,
+        'discount_amount': discount_amount,
+        'final_subtotal': final_subtotal,
+        'eligible_for_discount': eligible_for_discount,
+        'tournament': organization.tournaments.first() if organization.tournaments.exists() else None,
     }
     
     return render(request, 'shop/organization/cart.html', context)
@@ -490,7 +527,39 @@ def organization_checkout(request, org_slug):
     if shop_settings.free_shipping_threshold and subtotal >= shop_settings.free_shipping_threshold:
         shipping_fee = 0
     
-    total_amount = subtotal + shipping_fee
+    # Tính toán giảm giá cho các đội đã đóng lệ phí giải đấu
+    discount_amount = 0
+    eligible_for_discount = False
+    
+    # Kiểm tra user có phải là captain của đội đã đóng lệ phí không
+    from tournaments.models import TeamRegistration
+    paid_registrations = TeamRegistration.objects.filter(
+        team__captain=request.user,
+        tournament__organization=organization,
+        payment_status='PAID'
+    )
+    
+    if paid_registrations.exists():
+        eligible_for_discount = True
+        # Tính discount dựa trên profit của sản phẩm
+        total_profit = 0
+        for item in cart_items:
+            if item.product.cost_price:
+                profit_per_item = item.product.profit_amount
+                total_profit += profit_per_item * item.quantity
+        
+        # Lấy tournament để tính discount percentage
+        tournament = organization.tournaments.first()
+        if tournament and tournament.shop_discount_percentage > 0:
+            # Tính phần trăm tiền lãi được trừ vào phí đăng ký
+            discount_amount = total_profit * (tournament.shop_discount_percentage / 100)
+            # Giới hạn giảm giá tối đa bằng phí đăng ký
+            max_discount = tournament.registration_fee
+            discount_amount = min(discount_amount, max_discount)
+    
+    # Tính tổng cuối cùng
+    final_subtotal = subtotal - discount_amount
+    total_amount = final_subtotal + shipping_fee
     
     context = {
         'organization': organization,
@@ -498,8 +567,12 @@ def organization_checkout(request, org_slug):
         'cart': cart,
         'cart_items': cart_items,
         'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'final_subtotal': final_subtotal,
         'shipping_fee': shipping_fee,
         'total_amount': total_amount,
+        'eligible_for_discount': eligible_for_discount,
+        'tournament': organization.tournaments.first() if organization.tournaments.exists() else None,
     }
     
     return render(request, 'shop/organization/checkout.html', context)
@@ -571,10 +644,41 @@ def organization_place_order(request, org_slug):
         subtotal = cart.total_price
         shipping_fee = shop_settings.shipping_fee
         
-        if shop_settings.free_shipping_threshold and subtotal >= shop_settings.free_shipping_threshold:
+        # Tính toán giảm giá cho các đội đã đóng lệ phí giải đấu
+        discount_amount = 0
+        
+        # Kiểm tra user có phải là captain của đội đã đóng lệ phí không
+        from tournaments.models import TeamRegistration
+        paid_registrations = TeamRegistration.objects.filter(
+            team__captain=request.user,
+            tournament__organization=organization,
+            payment_status='PAID'
+        )
+        
+        if paid_registrations.exists():
+            # Tính discount dựa trên profit của sản phẩm
+            total_profit = 0
+            for item in cart_items:
+                if item.product.cost_price:
+                    profit_per_item = item.product.profit_amount
+                    total_profit += profit_per_item * item.quantity
+            
+            # Lấy tournament để tính discount percentage
+            tournament = organization.tournaments.first()
+            if tournament and tournament.shop_discount_percentage > 0:
+                # Tính phần trăm tiền lãi được trừ vào phí đăng ký
+                discount_amount = total_profit * (tournament.shop_discount_percentage / 100)
+                # Giới hạn giảm giá tối đa bằng phí đăng ký
+                max_discount = tournament.registration_fee
+                discount_amount = min(discount_amount, max_discount)
+        
+        # Tính subtotal sau giảm giá
+        final_subtotal = subtotal - discount_amount
+        
+        if shop_settings.free_shipping_threshold and final_subtotal >= shop_settings.free_shipping_threshold:
             shipping_fee = 0
         
-        total_amount = subtotal + shipping_fee
+        total_amount = final_subtotal + shipping_fee
         
         # Tạo đơn hàng
         with transaction.atomic():
@@ -588,6 +692,7 @@ def organization_place_order(request, org_slug):
                 shipping_city=shipping_city,
                 shipping_district=shipping_district,
                 subtotal=subtotal,
+                discount_amount=discount_amount,
                 shipping_fee=shipping_fee,
                 total_amount=total_amount,
                 payment_method=request.POST.get('payment_method', 'cod'),
@@ -831,6 +936,7 @@ def manage_products(request, org_slug):
         category_id = request.POST.get('category')
         price = request.POST.get('price')
         sale_price = request.POST.get('sale_price', '')
+        cost_price = request.POST.get('cost_price', '')
         stock_quantity = request.POST.get('stock_quantity', 0)
         short_description = request.POST.get('short_description', '')
         description = request.POST.get('description', '')
@@ -865,6 +971,7 @@ def manage_products(request, org_slug):
                     category=category,
                     price=Decimal(price),
                     sale_price=Decimal(sale_price) if sale_price else None,
+                    cost_price=Decimal(cost_price) if cost_price else None,
                     stock_quantity=int(stock_quantity),
                     sku=sku,
                     short_description=short_description,
@@ -1236,6 +1343,7 @@ def edit_product(request, org_slug, product_id):
         category_id = request.POST.get('category')
         price = request.POST.get('price')
         sale_price = request.POST.get('sale_price', '')
+        cost_price = request.POST.get('cost_price', '')
         stock_quantity = request.POST.get('stock_quantity', 0)
         short_description = request.POST.get('short_description', '')
         description = request.POST.get('description', '')
@@ -1253,6 +1361,7 @@ def edit_product(request, org_slug, product_id):
                 product.category = category
                 product.price = Decimal(price)
                 product.sale_price = Decimal(sale_price) if sale_price else None
+                product.cost_price = Decimal(cost_price) if cost_price else None
                 product.stock_quantity = int(stock_quantity)
                 product.short_description = short_description
                 product.description = description

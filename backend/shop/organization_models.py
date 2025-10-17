@@ -282,6 +282,7 @@ class OrganizationOrder(models.Model):
     
     # Thông tin đơn hàng
     subtotal = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Tổng tiền hàng")
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Số tiền giảm giá")
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Phí vận chuyển")
     total_amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Tổng cộng")
     

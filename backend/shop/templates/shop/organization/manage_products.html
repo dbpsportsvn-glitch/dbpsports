@@ -294,6 +294,23 @@
         </div>
     </div>
 
+    <!-- Shop Discount Info Alert -->
+    <div class="alert alert-info alert-dismissible fade show mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Tính năng Shop Discount:</strong> Để sử dụng chương trình giảm giá cho các đội đã đóng lệ phí giải đấu, bạn cần nhập <strong>"Giá vốn"</strong> cho từng sản phẩm. 
+                <br><small class="text-muted">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Ví dụ: Sản phẩm giá 100.000đ, giá vốn 70.000đ → Lãi 30.000đ. Nếu BTC cài đặt 10% discount, đội sẽ được giảm 3.000đ vào lệ phí đăng ký.
+                </small>
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content with Sidebar -->
     <div class="row">
         <!-- Management Sidebar -->
@@ -491,10 +508,19 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="cost_price" class="form-label">Giá Vốn</label>
+                                <input type="number" class="form-control" id="cost_price" name="cost_price" min="0" step="1000">
+                                <div class="form-text">Nhập giá nhập vào để tính lãi cho chương trình giảm giá giải đấu</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="stock" class="form-label">Số Lượng Tồn Kho</label>
                                 <input type="number" class="form-control" id="stock" name="stock_quantity" min="0" value="0">
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="status" class="form-label">Trạng Thái</label>
@@ -503,6 +529,9 @@
                                     <option value="published">Xuất Bản</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Empty column for layout balance -->
                         </div>
                     </div>
                     <div class="mb-3">

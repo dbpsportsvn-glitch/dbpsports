@@ -69,3 +69,12 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // No auto-format for registration fee to avoid conflicts
+    // Users can type naturally without interference
+});
+</script>
+{% endblock %}

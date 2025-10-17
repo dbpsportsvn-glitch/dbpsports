@@ -40,6 +40,7 @@ urlpatterns = [
     path('tournament/<int:tournament_pk>/schedule/generate/', views.generate_schedule_view, name='generate_schedule'),
     path('tournament/<int:pk>/schedule/print/', views.tournament_schedule_print_view, name='tournament_schedule_print'),
     path('tournament/<int:pk>/toggle_follow/', views.toggle_follow_view, name='toggle_follow'),
+    path('tournament/<int:pk>/shop-settings/', views.tournament_shop_settings, name='tournament_shop_settings'),
     path('team/create_standalone/', views.create_standalone_team, name='create_standalone_team'),
     path('tournament/<int:tournament_pk>/create_team/', views.create_team, name='create_team'),    
     path('tournament/<int:tournament_pk>/media-dashboard/', views.media_dashboard, name='media_dashboard'),

@@ -643,16 +643,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Auto-format registration fee
-    const feeInput = document.getElementById('{{ form.registration_fee.id_for_label }}');
-    if (feeInput) {
-        feeInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/[^\d]/g, '');
-            if (value) {
-                e.target.value = parseInt(value).toLocaleString('vi-VN');
-            }
-        });
-    }
+    // No auto-format for registration fee to avoid conflicts
+    // Users can type naturally without interference
 });
 </script>
 {% endblock %}

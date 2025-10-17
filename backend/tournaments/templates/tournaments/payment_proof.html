@@ -197,11 +197,43 @@ body {
                         <div class="stats-box bg-white bg-opacity-10 rounded p-3">
                             <div class="row text-center">
                                 <div class="col-6">
-                                    <div class="h4 mb-1">{{ cart.items.count }}</div>
+                                    <div class="h4 mb-1" id="banner-product-count">
+                                        {% if tournament.organization %}
+                                            {# Giải của BTC: Chỉ hiển thị Organization Shop #}
+                                            {% if org_cart and org_cart.items.exists %}
+                                                {{ org_cart.items.count }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        {% else %}
+                                            {# Giải của Admin: Chỉ hiển thị Main Shop #}
+                                            {% if cart and cart.items.exists %}
+                                                {{ cart.items.count }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
                                     <small>Sản phẩm</small>
                                 </div>
                                 <div class="col-6">
-                                    <div class="h4 mb-1">{{ cart_total|floatformat:0 }}</div>
+                                    <div class="h4 mb-1" id="banner-total-amount">
+                                        {% if tournament.organization %}
+                                            {# Giải của BTC: Chỉ hiển thị Organization Shop #}
+                                            {% if org_cart and org_cart.items.exists %}
+                                                {{ org_cart_total|floatformat:0 }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        {% else %}
+                                            {# Giải của Admin: Chỉ hiển thị Main Shop #}
+                                            {% if cart and cart.items.exists %}
+                                                {{ cart_total|floatformat:0 }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
                                     <small>VNĐ</small>
                                 </div>
                             </div>
@@ -217,7 +249,6 @@ body {
         <!-- Left Column: Payment Steps -->
         <div class="col-lg-8">
             <!-- Step 1: Shop Integration -->
-            {% if registration.tournament.shop_discount_percentage > 0 %}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
@@ -225,6 +256,7 @@ body {
                     </h5>
                 </div>
                 <div class="card-body">
+                    {% if registration.tournament.shop_discount_percentage > 0 %}
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
                         <strong>Ưu đãi đặc biệt:</strong> Đặt hàng từ shop để được trừ 
@@ -234,6 +266,22 @@ body {
                             <i class="bi bi-lightbulb me-1"></i>
                             Shop sẽ mở trong tab mới để bạn không mất form thanh toán này.
                         </small>
+                        {% if not registration.tournament.organization %}
+                        <br><small class="text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <strong>Lưu ý:</strong> Chỉ sử dụng giỏ hàng của Shop Chính, không tính vào giỏ hàng Shop BTC.
+                        </small>
+                        {% endif %}
+                        {% if registration.tournament.organization %}
+                        <br><small class="text-success">
+                            <i class="bi bi-shop me-1"></i>
+                            <strong>Shop BTC:</strong> Bạn có thể mua từ shop của {{ registration.tournament.organization.name }} để được giảm giá!
+                        </small>
+                        <br><small class="text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <strong>Lưu ý:</strong> Chỉ sử dụng giỏ hàng của Shop BTC, không tính vào giỏ hàng Main Shop.
+                        </small>
+                        {% endif %}
                     </div>
                     
                     <div class="form-check mb-3">
@@ -244,58 +292,140 @@ body {
                     </div>
                     
                     <div id="shop-cart-section" class="shop-cart-section" style="display: none;">
-                        
-                        {% if cart.items.exists %}
-                        <div class="cart-summary mb-3 p-3 border rounded bg-light">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>Giỏ hàng của bạn</h6>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
-                                        <i class="bi bi-arrow-clockwise"></i>
-                                    </button>
-                                    <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-plus-circle me-1"></i>Thêm sản phẩm
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="cart-items">
-                                {% for item in cart.items.all %}
-                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
-                                    <div>
-                                        <small class="fw-bold">{{ item.product.name }}</small>
-                                        {% if item.size %}<br><small class="text-muted">Size: {{ item.size.name }}</small>{% endif %}
-                                        <br><small class="text-info">Lãi: {{ item.product.profit_amount|floatformat:0 }} VNĐ</small>
-                                        <br><small class="text-warning">Giá vốn: {{ item.product.cost_price|floatformat:0|default:"Chưa có" }} VNĐ</small>
-                                    </div>
-                                    <div class="text-end">
-                                        <small>{{ item.quantity }}x {{ item.product.current_price|floatformat:0 }} VNĐ</small>
+                        {% if registration.tournament.organization %}
+                            {# Giải của BTC: Chỉ hiển thị Organization Shop #}
+                            {% if org_cart and org_cart.items.exists %}
+                            <div class="cart-summary mb-3 p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0"><i class="bi bi-shop me-2"></i>Shop {{ registration.tournament.organization.name }}</h6>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=registration.tournament.organization.slug %}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-plus-circle me-1"></i>Thêm sản phẩm
+                                        </a>
                                     </div>
                                 </div>
-                                {% endfor %}
+                                <div class="cart-items">
+                                    {% for item in org_cart.items.all %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                        <div>
+                                            <small class="fw-bold">{{ item.product.name }}</small>
+                                            {% if item.size %}<br><small class="text-muted">Size: {{ item.size.name }}</small>{% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <small>{{ item.quantity }}x {{ item.product.current_price|floatformat:0 }} VNĐ</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Tổng giỏ hàng:</strong>
+                                    <strong class="text-primary">{{ org_cart_total|floatformat:0 }} VNĐ</strong>
+                                </div>
                             </div>
-                            <hr>
-                            <div class="d-flex justify-content-between">
-                                <strong>Tổng giỏ hàng:</strong>
-                                <strong class="text-primary">{{ cart_total|floatformat:0 }} VNĐ</strong>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-cart-x me-2"></i>
+                                Giỏ hàng shop BTC đang trống. 
+                                <a href="{% url 'shop:organization_shop:shop_home' org_slug=registration.tournament.organization.slug %}" target="_blank" class="btn btn-sm btn-warning ms-2">
+                                    <i class="bi bi-shop me-1"></i>Vào shop BTC
+                                </a>
+                                <br><small class="text-muted mt-2 d-block">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Sau khi thêm sản phẩm vào giỏ hàng, quay lại tab này và click nút "Làm mới" để cập nhật.
+                                </small>
                             </div>
-                        </div>
+                            {% endif %}
+                            
+                            {# Quảng cáo Main Shop cho giải của BTC #}
+                            <div class="alert alert-secondary mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Shop Chính:</strong> Bạn cũng có thể mua sản phẩm từ shop chính của DBP Sports.
+                                <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="bi bi-shop me-1"></i>Xem Shop Chính
+                                </a>
+                                <br><small class="text-muted">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    Lưu ý: Sản phẩm từ Shop Chính không được tính vào giảm giá lệ phí đăng ký.
+                                </small>
+                            </div>
                         {% else %}
-                        <div class="alert alert-warning">
-                            <i class="bi bi-cart-x me-2"></i>
-                            Giỏ hàng của bạn đang trống. 
-                            <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-warning ms-2">
-                                <i class="bi bi-shop me-1"></i>Vào shop chọn đồ
-                            </a>
-                            <br><small class="text-muted mt-2 d-block">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Sau khi thêm sản phẩm vào giỏ hàng, quay lại tab này và click nút "Làm mới" để cập nhật.
-                            </small>
-                        </div>
+                            {# Giải của Admin: Chỉ hiển thị Main Shop #}
+                            {% if cart and cart.items.exists %}
+                            <div class="cart-summary mb-3 p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0"><i class="bi bi-cart-check me-2"></i>Giỏ hàng của bạn</h6>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                        <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-plus-circle me-1"></i>Thêm sản phẩm
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="cart-items">
+                                    {% for item in cart.items.all %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                        <div>
+                                            <small class="fw-bold">{{ item.product.name }}</small>
+                                            {% if item.size %}<br><small class="text-muted">Size: {{ item.size.name }}</small>{% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <small>{{ item.quantity }}x {{ item.product.current_price|floatformat:0 }} VNĐ</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Tổng giỏ hàng:</strong>
+                                    <strong class="text-primary">{{ cart_total|floatformat:0 }} VNĐ</strong>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-cart-x me-2"></i>
+                                Giỏ hàng của bạn đang trống. 
+                                <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-sm btn-warning ms-2">
+                                    <i class="bi bi-shop me-1"></i>Vào shop chọn đồ
+                                </a>
+                                <br><small class="text-muted mt-2 d-block">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Sau khi thêm sản phẩm vào giỏ hàng, quay lại tab này và click nút "Làm mới" để cập nhật.
+                                </small>
+                            </div>
+                            {% endif %}
                         {% endif %}
                     </div>
+                    {% else %}
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Thông báo:</strong> Giải đấu này hiện tại chưa có chương trình giảm giá từ shop.
+                        {% if registration.tournament.organization %}
+                        <br><small class="text-muted">
+                            <i class="bi bi-shop me-1"></i>
+                            Tuy nhiên, bạn vẫn có thể mua sản phẩm từ shop của {{ registration.tournament.organization.name }} để ủng hộ BTC.
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-shop me-2"></i>Vào Shop Chính
+                        </a>
+                        {% if registration.tournament.organization %}
+                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=registration.tournament.organization.slug %}" target="_blank" class="btn btn-outline-success">
+                            <i class="bi bi-shop me-2"></i>Vào Shop BTC
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
 
             <!-- Step 2: Payment Information -->
             <div class="card shadow-sm mb-4">
@@ -374,9 +504,28 @@ body {
                             <span>{{ registration.tournament.registration_fee|floatformat:0 }} VNĐ</span>
                         </div>
                         
-                        <div id="discount-info" class="discount-info d-flex justify-content-between mb-2 text-success" style="display: none;">
-                            <span><i class="bi bi-tag me-1"></i>Trừ tiền lãi từ shop:</span>
-                            <span>-<span id="discount-amount">{{ discount_amount|floatformat:0 }}</span> VNĐ</span>
+                        <div id="discount-info" class="discount-info" style="display: none;">
+                            {% if registration.tournament.organization %}
+                                {# Giải của BTC: Chỉ hiển thị Organization Shop discount #}
+                                {% if org_discount > 0 %}
+                                <div class="d-flex justify-content-between mb-1 text-success">
+                                    <span><i class="bi bi-shop me-1"></i>Trừ tiền lãi từ Shop BTC:</span>
+                                    <span>-{{ org_discount|floatformat:0 }} VNĐ</span>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                {# Giải của Admin: Chỉ hiển thị Main Shop discount #}
+                                {% if main_discount > 0 %}
+                                <div class="d-flex justify-content-between mb-1 text-success">
+                                    <span><i class="bi bi-shop me-1"></i>Trừ tiền lãi từ Shop Chính:</span>
+                                    <span>-{{ main_discount|floatformat:0 }} VNĐ</span>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                            <div class="d-flex justify-content-between mb-2 text-success fw-bold">
+                                <span><i class="bi bi-tag me-1"></i>Tổng giảm giá:</span>
+                                <span>-<span id="discount-amount">{{ discount_amount|floatformat:0 }}</span> VNĐ</span>
+                            </div>
                         </div>
                         
                         <hr>
@@ -400,10 +549,23 @@ body {
                                 Shop sẽ mở trong tab mới để bạn không mất form này.
                             </small>
                         </div>
+                        {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="bi bi-shop me-2"></i>
+                            <small>
+                                <strong>Thông báo:</strong> Giải đấu này chưa có chương trình giảm giá từ shop.
+                                {% if registration.tournament.organization %}
+                                Tuy nhiên, bạn vẫn có thể mua sản phẩm từ shop BTC để ủng hộ ban tổ chức.
+                                {% endif %}
+                            </small>
+                        </div>
                         {% endif %}
                     </div>
                     
                     <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-info" onclick="location.reload()">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Làm mới trang
+                        </button>
                         <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Quay lại đội bóng
                         </a>
@@ -412,9 +574,34 @@ body {
                             <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
                                 <i class="bi bi-arrow-clockwise me-2"></i>Làm mới
                             </button>
-                            <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-outline-primary">
-                                <i class="bi bi-shop me-2"></i>Vào shop chọn đồ
-                            </a>
+                            {% if registration.tournament.organization %}
+                                {# Giải của BTC: Dẫn đến Organization Shop #}
+                                <a href="{% url 'shop:organization_shop:shop_home' org_slug=registration.tournament.organization.slug %}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="bi bi-shop me-2"></i>Vào shop BTC
+                                </a>
+                            {% else %}
+                                {# Giải của Admin: Dẫn đến Main Shop #}
+                                <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="bi bi-shop me-2"></i>Vào shop chọn đồ
+                                </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload()" title="Làm mới giỏ hàng">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Làm mới
+                            </button>
+                            {% if registration.tournament.organization %}
+                                {# Giải của BTC: Dẫn đến Organization Shop #}
+                                <a href="{% url 'shop:organization_shop:shop_home' org_slug=registration.tournament.organization.slug %}" target="_blank" class="btn btn-outline-success">
+                                    <i class="bi bi-shop me-2"></i>Vào shop BTC
+                                </a>
+                            {% else %}
+                                {# Giải của Admin: Dẫn đến Main Shop #}
+                                <a href="{% url 'shop:home' %}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="bi bi-shop me-2"></i>Vào Shop Chính
+                                </a>
+                            {% endif %}
                         </div>
                         {% endif %}
                         
@@ -442,13 +629,20 @@ body {
         const originalFee = parseFloat('{{ registration.tournament.registration_fee|default:0 }}') || 0;
         const currentDiscountAmount = parseFloat('{{ discount_amount|default:0 }}') || 0;
         const currentFinalFee = parseFloat('{{ final_fee|default:0 }}') || 0;
+        const mainDiscount = parseFloat('{{ main_discount|default:0 }}') || 0;
+        const orgDiscount = parseFloat('{{ org_discount|default:0 }}') || 0;
+        const cartTotal = parseFloat('{{ cart_total|default:0 }}') || 0;
+        const orgCartTotal = parseFloat('{{ org_cart_total|default:0 }}') || 0;
         
         console.log('📊 Data values:');
         console.log('Original fee:', originalFee);
-        console.log('Discount amount:', currentDiscountAmount);
+        console.log('Main discount:', mainDiscount);
+        console.log('Org discount:', orgDiscount);
+        console.log('Total discount amount:', currentDiscountAmount);
         console.log('Final fee:', currentFinalFee);
         console.log('Shop discount percentage:', parseFloat('{{ registration.tournament.shop_discount_percentage|default:0 }}') || 0);
-        console.log('Cart total:', parseFloat('{{ cart_total|default:0 }}') || 0);
+        console.log('Main cart total:', cartTotal);
+        console.log('Org cart total:', orgCartTotal);
         
         // Storage key
         const storageKey = 'shop_discount_{{ registration.pk|default:0 }}';
@@ -477,6 +671,34 @@ body {
         
         console.log('✅ All elements found');
         
+        // Update banner with cart totals
+        function updateBanner() {
+            const bannerProductCount = document.getElementById('banner-product-count');
+            const bannerTotalAmount = document.getElementById('banner-total-amount');
+            
+            if (bannerProductCount && bannerTotalAmount) {
+                {% if registration.tournament.organization %}
+                    {# Giải của BTC: Chỉ hiển thị Organization Shop #}
+                    const orgCartCount = parseFloat('{{ org_cart.items.count|default:0 }}') || 0;
+                    const totalProducts = orgCartCount;
+                    const totalAmount = orgCartTotal;
+                {% else %}
+                    {# Giải của Admin: Chỉ hiển thị Main Shop #}
+                    const mainCartCount = parseFloat('{{ cart.items.count|default:0 }}') || 0;
+                    const totalProducts = mainCartCount;
+                    const totalAmount = cartTotal;
+                {% endif %}
+                
+                bannerProductCount.textContent = totalProducts;
+                bannerTotalAmount.textContent = totalAmount.toLocaleString();
+                
+                console.log('📊 Banner updated:', { 
+                    totalProducts, 
+                    totalAmount 
+                });
+            }
+        }
+        
         // Update display based on checkbox state
         function updateDisplay() {
             const isChecked = checkbox.checked;
@@ -489,29 +711,38 @@ body {
             
             // Update UI
             if (isChecked) {
-                // Check if cart has items
-                if ((parseFloat('{{ cart_total|default:0 }}') || 0) > 0 && currentDiscountAmount > 0) {
-                    // Show discount
-                    if (shopSection) shopSection.style.display = 'block';
+                // Always show shop section when checkbox is checked
+                if (shopSection) shopSection.style.display = 'block';
+                
+                // Update banner with cart totals
+                updateBanner();
+                
+                // Check if there's any discount available
+                const hasAnyDiscount = currentDiscountAmount > 0;
+                
+                if (hasAnyDiscount) {
+                    // Show discount info
                     if (discountInfo) discountInfo.style.display = 'block';
                     if (discountAmount) discountAmount.textContent = currentDiscountAmount.toLocaleString();
                     if (finalAmount) finalAmount.textContent = currentFinalFee.toLocaleString();
+                    
+                    console.log('✅ Showing discount:', currentDiscountAmount);
                 } else {
-                    // Cart is empty, show warning
-                    if (shopSection) shopSection.style.display = 'block';
+                    // Hide discount info but keep shop section visible
                     if (discountInfo) discountInfo.style.display = 'none';
                     if (discountAmount) discountAmount.textContent = '0';
                     if (finalAmount) finalAmount.textContent = originalFee.toLocaleString();
                     
-                    // Show warning message
-                    showToast('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm để được giảm giá!', 'warning');
+                    console.log('⚠️ No discount available');
                 }
             } else {
-                // Hide discount
+                // Hide everything when checkbox is unchecked
                 if (shopSection) shopSection.style.display = 'none';
                 if (discountInfo) discountInfo.style.display = 'none';
                 if (discountAmount) discountAmount.textContent = '0';
                 if (finalAmount) finalAmount.textContent = originalFee.toLocaleString();
+                
+                console.log('❌ Checkbox unchecked, hiding all');
             }
             
             console.log('🔍 Checkbox state after updateDisplay:', checkbox.checked);

@@ -117,6 +117,7 @@ from .forms import (
     GalleryURLForm,
     PaymentProofForm,
     PlayerCreationForm,
+    TournamentShopSettingsForm,
     PlayerTransferForm,
     RevenueItemForm,
     StaffPaymentForm,
@@ -892,13 +893,34 @@ def team_payment(request, pk):
     if request.user != team.captain:
         return redirect('home')
 
-    # Lấy cart của user
-    cart, created = Cart.objects.get_or_create(user=request.user)
+    # Tách biệt logic theo loại giải đấu
+    cart = None
+    org_cart = None
+    cart_total = 0
+    org_cart_total = 0
+    main_discount = 0
+    org_discount = 0
+    discount_amount = 0
+    final_fee = tournament.registration_fee
     
-    # Tính toán giảm giá
-    cart_total = cart.total_price
-    discount_amount = tournament.calculate_shop_discount(cart.items.all())
-    final_fee = tournament.get_final_registration_fee(cart.items.all())
+    if tournament.organization:
+        # Giải của BTC: Chỉ sử dụng Organization Shop
+        from shop.organization_models import OrganizationCart
+        try:
+            org_cart = OrganizationCart.objects.get(user=request.user, organization=tournament.organization)
+            org_cart_total = org_cart.total_price
+            org_discount = tournament.calculate_organization_shop_discount(org_cart.items.all())
+            discount_amount = org_discount
+            final_fee = tournament.get_final_registration_fee(None, org_cart.items.all())
+        except OrganizationCart.DoesNotExist:
+            pass
+    else:
+        # Giải của Admin: Chỉ sử dụng Main Shop
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart_total = cart.total_price
+        main_discount = tournament.calculate_shop_discount(cart.items.all())
+        discount_amount = main_discount
+        final_fee = tournament.get_final_registration_fee(cart.items.all(), None)
 
     if request.method == 'POST':
         form = PaymentProofForm(request.POST, request.FILES, instance=registration)
@@ -909,10 +931,18 @@ def team_payment(request, pk):
             # Xử lý tích hợp shop
             use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
             if use_shop_discount and tournament.shop_discount_percentage > 0:
-                if cart_total > 0:
-                    messages.info(request, f'Bạn đã sử dụng giảm giá từ shop ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                if tournament.organization:
+                    # Giải của BTC: Kiểm tra Organization Shop
+                    if org_cart_total > 0:
+                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop BTC ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                    else:
+                        messages.warning(request, 'Giỏ hàng Shop BTC của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
                 else:
-                    messages.warning(request, 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
+                    # Giải của Admin: Kiểm tra Main Shop
+                    if cart_total > 0:
+                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop Chính ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                    else:
+                        messages.warning(request, 'Giỏ hàng Shop Chính của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
             
             reg.save()
 
@@ -943,10 +973,22 @@ def team_payment(request, pk):
         'registration': registration,
         'cart': cart,
         'cart_total': cart_total,
+        'org_cart': org_cart,
+        'org_cart_total': org_cart_total,
+        'main_discount': main_discount,
+        'org_discount': org_discount,
         'discount_amount': discount_amount,
         'final_fee': final_fee,
     }
-    return render(request, 'tournaments/payment_proof.html', context)
+    
+    response = render(request, 'tournaments/payment_proof.html', context)
+    
+    # Add cache-busting headers to prevent browser caching
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
 
 
 def archive_view(request):
@@ -4029,6 +4071,39 @@ def calculate_shop_discount(request, tournament_pk):
 
 
 @login_required
+def tournament_shop_settings(request, pk):
+    """Trang cài đặt shop discount cho BTC"""
+    tournament = get_object_or_404(Tournament, pk=pk)
+    
+    # Kiểm tra quyền - chỉ BTC của tournament mới được chỉnh sửa
+    if not tournament.organization:
+        messages.error(request, 'Giải đấu này không thuộc về ban tổ chức nào.')
+        return redirect('tournament_detail', pk=tournament.pk)
+    
+    if not tournament.organization.members.filter(pk=request.user.pk).exists():
+        messages.error(request, 'Bạn không có quyền chỉnh sửa cài đặt shop của giải đấu này.')
+        return redirect('tournament_detail', pk=tournament.pk)
+    
+    if request.method == 'POST':
+        form = TournamentShopSettingsForm(request.POST, instance=tournament)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Đã cập nhật cài đặt shop discount cho giải đấu "{tournament.name}".')
+            return redirect('tournament_detail', pk=tournament.pk)
+        else:
+            messages.error(request, 'Có lỗi xảy ra khi cập nhật cài đặt.')
+    else:
+        form = TournamentShopSettingsForm(instance=tournament)
+    
+    context = {
+        'tournament': tournament,
+        'form': form,
+        'organization': tournament.organization,
+    }
+    return render(request, 'tournaments/tournament_shop_settings.html', context)
+
+
+@login_required
 def payment_with_shop(request, pk):
     """Payment page với tích hợp shop cart"""
     registration = get_object_or_404(TeamRegistration, pk=pk)
@@ -4055,10 +4130,18 @@ def payment_with_shop(request, pk):
             # Xử lý tích hợp shop
             use_shop_discount = form.cleaned_data.get('use_shop_discount', False)
             if use_shop_discount and tournament.shop_discount_percentage > 0:
-                if cart_total > 0:
-                    messages.info(request, f'Bạn đã sử dụng giảm giá từ shop ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                if tournament.organization:
+                    # Giải của BTC: Kiểm tra Organization Shop
+                    if org_cart_total > 0:
+                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop BTC ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                    else:
+                        messages.warning(request, 'Giỏ hàng Shop BTC của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
                 else:
-                    messages.warning(request, 'Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
+                    # Giải của Admin: Kiểm tra Main Shop
+                    if cart_total > 0:
+                        messages.info(request, f'Bạn đã sử dụng giảm giá từ Shop Chính ({tournament.shop_discount_percentage}%). Đơn hàng shop sẽ được xử lý riêng.')
+                    else:
+                        messages.warning(request, 'Giỏ hàng Shop Chính của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng để được giảm giá.')
             
             reg.save()
 

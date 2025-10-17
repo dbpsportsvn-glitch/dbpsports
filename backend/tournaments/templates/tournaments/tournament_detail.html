@@ -886,6 +886,13 @@
                     <span>Xếp lịch thi đấu {% if tournament.format == 'LEAGUE' %}League{% else %}Cúp{% endif %}</span>
                 </a>
                 {% endif %}
+
+                {% if tournament.organization and is_organizer %}
+                <a href="{% url 'tournament_shop_settings' pk=tournament.pk %}" class="admin-action-btn shop-btn">
+                    <i class="bi bi-shop"></i>
+                    <span>Cài đặt Shop Discount</span>
+                </a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -5349,6 +5356,10 @@
 
     .schedule-btn {
         background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .shop-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
     }
 
     /* Responsive Overview */

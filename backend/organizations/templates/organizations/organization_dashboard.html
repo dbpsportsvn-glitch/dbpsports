@@ -369,6 +369,15 @@
                         </a>
                     </div>
                     <div class="card-body p-4">
+                        <!-- Shop Discount Info Alert -->
+                        {% if organization.shop_settings %}
+                        <div class="alert alert-info alert-dismissible fade show mb-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Tính năng Shop Discount:</strong> Bạn có thể cài đặt phần trăm giảm giá từ shop cho các giải đấu để khuyến khích đội tham gia mua sản phẩm và giảm chi phí đăng ký.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+                        
                         {% if tournaments %}
                             <div class="row">
                                 {% for tournament in tournaments %}
@@ -394,6 +403,11 @@
                                                     <a href="{% url 'tournament_detail' pk=tournament.pk %}" class="btn btn-outline-secondary btn-sm">
                                                         <i class="bi bi-eye-fill"></i> Xem trang giải
                                                     </a>
+                                                    {% if tournament.get_organization_shop_settings %}
+                                                    <a href="{% url 'tournament_shop_settings' pk=tournament.pk %}" class="btn btn-success btn-sm" title="Cài đặt phần trăm giảm giá từ shop cho giải đấu này">
+                                                        <i class="bi bi-shop"></i> Cài đặt Shop
+                                                    </a>
+                                                    {% endif %}
                                                     <form method="post" action="{% url 'organizations:delete_tournament' pk=tournament.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giải đấu \'{{ tournament.name }}\' và toàn bộ dữ liệu liên quan không?');" class="mb-0">
                                                         {% csrf_token %}
                                                         <button type="submit" class="btn btn-danger btn-sm">

@@ -943,7 +943,7 @@ class OrganizationOrderAdmin(admin.ModelAdmin):
             'fields': ('shipping_address', 'shipping_city', 'shipping_district')
         }),
         ('Thông tin thanh toán', {
-            'fields': ('subtotal', 'shipping_fee', 'total_amount', 'payment_proof')
+            'fields': ('subtotal', 'discount_amount', 'shipping_fee', 'total_amount', 'payment_proof')
         }),
         ('Ghi chú', {
             'fields': ('notes',)

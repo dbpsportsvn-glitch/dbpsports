@@ -443,21 +443,21 @@
                     <span>{{ cart.subtotal|floatformat:0 }}đ</span>
                 </div>
                 
-                {% if cart.discount_amount > 0 %}
+                {% if discount_amount > 0 %}
                 <div class="summary-row">
-                    <span>Giảm giá:</span>
-                    <span class="text-success">-{{ cart.discount_amount|floatformat:0 }}đ</span>
+                    <span>Giảm giá ({{ tournament.shop_discount_percentage }}%):</span>
+                    <span class="text-success">-{{ discount_amount|floatformat:0 }}đ</span>
                 </div>
                 {% endif %}
                 
                 <div class="summary-row">
                     <span>Phí vận chuyển:</span>
-                    <span>{{ cart.shipping_fee|floatformat:0 }}đ</span>
+                    <span>{{ shop_settings.shipping_fee|floatformat:0 }}đ</span>
                 </div>
                 
                 <div class="summary-row">
                     <span>Tổng cộng:</span>
-                    <span>{{ cart.total|floatformat:0 }}đ</span>
+                    <span>{{ final_subtotal|add:shop_settings.shipping_fee|floatformat:0 }}đ</span>
                 </div>
                 
                 <div class="mt-4">
@@ -465,6 +465,16 @@
                         <i class="fas fa-credit-card me-2"></i>Thanh Toán
                     </a>
                 </div>
+                
+                {% if eligible_for_discount %}
+                <div class="mt-3 text-center">
+                    <div class="alert alert-success alert-sm">
+                        <i class="fas fa-gift me-1"></i>
+                        <strong>Bạn được giảm giá {{ tournament.shop_discount_percentage }}%</strong><br>
+                        <small>Vì đội của bạn đã đóng lệ phí giải đấu</small>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <div class="mt-3 text-center">
                     <small class="text-muted">
