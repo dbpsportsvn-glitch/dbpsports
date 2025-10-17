@@ -91,6 +91,7 @@ TEMPLATES = [
                 "tournaments.context_processors.unread_notifications_count",
                 "tournaments.context_processors.user_cart_context",
                 "users.context_processors.user_roles_context",
+                "shop.context_processors.organization_shop_context",
             ],
         },
     },

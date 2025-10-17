@@ -109,6 +109,27 @@
         object-fit: cover;
     }
     
+    .cart-count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        min-width: 60px;
+        justify-content: center;
+    }
+    
+    .cart-count-badge:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
+    
     .cart-item-card {
         border: none;
         border-radius: 12px;
@@ -336,9 +357,16 @@
                 </nav>
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light">
-                    <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn btn-light">
+                        <i class="fas fa-shopping-bag me-2"></i>Tiếp Tục Mua
+                    </a>
+                    {% if org_cart_count > 0 %}
+                    <span class="cart-count-badge">
+                        <i class="fas fa-shopping-cart me-1"></i>{{ org_cart_count }}
+                    </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -455,6 +483,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'shop/organization/js/cart-count-updater.js' %}"></script>
 <script>
     // Update quantity
     function updateQuantity(itemId, newQuantity) {
@@ -479,6 +508,9 @@
             if (data.success) {
                 // Update the input value
                 document.getElementById('quantity-' + itemId).value = newQuantity;
+                
+                // Update cart count
+                updateCartCount(data.cart_total);
                 
                 // Reload page to update totals
                 location.reload();
@@ -511,6 +543,9 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Update cart count
+                updateCartCount(data.cart_total);
+                
                 // Remove the item from DOM
                 const itemElement = document.querySelector(`[onclick="removeItem(${itemId})"]`).closest('.cart-item-card');
                 itemElement.remove();

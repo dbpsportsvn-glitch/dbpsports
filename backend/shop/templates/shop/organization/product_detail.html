@@ -109,6 +109,27 @@
         object-fit: cover;
     }
     
+    .cart-count-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        min-width: 60px;
+        justify-content: center;
+    }
+    
+    .cart-count-badge:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
+    
     .product-detail-card {
         border: none;
         border-radius: 12px;
@@ -376,9 +397,16 @@
                 </nav>
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn btn-light">
-                    <i class="fas fa-shopping-cart me-2"></i>Giỏ Hàng
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn btn-light">
+                        <i class="fas fa-shopping-cart me-2"></i>Giỏ Hàng
+                    </a>
+                    {% if org_cart_count > 0 %}
+                    <span class="cart-count-badge">
+                        <i class="fas fa-shopping-cart me-1"></i>{{ org_cart_count }}
+                    </span>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -559,6 +587,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'shop/organization/js/cart-count-updater.js' %}"></script>
 {% csrf_token %}
 <script>
     let selectedSize = null;
@@ -658,10 +687,7 @@
                 }, 2000);
                 
                 // Update cart count if exists
-                const cartCount = document.querySelector('.cart-count');
-                if (cartCount) {
-                    cartCount.textContent = data.cart_total;
-                }
+                updateCartCount(data.cart_total);
             } else {
                 alert(data.error || 'Có lỗi xảy ra');
             }

@@ -466,6 +466,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'shop/organization/js/cart-count-updater.js' %}"></script>
 {% csrf_token %}
 <script>
     // Auto-submit form when sort changes
@@ -497,6 +498,8 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Update cart count before redirect
+                updateCartCount(data.cart_total);
                 // Redirect to checkout immediately
                 window.location.href = '{% url "shop:organization_shop:checkout" org_slug=organization.slug %}';
             } else {

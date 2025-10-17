@@ -316,6 +316,7 @@ def organization_cart_view(request, org_slug):
         'shop_settings': shop_settings,
         'cart': cart,
         'cart_items': cart_items,
+        'cart_count': cart.total_items,
     }
     
     return render(request, 'shop/organization/cart.html', context)
@@ -419,7 +420,8 @@ def organization_update_cart_item(request, org_slug, item_id):
             'success': True, 
             'message': 'Đã cập nhật số lượng',
             'item_total': cart_item.total_price,
-            'cart_total': cart_item.cart.total_price
+            'cart_total': cart_item.cart.total_items,
+            'cart_price': cart_item.cart.total_price
         })
         
     except Exception as e:

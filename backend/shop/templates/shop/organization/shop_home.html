@@ -696,10 +696,18 @@
         </div>
         
         <div class="text-center mt-4">
-            <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn-modern">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Bắt Đầu Mua Sắm</span>
-            </a>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'shop:organization_shop:product_list' org_slug=organization.slug %}" class="btn-modern">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Bắt Đầu Mua Sắm</span>
+                </a>
+                {% if org_cart_count > 0 %}
+                <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn-modern cart-count-btn">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Giỏ Hàng ({{ org_cart_count }})</span>
+                </a>
+                {% endif %}
+            </div>
         </div>
     </section>
     {% endif %}

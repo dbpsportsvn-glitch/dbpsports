@@ -115,9 +115,16 @@
                     {% endif %}
                 </div>
                 <div class="col-md-2 text-end">
-                    <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-sm">
-                        <i class="fas fa-home me-1"></i>Trang Chủ
-                    </a>
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-home me-1"></i>Trang Chủ
+                        </a>
+                        {% if org_cart_count > 0 %}
+                        <a href="{% url 'shop:organization_shop:cart' org_slug=organization.slug %}" class="btn btn-light btn-sm cart-count-btn">
+                            <i class="fas fa-shopping-cart me-1"></i>{{ org_cart_count }}
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
