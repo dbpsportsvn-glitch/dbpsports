@@ -1088,11 +1088,13 @@ Vui lòng liên hệ Admin để được hỗ trợ.
                         for member in btc_members:
                             if member.email:
                                 # Render template riêng cho từng member
+                                from django.utils import timezone
                                 member_html_content = render_to_string('shop/organization/emails/shop_locked.html', {
                                     'organization': shop_settings.organization,
                                     'user': member,
                                     'reason': shop_settings.shop_lock_reason,
                                     'dashboard_url': f'http://127.0.0.1:8000/orgs/{shop_settings.organization.slug}/',
+                                    'lock_time': timezone.now(),
                                 })
                                 
                                 email = EmailMultiAlternatives(
@@ -1139,10 +1141,12 @@ Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để t
                         for member in btc_members:
                             if member.email:
                                 # Render template riêng cho từng member
+                                from django.utils import timezone
                                 member_html_content = render_to_string('shop/organization/emails/shop_unlocked.html', {
                                     'organization': shop_settings.organization,
                                     'user': member,
                                     'shop_url': f'http://127.0.0.1:8000/shop/org/{shop_settings.organization.slug}/',
+                                    'unlock_time': timezone.now(),
                                 })
                                 
                                 email = EmailMultiAlternatives(
@@ -1193,10 +1197,12 @@ Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để t
                         for member in btc_members:
                             if member.email:
                                 # Render template riêng cho từng member
+                                from django.utils import timezone
                                 member_html_content = render_to_string('shop/organization/emails/shop_unlocked.html', {
                                     'organization': shop_settings.organization,
                                     'user': member,
                                     'shop_url': f'http://127.0.0.1:8000/shop/org/{shop_settings.organization.slug}/',
+                                    'unlock_time': timezone.now(),
                                 })
                                 
                                 email = EmailMultiAlternatives(
