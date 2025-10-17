@@ -16,7 +16,7 @@ ROLES_DATA = [
     },
     {
         "id": "COMMENTATOR", "name": "Bình Luận Viên", "icon": "bi-mic-fill",
-        "description": "Được các BTC mời tham gia bình luận, truy cập phòng điều khiển livestream độc quyền.",
+        "description": "Được các BTC mời tham gia bình luận, truy cập phòng điều khiển livestream.",
         "order": 40
     },
     {
