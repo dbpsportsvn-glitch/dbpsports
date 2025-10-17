@@ -44,4 +44,7 @@ urlpatterns = [
     
     # Organization Shop URLs
     path('org/', include('shop.organization_urls', namespace='organization_shop')),
+    
+    # Organization Shops Search
+    path('btc-shops/', views.organization_shops_search, name='btc_shops_search'),
 ]

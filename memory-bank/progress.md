@@ -97,7 +97,6 @@
   - Tối ưu hóa performance cho các trang có nhiều dữ liệu
   - Thêm tính năng export/import dữ liệu
   - Tích hợp payment gateway thực tế
-  - Hoàn thiện module Shop
   - Thêm analytics và reporting
 
 - **Các vấn đề đã biết:**
@@ -113,3 +112,5 @@
   - **Edit/Delete Functions:** Implement đầy đủ chức năng edit/delete cho cả danh mục và sản phẩm với 4 templates mới, 4 view functions với validation đầy đủ, URL routing hoàn chỉnh, và giao diện xác nhận xóa chuyên nghiệp.
   - **Shop Settings Upgrade:** Nâng cấp giao diện cài đặt shop với đầy đủ các trường thông tin khoa học và chuyên nghiệp. Thêm JavaScript features: auto-save localStorage, format tiền tệ/phone/bank account, preview ảnh, validation real-time.
   - **Image Upload Fix:** Khắc phục thành công lỗi upload ảnh bằng cách sửa template từ `product.image` thành `product.main_image` để khớp với field name trong model. Upload ảnh hiện hoạt động hoàn hảo.
+  - **Banner Upload System Optimization:** Hoàn thiện hệ thống upload banner với 5 cải tiến lớn: (1) Dọn dẹp code debug không cần thiết - xóa views debug_banner_upload, test_csrf và templates, loại bỏ @csrf_exempt không an toàn; (2) Thêm chức năng tự động resize và nén ảnh với thuật toán Cover thông minh - resize về 1200x300px, crop từ center, nén xuống dưới 2MB với quality adaptive; (3) Cải thiện UX với gợi ý kích thước rõ ràng, preview ảnh, validation file type và size; (4) Sửa lỗi góc banner không có border-radius và ảnh bị repeat/tile - thêm border-radius 15px, box-shadow đẹp, CSS !important để ngăn chặn override; (5) Khắc phục hoàn toàn vấn đề ảnh bị cắt và nối sai phần - thuật toán Cover đảm bảo fill đầy banner, không bị repeat hay tile. Hệ thống banner giờ hoạt động hoàn hảo với giao diện đẹp và tính năng chuyên nghiệp.
+  - **Trang Tim Kiem Shop BTC:** Hoan thanh tao trang tim kiem shop BTC voi giao dien hien dai dong bo voi trang tim viec. Bao gom: Hero section voi gradient tim va thong ke tong quan, Bo loc thong minh (tim kiem theo ten, khu vuc, giai dau), Shop cards dep mat voi thong tin chi tiet, Sidebar "Shop Noi Bat" hien thi top shops co nhieu san pham nhat, Logic tim kiem thong minh voi toi uu database queries, Responsive design cho moi thiet bi. Cap nhat menu Shop thanh dropdown voi 2 muc: "Shop Chinh" (highlight voi gradient tim va mau vang khi hover) va "Shop BTC". Sua loi template organization shop khi khong co logo bang cach them placeholder dep mat voi icon shop va styling dong nhat.

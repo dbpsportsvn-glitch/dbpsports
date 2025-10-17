@@ -1080,3 +1080,102 @@ def shop_dashboard(request):
     }
     
     return render(request, 'shop/admin/dashboard.html', context)
+
+
+def organization_shops_search(request):
+    """
+    Trang tìm kiếm và hiển thị tất cả shop BTC trên hệ thống
+    """
+    from organizations.models import Organization
+    from shop.organization_models import OrganizationShopSettings
+    
+    # Lấy các filter parameters
+    region_filter = request.GET.get('region', '')
+    search_query = request.GET.get('search', '')
+    tournament_filter = request.GET.get('tournament', '')
+    
+    # Base queryset cho organizations có shop
+    organizations = Organization.objects.filter(
+        status=Organization.Status.ACTIVE,
+        shop_settings__is_active=True
+    ).select_related('shop_settings').prefetch_related('tournaments', 'shop_products', 'shop_orders')
+    
+    # Apply filters
+    if region_filter:
+        organizations = organizations.filter(
+            Q(tournaments__region=region_filter) | 
+            Q(shop_settings__contact_address__icontains=region_filter)
+        ).distinct()
+    
+    if tournament_filter:
+        organizations = organizations.filter(
+            tournaments__name__icontains=tournament_filter
+        ).distinct()
+    
+    if search_query:
+        organizations = organizations.filter(
+            Q(name__icontains=search_query) |
+            Q(shop_settings__shop_name__icontains=search_query) |
+            Q(shop_settings__shop_description__icontains=search_query) |
+            Q(tournaments__name__icontains=search_query) |
+            Q(shop_settings__contact_address__icontains=search_query)
+        ).distinct()
+    
+    # Lấy thống kê tổng quan
+    total_shops = Organization.objects.filter(
+        status=Organization.Status.ACTIVE,
+        shop_settings__is_active=True
+    ).count()
+    
+    # Tối ưu hóa query cho thống kê
+    shop_settings_with_stats = OrganizationShopSettings.objects.filter(
+        is_active=True
+    ).select_related('organization')
+    
+    total_products = 0
+    total_orders = 0
+    
+    for shop_setting in shop_settings_with_stats:
+        total_products += shop_setting.organization.shop_products.filter(status='published').count()
+        total_orders += shop_setting.organization.shop_orders.count()
+    
+    # Lấy top shops có nhiều sản phẩm nhất (tối ưu hóa)
+    top_shops = []
+    for org in organizations[:15]:  # Tăng limit để có nhiều lựa chọn hơn
+        product_count = org.shop_products.filter(status='published').count()
+        order_count = org.shop_orders.count()
+        if product_count > 0:  # Chỉ hiển thị shop có sản phẩm
+            top_shops.append({
+                'organization': org,
+                'product_count': product_count,
+                'order_count': order_count,
+                'shop_settings': org.shop_settings
+            })
+    
+    # Sắp xếp theo số sản phẩm
+    top_shops.sort(key=lambda x: x['product_count'], reverse=True)
+    top_shops = top_shops[:8]  # Top 8 shops
+    
+    # Lấy tất cả regions từ tournaments để filter
+    from tournaments.models import Tournament
+    all_regions = Tournament.Region.choices
+    
+    # Lấy danh sách tournaments để filter (tối ưu hóa)
+    tournaments = Tournament.objects.filter(
+        organization__shop_settings__is_active=True
+    ).values_list('name', flat=True).distinct().order_by('name')[:20]  # Limit để tránh dropdown quá dài
+    
+    context = {
+        'organizations': organizations,
+        'top_shops': top_shops,
+        'all_regions': all_regions,
+        'tournaments': tournaments,
+        'current_region': region_filter,
+        'current_search': search_query,
+        'current_tournament': tournament_filter,
+        'total_shops': total_shops,
+        'total_products': total_products,
+        'total_orders': total_orders,
+    }
+    
+    return render(request, 'shop/organization_shops_search.html', context)

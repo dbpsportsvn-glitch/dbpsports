@@ -610,10 +610,15 @@
           </li>
           {% endwith %}
 
-          <li class="nav-item">
-            <a class="nav-link text-light {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}">
+          <!-- Shop Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-light {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
               <i class="bi bi-shop me-1"></i>Shop
             </a>
+            <ul class="dropdown-menu" style="background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 8px 4px; overflow: hidden;">
+              <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'shop:home' %}active{% endif %}" href="{% url 'shop:home' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-weight: 600; border-radius: 8px; margin: 2px 4px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s ease; overflow: hidden;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'; this.style.setProperty('color', '#FFD700', 'important'); this.querySelector('i').style.setProperty('color', '#FFD700', 'important')" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'; this.style.setProperty('color', 'white', 'important'); this.querySelector('i').style.setProperty('color', 'white', 'important')"><i class="bi bi-star-fill me-2"></i>Shop Chính</a></li>
+              <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'shop:btc_shops_search' %}active{% endif %}" href="{% url 'shop:btc_shops_search' %}"><i class="bi bi-building me-2"></i>Shop BTC</a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link text-light {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}">
@@ -831,7 +836,16 @@
       </div>
       {% endwith %}
 
-      <a class="nav-link {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'shop:home' %}"><i class="bi bi-shop"></i> Shop</a>
+      <!-- Shop Dropdown Mobile -->
+      <div class="dropdown">
+        <a class="nav-link dropdown-toggle {% if 'shop' in request.resolver_match.namespace %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown">
+          <i class="bi bi-shop"></i> Shop
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item {% if request.resolver_match.url_name == 'shop:home' %}active{% endif %}" href="{% url 'shop:home' %}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; border-radius: 8px; margin: 2px 4px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s ease; overflow: hidden;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'; this.style.setProperty('color', '#FFD700', 'important'); this.querySelector('i').style.setProperty('color', '#FFD700', 'important')" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'; this.style.setProperty('color', 'white', 'important'); this.querySelector('i').style.setProperty('color', 'white', 'important')"><i class="bi bi-star-fill me-2"></i>Shop Chính</a></li>
+          <li><a class="dropdown-item {% if request.resolver_match.url_name == 'shop:btc_shops_search' %}active{% endif %}" href="{% url 'shop:btc_shops_search' %}"><i class="bi bi-building me-2"></i>Shop BTC</a></li>
+        </ul>
+      </div>
       <a class="nav-link {% if request.resolver_match.url_name == 'job_market' %}active{% endif %}" href="{% url 'job_market' %}"><i class="bi bi-briefcase"></i> Việc làm</a>
 
       {% if user.is_authenticated %}
