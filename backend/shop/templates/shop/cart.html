@@ -622,6 +622,27 @@
 
 {% block extra_js %}
 <script>
+// Notification function - must be defined first
+function showNotification(message, type) {
+  // Tạo thông báo
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Tự động ẩn sau 3 giây
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
 // Check for out of stock products and disable checkout
 document.addEventListener('DOMContentLoaded', function() {
   const outOfStockItems = document.querySelectorAll('.stock-status.out-of-stock');
@@ -824,26 +845,6 @@ function removeItem(itemId) {
       allInputs.forEach(element => element.disabled = false);
     }
   });
-}
-
-function showNotification(message, type) {
-  // Tạo thông báo
-  const notification = document.createElement('div');
-  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-  notification.innerHTML = `
-    ${message}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  // Tự động ẩn sau 3 giây
-  setTimeout(() => {
-    if (notification.parentNode) {
-      notification.remove();
-    }
-  }, 3000);
 }
 
 // Event delegation for quantity controls
