@@ -5,6 +5,47 @@
 
 {% block extra_css %}
 <style>
+    /* BTC Back Button Container */
+    .btc-back-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    
+    /* BTC Back Button */
+    .btc-back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btc-back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btc-back-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .btc-back-btn span {
+        font-size: 0.9rem;
+    }
+    
     .org-shop-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -154,10 +195,41 @@
         margin-bottom: 1rem;
         opacity: 0.5;
     }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .btc-back-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .btc-back-btn {
+            padding: 0.6rem 1rem;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .btc-back-btn span {
+            font-size: 0.8rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- BTC Back Button -->
+{% if user.is_authenticated %}
+    {% if is_btc_member %}
+    <div class="btc-back-button">
+        <a href="{% url 'organizations:dashboard' %}" class="btc-back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Quay về BTC</span>
+        </a>
+    </div>
+    {% endif %}
+{% endif %}
+
 <!-- Organization Shop Header -->
 <div class="org-shop-header">
     <div class="container">

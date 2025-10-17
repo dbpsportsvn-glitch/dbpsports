@@ -138,6 +138,7 @@ def organization_shop_dashboard(request, org_slug):
         'monthly_stats': monthly_stats,
         'payment_stats': payment_stats,
         'top_categories': top_categories,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/dashboard.html', context)

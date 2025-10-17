@@ -713,6 +713,7 @@ def manage_shop(request, org_slug):
         'total_orders': total_orders,
         'total_revenue': total_revenue,
         'recent_orders': recent_orders,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/manage_shop.html', context)
@@ -831,6 +832,7 @@ def manage_products(request, org_slug):
         'published_products': published_products,
         'draft_products': draft_products,
         'total_categories': total_categories,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/manage_products.html', context)
@@ -920,6 +922,7 @@ def manage_orders(request, org_slug):
         'pending_orders': pending_orders,
         'delivered_orders': delivered_orders,
         'total_revenue': total_revenue,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/manage_orders.html', context)
@@ -979,6 +982,7 @@ def manage_categories(request, org_slug):
         'total_categories': total_categories,
         'active_categories': active_categories,
         'total_products': total_products,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/manage_categories.html', context)
@@ -1040,6 +1044,7 @@ def shop_settings(request, org_slug):
     context = {
         'organization': organization,
         'shop_settings': shop_settings,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/shop_settings.html', context)
@@ -1349,6 +1354,7 @@ def organization_shop_dashboard(request, org_slug):
         'monthly_stats': monthly_stats,
         'payment_stats': payment_stats,
         'top_categories': top_categories,
+        'is_btc_member': True,  # User đã được kiểm tra quyền ở trên
     }
     
     return render(request, 'shop/organization/dashboard.html', context)

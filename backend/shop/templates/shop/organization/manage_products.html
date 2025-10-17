@@ -4,7 +4,48 @@
 {% block title %}Quản Lý Sản Phẩm - {{ organization.name }}{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'shop/organization/partials/management_sidebar.css' %}">
 <style>
+    /* BTC Back Button Container */
+    .btc-back-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    
+    /* BTC Back Button */
+    .btc-back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btc-back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btc-back-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .btc-back-btn span {
+        font-size: 0.9rem;
+    }
     .management-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -91,10 +132,40 @@
         content: "›";
         color: #6c757d;
     }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .btc-back-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .btc-back-btn {
+            padding: 0.6rem 1rem;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .btc-back-btn span {
+            font-size: 0.8rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- BTC Back Button -->
+{% if user.is_authenticated %}
+    {% if is_btc_member %}
+    <div class="btc-back-button">
+        <a href="{% url 'organizations:dashboard' %}" class="btc-back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Quay về BTC</span>
+        </a>
+    </div>
+    {% endif %}
+{% endif %}
 <!-- Management Header -->
 <div class="management-header">
     <div class="container">
@@ -113,7 +184,7 @@
                 <p class="mb-0 opacity-75">{{ organization.name }}</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg me-2" target="_blank">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg me-2">
                     <i class="fas fa-external-link-alt me-2"></i>Xem Shop
                 </a>
                 <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addProductModal">
@@ -153,6 +224,13 @@
         </div>
     </div>
 
+    <!-- Main Content with Sidebar -->
+    <div class="row">
+        <!-- Management Sidebar -->
+        {% include 'shop/organization/partials/management_sidebar.html' %}
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
@@ -230,7 +308,7 @@
                     </div>
                     <div class="action-buttons">
                         <a href="{% url 'shop:organization_shop:product_detail' org_slug=organization.slug product_slug=product.slug %}" 
-                           class="btn btn-outline-primary btn-sm" target="_blank">
+                           class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-eye"></i>
                         </a>
                         <a href="{% url 'shop:organization_shop:edit_product' org_slug=organization.slug product_id=product.id %}" class="btn btn-outline-warning btn-sm">
@@ -386,6 +464,10 @@
         </div>
     </div>
 </div>
+
+        </div> <!-- End Main Content col-lg-9 -->
+    </div> <!-- End Row -->
+</div> <!-- End Container -->
 
 {% endblock %}
 

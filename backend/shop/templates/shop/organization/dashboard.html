@@ -40,26 +40,29 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.1)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.2)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
   background-size: cover;
   background-position: bottom;
+  z-index: 1;
 }
 
 .dashboard-title {
   font-size: 2.5rem;
   font-weight: 900;
   margin-bottom: 0.5rem;
-  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   position: relative;
-  z-index: 2;
+  z-index: 5;
+  color: #ffffff !important;
 }
 
 .dashboard-subtitle {
   font-size: 1.1rem;
-  opacity: 0.95;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  opacity: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   position: relative;
-  z-index: 2;
+  z-index: 5;
+  color: #ffffff !important;
 }
 
 /* Stats Cards */
@@ -240,6 +243,20 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .dashboard-header {
+    padding: 2rem 0;
+  }
+  
+  .dashboard-title {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
   .charts-section {
     grid-template-columns: 1fr;
   }
@@ -251,6 +268,76 @@
   .action-btn {
     justify-content: center;
   }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  /* Mobile Shop Button */
+  .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
+    min-width: 120px;
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+  
+  .btn-lg i {
+    font-size: 0.9rem;
+  }
+  
+  /* Dashboard Buttons */
+  .dashboard-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .dashboard-buttons .btn {
+    position: relative;
+    z-index: 15;
+    pointer-events: auto;
+  }
+  
+  @media (min-width: 768px) {
+    .dashboard-buttons {
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-title {
+      font-size: 2rem;
+      color: #ffffff !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+    }
+    
+    .dashboard-subtitle {
+      font-size: 1rem;
+      color: #ffffff !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+    }
+  }
 }
 </style>
 {% endblock %}
@@ -260,7 +347,7 @@
 <section class="dashboard-header">
   <div class="container">
     <div class="row align-items-center">
-      <div class="col-md-8">
+      <div class="col-md-8 col-12">
         <h1 class="dashboard-title">
           <i class="fas fa-store me-3"></i>
           {{ organization.name }} - Shop Dashboard
@@ -269,12 +356,21 @@
           Quản lý cửa hàng và theo dõi hiệu suất kinh doanh
         </p>
       </div>
-      <div class="col-md-4 text-end">
-        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" 
-           class="btn btn-light btn-lg" target="_blank">
-          <i class="fas fa-external-link-alt me-2"></i>
-          Xem Shop
-        </a>
+      <div class="col-md-4 col-12 text-md-end text-center mt-3 mt-md-0" style="position: relative; z-index: 10;">
+        <div class="dashboard-buttons">
+          <a href="{% url 'organizations:dashboard' %}" 
+             class="btn btn-outline-light btn-lg me-2 mb-2 mb-md-0" 
+             style="position: relative; z-index: 15; pointer-events: auto; cursor: pointer;">
+            <i class="fas fa-arrow-left me-2"></i>
+            Quay về BTC
+          </a>
+          <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" 
+             class="btn btn-light btn-lg" 
+             style="position: relative; z-index: 15; pointer-events: auto; cursor: pointer;">
+            <i class="fas fa-external-link-alt me-2"></i>
+            Xem Shop
+          </a>
+        </div>
       </div>
     </div>
   </div>

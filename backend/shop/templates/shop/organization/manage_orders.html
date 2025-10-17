@@ -4,7 +4,48 @@
 {% block title %}Quản Lý Đơn Hàng - {{ organization.name }}{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'shop/organization/partials/management_sidebar.css' %}">
 <style>
+    /* BTC Back Button Container */
+    .btc-back-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    
+    /* BTC Back Button */
+    .btc-back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btc-back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btc-back-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .btc-back-btn span {
+        font-size: 0.9rem;
+    }
     .management-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -78,10 +119,141 @@
         content: "›";
         color: #6c757d;
     }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .btc-back-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .btc-back-btn {
+            padding: 0.6rem 1rem;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .btc-back-btn span {
+            font-size: 0.8rem;
+        }
+    }
+    
+    /* Orders Table Styles */
+    .table-responsive {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #374151;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #e5e7eb;
+        background-color: #f8fafc;
+    }
+    
+    .table tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    .order-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+    
+    .order-status.status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .order-status.status-processing {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .order-status.status-shipped {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+    
+    .order-status.status-delivered {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .order-status.status-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .btn-group-vertical .btn {
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-group-vertical .btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.85rem;
+        }
+        
+        .table thead th,
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .btn-group-vertical .btn {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+        
+        .order-status {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table thead th:nth-child(3),
+        .table tbody td:nth-child(3),
+        .table thead th:nth-child(7),
+        .table tbody td:nth-child(7) {
+            display: none;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- BTC Back Button -->
+{% if user.is_authenticated %}
+    {% if is_btc_member %}
+    <div class="btc-back-button">
+        <a href="{% url 'organizations:dashboard' %}" class="btc-back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Quay về BTC</span>
+        </a>
+    </div>
+    {% endif %}
+{% endif %}
 <!-- Management Header -->
 <div class="management-header">
     <div class="container">
@@ -100,7 +272,7 @@
                 <p class="mb-0 opacity-75">{{ organization.name }}</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg" target="_blank">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light btn-lg">
                     <i class="fas fa-external-link-alt me-2"></i>Xem Shop
                 </a>
             </div>
@@ -137,6 +309,13 @@
         </div>
     </div>
 
+    <!-- Main Content with Sidebar -->
+    <div class="row">
+        <!-- Management Sidebar -->
+        {% include 'shop/organization/partials/management_sidebar.html' %}
+        
+        <!-- Main Content -->
+        <div class="col-lg-9">
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
@@ -173,131 +352,143 @@
         </div>
     </div>
 
-    <!-- Orders List -->
+    <!-- Orders Table -->
     {% if orders %}
-    <div class="row">
-        {% for order in orders %}
-        <div class="col-lg-6 mb-4">
-            <div class="order-card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h5 class="card-title mb-1">Đơn Hàng #{{ order.id }}</h5>
-                            <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
-                        </div>
-                        <span class="order-status status-{{ order.status|lower }}">
-                            {% if order.status == 'pending' %}Chờ Xử Lý
-                            {% elif order.status == 'processing' %}Đang Xử Lý
-                            {% elif order.status == 'shipped' %}Đang Giao
-                            {% elif order.status == 'delivered' %}Đã Giao
-                            {% elif order.status == 'cancelled' %}Đã Hủy
-                            {% else %}{{ order.get_status_display }}{% endif %}
-                        </span>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <strong>Khách Hàng:</strong><br>
-                            {{ order.customer_name }}<br>
-                            <small class="text-muted">{{ order.customer_phone }}</small>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Thanh Toán:</strong><br>
-                            <span class="badge {% if order.payment_status == 'paid' %}bg-success{% elif order.payment_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
-                                {% if order.payment_status == 'paid' %}Đã TT
-                                {% elif order.payment_status == 'pending' %}Chờ TT
-                                {% elif order.payment_status == 'failed' %}TT TB
-                                {% else %}TT TB{% endif %}
-                            </span><br>
-                            <small class="text-muted">{{ order.get_payment_method_display }}</small>
-                        </div>
-                        <div class="col-md-4">
-                            <strong>Địa Chỉ:</strong><br>
-                            <small>{{ order.shipping_address }}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Sản Phẩm:</strong>
-                        <ul class="list-unstyled mt-2">
-                            {% for item in order.items.all %}
-                            <li class="d-flex justify-content-between">
-                                <span>{{ item.product.name }} x{{ item.quantity }}</span>
-                                <span>{{ item.total_price|floatformat:0 }}đ</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>Hóa đơn thanh toán:</strong><br>
-                        {% if order.payment_proof %}
-                        <div class="mt-2">
-                            <a href="{{ order.payment_proof.url }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
-                                <i class="fas fa-file-invoice me-1"></i>Xem hóa đơn
-                            </a>
-                            <a href="{{ order.payment_proof.url }}" download class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-download me-1"></i>Tải xuống
-                            </a>
-                        </div>
-                        {% else %}
-                        <div class="mt-2">
-                            <span class="text-muted">
-                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                {% if order.payment_method == 'cod' %}
-                                    COD - Không cần hóa đơn
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">Đơn Hàng</th>
+                            <th class="border-0">Khách Hàng</th>
+                            <th class="border-0">Sản Phẩm</th>
+                            <th class="border-0">Trạng Thái</th>
+                            <th class="border-0">Thanh Toán</th>
+                            <th class="border-0">Tổng Tiền</th>
+                            <th class="border-0">Hóa Đơn</th>
+                            <th class="border-0 text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td class="align-middle">
+                                <div>
+                                    <strong>#{{ order.id }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div>
+                                    <strong>{{ order.customer_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ order.customer_phone }}</small>
+                                    <br>
+                                    <small class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        {{ order.shipping_address }}
+                                    </small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div style="max-width: 250px;">
+                                    {% for item in order.items.all %}
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>{{ item.product.name }}</span>
+                                        <span class="text-muted">x{{ item.quantity }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="order-status status-{{ order.status|lower }}">
+                                    {% if order.status == 'pending' %}Chờ Xử Lý
+                                    {% elif order.status == 'processing' %}Đang Xử Lý
+                                    {% elif order.status == 'shipped' %}Đang Giao
+                                    {% elif order.status == 'delivered' %}Đã Giao
+                                    {% elif order.status == 'cancelled' %}Đã Hủy
+                                    {% else %}{{ order.get_status_display }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div>
+                                    <span class="badge {% if order.payment_status == 'paid' %}bg-success{% elif order.payment_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {% if order.payment_status == 'paid' %}Đã TT
+                                        {% elif order.payment_status == 'pending' %}Chờ TT
+                                        {% elif order.payment_status == 'failed' %}TT TB
+                                        {% else %}TT TB{% endif %}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">{{ order.get_payment_method_display }}</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <strong>{{ order.total_amount|floatformat:0 }}đ</strong>
+                            </td>
+                            <td class="align-middle">
+                                {% if order.payment_proof %}
+                                <div class="btn-group-vertical btn-group-sm">
+                                    <a href="{{ order.payment_proof.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-file-invoice me-1"></i>Xem
+                                    </a>
+                                    <a href="{{ order.payment_proof.url }}" download class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-download me-1"></i>Tải
+                                    </a>
+                                </div>
                                 {% else %}
-                                    Chưa có hóa đơn thanh toán
+                                <small class="text-muted">
+                                    {% if order.payment_method == 'cod' %}
+                                        COD
+                                    {% else %}
+                                        Chưa có
+                                    {% endif %}
+                                </small>
                                 {% endif %}
-                            </span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Tổng Tiền: {{ order.total_amount|floatformat:0 }}đ</strong>
-                        </div>
-                        <div class="btn-group">
-                            <a href="{% url 'shop:organization_shop:order_detail' org_slug=organization.slug order_number=order.order_number %}" 
-                               class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye"></i> Xem
-                            </a>
-                            
-                            <!-- Payment Confirmation -->
-                            {% if order.payment_status == 'pending' and order.payment_method != 'cod' %}
-                            <button class="btn btn-outline-success btn-sm" onclick="confirmPayment({{ order.id }})">
-                                <i class="fas fa-money-check-alt"></i> Xác Nhận TT
-                            </button>
-                            {% endif %}
-                            
-                            <!-- Order Status Updates -->
-                            {% if order.status == 'pending' %}
-                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'processing')">
-                                <i class="fas fa-check"></i> Xác Nhận ĐH
-                            </button>
-                            {% elif order.status == 'processing' %}
-                            <button class="btn btn-outline-info btn-sm" onclick="updateOrderStatus({{ order.id }}, 'shipped')">
-                                <i class="fas fa-truck"></i> Giao Hàng
-                            </button>
-                            {% elif order.status == 'shipped' %}
-                            <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'delivered')">
-                                <i class="fas fa-check-circle"></i> Hoàn Thành
-                            </button>
-                            {% endif %}
-                            
-                            <!-- Cancel Order -->
-                            {% if order.status in 'pending,processing' %}
-                            <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ order.id }})">
-                                <i class="fas fa-times"></i> Hủy
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <div class="btn-group-vertical btn-group-sm">
+                                    <a href="{% url 'shop:organization_shop:order_detail' org_slug=organization.slug order_number=order.order_number %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </a>
+                                    
+                                    <!-- Payment Confirmation -->
+                                    {% if order.payment_status == 'pending' and order.payment_method != 'cod' %}
+                                    <button class="btn btn-outline-success btn-sm" onclick="confirmPayment({{ order.id }})">
+                                        <i class="fas fa-money-check-alt"></i> Xác Nhận TT
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Order Status Updates -->
+                                    {% if order.status == 'pending' %}
+                                    <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'processing')">
+                                        <i class="fas fa-check"></i> Xác Nhận ĐH
+                                    </button>
+                                    {% elif order.status == 'processing' %}
+                                    <button class="btn btn-outline-info btn-sm" onclick="updateOrderStatus({{ order.id }}, 'shipped')">
+                                        <i class="fas fa-truck"></i> Giao Hàng
+                                    </button>
+                                    {% elif order.status == 'shipped' %}
+                                    <button class="btn btn-outline-success btn-sm" onclick="updateOrderStatus({{ order.id }}, 'delivered')">
+                                        <i class="fas fa-check-circle"></i> Hoàn Thành
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Cancel Order -->
+                                    {% if order.status in 'pending,processing' %}
+                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder({{ order.id }})">
+                                        <i class="fas fa-times"></i> Hủy
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endfor %}
     </div>
 
     <!-- Pagination -->
@@ -343,12 +534,15 @@
         <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
         <h3 class="text-muted">Chưa có đơn hàng nào</h3>
         <p class="text-muted mb-4">Các đơn hàng sẽ xuất hiện ở đây khi khách hàng đặt mua</p>
-        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-primary btn-lg" target="_blank">
+        <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-primary btn-lg">
             <i class="fas fa-external-link-alt me-2"></i>Xem Shop
         </a>
     </div>
     {% endif %}
-</div>
+
+        </div> <!-- End Main Content col-lg-9 -->
+    </div> <!-- End Row -->
+</div> <!-- End Container -->
 
 {% endblock %}
 

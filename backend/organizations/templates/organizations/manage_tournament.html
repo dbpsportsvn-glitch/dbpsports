@@ -89,18 +89,18 @@
                     <p class="text-muted mb-4">Các công cụ quản lý giải đấu quan trọng.</p>
                     <div class="d-flex flex-wrap gap-2">
                         {% if tournament.status == 'IN_PROGRESS' and unassigned_teams %}
-                        <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary" target="_blank">
+                        <a href="{% url 'draw_groups' tournament_pk=tournament.pk %}" class="btn btn-primary">
                             <i class="bi bi-shuffle"></i> Tới trang Bốc thăm
                         </a>
                         {% endif %}
 
                         {% if tournament.status == 'IN_PROGRESS' and has_paid_teams and not unassigned_teams and not tournament.matches.exists %}
-                        <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info" target="_blank">
+                        <a href="{% url 'generate_schedule' tournament_pk=tournament.pk %}" class="btn btn-info">
                             <i class="bi bi-calendar-plus"></i> Xếp Lịch Thi Đấu
                         </a>
                         {% endif %}
 
-                        <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary" target="_blank">
+                        <a href="{% url 'tournament_bulk_upload' tournament_pk=tournament.pk %}" class="btn btn-secondary">
                             <i class="bi bi-images"></i> Tải ảnh hàng loạt
                         </a>
                     </div>
@@ -150,7 +150,7 @@
                         {% for reg in unpaid_regs %}
                         <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
                             <div>
-                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
+                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
                                 <br><small>Đội trưởng: {{ reg.team.captain.username }}</small>
                             </div>
                             <form method="post" action="{% url 'organizations:delete_team_registration' pk=reg.pk %}" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA đội {{ reg.team.name }} khỏi giải đấu này không?');" class="mb-0">
@@ -176,7 +176,7 @@
                         {% for reg in pending_regs %}
                         <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
+                                <strong><a href="{% url 'team_detail' pk=reg.team.pk %}">{{ reg.team.name }}</a></strong> <span class="badge bg-secondary">{{ reg.tournament.name }}</span>
                                 <br><small>Đội trưởng: {{ reg.team.captain.username }} {% if reg.payment_proof %}<a href="{{ reg.payment_proof.url }}" target="_blank" class="ms-2">[Xem hóa đơn]</a>{% endif %}</small>
                             </div>
                             <div class="d-flex gap-2">
@@ -205,7 +205,7 @@
                         <div class="col-md-6 mb-2">
                             <div class="d-flex justify-content-between align-items-center p-2 border rounded">
                                 <div>
-                                    <span><a href="{% url 'team_detail' pk=reg.team.pk %}" target="_blank">{{ reg.team.name }}</a></span>
+                                    <span><a href="{% url 'team_detail' pk=reg.team.pk %}">{{ reg.team.name }}</a></span>
                                     <small class="d-block text-muted">{{ reg.tournament.name }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
@@ -342,7 +342,7 @@
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                     <input type="hidden" name="match_ids" value="{{ match.pk }}">
                                     <div class="flex-grow-1">
-                                        <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
+                                        <a href="{% url 'match_detail' pk=match.pk %}" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
                                             <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
                                         </a>
                                         <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
@@ -390,7 +390,7 @@
                                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                         <input type="hidden" name="match_ids" value="{{ match.pk }}">
                                         <div class="flex-grow-1">
-                                            <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
+                                            <a href="{% url 'match_detail' pk=match.pk %}" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
                                                 <strong>{{ match.team1.name }} vs {{ match.team2.name }}</strong>
                                             </a>
                                             <small class="d-block text-muted">{{ match.match_time|date:"H:i, d/m/Y" }}</small>
@@ -439,7 +439,7 @@
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                     <input type="hidden" name="match_ids" value="{{ match.pk }}">
                                     <div class="flex-grow-1">
-                                        <a href="{% url 'match_detail' pk=match.pk %}" target="_blank" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
+                                        <a href="{% url 'match_detail' pk=match.pk %}" class="text-dark text-decoration-none" title="Xem trang chi tiết trận đấu">
                                             {% if match.match_round == 'SEMI' %}<strong style="color: #ffc107;">{{ match.get_match_round_display }}:</strong>
                                             {% elif match.match_round == 'THIRD_PLACE' %}<strong style="color: #135f10;">{{ match.get_match_round_display }}:</strong>
                                             {% elif match.match_round == 'FINAL' %}<strong style="color: #dc3545;">{{ match.get_match_round_display }}:</strong>
@@ -577,7 +577,7 @@
                             {% for player in players_list %}
                             <tr>
                                 <td>
-                                    <a href="{% url 'player_detail' pk=player.pk %}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center gap-2">
+                                    <a href="{% url 'player_detail' pk=player.pk %}" class="text-decoration-none text-dark d-flex align-items-center gap-2">
                                         <img src="{% if player.avatar %}{{ player.avatar.url }}{% else %}/static/images/placeholder_avatar.png{% endif %}" alt="Avatar" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
                                         <div>
                                             <span class="fw-bold">{{ player.full_name }}</span>
@@ -674,7 +674,7 @@
                             {% for staff in tournament_staff %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center gap-3">
-                                    <a href="{% url 'public_profile' username=staff.user.username %}" target="_blank">
+                                    <a href="{% url 'public_profile' username=staff.user.username %}">
                                         {% if staff.user.profile.avatar %}
                                             <img src="{{ staff.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                                         {% else %}
@@ -706,7 +706,7 @@
                             {% for member in org_members %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center gap-3">
-                                    <a href="{% url 'public_profile' username=member.user.username %}" target="_blank">
+                                    <a href="{% url 'public_profile' username=member.user.username %}">
                                          {% if member.user.profile.avatar %}
                                             <img src="{{ member.user.profile.avatar.url }}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                                         {% else %}

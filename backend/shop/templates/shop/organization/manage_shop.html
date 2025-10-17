@@ -4,12 +4,96 @@
 {% block title %}Quản Lý Shop - {{ organization.name }}{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'shop/organization/partials/management_sidebar.css' %}">
 <style>
+    /* BTC Back Button Container */
+    .btc-back-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    
+    /* BTC Back Button */
+    .btc-back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btc-back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btc-back-btn i {
+        font-size: 1.1rem;
+    }
+    
+    .btc-back-btn span {
+        font-size: 0.9rem;
+    }
     .management-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 2rem 0;
         margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .management-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" fill="rgba(0,0,0,0.2)"><path d="M0,200 Q250,100 500,150 T1000,100 L1000,200 Z"/></svg>');
+        background-size: cover;
+        background-position: bottom;
+        z-index: 1;
+    }
+    
+    .management-header h1 {
+        color: #ffffff !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+        position: relative;
+        z-index: 5;
+        font-weight: 700;
+    }
+    
+    .management-header .breadcrumb {
+        position: relative;
+        z-index: 5;
+    }
+    
+    .management-header .breadcrumb-item {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+    }
+    
+    .management-header .breadcrumb-item.active {
+        color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+    }
+    
+    .management-header .btn {
+        position: relative;
+        z-index: 5;
     }
     
     .org-logo {
@@ -169,17 +253,71 @@
     }
     
     .breadcrumb-item a {
-        color: #667eea;
+        color: #ffffff !important;
         text-decoration: none;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.7);
     }
     
     .breadcrumb-item a:hover {
-        color: #764ba2;
+        color: #f8f9fa !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .management-header h1 {
+            font-size: 1.5rem;
+            color: #ffffff !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.7) !important;
+        }
+        
+        .management-header .breadcrumb-item {
+            font-size: 0.9rem;
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7) !important;
+        }
+        
+        .management-header .breadcrumb-item a {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7) !important;
+        }
+        
+        .management-header .breadcrumb-item.active {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.7) !important;
+        }
+        
+        .btc-back-button {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .btc-back-btn {
+            padding: 0.6rem 1rem;
+            min-width: 120px;
+            font-size: 0.8rem;
+        }
+        
+        .btc-back-btn span {
+            font-size: 0.8rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- BTC Back Button -->
+{% if user.is_authenticated %}
+    {% if is_btc_member %}
+    <div class="btc-back-button">
+        <a href="{% url 'organizations:dashboard' %}" class="btc-back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Quay về BTC</span>
+        </a>
+    </div>
+    {% endif %}
+{% endif %}
 <!-- Management Header -->
 <div class="management-header">
     <div class="container">
@@ -199,7 +337,7 @@
                 </nav>
             </div>
             <div class="col-md-2 text-end">
-                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light" target="_blank">
+                <a href="{% url 'shop:organization_shop:shop_home' org_slug=organization.slug %}" class="btn btn-light">
                     <i class="fas fa-external-link-alt me-2"></i>Xem Shop
                 </a>
             </div>
@@ -240,44 +378,8 @@
     </div>
     
     <div class="row">
-        <!-- Management Navigation -->
-        <div class="col-lg-3">
-            <div class="management-nav">
-                <h5 class="section-title">Quản Lý</h5>
-                <nav class="nav flex-column">
-                    <div class="nav-item">
-                        <a class="nav-link active" href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            Tổng Quan
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}">
-                            <i class="fas fa-box"></i>
-                            Sản Phẩm
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}">
-                            <i class="fas fa-shopping-cart"></i>
-                            Đơn Hàng
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="{% url 'shop:organization_shop:manage_categories' org_slug=organization.slug %}">
-                            <i class="fas fa-tags"></i>
-                            Danh Mục
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a class="nav-link" href="{% url 'shop:organization_shop:shop_settings' org_slug=organization.slug %}">
-                            <i class="fas fa-cog"></i>
-                            Cài Đặt
-                        </a>
-                    </div>
-                </nav>
-            </div>
-        </div>
+        <!-- Management Sidebar -->
+        {% include 'shop/organization/partials/management_sidebar.html' %}
         
         <!-- Main Content -->
         <div class="col-lg-9">

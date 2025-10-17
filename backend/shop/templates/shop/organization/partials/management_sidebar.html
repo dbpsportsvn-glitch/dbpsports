@@ -1,0 +1,43 @@
+<!-- Management Sidebar -->
+<div class="col-lg-3">
+    <div class="management-nav">
+        <h5 class="section-title">Quản Lý</h5>
+        <nav class="nav flex-column">
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_shop' %}active{% endif %}" 
+                   href="{% url 'shop:organization_shop:manage_shop' org_slug=organization.slug %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Tổng Quan
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_products' %}active{% endif %}" 
+                   href="{% url 'shop:organization_shop:manage_products' org_slug=organization.slug %}">
+                    <i class="fas fa-box"></i>
+                    Sản Phẩm
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_orders' %}active{% endif %}" 
+                   href="{% url 'shop:organization_shop:manage_orders' org_slug=organization.slug %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    Đơn Hàng
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'manage_categories' %}active{% endif %}" 
+                   href="{% url 'shop:organization_shop:manage_categories' org_slug=organization.slug %}">
+                    <i class="fas fa-tags"></i>
+                    Danh Mục
+                </a>
+            </div>
+            <div class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'shop_settings' %}active{% endif %}" 
+                   href="{% url 'shop:organization_shop:shop_settings' org_slug=organization.slug %}">
+                    <i class="fas fa-cog"></i>
+                    Cài Đặt
+                </a>
+            </div>
+        </nav>
+    </div>
+</div>

@@ -79,41 +79,52 @@
         opacity: 0.8;
     }
     
-    /* BTC Management Button */
-    .btc-management-btn {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1000;
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 50px;
-        font-weight: 600;
-        text-decoration: none;
-        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        min-width: 140px;
-        justify-content: center;
+    /* BTC Back Button Container */
+    .btc-back-button {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
-    .btc-management-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(40, 167, 69, 0.4);
-        color: white;
-        text-decoration: none;
+    /* BTC Back Button */
+    .btc-back-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.75rem 1.5rem !important;
+        border-radius: 50px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        min-width: 140px !important;
+        justify-content: center !important;
+        position: relative !important;
+        z-index: 10000 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
     }
     
-    .btc-management-btn i {
-        font-size: 1.1rem;
+    .btc-back-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4) !important;
+        color: white !important;
+        text-decoration: none !important;
     }
     
-    .btc-management-btn span {
-        font-size: 0.9rem;
+    .btc-back-btn i {
+        font-size: 1.1rem !important;
+    }
+    
+    .btc-back-btn span {
+        font-size: 0.9rem !important;
     }
     
     /* Modern Cards */
@@ -334,34 +345,57 @@
             gap: 1rem;
         }
         
-        .btc-management-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 0.6rem 1rem;
-            min-width: 120px;
-            font-size: 0.8rem;
+        .btc-back-button {
+            position: fixed !important;
+            bottom: 10px !important;
+            right: 10px !important;
         }
         
-        .btc-management-btn span {
-            font-size: 0.8rem;
+        .btc-back-btn {
+            padding: 0.6rem 1rem !important;
+            min-width: 120px !important;
+            font-size: 0.8rem !important;
+        }
+        
+        .btc-back-btn span {
+            font-size: 0.8rem !important;
         }
         
         .section-title {
             font-size: 2rem;
+        }
+        
+        /* Mobile Button Improvements */
+        .btn-modern {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.9rem;
+            min-height: 44px;
+            min-width: 140px;
+        }
+        
+        .btn-modern i {
+            font-size: 0.8rem;
+        }
+        
+        .btn-modern span {
+            font-size: 0.9rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- BTC Management Button -->
+<!-- BTC Back Button -->
 {% if user.is_authenticated %}
     {% if is_btc_member %}
-    <a href="{% url 'shop:organization_shop:dashboard' org_slug=organization.slug %}" class="btc-management-btn">
-        <i class="fas fa-cog"></i>
-        <span>Quản Lý Shop</span>
-    </a>
+    <div class="btc-back-button" style="position: fixed !important; bottom: 20px !important; right: 20px !important; z-index: 9999 !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+        <a href="{% url 'organizations:dashboard' %}" 
+           class="btc-back-btn" 
+           style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white !important; border: none !important; padding: 0.75rem 1.5rem !important; border-radius: 50px !important; font-weight: 600 !important; text-decoration: none !important; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important; display: flex !important; align-items: center !important; gap: 0.5rem !important; min-width: 140px !important; justify-content: center !important; position: relative !important; z-index: 10000 !important; pointer-events: auto !important; cursor: pointer !important;">
+            <i class="fas fa-arrow-left"></i>
+            <span>Quay về BTC</span>
+        </a>
+    </div>
     {% endif %}
 {% endif %}
 
@@ -627,6 +661,47 @@
 
 {% block extra_js %}
 <script>
+    // Debug script for BTC Back Button
+    document.addEventListener('DOMContentLoaded', function() {
+        const backButton = document.querySelector('.btc-back-button');
+        const backLink = document.querySelector('.btc-back-btn');
+        
+        console.log('BTC Back Button Debug:');
+        console.log('Container found:', backButton);
+        console.log('Link found:', backLink);
+        
+        if (backButton) {
+            console.log('Container styles:', window.getComputedStyle(backButton));
+            console.log('Container position:', backButton.style.position);
+            console.log('Container z-index:', backButton.style.zIndex);
+        }
+        
+        if (backLink) {
+            console.log('Link styles:', window.getComputedStyle(backLink));
+            console.log('Link display:', backLink.style.display);
+            console.log('Link visibility:', backLink.style.visibility);
+        }
+        
+        // Force button to be visible
+        if (backButton) {
+            backButton.style.position = 'fixed';
+            backButton.style.bottom = '20px';
+            backButton.style.right = '20px';
+            backButton.style.zIndex = '9999';
+            backButton.style.display = 'block';
+            backButton.style.visibility = 'visible';
+            backButton.style.opacity = '1';
+        }
+        
+        if (backLink) {
+            backLink.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            backLink.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.3)';
+            backLink.style.display = 'flex';
+            backLink.style.visibility = 'visible';
+            backLink.style.opacity = '1';
+        }
+    });
+    
     // Add smooth scrolling for better UX
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
