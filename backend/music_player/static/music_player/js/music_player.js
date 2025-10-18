@@ -125,48 +125,23 @@ class MusicPlayer {
         this.popup.addEventListener('click', (e) => {
             e.stopPropagation();
             this.userInteracted = true;
-            // Tự động phát khi click vào player
+            // Tự động phát khi click vào player (NHƯNG chỉ khi chưa phát)
             if (this.settings.auto_play && this.currentPlaylist && !this.isPlaying) {
                 console.log('Auto-playing after click on player');
                 this.playTrack(this.currentTrackIndex);
             }
         });
         
-        // Đánh dấu user interaction khi click vào controls
-        this.playPauseBtn.addEventListener('click', () => {
-            this.userInteracted = true;
-        });
-        
-        this.nextBtn.addEventListener('click', () => {
-            this.userInteracted = true;
-        });
-        
-        this.prevBtn.addEventListener('click', () => {
-            this.userInteracted = true;
-        });
-        
-        // Tự động phát khi hover vào player
+        // Tự động phát khi hover vào player (NHƯNG chỉ khi chưa phát)
         this.popup.addEventListener('mouseenter', () => {
             this.userInteracted = true;
-            // Tự động phát khi hover vào player
             if (this.settings.auto_play && this.currentPlaylist && !this.isPlaying) {
                 console.log('Auto-playing after hover');
                 this.playTrack(this.currentTrackIndex);
             }
         });
         
-        // Tự động phát khi click vào player
-        this.popup.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.userInteracted = true;
-            // Tự động phát khi click vào player
-            if (this.settings.auto_play && this.currentPlaylist && !this.isPlaying) {
-                console.log('Auto-playing after click on player');
-                this.playTrack(this.currentTrackIndex);
-            }
-        });
-        
-        // Thêm event listener cho document để đánh dấu user interaction
+        // Đánh dấu user interaction khi click vào document (chỉ một lần)
         document.addEventListener('click', (e) => {
             this.userInteracted = true;
             // Tự động phát nếu chưa phát và có playlist
@@ -285,8 +260,13 @@ class MusicPlayer {
             this.savePlayerState();
         }
         
+<<<<<<< HEAD
         // Auto-play if enabled (nhưng không auto-play khi đang restore)
         if (this.settings.auto_play && playlist.tracks.length > 0 && !this.isRestoringState) {
+=======
+        // Auto-play if enabled (nhưng không auto-play khi đang restore hoặc đang phát)
+        if (this.settings.auto_play && playlist.tracks.length > 0 && !this.isRestoringState && !this.isPlaying) {
+>>>>>>> 029f4c7 (Music 3)
             console.log('Auto-playing track 0');
             // Đánh dấu user interaction TRƯỚC KHI phát nhạc
             this.userInteracted = true;
@@ -343,8 +323,20 @@ class MusicPlayer {
     playTrack(index) {
         if (!this.currentPlaylist || !this.currentPlaylist.tracks[index]) return;
         
-        this.currentTrackIndex = index;
         const track = this.currentPlaylist.tracks[index];
+        const fileUrl = `/media/music/playlist/${track.file_path}`;
+        
+        // Kiểm tra xem có đang phát cùng track này không
+        if (this.currentTrackIndex === index && this.audio.src.endsWith(track.file_path)) {
+            console.log('Track already loaded, just resume if paused');
+            // Nếu đang tạm dừng thì tiếp tục phát, không load lại
+            if (!this.isPlaying) {
+                this.audio.play().catch(e => console.log('Play failed:', e));
+            }
+            return;
+        }
+        
+        this.currentTrackIndex = index;
         
         console.log('Playing track:', track);
         console.log('Current playlist:', this.currentPlaylist);
@@ -359,8 +351,6 @@ class MusicPlayer {
             return;
         }
         
-        // Kiểm tra file có tồn tại không
-        const fileUrl = `/media/music/playlist/${track.file_path}`;
         console.log('File URL:', fileUrl);
         
         try {
