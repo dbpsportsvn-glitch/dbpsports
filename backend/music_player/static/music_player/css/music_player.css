@@ -670,6 +670,124 @@
     opacity: 1;
 }
 
+/* Sleep Timer Styles */
+.sleep-timer-container {
+    position: relative;
+}
+
+.sleep-timer-menu {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 200px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.sleep-timer-menu.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+}
+
+.sleep-timer-header {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.sleep-timer-option {
+    display: block;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 10px 16px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.sleep-timer-option:last-of-type {
+    margin-bottom: 0;
+}
+
+.sleep-timer-option:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateX(4px);
+}
+
+.sleep-timer-option:active {
+    transform: translateX(2px);
+}
+
+.sleep-timer-status {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timer-remaining {
+    color: #ffd700;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.cancel-timer-btn {
+    display: block;
+    width: 100%;
+    background: rgba(255, 77, 77, 0.8);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-timer-btn:hover {
+    background: rgba(255, 77, 77, 1);
+    transform: scale(1.05);
+}
+
+#sleep-timer-btn.active {
+    background: rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+#sleep-timer-btn.active i {
+    animation: ring 1s infinite;
+}
+
+@keyframes ring {
+    0%, 100% {
+        transform: rotate(-10deg);
+    }
+    50% {
+        transform: rotate(10deg);
+    }
+}
+
 /* Music Player Toggle Button */
 .music-player-toggle {
     position: fixed;

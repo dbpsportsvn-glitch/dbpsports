@@ -27,6 +27,11 @@ class MusicPlayer {
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         
+        // Sleep timer variables
+        this.sleepTimerActive = false;
+        this.sleepTimerEndTime = null;
+        this.sleepTimerInterval = null;
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
@@ -93,6 +98,13 @@ class MusicPlayer {
         this.volumeFill = document.getElementById('volume-fill');
         this.volumeHandle = document.getElementById('volume-handle');
         this.closeBtn = document.getElementById('player-close');
+        
+        // Sleep timer elements
+        this.sleepTimerBtn = document.getElementById('sleep-timer-btn');
+        this.sleepTimerMenu = document.getElementById('sleep-timer-menu');
+        this.sleepTimerStatus = document.getElementById('sleep-timer-status');
+        this.timerRemaining = document.getElementById('timer-remaining');
+        this.cancelTimerBtn = document.getElementById('cancel-timer-btn');
         
         // Debug: Kiểm tra các elements quan trọng (chỉ log khi có lỗi)
         const elementsStatus = {
@@ -214,6 +226,40 @@ class MusicPlayer {
         document.addEventListener('keydown', () => {
             this.userInteracted = true;
         }, { once: true });
+        
+        // Sleep timer events
+        if (this.sleepTimerBtn) {
+            this.sleepTimerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.sleepTimerMenu.classList.toggle('hidden');
+            });
+        }
+        
+        // Sleep timer options
+        const timerOptions = document.querySelectorAll('.sleep-timer-option');
+        timerOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const minutes = parseInt(option.getAttribute('data-minutes'));
+                this.setSleepTimer(minutes);
+                this.sleepTimerMenu.classList.add('hidden');
+            });
+        });
+        
+        // Cancel timer button
+        if (this.cancelTimerBtn) {
+            this.cancelTimerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.cancelSleepTimer();
+            });
+        }
+        
+        // Close sleep timer menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (this.sleepTimerMenu && !this.sleepTimerMenu.contains(e.target) && !this.sleepTimerBtn.contains(e.target)) {
+                this.sleepTimerMenu.classList.add('hidden');
+            }
+        });
         
         // Tab switching
         this.initTabSystem();
@@ -1208,6 +1254,117 @@ class MusicPlayer {
     }
 
 
+    // Sleep Timer Methods
+    setSleepTimer(minutes) {
+        console.log(`⏰ Setting sleep timer for ${minutes} minutes`);
+        
+        // Cancel existing timer if any
+        this.cancelSleepTimer();
+        
+        // Set new timer
+        this.sleepTimerActive = true;
+        this.sleepTimerEndTime = Date.now() + (minutes * 60 * 1000);
+        
+        // Update UI
+        this.sleepTimerBtn.classList.add('active');
+        
+        // Show timer options buttons
+        const timerOptions = document.querySelectorAll('.sleep-timer-option');
+        timerOptions.forEach(opt => opt.style.display = 'none');
+        
+        // Show status
+        this.sleepTimerStatus.classList.remove('hidden');
+        
+        // Start countdown
+        this.sleepTimerInterval = setInterval(() => {
+            this.updateTimerDisplay();
+        }, 1000);
+        
+        // Update immediately
+        this.updateTimerDisplay();
+    }
+    
+    updateTimerDisplay() {
+        if (!this.sleepTimerActive || !this.sleepTimerEndTime) return;
+        
+        const remaining = this.sleepTimerEndTime - Date.now();
+        
+        if (remaining <= 0) {
+            // Time's up! Fade out and stop
+            this.fadeOutAndStop();
+            return;
+        }
+        
+        // Calculate minutes and seconds
+        const totalSeconds = Math.floor(remaining / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        
+        // Update display
+        this.timerRemaining.textContent = `Còn lại: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        // If less than 10 seconds, add warning animation
+        if (totalSeconds <= 10) {
+            this.timerRemaining.style.animation = 'pulse 0.5s infinite';
+        }
+    }
+    
+    fadeOutAndStop() {
+        console.log('⏰ Sleep timer finished - fading out...');
+        
+        if (!this.audio.paused) {
+            // Fade out over 3 seconds
+            const startVolume = this.audio.volume;
+            const fadeSteps = 30;
+            const fadeInterval = 3000 / fadeSteps;
+            const volumeStep = startVolume / fadeSteps;
+            
+            let currentStep = 0;
+            const fadeIntervalId = setInterval(() => {
+                currentStep++;
+                const newVolume = Math.max(0, startVolume - (volumeStep * currentStep));
+                this.audio.volume = newVolume;
+                
+                if (currentStep >= fadeSteps || newVolume <= 0) {
+                    clearInterval(fadeIntervalId);
+                    this.audio.pause();
+                    this.audio.volume = this.volume; // Restore original volume
+                    this.isPlaying = false;
+                    this.updatePlayPauseButton();
+                    console.log('⏰ Music stopped by sleep timer');
+                }
+            }, fadeInterval);
+        }
+        
+        // Cancel timer
+        this.cancelSleepTimer();
+    }
+    
+    cancelSleepTimer() {
+        console.log('⏰ Cancelling sleep timer');
+        
+        // Clear interval
+        if (this.sleepTimerInterval) {
+            clearInterval(this.sleepTimerInterval);
+            this.sleepTimerInterval = null;
+        }
+        
+        // Reset state
+        this.sleepTimerActive = false;
+        this.sleepTimerEndTime = null;
+        
+        // Update UI
+        this.sleepTimerBtn.classList.remove('active');
+        this.sleepTimerStatus.classList.add('hidden');
+        
+        // Show timer options again
+        const timerOptions = document.querySelectorAll('.sleep-timer-option');
+        timerOptions.forEach(opt => opt.style.display = 'block');
+        
+        // Reset timer display animation
+        this.timerRemaining.style.animation = '';
+    }
+
     destroy() {
         // Save state trước khi destroy
         this.savePlayerState();
@@ -1218,6 +1375,9 @@ class MusicPlayer {
         }
         if (this.saveStateInterval) {
             clearInterval(this.saveStateInterval);
+        }
+        if (this.sleepTimerInterval) {
+            clearInterval(this.sleepTimerInterval);
         }
     }
 }

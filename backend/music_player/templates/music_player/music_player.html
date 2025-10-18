@@ -8,6 +8,23 @@
                 Trình Phát Nhạc
             </h5>
             <div class="header-controls">
+                <!-- Sleep Timer -->
+                <div class="sleep-timer-container">
+                    <button id="sleep-timer-btn" class="control-btn" title="Hẹn giờ tắt nhạc">
+                        <i class="bi bi-alarm"></i>
+                    </button>
+                    <div id="sleep-timer-menu" class="sleep-timer-menu hidden">
+                        <div class="sleep-timer-header">Hẹn giờ tắt nhạc</div>
+                        <button class="sleep-timer-option" data-minutes="15">15 phút</button>
+                        <button class="sleep-timer-option" data-minutes="30">30 phút</button>
+                        <button class="sleep-timer-option" data-minutes="60">1 giờ</button>
+                        <button class="sleep-timer-option" data-minutes="120">2 giờ</button>
+                        <div class="sleep-timer-status hidden" id="sleep-timer-status">
+                            <div class="timer-remaining" id="timer-remaining">Còn lại: --:--</div>
+                            <button class="cancel-timer-btn" id="cancel-timer-btn">Hủy</button>
+                        </div>
+                    </div>
+                </div>
                 <button id="refresh-playlists" class="control-btn" title="Làm mới playlist">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
