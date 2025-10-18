@@ -181,64 +181,22 @@ class MusicPlayer {
             this.userInteracted = true;
         });
         
-        // Click bất kỳ đâu trên màn hình → auto open player + auto play (chỉ 1 lần)
+        // Click ngoài khu vực player → thu nhỏ player
         document.addEventListener('click', (e) => {
             this.userInteracted = true;
             
-            // Auto-open player và auto-play nếu có playlist, chưa phát, và chưa từng auto-play
-            if (!this.hasAutoPlayed && this.currentPlaylist && this.currentPlaylist.tracks && 
-                this.currentPlaylist.tracks.length > 0 && !this.isPlaying && !this.isRestoringState) {
-                console.log('🎵 Auto-opening player and playing after first user click');
-                this.hasAutoPlayed = true;
-                
-                // Mở player nếu đang ẩn
-                if (this.popup.classList.contains('hidden')) {
-                    this.popup.classList.remove('hidden');
-                    console.log('✅ Player opened');
-                }
-                
-                // Delay nhỏ để đảm bảo UI đã render
-                setTimeout(() => {
-                    // Phát nhạc
-                    console.log('▶️ Starting playback...');
-                    this.playTrack(this.currentTrackIndex);
-                }, 100);
-            }
-            
-            // Click ngoài khu vực player → thu nhỏ player (nhưng không áp dụng khi vừa mới auto-open)
             if (!this.popup.classList.contains('hidden')) {
                 // Kiểm tra xem click có nằm trong popup hoặc toggle button không
                 if (!this.popup.contains(e.target) && !this.toggle.contains(e.target)) {
-                    // Chỉ close nếu đã auto-play rồi và không phải click đầu tiên
-                    if (this.hasAutoPlayed) {
-                        console.log('Clicked outside player, closing...');
-                        this.togglePlayer();
-                    }
+                    console.log('Clicked outside player, closing...');
+                    this.togglePlayer();
                 }
             }
         }, { once: false });
         
+        // Track user interaction for play permission
         document.addEventListener('keydown', () => {
             this.userInteracted = true;
-            
-            // Auto-open và auto-play khi nhấn phím (nếu chưa auto-play)
-            if (!this.hasAutoPlayed && this.currentPlaylist && this.currentPlaylist.tracks && 
-                this.currentPlaylist.tracks.length > 0 && !this.isPlaying && !this.isRestoringState) {
-                console.log('🎵 Auto-opening player and playing after keyboard interaction');
-                this.hasAutoPlayed = true;
-                
-                // Mở player nếu đang ẩn
-                if (this.popup.classList.contains('hidden')) {
-                    this.popup.classList.remove('hidden');
-                    console.log('✅ Player opened');
-                }
-                
-                // Delay nhỏ để đảm bảo UI đã render
-                setTimeout(() => {
-                    console.log('▶️ Starting playback...');
-                    this.playTrack(this.currentTrackIndex);
-                }, 100);
-            }
         }, { once: true });
         
         // Tab switching
@@ -661,6 +619,9 @@ class MusicPlayer {
         this.isPlaying = true;
         this.updatePlayPauseButtons();
         
+        // Thêm class 'playing' cho toggle button để trigger animation
+        this.toggle.classList.add('playing');
+        
         // Force update thời gian khi bắt đầu phát
         this.updateDuration();
         this.updateProgress();
@@ -674,6 +635,10 @@ class MusicPlayer {
     onPause() {
         this.isPlaying = false;
         this.updatePlayPauseButtons();
+        
+        // Xóa class 'playing' khỏi toggle button để tắt animation
+        this.toggle.classList.remove('playing');
+        
         // Lưu state khi tạm dừng
         if (!this.isRestoringState) {
             this.savePlayerState();
