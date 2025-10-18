@@ -158,7 +158,8 @@
     overflow-y: auto;
 }
 
-.section-title {
+/* Scope section-title chỉ trong music player */
+.music-player-popup .section-title {
     color: white;
     font-weight: 600;
     font-size: 14px;
@@ -172,7 +173,8 @@
     margin-bottom: 20px;
 }
 
-.form-select {
+/* Scope form-select chỉ trong music player */
+.music-player-popup .form-select {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -182,14 +184,14 @@
     font-size: 14px;
 }
 
-.form-select:focus {
+.music-player-popup .form-select:focus {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
     outline: none;
 }
 
-.form-select option {
+.music-player-popup .form-select option {
     background: #667eea;
     color: white;
 }
@@ -256,19 +258,20 @@
     margin-left: 12px;
 }
 
-.empty-state {
+/* Scope empty-state chỉ trong music player */
+.music-player-popup .empty-state {
     text-align: center;
     padding: 40px 20px;
     color: rgba(255, 255, 255, 0.6);
 }
 
-.empty-state i {
+.music-player-popup .empty-state i {
     font-size: 48px;
     margin-bottom: 12px;
     display: block;
 }
 
-.empty-state p {
+.music-player-popup .empty-state p {
     margin: 0;
     font-size: 14px;
 }
