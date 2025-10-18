@@ -146,6 +146,87 @@ class TrackForm(ModelForm):
         return instance
 
 
+class BulkTrackForm(forms.Form):
+    """Form để upload nhiều track cùng lúc"""
+    playlist = forms.ModelChoiceField(
+        queryset=Playlist.objects.filter(is_active=True),
+        empty_label="Chọn playlist...",
+        help_text="Chọn playlist để thêm nhạc"
+    )
+    music_files = forms.FileField(
+        widget=forms.FileInput(attrs={
+            'accept': '.mp3,.wav,.ogg,.m4a,.aac',
+            'class': 'form-control'
+        }),
+        help_text="Chọn nhiều file nhạc cùng lúc (.mp3, .wav, .ogg, .m4a, .aac)"
+    )
+    
+    def clean_music_files(self):
+        files = self.files.getlist('music_files')
+        if not files:
+            raise forms.ValidationError("Vui lòng chọn ít nhất một file nhạc.")
+        
+        # Kiểm tra định dạng file
+        allowed_extensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+        for file in files:
+            if not any(file.name.lower().endswith(ext) for ext in allowed_extensions):
+                raise forms.ValidationError(f"File {file.name} không được hỗ trợ. Chỉ chấp nhận: {', '.join(allowed_extensions)}")
+        
+        return files
+
+
+class EnhancedTrackForm(TrackForm):
+    """Form nâng cao cho Track với tùy chọn upload hàng loạt"""
+    upload_mode = forms.ChoiceField(
+        choices=[
+            ('single', 'Upload đơn lẻ'),
+            ('bulk', 'Upload hàng loạt')
+        ],
+        initial='single',
+        widget=forms.RadioSelect,
+        help_text="Chọn chế độ upload"
+    )
+    bulk_files = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'accept': '.mp3,.wav,.ogg,.m4a,.aac',
+            'class': 'form-control'
+        }),
+        help_text="Chọn nhiều file nhạc cùng lúc (chỉ hiển thị khi chọn 'Upload hàng loạt')"
+    )
+    
+    class Meta(TrackForm.Meta):
+        fields = ['playlist', 'title', 'artist', 'music_file', 'duration', 'order', 'is_active']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ẩn các trường không cần thiết cho bulk upload
+        self.fields['title'].required = False
+        self.fields['artist'].required = False
+        self.fields['music_file'].required = False
+        self.fields['bulk_files'].required = False
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        upload_mode = cleaned_data.get('upload_mode')
+        
+        if upload_mode == 'single':
+            if not cleaned_data.get('music_file'):
+                raise forms.ValidationError("Vui lòng chọn file nhạc cho upload đơn lẻ.")
+        elif upload_mode == 'bulk':
+            bulk_files = self.files.getlist('bulk_files')
+            if not bulk_files:
+                raise forms.ValidationError("Vui lòng chọn ít nhất một file nhạc cho upload hàng loạt.")
+            
+            # Kiểm tra định dạng file
+            allowed_extensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+            for file in bulk_files:
+                if not any(file.name.lower().endswith(ext) for ext in allowed_extensions):
+                    raise forms.ValidationError(f"File {file.name} không được hỗ trợ. Chỉ chấp nhận: {', '.join(allowed_extensions)}")
+        
+        return cleaned_data
+
+
 @admin.register(Playlist)
 class PlaylistAdmin(admin.ModelAdmin):
     form = PlaylistForm
@@ -316,7 +397,7 @@ class PlaylistAdmin(admin.ModelAdmin):
 
 @admin.register(Track)
 class TrackAdmin(admin.ModelAdmin):
-    form = TrackForm
+    form = EnhancedTrackForm
     list_display = ['title', 'artist', 'playlist', 'duration_formatted', 'order', 'is_active']
     list_filter = ['playlist', 'is_active', 'created_at']
     search_fields = ['title', 'artist']
@@ -324,8 +405,12 @@ class TrackAdmin(admin.ModelAdmin):
     list_editable = ['order', 'is_active']
     
     fieldsets = (
+        ('Chế độ Upload', {
+            'fields': ('upload_mode',),
+            'description': 'Chọn chế độ upload: đơn lẻ hoặc hàng loạt'
+        }),
         ('Thông tin cơ bản', {
-            'fields': ('playlist', 'title', 'artist', 'music_file')
+            'fields': ('playlist', 'title', 'artist', 'music_file', 'bulk_files')
         }),
         ('Cài đặt', {
             'fields': ('duration', 'order', 'is_active')
@@ -350,14 +435,84 @@ class TrackAdmin(admin.ModelAdmin):
         return form
     
     def save_model(self, request, obj, form, change):
-        """Override để hiển thị thông báo khi file đã tồn tại"""
-        try:
-            super().save_model(request, obj, form, change)
-        except Exception as e:
-            if "UNIQUE constraint failed" in str(e):
-                messages.warning(request, f"File '{obj.file_path}' đã tồn tại trong playlist này. Track đã được cập nhật.")
+        """Xử lý save model với hỗ trợ upload hàng loạt"""
+        upload_mode = form.cleaned_data.get('upload_mode', 'single')
+        
+        if upload_mode == 'bulk':
+            # Xử lý upload hàng loạt
+            bulk_files = request.FILES.getlist('bulk_files')
+            playlist = form.cleaned_data['playlist']
+            
+            added_count = 0
+            updated_count = 0
+            
+            for file in bulk_files:
+                try:
+                    # Tạo đường dẫn file
+                    file_path = os.path.join(playlist.folder_path, file.name)
+                    
+                    # Kiểm tra xem track đã tồn tại chưa
+                    existing_track = Track.objects.filter(
+                        playlist=playlist,
+                        file_path=file_path
+                    ).first()
+                    
+                    # Lưu file
+                    with open(file_path, 'wb') as destination:
+                        for chunk in file.chunks():
+                            destination.write(chunk)
+                    
+                    # Parse title và artist từ tên file
+                    name_without_ext = os.path.splitext(file.name)[0]
+                    if ' - ' in name_without_ext:
+                        artist, title = name_without_ext.split(' - ', 1)
+                        artist = artist.strip()
+                        title = title.strip()
+                    else:
+                        artist = ''
+                        title = name_without_ext
+                    
+                    if existing_track:
+                        # Cập nhật track hiện có
+                        existing_track.title = title
+                        existing_track.artist = artist
+                        existing_track.save()
+                        updated_count += 1
+                    else:
+                        # Tạo track mới
+                        Track.objects.create(
+                            playlist=playlist,
+                            title=title,
+                            artist=artist,
+                            file_path=file_path,
+                            order=Track.objects.filter(playlist=playlist).count() + 1
+                        )
+                        added_count += 1
+                        
+                except Exception as e:
+                    self.message_user(request, f"Lỗi khi upload file '{file.name}': {str(e)}", level='ERROR')
+                    continue
+            
+            if added_count > 0 or updated_count > 0:
+                message = f"Đã upload thành công {added_count} bài hát mới"
+                if updated_count > 0:
+                    message += f" và cập nhật {updated_count} bài hát"
+                self.message_user(request, message, level='SUCCESS')
             else:
-                raise e
+                self.message_user(request, "Không có file nào được upload thành công", level='WARNING')
+            
+            # Redirect về changelist sau khi upload hàng loạt
+            return HttpResponseRedirect(request.path.replace('/add/', '/'))
+        
+        else:
+            # Xử lý upload đơn lẻ (giữ nguyên logic cũ)
+            try:
+                super().save_model(request, obj, form, change)
+            except Exception as e:
+                if "UNIQUE constraint failed" in str(e):
+                    messages.warning(request, f"File '{obj.file_path}' đã tồn tại trong playlist này. Track đã được cập nhật.")
+                else:
+                    raise e
 
 
 @admin.register(MusicPlayerSettings)

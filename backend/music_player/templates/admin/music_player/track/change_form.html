@@ -1,119 +1,100 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls static admin_modify %}
+{% load static %}
 
 {% block extrahead %}
 {{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadModeRadios = document.querySelectorAll('input[name="upload_mode"]');
+    const singleFileField = document.querySelector('#id_music_file').closest('.form-row');
+    const bulkFileField = document.querySelector('#id_bulk_files').closest('.form-row');
+    const titleField = document.querySelector('#id_title').closest('.form-row');
+    const artistField = document.querySelector('#id_artist').closest('.form-row');
+    
+    function toggleFields() {
+        const selectedMode = document.querySelector('input[name="upload_mode"]:checked').value;
+        
+        if (selectedMode === 'single') {
+            singleFileField.style.display = 'block';
+            bulkFileField.style.display = 'none';
+            titleField.style.display = 'block';
+            artistField.style.display = 'block';
+            
+            // Set required fields
+            document.querySelector('#id_music_file').required = true;
+            document.querySelector('#id_bulk_files').required = false;
+        } else {
+            singleFileField.style.display = 'none';
+            bulkFileField.style.display = 'block';
+            titleField.style.display = 'none';
+            artistField.style.display = 'none';
+            
+            // Set required fields
+            document.querySelector('#id_music_file').required = false;
+            document.querySelector('#id_bulk_files').required = true;
+        }
+    }
+    
+    // Initial toggle
+    toggleFields();
+    
+    // Add event listeners
+    uploadModeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleFields);
+    });
+    
+    // Add multiple attribute to bulk files input
+    const bulkFileInput = document.querySelector('#id_bulk_files');
+    if (bulkFileInput) {
+        bulkFileInput.setAttribute('multiple', 'multiple');
+        
+        // Show file count when files are selected
+        bulkFileInput.addEventListener('change', function() {
+            const files = this.files;
+            const helpText = this.nextElementSibling;
+            if (files.length > 0) {
+                helpText.textContent = `Đã chọn ${files.length} file(s): ${Array.from(files).map(f => f.name).join(', ')}`;
+                helpText.style.color = '#28a745';
+                helpText.style.fontWeight = 'bold';
+            } else {
+                helpText.textContent = 'Chọn nhiều file nhạc cùng lúc (chỉ hiển thị khi chọn \'Upload hàng loạt\')';
+                helpText.style.color = '#6c757d';
+                helpText.style.fontWeight = 'normal';
+            }
+        });
+    }
+});
+</script>
+
 <style>
-.field-file_path {
-    display: none !important;
+.form-row {
+    margin-bottom: 15px;
 }
 
-.upload-help {
-    background: #e7f3ff;
-    border: 1px solid #b3d9ff;
-    border-radius: 4px;
-    padding: 15px;
-    margin: 15px 0;
-    color: #0066cc;
-}
-
-.upload-help h4 {
-    margin-top: 0;
-    color: #004499;
-}
-
-.upload-help ul {
-    margin-bottom: 0;
-}
-
-.file-upload-info {
-    background: #f0f8ff;
-    border-left: 4px solid #667eea;
-    padding: 15px;
-    margin: 15px 0;
-}
-
-.file-upload-info h4 {
-    margin-top: 0;
-    color: #667eea;
-}
-
-.file-upload-info .supported-formats {
-    display: inline-block;
-    background: #667eea;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
+.form-row label {
     font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.help {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+input[type="radio"] {
+    margin-right: 8px;
+}
+
+.radio-group {
+    margin-bottom: 15px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    display: inline;
     margin-left: 5px;
 }
-
-.auto-parse-info {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 4px;
-    padding: 10px;
-    margin: 10px 0;
-    color: #856404;
-}
-
-.auto-parse-info strong {
-    color: #6c5ce7;
-}
-
-.quick-create-info {
-    background: #d1ecf1;
-    border: 1px solid #bee5eb;
-    border-radius: 4px;
-    padding: 15px;
-    margin: 15px 0;
-    color: #0c5460;
-}
-
-.quick-create-info h4 {
-    margin-top: 0;
-    color: #0c5460;
-}
 </style>
-{% endblock %}
-
-{% block field_sets %}
-<div class="upload-help">
-    <h4><i class="icon-upload"></i> Upload File Nhạc</h4>
-    <ul>
-        <li><strong>Chọn file:</strong> Click vào trường "Music file" để chọn file nhạc từ máy tính</li>
-        <li><strong>Định dạng hỗ trợ:</strong> <span class="supported-formats">MP3, WAV, OGG, M4A, AAC</span></li>
-        <li><strong>Tự động lưu:</strong> File sẽ được lưu vào thư mục playlist tự động</li>
-        <li><strong>Đường dẫn:</strong> Đường dẫn file sẽ được tạo tự động, không cần nhập</li>
-    </ul>
-</div>
-
-<div class="quick-create-info">
-    <h4><i class="icon-folder"></i> Tạo Playlist Nhanh từ Thư mục</h4>
-    <p><strong>💡 Mẹo:</strong> Thay vì thêm từng bài hát một, bạn có thể tạo playlist hoàn chỉnh từ thư mục:</p>
-    <ol>
-        <li>Vào <strong>Playlists</strong> → Chọn action <strong>"Tạo playlist từ thư mục"</strong></li>
-        <li>Nhập tên playlist và đường dẫn thư mục</li>
-        <li>Hệ thống sẽ tự động tạo playlist và import tất cả file nhạc</li>
-    </ol>
-</div>
-
-<div class="auto-parse-info">
-    <strong>🎵 Tự động phân tách tên file:</strong> Nếu tên file có định dạng "Nghệ sĩ - Tên bài hát", hệ thống sẽ tự động điền vào các trường "Nghệ sĩ" và "Tên bài hát". Ví dụ: "Taylor Swift - Love Story.mp3"
-</div>
-
-<div class="file-upload-info">
-    <h4><i class="icon-info"></i> Lưu ý quan trọng:</h4>
-    <ul>
-        <li>File sẽ được lưu vào thư mục của playlist đã chọn</li>
-        <li><strong>Nếu file đã tồn tại:</strong> Track hiện tại sẽ được cập nhật với file mới</li>
-        <li>Thời lượng sẽ được tính tự động khi phát nhạc</li>
-        <li>Thứ tự có thể được điều chỉnh sau khi upload</li>
-        <li><strong>Tên bài hát không bắt buộc</strong> - sẽ tự động lấy từ tên file</li>
-        <li><strong>File trùng lặp:</strong> Hệ thống sẽ tự động xử lý và cập nhật track hiện có</li>
-    </ul>
-</div>
-
-{{ block.super }}
 {% endblock %}
