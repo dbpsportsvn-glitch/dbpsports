@@ -186,17 +186,23 @@ class MusicPlayer {
             this.userInteracted = true;
             
             // Auto-open player và auto-play nếu có playlist, chưa phát, và chưa từng auto-play
-            if (!this.hasAutoPlayed && this.currentPlaylist && !this.isPlaying && !this.isRestoringState) {
-                console.log('Auto-opening player and playing after first user click');
+            if (!this.hasAutoPlayed && this.currentPlaylist && this.currentPlaylist.tracks && 
+                this.currentPlaylist.tracks.length > 0 && !this.isPlaying && !this.isRestoringState) {
+                console.log('🎵 Auto-opening player and playing after first user click');
                 this.hasAutoPlayed = true;
                 
                 // Mở player nếu đang ẩn
                 if (this.popup.classList.contains('hidden')) {
                     this.popup.classList.remove('hidden');
+                    console.log('✅ Player opened');
                 }
                 
-                // Phát nhạc
-                this.playTrack(this.currentTrackIndex);
+                // Delay nhỏ để đảm bảo UI đã render
+                setTimeout(() => {
+                    // Phát nhạc
+                    console.log('▶️ Starting playback...');
+                    this.playTrack(this.currentTrackIndex);
+                }, 100);
             }
             
             // Click ngoài khu vực player → thu nhỏ player (nhưng không áp dụng khi vừa mới auto-open)
@@ -216,17 +222,22 @@ class MusicPlayer {
             this.userInteracted = true;
             
             // Auto-open và auto-play khi nhấn phím (nếu chưa auto-play)
-            if (!this.hasAutoPlayed && this.currentPlaylist && !this.isPlaying && !this.isRestoringState) {
-                console.log('Auto-opening player and playing after keyboard interaction');
+            if (!this.hasAutoPlayed && this.currentPlaylist && this.currentPlaylist.tracks && 
+                this.currentPlaylist.tracks.length > 0 && !this.isPlaying && !this.isRestoringState) {
+                console.log('🎵 Auto-opening player and playing after keyboard interaction');
                 this.hasAutoPlayed = true;
                 
                 // Mở player nếu đang ẩn
                 if (this.popup.classList.contains('hidden')) {
                     this.popup.classList.remove('hidden');
+                    console.log('✅ Player opened');
                 }
                 
-                // Phát nhạc
-                this.playTrack(this.currentTrackIndex);
+                // Delay nhỏ để đảm bảo UI đã render
+                setTimeout(() => {
+                    console.log('▶️ Starting playback...');
+                    this.playTrack(this.currentTrackIndex);
+                }, 100);
             }
         }, { once: true });
         
@@ -1069,7 +1080,10 @@ class MusicPlayer {
             // Set flags
             this.isRestoringState = true;
             this.isLoadingTrack = true;
-            this.hasAutoPlayed = true;
+            // CHỈ set hasAutoPlayed nếu đang phát, nếu không phát thì để user click để auto-play
+            if (state.isPlaying) {
+                this.hasAutoPlayed = true;
+            }
             
             // Restore playlist và track
             this.currentPlaylist = playlist;
