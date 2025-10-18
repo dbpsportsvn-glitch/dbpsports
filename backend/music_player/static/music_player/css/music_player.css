@@ -171,14 +171,14 @@
 }
 
 /* Tab System - Modern Design */
-.tabs-section {
+.music-player-popup .tabs-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-.tab-headers {
+.music-player-popup .tab-headers {
     display: flex;
     background: rgba(0, 0, 0, 0.1);
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
@@ -186,7 +186,7 @@
     gap: 8px;
 }
 
-.tab-header {
+.music-player-popup .tab-header {
     flex: 1;
     background: transparent;
     border: none;
@@ -203,7 +203,7 @@
     gap: 8px;
 }
 
-.tab-header::after {
+.music-player-popup .tab-header::after {
     content: '';
     position: absolute;
     bottom: -2px;
@@ -217,37 +217,37 @@
     box-shadow: 0 -2px 10px rgba(102, 126, 234, 0.5);
 }
 
-.tab-header:hover {
+.music-player-popup .tab-header:hover {
     color: rgba(255, 255, 255, 0.9);
     background: rgba(255, 255, 255, 0.05);
 }
 
-.tab-header.active {
+.music-player-popup .tab-header.active {
     color: white;
     font-weight: 600;
 }
 
-.tab-header.active::after {
+.music-player-popup .tab-header.active::after {
     transform: translateX(-50%) scaleX(1);
 }
 
-.tab-header i {
+.music-player-popup .tab-header i {
     font-size: 16px;
 }
 
-.tab-contents {
+.music-player-popup .tab-contents {
     flex: 1;
     position: relative;
     overflow: hidden;
 }
 
-.tab-content {
+.music-player-popup .tab-content {
     display: none;
     padding: 20px;
     animation: fadeIn 0.3s ease;
 }
 
-.tab-content.active {
+.music-player-popup .tab-content.active {
     display: flex;
     flex-direction: column;
 }
