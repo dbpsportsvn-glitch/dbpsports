@@ -46,19 +46,10 @@ class MusicPlayer {
     initializeElements() {
         // Main elements
         this.popup = document.getElementById('music-player-popup');
-        this.miniPlayer = document.getElementById('mini-player');
         this.fullPlayer = document.getElementById('full-player');
         this.toggle = document.getElementById('music-player-toggle');
         
-        // Mini player elements
-        this.miniTrackTitle = document.getElementById('mini-track-title');
-        this.miniTrackArtist = document.getElementById('mini-track-artist');
-        this.miniPlayPause = document.getElementById('mini-play-pause');
-        this.miniNext = document.getElementById('mini-next');
-        this.miniExpand = document.getElementById('mini-expand');
-        this.miniProgressFill = document.getElementById('mini-progress-fill');
-        
-        // Full player elements
+        // Player elements
         this.playlistSelect = document.getElementById('playlist-select');
         this.trackList = document.getElementById('track-list');
         this.currentTrackTitle = document.getElementById('current-track-title');
@@ -81,8 +72,7 @@ class MusicPlayer {
     bindEvents() {
         // Toggle events
         this.toggle.addEventListener('click', () => this.togglePlayer());
-        this.miniExpand.addEventListener('click', () => this.expandPlayer());
-        this.closeBtn.addEventListener('click', () => this.collapsePlayer());
+        this.closeBtn.addEventListener('click', () => this.togglePlayer());
         
         // Refresh button
         this.refreshBtn = document.getElementById('refresh-playlists');
@@ -94,8 +84,6 @@ class MusicPlayer {
         this.playlistSelect.addEventListener('change', (e) => this.selectPlaylist(e.target.value));
         
         // Control buttons
-        this.miniPlayPause.addEventListener('click', () => this.togglePlayPause());
-        this.miniNext.addEventListener('click', () => this.nextTrack());
         this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
         this.prevBtn.addEventListener('click', () => this.previousTrack());
         this.nextBtn.addEventListener('click', () => this.nextTrack());
@@ -396,8 +384,6 @@ class MusicPlayer {
         
         const track = this.currentPlaylist.tracks[this.currentTrackIndex];
         
-        this.miniTrackTitle.textContent = track.title;
-        this.miniTrackArtist.textContent = track.artist;
         this.currentTrackTitle.textContent = track.title;
         this.currentTrackArtist.textContent = track.artist;
     }
@@ -471,7 +457,6 @@ class MusicPlayer {
 
     updatePlayPauseButtons() {
         const icon = this.isPlaying ? 'bi-pause-fill' : 'bi-play-fill';
-        this.miniPlayPause.innerHTML = `<i class="bi ${icon}"></i>`;
         this.playPauseBtn.innerHTML = `<i class="bi ${icon}"></i>`;
     }
 
@@ -485,7 +470,6 @@ class MusicPlayer {
         
         const progress = (this.audio.currentTime / this.audio.duration) * 100;
         this.progressFill.style.width = `${progress}%`;
-        this.miniProgressFill.style.width = `${progress}%`;
         this.progressHandle.style.left = `${progress}%`;
         
         this.currentTime.textContent = this.formatTime(this.audio.currentTime);
@@ -580,19 +564,6 @@ class MusicPlayer {
 
     togglePlayer() {
         this.popup.classList.toggle('hidden');
-        if (!this.popup.classList.contains('hidden')) {
-            this.expandPlayer();
-        }
-    }
-
-    expandPlayer() {
-        this.miniPlayer.style.display = 'none';
-        this.fullPlayer.style.display = 'block';
-    }
-
-    collapsePlayer() {
-        this.fullPlayer.style.display = 'none';
-        this.miniPlayer.style.display = 'block';
     }
 
     handleKeyboard(event) {

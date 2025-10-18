@@ -1,32 +1,6 @@
 <!-- Music Player Popup -->
-<div id="music-player-popup" class="music-player-popup">
-    <!-- Mini Player (Collapsed State) -->
-    <div id="mini-player" class="mini-player">
-        <div class="mini-player-content">
-            <div class="track-info">
-                <div class="track-title" id="mini-track-title">Chọn bài hát</div>
-                <div class="track-artist" id="mini-track-artist"></div>
-            </div>
-            <div class="mini-controls">
-                <button id="mini-play-pause" class="control-btn play-pause-btn">
-                    <i class="bi bi-play-fill"></i>
-                </button>
-                <button id="mini-next" class="control-btn">
-                    <i class="bi bi-skip-end-fill"></i>
-                </button>
-                <button id="mini-expand" class="control-btn">
-                    <i class="bi bi-arrows-expand"></i>
-                </button>
-            </div>
-        </div>
-        <div class="mini-progress">
-            <div class="progress-bar">
-                <div class="progress-fill" id="mini-progress-fill"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Full Player (Expanded State) -->
+<div id="music-player-popup" class="music-player-popup hidden">
+    <!-- Full Player -->
     <div id="full-player" class="full-player">
         <div class="player-header">
             <h5 class="player-title">
@@ -125,7 +99,7 @@
     </div>
 
     <!-- Audio Element -->
-    <audio id="audio-player" preload="metadata"></audio>
+    <audio id="audio-player" preload="auto"></audio>
 </div>
 
 <!-- Music Player Toggle Button -->
