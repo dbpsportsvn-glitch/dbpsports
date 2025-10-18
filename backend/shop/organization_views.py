@@ -140,18 +140,18 @@ def organization_shop_home(request, org_slug):
         if not shop_settings.is_active:
             messages.warning(request, "Shop của ban tổ chức này hiện đang tạm ngưng hoạt động.")
             # Redirect về dashboard BTC thay vì tournament
-            return redirect('organizations:dashboard', org_slug=org_slug)
+            return redirect('organizations:dashboard')
         
         # Kiểm tra shop có bị khoá không
         if shop_settings.shop_locked:
             messages.warning(request, "Shop BTC của ban tổ chức này hiện đang bị khoá và cần Admin phê duyệt.")
             # Redirect về dashboard BTC thay vì tournament
-            return redirect('organizations:dashboard', org_slug=org_slug)
+            return redirect('organizations:dashboard')
             
     except OrganizationShopSettings.DoesNotExist:
         messages.warning(request, "Ban tổ chức này chưa thiết lập shop.")
         # Redirect về dashboard BTC thay vì tournament
-        return redirect('organizations:dashboard', org_slug=org_slug)
+        return redirect('organizations:dashboard')
     
     # Lấy sản phẩm nổi bật
     featured_products = OrganizationProduct.objects.filter(
