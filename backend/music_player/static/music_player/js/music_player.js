@@ -589,6 +589,8 @@ class MusicPlayer {
             const trackItem = document.createElement('div');
             trackItem.className = 'track-item';
             trackItem.innerHTML = `
+                <div class="track-item-number">${index + 1}</div>
+                <i class="bi bi-music-note-beamed track-item-icon"></i>
                 <div class="track-item-info">
                     <div class="track-item-title">${track.title}</div>
                     <div class="track-item-artist">${track.artist}</div>

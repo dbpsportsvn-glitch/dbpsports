@@ -3,10 +3,25 @@
     <!-- Full Player -->
     <div id="full-player" class="full-player">
         <div class="player-header">
-            <h5 class="player-title">
-                <i class="bi bi-music-note-beamed"></i>
-                Trình Phát Nhạc
-            </h5>
+            <div class="header-left">
+                <!-- User Avatar Button (Settings) -->
+                {% if user.is_authenticated %}
+                <button id="settings-btn" class="control-btn user-avatar-btn" title="Cài đặt cá nhân">
+                    {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.get_full_name }}" class="user-avatar-img">
+                    {% else %}
+                    <div class="user-avatar-placeholder">
+                        {{ user.first_name.0|default:user.username.0|upper }}
+                    </div>
+                    {% endif %}
+                </button>
+                {% else %}
+                <button id="settings-btn" class="control-btn" title="Đăng nhập để cài đặt">
+                    <i class="bi bi-person-circle"></i>
+                </button>
+                {% endif %}
+                <h5 class="player-title">Trình Phát Nhạc</h5>
+            </div>
             <div class="header-controls">
                 <!-- Sleep Timer -->
                 <div class="sleep-timer-container">
@@ -25,10 +40,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- Settings Button -->
-                <button id="settings-btn" class="control-btn" title="Cài đặt">
-                    <i class="bi bi-gear"></i>
-                </button>
                 <button id="refresh-playlists" class="control-btn" title="Làm mới playlist">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
