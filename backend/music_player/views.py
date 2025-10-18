@@ -7,6 +7,7 @@ from django.views import View
 import json
 import os
 from .models import Playlist, Track, MusicPlayerSettings
+from .utils import get_audio_duration
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -190,11 +191,18 @@ def scan_playlist_folder(request, playlist_id):
                 artist = ''
                 title = name_without_ext
             
+            # Đường dẫn đầy đủ đến file
+            full_file_path = os.path.join(folder_path, file)
+            
+            # Đọc duration từ file nhạc
+            duration = get_audio_duration(full_file_path)
+            
             Track.objects.create(
                 playlist=playlist,
                 title=title.strip(),
                 artist=artist.strip() if artist else None,
-                file_path=os.path.join(folder_path, file),
+                file_path=full_file_path,
+                duration=duration,
                 order=i + 1
             )
         

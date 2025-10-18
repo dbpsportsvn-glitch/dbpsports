@@ -20,6 +20,10 @@ class MusicPlayer {
         this.userInteracted = false; // Track user interaction for autoplay
         this.isRestoringState = false; // Flag để tránh lưu state khi đang restore
         
+        // Drag and drop variables
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
@@ -48,6 +52,7 @@ class MusicPlayer {
         this.popup = document.getElementById('music-player-popup');
         this.fullPlayer = document.getElementById('full-player');
         this.toggle = document.getElementById('music-player-toggle');
+        this.playerHeader = this.fullPlayer?.querySelector('.player-header');
         
         // Player elements
         this.playlistSelect = document.getElementById('playlist-select');
@@ -67,6 +72,15 @@ class MusicPlayer {
         this.volumeFill = document.getElementById('volume-fill');
         this.volumeHandle = document.getElementById('volume-handle');
         this.closeBtn = document.getElementById('player-close');
+        
+        // Debug: Kiểm tra các elements quan trọng
+        console.log('Music Player Elements initialized:', {
+            currentTime: !!this.currentTime,
+            totalTime: !!this.totalTime,
+            progressFill: !!this.progressFill,
+            progressHandle: !!this.progressHandle,
+            audio: !!this.audio
+        });
     }
 
     bindEvents() {
@@ -100,14 +114,36 @@ class MusicPlayer {
         this.volumeHandle.addEventListener('mousedown', (e) => this.startVolumeSeeking(e));
         
         // Audio events
-        this.audio.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.audio.addEventListener('loadedmetadata', () => {
+            console.log('Audio metadata loaded');
+            this.updateDuration();
+        });
         this.audio.addEventListener('timeupdate', () => this.updateProgress());
         this.audio.addEventListener('ended', () => this.onTrackEnd());
         this.audio.addEventListener('play', () => this.onPlay());
         this.audio.addEventListener('pause', () => this.onPause());
         
+        // Thêm event listener cho canplay để đảm bảo audio sẵn sàng
+        this.audio.addEventListener('canplay', () => {
+            console.log('Audio can play');
+            this.updateDuration();
+        });
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+        
+        // Drag and drop for player header (Desktop)
+        if (this.playerHeader) {
+            this.playerHeader.addEventListener('mousedown', (e) => this.startDragging(e));
+            // Touch events for mobile
+            this.playerHeader.addEventListener('touchstart', (e) => this.startDragging(e), { passive: false });
+        }
+        document.addEventListener('mousemove', (e) => this.drag(e));
+        document.addEventListener('mouseup', () => this.stopDragging());
+        // Touch events for mobile
+        document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
+        document.addEventListener('touchend', () => this.stopDragging());
+        document.addEventListener('touchcancel', () => this.stopDragging());
         
         // Prevent popup from closing when clicking inside
         this.popup.addEventListener('click', (e) => {
@@ -248,13 +284,8 @@ class MusicPlayer {
             this.savePlayerState();
         }
         
-<<<<<<< HEAD
-        // Auto-play if enabled (nhưng không auto-play khi đang restore)
-        if (this.settings.auto_play && playlist.tracks.length > 0 && !this.isRestoringState) {
-=======
         // Auto-play if enabled (nhưng không auto-play khi đang restore hoặc đang phát)
         if (this.settings.auto_play && playlist.tracks.length > 0 && !this.isRestoringState && !this.isPlaying) {
->>>>>>> 029f4c7 (Music 3)
             console.log('Auto-playing track 0');
             // Đánh dấu user interaction TRƯỚC KHI phát nhạc
             this.userInteracted = true;
@@ -440,6 +471,11 @@ class MusicPlayer {
     onPlay() {
         this.isPlaying = true;
         this.updatePlayPauseButtons();
+        
+        // Force update thời gian khi bắt đầu phát
+        this.updateDuration();
+        this.updateProgress();
+        
         // Lưu state khi bắt đầu phát
         if (!this.isRestoringState) {
             this.savePlayerState();
@@ -462,17 +498,38 @@ class MusicPlayer {
 
     updateDuration() {
         const duration = this.audio.duration;
-        this.totalTime.textContent = this.formatTime(duration);
+        if (this.totalTime && duration) {
+            this.totalTime.textContent = this.formatTime(duration);
+            console.log('Updated total time:', this.formatTime(duration));
+        }
     }
 
     updateProgress() {
         if (!this.audio.duration) return;
         
         const progress = (this.audio.currentTime / this.audio.duration) * 100;
-        this.progressFill.style.width = `${progress}%`;
-        this.progressHandle.style.left = `${progress}%`;
         
-        this.currentTime.textContent = this.formatTime(this.audio.currentTime);
+        // Cập nhật progress bar
+        if (this.progressFill) {
+            this.progressFill.style.width = `${progress}%`;
+        }
+        if (this.progressHandle) {
+            this.progressHandle.style.left = `${progress}%`;
+        }
+        
+        // Cập nhật thời gian hiện tại
+        if (this.currentTime) {
+            this.currentTime.textContent = this.formatTime(this.audio.currentTime);
+        }
+        
+        // Debug log mỗi 5 giây
+        if (Math.floor(this.audio.currentTime) % 5 === 0) {
+            console.log('Progress update:', {
+                currentTime: this.formatTime(this.audio.currentTime),
+                totalTime: this.formatTime(this.audio.duration),
+                progress: progress.toFixed(1) + '%'
+            });
+        }
     }
 
     formatTime(seconds) {
@@ -564,6 +621,60 @@ class MusicPlayer {
 
     togglePlayer() {
         this.popup.classList.toggle('hidden');
+    }
+
+    startDragging(event) {
+        // Không drag nếu click vào button
+        if (event.target.closest('button')) {
+            return;
+        }
+        
+        this.isDragging = true;
+        this.popup.classList.add('dragging');
+        
+        const rect = this.popup.getBoundingClientRect();
+        
+        // Lấy clientX/Y từ touch hoặc mouse event
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+        
+        this.dragOffset.x = clientX - rect.left;
+        this.dragOffset.y = clientY - rect.top;
+        
+        event.preventDefault();
+    }
+
+    drag(event) {
+        if (!this.isDragging) return;
+        
+        event.preventDefault();
+        
+        // Lấy clientX/Y từ touch hoặc mouse event
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+        
+        let x = clientX - this.dragOffset.x;
+        let y = clientY - this.dragOffset.y;
+        
+        // Giới hạn trong viewport
+        const rect = this.popup.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+        
+        x = Math.max(0, Math.min(x, maxX));
+        y = Math.max(0, Math.min(y, maxY));
+        
+        this.popup.style.left = `${x}px`;
+        this.popup.style.top = `${y}px`;
+        this.popup.style.bottom = 'auto';
+        this.popup.style.right = 'auto';
+    }
+
+    stopDragging() {
+        if (this.isDragging) {
+            this.isDragging = false;
+            this.popup.classList.remove('dragging');
+        }
     }
 
     handleKeyboard(event) {
@@ -744,6 +855,24 @@ class MusicPlayer {
             console.error('Error restoring player state:', error);
             this.isRestoringState = false;
             return false;
+        }
+    }
+
+    // Method để test và debug thời gian
+    testTimeUpdate() {
+        console.log('Testing time update...');
+        console.log('Audio currentTime:', this.audio.currentTime);
+        console.log('Audio duration:', this.audio.duration);
+        console.log('Elements:', {
+            currentTime: this.currentTime,
+            totalTime: this.totalTime,
+            currentTimeElement: this.currentTime ? this.currentTime.textContent : 'not found',
+            totalTimeElement: this.totalTime ? this.totalTime.textContent : 'not found'
+        });
+        
+        if (this.audio.duration) {
+            this.updateDuration();
+            this.updateProgress();
         }
     }
 

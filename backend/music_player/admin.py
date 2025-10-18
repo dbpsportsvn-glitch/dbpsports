@@ -8,6 +8,7 @@ from django.urls import path
 from django.contrib import messages
 import os
 from .models import Playlist, Track, MusicPlayerSettings
+from .utils import get_audio_duration
 
 
 class PlaylistForm(ModelForm):
@@ -92,7 +93,6 @@ class TrackForm(ModelForm):
                     # Nếu đã tồn tại, cập nhật track hiện tại thay vì tạo mới
                     existing_track.title = instance.title or existing_track.title
                     existing_track.artist = instance.artist or existing_track.artist
-                    existing_track.duration = instance.duration
                     existing_track.order = instance.order
                     existing_track.is_active = instance.is_active
                     
@@ -100,6 +100,9 @@ class TrackForm(ModelForm):
                     with open(file_path, 'wb') as destination:
                         for chunk in music_file.chunks():
                             destination.write(chunk)
+                    
+                    # Đọc duration từ file nhạc mới
+                    existing_track.duration = get_audio_duration(file_path)
                     
                     # Tự động phân tách tên file thành title và artist
                     name_without_ext = os.path.splitext(music_file.name)[0]
@@ -120,6 +123,9 @@ class TrackForm(ModelForm):
                         destination.write(chunk)
                 
                 instance.file_path = file_path
+                
+                # Đọc duration từ file nhạc
+                instance.duration = get_audio_duration(file_path)
                 
                 # Tự động phân tách tên file thành title và artist
                 name_without_ext = os.path.splitext(music_file.name)[0]
@@ -306,11 +312,15 @@ class PlaylistAdmin(admin.ModelAdmin):
                             artist = ''
                             title = name_without_ext
                         
+                        full_file_path = os.path.join(folder_path, file)
+                        duration = get_audio_duration(full_file_path)
+                        
                         Track.objects.create(
                             playlist=playlist,
                             title=title.strip(),
                             artist=artist.strip() if artist else None,
-                            file_path=os.path.join(folder_path, file),
+                            file_path=full_file_path,
+                            duration=duration,
                             order=i + 1
                         )
                         added_count += 1
@@ -371,11 +381,15 @@ class PlaylistAdmin(admin.ModelAdmin):
                             artist = ''
                             title = name_without_ext
                         
+                        full_file_path = os.path.join(folder_path, file)
+                        duration = get_audio_duration(full_file_path)
+                        
                         Track.objects.create(
                             playlist=playlist,
                             title=title.strip(),
                             artist=artist.strip() if artist else None,
-                            file_path=os.path.join(folder_path, file),
+                            file_path=full_file_path,
+                            duration=duration,
                             order=i + 1
                         )
                         added_count += 1
@@ -472,10 +486,14 @@ class TrackAdmin(admin.ModelAdmin):
                         artist = ''
                         title = name_without_ext
                     
+                    # Đọc duration từ file nhạc
+                    duration = get_audio_duration(file_path)
+                    
                     if existing_track:
                         # Cập nhật track hiện có
                         existing_track.title = title
                         existing_track.artist = artist
+                        existing_track.duration = duration
                         existing_track.save()
                         updated_count += 1
                     else:
@@ -485,6 +503,7 @@ class TrackAdmin(admin.ModelAdmin):
                             title=title,
                             artist=artist,
                             file_path=file_path,
+                            duration=duration,
                             order=Track.objects.filter(playlist=playlist).count() + 1
                         )
                         added_count += 1
