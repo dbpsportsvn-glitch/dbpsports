@@ -181,29 +181,53 @@ class MusicPlayer {
             this.userInteracted = true;
         });
         
-        // Click bất kỳ đâu trên màn hình → auto play (chỉ 1 lần) và close player khi click outside
+        // Click bất kỳ đâu trên màn hình → auto open player + auto play (chỉ 1 lần)
         document.addEventListener('click', (e) => {
             this.userInteracted = true;
             
-            // Auto-play nếu có playlist, chưa phát, và chưa từng auto-play
+            // Auto-open player và auto-play nếu có playlist, chưa phát, và chưa từng auto-play
             if (!this.hasAutoPlayed && this.currentPlaylist && !this.isPlaying && !this.isRestoringState) {
-                console.log('Auto-playing after first user click');
+                console.log('Auto-opening player and playing after first user click');
                 this.hasAutoPlayed = true;
+                
+                // Mở player nếu đang ẩn
+                if (this.popup.classList.contains('hidden')) {
+                    this.popup.classList.remove('hidden');
+                }
+                
+                // Phát nhạc
                 this.playTrack(this.currentTrackIndex);
             }
             
-            // Click ngoài khu vực player → thu nhỏ player
+            // Click ngoài khu vực player → thu nhỏ player (nhưng không áp dụng khi vừa mới auto-open)
             if (!this.popup.classList.contains('hidden')) {
                 // Kiểm tra xem click có nằm trong popup hoặc toggle button không
                 if (!this.popup.contains(e.target) && !this.toggle.contains(e.target)) {
-                    console.log('Clicked outside player, closing...');
-                    this.togglePlayer();
+                    // Chỉ close nếu đã auto-play rồi và không phải click đầu tiên
+                    if (this.hasAutoPlayed) {
+                        console.log('Clicked outside player, closing...');
+                        this.togglePlayer();
+                    }
                 }
             }
-        });
+        }, { once: false });
         
         document.addEventListener('keydown', () => {
             this.userInteracted = true;
+            
+            // Auto-open và auto-play khi nhấn phím (nếu chưa auto-play)
+            if (!this.hasAutoPlayed && this.currentPlaylist && !this.isPlaying && !this.isRestoringState) {
+                console.log('Auto-opening player and playing after keyboard interaction');
+                this.hasAutoPlayed = true;
+                
+                // Mở player nếu đang ẩn
+                if (this.popup.classList.contains('hidden')) {
+                    this.popup.classList.remove('hidden');
+                }
+                
+                // Phát nhạc
+                this.playTrack(this.currentTrackIndex);
+            }
         }, { once: true });
         
         // Tab switching
