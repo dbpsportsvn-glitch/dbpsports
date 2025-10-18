@@ -59,50 +59,6 @@ class MusicPlayerAPIView(View):
                 'success': False,
                 'error': str(e)
             }, status=500)
-    
-    def post(self, request):
-        """Cập nhật cài đặt music player"""
-        try:
-            data = json.loads(request.body)
-            user = request.user
-            
-            if not user.is_authenticated:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'User not authenticated'
-                }, status=401)
-            
-            # Lấy hoặc tạo settings
-            settings, created = MusicPlayerSettings.objects.get_or_create(user=user)
-            
-            # Cập nhật settings
-            if 'auto_play' in data:
-                settings.auto_play = data['auto_play']
-            if 'volume' in data:
-                settings.volume = max(0.0, min(1.0, float(data['volume'])))
-            if 'repeat_mode' in data:
-                settings.repeat_mode = data['repeat_mode']
-            if 'shuffle' in data:
-                settings.shuffle = data['shuffle']
-            if 'default_playlist_id' in data:
-                try:
-                    playlist = Playlist.objects.get(id=data['default_playlist_id'])
-                    settings.default_playlist = playlist
-                except Playlist.DoesNotExist:
-                    pass
-            
-            settings.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Settings updated successfully'
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -147,6 +103,50 @@ class MusicPlayerSettingsView(View):
             return JsonResponse({
                 'success': True,
                 'settings': settings_data
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    def post(self, request):
+        """Cập nhật cài đặt music player"""
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            
+            if not user.is_authenticated:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'User not authenticated'
+                }, status=401)
+            
+            # Lấy hoặc tạo settings
+            settings, created = MusicPlayerSettings.objects.get_or_create(user=user)
+            
+            # Cập nhật settings
+            if 'auto_play' in data:
+                settings.auto_play = data['auto_play']
+            if 'volume' in data:
+                settings.volume = max(0.0, min(1.0, float(data['volume'])))
+            if 'repeat_mode' in data:
+                settings.repeat_mode = data['repeat_mode']
+            if 'shuffle' in data:
+                settings.shuffle = data['shuffle']
+            if 'default_playlist_id' in data:
+                try:
+                    playlist = Playlist.objects.get(id=data['default_playlist_id'])
+                    settings.default_playlist = playlist
+                except Playlist.DoesNotExist:
+                    pass
+            
+            settings.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Settings updated successfully'
             })
             
         except Exception as e:

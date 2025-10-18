@@ -73,6 +73,17 @@
     transform: scale(1.1);
 }
 
+.control-btn.active {
+    background: rgba(255, 255, 255, 0.4);
+    color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.control-btn.active:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.15);
+}
+
 .play-pause-btn {
     background: rgba(255, 255, 255, 0.3);
     width: 40px;
@@ -84,13 +95,6 @@
     background: rgba(255, 255, 255, 0.4);
 }
 
-.progress-bar {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-    cursor: pointer;
-}
 
 .progress-fill {
     height: 100%;
@@ -294,13 +298,6 @@
     position: relative;
 }
 
-.progress-bar {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-    cursor: pointer;
-}
 
 .progress-fill {
     height: 100%;
@@ -322,10 +319,22 @@
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s ease;
+    pointer-events: none; /* Disable pointer events when invisible */
+    z-index: 10;
 }
 
 .progress-container:hover .progress-handle {
     opacity: 1;
+    pointer-events: auto; /* Enable pointer events when visible */
+}
+
+/* Make progress bar more interactive */
+.progress-bar {
+    height: 6px; /* Increase height for easier clicking */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: visible; /* Allow handle to extend beyond bar */
+    cursor: pointer;
 }
 
 .control-buttons {
