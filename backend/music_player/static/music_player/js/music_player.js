@@ -1099,22 +1099,38 @@ class MusicPlayer {
             const fileUrl = `/media/music/playlist/${track.file_path}`;
             this.audio.src = fileUrl;
             
-            // Sử dụng Promise để handle audio loading
+            // Sử dụng Promise để handle audio loading với retry logic
             const waitForAudioReady = () => {
                 return new Promise((resolve, reject) => {
                     let resolved = false;
                     
                     const cleanup = () => {
                         clearTimeout(timeout);
-                        this.audio.removeEventListener('loadeddata', onReady);
+                        this.audio.removeEventListener('loadedmetadata', onMetadataLoaded);
+                        this.audio.removeEventListener('canplay', onCanPlay);
                         this.audio.removeEventListener('error', onError);
                     };
                     
-                    const onReady = () => {
-                        if (resolved) return;
-                        resolved = true;
-                        cleanup();
-                        resolve();
+                    const checkAndResolve = () => {
+                        // Đảm bảo duration đã có và hợp lệ
+                        if (this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
+                            if (resolved) return;
+                            resolved = true;
+                            cleanup();
+                            console.log('✅ Audio ready with duration:', this.formatTime(this.audio.duration));
+                            resolve();
+                        }
+                    };
+                    
+                    const onMetadataLoaded = () => {
+                        console.log('📊 Metadata loaded, duration:', this.audio.duration);
+                        checkAndResolve();
+                    };
+                    
+                    const onCanPlay = () => {
+                        console.log('▶️ Can play, duration:', this.audio.duration);
+                        // Delay nhỏ để chắc chắn duration đã được set
+                        setTimeout(checkAndResolve, 50);
                     };
                     
                     const onError = (e) => {
@@ -1124,15 +1140,17 @@ class MusicPlayer {
                         reject(e);
                     };
                     
-                    // Timeout sau 5 giây
+                    // Timeout sau 8 giây (tăng lên để audio có thời gian load)
                     const timeout = setTimeout(() => {
                         if (resolved) return;
                         resolved = true;
                         cleanup();
                         reject(new Error('Timeout waiting for audio'));
-                    }, 5000);
+                    }, 8000);
                     
-                    this.audio.addEventListener('loadeddata', onReady, { once: true });
+                    // Listen cả 2 events để đảm bảo
+                    this.audio.addEventListener('loadedmetadata', onMetadataLoaded, { once: true });
+                    this.audio.addEventListener('canplay', onCanPlay, { once: true });
                     this.audio.addEventListener('error', onError, { once: true });
                 });
             };
@@ -1140,17 +1158,37 @@ class MusicPlayer {
             // Load audio
             this.audio.load();
             
-            // Xử lý async
+            // Xử lý async với retry logic
             waitForAudioReady()
                 .then(() => {
-                    // Audio đã sẵn sàng
-                    console.log('Audio ready for restore');
+                    // Audio đã sẵn sàng VÀ có duration
+                    console.log('🎵 Audio ready for restore, attempting to set position...');
                     
-                    // Set thời gian phát
-                    if (state.currentTime && state.currentTime > 0 && this.audio.duration) {
-                        const targetTime = Math.min(state.currentTime, this.audio.duration - 1);
-                        this.audio.currentTime = targetTime;
-                        console.log('Restored position:', this.formatTime(targetTime));
+                    // Set thời gian phát với validation tốt hơn
+                    if (state.currentTime && state.currentTime > 0) {
+                        if (this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
+                            const targetTime = Math.min(state.currentTime, this.audio.duration - 0.5);
+                            
+                            try {
+                                this.audio.currentTime = targetTime;
+                                console.log('✅ Restored position:', this.formatTime(targetTime), '/', this.formatTime(this.audio.duration));
+                            } catch (e) {
+                                console.error('❌ Failed to set currentTime:', e);
+                                // Retry sau 200ms
+                                setTimeout(() => {
+                                    try {
+                                        this.audio.currentTime = targetTime;
+                                        console.log('✅ Restored position (retry):', this.formatTime(targetTime));
+                                    } catch (e2) {
+                                        console.error('❌ Failed to set currentTime (retry):', e2);
+                                    }
+                                }, 200);
+                            }
+                        } else {
+                            console.warn('⚠️ Duration not valid:', this.audio.duration, '- cannot restore position');
+                        }
+                    } else {
+                        console.log('ℹ️ No currentTime to restore (starting from beginning)');
                     }
                     
                     // Update UI
@@ -1166,14 +1204,14 @@ class MusicPlayer {
                     }
                 })
                 .catch(error => {
-                    console.error('Error restoring audio:', error);
+                    console.error('❌ Error restoring audio:', error);
                 })
                 .finally(() => {
                     // Reset flags sau 1 giây để đảm bảo mọi thứ ổn định
                     setTimeout(() => {
                         this.isRestoringState = false;
                         this.isLoadingTrack = false;
-                        console.log('Restore completed');
+                        console.log('🏁 Restore completed');
                     }, 1000);
                 });
             
