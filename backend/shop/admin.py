@@ -927,6 +927,7 @@ class OrganizationOrderAdmin(admin.ModelAdmin):
     search_fields = ['order_number', 'organization__name', 'customer_name', 'customer_email', 'customer_phone']
     readonly_fields = ['order_number', 'created_at', 'updated_at']
     inlines = [OrganizationOrderItemInline]
+    actions = ['mark_as_processing', 'mark_as_shipped', 'mark_as_delivered', 'mark_as_cancelled', 'mark_payment_paid']
     
     class Meta:
         verbose_name = "Đơn hàng Shop BTC"
@@ -1016,6 +1017,36 @@ class OrganizationOrderAdmin(admin.ModelAdmin):
         )
     total_amount.short_description = "Tổng tiền"
     total_amount.admin_order_field = 'total_amount'
+    
+    def mark_as_processing(self, request, queryset):
+        """Đánh dấu đơn hàng đang xử lý"""
+        updated = queryset.filter(status='pending').update(status='processing')
+        self.message_user(request, f'Đã cập nhật {updated} đơn hàng thành "Đang xử lý"')
+    mark_as_processing.short_description = "Đánh dấu đang xử lý"
+    
+    def mark_as_shipped(self, request, queryset):
+        """Đánh dấu đơn hàng đã giao"""
+        updated = queryset.filter(status='processing').update(status='shipped')
+        self.message_user(request, f'Đã cập nhật {updated} đơn hàng thành "Đã giao hàng"')
+    mark_as_shipped.short_description = "Đánh dấu đã giao hàng"
+    
+    def mark_as_delivered(self, request, queryset):
+        """Đánh dấu đơn hàng đã nhận"""
+        updated = queryset.filter(status='shipped').update(status='delivered')
+        self.message_user(request, f'Đã cập nhật {updated} đơn hàng thành "Đã nhận hàng"')
+    mark_as_delivered.short_description = "Đánh dấu đã nhận hàng"
+    
+    def mark_as_cancelled(self, request, queryset):
+        """Đánh dấu đơn hàng đã hủy"""
+        updated = queryset.filter(status__in=['pending', 'processing']).update(status='cancelled')
+        self.message_user(request, f'Đã hủy {updated} đơn hàng')
+    mark_as_cancelled.short_description = "Hủy đơn hàng"
+    
+    def mark_payment_paid(self, request, queryset):
+        """Đánh dấu đã thanh toán"""
+        updated = queryset.filter(payment_status='pending').update(payment_status='paid')
+        self.message_user(request, f'Đã cập nhật {updated} đơn hàng thành "Đã thanh toán"')
+    mark_payment_paid.short_description = "Đánh dấu đã thanh toán"
 
 
 @admin.register(OrganizationShopSettings)
@@ -1058,10 +1089,18 @@ class OrganizationShopSettingsAdmin(admin.ModelAdmin):
     
     @admin.action(description='Khoá Shop BTC đã chọn')
     def lock_shops(self, request, queryset):
-        updated_count = queryset.update(shop_locked=True, shop_unlock_requested=False)
+        # Lưu lại danh sách các shop cần khoá
+        shops_to_lock = list(queryset)
+        updated_count = len(shops_to_lock)
+        
+        # Cập nhật status cho từng shop
+        for shop_settings in shops_to_lock:
+            shop_settings.shop_locked = True
+            shop_settings.shop_unlock_requested = False
+            shop_settings.save()
         
         # Gửi email thông báo cho các BTC
-        for shop_settings in queryset:
+        for shop_settings in shops_to_lock:
             if shop_settings.organization:
                 # Lấy tất cả thành viên BTC
                 btc_members = shop_settings.organization.members.all()
@@ -1112,11 +1151,18 @@ Vui lòng liên hệ Admin để được hỗ trợ.
     
     @admin.action(description='Mở khoá Shop BTC đã chọn')
     def unlock_shops(self, request, queryset):
-        # Chỉ mở khoá những Shop Settings đã tồn tại
-        updated_count = queryset.update(shop_locked=False, shop_unlock_requested=False)
+        # Lưu lại danh sách các shop cần mở khoá
+        shops_to_unlock = list(queryset)
+        updated_count = len(shops_to_unlock)
+        
+        # Cập nhật status cho từng shop
+        for shop_settings in shops_to_unlock:
+            shop_settings.shop_locked = False
+            shop_settings.shop_unlock_requested = False
+            shop_settings.save()
         
         # Gửi email thông báo cho các BTC
-        for shop_settings in queryset:
+        for shop_settings in shops_to_unlock:
             if shop_settings.organization:
                 # Lấy tất cả thành viên BTC
                 btc_members = shop_settings.organization.members.all()
@@ -1164,15 +1210,19 @@ Bây giờ bạn có thể sử dụng đầy đủ tính năng Shop BTC để t
     
     @admin.action(description='Duyệt yêu cầu mở khoá Shop BTC')
     def approve_unlock_requests(self, request, queryset):
-        updated_count = queryset.filter(shop_unlock_requested=True).update(
-            shop_locked=False, 
-            shop_unlock_requested=False,
-            shop_unlock_request_message=''
-        )
+        # Lọc ra các shop có yêu cầu mở khoá
+        shops_to_approve = queryset.filter(shop_unlock_requested=True)
+        updated_count = shops_to_approve.count()
+        
+        # Cập nhật status cho từng shop
+        for shop_settings in shops_to_approve:
+            shop_settings.shop_locked = False
+            shop_settings.shop_unlock_requested = False
+            shop_settings.shop_unlock_request_message = ''
+            shop_settings.save()
         
         # Gửi email thông báo cho các BTC được duyệt
-        approved_shops = queryset.filter(shop_unlock_requested=False, shop_locked=False)
-        for shop_settings in approved_shops:
+        for shop_settings in shops_to_approve:
             if shop_settings.organization:
                 # Lấy tất cả thành viên BTC
                 btc_members = shop_settings.organization.members.all()

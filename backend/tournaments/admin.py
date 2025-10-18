@@ -341,8 +341,16 @@ class TeamRegistrationAdmin(ModelAdmin):
 
     @admin.action(description='Duyệt thanh toán cho các đăng ký đã chọn')
     def approve_payments(self, request, queryset):
-        updated_count = queryset.filter(payment_status='PENDING').update(payment_status='PAID')
-        for reg in queryset.filter(pk__in=queryset.values_list('pk', flat=True)):
+        # Lọc ra các registration có status PENDING
+        pending_registrations = queryset.filter(payment_status='PENDING')
+        updated_count = pending_registrations.count()
+        
+        # Cập nhật status và gửi email cho từng registration
+        for reg in pending_registrations:
+            reg.payment_status = 'PAID'
+            reg.save()
+            
+            # Gửi email thông báo cho đội trưởng
             if reg.team.captain.email:
                 send_notification_email(
                     subject=f"Xác nhận thanh toán thành công cho đội {reg.team.name}",
@@ -350,16 +358,20 @@ class TeamRegistrationAdmin(ModelAdmin):
                     context={'team': reg.team, 'tournament': reg.tournament},
                     recipient_list=[reg.team.captain.email]
                 )
+        
         self.message_user(request, f'Đã duyệt thành công thanh toán cho {updated_count} đội.')
     
     @admin.action(description='Từ chối thanh toán cho các đăng ký đã chọn')
     def reject_payments(self, request, queryset):
-        rejected_count = 0
-        for reg in queryset.filter(payment_status='PENDING'):
+        # Lọc ra các registration có status PENDING
+        pending_registrations = queryset.filter(payment_status='PENDING')
+        rejected_count = pending_registrations.count()
+        
+        # Cập nhật status và gửi email cho từng registration
+        for reg in pending_registrations:
             reg.payment_status = 'UNPAID'
             reg.payment_proof = None  # Xóa bằng chứng thanh toán
             reg.save()
-            rejected_count += 1
             
             # Gửi email thông báo từ chối cho đội trưởng
             if reg.team.captain.email:
