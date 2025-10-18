@@ -18,80 +18,104 @@
         </div>
 
         <div class="player-content">
-            <!-- Playlist Selection -->
-            <div class="playlist-section">
-                <div class="section-title">
-                    <i class="bi bi-list-ul"></i>
-                    Playlist
-                </div>
-                <select id="playlist-select" class="form-select">
-                    <option value="">Chọn playlist...</option>
-                </select>
-            </div>
-
-            <!-- Track List -->
-            <div class="track-list-section">
-                <div class="section-title">
-                    <i class="bi bi-music-note-list"></i>
-                    Danh sách bài hát
-                </div>
-                <div id="track-list" class="track-list">
-                    <div class="empty-state">
-                        <i class="bi bi-music-note"></i>
-                        <p>Chưa có bài hát nào</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Player Controls -->
+            <!-- Player Controls - Now on TOP -->
             <div class="player-controls">
-                <div class="current-track">
-                    <div class="track-info">
-                        <div class="track-title" id="current-track-title">Chọn bài hát</div>
-                        <div class="track-artist" id="current-track-artist"></div>
+                <!-- Current Track Info & Progress -->
+                <div class="current-track-section">
+                    <div class="current-track">
+                        <div class="track-info">
+                            <div class="track-title" id="current-track-title">Chọn bài hát</div>
+                            <div class="track-artist" id="current-track-artist"></div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="progress-section">
-                    <div class="time-display">
-                        <span id="current-time">0:00</span>
-                        <span id="total-time">0:00</span>
-                    </div>
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
-                            <div class="progress-handle" id="progress-handle"></div>
+                    <div class="progress-section">
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                                <div class="progress-handle" id="progress-handle"></div>
+                            </div>
+                        </div>
+                        <div class="time-display">
+                            <span id="current-time">0:00</span>
+                            <span id="total-time">0:00</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="control-buttons">
-                    <button id="shuffle-btn" class="control-btn" title="Phát ngẫu nhiên">
-                        <i class="bi bi-shuffle"></i>
+                <!-- Control Buttons & Volume on same row -->
+                <div class="controls-row">
+                    <div class="control-buttons">
+                        <button id="shuffle-btn" class="control-btn" title="Phát ngẫu nhiên">
+                            <i class="bi bi-shuffle"></i>
+                        </button>
+                        <button id="prev-btn" class="control-btn" title="Bài trước">
+                            <i class="bi bi-skip-start-fill"></i>
+                        </button>
+                        <button id="play-pause-btn" class="control-btn play-pause-btn" title="Phát/Tạm dừng">
+                            <i class="bi bi-play-fill"></i>
+                        </button>
+                        <button id="next-btn" class="control-btn" title="Bài tiếp">
+                            <i class="bi bi-skip-end-fill"></i>
+                        </button>
+                        <button id="repeat-btn" class="control-btn" title="Lặp lại">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                    </div>
+
+                    <div class="volume-section">
+                        <button id="mute-btn" class="control-btn volume-btn" title="Tắt tiếng">
+                            <i class="bi bi-volume-up-fill"></i>
+                        </button>
+                        <div class="volume-container">
+                            <div class="volume-bar">
+                                <div class="volume-fill" id="volume-fill"></div>
+                                <div class="volume-handle" id="volume-handle"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab System - Modern Design -->
+            <div class="tabs-section">
+                <!-- Tab Headers -->
+                <div class="tab-headers">
+                    <button class="tab-header active" data-tab="tracks">
+                        <i class="bi bi-music-note-list"></i>
+                        Danh sách bài hát
                     </button>
-                    <button id="prev-btn" class="control-btn" title="Bài trước">
-                        <i class="bi bi-skip-start-fill"></i>
-                    </button>
-                    <button id="play-pause-btn" class="control-btn play-pause-btn" title="Phát/Tạm dừng">
-                        <i class="bi bi-play-fill"></i>
-                    </button>
-                    <button id="next-btn" class="control-btn" title="Bài tiếp">
-                        <i class="bi bi-skip-end-fill"></i>
-                    </button>
-                    <button id="repeat-btn" class="control-btn" title="Lặp lại">
-                        <i class="bi bi-arrow-repeat"></i>
+                    <button class="tab-header" data-tab="playlists">
+                        <i class="bi bi-collection-play"></i>
+                        Playlist
                     </button>
                 </div>
 
-                <div class="volume-section">
-                    <button id="mute-btn" class="control-btn" title="Tắt tiếng">
-                        <i class="bi bi-volume-up-fill"></i>
-                    </button>
-                    <div class="volume-container">
-                        <div class="volume-bar">
-                            <div class="volume-fill" id="volume-fill"></div>
-                            <div class="volume-handle" id="volume-handle"></div>
+                <!-- Tab Contents -->
+                <div class="tab-contents">
+                    <!-- Tracks Tab -->
+                    <div class="tab-content active" id="tab-tracks">
+                        <div id="track-list" class="track-list">
+                            <div class="empty-state">
+                                <i class="bi bi-music-note"></i>
+                                <p>Chưa có bài hát nào</p>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Playlists Tab -->
+                    <div class="tab-content" id="tab-playlists">
+                        <div class="playlist-grid" id="playlist-grid">
+                            <!-- Playlists will be populated here -->
+                            <div class="empty-state">
+                                <i class="bi bi-collection-play"></i>
+                                <p>Đang tải playlists...</p>
+                            </div>
+                        </div>
+                        <!-- Hidden select for backward compatibility -->
+                        <select id="playlist-select" class="form-select" style="display: none;">
+                            <option value="">Chọn playlist...</option>
+                        </select>
                     </div>
                 </div>
             </div>
