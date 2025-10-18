@@ -1,0 +1,58 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.field-folder_path {
+    display: none !important;
+}
+
+.help-text {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    color: #0066cc;
+}
+
+.help-text strong {
+    color: #004499;
+}
+
+.upload-info {
+    background: #f0f8ff;
+    border-left: 4px solid #667eea;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.upload-info h4 {
+    margin-top: 0;
+    color: #667eea;
+}
+
+.upload-info ul {
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block field_sets %}
+<div class="help-text">
+    <strong>📁 Tự động tạo thư mục:</strong> Thư mục playlist sẽ được tạo tự động dựa trên tên playlist bạn nhập. Không cần nhập đường dẫn thư mục.
+</div>
+
+<div class="upload-info">
+    <h4><i class="icon-upload"></i> Hướng dẫn thêm nhạc:</h4>
+    <ul>
+        <li><strong>Cách 1:</strong> Sau khi tạo playlist, vào phần "Tracks" và upload file nhạc trực tiếp</li>
+        <li><strong>Cách 2:</strong> Copy file nhạc vào thư mục playlist và dùng action "Scan thư mục playlist"</li>
+        <li><strong>Định dạng hỗ trợ:</strong> MP3, WAV, OGG, M4A, AAC</li>
+        <li><strong>Lưu ý:</strong> Tên file nên có định dạng "Nghệ sĩ - Tên bài hát" để tự động phân tách</li>
+    </ul>
+</div>
+
+{{ block.super }}
+{% endblock %}

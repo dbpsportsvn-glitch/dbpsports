@@ -25,7 +25,7 @@ class Tournament(models.Model):
         FINISHED = 'FINISHED', 'Đã kết thúc'
 
     class Format(models.TextChoices):
-        CUP = 'CUP', 'Đá Cúp (loại trực tiếp/vòng bảng + knock-out)'
+        CUP = 'CUP', 'Đá Cúp (loại trực tiếp)'
         LEAGUE = 'LEAGUE', 'Đá League (vòng tròn tính điểm)'
 
     class Region(models.TextChoices):

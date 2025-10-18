@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'sponsors',
     'shop',
     'blog',
+    'music_player',
     
     # Django admin interface
     'admin_interface',

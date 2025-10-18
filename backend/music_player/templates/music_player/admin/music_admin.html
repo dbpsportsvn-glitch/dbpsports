@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quản lý Music Player - DBP Sports{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="bi bi-music-note-beamed text-primary"></i>
+                        Quản lý Music Player
+                    </h2>
+                    <p class="text-muted mb-0">Quản lý playlist và bài hát cho trình phát nhạc</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                    <i class="bi bi-plus-circle"></i>
+                    Tạo Playlist
+                </button>
+            </div>
+
+            <!-- Playlists Grid -->
+            <div class="row">
+                {% for playlist in playlists %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-list-ul text-primary"></i>
+                                {{ playlist.name }}
+                            </h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="openUploadModal({{ playlist.id }}, '{{ playlist.name }}')">
+                                            <i class="bi bi-cloud-upload"></i>
+                                            Thêm nhạc
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="scanPlaylist({{ playlist.id }})">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                            Scan thư mục
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="togglePlaylistStatus({{ playlist.id }})">
+                                            <i class="bi bi-{% if playlist.is_active %}pause{% else %}play{% endif %}"></i>
+                                            {% if playlist.is_active %}Tắt{% else %}Bật{% endif %}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" onclick="deletePlaylist({{ playlist.id }})">
+                                            <i class="bi bi-trash"></i>
+                                            Xóa
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text text-muted">{{ playlist.description|default:"Không có mô tả" }}</p>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-folder"></i>
+                                    {{ playlist.folder_path }}
+                                </small>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{% if playlist.is_active %}success{% else %}secondary{% endif %}">
+                                    <i class="bi bi-{% if playlist.is_active %}check-circle{% else %}pause-circle{% endif %}"></i>
+                                    {% if playlist.is_active %}Hoạt động{% else %}Tạm dừng{% endif %}
+                                </span>
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-music-note"></i>
+                                    {{ playlist.get_tracks_count }} bài hát
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i>
+                                Tạo: {{ playlist.created_at|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+                        <h4 class="text-muted mt-3">Chưa có playlist nào</h4>
+                        <p class="text-muted">Hãy tạo playlist đầu tiên để bắt đầu sử dụng music player.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                            <i class="bi bi-plus-circle"></i>
+                            Tạo Playlist
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Playlist Modal -->
+<div class="modal fade" id="createPlaylistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle text-primary"></i>
+                    Tạo Playlist Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'music_player:create_playlist' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên Playlist *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Lưu ý:</strong> Thư mục sẽ được tạo tự động. Sau khi tạo playlist, bạn có thể thêm nhạc bằng cách upload file hoặc copy file vào thư mục và scan.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Tạo Playlist
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Music Modal -->
+<div class="modal fade" id="uploadMusicModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-cloud-upload text-primary"></i>
+                    Thêm Nhạc vào Playlist
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="upload-area" class="upload-area">
+                    <div class="upload-content">
+                        <i class="bi bi-cloud-upload display-1 text-muted"></i>
+                        <h4 class="text-muted mt-3">Kéo thả file nhạc vào đây</h4>
+                        <p class="text-muted">hoặc</p>
+                        <button type="button" class="btn btn-primary" onclick="document.getElementById('music-files').click()">
+                            <i class="bi bi-folder2-open"></i>
+                            Chọn File
+                        </button>
+                        <input type="file" id="music-files" multiple accept=".mp3,.wav,.ogg,.m4a,.aac" style="display: none;">
+                    </div>
+                </div>
+                
+                <div id="file-list" class="file-list mt-3" style="display: none;">
+                    <h6>Files đã chọn:</h6>
+                    <div id="selected-files"></div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Định dạng hỗ trợ:</strong> MP3, WAV, OGG, M4A, AAC<br>
+                    <strong>Lưu ý:</strong> Tên file nên có định dạng "Nghệ sĩ - Tên bài hát" để tự động phân tách
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="upload-btn" onclick="uploadFiles()" disabled>
+                    <i class="bi bi-cloud-upload"></i>
+                    Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Đang xử lý...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFiles = [];
+let currentPlaylistId = null;
+
+// Drag and drop functionality
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('music-files');
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('drag-over');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+    selectedFiles = Array.from(files).filter(file => {
+        const validTypes = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
+        return validTypes.some(type => file.name.toLowerCase().endsWith(type));
+    });
+    
+    displaySelectedFiles();
+    document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+}
+
+function displaySelectedFiles() {
+    const fileList = document.getElementById('file-list');
+    const selectedFilesDiv = document.getElementById('selected-files');
+    
+    if (selectedFiles.length === 0) {
+        fileList.style.display = 'none';
+        return;
+    }
+    
+    fileList.style.display = 'block';
+    selectedFilesDiv.innerHTML = '';
+    
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item d-flex justify-content-between align-items-center p-2 border rounded mb-2';
+        fileItem.innerHTML = `
+            <div>
+                <i class="bi bi-music-note text-primary"></i>
+                <span class="ms-2">${file.name}</span>
+                <small class="text-muted ms-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                <i class="bi bi-x"></i>
+            </button>
+        `;
+        selectedFilesDiv.appendChild(fileItem);
+    });
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    displaySelectedFiles();
+    document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+}
+
+function openUploadModal(playlistId, playlistName) {
+    currentPlaylistId = playlistId;
+    document.querySelector('#uploadMusicModal .modal-title').innerHTML = `
+        <i class="bi bi-cloud-upload text-primary"></i>
+        Thêm Nhạc vào "${playlistName}"
+    `;
+    
+    // Reset
+    selectedFiles = [];
+    document.getElementById('file-list').style.display = 'none';
+    document.getElementById('upload-btn').disabled = true;
+    fileInput.value = '';
+    
+    new bootstrap.Modal(document.getElementById('uploadMusicModal')).show();
+}
+
+function uploadFiles() {
+    if (selectedFiles.length === 0 || !currentPlaylistId) return;
+    
+    showLoading();
+    
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+        formData.append('files', file);
+    });
+    
+    fetch(`/music/admin/upload-music/${currentPlaylistId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showAlert('success', data.message);
+            if (data.errors && data.errors.length > 0) {
+                showAlert('warning', 'Một số file có lỗi: ' + data.errors.join(', '));
+            }
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', 'Lỗi: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Lỗi khi upload: ' + error);
+    });
+}
+
+function scanPlaylist(playlistId) {
+    if (confirm('Bạn có chắc muốn scan lại thư mục playlist này? Tất cả bài hát cũ sẽ bị xóa.')) {
+        showLoading();
+        
+        fetch(`/music/api/scan-playlist/${playlistId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showAlert('success', `Đã scan thành công ${data.tracks_count} bài hát!`);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert('danger', 'Lỗi: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('danger', 'Lỗi khi scan playlist: ' + error);
+        });
+    }
+}
+
+function togglePlaylistStatus(playlistId) {
+    showLoading();
+    
+    fetch(`/music/admin/toggle-playlist/${playlistId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        hideLoading();
+        if (response.ok) {
+            location.reload();
+        } else {
+            showAlert('danger', 'Lỗi khi cập nhật trạng thái playlist');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showAlert('danger', 'Lỗi: ' + error);
+    });
+}
+
+function deletePlaylist(playlistId) {
+    if (confirm('Bạn có chắc muốn xóa playlist này? Hành động này không thể hoàn tác.')) {
+        showLoading();
+        
+        fetch(`/music/admin/delete-playlist/${playlistId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            hideLoading();
+            if (response.ok) {
+                location.reload();
+            } else {
+                showAlert('danger', 'Lỗi khi xóa playlist');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('danger', 'Lỗi: ' + error);
+        });
+    }
+}
+
+function showLoading() {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+}
+
+function hideLoading() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+    if (modal) modal.hide();
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.upload-area.drag-over {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+}
+
+.file-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #e9ecef;
+}
+
+.file-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}

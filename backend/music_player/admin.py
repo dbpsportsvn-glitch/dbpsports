@@ -1,0 +1,368 @@
+from django.contrib import admin
+from django.utils.html import format_html
+from django.forms import ModelForm, FileField, MultipleChoiceField
+from django import forms
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.urls import path
+from django.contrib import messages
+import os
+from .models import Playlist, Track, MusicPlayerSettings
+
+
+class PlaylistForm(ModelForm):
+    """Custom form cho Playlist với tính năng tự động tạo thư mục"""
+    
+    class Meta:
+        model = Playlist
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ẩn trường folder_path vì sẽ tự động tạo
+        if 'folder_path' in self.fields:
+            self.fields['folder_path'].widget = forms.HiddenInput()
+            self.fields['folder_path'].required = False
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Tự động tạo thư mục nếu chưa có
+        if not instance.folder_path:
+            playlist_folder = os.path.join('media', 'music', 'playlist', instance.name.lower().replace(' ', '_'))
+            os.makedirs(playlist_folder, exist_ok=True)
+            instance.folder_path = os.path.abspath(playlist_folder)
+        
+        if commit:
+            instance.save()
+        return instance
+
+
+class TrackForm(ModelForm):
+    """Custom form cho Track với tính năng upload file"""
+    music_file = FileField(
+        required=False,
+        help_text="Upload file nhạc (.mp3, .wav, .ogg, .m4a, .aac)",
+        widget=forms.FileInput(attrs={'accept': '.mp3,.wav,.ogg,.m4a,.aac'})
+    )
+    
+    class Meta:
+        model = Track
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ẩn trường file_path vì sẽ tự động tạo từ upload
+        if 'file_path' in self.fields:
+            self.fields['file_path'].widget = forms.HiddenInput()
+            self.fields['file_path'].required = False
+        
+        # Không bắt buộc nhập title nếu có music_file
+        if 'title' in self.fields:
+            self.fields['title'].required = False
+            self.fields['title'].help_text = "Tự động lấy từ tên file nếu không nhập"
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        music_file = cleaned_data.get('music_file')
+        
+        if music_file:
+            # Kiểm tra định dạng file
+            allowed_extensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+            file_extension = os.path.splitext(music_file.name)[1].lower()
+            
+            if file_extension not in allowed_extensions:
+                raise forms.ValidationError(f"Định dạng file không được hỗ trợ. Chỉ chấp nhận: {', '.join(allowed_extensions)}")
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        music_file = self.cleaned_data.get('music_file')
+        
+        if music_file:
+            # Lưu file vào thư mục playlist
+            playlist = instance.playlist
+            if playlist and playlist.folder_path:
+                file_path = os.path.join(playlist.folder_path, music_file.name)
+                
+                # Kiểm tra xem track với file_path này đã tồn tại chưa
+                existing_track = Track.objects.filter(playlist=playlist, file_path=file_path).first()
+                if existing_track:
+                    # Nếu đã tồn tại, cập nhật track hiện tại thay vì tạo mới
+                    existing_track.title = instance.title or existing_track.title
+                    existing_track.artist = instance.artist or existing_track.artist
+                    existing_track.duration = instance.duration
+                    existing_track.order = instance.order
+                    existing_track.is_active = instance.is_active
+                    
+                    # Ghi đè file cũ
+                    with open(file_path, 'wb') as destination:
+                        for chunk in music_file.chunks():
+                            destination.write(chunk)
+                    
+                    # Tự động phân tách tên file thành title và artist
+                    name_without_ext = os.path.splitext(music_file.name)[0]
+                    if ' - ' in name_without_ext:
+                        artist, title = name_without_ext.split(' - ', 1)
+                        existing_track.artist = artist.strip()
+                        existing_track.title = title.strip()
+                    else:
+                        existing_track.title = name_without_ext
+                    
+                    if commit:
+                        existing_track.save()
+                    return existing_track
+                
+                # Lưu file
+                with open(file_path, 'wb') as destination:
+                    for chunk in music_file.chunks():
+                        destination.write(chunk)
+                
+                instance.file_path = file_path
+                
+                # Tự động phân tách tên file thành title và artist
+                name_without_ext = os.path.splitext(music_file.name)[0]
+                if ' - ' in name_without_ext:
+                    artist, title = name_without_ext.split(' - ', 1)
+                    instance.artist = artist.strip()
+                    instance.title = title.strip()
+                else:
+                    instance.title = name_without_ext
+        
+        # Nếu không có title và không có music_file, lấy từ file_path hiện tại
+        if not instance.title and instance.file_path and os.path.exists(instance.file_path):
+            filename = os.path.basename(instance.file_path)
+            name_without_ext = os.path.splitext(filename)[0]
+            if ' - ' in name_without_ext:
+                artist, title = name_without_ext.split(' - ', 1)
+                instance.artist = artist.strip()
+                instance.title = title.strip()
+            else:
+                instance.title = name_without_ext
+        
+        if commit:
+            instance.save()
+        return instance
+
+
+@admin.register(Playlist)
+class PlaylistAdmin(admin.ModelAdmin):
+    form = PlaylistForm
+    list_display = ['name', 'folder_path', 'tracks_count', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    actions = ['scan_playlist_folder', 'create_from_folder']
+    
+    def tracks_count(self, obj):
+        return obj.get_tracks_count()
+    tracks_count.short_description = 'Số bài hát'
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # Thêm help text cho folder_path
+        if 'folder_path' in form.base_fields:
+            form.base_fields['folder_path'].help_text = "Thư mục sẽ được tạo tự động dựa trên tên playlist"
+        return form
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('create-from-folder/', self.admin_site.admin_view(self.create_from_folder_view), name='music_player_playlist_create_from_folder'),
+        ]
+        return custom_urls + urls
+    
+    def create_from_folder_view(self, request):
+        """View để tạo playlist từ thư mục"""
+        if request.method == 'POST':
+            folder_path = request.POST.get('folder_path')
+            playlist_name = request.POST.get('playlist_name')
+            description = request.POST.get('description', '')
+            
+            if not folder_path or not playlist_name:
+                messages.error(request, 'Vui lòng nhập đầy đủ thông tin.')
+                return render(request, 'admin/music_player/playlist/create_from_folder.html', {
+                    'title': 'Tạo Playlist từ Thư mục',
+                    'opts': self.model._meta,
+                })
+            
+            if not os.path.exists(folder_path):
+                messages.error(request, 'Thư mục không tồn tại.')
+                return render(request, 'admin/music_player/playlist/create_from_folder.html', {
+                    'title': 'Tạo Playlist từ Thư mục',
+                    'opts': self.model._meta,
+                })
+            
+            try:
+                # Tạo playlist
+                playlist = Playlist.objects.create(
+                    name=playlist_name,
+                    description=description,
+                    folder_path=folder_path,
+                    is_active=True
+                )
+                
+                # Scan và thêm tracks
+                audio_extensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+                files = []
+                
+                for file in os.listdir(folder_path):
+                    if any(file.lower().endswith(ext) for ext in audio_extensions):
+                        files.append(file)
+                
+                files.sort()
+                
+                # Thêm tracks
+                added_count = 0
+                for i, file in enumerate(files):
+                    try:
+                        # Tách tên file thành title và artist
+                        name_without_ext = os.path.splitext(file)[0]
+                        if ' - ' in name_without_ext:
+                            artist, title = name_without_ext.split(' - ', 1)
+                        else:
+                            artist = ''
+                            title = name_without_ext
+                        
+                        Track.objects.create(
+                            playlist=playlist,
+                            title=title.strip(),
+                            artist=artist.strip() if artist else None,
+                            file_path=os.path.join(folder_path, file),
+                            order=i + 1
+                        )
+                        added_count += 1
+                    except Exception as e:
+                        print(f"Error adding track {file}: {e}")
+                        continue
+                
+                messages.success(request, f'Đã tạo playlist "{playlist_name}" với {added_count} bài hát thành công!')
+                return HttpResponseRedirect(f'../{playlist.id}/change/')
+                
+            except Exception as e:
+                messages.error(request, f'Lỗi khi tạo playlist: {str(e)}')
+        
+        return render(request, 'admin/music_player/playlist/create_from_folder.html', {
+            'title': 'Tạo Playlist từ Thư mục',
+            'opts': self.model._meta,
+        })
+    
+    def create_from_folder(self, request, queryset):
+        """Admin action để tạo playlist từ thư mục"""
+        return HttpResponseRedirect('../create-from-folder/')
+    
+    create_from_folder.short_description = "Tạo playlist từ thư mục"
+    
+    def scan_playlist_folder(self, request, queryset):
+        """Admin action để scan thư mục playlist"""
+        scanned_count = 0
+        for playlist in queryset:
+            try:
+                folder_path = playlist.folder_path
+                
+                if not os.path.exists(folder_path):
+                    self.message_user(request, f"Thư mục không tồn tại: {playlist.name}", level='ERROR')
+                    continue
+                
+                # Lấy danh sách file nhạc
+                audio_extensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac']
+                files = []
+                
+                for file in os.listdir(folder_path):
+                    if any(file.lower().endswith(ext) for ext in audio_extensions):
+                        files.append(file)
+                
+                files.sort()
+                
+                # Xóa tracks cũ
+                Track.objects.filter(playlist=playlist).delete()
+                
+                # Thêm tracks mới
+                added_count = 0
+                for i, file in enumerate(files):
+                    try:
+                        # Tách tên file thành title và artist
+                        name_without_ext = os.path.splitext(file)[0]
+                        if ' - ' in name_without_ext:
+                            artist, title = name_without_ext.split(' - ', 1)
+                        else:
+                            artist = ''
+                            title = name_without_ext
+                        
+                        Track.objects.create(
+                            playlist=playlist,
+                            title=title.strip(),
+                            artist=artist.strip() if artist else None,
+                            file_path=os.path.join(folder_path, file),
+                            order=i + 1
+                        )
+                        added_count += 1
+                    except Exception as e:
+                        print(f"Error adding track {file}: {e}")
+                        continue
+                
+                scanned_count += 1
+                self.message_user(request, f"Đã scan thành công {added_count} bài hát từ playlist '{playlist.name}'")
+                
+            except Exception as e:
+                self.message_user(request, f"Lỗi khi scan playlist '{playlist.name}': {str(e)}", level='ERROR')
+        
+        if scanned_count > 0:
+            self.message_user(request, f"Đã scan thành công {scanned_count} playlist(s)")
+    
+    scan_playlist_folder.short_description = "Scan thư mục playlist"
+
+
+@admin.register(Track)
+class TrackAdmin(admin.ModelAdmin):
+    form = TrackForm
+    list_display = ['title', 'artist', 'playlist', 'duration_formatted', 'order', 'is_active']
+    list_filter = ['playlist', 'is_active', 'created_at']
+    search_fields = ['title', 'artist']
+    readonly_fields = ['created_at']
+    list_editable = ['order', 'is_active']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('playlist', 'title', 'artist', 'music_file')
+        }),
+        ('Cài đặt', {
+            'fields': ('duration', 'order', 'is_active')
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('file_path', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def duration_formatted(self, obj):
+        return obj.get_duration_formatted()
+    duration_formatted.short_description = 'Thời lượng'
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # Thêm help text cho các trường
+        if 'music_file' in form.base_fields:
+            form.base_fields['music_file'].help_text = "Upload file nhạc (.mp3, .wav, .ogg, .m4a, .aac). Tên file nên có định dạng 'Nghệ sĩ - Tên bài hát'. Nếu file đã tồn tại, sẽ được cập nhật."
+        if 'file_path' in form.base_fields:
+            form.base_fields['file_path'].help_text = "Đường dẫn file sẽ được tạo tự động khi upload"
+        return form
+    
+    def save_model(self, request, obj, form, change):
+        """Override để hiển thị thông báo khi file đã tồn tại"""
+        try:
+            super().save_model(request, obj, form, change)
+        except Exception as e:
+            if "UNIQUE constraint failed" in str(e):
+                messages.warning(request, f"File '{obj.file_path}' đã tồn tại trong playlist này. Track đã được cập nhật.")
+            else:
+                raise e
+
+
+@admin.register(MusicPlayerSettings)
+class MusicPlayerSettingsAdmin(admin.ModelAdmin):
+    list_display = ['user', 'default_playlist', 'auto_play', 'volume', 'repeat_mode', 'shuffle']
+    list_filter = ['auto_play', 'repeat_mode', 'shuffle']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'updated_at']
