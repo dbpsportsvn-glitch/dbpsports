@@ -51,6 +51,20 @@ class Track(models.Model):
     
     def get_file_url(self):
         """Lấy URL của file nhạc"""
+        # file_path có thể là:
+        # - Windows: D:\...\media\music\playlist\folder\file.mp3
+        # - Linux: /home/.../media/music/playlist/folder/file.mp3
+        # - Relative: media/music/playlist/folder/file.mp3
+        
+        # Chuẩn hóa path separator
+        normalized_path = self.file_path.replace('\\', '/')
+        
+        # Tìm và lấy phần sau 'media/music/playlist/'
+        if 'media/music/playlist/' in normalized_path:
+            relative_path = normalized_path.split('media/music/playlist/')[-1]
+            return f"/media/music/playlist/{relative_path}"
+        
+        # Fallback: chỉ lấy basename (trường hợp file không nằm trong subfolder)
         return f"/media/music/playlist/{os.path.basename(self.file_path)}"
     
     def get_duration_formatted(self):

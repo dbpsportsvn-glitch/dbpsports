@@ -44,6 +44,22 @@ class MusicPlayer {
             }
         });
         
+        // Handle mobile browser pause/resume - DISABLED (user wants continuous playback)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page bị ẩn - KHÔNG pause audio trên mobile (user muốn tiếp tục phát)
+                console.log('📱 Page hidden - keeping music playing');
+            } else {
+                // Page hiện lại
+                console.log('📱 Page visible again');
+            }
+        });
+        
+        // Handle mobile app switching - DISABLED (user wants continuous playback)
+        window.addEventListener('blur', () => {
+            console.log('📱 App switched - keeping music playing');
+        });
+        
         // Lưu state định kỳ mỗi 3 giây (chỉ khi đang phát)
         this.saveStateInterval = setInterval(() => {
             if (this.isPlaying && !this.isRestoringState && this.currentPlaylist) {
@@ -481,7 +497,8 @@ class MusicPlayer {
         this.isLoadingTrack = true;
         this.currentTrackIndex = index;
         
-        const fileUrl = `/media/music/playlist/${track.file_path}`;
+        // Sử dụng file_url từ API (đã có đường dẫn đầy đủ)
+        const fileUrl = track.file_url;
         
         // Load track mới
         this.audio.src = fileUrl;
@@ -1060,8 +1077,8 @@ class MusicPlayer {
             this.updateCurrentTrack();
             this.updateTrackListSelection();
             
-            // Load audio với approach mới
-            const fileUrl = `/media/music/playlist/${track.file_path}`;
+            // Load audio với approach mới - sử dụng file_url từ API
+            const fileUrl = track.file_url;
             this.audio.src = fileUrl;
             
             // Sử dụng Promise để handle audio loading với retry logic
