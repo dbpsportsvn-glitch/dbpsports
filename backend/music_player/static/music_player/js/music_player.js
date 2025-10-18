@@ -20,6 +20,7 @@ class MusicPlayer {
         this.userInteracted = false; // Track user interaction for autoplay
         this.isRestoringState = false; // Flag để tránh lưu state khi đang restore
         this.isLoadingTrack = false; // Flag để tránh load track nhiều lần cùng lúc
+        this.hasAutoPlayed = false; // Flag để track đã auto-play chưa
         
         // Drag and drop variables
         this.isDragging = false;
@@ -183,11 +184,26 @@ class MusicPlayer {
             this.userInteracted = true;
         });
         
-        // Đánh dấu user interaction khi click vào document (chỉ một lần)
-        // Loại bỏ auto-play ở đây vì đã có trong selectPlaylist
-        document.addEventListener('click', () => {
+        // Click bất kỳ đâu trên màn hình → auto play (chỉ 1 lần) và close player khi click outside
+        document.addEventListener('click', (e) => {
             this.userInteracted = true;
-        }, { once: true });
+            
+            // Auto-play nếu có playlist, chưa phát, và chưa từng auto-play
+            if (!this.hasAutoPlayed && this.currentPlaylist && !this.isPlaying && !this.isRestoringState) {
+                console.log('Auto-playing after first user click');
+                this.hasAutoPlayed = true;
+                this.playTrack(this.currentTrackIndex);
+            }
+            
+            // Click ngoài khu vực player → thu nhỏ player
+            if (!this.popup.classList.contains('hidden')) {
+                // Kiểm tra xem click có nằm trong popup hoặc toggle button không
+                if (!this.popup.contains(e.target) && !this.toggle.contains(e.target)) {
+                    console.log('Clicked outside player, closing...');
+                    this.togglePlayer();
+                }
+            }
+        });
         
         document.addEventListener('keydown', () => {
             this.userInteracted = true;
