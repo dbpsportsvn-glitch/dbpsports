@@ -1,0 +1,182 @@
+<!-- Settings Modal -->
+<div id="settings-modal" class="settings-modal hidden">
+    <div class="settings-modal-overlay"></div>
+    <div class="settings-modal-content">
+        <!-- Modal Header -->
+        <div class="settings-modal-header">
+            <h4 class="settings-modal-title">
+                <i class="bi bi-gear-fill"></i>
+                Cài Đặt Music Player
+            </h4>
+            <button id="settings-close-btn" class="settings-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Tab Headers -->
+        <div class="settings-tab-headers">
+            <button class="settings-tab-header active" data-tab="settings">
+                <i class="bi bi-sliders"></i>
+                Cài Đặt Player
+            </button>
+            <button class="settings-tab-header" data-tab="mymusic">
+                <i class="bi bi-music-note-list"></i>
+                Nhạc Của Tôi
+            </button>
+            <button class="settings-tab-header" data-tab="myplaylists">
+                <i class="bi bi-collection-play-fill"></i>
+                Playlist Của Tôi
+            </button>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="settings-tab-contents">
+            <!-- Tab 1: Player Settings -->
+            <div class="settings-tab-content active" id="settings-tab-settings">
+                <div class="settings-section">
+                    <h5 class="settings-section-title">
+                        <i class="bi bi-music-player"></i>
+                        Cài Đặt Phát Nhạc
+                    </h5>
+                    
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <i class="bi bi-play-circle"></i>
+                            Tự động phát
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="setting-autoplay" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <i class="bi bi-volume-up"></i>
+                            Âm lượng mặc định
+                            <span class="settings-value" id="volume-value">70%</span>
+                        </div>
+                        <input type="range" class="settings-slider" id="setting-volume" min="0" max="100" value="70">
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Chế độ lặp
+                        </div>
+                        <select class="settings-select" id="setting-repeat">
+                            <option value="none">Không lặp</option>
+                            <option value="one">Lặp một bài</option>
+                            <option value="all" selected>Lặp tất cả</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <i class="bi bi-shuffle"></i>
+                            Phát ngẫu nhiên
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="setting-shuffle">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <button class="settings-save-btn" id="save-settings-btn">
+                        <i class="bi bi-check-circle"></i>
+                        Lưu Cài Đặt
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: My Music -->
+            <div class="settings-tab-content" id="settings-tab-mymusic">
+                <div class="settings-section">
+                    <!-- Upload Quota -->
+                    <div class="upload-quota-section">
+                        <h5 class="settings-section-title">
+                            <i class="bi bi-cloud-upload"></i>
+                            Bộ Nhớ Upload
+                        </h5>
+                        <div class="quota-info">
+                            <div class="quota-text">
+                                <span id="quota-used">0</span> / <span id="quota-total">500</span> MB
+                                (<span id="quota-remaining">500</span> MB còn lại)
+                            </div>
+                            <div class="quota-text-small" style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px;">
+                                <span id="tracks-count">0</span> bài hát
+                            </div>
+                            <div class="quota-bar">
+                                <div class="quota-fill" id="quota-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Button -->
+                    <div class="upload-section">
+                        <button class="upload-btn" id="upload-btn">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            Upload Nhạc
+                        </button>
+                        <input type="file" id="file-input" accept=".mp3,.m4a,.aac,.ogg,.wav" multiple style="display: none;">
+                        <p class="upload-hint">
+                            <i class="bi bi-info-circle"></i>
+                            Định dạng hỗ trợ: MP3, M4A, AAC, OGG, WAV. Tối đa 50MB/file. Tổng quota: 500MB.
+                        </p>
+                    </div>
+
+                    <!-- My Tracks List -->
+                    <div class="my-tracks-section">
+                        <h5 class="settings-section-title">
+                            <i class="bi bi-music-note-beamed"></i>
+                            Danh Sách Bài Hát
+                        </h5>
+                        <div id="my-tracks-list" class="my-tracks-list">
+                            <div class="empty-state">
+                                <i class="bi bi-music-note"></i>
+                                <p>Chưa có bài hát nào. Hãy upload nhạc của bạn!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: My Playlists -->
+            <div class="settings-tab-content" id="settings-tab-myplaylists">
+                <div class="settings-section">
+                    <div class="playlist-header">
+                        <h5 class="settings-section-title">
+                            <i class="bi bi-collection-play"></i>
+                            Playlist Của Bạn
+                        </h5>
+                        <button class="create-playlist-btn" id="create-playlist-btn">
+                            <i class="bi bi-plus-circle"></i>
+                            Tạo Playlist Mới
+                        </button>
+                    </div>
+
+                    <div id="my-playlists-list" class="my-playlists-list">
+                        <div class="empty-state">
+                            <i class="bi bi-collection-play"></i>
+                            <p>Chưa có playlist nào. Tạo playlist đầu tiên!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Progress Overlay -->
+<div id="upload-progress-overlay" class="upload-progress-overlay hidden">
+    <div class="upload-progress-content">
+        <h4>
+            <i class="bi bi-cloud-upload"></i>
+            Đang Upload...
+        </h4>
+        <div class="upload-progress-list" id="upload-progress-list">
+            <!-- Progress items will be added here -->
+        </div>
+    </div>
+</div>
+

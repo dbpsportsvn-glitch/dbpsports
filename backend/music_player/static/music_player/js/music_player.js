@@ -263,6 +263,102 @@ class MusicPlayer {
         
         // Tab switching
         this.initTabSystem();
+        
+        // Playlist type toggle
+        this.initPlaylistTypeToggle();
+    }
+    
+    initPlaylistTypeToggle() {
+        const toggleButtons = document.querySelectorAll('.playlist-type-btn');
+        const adminGrid = document.getElementById('playlist-grid');
+        const userGrid = document.getElementById('user-playlist-grid');
+        
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const type = btn.getAttribute('data-type');
+                
+                // Update active state
+                toggleButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Toggle grids
+                if (type === 'admin') {
+                    adminGrid.classList.remove('hidden');
+                    userGrid.classList.add('hidden');
+                } else if (type === 'personal') {
+                    adminGrid.classList.add('hidden');
+                    userGrid.classList.remove('hidden');
+                    // Load user playlists
+                    this.loadUserPlaylistsInMainPlayer();
+                }
+            });
+        });
+    }
+    
+    async loadUserPlaylistsInMainPlayer() {
+        const userGrid = document.getElementById('user-playlist-grid');
+        if (!userGrid) return;
+        
+        try {
+            const response = await fetch('/music/user/playlists/');
+            const data = await response.json();
+            
+            if (data.success) {
+                if (data.playlists.length === 0) {
+                    userGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-music-note"></i>
+                            <p>Chưa có playlist cá nhân. Vào Cài đặt để tạo!</p>
+                        </div>
+                    `;
+                } else {
+                    userGrid.innerHTML = data.playlists.map(playlist => `
+                        <div class="playlist-card" onclick="musicPlayer.loadUserPlaylist(${playlist.id})">
+                            <div class="playlist-card-icon">
+                                <i class="bi bi-vinyl-fill"></i>
+                            </div>
+                            <div class="playlist-card-name">${playlist.name}</div>
+                            <div class="playlist-card-count">${playlist.tracks_count} bài hát</div>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading user playlists in main player:', error);
+        }
+    }
+    
+    async loadUserPlaylist(playlistId) {
+        try {
+            const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            const data = await response.json();
+            
+            if (data.success && data.tracks.length > 0) {
+                // Convert to player format
+                this.currentPlaylist = {
+                    id: 'user-playlist-' + data.playlist.id,
+                    name: data.playlist.name,
+                    tracks: data.tracks.map(track => ({
+                        id: track.id,
+                        title: track.title,
+                        artist: track.artist || 'Unknown Artist',
+                        file_url: track.file_url,
+                        duration: track.duration
+                    }))
+                };
+                
+                this.currentTrackIndex = 0;
+                this.populateTrackList();
+                this.playTrack(this.currentPlaylist.tracks[0]);
+                
+                console.log('✅ Loaded user playlist:', data.playlist.name);
+            } else {
+                console.log('Playlist chưa có bài hát!');
+            }
+        } catch (error) {
+            console.error('Error loading user playlist:', error);
+        }
     }
     
     initTabSystem() {

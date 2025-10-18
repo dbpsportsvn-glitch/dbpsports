@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path
 from django.contrib import messages
 import os
-from .models import Playlist, Track, MusicPlayerSettings
+from .models import Playlist, Track, MusicPlayerSettings, UserPlaylist, UserTrack, UserPlaylistTrack
 from .utils import get_audio_duration
 
 
@@ -536,7 +536,131 @@ class TrackAdmin(admin.ModelAdmin):
 
 @admin.register(MusicPlayerSettings)
 class MusicPlayerSettingsAdmin(admin.ModelAdmin):
-    list_display = ['user', 'default_playlist', 'auto_play', 'volume', 'repeat_mode', 'shuffle']
+    list_display = ['user', 'default_playlist', 'auto_play', 'volume', 'repeat_mode', 'shuffle', 'storage_usage_display', 'storage_quota_mb']
     list_filter = ['auto_play', 'repeat_mode', 'shuffle']
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'storage_usage_display']
+    list_editable = ['storage_quota_mb']
+    
+    fieldsets = (
+        ('Người dùng', {
+            'fields': ('user',)
+        }),
+        ('Cài đặt Player', {
+            'fields': ('default_playlist', 'auto_play', 'volume', 'repeat_mode', 'shuffle')
+        }),
+        ('Quota Upload', {
+            'fields': ('storage_quota_mb', 'storage_usage_display'),
+            'description': 'Giới hạn dung lượng (MB) user có thể upload'
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def storage_usage_display(self, obj):
+        usage = obj.get_upload_usage()
+        percentage = (usage['used'] / usage['total'] * 100) if usage['total'] > 0 else 0
+        color = '#28a745' if percentage < 70 else '#ffc107' if percentage < 90 else '#dc3545'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{:.1f}/{} MB ({:.0f}%)</span><br><small>{} bài hát</small>',
+            color, usage['used'], usage['total'], percentage, usage['tracks_count']
+        )
+    storage_usage_display.short_description = 'Dung lượng đã dùng'
+
+
+class UserPlaylistTrackInline(admin.TabularInline):
+    model = UserPlaylistTrack
+    extra = 0
+    fields = ['user_track', 'order']
+    autocomplete_fields = ['user_track']
+
+
+@admin.register(UserPlaylist)
+class UserPlaylistAdmin(admin.ModelAdmin):
+    list_display = ['name', 'user', 'tracks_count_display', 'is_public', 'is_active', 'created_at']
+    list_filter = ['is_public', 'is_active', 'created_at', 'user']
+    search_fields = ['name', 'user__username', 'description']
+    readonly_fields = ['created_at', 'updated_at', 'tracks_count_display']
+    list_editable = ['is_public', 'is_active']
+    inlines = [UserPlaylistTrackInline]
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('user', 'name', 'description')
+        }),
+        ('Cài đặt', {
+            'fields': ('is_public', 'is_active')
+        }),
+        ('Thống kê', {
+            'fields': ('tracks_count_display',),
+            'classes': ('collapse',)
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def tracks_count_display(self, obj):
+        count = obj.get_tracks_count()
+        total_duration = obj.get_total_duration()
+        minutes = total_duration // 60
+        return format_html(
+            '<span style="font-weight: bold;">{} bài</span> ({} phút)',
+            count, minutes
+        )
+    tracks_count_display.short_description = 'Số bài hát'
+
+
+@admin.register(UserTrack)
+class UserTrackAdmin(admin.ModelAdmin):
+    list_display = ['title', 'artist', 'user', 'duration_formatted', 'file_size_display', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at', 'user']
+    search_fields = ['title', 'artist', 'album', 'user__username']
+    readonly_fields = ['created_at', 'updated_at', 'file_size', 'duration', 'file_preview']
+    list_editable = ['is_active']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('user', 'title', 'artist', 'album')
+        }),
+        ('File nhạc', {
+            'fields': ('file', 'file_preview', 'file_size', 'duration')
+        }),
+        ('Cài đặt', {
+            'fields': ('is_active',)
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def duration_formatted(self, obj):
+        return obj.get_duration_formatted()
+    duration_formatted.short_description = 'Thời lượng'
+    
+    def file_size_display(self, obj):
+        return obj.get_file_size_formatted()
+    file_size_display.short_description = 'Kích thước'
+    
+    def file_preview(self, obj):
+        if obj.file:
+            return format_html(
+                '<audio controls preload="none" style="width: 300px;"><source src="{}" type="audio/mpeg">Trình duyệt không hỗ trợ.</audio>',
+                obj.get_file_url()
+            )
+        return "Chưa có file"
+    file_preview.short_description = 'Preview'
+    
+    actions = ['delete_selected_with_files']
+    
+    def delete_selected_with_files(self, request, queryset):
+        """Xóa tracks và files của chúng"""
+        count = queryset.count()
+        for track in queryset:
+            track.delete()  # Sẽ tự động xóa file nhờ override delete()
+        self.message_user(request, f'Đã xóa {count} bài hát và files của chúng.')
+    delete_selected_with_files.short_description = "Xóa tracks đã chọn (bao gồm cả files)"

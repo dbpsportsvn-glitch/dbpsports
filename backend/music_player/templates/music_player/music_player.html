@@ -25,6 +25,10 @@
                         </div>
                     </div>
                 </div>
+                <!-- Settings Button -->
+                <button id="settings-btn" class="control-btn" title="Cài đặt">
+                    <i class="bi bi-gear"></i>
+                </button>
                 <button id="refresh-playlists" class="control-btn" title="Làm mới playlist">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
@@ -122,6 +126,19 @@
 
                     <!-- Playlists Tab -->
                     <div class="tab-content" id="tab-playlists">
+                        <!-- Playlist Type Toggle -->
+                        <div class="playlist-type-toggle">
+                            <button class="playlist-type-btn active" data-type="admin">
+                                <i class="bi bi-globe"></i>
+                                Admin Playlists
+                            </button>
+                            <button class="playlist-type-btn" data-type="personal">
+                                <i class="bi bi-person-fill"></i>
+                                Playlist Của Tôi
+                            </button>
+                        </div>
+                        
+                        <!-- Admin Playlists Grid -->
                         <div class="playlist-grid" id="playlist-grid">
                             <!-- Playlists will be populated here -->
                             <div class="empty-state">
@@ -129,6 +146,15 @@
                                 <p>Đang tải playlists...</p>
                             </div>
                         </div>
+                        
+                        <!-- User Playlists Grid -->
+                        <div class="playlist-grid hidden" id="user-playlist-grid">
+                            <div class="empty-state">
+                                <i class="bi bi-music-note"></i>
+                                <p>Chưa có playlist cá nhân. Vào Cài đặt để tạo!</p>
+                            </div>
+                        </div>
+                        
                         <!-- Hidden select for backward compatibility -->
                         <select id="playlist-select" class="form-select" style="display: none;">
                             <option value="">Chọn playlist...</option>
@@ -147,3 +173,6 @@
 <div id="music-player-toggle" class="music-player-toggle">
     <i class="bi bi-music-note-beamed"></i>
 </div>
+
+<!-- Include Settings Modal -->
+{% include 'music_player/settings_modal.html' %}
