@@ -286,14 +286,56 @@ class MusicPlayer {
                 if (type === 'admin') {
                     adminGrid.classList.remove('hidden');
                     userGrid.classList.add('hidden');
+                    // Restore active state for admin playlists
+                    this.restorePlaylistActiveState();
                 } else if (type === 'personal') {
                     adminGrid.classList.add('hidden');
                     userGrid.classList.remove('hidden');
                     // Load user playlists
-                    this.loadUserPlaylistsInMainPlayer();
+                    this.loadUserPlaylistsInMainPlayer().then(() => {
+                        // Restore active state after loading
+                        this.restorePlaylistActiveState();
+                    });
                 }
             });
         });
+    }
+    
+    restorePlaylistActiveState() {
+        if (!this.currentPlaylist) return;
+        
+        // Check if it's a user playlist or admin playlist
+        const isUserPlaylist = typeof this.currentPlaylist.id === 'string' && this.currentPlaylist.id.startsWith('user-playlist-');
+        
+        if (isUserPlaylist) {
+            // Extract the actual playlist ID from "user-playlist-3" format
+            const playlistIdMatch = this.currentPlaylist.id.match(/user-playlist-(\d+)/);
+            if (playlistIdMatch) {
+                const playlistId = playlistIdMatch[1];
+                const userGrid = document.getElementById('user-playlist-grid');
+                if (userGrid) {
+                    userGrid.querySelectorAll('.playlist-card').forEach(card => {
+                        if (card.dataset.playlistId === `user-${playlistId}`) {
+                            card.classList.add('active');
+                        } else {
+                            card.classList.remove('active');
+                        }
+                    });
+                }
+            }
+        } else {
+            // Admin playlist
+            const playlistGrid = document.getElementById('playlist-grid');
+            if (playlistGrid) {
+                playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                    if (parseInt(card.dataset.playlistId) === this.currentPlaylist.id) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+        }
     }
     
     async loadUserPlaylistsInMainPlayer() {
@@ -314,7 +356,7 @@ class MusicPlayer {
                     `;
                 } else {
                     userGrid.innerHTML = data.playlists.map(playlist => `
-                        <div class="playlist-card" onclick="musicPlayer.loadUserPlaylist(${playlist.id})">
+                        <div class="playlist-card" data-playlist-id="user-${playlist.id}" onclick="musicPlayer.loadUserPlaylist(${playlist.id})">
                             <div class="playlist-card-icon">
                                 <i class="bi bi-vinyl-fill"></i>
                             </div>
@@ -350,7 +392,41 @@ class MusicPlayer {
                 
                 this.currentTrackIndex = 0;
                 this.populateTrackList();
-                this.playTrack(this.currentPlaylist.tracks[0]);
+                
+                // Update active state for user playlist cards
+                const userPlaylistGrid = document.getElementById('user-playlist-grid');
+                if (userPlaylistGrid) {
+                    userPlaylistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                        if (card.dataset.playlistId === `user-${playlistId}`) {
+                            card.classList.add('active');
+                        } else {
+                            card.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Remove active from admin playlists
+                const playlistGrid = document.getElementById('playlist-grid');
+                if (playlistGrid) {
+                    playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                        card.classList.remove('active');
+                    });
+                }
+                
+                // Switch to tracks tab FIRST before playing
+                const popup = document.getElementById('music-player-popup');
+                if (popup) {
+                    const tracksTab = popup.querySelector('[data-tab="tracks"]');
+                    if (tracksTab && !tracksTab.classList.contains('active')) {
+                        tracksTab.click();
+                    }
+                }
+                
+                // Then auto-play
+                this.userInteracted = true;
+                setTimeout(() => {
+                    this.playTrack(0);
+                }, 100);
                 
                 console.log('✅ Loaded user playlist:', data.playlist.name);
             } else {
@@ -551,21 +627,44 @@ class MusicPlayer {
         this.populateTrackList();
         this.updateCurrentTrack();
         
+        // Update active state for playlist cards
+        const playlistGrid = document.getElementById('playlist-grid');
+        if (playlistGrid) {
+            playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                if (parseInt(card.dataset.playlistId) === playlist.id) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+        
+        // Also update user playlist cards if visible
+        const userPlaylistGrid = document.getElementById('user-playlist-grid');
+        if (userPlaylistGrid) {
+            userPlaylistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                const cardPlaylistId = card.dataset.playlistId;
+                // User playlists have string IDs like "user-3"
+                if (cardPlaylistId === `user-${playlist.id}` || parseInt(cardPlaylistId) === playlist.id) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+        
         // Lưu state khi chọn playlist mới
         if (!this.isRestoringState) {
             this.savePlayerState();
         }
         
-        // Auto-play if enabled (nhưng không auto-play khi đang restore hoặc đang phát)
-        // Chỉ auto-play nếu user đã tương tác
-        if (this.settings.auto_play && playlist.tracks.length > 0 && !this.isRestoringState && !this.isPlaying && this.userInteracted) {
+        // Auto-play khi user chọn playlist (KHÔNG auto-play khi restore state)
+        if (playlist.tracks.length > 0 && !this.isRestoringState) {
             console.log('Auto-playing track 0 after playlist selection');
+            this.userInteracted = true; // Mark user has interacted
             // Delay một chút để đảm bảo UI đã update
             setTimeout(() => {
-                // Kiểm tra lại isPlaying để tránh trigger nhiều lần
-                if (!this.isPlaying) {
-                    this.playTrack(0);
-                }
+                this.playTrack(0);
             }, 100);
         }
     }
