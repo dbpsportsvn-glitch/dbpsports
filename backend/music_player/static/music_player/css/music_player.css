@@ -352,8 +352,8 @@
 .playlist-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
-    max-height: 180px; /* ✅ Giảm xuống 180px để có nhiều không gian cuộn hơn */
+    gap: 10px; /* ✅ Giảm từ 12px xuống 10px */
+    max-height: 250px; /* ✅ Perfect 250px - vừa khít hoàn hảo */
     overflow-y: auto;
     padding: 4px;
     padding-bottom: 16px; /* ✅ Giảm từ 50px xuống 16px để scroll được hết */
@@ -366,8 +366,8 @@
 .playlist-card {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
     border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 10px; /* ✅ Giảm từ 12px xuống 10px */
+    padding: 12px; /* ✅ Giảm từ 16px xuống 12px */
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
@@ -419,9 +419,9 @@
 }
 
 .playlist-card-icon {
-    font-size: 32px;
+    font-size: 28px; /* ✅ Giảm từ 32px xuống 28px */
     color: #f093fb;
-    margin-bottom: 8px;
+    margin-bottom: 6px; /* ✅ Giảm từ 8px xuống 6px */
     display: block;
     text-align: center;
 }
@@ -429,9 +429,9 @@
 .playlist-card-name {
     color: white;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px; /* ✅ Giảm từ 13px xuống 12px */
     text-align: center;
-    margin-bottom: 4px;
+    margin-bottom: 3px; /* ✅ Giảm từ 4px xuống 3px */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -439,7 +439,7 @@
 
 .playlist-card-count {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 11px;
+    font-size: 10px; /* ✅ Giảm từ 11px xuống 10px */
     text-align: center;
 }
 

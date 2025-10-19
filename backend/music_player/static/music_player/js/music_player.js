@@ -32,10 +32,19 @@ class MusicPlayer {
         this.sleepTimerEndTime = null;
         this.sleepTimerInterval = null;
         
+        // ✅ Mobile optimization variables
+        this.preloadedTracks = new Map(); // Cache cho preloaded audio
+        this.nextTrackPreloaded = false;
+        this.previousTrackPreloaded = false;
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
         this.loadPlaylists();
+        
+        // ✅ Initialize mobile optimizations
+        this.initializeMobileOptimizations();
         
         // Auto refresh every 3 minutes (180 seconds) để tiết kiệm pin trên mobile
         this.autoRefreshInterval = setInterval(() => {
@@ -876,6 +885,9 @@ class MusicPlayer {
         this.updateCurrentTrack();
         this.updateTrackListSelection();
         
+        // ✅ Update Media Session cho mobile
+        this.updateMediaSessionMetadata();
+        
         // Đợi audio sẵn sàng rồi phát
         const onCanPlay = () => {
             this.isLoadingTrack = false;
@@ -931,6 +943,9 @@ class MusicPlayer {
                 this.showMessage('Không thể phát nhạc. Vui lòng thử lại.', 'error');
             });
         }
+        
+        // ✅ Update Media Session cho mobile
+        this.updateMediaSessionMetadata();
     }
 
     previousTrack() {
@@ -955,6 +970,9 @@ class MusicPlayer {
         }
         
         this.playTrack(prevIndex);
+        
+        // ✅ Update Media Session cho mobile
+        this.updateMediaSessionMetadata();
     }
 
     nextTrack() {
@@ -983,6 +1001,9 @@ class MusicPlayer {
         }
         
         this.playTrack(nextIndex);
+        
+        // ✅ Update Media Session cho mobile
+        this.updateMediaSessionMetadata();
     }
 
     onTrackEnd() {
@@ -1744,6 +1765,198 @@ class MusicPlayer {
         this.timerRemaining.style.animation = '';
     }
 
+    // ✅ Mobile Optimization Methods
+    initializeMobileOptimizations() {
+        if (this.isMobile) {
+            console.log('📱 Initializing mobile optimizations...');
+            
+            // ✅ Media Session API cho lock screen controls
+            this.initializeMediaSession();
+            
+            // ✅ Audio preloading cho smooth transitions
+            this.setupAudioPreloading();
+            
+            // ✅ Touch optimization
+            this.optimizeTouchEvents();
+            
+            // ✅ Background playback support
+            this.setupBackgroundPlayback();
+        }
+    }
+    
+    initializeMediaSession() {
+        if ('mediaSession' in navigator) {
+            console.log('🎵 Setting up Media Session API...');
+            
+            navigator.mediaSession.setActionHandler('play', () => {
+                this.play();
+            });
+            
+            navigator.mediaSession.setActionHandler('pause', () => {
+                this.pause();
+            });
+            
+            navigator.mediaSession.setActionHandler('previoustrack', () => {
+                this.previousTrack();
+            });
+            
+            navigator.mediaSession.setActionHandler('nexttrack', () => {
+                this.nextTrack();
+            });
+            
+            navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+                this.seekBackward(details.seekOffset || 10);
+            });
+            
+            navigator.mediaSession.setActionHandler('seekforward', (details) => {
+                this.seekForward(details.seekOffset || 10);
+            });
+            
+            navigator.mediaSession.setActionHandler('seekto', (details) => {
+                if (details.seekTime !== undefined) {
+                    this.seekTo(details.seekTime);
+                }
+            });
+        }
+    }
+    
+    updateMediaSessionMetadata() {
+        if ('mediaSession' in navigator && this.currentPlaylist && this.currentPlaylist.tracks[this.currentTrackIndex]) {
+            const track = this.currentPlaylist.tracks[this.currentTrackIndex];
+            
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: track.title,
+                artist: track.artist || 'Unknown Artist',
+                album: this.currentPlaylist.name,
+                artwork: [
+                    { src: '/static/music_player/images/album-art.png', sizes: '96x96', type: 'image/png' },
+                    { src: '/static/music_player/images/album-art.png', sizes: '128x128', type: 'image/png' },
+                    { src: '/static/music_player/images/album-art.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/static/music_player/images/album-art.png', sizes: '256x256', type: 'image/png' },
+                    { src: '/static/music_player/images/album-art.png', sizes: '384x384', type: 'image/png' },
+                    { src: '/static/music_player/images/album-art.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+            
+            navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+        }
+    }
+    
+    setupAudioPreloading() {
+        console.log('🎵 Setting up audio preloading...');
+        
+        // Preload next và previous tracks
+        this.audio.addEventListener('loadedmetadata', () => {
+            this.preloadAdjacentTracks();
+        });
+        
+        this.audio.addEventListener('canplaythrough', () => {
+            this.preloadAdjacentTracks();
+        });
+    }
+    
+    async preloadAdjacentTracks() {
+        if (!this.currentPlaylist || this.currentPlaylist.tracks.length <= 1) return;
+        
+        try {
+            // Preload next track
+            const nextIndex = this.getNextTrackIndex();
+            if (nextIndex !== this.currentTrackIndex) {
+                const nextTrack = this.currentPlaylist.tracks[nextIndex];
+                if (nextTrack && !this.preloadedTracks.has(nextTrack.id)) {
+                    console.log('🎵 Preloading next track:', nextTrack.title);
+                    const audio = new Audio();
+                    audio.preload = 'metadata';
+                    audio.src = nextTrack.file_url;
+                    this.preloadedTracks.set(nextTrack.id, audio);
+                }
+            }
+            
+            // Preload previous track
+            const prevIndex = this.getPreviousTrackIndex();
+            if (prevIndex !== this.currentTrackIndex) {
+                const prevTrack = this.currentPlaylist.tracks[prevIndex];
+                if (prevTrack && !this.preloadedTracks.has(prevTrack.id)) {
+                    console.log('🎵 Preloading previous track:', prevTrack.title);
+                    const audio = new Audio();
+                    audio.preload = 'metadata';
+                    audio.src = prevTrack.file_url;
+                    this.preloadedTracks.set(prevTrack.id, audio);
+                }
+            }
+        } catch (error) {
+            console.error('Error preloading tracks:', error);
+        }
+    }
+    
+    optimizeTouchEvents() {
+        console.log('📱 Optimizing touch events...');
+        
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Optimize touch events for controls
+        const controlButtons = document.querySelectorAll('.control-btn');
+        controlButtons.forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.style.transform = 'scale(0.95)';
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.style.transform = 'scale(1)';
+                btn.click();
+            });
+        });
+    }
+    
+    setupBackgroundPlayback() {
+        console.log('🎵 Setting up background playback...');
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 Page hidden - maintaining playback');
+                // Keep playing in background
+            } else {
+                console.log('📱 Page visible - updating UI');
+                this.updateMediaSessionMetadata();
+            }
+        });
+        
+        // Handle audio focus on mobile
+        this.audio.addEventListener('pause', () => {
+            if (this.isPlaying && document.hidden) {
+                // Resume if paused due to page visibility
+                setTimeout(() => {
+                    if (this.isPlaying) {
+                        this.audio.play().catch(console.error);
+                    }
+                }, 100);
+            }
+        });
+    }
+    
+    seekBackward(seconds = 10) {
+        this.audio.currentTime = Math.max(0, this.audio.currentTime - seconds);
+    }
+    
+    seekForward(seconds = 10) {
+        this.audio.currentTime = Math.min(this.audio.duration, this.audio.currentTime + seconds);
+    }
+    
+    seekTo(time) {
+        this.audio.currentTime = time;
+    }
+    
     // ✅ Helper methods để tối ưu battery
     updateUserActivity() {
         this.lastUserActivity = Date.now();
