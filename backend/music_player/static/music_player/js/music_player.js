@@ -881,6 +881,15 @@ class MusicPlayer {
         this.audio.src = fileUrl;
         this.audio.load();
         
+        // ✅ Timeout protection
+        const loadTimeout = setTimeout(() => {
+            if (this.isLoadingTrack) {
+                console.warn('⏰ Track load timeout:', track.title);
+                this.isLoadingTrack = false;
+                this.showMessage('Timeout khi tải bài hát: ' + track.title, 'error');
+            }
+        }, 10000); // 10 seconds timeout
+        
         // Update UI ngay
         this.updateCurrentTrack();
         this.updateTrackListSelection();
@@ -891,6 +900,7 @@ class MusicPlayer {
         // Đợi audio sẵn sàng rồi phát
         const onCanPlay = () => {
             this.isLoadingTrack = false;
+            clearTimeout(loadTimeout); // ✅ Clear timeout
             
             // Lưu state
             if (!this.isRestoringState) {
@@ -907,8 +917,36 @@ class MusicPlayer {
         
         const onError = (e) => {
             this.isLoadingTrack = false;
+            clearTimeout(loadTimeout); // ✅ Clear timeout
             console.error('Error loading track:', e);
-            this.showMessage('Không thể tải bài hát: ' + track.title, 'error');
+            
+            // ✅ Detailed error handling
+            let errorMessage = 'Không thể tải bài hát: ' + track.title;
+            
+            if (e.target && e.target.error) {
+                switch(e.target.error.code) {
+                    case 1: // MEDIA_ERR_ABORTED
+                        errorMessage = 'Tải bài hát bị hủy: ' + track.title;
+                        break;
+                    case 2: // MEDIA_ERR_NETWORK
+                        errorMessage = 'Lỗi mạng khi tải: ' + track.title;
+                        break;
+                    case 3: // MEDIA_ERR_DECODE
+                        errorMessage = 'Lỗi định dạng file: ' + track.title;
+                        break;
+                    case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        errorMessage = 'Định dạng không hỗ trợ: ' + track.title;
+                        break;
+                }
+            }
+            
+            this.showMessage(errorMessage, 'error');
+            
+            // ✅ Retry mechanism
+            setTimeout(() => {
+                console.log('🔄 Retrying track load...');
+                this.audio.load();
+            }, 2000);
         };
         
         // Sử dụng once: true để tránh duplicate listeners
