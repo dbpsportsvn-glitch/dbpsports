@@ -138,7 +138,11 @@ class TournamentAdmin(admin.ModelAdmin):
     
     def budget_dashboard_link(self, obj):
         url = reverse('budget_dashboard', kwargs={'tournament_pk': obj.pk})
-        return format_html('<a class="button" href="{}" target="_blank">💰 Tài chính</a>', url)
+        return format_html(
+            '<a href="{}" target="_blank" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">'
+            '<i class="bi bi-calculator" style="margin-right: 4px;"></i>Quản lý tài chính</a>',
+            url
+        )
     budget_dashboard_link.short_description = 'Dashboard Tài chính'
     
     def view_details_link(self, obj):
@@ -593,7 +597,7 @@ class TeamAchievementAdmin(admin.ModelAdmin):
 # ===== ADMIN CHO CÁC MODEL TÀI CHÍNH =====
 @admin.register(TournamentBudget)
 class TournamentBudgetAdmin(admin.ModelAdmin):
-    list_display = ('tournament', 'initial_budget', 'get_total_revenue', 'get_total_expenses', 'get_profit_loss', 'get_budget_status', 'created_at')
+    list_display = ('tournament', 'initial_budget', 'get_total_revenue', 'get_total_expenses', 'get_profit_loss', 'get_budget_status', 'budget_dashboard_link', 'created_at')
     list_filter = ('tournament__status', 'tournament__region', 'created_at')
     search_fields = ('tournament__name',)
     readonly_fields = ('created_at', 'updated_at')
@@ -614,12 +618,22 @@ class TournamentBudgetAdmin(admin.ModelAdmin):
     def get_profit_loss(self, obj):
         profit_loss = obj.get_profit_loss()
         if profit_loss > 0:
-            return format_html('<span style="color: green;">+{:,} VNĐ</span>', profit_loss)
+            return format_html('<span style="color: green;">+{} VNĐ</span>', f'{profit_loss:,}')
         elif profit_loss < 0:
-            return format_html('<span style="color: red;">{:,} VNĐ</span>', profit_loss)
+            return format_html('<span style="color: red;">{} VNĐ</span>', f'{profit_loss:,}')
         else:
             return f"{profit_loss:,} VNĐ"
     get_profit_loss.short_description = "Lời/Lỗ"
+    
+    def budget_dashboard_link(self, obj):
+        """Link đến dashboard tài chính"""
+        url = reverse('budget_dashboard', args=[obj.tournament.pk])
+        return format_html(
+            '<a href="{}" target="_blank" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">'
+            '<i class="bi bi-calculator" style="margin-right: 4px;"></i>Quản lý tài chính</a>',
+            url
+        )
+    budget_dashboard_link.short_description = "Dashboard"
 
 @admin.register(RevenueItem)
 class RevenueItemAdmin(admin.ModelAdmin):

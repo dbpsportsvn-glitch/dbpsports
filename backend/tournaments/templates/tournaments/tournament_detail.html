@@ -893,6 +893,13 @@
                     <span>Cài đặt Shop Discount</span>
                 </a>
                 {% endif %}
+
+                {% if user.is_staff or is_organizer %}
+                <a href="{% url 'budget_dashboard' tournament_pk=tournament.pk %}" class="admin-action-btn budget-btn">
+                    <i class="bi bi-calculator"></i>
+                    <span>Quản lý tài chính</span>
+                </a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -5360,6 +5367,10 @@
 
     .shop-btn {
         background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .budget-btn {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
     }
 
     /* Responsive Overview */
