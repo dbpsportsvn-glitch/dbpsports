@@ -127,12 +127,6 @@ class MusicPlayer {
         this.toggle.addEventListener('click', () => this.togglePlayer());
         this.closeBtn.addEventListener('click', () => this.togglePlayer());
         
-        // Refresh button
-        this.refreshBtn = document.getElementById('refresh-playlists');
-        if (this.refreshBtn) {
-            this.refreshBtn.addEventListener('click', () => this.refreshPlaylists());
-        }
-        
         // Playlist selection
         this.playlistSelect.addEventListener('change', (e) => this.selectPlaylist(e.target.value));
         
@@ -172,8 +166,31 @@ class MusicPlayer {
         }
         
         // Volume control
-        this.volumeFill.parentElement.addEventListener('click', (e) => this.setVolume(e));
-        this.volumeHandle.addEventListener('mousedown', (e) => this.startVolumeSeeking(e));
+        const volumeBar = this.volumeFill.parentElement;
+        if (volumeBar) {
+            // Click to set volume
+            volumeBar.addEventListener('click', (e) => this.setVolume(e));
+            // Touch to set volume (mobile)
+            volumeBar.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                this.setVolume(touch);
+            });
+        }
+        
+        if (this.volumeHandle) {
+            // Mouse drag
+            this.volumeHandle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                this.startVolumeSeeking(e);
+            });
+            // Touch drag (mobile)
+            this.volumeHandle.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.startVolumeSeeking(e); // ✅ Pass event object, not touch object
+            });
+        }
         
         // Audio events
         this.audio.addEventListener('loadedmetadata', () => {
@@ -1088,8 +1105,9 @@ class MusicPlayer {
     }
 
     setVolume(event) {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const rect = event.currentTarget ? event.currentTarget.getBoundingClientRect() : event.target.getBoundingClientRect();
+        const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
         this.volume = percent;
         this.audio.volume = this.isMuted ? 0 : this.volume;
         this.updateVolumeDisplay();
@@ -1097,20 +1115,40 @@ class MusicPlayer {
     }
 
     startVolumeSeeking(event) {
-        event.preventDefault();
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
+        const isTouchEvent = event.type && event.type.startsWith('touch');
+        
         const handleVolumeSeek = (e) => {
+            const clientX = isTouchEvent ? (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX) : e.clientX;
             const rect = this.volumeFill.parentElement.getBoundingClientRect();
-            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
             this.volume = percent;
             this.audio.volume = this.isMuted ? 0 : this.volume;
             this.updateVolumeDisplay();
         };
         
-        document.addEventListener('mousemove', handleVolumeSeek);
-        document.addEventListener('mouseup', () => {
-            document.removeEventListener('mousemove', handleVolumeSeek);
+        const handleEnd = () => {
+            if (isTouchEvent) {
+                document.removeEventListener('touchmove', handleVolumeSeek);
+                document.removeEventListener('touchend', handleEnd);
+                document.removeEventListener('touchcancel', handleEnd);
+            } else {
+                document.removeEventListener('mousemove', handleVolumeSeek);
+                document.removeEventListener('mouseup', handleEnd);
+            }
             this.saveSettings();
-        });
+        };
+        
+        if (isTouchEvent) {
+            document.addEventListener('touchmove', handleVolumeSeek, { passive: false });
+            document.addEventListener('touchend', handleEnd);
+            document.addEventListener('touchcancel', handleEnd);
+        } else {
+            document.addEventListener('mousemove', handleVolumeSeek);
+            document.addEventListener('mouseup', handleEnd);
+        }
     }
 
     toggleMute() {
@@ -1173,7 +1211,14 @@ class MusicPlayer {
     }
 
     togglePlayer() {
+        const wasHidden = this.popup.classList.contains('hidden');
         this.popup.classList.toggle('hidden');
+        
+        // Nếu đang mở player (từ hidden → visible), tự động refresh playlists
+        if (wasHidden) {
+            console.log('🎵 Opening player - refreshing playlists...');
+            this.refreshPlaylists();
+        }
     }
 
     startDragging(event) {
@@ -1275,12 +1320,20 @@ class MusicPlayer {
     }
 
     async saveSettings() {
+        // Chỉ save lên server nếu có CSRF token (user đã đăng nhập)
+        const csrfToken = this.getCSRFToken();
+        if (!csrfToken) {
+            // User chưa đăng nhập, settings sẽ được lưu trong localStorage
+            // thông qua savePlayerState(), không cần gọi API
+            return;
+        }
+        
         try {
-            await fetch('/music/api/settings/', {
+            const response = await fetch('/music/api/settings/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     auto_play: this.settings.auto_play,
@@ -1290,8 +1343,13 @@ class MusicPlayer {
                     default_playlist_id: this.currentPlaylist ? this.currentPlaylist.id : null
                 })
             });
+            
+            // Nếu 401 (session expired), không log error
+            if (!response.ok && response.status !== 401) {
+                console.error('Error saving settings:', response.status);
+            }
         } catch (error) {
-            console.error('Error saving settings:', error);
+            // Silent fail - settings vẫn được lưu trong localStorage
         }
     }
 
