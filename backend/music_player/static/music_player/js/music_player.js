@@ -37,10 +37,19 @@ class MusicPlayer {
         this.loadSettings();
         this.loadPlaylists();
         
-        // Auto refresh every 30 seconds
+        // Auto refresh every 3 minutes (180 seconds) để tiết kiệm pin trên mobile
         this.autoRefreshInterval = setInterval(() => {
-            this.checkForUpdates();
-        }, 30000);
+            // ✅ Chỉ auto-refresh khi user đang active (tiết kiệm pin)
+            if (!document.hidden && this.isUserActive()) {
+                this.checkForUpdates();
+            }
+        }, 180000);
+        
+        // ✅ Track user activity để tối ưu battery
+        this.lastUserActivity = Date.now();
+        document.addEventListener('click', () => this.updateUserActivity());
+        document.addEventListener('keydown', () => this.updateUserActivity());
+        document.addEventListener('touchstart', () => this.updateUserActivity());
         
         // Lưu state trước khi chuyển trang
         window.addEventListener('beforeunload', () => {
@@ -303,8 +312,12 @@ class MusicPlayer {
                 if (type === 'admin') {
                     adminGrid.classList.remove('hidden');
                     userGrid.classList.add('hidden');
-                    // Restore active state for admin playlists
-                    this.restorePlaylistActiveState();
+                    // ✅ Force refresh admin playlists khi click vào Admin Playlists
+                    console.log('🔄 Switching to Admin Playlists - force refreshing...');
+                    this.refreshPlaylists().then(() => {
+                        // Restore active state for admin playlists
+                        this.restorePlaylistActiveState();
+                    });
                 } else if (type === 'personal') {
                     adminGrid.classList.add('hidden');
                     userGrid.classList.remove('hidden');
@@ -540,6 +553,12 @@ class MusicPlayer {
                 if (targetContent) {
                     targetContent.classList.add('active');
                     console.log('Tab switched to:', tabName);
+                    
+                    // ✅ Auto-refresh playlists khi switch sang tab Playlists
+                    if (tabName === 'playlists') {
+                        console.log('🎵 Refreshing playlists...');
+                        this.refreshPlaylists();
+                    }
                 } else {
                     console.error('Tab content not found:', `tab-${tabName}`);
                 }
@@ -549,7 +568,14 @@ class MusicPlayer {
 
     async loadPlaylists() {
         try {
-            const response = await fetch('/music/api/');
+            const response = await fetch(`/music/api/?t=${Date.now()}`, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             const data = await response.json();
             
             if (data.success) {
@@ -580,9 +606,25 @@ class MusicPlayer {
     }
 
     async refreshPlaylists() {
-        // Refresh playlists from server
+        // ✅ Force refresh playlists from server với cache-busting mạnh
         try {
-            const response = await fetch('/music/api/');
+            console.log('🔄 Force refreshing playlists...');
+            
+            // ✅ Thêm random parameter để đảm bảo không cache
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(7);
+            
+            const response = await fetch(`/music/api/?t=${timestamp}&r=${random}&force=1`, {
+                method: 'GET',
+                cache: 'no-store', // ✅ Force no cache
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0',
+                    'If-Modified-Since': '0' // ✅ Force fresh data
+                }
+            });
+            
             const data = await response.json();
             
             if (data.success) {
@@ -599,17 +641,31 @@ class MusicPlayer {
                     }
                 }
                 
-                console.log('Playlists refreshed successfully');
+                console.log('✅ Playlists refreshed successfully:', this.playlists.length, 'playlists');
+                
+                // ✅ Log chi tiết để debug
+                this.playlists.forEach((playlist, index) => {
+                    console.log(`  ${index + 1}. ${playlist.name} (${playlist.tracks_count} tracks)`);
+                });
+            } else {
+                console.error('❌ Failed to refresh playlists:', data.error);
             }
         } catch (error) {
-            console.error('Error refreshing playlists:', error);
+            console.error('❌ Error refreshing playlists:', error);
         }
     }
 
     async checkForUpdates() {
         // Check if there are new tracks without full refresh
         try {
-            const response = await fetch('/music/api/');
+            const response = await fetch(`/music/api/?t=${Date.now()}`, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
             const data = await response.json();
             
             if (data.success && this.currentPlaylist) {
@@ -1199,15 +1255,31 @@ class MusicPlayer {
             this.repeatBtn.classList.add('active');
         }
         
-        // Cập nhật icon dựa trên mode
-        let icon = 'bi-arrow-repeat';
-        if (this.repeatMode === 'one') {
-            icon = 'bi-arrow-repeat'; // Có thể thay bằng icon khác nếu muốn
+        // Cập nhật icon và text dựa trên mode
+        let content = '';
+        if (this.repeatMode === 'none') {
+            // Không lặp - icon mờ
+            content = `<i class="bi bi-arrow-repeat"></i>`;
+        } else if (this.repeatMode === 'one') {
+            // Lặp 1 bài - icon + số "1"
+            content = `
+                <i class="bi bi-arrow-repeat"></i>
+                <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: bold; color: #f093fb;">1</span>
+            `;
         } else if (this.repeatMode === 'all') {
-            icon = 'bi-arrow-repeat';
+            // Lặp tất cả - icon sáng
+            content = `<i class="bi bi-arrow-repeat"></i>`;
         }
         
-        this.repeatBtn.innerHTML = `<i class="bi ${icon}"></i>`;
+        this.repeatBtn.innerHTML = content;
+        
+        // Thêm title để hiển thị tooltip
+        const titles = {
+            'none': 'Không lặp',
+            'one': 'Lặp một bài',
+            'all': 'Lặp tất cả'
+        };
+        this.repeatBtn.title = titles[this.repeatMode] || 'Lặp lại';
     }
 
     togglePlayer() {
@@ -1672,6 +1744,17 @@ class MusicPlayer {
         this.timerRemaining.style.animation = '';
     }
 
+    // ✅ Helper methods để tối ưu battery
+    updateUserActivity() {
+        this.lastUserActivity = Date.now();
+    }
+    
+    isUserActive() {
+        // User được coi là active nếu có tương tác trong 5 phút gần đây
+        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+        return this.lastUserActivity > fiveMinutesAgo;
+    }
+    
     destroy() {
         // Save state trước khi destroy
         this.savePlayerState();

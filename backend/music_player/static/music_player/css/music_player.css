@@ -66,6 +66,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 14px;
+    position: relative; /* ✅ Thêm để số "1" trong repeat button hiển thị đúng */
 }
 
 .control-btn:hover {
@@ -211,7 +212,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible; /* ✅ Cho phép scroll hiện ra */
 }
 
 .music-player-popup .tab-headers {
@@ -274,7 +275,7 @@
 .music-player-popup .tab-contents {
     flex: 1;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* ✅ Cho phép scroll hiện ra */
 }
 
 .music-player-popup .tab-content {
@@ -352,10 +353,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
-    max-height: 280px;
+    max-height: 180px; /* ✅ Giảm xuống 180px để có nhiều không gian cuộn hơn */
     overflow-y: auto;
     padding: 4px;
-    padding-bottom: 50px;
+    padding-bottom: 16px; /* ✅ Giảm từ 50px xuống 16px để scroll được hết */
 }
 
 .playlist-grid.hidden {

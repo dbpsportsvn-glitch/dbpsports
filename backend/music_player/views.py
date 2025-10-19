@@ -49,10 +49,17 @@ class MusicPlayerAPIView(View):
                     'tracks_count': len(tracks_data)
                 })
             
-            return JsonResponse({
+            response = JsonResponse({
                 'success': True,
                 'playlists': playlists_data
             })
+            
+            # ✅ Thêm headers để disable cache
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            
+            return response
             
         except Exception as e:
             return JsonResponse({
