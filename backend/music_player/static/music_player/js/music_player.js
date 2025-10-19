@@ -38,6 +38,14 @@ class MusicPlayer {
         this.previousTrackPreloaded = false;
         this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
+        // ✅ Cache cho formatted times (tối ưu performance)
+        this.formatTimeCache = new Map();
+        this.lastProgressUpdate = 0; // Throttle progress updates
+        
+        // ✅ Debounce timers
+        this.saveStateDebounceTimer = null;
+        this.refreshPlaylistsDebounceTimer = null;
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
@@ -46,24 +54,22 @@ class MusicPlayer {
         // ✅ Initialize mobile optimizations
         this.initializeMobileOptimizations();
         
-        // Auto refresh every 3 minutes (180 seconds) để tiết kiệm pin trên mobile
-        this.autoRefreshInterval = setInterval(() => {
-            // ✅ Chỉ auto-refresh khi user đang active (tiết kiệm pin)
-            if (!document.hidden && this.isUserActive()) {
-                this.checkForUpdates();
-            }
-        }, 180000);
+        // ❌ REMOVED: Auto refresh interval - không cần thiết và tốn pin
+        // Playlists sẽ tự động refresh khi:
+        // 1. User mở player (togglePlayer)
+        // 2. User switch sang tab Playlists
+        // 3. User manually click refresh (nếu cần thêm nút refresh sau này)
         
-        // ✅ Track user activity để tối ưu battery
+        // ✅ Track user activity (vẫn giữ để track interaction)
         this.lastUserActivity = Date.now();
         document.addEventListener('click', () => this.updateUserActivity());
         document.addEventListener('keydown', () => this.updateUserActivity());
         document.addEventListener('touchstart', () => this.updateUserActivity());
         
-        // Lưu state trước khi chuyển trang
+        // Lưu state trước khi chuyển trang (immediate - không debounce)
         window.addEventListener('beforeunload', () => {
             if (!this.isRestoringState) {
-                this.savePlayerState();
+                this.savePlayerStateImmediate();
             }
         });
         
@@ -83,12 +89,14 @@ class MusicPlayer {
             console.log('📱 App switched - keeping music playing');
         });
         
-        // Lưu state định kỳ mỗi 3 giây (chỉ khi đang phát)
-        this.saveStateInterval = setInterval(() => {
-            if (this.isPlaying && !this.isRestoringState && this.currentPlaylist) {
-                this.savePlayerState();
-            }
-        }, 3000);
+        // ❌ REMOVED: Save state interval - đã có debounce trong savePlayerState()
+        // State sẽ tự động save khi:
+        // 1. Play/Pause
+        // 2. Change track
+        // 3. Seek position
+        // 4. Change playlist
+        // 5. Before unload
+        // Không cần interval polling nữa!
     }
 
     initializeElements() {
@@ -664,30 +672,11 @@ class MusicPlayer {
         }
     }
 
-    async checkForUpdates() {
-        // Check if there are new tracks without full refresh
-        try {
-            const response = await fetch(`/music/api/?t=${Date.now()}`, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
-            const data = await response.json();
-            
-            if (data.success && this.currentPlaylist) {
-                const updatedPlaylist = data.playlists.find(p => p.id === this.currentPlaylist.id);
-                if (updatedPlaylist && updatedPlaylist.tracks.length !== this.currentPlaylist.tracks.length) {
-                    console.log('New tracks detected, refreshing playlist...');
-                    this.refreshPlaylists();
-                }
-            }
-        } catch (error) {
-            console.error('Error checking for updates:', error);
-        }
-    }
+    // ❌ REMOVED: checkForUpdates() - không cần auto-polling
+    // Nếu cần check updates, user có thể:
+    // 1. Đóng/mở lại player (auto refresh)
+    // 2. Switch tab Playlists (auto refresh)
+    // 3. Manual refresh button (có thể thêm sau)
 
     populatePlaylistSelect() {
         // Populate hidden select for backward compatibility
@@ -717,6 +706,41 @@ class MusicPlayer {
             return;
         }
         
+        // ✅ Tối ưu: Chỉ update khi cần thiết
+        const existingCards = playlistGrid.querySelectorAll('.playlist-card');
+        const existingIds = new Set(Array.from(existingCards).map(c => parseInt(c.dataset.playlistId)));
+        const newIds = new Set(this.playlists.map(p => p.id));
+        
+        // ✅ Check nếu danh sách không đổi, chỉ update active state
+        const listsMatch = existingIds.size === newIds.size && 
+                          Array.from(existingIds).every(id => newIds.has(id));
+        
+        if (listsMatch) {
+            // Chỉ update active state và track count
+            existingCards.forEach(card => {
+                const playlistId = parseInt(card.dataset.playlistId);
+                const playlist = this.playlists.find(p => p.id === playlistId);
+                
+                if (playlist) {
+                    // Update active state
+                    if (this.currentPlaylist && this.currentPlaylist.id === playlist.id) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                    
+                    // Update track count nếu thay đổi
+                    const countElement = card.querySelector('.playlist-card-count');
+                    const newCount = `${playlist.tracks_count || playlist.tracks?.length || 0} bài hát`;
+                    if (countElement && countElement.textContent !== newCount) {
+                        countElement.textContent = newCount;
+                    }
+                }
+            });
+            return;
+        }
+        
+        // ✅ Nếu danh sách thay đổi, re-render toàn bộ
         playlistGrid.innerHTML = '';
         this.playlists.forEach(playlist => {
             const card = document.createElement('div');
@@ -806,8 +830,6 @@ class MusicPlayer {
     populateTrackList() {
         if (!this.currentPlaylist) return;
         
-        this.trackList.innerHTML = '';
-        
         if (this.currentPlaylist.tracks.length === 0) {
             this.trackList.innerHTML = `
                 <div class="empty-state">
@@ -818,9 +840,17 @@ class MusicPlayer {
             return;
         }
         
+        // ✅ Tối ưu: Sử dụng DocumentFragment để giảm reflow
+        const fragment = document.createDocumentFragment();
+        
         this.currentPlaylist.tracks.forEach((track, index) => {
             const trackItem = document.createElement('div');
             trackItem.className = 'track-item';
+            if (index === this.currentTrackIndex) {
+                trackItem.classList.add('active');
+            }
+            trackItem.dataset.index = index;
+            
             trackItem.innerHTML = `
                 <div class="track-item-number">${index + 1}</div>
                 <i class="bi bi-music-note-beamed track-item-icon"></i>
@@ -831,9 +861,14 @@ class MusicPlayer {
                 <div class="track-item-duration">${track.duration_formatted}</div>
             `;
             
+            // ✅ Event delegation sẽ tốt hơn nhưng cần refactor lớn
             trackItem.addEventListener('click', () => this.playTrack(index));
-            this.trackList.appendChild(trackItem);
+            fragment.appendChild(trackItem);
         });
+        
+        // ✅ Single DOM update thay vì nhiều appendChild calls
+        this.trackList.innerHTML = '';
+        this.trackList.appendChild(fragment);
     }
 
     showMessage(message, type = 'info') {
@@ -989,58 +1024,33 @@ class MusicPlayer {
     previousTrack() {
         if (!this.currentPlaylist) return;
         
-        let prevIndex;
+        const prevIndex = this.getPreviousTrackIndex();
         
-        if (this.isShuffled) {
-            // Shuffle mode: chọn ngẫu nhiên
-            do {
-                prevIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
-            } while (prevIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
-        } else {
-            // Normal mode: theo thứ tự
-            if (this.currentTrackIndex > 0) {
-                prevIndex = this.currentTrackIndex - 1;
-            } else if (this.repeatMode === 'all') {
-                prevIndex = this.currentPlaylist.tracks.length - 1;
-            } else {
-                return; // Không làm gì nếu không có repeat mode
-            }
+        // Nếu ở vị trí đầu mà không repeat, không làm gì
+        if (prevIndex === this.currentTrackIndex && !this.repeatMode && this.currentTrackIndex === 0) {
+            return;
         }
         
         this.playTrack(prevIndex);
-        
-        // ✅ Update Media Session cho mobile
         this.updateMediaSessionMetadata();
     }
 
     nextTrack() {
         if (!this.currentPlaylist) return;
         
-        let nextIndex;
+        const nextIndex = this.getNextTrackIndex();
         
-        if (this.isShuffled) {
-            // Shuffle mode: chọn ngẫu nhiên
-            do {
-                nextIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
-            } while (nextIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
-        } else {
-            // Normal mode: theo thứ tự
-            if (this.currentTrackIndex < this.currentPlaylist.tracks.length - 1) {
-                nextIndex = this.currentTrackIndex + 1;
-            } else if (this.repeatMode === 'all') {
-                nextIndex = 0;
-            } else {
-                // Nếu không có repeat mode 'all' và đã hết playlist, dừng lại
-                this.audio.pause();
-                this.isPlaying = false;
-                this.updatePlayPauseButtons();
-                return;
-            }
+        // Nếu ở cuối playlist mà không repeat, dừng phát
+        if (nextIndex === this.currentTrackIndex && 
+            this.currentTrackIndex === this.currentPlaylist.tracks.length - 1 && 
+            this.repeatMode !== 'all') {
+            this.audio.pause();
+            this.isPlaying = false;
+            this.updatePlayPauseButtons();
+            return;
         }
         
         this.playTrack(nextIndex);
-        
-        // ✅ Update Media Session cho mobile
         this.updateMediaSessionMetadata();
     }
 
@@ -1105,19 +1115,44 @@ class MusicPlayer {
     updateProgress() {
         if (!this.audio.duration) return;
         
+        // ✅ Throttle updates - chỉ update UI mỗi 250ms để giảm CPU usage
+        const now = Date.now();
+        if (now - this.lastProgressUpdate < 250) {
+            return;
+        }
+        this.lastProgressUpdate = now;
+        
         const progress = (this.audio.currentTime / this.audio.duration) * 100;
         
-        // Cập nhật progress bar
-        if (this.progressFill) {
-            this.progressFill.style.width = `${progress}%`;
-        }
-        if (this.progressHandle) {
-            this.progressHandle.style.left = `${progress}%`;
-        }
+        // ✅ Batch DOM updates để tránh reflow nhiều lần
+        requestAnimationFrame(() => {
+            // Cập nhật progress bar
+            if (this.progressFill) {
+                this.progressFill.style.width = `${progress}%`;
+            }
+            if (this.progressHandle) {
+                this.progressHandle.style.left = `${progress}%`;
+            }
+            
+            // Cập nhật thời gian hiện tại
+            if (this.currentTime) {
+                this.currentTime.textContent = this.formatTime(this.audio.currentTime);
+            }
+        });
         
-        // Cập nhật thời gian hiện tại
-        if (this.currentTime) {
-            this.currentTime.textContent = this.formatTime(this.audio.currentTime);
+        // ✅ Update Media Session position cho lock screen (mỗi 5 giây để tối ưu)
+        if (Math.floor(this.audio.currentTime) % 5 === 0 && 'mediaSession' in navigator) {
+            try {
+                if (this.audio.duration && !isNaN(this.audio.duration)) {
+                    navigator.mediaSession.setPositionState({
+                        duration: this.audio.duration,
+                        playbackRate: this.audio.playbackRate,
+                        position: this.audio.currentTime
+                    });
+                }
+            } catch (error) {
+                // Silent fail - không log để tránh spam console
+            }
         }
         
         // Debug log mỗi 10 giây (giảm tần suất)
@@ -1131,9 +1166,25 @@ class MusicPlayer {
     }
 
     formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        // ✅ Cache với LRU limit (giữ tối đa 100 entries để tiết kiệm memory)
+        const secondsInt = Math.floor(seconds);
+        
+        if (this.formatTimeCache.has(secondsInt)) {
+            return this.formatTimeCache.get(secondsInt);
+        }
+        
+        const mins = Math.floor(secondsInt / 60);
+        const secs = secondsInt % 60;
+        const formatted = `${mins}:${secs.toString().padStart(2, '0')}`;
+        
+        // ✅ LRU cleanup - clear cache khi quá 100 entries
+        if (this.formatTimeCache.size > 100) {
+            const firstKey = this.formatTimeCache.keys().next().value;
+            this.formatTimeCache.delete(firstKey);
+        }
+        
+        this.formatTimeCache.set(secondsInt, formatted);
+        return formatted;
     }
 
     seekToPosition(event) {
@@ -1497,6 +1548,39 @@ class MusicPlayer {
             return;
         }
         
+        // ✅ Debounce saves - chỉ lưu sau 500ms idle để giảm localStorage writes
+        if (this.saveStateDebounceTimer) {
+            clearTimeout(this.saveStateDebounceTimer);
+        }
+        
+        this.saveStateDebounceTimer = setTimeout(() => {
+            const state = {
+                playlistId: this.currentPlaylist.id,
+                trackIndex: this.currentTrackIndex,
+                currentTime: this.audio.currentTime || 0,
+                isPlaying: this.isPlaying,
+                timestamp: Date.now()
+            };
+            
+            try {
+                localStorage.setItem('musicPlayerState', JSON.stringify(state));
+            } catch (error) {
+                console.error('Error saving player state:', error);
+            }
+        }, 500);
+    }
+    
+    // ✅ Immediate save (không debounce) - dùng khi beforeunload
+    savePlayerStateImmediate() {
+        if (this.isRestoringState || !this.currentPlaylist) {
+            return;
+        }
+        
+        // Clear debounce timer
+        if (this.saveStateDebounceTimer) {
+            clearTimeout(this.saveStateDebounceTimer);
+        }
+        
         const state = {
             playlistId: this.currentPlaylist.id,
             trackIndex: this.currentTrackIndex,
@@ -1829,56 +1913,92 @@ class MusicPlayer {
             console.log('🎵 Setting up Media Session API...');
             
             navigator.mediaSession.setActionHandler('play', () => {
-                this.play();
+                console.log('🎵 Media Session: Play action');
+                if (!this.isPlaying) {
+                    this.userInteracted = true;
+                    this.audio.play().catch(e => {
+                        console.error('Media Session play failed:', e);
+                    });
+                }
             });
             
             navigator.mediaSession.setActionHandler('pause', () => {
-                this.pause();
+                console.log('🎵 Media Session: Pause action');
+                if (this.isPlaying) {
+                    this.audio.pause();
+                }
             });
             
             navigator.mediaSession.setActionHandler('previoustrack', () => {
+                console.log('🎵 Media Session: Previous track');
                 this.previousTrack();
             });
             
             navigator.mediaSession.setActionHandler('nexttrack', () => {
+                console.log('🎵 Media Session: Next track');
                 this.nextTrack();
             });
             
             navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+                console.log('🎵 Media Session: Seek backward', details.seekOffset);
                 this.seekBackward(details.seekOffset || 10);
             });
             
             navigator.mediaSession.setActionHandler('seekforward', (details) => {
+                console.log('🎵 Media Session: Seek forward', details.seekOffset);
                 this.seekForward(details.seekOffset || 10);
             });
             
             navigator.mediaSession.setActionHandler('seekto', (details) => {
                 if (details.seekTime !== undefined) {
+                    console.log('🎵 Media Session: Seek to', details.seekTime);
                     this.seekTo(details.seekTime);
                 }
+            });
+            
+            navigator.mediaSession.setActionHandler('stop', () => {
+                console.log('🎵 Media Session: Stop action');
+                this.audio.pause();
+                this.audio.currentTime = 0;
             });
         }
     }
     
     updateMediaSessionMetadata() {
-        if ('mediaSession' in navigator && this.currentPlaylist && this.currentPlaylist.tracks[this.currentTrackIndex]) {
+        if (!('mediaSession' in navigator)) return;
+        
+        if (this.currentPlaylist && this.currentPlaylist.tracks[this.currentTrackIndex]) {
             const track = this.currentPlaylist.tracks[this.currentTrackIndex];
             
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: track.title,
-                artist: track.artist || 'Unknown Artist',
-                album: this.currentPlaylist.name,
-                artwork: [
-                    { src: '/static/music_player/images/album-art.png', sizes: '96x96', type: 'image/png' },
-                    { src: '/static/music_player/images/album-art.png', sizes: '128x128', type: 'image/png' },
-                    { src: '/static/music_player/images/album-art.png', sizes: '192x192', type: 'image/png' },
-                    { src: '/static/music_player/images/album-art.png', sizes: '256x256', type: 'image/png' },
-                    { src: '/static/music_player/images/album-art.png', sizes: '384x384', type: 'image/png' },
-                    { src: '/static/music_player/images/album-art.png', sizes: '512x512', type: 'image/png' }
-                ]
-            });
-            
-            navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+            try {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: track.title,
+                    artist: track.artist || 'Unknown Artist',
+                    album: this.currentPlaylist.name,
+                    artwork: [
+                        { src: '/static/music_player/images/album-art.png', sizes: '96x96', type: 'image/png' },
+                        { src: '/static/music_player/images/album-art.png', sizes: '128x128', type: 'image/png' },
+                        { src: '/static/music_player/images/album-art.png', sizes: '192x192', type: 'image/png' },
+                        { src: '/static/music_player/images/album-art.png', sizes: '256x256', type: 'image/png' },
+                        { src: '/static/music_player/images/album-art.png', sizes: '384x384', type: 'image/png' },
+                        { src: '/static/music_player/images/album-art.png', sizes: '512x512', type: 'image/png' }
+                    ]
+                });
+                
+                // ✅ Update playback state
+                navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+                
+                // ✅ Update position state (quan trọng cho lock screen!)
+                if (this.audio.duration && !isNaN(this.audio.duration)) {
+                    navigator.mediaSession.setPositionState({
+                        duration: this.audio.duration,
+                        playbackRate: this.audio.playbackRate,
+                        position: this.audio.currentTime
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating Media Session metadata:', error);
+            }
         }
     }
     
@@ -1899,6 +2019,34 @@ class MusicPlayer {
         if (!this.currentPlaylist || this.currentPlaylist.tracks.length <= 1) return;
         
         try {
+            // ✅ Cleanup old preloaded tracks (giữ tối đa 5 tracks để tránh memory leak)
+            if (this.preloadedTracks.size > 5) {
+                const tracksToKeep = new Set();
+                
+                // Get IDs of current, next, and previous tracks
+                const currentTrack = this.currentPlaylist.tracks[this.currentTrackIndex];
+                if (currentTrack) tracksToKeep.add(currentTrack.id);
+                
+                const nextIndex = this.getNextTrackIndex();
+                const nextTrack = this.currentPlaylist.tracks[nextIndex];
+                if (nextTrack) tracksToKeep.add(nextTrack.id);
+                
+                const prevIndex = this.getPreviousTrackIndex();
+                const prevTrack = this.currentPlaylist.tracks[prevIndex];
+                if (prevTrack) tracksToKeep.add(prevTrack.id);
+                
+                // Remove tracks that are not in tracksToKeep
+                for (const [trackId, audioElement] of this.preloadedTracks.entries()) {
+                    if (!tracksToKeep.has(trackId)) {
+                        // ✅ Cleanup audio element
+                        audioElement.src = '';
+                        audioElement.load(); // Free memory
+                        this.preloadedTracks.delete(trackId);
+                        console.log('🗑️ Cleaned up preloaded track:', trackId);
+                    }
+                }
+            }
+            
             // Preload next track
             const nextIndex = this.getNextTrackIndex();
             if (nextIndex !== this.currentTrackIndex) {
@@ -2007,49 +2155,50 @@ class MusicPlayer {
         this.audio.currentTime = validTime;
     }
     
+    // ✅ Helper method cho random index (tránh duplicate code)
+    getRandomTrackIndex() {
+        if (!this.currentPlaylist || this.currentPlaylist.tracks.length <= 1) {
+            return this.currentTrackIndex;
+        }
+        
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
+        } while (randomIndex === this.currentTrackIndex);
+        return randomIndex;
+    }
+    
     // ✅ Helper methods cho track navigation
     getNextTrackIndex() {
         if (!this.currentPlaylist) return 0;
         
         if (this.isShuffled) {
-            // Shuffle mode: chọn ngẫu nhiên
-            let nextIndex;
-            do {
-                nextIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
-            } while (nextIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
-            return nextIndex;
-        } else {
-            // Normal mode: theo thứ tự
-            if (this.currentTrackIndex < this.currentPlaylist.tracks.length - 1) {
-                return this.currentTrackIndex + 1;
-            } else if (this.repeatMode === 'all') {
-                return 0;
-            } else {
-                return this.currentTrackIndex; // Stay on current if no repeat
-            }
+            return this.getRandomTrackIndex();
         }
+        
+        // Normal mode: theo thứ tự
+        if (this.currentTrackIndex < this.currentPlaylist.tracks.length - 1) {
+            return this.currentTrackIndex + 1;
+        } else if (this.repeatMode === 'all') {
+            return 0;
+        }
+        return this.currentTrackIndex; // Stay on current if no repeat
     }
     
     getPreviousTrackIndex() {
         if (!this.currentPlaylist) return 0;
         
         if (this.isShuffled) {
-            // Shuffle mode: chọn ngẫu nhiên
-            let prevIndex;
-            do {
-                prevIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
-            } while (prevIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
-            return prevIndex;
-        } else {
-            // Normal mode: theo thứ tự
-            if (this.currentTrackIndex > 0) {
-                return this.currentTrackIndex - 1;
-            } else if (this.repeatMode === 'all') {
-                return this.currentPlaylist.tracks.length - 1;
-            } else {
-                return this.currentTrackIndex; // Stay on current if no repeat
-            }
+            return this.getRandomTrackIndex();
         }
+        
+        // Normal mode: theo thứ tự
+        if (this.currentTrackIndex > 0) {
+            return this.currentTrackIndex - 1;
+        } else if (this.repeatMode === 'all') {
+            return this.currentPlaylist.tracks.length - 1;
+        }
+        return this.currentTrackIndex; // Stay on current if no repeat
     }
     
     // ✅ Helper methods để tối ưu battery
@@ -2057,25 +2206,45 @@ class MusicPlayer {
         this.lastUserActivity = Date.now();
     }
     
-    isUserActive() {
-        // User được coi là active nếu có tương tác trong 5 phút gần đây
-        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-        return this.lastUserActivity > fiveMinutesAgo;
-    }
+    // ❌ REMOVED: isUserActive() - không cần nữa vì đã remove auto-refresh interval
     
     destroy() {
-        // Save state trước khi destroy
-        this.savePlayerState();
+        // Save state trước khi destroy (immediate)
+        this.savePlayerStateImmediate();
+        
+        // ✅ Cleanup debounce timers
+        if (this.saveStateDebounceTimer) {
+            clearTimeout(this.saveStateDebounceTimer);
+        }
+        if (this.refreshPlaylistsDebounceTimer) {
+            clearTimeout(this.refreshPlaylistsDebounceTimer);
+        }
         
         // Cleanup intervals
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-        }
-        if (this.saveStateInterval) {
-            clearInterval(this.saveStateInterval);
-        }
         if (this.sleepTimerInterval) {
             clearInterval(this.sleepTimerInterval);
+        }
+        
+        // ✅ Cleanup preloaded tracks để free memory
+        if (this.preloadedTracks) {
+            for (const [trackId, audioElement] of this.preloadedTracks.entries()) {
+                audioElement.src = '';
+                audioElement.load();
+            }
+            this.preloadedTracks.clear();
+            console.log('🗑️ Cleaned up all preloaded tracks');
+        }
+        
+        // ✅ Cleanup caches
+        if (this.formatTimeCache) {
+            this.formatTimeCache.clear();
+        }
+        
+        // ✅ Cleanup audio element
+        if (this.audio) {
+            this.audio.pause();
+            this.audio.src = '';
+            this.audio.load();
         }
     }
 }
