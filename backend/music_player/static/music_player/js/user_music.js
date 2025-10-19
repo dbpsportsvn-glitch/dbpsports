@@ -20,7 +20,8 @@ class UserMusicManager {
         
         this.initializeElements();
         this.bindEvents();
-        this.loadUserSettings();
+        // KHÔNG gọi loadUserSettings() ở đây vì user có thể chưa đăng nhập
+        // Settings sẽ được load khi user click vào Settings button
     }
     
     initializeElements() {
@@ -121,12 +122,55 @@ class UserMusicManager {
         }
     }
     
-    openSettings() {
-        this.settingsModal.classList.remove('hidden');
-        // Load data when opening
-        this.loadUserSettings();
-        this.loadUserTracks();
-        this.loadUserPlaylists();
+    async openSettings() {
+        // Kiểm tra authentication trước khi mở modal
+        try {
+            const response = await fetch('/music/user/settings/');
+            
+            // Check nếu response là HTML (user chưa đăng nhập, Django redirect)
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng cá nhân!', 'info');
+                setTimeout(() => {
+                    window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                }, 1500);
+                return;
+            }
+            
+            if (!response.ok) {
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng cá nhân!', 'info');
+                    setTimeout(() => {
+                        window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                    }, 1500);
+                    return;
+                }
+            }
+            
+            // Try to parse JSON
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng cá nhân!', 'info');
+                setTimeout(() => {
+                    window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                }, 1500);
+                return;
+            }
+            
+            // Nếu authenticated, mở modal và load data
+            this.settingsModal.classList.remove('hidden');
+            this.loadUserSettings();
+            this.loadUserTracks();
+            this.loadUserPlaylists();
+            
+        } catch (error) {
+            console.error('Error checking authentication:', error);
+            this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng cá nhân!', 'info');
+            setTimeout(() => {
+                window.location.href = '/accounts/login/?next=' + window.location.pathname;
+            }, 1500);
+        }
     }
     
     closeSettings() {
@@ -156,13 +200,16 @@ class UserMusicManager {
         }
     }
     
-    async loadUserSettings() {
+    async loadUserSettings(silent = false) {
         try {
             const response = await fetch('/music/user/settings/');
             
             if (!response.ok) {
-                if (response.status === 302 || response.status === 401) {
-                    this.showNotification('Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    // Chỉ show notification nếu không phải silent mode
+                    if (!silent) {
+                        this.showNotification('Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
+                    }
                     return;
                 }
                 throw new Error(`HTTP ${response.status}`);
@@ -175,11 +222,14 @@ class UserMusicManager {
                 this.populateSettings(data.settings);
             }
         } catch (error) {
-            console.error('Error loading user settings:', error);
-            if (error.message.includes('Unexpected token')) {
-                this.showNotification('Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
-            } else {
-                this.showNotification('Lỗi khi tải cài đặt!', 'error');
+            // Chỉ log error, không show notification trong silent mode
+            if (!silent) {
+                console.error('Error loading user settings:', error);
+                if (error.message.includes('Unexpected token')) {
+                    this.showNotification('Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
+                } else {
+                    this.showNotification('Lỗi khi tải cài đặt!', 'error');
+                }
             }
         }
     }
@@ -582,6 +632,17 @@ class UserMusicManager {
                 body: JSON.stringify({ name: name.trim() })
             });
             
+            if (!response.ok) {
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    this.showNotification('⚠️ Vui lòng đăng nhập để tạo playlist!', 'info');
+                    setTimeout(() => {
+                        window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                    }, 1500);
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success) {
@@ -593,7 +654,11 @@ class UserMusicManager {
             }
         } catch (error) {
             console.error('Error creating playlist:', error);
-            this.showNotification('Lỗi khi tạo playlist!', 'error');
+            if (error.message.includes('Unexpected token')) {
+                this.showNotification('⚠️ Vui lòng đăng nhập để tạo playlist!', 'info');
+            } else {
+                this.showNotification('Lỗi khi tạo playlist!', 'error');
+            }
         }
     }
     
@@ -708,6 +773,18 @@ class UserMusicManager {
     async loadAndPlayUserPlaylist(playlistId) {
         try {
             const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            
+            if (!response.ok) {
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
+                    setTimeout(() => {
+                        window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                    }, 1500);
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success && data.tracks.length > 0) {
@@ -736,7 +813,11 @@ class UserMusicManager {
             }
         } catch (error) {
             console.error('Error loading playlist tracks:', error);
-            this.showNotification('Lỗi khi load playlist!', 'error');
+            if (error.message.includes('Unexpected token')) {
+                this.showNotification('⚠️ Vui lòng đăng nhập để sử dụng tính năng này!', 'info');
+            } else {
+                this.showNotification('Lỗi khi load playlist!', 'error');
+            }
         }
     }
     

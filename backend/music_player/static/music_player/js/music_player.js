@@ -344,6 +344,23 @@ class MusicPlayer {
         
         try {
             const response = await fetch('/music/user/playlists/');
+            
+            if (!response.ok) {
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    userGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-lock-fill"></i>
+                            <p style="margin-bottom: 12px;">Vui lòng đăng nhập để sử dụng tính năng này!</p>
+                            <a href="/accounts/login/?next=${window.location.pathname}" style="color: #f093fb; text-decoration: underline;">
+                                Đăng nhập ngay
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success) {
@@ -368,12 +385,42 @@ class MusicPlayer {
             }
         } catch (error) {
             console.error('Error loading user playlists in main player:', error);
+            if (error.message.includes('Unexpected token')) {
+                userGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-lock-fill"></i>
+                        <p style="margin-bottom: 12px;">Vui lòng đăng nhập để sử dụng tính năng này!</p>
+                        <a href="/accounts/login/?next=${window.location.pathname}" style="color: #f093fb; text-decoration: underline;">
+                            Đăng nhập ngay
+                        </a>
+                    </div>
+                `;
+            } else {
+                userGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <p>Lỗi khi tải danh sách playlist!</p>
+                    </div>
+                `;
+            }
         }
     }
     
     async loadUserPlaylist(playlistId) {
         try {
             const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            
+            if (!response.ok) {
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
+                    setTimeout(() => {
+                        window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                    }, 1500);
+                    return;
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
             const data = await response.json();
             
             if (data.success && data.tracks.length > 0) {
@@ -430,10 +477,15 @@ class MusicPlayer {
                 
                 console.log('✅ Loaded user playlist:', data.playlist.name);
             } else {
-                console.log('Playlist chưa có bài hát!');
+                this.showMessage('Playlist chưa có bài hát!', 'info');
             }
         } catch (error) {
             console.error('Error loading user playlist:', error);
+            if (error.message.includes('Unexpected token')) {
+                this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
+            } else {
+                this.showMessage('Lỗi khi load playlist!', 'error');
+            }
         }
     }
     
