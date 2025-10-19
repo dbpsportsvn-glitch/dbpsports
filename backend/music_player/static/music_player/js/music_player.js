@@ -161,12 +161,12 @@ class MusicPlayer {
         if (this.progressBar) {
             // Click to seek
             this.progressBar.addEventListener('click', (e) => {
-                this.seekTo(e);
+                this.seekToPosition(e);
             });
             // Touch support for mobile
             this.progressBar.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                this.seekTo(e.touches[0]);
+                this.seekToPosition(e.touches[0]);
             });
         }
         if (this.progressHandle) {
@@ -1098,7 +1098,7 @@ class MusicPlayer {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    seekTo(event) {
+    seekToPosition(event) {
         if (!this.audio.duration) {
             return;
         }
@@ -1108,15 +1108,17 @@ class MusicPlayer {
         const percent = Math.max(0, Math.min(1, clickX / rect.width));
         const newTime = percent * this.audio.duration;
         
-        // Set new time
-        this.audio.currentTime = newTime;
-        
-        // Force update UI immediately
-        this.updateProgress();
-        
-        // Save state after seeking
-        if (!this.isRestoringState) {
-            this.savePlayerState();
+        // ✅ Validate và set time
+        if (isFinite(newTime) && newTime >= 0) {
+            this.audio.currentTime = newTime;
+            
+            // Force update UI immediately
+            this.updateProgress();
+            
+            // Save state after seeking
+            if (!this.isRestoringState) {
+                this.savePlayerState();
+            }
         }
     }
 
@@ -1954,7 +1956,17 @@ class MusicPlayer {
     }
     
     seekTo(time) {
-        this.audio.currentTime = time;
+        // ✅ Validate time value trước khi set
+        if (typeof time !== 'number' || !isFinite(time) || time < 0) {
+            console.warn('Invalid time value for seekTo:', time);
+            return;
+        }
+        
+        // ✅ Ensure time is within valid range
+        const maxTime = this.audio.duration || 0;
+        const validTime = Math.min(Math.max(time, 0), maxTime);
+        
+        this.audio.currentTime = validTime;
     }
     
     // ✅ Helper methods cho track navigation
