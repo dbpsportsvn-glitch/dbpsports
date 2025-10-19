@@ -1957,6 +1957,51 @@ class MusicPlayer {
         this.audio.currentTime = time;
     }
     
+    // ✅ Helper methods cho track navigation
+    getNextTrackIndex() {
+        if (!this.currentPlaylist) return 0;
+        
+        if (this.isShuffled) {
+            // Shuffle mode: chọn ngẫu nhiên
+            let nextIndex;
+            do {
+                nextIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
+            } while (nextIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
+            return nextIndex;
+        } else {
+            // Normal mode: theo thứ tự
+            if (this.currentTrackIndex < this.currentPlaylist.tracks.length - 1) {
+                return this.currentTrackIndex + 1;
+            } else if (this.repeatMode === 'all') {
+                return 0;
+            } else {
+                return this.currentTrackIndex; // Stay on current if no repeat
+            }
+        }
+    }
+    
+    getPreviousTrackIndex() {
+        if (!this.currentPlaylist) return 0;
+        
+        if (this.isShuffled) {
+            // Shuffle mode: chọn ngẫu nhiên
+            let prevIndex;
+            do {
+                prevIndex = Math.floor(Math.random() * this.currentPlaylist.tracks.length);
+            } while (prevIndex === this.currentTrackIndex && this.currentPlaylist.tracks.length > 1);
+            return prevIndex;
+        } else {
+            // Normal mode: theo thứ tự
+            if (this.currentTrackIndex > 0) {
+                return this.currentTrackIndex - 1;
+            } else if (this.repeatMode === 'all') {
+                return this.currentPlaylist.tracks.length - 1;
+            } else {
+                return this.currentTrackIndex; // Stay on current if no repeat
+            }
+        }
+    }
+    
     // ✅ Helper methods để tối ưu battery
     updateUserActivity() {
         this.lastUserActivity = Date.now();
