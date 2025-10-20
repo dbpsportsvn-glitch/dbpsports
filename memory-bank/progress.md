@@ -49,12 +49,16 @@
   
   **Module Music Player:**
   - Trình phát nhạc popup với đầy đủ tính năng
-  - Personal Music - Upload & Manage User Music với quota 500MB
+  - Personal Music - Upload & Manage User Music với quota 369MB (giam quota + UI lien he admin)
   - Mobile Full-Screen Mode với performance tối ưu
   - Keyboard Shortcuts và Auto-Play
   - Sleep Timer với fade out mượt mà
   - Tab System + Playlist Grid với UX hoàn hảo
   - CSS Scoping để tránh xung đột global styles
+  - Album Cover ho tro: User Track + User Playlist + Global Track/Playlist, update MediaSession (lock screen), fallback mac dinh
+  - Listening Lock: khoa trinh phat, chan dong/toggle/click ngoai, chan cuon nen, giu trang thai theo tai khoan, tu mo lai khi reload
+  - Keyboard help an: click/touch vao chu Music mo huong dan phim tat (an nut rieng)
+  - Low Power Mode: tat hieu ung nang, giam update UI, dung class low-power; luu theo tai khoan
 
   **Module Organization Shop:**
   - Hệ thống shop riêng cho từng ban tổ chức (BTC)

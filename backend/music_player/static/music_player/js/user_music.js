@@ -35,7 +35,12 @@ class UserMusicManager {
         this.volumeValue = document.getElementById('volume-value');
         this.repeatSelect = document.getElementById('setting-repeat');
         this.shuffleCheckbox = document.getElementById('setting-shuffle');
+        this.lowPowerCheckbox = document.getElementById('setting-lowpower');
         this.saveSettingsBtn = document.getElementById('save-settings-btn');
+
+        // State flags to avoid UI flicker
+        this.isEditingSettings = false;
+        this.isSavingSettings = false;
         
         // Quota elements
         this.quotaUsed = document.getElementById('quota-used');
@@ -147,6 +152,14 @@ class UserMusicManager {
             this.coverPreview.addEventListener('click', () => this.playlistCoverInput.click());
             this.playlistCoverInput.addEventListener('change', (e) => this.previewCoverImage(e));
         }
+
+        // Mark editing when user changes any setting control
+        const markEditing = () => { this.isEditingSettings = true; };
+        if (this.autoPlayCheckbox) this.autoPlayCheckbox.addEventListener('change', markEditing);
+        if (this.volumeSlider) this.volumeSlider.addEventListener('input', markEditing);
+        if (this.repeatSelect) this.repeatSelect.addEventListener('change', markEditing);
+        if (this.shuffleCheckbox) this.shuffleCheckbox.addEventListener('change', markEditing);
+        if (this.lowPowerCheckbox) this.lowPowerCheckbox.addEventListener('change', markEditing);
     }
     
     async openSettings() {
@@ -245,6 +258,11 @@ class UserMusicManager {
             const data = await response.json();
             
             if (data.success) {
+                // Nếu đang ở trạng thái người dùng đang chỉnh sửa hoặc đang lưu, không ép UI
+                if (this.isEditingSettings || this.isSavingSettings) {
+                    this.userSettings = data.settings; // vẫn cập nhật cache mới nhất
+                    return;
+                }
                 this.userSettings = data.settings;
                 this.populateSettings(data.settings);
                 // Đồng bộ lock state sang player
@@ -277,6 +295,9 @@ class UserMusicManager {
         // Populate form with current settings
         if (this.autoPlayCheckbox) {
             this.autoPlayCheckbox.checked = settings.auto_play;
+        }
+        if (this.lowPowerCheckbox) {
+            this.lowPowerCheckbox.checked = !!settings.low_power_mode;
         }
         
         if (this.volumeSlider) {
@@ -337,16 +358,18 @@ class UserMusicManager {
             auto_play: this.autoPlayCheckbox.checked,
             volume: parseFloat(this.volumeSlider.value) / 100,
             repeat_mode: this.repeatSelect.value,
-            shuffle: this.shuffleCheckbox.checked
+            shuffle: this.shuffleCheckbox.checked,
+            low_power_mode: this.lowPowerCheckbox ? this.lowPowerCheckbox.checked : false
         };
         
         try {
-            const response = await fetch('/music/user/settings/update/', {
+            const response = await fetch(`/music/user/settings/update/?t=${Date.now()}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCSRFToken()
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(settings)
             });
             
@@ -361,6 +384,10 @@ class UserMusicManager {
                     this.musicPlayer.audio.volume = settings.volume;
                     this.musicPlayer.repeatMode = settings.repeat_mode;
                     this.musicPlayer.isShuffled = settings.shuffle;
+                    this.musicPlayer.settings = {
+                        ...(this.musicPlayer.settings || {}),
+                        low_power_mode: settings.low_power_mode
+                    };
                     
                     // Update UI buttons
                     if (this.musicPlayer.updateRepeatButton) {
@@ -378,6 +405,14 @@ class UserMusicManager {
                         this.musicPlayer.volumeHandle.style.left = (settings.volume * 100) + '%';
                     }
                 }
+                // Apply low-power UI immediately
+                document.body.classList.toggle('low-power', settings.low_power_mode);
+                document.documentElement.classList.toggle('low-power', settings.low_power_mode);
+                const popup = document.getElementById('music-player-popup');
+                if (popup) popup.classList.toggle('low-power', settings.low_power_mode);
+                
+                // Force refresh settings from server to avoid stale cache on next open
+                await this.loadUserSettings(true);
                 
                 // Đóng modal sau khi lưu thành công
                 this.closeSettings();

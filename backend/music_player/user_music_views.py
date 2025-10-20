@@ -42,6 +42,7 @@ def user_music_settings(request):
                 'repeat_mode': user_settings.repeat_mode,
                 'shuffle': user_settings.shuffle,
                 'listening_lock': user_settings.listening_lock,
+                'low_power_mode': user_settings.low_power_mode,
                 'upload_quota': user_settings.upload_quota,
                 'storage_quota_mb': user_settings.storage_quota_mb,
                 'upload_usage': usage
@@ -72,6 +73,8 @@ def update_music_settings(request):
             user_settings.shuffle = data['shuffle']
         if 'listening_lock' in data:
             user_settings.listening_lock = bool(data['listening_lock'])
+        if 'low_power_mode' in data:
+            user_settings.low_power_mode = bool(data['low_power_mode'])
         
         user_settings.save()
         

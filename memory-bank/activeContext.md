@@ -1,10 +1,13 @@
 # Bối Cảnh Hiện Tại
 
 - **Công việc đang tập trung:**
-  - Tối ưu hóa Memory Bank và dọn dẹp thông tin cũ
-  - Chuẩn bị cho các tính năng mới trong tương lai
+  - Chuan bi cac tinh nang khac (tam thoi khong co task muc tieu cap bach)
 
 - **Các thay đổi gần đây:**
+  - Hoan thanh Listening Lock cho Music Player: khoa trinh phat, chan dong/toggle/click ngoai, chan cuon nen; giu trang thai theo tai khoan va tu mo lai khi reload.
+  - Hoan thanh Low Power Mode: them toggle trong Settings, tat hieu ung nang, giam update UI, dung class low-power, luu theo tai khoan.
+  - Them Album Cover toan dien: User Track/Playlist + Global Track/Playlist; cap nhat MediaSession lock screen; fallback hinh mac dinh; cache-busting khi doi anh.
+  - Giam quota upload ca nhan con 369MB va them goi y lien he admin xin mo rong.
   - **Hoàn thành tối ưu Music Player - Mobile Full-Screen & Performance Optimizations:** Đã thực hiện 7 cải tiến lớn cho music player đạt chuẩn 10/10 với performance hoàn hảo, mobile UX như native app (Spotify-like), và đáp ứng tất cả accessibility standards.
   - **Hoàn thành tối ưu hóa toàn diện Music Player với Auto-Play và Keyboard Shortcuts:** Music player giờ professional như Spotify với performance cao, security tốt, UX mượt mà, power-user friendly với full keyboard control.
   - **Hoàn thành tính năng Personal Music - Upload & Manage User Music:** Tính năng KHÁC BIỆT cho phép user upload nhạc riêng với quota 500MB, auto-extract metadata, quản lý playlists cá nhân.

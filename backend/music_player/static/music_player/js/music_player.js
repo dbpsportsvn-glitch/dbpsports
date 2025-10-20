@@ -1137,12 +1137,16 @@ class MusicPlayer {
         this.currentTrackTitle.textContent = track.title;
         this.currentTrackArtist.textContent = track.artist;
         
-        // Update album cover (track cover → playlist cover → default)
+        // Update album cover (track cover → playlist cover → default) with cache-busting
         if (this.currentAlbumCover) {
             const playlistCover = this.currentPlaylist && this.currentPlaylist.cover_image ? this.currentPlaylist.cover_image : null;
-            const albumCoverUrl = track.album_cover || playlistCover || '/static/music_player/images/album-art.png';
+            const baseUrl = track.album_cover || playlistCover || '/static/music_player/images/album-art.png';
+            const cb = `v=${Date.now()}`;
+            const albumCoverUrl = baseUrl.includes('?') ? `${baseUrl}&${cb}` : `${baseUrl}?${cb}`;
             this.currentAlbumCover.src = albumCoverUrl;
         }
+        // Force refresh Media Session metadata to update lock screen artwork
+        this.updateMediaSessionMetadata();
     }
 
     updateTrackListSelection() {
@@ -2817,8 +2821,10 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             
             try {
                 // Use album cover if available, otherwise use default
-                const artworkUrl = track.album_cover || '/static/music_player/images/album-art.png';
-                const artworkType = track.album_cover ? 'image/jpeg' : 'image/png';
+                const baseArtwork = track.album_cover || (this.currentPlaylist && this.currentPlaylist.cover_image) || '/static/music_player/images/album-art.png';
+                const bust = `v=${Date.now()}`;
+                const artworkUrl = baseArtwork.includes('?') ? `${baseArtwork}&${bust}` : `${baseArtwork}?${bust}`;
+                const artworkType = baseArtwork.endsWith('.png') ? 'image/png' : 'image/jpeg';
                 const albumName = track.album || (this.currentPlaylist && this.currentPlaylist.name) || '';
                 
                 navigator.mediaSession.metadata = new MediaMetadata({
@@ -3128,13 +3134,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data && data.success && data.settings) {
                 const locked = !!data.settings.listening_lock;
+                const lowPower = !!data.settings.low_power_mode;
                 window.musicPlayer.settings = {
                     ...(window.musicPlayer.settings || {}),
-                    listening_lock: locked
+                    listening_lock: locked,
+                    low_power_mode: lowPower
                 };
                 // Áp dụng class chặn cuộn/header
                 document.body.classList.toggle('listening-locked', locked);
                 document.documentElement.classList.toggle('listening-locked', locked);
+                document.body.classList.toggle('low-power', lowPower);
                 // Nếu đang lock, đảm bảo mở player
                 const popup = document.getElementById('music-player-popup');
                 if (locked && popup && popup.classList.contains('hidden')) {

@@ -8,6 +8,22 @@
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+/* Low-power mode: disable heavy effects */
+body.listening-locked.low-power .music-player-popup,
+body.low-power .music-player-popup,
+.music-player-popup.low-power {
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+body.low-power .music-player-popup * {
+    animation: none !important;
+    transition: none !important;
+}
+
+body.low-power .playlist-card-cover { filter: none !important; }
+
+
 .music-player-popup.hidden {
     opacity: 0;
     visibility: hidden;
