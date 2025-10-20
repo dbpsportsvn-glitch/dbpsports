@@ -948,7 +948,7 @@ class MusicPlayer {
             color: '#fff',
             fontSize: '14px',
             fontWeight: '500',
-            zIndex: '10001',
+            zIndex: '100002', /* ✅ Cao hơn player và settings modal */
             maxWidth: this.isIOS ? '90%' : '350px', // ✅ Wider cho iOS messages
             lineHeight: '1.5',
             textAlign: 'center',
@@ -1787,7 +1787,7 @@ class MusicPlayer {
                 border-radius: 12px;
                 font-size: 18px;
                 font-weight: 600;
-                z-index: 10002;
+                z-index: 100002;
                 pointer-events: none;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
                 animation: keyboardHintFade 1s ease-in-out;
@@ -1821,7 +1821,7 @@ class MusicPlayer {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            z-index: 10003;
+            z-index: 100003;
             display: flex;
             align-items: center;
             justify-content: center;
