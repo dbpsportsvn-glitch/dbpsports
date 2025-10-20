@@ -563,15 +563,39 @@ class UserMusicManager {
             duration: track.duration
         };
         
-        // Play track in music player
-        this.musicPlayer.currentTrackIndex = 0;
+        // Set current playlist với bài này
         this.musicPlayer.currentPlaylist = {
             id: 'user-track-' + track.id,
             name: 'Nhạc của tôi',
             tracks: [playerTrack]
         };
+        this.musicPlayer.currentTrackIndex = 0;
         
-        this.musicPlayer.playTrack(playerTrack);
+        // ✅ Đảm bảo mini player được mở (remove hidden class)
+        const popup = this.musicPlayer.popup;
+        if (popup && popup.classList.contains('hidden')) {
+            popup.classList.remove('hidden');
+        }
+        
+        // ✅ Populate track list để hiển thị bài đang phát
+        this.musicPlayer.populateTrackList();
+        
+        // ✅ Đánh dấu user đã tương tác (để autoplay được phép)
+        this.musicPlayer.userInteracted = true;
+        
+        // ✅ Phát bài hát (truyền index 0, không phải object)
+        this.musicPlayer.playTrack(0);
+        
+        // ✅ Đảm bảo phát luôn (nếu auto_play tắt)
+        setTimeout(() => {
+            if (!this.musicPlayer.isPlaying) {
+                this.musicPlayer.audio.play().catch(e => {
+                    console.log('User track play failed:', e);
+                });
+            }
+        }, 100);
+        
+        // Đóng Settings modal
         this.closeSettings();
     }
     
@@ -821,8 +845,30 @@ class UserMusicManager {
                 // Set as current playlist in music player
                 this.musicPlayer.currentPlaylist = playerPlaylist;
                 this.musicPlayer.currentTrackIndex = 0;
+                
+                // ✅ Đảm bảo mini player được mở (remove hidden class)
+                const popup = this.musicPlayer.popup;
+                if (popup && popup.classList.contains('hidden')) {
+                    popup.classList.remove('hidden');
+                }
+                
+                // ✅ Populate track list để hiển thị playlist
                 this.musicPlayer.populateTrackList();
-                this.musicPlayer.playTrack(playerPlaylist.tracks[0]);
+                
+                // ✅ Đánh dấu user đã tương tác (để autoplay được phép)
+                this.musicPlayer.userInteracted = true;
+                
+                // ✅ Phát bài đầu tiên (truyền index 0, không phải object)
+                this.musicPlayer.playTrack(0);
+                
+                // ✅ Đảm bảo phát luôn (nếu auto_play tắt)
+                setTimeout(() => {
+                    if (!this.musicPlayer.isPlaying) {
+                        this.musicPlayer.audio.play().catch(e => {
+                            console.log('Playlist play failed:', e);
+                        });
+                    }
+                }, 100);
                 
                 this.showNotification(`Đang phát playlist "${data.playlist.name}"`, 'success');
             } else {
