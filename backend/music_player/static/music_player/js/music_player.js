@@ -430,7 +430,8 @@ class MusicPlayer {
         if (!userGrid) return;
         
         try {
-            const response = await fetch('/music/user/playlists/');
+            // Add cache-busting parameter để luôn lấy data mới nhất
+            const response = await fetch(`/music/user/playlists/?t=${Date.now()}`);
             
             if (!response.ok) {
                 if (response.status === 302 || response.status === 401 || response.status === 403) {

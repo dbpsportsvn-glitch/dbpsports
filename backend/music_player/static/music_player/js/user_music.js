@@ -434,6 +434,15 @@ class UserMusicManager {
         // Reload tracks after upload
         await this.loadUserTracks();
         
+        // Reload playlists để cập nhật số lượng bài hát
+        await this.loadUserPlaylists();
+        
+        // LUÔN cập nhật user playlists trong main player (dù đang ẩn hay không)
+        // Vì user có thể sẽ mở ra sau, và cần thấy data mới nhất
+        if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
+            await this.musicPlayer.loadUserPlaylistsInMainPlayer();
+        }
+        
         // Hide overlay after 2 seconds
         setTimeout(() => {
             this.uploadProgressOverlay.classList.add('hidden');
@@ -524,6 +533,14 @@ class UserMusicManager {
             if (data.success) {
                 this.showNotification('Đã xóa bài hát thành công!', 'success');
                 await this.loadUserTracks();
+                
+                // Reload playlists để cập nhật số lượng bài hát
+                await this.loadUserPlaylists();
+                
+                // LUÔN cập nhật user playlists trong main player
+                if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
+                    await this.musicPlayer.loadUserPlaylistsInMainPlayer();
+                }
             } else {
                 this.showNotification('Lỗi khi xóa bài hát!', 'error');
             }

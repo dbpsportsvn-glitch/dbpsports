@@ -156,7 +156,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-left: 8px; /* ✅ Khoảng cách với mép trái */
+    margin-left: 0px; /* ✅ Sát lề trái hơn trên desktop */
 }
 
 .player-title {
@@ -170,7 +170,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-right: 8px; /* ✅ Khoảng cách với mép phải */
+    margin-right: 0px; /* ✅ Sát lề phải hơn trên desktop */
 }
 
 /* ✅ Override touch-action cho buttons trong header để click được trên mobile */
@@ -657,7 +657,7 @@
 
 /* Beautiful Progress Bar with Gradient & Glow */
 .progress-bar {
-    height: 6px;
+    height: 8px; /* ✅ Tăng từ 6px lên 8px cho đẹp hơn */
     background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
     overflow: visible;
@@ -758,9 +758,9 @@
 }
 
 .volume-btn {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 12px !important;
+    width: 38px !important; /* ✅ Tăng từ 28px lên 38px match với control-btn */
+    height: 38px !important;
+    font-size: 16px !important; /* ✅ Tăng icon size lên cho đẹp */
 }
 
 .volume-container {
