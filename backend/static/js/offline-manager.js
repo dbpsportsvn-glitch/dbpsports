@@ -161,6 +161,21 @@ class OfflineManager {
     }
     
     /**
+     * Lấy danh sách các tracks đã cache
+     */
+    async getCachedTracks() {
+        if (!this.swRegistration) return [];
+        
+        try {
+            const response = await this.sendMessage({ action: 'getCachedTracks' });
+            return response.tracks || [];
+        } catch (error) {
+            console.error('[Offline Manager] Get cached tracks failed:', error);
+            return [];
+        }
+    }
+    
+    /**
      * Update cache status UI
      */
     async updateCacheStatus() {
@@ -301,11 +316,13 @@ style.textContent = `
     padding: 12px 24px;
     border-radius: 8px;
     font-size: 14px;
-    z-index: 10000;
+    z-index: 100010;
     opacity: 0;
     transition: all 0.3s ease;
     max-width: 90%;
     text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    word-wrap: break-word;
 }
 
 .offline-toast.show {
@@ -315,18 +332,50 @@ style.textContent = `
 
 .offline-toast-success {
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
 }
 
 .offline-toast-warning {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
 }
 
 .offline-toast-error {
     background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    box-shadow: 0 4px 12px rgba(250, 112, 154, 0.4);
 }
 
 .offline-toast-info {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .offline-toast {
+        top: 80px;
+        bottom: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        max-width: 85%;
+        padding: 10px 20px;
+        font-size: 13px;
+        border-radius: 6px;
+    }
+    
+    .offline-toast.show {
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+    .offline-toast {
+        top: 70px;
+        max-width: 90%;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
 }
 
 body.offline-mode::before {

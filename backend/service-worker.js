@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
 });
 
 // Force update version
-const SW_VERSION = 'v2-fix-206';
+const SW_VERSION = 'v3-delete-tracks';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
@@ -209,6 +209,11 @@ self.addEventListener('message', async (event) => {
     event.ports[0].postMessage({ size });
   }
   
+  if (event.data.action === 'getCachedTracks') {
+    const tracks = await getCachedTracks();
+    event.ports[0].postMessage({ tracks });
+  }
+  
   if (event.data.action === 'preloadTrack') {
     // Preload track vào cache
     const url = event.data.url;
@@ -238,5 +243,45 @@ async function getCacheSize() {
   }
   
   return totalSize;
+}
+
+/**
+ * Lấy danh sách các tracks đã cache với thông tin chi tiết
+ */
+async function getCachedTracks() {
+  const cache = await caches.open(CACHE_VERSION);
+  const requests = await cache.keys();
+  const tracks = [];
+  
+  for (const request of requests) {
+    const url = request.url;
+    
+    // Chỉ lấy audio files
+    if (url.includes('/media/music/')) {
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        const size = blob.size;
+        const trackId = extractTrackIdFromUrl(url);
+        
+        // Extract filename from URL
+        const urlParts = url.split('/');
+        const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+        
+        tracks.push({
+          url: url,
+          filename: filename,
+          size: size,
+          sizeMB: (size / (1024 * 1024)).toFixed(2),
+          trackId: trackId
+        });
+      }
+    }
+  }
+  
+  // Sort by filename
+  tracks.sort((a, b) => a.filename.localeCompare(b.filename));
+  
+  return tracks;
 }
 

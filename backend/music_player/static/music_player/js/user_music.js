@@ -215,6 +215,7 @@ class UserMusicManager {
             this.loadUserSettings();
             this.loadUserTracks();
             this.loadUserPlaylists();
+            this.displayCachedTracks(); // Display cached tracks list
             
         } catch (error) {
             console.error('Error checking authentication:', error);
@@ -1024,27 +1025,48 @@ class UserMusicManager {
     }
     
     showNotification(message, type = 'info') {
-        // Simple notification - you can enhance this with better UI
-        const color = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+        // Enhanced notification with mobile support
+        const colorMap = {
+            'success': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            'error': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'warning': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'info': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        };
+        
         const notification = document.createElement('div');
+        notification.className = 'user-music-notification';
         notification.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${color};
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: ${colorMap[type] || colorMap['info']};
             color: white;
-            padding: 16px 24px;
+            padding: 12px 24px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 10003;
+            z-index: 100010;
             font-weight: 600;
-            animation: slideInRight 0.3s ease;
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+            word-wrap: break-word;
+            transition: all 0.3s ease;
+            opacity: 0;
         `;
         notification.textContent = message;
         document.body.appendChild(notification);
         
+        // Animate in
         setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease';
+            notification.style.transform = 'translateX(-50%) translateY(0)';
+            notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out and remove
+        setTimeout(() => {
+            notification.style.transform = 'translateX(-50%) translateY(-100px)';
+            notification.style.opacity = '0';
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
@@ -1086,6 +1108,9 @@ class UserMusicManager {
             // Update cache status in UI
             await offlineManager.updateCacheStatus();
             
+            // Update cached tracks list
+            await this.displayCachedTracks();
+            
             // Update cached tracks indicators
             if (this.musicPlayer) {
                 await this.musicPlayer.updateCachedTracksStatus();
@@ -1095,6 +1120,140 @@ class UserMusicManager {
         } catch (error) {
             console.error('Error refreshing cache status:', error);
             this.showNotification('❌ Lỗi khi làm mới cache', 'error');
+        }
+    }
+    
+    // ✅ Display cached tracks list
+    async displayCachedTracks() {
+        try {
+            const offlineManager = this.musicPlayer?.offlineManager;
+            if (!offlineManager) {
+                console.warn('Offline Manager not available');
+                return;
+            }
+            
+            const cachedTracks = await offlineManager.getCachedTracks();
+            const container = document.getElementById('offline-cached-tracks');
+            
+            if (!container) {
+                console.warn('Cached tracks container not found');
+                return;
+            }
+            
+            if (cachedTracks.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <i class="bi bi-music-note" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                        <p style="font-size: 13px; margin: 0;">Chưa có bài hát nào được cache</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate HTML for cached tracks
+            let html = `
+                <div style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <h6 style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); margin: 0;">
+                        <i class="bi bi-cloud-check"></i> 
+                        Bài hát đã cache (${cachedTracks.length})
+                    </h6>
+                </div>
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.03);">
+            `;
+            
+            cachedTracks.forEach((track, index) => {
+                html += `
+                    <div class="cached-track-item" data-url="${track.url}" style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 12px;
+                        border-bottom: 1px solid rgba(255,255,255,0.05);
+                        transition: background 0.2s ease;
+                    ">
+                        <div style="flex: 1; min-width: 0; margin-right: 12px;">
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${track.filename}
+                            </div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;">
+                                ${track.sizeMB} MB
+                            </div>
+                        </div>
+                        <button 
+                            class="delete-cached-track-btn" 
+                            data-url="${track.url}"
+                            data-filename="${track.filename}"
+                            style="
+                                background: rgba(239, 68, 68, 0.15);
+                                border: 1px solid rgba(239, 68, 68, 0.3);
+                                border-radius: 6px;
+                                color: #ef4444;
+                                padding: 6px 12px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                white-space: nowrap;
+                            "
+                            onmouseover="this.style.background='rgba(239, 68, 68, 0.25)'"
+                            onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'"
+                            title="Xóa bài này khỏi cache"
+                        >
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
+            
+            // Attach event listeners to delete buttons
+            const deleteButtons = container.querySelectorAll('.delete-cached-track-btn');
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const url = e.currentTarget.dataset.url;
+                    const filename = e.currentTarget.dataset.filename;
+                    await this.deleteSingleTrack(url, filename);
+                });
+            });
+            
+        } catch (error) {
+            console.error('Error displaying cached tracks:', error);
+        }
+    }
+    
+    // ✅ Delete single track from cache
+    async deleteSingleTrack(url, filename) {
+        if (!confirm(`Xóa "${filename}" khỏi cache offline?`)) {
+            return;
+        }
+        
+        try {
+            const offlineManager = this.musicPlayer?.offlineManager;
+            if (!offlineManager) {
+                this.showNotification('Offline Manager chưa sẵn sàng', 'error');
+                return;
+            }
+            
+            const success = await offlineManager.removeCachedTrack(url);
+            if (success) {
+                this.showNotification(`✅ Đã xóa "${filename}" khỏi cache`, 'success');
+                // Refresh the cached tracks list
+                await this.displayCachedTracks();
+                // Update cache status
+                await offlineManager.updateCacheStatus();
+                // Update cached tracks indicators in player
+                if (this.musicPlayer) {
+                    await this.musicPlayer.updateCachedTracksStatus();
+                }
+            } else {
+                this.showNotification('❌ Lỗi khi xóa bài hát', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting track:', error);
+            this.showNotification('❌ Lỗi khi xóa bài hát', 'error');
         }
     }
 }
