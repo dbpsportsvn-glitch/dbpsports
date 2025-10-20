@@ -12,6 +12,7 @@ import os
 import json
 from mutagen import File as MutagenFile
 from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings
+from .utils import extract_album_cover
 
 
 @login_required
@@ -97,6 +98,7 @@ def get_user_tracks(request):
             'title': track.title,
             'artist': track.artist or '',
             'album': track.album or '',
+            'album_cover': track.album_cover.url if track.album_cover else None,
             'duration': track.duration,
             'duration_formatted': track.get_duration_formatted(),
             'file_url': track.get_file_url(),
@@ -216,10 +218,14 @@ def upload_user_track(request):
                 else:
                     title = name_without_ext
             
+            # Extract album cover
+            album_cover_file = extract_album_cover(temp_path)
+            
             # Delete temp file
             os.remove(temp_path)
             
         except Exception as e:
+            album_cover_file = None
             # Error extracting metadata
             # Use filename as fallback
             name_without_ext = uploaded_file.name.rsplit('.', 1)[0]
@@ -242,6 +248,11 @@ def upload_user_track(request):
             duration=duration
         )
         
+        # Save album cover if extracted
+        if album_cover_file:
+            track.album_cover = album_cover_file
+            track.save()
+        
         return JsonResponse({
             'success': True,
             'message': 'Upload thành công!',
@@ -250,6 +261,7 @@ def upload_user_track(request):
                 'title': track.title,
                 'artist': track.artist,
                 'album': track.album,
+                'album_cover': track.album_cover.url if track.album_cover else None,
                 'duration': track.duration,
                 'duration_formatted': track.get_duration_formatted(),
                 'file_url': track.get_file_url(),
@@ -369,7 +381,14 @@ def get_user_playlists(request):
 def create_user_playlist(request):
     """API endpoint để tạo playlist mới"""
     try:
-        data = json.loads(request.body)
+        # Check if it's JSON or form data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            cover_image = None
+        else:
+            # Form data with file upload
+            data = request.POST
+            cover_image = request.FILES.get('cover_image')
         
         if not data.get('name'):
             return JsonResponse({
@@ -393,7 +412,8 @@ def create_user_playlist(request):
             user=request.user,
             name=data['name'],
             description=data.get('description', ''),
-            is_public=data.get('is_public', False)
+            is_public=data.get('is_public', False) if isinstance(data.get('is_public'), bool) else data.get('is_public') == 'true',
+            cover_image=cover_image
         )
         
         return JsonResponse({
@@ -403,6 +423,7 @@ def create_user_playlist(request):
                 'id': playlist.id,
                 'name': playlist.name,
                 'description': playlist.description,
+                'cover_image': playlist.cover_image.url if playlist.cover_image else None,
                 'is_public': playlist.is_public
             }
         })

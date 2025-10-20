@@ -2,6 +2,12 @@
 Utility functions cho Music Player
 """
 from mutagen import File as MutagenFile
+from mutagen.id3 import ID3, APIC
+from mutagen.mp4 import MP4, MP4Cover
+from mutagen.flac import FLAC, Picture
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import os
 
 
@@ -93,4 +99,83 @@ def get_audio_metadata(file_path):
     except Exception as e:
         # Lỗi khi đọc metadata của file
         return {}
+
+
+def extract_album_cover(file_path):
+    """
+    Extract album cover từ file nhạc
+    
+    Args:
+        file_path: Đường dẫn đầy đủ đến file nhạc
+        
+    Returns:
+        InMemoryUploadedFile hoặc None nếu không có album art
+    """
+    try:
+        if not os.path.exists(file_path):
+            return None
+        
+        audio = MutagenFile(file_path)
+        if audio is None:
+            return None
+        
+        image_data = None
+        
+        # Try different tag formats
+        if hasattr(audio, 'tags') and audio.tags:
+            # MP3 (ID3)
+            if isinstance(audio.tags, ID3):
+                for tag in audio.tags.values():
+                    if isinstance(tag, APIC):
+                        image_data = tag.data
+                        break
+            
+            # M4A/AAC (MP4)
+            elif isinstance(audio, MP4):
+                if 'covr' in audio.tags:
+                    image_data = bytes(audio.tags['covr'][0])
+            
+            # FLAC
+            elif isinstance(audio, FLAC):
+                if audio.pictures:
+                    image_data = audio.pictures[0].data
+        
+        if not image_data:
+            return None
+        
+        # Convert to PIL Image and resize if needed
+        img = Image.open(BytesIO(image_data))
+        
+        # Resize to max 512x512 to save space
+        max_size = 512
+        if img.width > max_size or img.height > max_size:
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+        
+        # Convert to RGB if needed
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+            img = background
+        
+        # Save to BytesIO
+        output = BytesIO()
+        img.save(output, format='JPEG', quality=85)
+        output.seek(0)
+        
+        # Create InMemoryUploadedFile
+        file_name = f"album_cover_{os.path.basename(file_path)}.jpg"
+        return InMemoryUploadedFile(
+            output,
+            'ImageField',
+            file_name,
+            'image/jpeg',
+            output.getbuffer().nbytes,
+            None
+        )
+        
+    except Exception as e:
+        # Lỗi khi extract album cover
+        return None
 

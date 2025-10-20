@@ -33,6 +33,8 @@ class MusicPlayerAPIView(View):
                         'id': track.id,
                         'title': track.title,
                         'artist': track.artist or '',
+                        'album': track.album or '',
+                        'album_cover': track.album_cover.url if track.album_cover else None,
                         'file_path': file_name,
                         'file_url': track.get_file_url(),
                         'duration': track.duration,
@@ -44,6 +46,7 @@ class MusicPlayerAPIView(View):
                     'id': playlist.id,
                     'name': playlist.name,
                     'description': playlist.description or '',
+                    'cover_image': playlist.cover_image.url if playlist.cover_image else None,
                     'folder_path': os.path.basename(playlist.folder_path),
                     'tracks': tracks_data,
                     'tracks_count': len(tracks_data)

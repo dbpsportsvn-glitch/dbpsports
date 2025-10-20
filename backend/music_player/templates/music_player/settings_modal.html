@@ -171,6 +171,51 @@
     </div>
 </div>
 
+<!-- Create Playlist Modal -->
+<div id="create-playlist-modal" class="create-playlist-modal hidden">
+    <div class="playlist-modal-overlay"></div>
+    <div class="playlist-modal-content">
+        <div class="playlist-modal-header">
+            <h4><i class="bi bi-plus-circle"></i> Tạo Playlist Mới</h4>
+            <button class="playlist-modal-close" id="playlist-modal-close">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <form id="create-playlist-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Tên Playlist <span style="color: #ff6b6b;">*</span></label>
+                <input type="text" id="playlist-name" name="name" class="form-input" placeholder="Ví dụ: Nhạc yêu thích" required>
+            </div>
+            <div class="form-group">
+                <label>Mô tả</label>
+                <textarea id="playlist-description" name="description" class="form-textarea" placeholder="Mô tả về playlist..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Ảnh bìa Playlist</label>
+                <div class="cover-upload-area">
+                    <input type="file" id="playlist-cover" name="cover_image" accept="image/*" style="display: none;">
+                    <div class="cover-preview" id="cover-preview">
+                        <i class="bi bi-image" style="font-size: 48px; color: rgba(255,255,255,0.5);"></i>
+                        <p style="margin-top: 8px; color: rgba(255,255,255,0.7);">Click để chọn ảnh</p>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="playlist-public" name="is_public" style="margin-right: 8px;">
+                    Công khai playlist
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" id="cancel-playlist-btn">Hủy</button>
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-check-circle"></i> Tạo Playlist
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Upload Progress Overlay -->
 <div id="upload-progress-overlay" class="upload-progress-overlay hidden">
     <div class="upload-progress-content">

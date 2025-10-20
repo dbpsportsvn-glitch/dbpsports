@@ -236,11 +236,47 @@ class EnhancedTrackForm(TrackForm):
 @admin.register(Playlist)
 class PlaylistAdmin(admin.ModelAdmin):
     form = PlaylistForm
-    list_display = ['name', 'folder_path', 'tracks_count', 'is_active', 'created_at']
+    list_display = ['cover_thumbnail', 'name', 'folder_path', 'tracks_count', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['name', 'description']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'cover_preview']
     actions = ['scan_playlist_folder', 'create_from_folder']
+    
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('name', 'description', 'folder_path')
+        }),
+        ('Ảnh bìa Playlist', {
+            'fields': ('cover_image', 'cover_preview')
+        }),
+        ('Cài đặt', {
+            'fields': ('is_active',)
+        }),
+        ('Thông tin hệ thống', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def cover_thumbnail(self, obj):
+        """Hiển thị thumbnail của playlist cover trong danh sách"""
+        if obj.cover_image:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
+                obj.cover_image.url
+            )
+        return format_html('<span style="color: #999;">Không có ảnh</span>')
+    cover_thumbnail.short_description = 'Ảnh bìa'
+    
+    def cover_preview(self, obj):
+        """Hiển thị preview lớn của playlist cover trong form"""
+        if obj.cover_image:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.cover_image.url
+            )
+        return 'Chưa có ảnh bìa playlist'
+    cover_preview.short_description = 'Preview Ảnh Bìa'
     
     def tracks_count(self, obj):
         return obj.get_tracks_count()
@@ -412,10 +448,10 @@ class PlaylistAdmin(admin.ModelAdmin):
 @admin.register(Track)
 class TrackAdmin(admin.ModelAdmin):
     form = EnhancedTrackForm
-    list_display = ['title', 'artist', 'playlist', 'duration_formatted', 'order', 'is_active']
+    list_display = ['album_cover_thumbnail', 'title', 'artist', 'playlist', 'duration_formatted', 'order', 'is_active']
     list_filter = ['playlist', 'is_active', 'created_at']
-    search_fields = ['title', 'artist']
-    readonly_fields = ['created_at']
+    search_fields = ['title', 'artist', 'album']
+    readonly_fields = ['created_at', 'album_cover_preview']
     list_editable = ['order', 'is_active']
     
     fieldsets = (
@@ -424,7 +460,10 @@ class TrackAdmin(admin.ModelAdmin):
             'description': 'Chọn chế độ upload: đơn lẻ hoặc hàng loạt'
         }),
         ('Thông tin cơ bản', {
-            'fields': ('playlist', 'title', 'artist', 'music_file', 'bulk_files')
+            'fields': ('playlist', 'title', 'artist', 'album', 'music_file', 'bulk_files')
+        }),
+        ('Ảnh bìa Album', {
+            'fields': ('album_cover', 'album_cover_preview')
         }),
         ('Cài đặt', {
             'fields': ('duration', 'order', 'is_active')
@@ -438,6 +477,26 @@ class TrackAdmin(admin.ModelAdmin):
     def duration_formatted(self, obj):
         return obj.get_duration_formatted()
     duration_formatted.short_description = 'Thời lượng'
+    
+    def album_cover_thumbnail(self, obj):
+        """Hiển thị thumbnail của album cover trong danh sách"""
+        if obj.album_cover:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
+                obj.album_cover.url
+            )
+        return format_html('<span style="color: #999;">Không có ảnh</span>')
+    album_cover_thumbnail.short_description = 'Ảnh bìa'
+    
+    def album_cover_preview(self, obj):
+        """Hiển thị preview lớn của album cover trong form"""
+        if obj.album_cover:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.album_cover.url
+            )
+        return 'Chưa có ảnh bìa album'
+    album_cover_preview.short_description = 'Preview Ảnh Bìa'
     
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -563,9 +622,14 @@ class MusicPlayerSettingsAdmin(admin.ModelAdmin):
         usage = obj.get_upload_usage()
         percentage = (usage['used'] / usage['total'] * 100) if usage['total'] > 0 else 0
         color = '#28a745' if percentage < 70 else '#ffc107' if percentage < 90 else '#dc3545'
+        # Format numbers first, then use format_html
+        used_mb = f"{usage['used']:.1f}"
+        total_mb = usage['total']
+        percent_display = f"{percentage:.0f}"
+        tracks = usage['tracks_count']
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{:.1f}/{} MB ({:.0f}%)</span><br><small>{} bài hát</small>',
-            color, usage['used'], usage['total'], percentage, usage['tracks_count']
+            '<span style="color: {}; font-weight: bold;">{}/{} MB ({}%)</span><br><small>{} bài hát</small>',
+            color, used_mb, total_mb, percent_display, tracks
         )
     storage_usage_display.short_description = 'Dung lượng đã dùng'
 
@@ -579,16 +643,19 @@ class UserPlaylistTrackInline(admin.TabularInline):
 
 @admin.register(UserPlaylist)
 class UserPlaylistAdmin(admin.ModelAdmin):
-    list_display = ['name', 'user', 'tracks_count_display', 'is_public', 'is_active', 'created_at']
+    list_display = ['cover_thumbnail', 'name', 'user', 'tracks_count_display', 'is_public', 'is_active', 'created_at']
     list_filter = ['is_public', 'is_active', 'created_at', 'user']
     search_fields = ['name', 'user__username', 'description']
-    readonly_fields = ['created_at', 'updated_at', 'tracks_count_display']
+    readonly_fields = ['created_at', 'updated_at', 'tracks_count_display', 'cover_preview']
     list_editable = ['is_public', 'is_active']
     inlines = [UserPlaylistTrackInline]
     
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('user', 'name', 'description')
+        }),
+        ('Ảnh bìa Playlist', {
+            'fields': ('cover_image', 'cover_preview')
         }),
         ('Cài đặt', {
             'fields': ('is_public', 'is_active')
@@ -603,6 +670,26 @@ class UserPlaylistAdmin(admin.ModelAdmin):
         }),
     )
     
+    def cover_thumbnail(self, obj):
+        """Hiển thị thumbnail của playlist cover trong danh sách"""
+        if obj.cover_image:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
+                obj.cover_image.url
+            )
+        return format_html('<span style="color: #999;">Không có ảnh</span>')
+    cover_thumbnail.short_description = 'Ảnh bìa'
+    
+    def cover_preview(self, obj):
+        """Hiển thị preview lớn của playlist cover trong form"""
+        if obj.cover_image:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.cover_image.url
+            )
+        return 'Chưa có ảnh bìa playlist'
+    cover_preview.short_description = 'Preview Ảnh Bìa'
+    
     def tracks_count_display(self, obj):
         count = obj.get_tracks_count()
         total_duration = obj.get_total_duration()
@@ -616,15 +703,18 @@ class UserPlaylistAdmin(admin.ModelAdmin):
 
 @admin.register(UserTrack)
 class UserTrackAdmin(admin.ModelAdmin):
-    list_display = ['title', 'artist', 'user', 'duration_formatted', 'file_size_display', 'is_active', 'created_at']
+    list_display = ['album_cover_thumbnail', 'title', 'artist', 'user', 'duration_formatted', 'file_size_display', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at', 'user']
     search_fields = ['title', 'artist', 'album', 'user__username']
-    readonly_fields = ['created_at', 'updated_at', 'file_size', 'duration', 'file_preview']
+    readonly_fields = ['created_at', 'updated_at', 'file_size', 'duration', 'file_preview', 'album_cover_preview']
     list_editable = ['is_active']
     
     fieldsets = (
         ('Thông tin cơ bản', {
             'fields': ('user', 'title', 'artist', 'album')
+        }),
+        ('Ảnh bìa Album', {
+            'fields': ('album_cover', 'album_cover_preview')
         }),
         ('File nhạc', {
             'fields': ('file', 'file_preview', 'file_size', 'duration')
@@ -645,6 +735,26 @@ class UserTrackAdmin(admin.ModelAdmin):
     def file_size_display(self, obj):
         return obj.get_file_size_formatted()
     file_size_display.short_description = 'Kích thước'
+    
+    def album_cover_thumbnail(self, obj):
+        """Hiển thị thumbnail của album cover trong danh sách"""
+        if obj.album_cover:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />',
+                obj.album_cover.url
+            )
+        return format_html('<span style="color: #999;">Không có ảnh</span>')
+    album_cover_thumbnail.short_description = 'Ảnh bìa'
+    
+    def album_cover_preview(self, obj):
+        """Hiển thị preview lớn của album cover trong form"""
+        if obj.album_cover:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.album_cover.url
+            )
+        return 'Chưa có ảnh bìa album'
+    album_cover_preview.short_description = 'Preview Ảnh Bìa'
     
     def file_preview(self, obj):
         if obj.file:

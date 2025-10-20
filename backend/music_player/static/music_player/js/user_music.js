@@ -50,6 +50,14 @@ class UserMusicManager {
         // Playlists
         this.myPlaylistsList = document.getElementById('my-playlists-list');
         this.createPlaylistBtn = document.getElementById('create-playlist-btn');
+        
+        // Create Playlist Modal elements
+        this.createPlaylistModal = document.getElementById('create-playlist-modal');
+        this.playlistModalClose = document.getElementById('playlist-modal-close');
+        this.cancelPlaylistBtn = document.getElementById('cancel-playlist-btn');
+        this.createPlaylistForm = document.getElementById('create-playlist-form');
+        this.playlistCoverInput = document.getElementById('playlist-cover');
+        this.coverPreview = document.getElementById('cover-preview');
     }
     
     bindEvents() {
@@ -118,7 +126,26 @@ class UserMusicManager {
         
         // Create Playlist
         if (this.createPlaylistBtn) {
-            this.createPlaylistBtn.addEventListener('click', () => this.createPlaylist());
+            this.createPlaylistBtn.addEventListener('click', () => this.openCreatePlaylistModal());
+        }
+        
+        // Create Playlist Modal events
+        if (this.playlistModalClose) {
+            this.playlistModalClose.addEventListener('click', () => this.closeCreatePlaylistModal());
+        }
+        
+        if (this.cancelPlaylistBtn) {
+            this.cancelPlaylistBtn.addEventListener('click', () => this.closeCreatePlaylistModal());
+        }
+        
+        if (this.createPlaylistForm) {
+            this.createPlaylistForm.addEventListener('submit', (e) => this.handleCreatePlaylistSubmit(e));
+        }
+        
+        // Cover image preview
+        if (this.playlistCoverInput && this.coverPreview) {
+            this.coverPreview.addEventListener('click', () => this.playlistCoverInput.click());
+            this.playlistCoverInput.addEventListener('change', (e) => this.previewCoverImage(e));
         }
     }
     
@@ -659,18 +686,47 @@ class UserMusicManager {
         `).join('');
     }
     
-    async createPlaylist() {
-        const name = prompt('Tên playlist:');
-        if (!name || name.trim() === '') return;
+    openCreatePlaylistModal() {
+        if (this.createPlaylistModal) {
+            this.createPlaylistModal.classList.remove('hidden');
+            // Reset form
+            this.createPlaylistForm.reset();
+            this.coverPreview.innerHTML = `
+                <i class="bi bi-image" style="font-size: 48px; color: rgba(255,255,255,0.5);"></i>
+                <p style="margin-top: 8px; color: rgba(255,255,255,0.7);">Click để chọn ảnh</p>
+            `;
+        }
+    }
+    
+    closeCreatePlaylistModal() {
+        if (this.createPlaylistModal) {
+            this.createPlaylistModal.classList.add('hidden');
+        }
+    }
+    
+    previewCoverImage(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                this.coverPreview.innerHTML = `<img src="${event.target.result}" alt="Cover Preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    async handleCreatePlaylistSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this.createPlaylistForm);
         
         try {
             const response = await fetch('/music/user/playlists/create/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRFToken': this.getCSRFToken()
                 },
-                body: JSON.stringify({ name: name.trim() })
+                body: formData
             });
             
             if (!response.ok) {
@@ -688,6 +744,7 @@ class UserMusicManager {
             
             if (data.success) {
                 this.showNotification('Đã tạo playlist "' + data.playlist.name + '" thành công!', 'success');
+                this.closeCreatePlaylistModal();
                 // Reload playlists to show new one
                 await this.loadUserPlaylists();
             } else {

@@ -384,8 +384,8 @@
 .playlist-card {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
     border: 2px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 0;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
@@ -393,10 +393,27 @@
     /* ✅ Đảm bảo tất cả cards có cùng structure */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100px; /* ✅ Chiều cao tối thiểu đồng nhất */
-    aspect-ratio: 1 / 1; /* ✅ Cards vuông đều nhau */
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 140px; /* ✅ Tăng chiều cao để chứa ảnh + text */
+    aspect-ratio: 1 / 1.2; /* ✅ Cards hình chữ nhật đứng */
+}
+
+/* Playlist Card Cover */
+.playlist-card-cover {
+    width: 100%;
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+/* Content wrapper for text */
+.playlist-card-name,
+.playlist-card-count {
+    padding: 0 10px;
 }
 
 .playlist-card::before {
@@ -444,32 +461,33 @@
 }
 
 .playlist-card-icon {
-    font-size: 28px; /* ✅ Icon size nhất quán */
+    font-size: 28px;
     color: #f093fb;
     margin-bottom: 8px;
     display: block;
     text-align: center;
-    width: 100%; /* ✅ Full width để căn giữa */
+    width: 100%;
 }
 
 .playlist-card-name {
     color: white;
     font-weight: 600;
-    font-size: 13px; /* ✅ Tăng từ 11px lên 13px để dễ đọc hơn */
+    font-size: 13px;
     text-align: center;
-    margin-bottom: 4px;
-    width: 100%; /* ✅ Full width để căn giữa */
+    margin: 8px 0 4px 0;
+    width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.3; /* ✅ Line height đồng nhất */
+    line-height: 1.3;
 }
 
 .playlist-card-count {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 9px;
+    font-size: 10px;
     text-align: center;
-    width: 100%; /* ✅ Full width để căn giữa */
+    width: 100%;
+    margin-bottom: 8px;
 }
 
 /* Scope form-select chỉ trong music player */
@@ -636,6 +654,29 @@
 
 .current-track {
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Album Cover in Current Track */
+.album-cover-container {
+    flex-shrink: 0;
+}
+
+.current-album-cover {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.current-album-cover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* Progress Section with Beautiful Effects */
@@ -1104,24 +1145,30 @@
         padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
     }
     
-    /* ✅ Playlist cards trên mobile - đảm bảo kích thước đồng nhất */
+    /* ✅ Playlist cards trên mobile - với cover image */
     .playlist-card {
-        min-height: 90px !important; /* ✅ Nhỏ hơn trên mobile */
-        padding: 8px !important; /* ✅ Padding nhỏ hơn */
+        min-height: 130px !important;
+        padding: 0 !important;
     }
     
-    .playlist-card-icon {
-        font-size: 24px !important; /* ✅ Icon nhỏ hơn trên mobile */
-        margin-bottom: 6px !important;
+    .playlist-card-cover {
+        height: 80px !important;
     }
     
     .playlist-card-name {
-        font-size: 12px !important; /* ✅ Tăng từ 10px lên 12px cho mobile */
-        margin-bottom: 3px !important;
+        font-size: 11px !important;
+        margin: 6px 0 3px 0 !important;
     }
     
     .playlist-card-count {
-        font-size: 10px !important; /* ✅ Tăng từ 8px lên 10px cho mobile */
+        font-size: 9px !important;
+        margin-bottom: 6px !important;
+    }
+    
+    /* ✅ Album cover trong current track - nhỏ hơn trên mobile */
+    .current-album-cover {
+        width: 50px !important;
+        height: 50px !important;
     }
     
     /* ✅ Player header - không cần safe-area-inset-top vì nằm dưới navbar */
@@ -1972,6 +2019,203 @@
     background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
 }
 
+/* Create Playlist Modal */
+.create-playlist-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100005;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.create-playlist-modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.playlist-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.playlist-modal-content {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.playlist-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.playlist-modal-header h4 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.playlist-modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 20px;
+}
+
+.playlist-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    color: white;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.cover-upload-area {
+    cursor: pointer;
+}
+
+.cover-preview {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.cover-preview:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.cover-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #667eea;
+}
+
+.btn-primary:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* ✅ Toast Notification Styles */
 .music-player-toast {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -2236,6 +2480,12 @@
         height: calc(100% - 57px) !important;
     }
     
+    /* ✅ Album cover trong landscape - nhỏ hơn */
+    .current-album-cover {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    
     /* ✅ Header compact nhưng vẫn đủ rõ ràng */
     .player-header {
         padding: 10px 16px !important; /* ✅ Tăng từ 8px lên 10px */
@@ -2489,22 +2739,22 @@
     
     /* ✅ Playlist cards nhỏ gọn hơn */
     .playlist-card {
-        min-height: 90px !important; /* ✅ Tăng từ 80px lên 90px */
-        padding: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        min-height: 120px !important;
+        padding: 0 !important;
     }
     
-    .playlist-card-icon {
-        font-size: 22px !important; /* ✅ Tăng từ 20px lên 22px */
-        margin-bottom: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+    .playlist-card-cover {
+        height: 70px !important;
     }
     
     .playlist-card-name {
-        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
-        margin-bottom: 3px !important; /* ✅ Tăng từ 2px lên 3px */
+        font-size: 11px !important;
+        margin: 6px 0 3px 0 !important;
     }
     
     .playlist-card-count {
-        font-size: 10px !important; /* ✅ Tăng từ 9px lên 10px */
+        font-size: 9px !important;
+        margin-bottom: 6px !important;
     }
     
     /* ✅ Settings Modal trong landscape mode - SUPER RESPONSIVE, dưới header */

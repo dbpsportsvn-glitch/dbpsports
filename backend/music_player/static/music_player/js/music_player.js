@@ -123,6 +123,7 @@ class MusicPlayer {
         this.trackList = document.getElementById('track-list');
         this.currentTrackTitle = document.getElementById('current-track-title');
         this.currentTrackArtist = document.getElementById('current-track-artist');
+        this.currentAlbumCover = document.getElementById('current-album-cover');
         this.currentTime = document.getElementById('current-time');
         this.totalTime = document.getElementById('total-time');
         this.progressFill = document.getElementById('progress-fill');
@@ -778,8 +779,9 @@ class MusicPlayer {
             
             // ✅ Escape HTML để tránh XSS
             const escapedName = this.escapeHtml(playlist.name);
+            const coverImage = playlist.cover_image || '/static/music_player/images/album-art.png';
             card.innerHTML = `
-                <i class="bi bi-vinyl-fill playlist-card-icon"></i>
+                <div class="playlist-card-cover" style="background-image: url('${coverImage}');"></div>
                 <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
                 <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài hát</div>
             `;
@@ -1078,6 +1080,12 @@ class MusicPlayer {
         // ✅ Dùng textContent thay vì innerHTML để tránh XSS
         this.currentTrackTitle.textContent = track.title;
         this.currentTrackArtist.textContent = track.artist;
+        
+        // Update album cover
+        if (this.currentAlbumCover) {
+            const albumCoverUrl = track.album_cover || '/static/music_player/images/album-art.png';
+            this.currentAlbumCover.src = albumCoverUrl;
+        }
     }
 
     updateTrackListSelection() {
@@ -2743,17 +2751,21 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             const track = this.currentPlaylist.tracks[this.currentTrackIndex];
             
             try {
+                // Use album cover if available, otherwise use default
+                const artworkUrl = track.album_cover || '/static/music_player/images/album-art.png';
+                const artworkType = track.album_cover ? 'image/jpeg' : 'image/png';
+                
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: track.title,
                     artist: track.artist || 'Unknown Artist',
-                    album: this.currentPlaylist.name,
+                    album: track.album || this.currentPlaylist.name,
                     artwork: [
-                        { src: '/static/music_player/images/album-art.png', sizes: '96x96', type: 'image/png' },
-                        { src: '/static/music_player/images/album-art.png', sizes: '128x128', type: 'image/png' },
-                        { src: '/static/music_player/images/album-art.png', sizes: '192x192', type: 'image/png' },
-                        { src: '/static/music_player/images/album-art.png', sizes: '256x256', type: 'image/png' },
-                        { src: '/static/music_player/images/album-art.png', sizes: '384x384', type: 'image/png' },
-                        { src: '/static/music_player/images/album-art.png', sizes: '512x512', type: 'image/png' }
+                        { src: artworkUrl, sizes: '96x96', type: artworkType },
+                        { src: artworkUrl, sizes: '128x128', type: artworkType },
+                        { src: artworkUrl, sizes: '192x192', type: artworkType },
+                        { src: artworkUrl, sizes: '256x256', type: artworkType },
+                        { src: artworkUrl, sizes: '384x384', type: artworkType },
+                        { src: artworkUrl, sizes: '512x512', type: artworkType }
                     ]
                 });
                 
