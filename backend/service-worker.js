@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
 });
 
 // Force update version
-const SW_VERSION = 'v3-delete-tracks';
+const SW_VERSION = 'v4-fix-range-cache';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
@@ -31,6 +31,8 @@ self.addEventListener('activate', (event) => {
             .map((cacheName) => caches.delete(cacheName))
         );
       }),
+      // ✅ Clean up small range request caches
+      cleanupRangeRequests(),
       // ✅ Claim all clients immediately
       clients.claim().then(() => {
         console.log('[Service Worker] Claimed all clients - ready to intercept!');
@@ -246,30 +248,83 @@ async function getCacheSize() {
 }
 
 /**
+ * Cleanup range request caches (các file nhỏ < 500KB)
+ * Chạy khi activate Service Worker
+ */
+async function cleanupRangeRequests() {
+  try {
+    const cache = await caches.open(CACHE_VERSION);
+    const requests = await cache.keys();
+    let deletedCount = 0;
+    
+    for (const request of requests) {
+      const url = request.url;
+      
+      if (url.includes('/media/music/')) {
+        const response = await cache.match(request);
+        if (response) {
+          const blob = await response.blob();
+          const size = blob.size;
+          
+          // Xóa files nhỏ hơn 500KB (range requests)
+          if (size < 500 * 1024) {
+            await cache.delete(request);
+            deletedCount++;
+            console.log(`[Service Worker] Deleted range request: ${url} (${(size / 1024).toFixed(2)} KB)`);
+          }
+        }
+      }
+    }
+    
+    if (deletedCount > 0) {
+      console.log(`[Service Worker] ✅ Cleaned up ${deletedCount} range request caches`);
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error cleaning up range requests:', error);
+  }
+}
+
+/**
  * Lấy danh sách các tracks đã cache với thông tin chi tiết
  */
 async function getCachedTracks() {
   const cache = await caches.open(CACHE_VERSION);
   const requests = await cache.keys();
   const tracks = [];
+  const seenUrls = new Set(); // Deduplicate by base URL
   
   for (const request of requests) {
     const url = request.url;
     
     // Chỉ lấy audio files
     if (url.includes('/media/music/')) {
+      // Skip range requests - chỉ lấy full files
+      // Range requests thường có URL base giống nhau
+      const baseUrl = url.split('?')[0]; // Remove query params
+      
+      if (seenUrls.has(baseUrl)) {
+        continue; // Skip duplicates
+      }
+      
       const response = await cache.match(request);
       if (response) {
         const blob = await response.blob();
         const size = blob.size;
+        
+        // Chỉ lấy files lớn hơn 500KB (bỏ qua range requests nhỏ)
+        if (size < 500 * 1024) {
+          continue;
+        }
+        
         const trackId = extractTrackIdFromUrl(url);
         
         // Extract filename from URL
-        const urlParts = url.split('/');
+        const urlParts = baseUrl.split('/');
         const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
         
+        seenUrls.add(baseUrl);
         tracks.push({
-          url: url,
+          url: baseUrl,
           filename: filename,
           size: size,
           sizeMB: (size / (1024 * 1024)).toFixed(2),
