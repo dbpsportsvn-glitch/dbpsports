@@ -1001,24 +1001,63 @@
         max-height: 60vh;
     }
     
+    /* ✅ REDESIGN: Controls và Volume cùng hàng trên mobile */
     .controls-row {
-        flex-direction: column;
+        flex-direction: row; /* Giữ flex-row thay vì column */
         gap: 12px;
+        align-items: center;
+        justify-content: space-between;
     }
     
+    /* Control buttons bên trái, compact hơn */
     .control-buttons {
-        width: 100%;
-        justify-content: space-around;
+        flex: 0 0 auto; /* Không grow, giữ size vừa đủ */
+        gap: 6px; /* Giảm gap để gọn hơn */
     }
     
+    /* Giảm size buttons để vừa vặn */
+    .control-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+    
+    .play-pause-btn {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 20px !important;
+    }
+    
+    /* Volume bên phải, chiếm space còn lại */
     .volume-section {
-        width: 100%;
-        max-width: 100%;
-        justify-content: center;
+        flex: 1; /* Grow để fill space còn lại */
+        min-width: 100px; /* Đảm bảo có space tối thiểu */
+        max-width: 200px; /* Không quá rộng */
+        justify-content: flex-end;
+    }
+    
+    /* Volume bar lớn hơn để dễ kéo */
+    .volume-bar {
+        height: 6px !important; /* Tăng height để dễ touch */
+        border-radius: 3px;
+    }
+    
+    .volume-bar:active {
+        height: 8px !important;
+    }
+    
+    /* Volume handle lớn hơn, luôn hiện */
+    .volume-handle {
+        width: 16px !important;
+        height: 16px !important;
+        opacity: 1 !important; /* Luôn hiện trên mobile */
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.5);
     }
     
     .volume-container {
-        max-width: 150px;
+        flex: 1;
+        max-width: none; /* Cho phép expand */
     }
     
     .track-list {
@@ -1772,4 +1811,122 @@
 
 .upload-item.error .upload-item-progress-fill {
     background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+}
+
+/* ✅ Toast Notification Styles */
+.music-player-toast {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    word-wrap: break-word;
+    transition: all 0.3s ease;
+}
+
+/* Toast animations */
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsive for toast */
+@media (max-width: 768px) {
+    .music-player-toast {
+        max-width: calc(100vw - 40px) !important;
+        left: 20px !important;
+        right: 20px !important;
+    }
+}
+
+/* ✅ Keyboard Hint Animations */
+@keyframes keyboardHintFade {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+}
+
+/* ✅ Modal fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ✅ Keyboard shortcuts modal styling */
+#keyboard-shortcuts-modal kbd {
+    display: inline-block;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#keyboard-shortcuts-modal > div {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#keyboard-shortcuts-modal > div > div {
+    animation: slideInUp 0.4s ease backwards;
+}
+
+#keyboard-shortcuts-modal > div > div:nth-child(1) { animation-delay: 0.05s; }
+#keyboard-shortcuts-modal > div > div:nth-child(2) { animation-delay: 0.1s; }
+#keyboard-shortcuts-modal > div > div:nth-child(3) { animation-delay: 0.15s; }
+#keyboard-shortcuts-modal > div > div:nth-child(4) { animation-delay: 0.2s; }
+#keyboard-shortcuts-modal > div > div:nth-child(5) { animation-delay: 0.25s; }
+#keyboard-shortcuts-modal > div > div:nth-child(6) { animation-delay: 0.3s; }
+#keyboard-shortcuts-modal > div > div:nth-child(7) { animation-delay: 0.35s; }
+#keyboard-shortcuts-modal > div > div:nth-child(8) { animation-delay: 0.4s; }
+#keyboard-shortcuts-modal > div > div:nth-child(9) { animation-delay: 0.45s; }
+#keyboard-shortcuts-modal > div > div:nth-child(10) { animation-delay: 0.5s; }
+#keyboard-shortcuts-modal > div > div:nth-child(11) { animation-delay: 0.55s; }
+#keyboard-shortcuts-modal > div > div:nth-child(12) { animation-delay: 0.6s; }
+#keyboard-shortcuts-modal > div > div:nth-child(13) { animation-delay: 0.65s; }
+
+/* Mobile responsive for shortcuts modal */
+@media (max-width: 768px) {
+    #keyboard-shortcuts-modal > div {
+        padding: 20px;
+        max-width: 90%;
+    }
+    
+    #keyboard-shortcuts-modal > div > div {
+        grid-template-columns: 1fr !important;
+        gap: 8px;
+    }
 }
