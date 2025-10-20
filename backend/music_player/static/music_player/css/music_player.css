@@ -15,6 +15,7 @@
 
 .music-player-popup.dragging {
     transition: none;
+    will-change: left, top; /* ✅ Optimize drag performance */
 }
 
 /* Full Player Styles */
@@ -67,6 +68,7 @@
     transition: all 0.2s ease;
     font-size: 16px; /* ✅ Tăng từ 14px lên 16px */
     position: relative;
+    will-change: transform, background-color; /* ✅ Optimize hover effects */
 }
 
 .control-btn:hover {
@@ -672,6 +674,7 @@
     transition: width 0.1s ease;
     position: relative;
     box-shadow: 0 0 10px rgba(118, 75, 162, 0.5);
+    will-change: width; /* ✅ Optimize width updates during playback */
 }
 
 .progress-fill::after {
@@ -709,6 +712,7 @@
     transition: all 0.3s ease;
     z-index: 10;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1);
+    will-change: left, opacity, transform; /* ✅ Optimize frequent updates */
 }
 
 .progress-handle:active {
@@ -778,6 +782,7 @@
     width: 70%;
     transition: width 0.1s ease;
     box-shadow: 0 0 5px rgba(102, 126, 234, 0.4);
+    will-change: width; /* ✅ Optimize volume changes */
 }
 
 .volume-handle {
@@ -793,6 +798,7 @@
     opacity: 0;
     transition: opacity 0.2s ease;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    will-change: left, opacity; /* ✅ Optimize volume drag */
 }
 
 .volume-container:hover .volume-handle {
