@@ -64,10 +64,23 @@ class MusicPlayer {
         this.playTrackingInterval = null; // Interval để update listen duration
         this.hasRecordedPlay = false; // Flag để tránh record trùng lần
         
+        // ✅ OFFLINE MANAGER - For offline playback
+        this.offlineManager = null; // Will be initialized after DOM is ready
+        this.cachedTracks = new Set(); // Track which tracks are cached for offline
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
         this.loadPlaylists();
+        
+        // ✅ Load cached tracks from localStorage AFTER DOM is ready
+        setTimeout(async () => {
+            const loaded = await this.loadCachedTracksFromStorage();
+            if (loaded) {
+                console.log('✅ Cached tracks loaded and verified, updating UI...');
+                this.updateTrackListOfflineIndicators();
+            }
+        }, 500);
         
         // Initialize play count display
         this.playCountNumber = document.getElementById('play-count-number');
@@ -77,6 +90,9 @@ class MusicPlayer {
         
         // ✅ Handle iOS volume restrictions
         this.handleIOSVolumeRestrictions();
+        
+        // ✅ Initialize offline manager for caching
+        this.initializeOfflineManager();
         
         // ❌ REMOVED: Auto refresh interval - không cần thiết và tốn pin
         // Playlists sẽ tự động refresh khi:
@@ -879,6 +895,9 @@ class MusicPlayer {
         this.populateTrackList();
         this.updateCurrentTrack();
         
+        // ✅ Update cached tracks status for offline indicators
+        this.updateCachedTracksStatus();
+        
         // Update active state for playlist cards
         const playlistGrid = document.getElementById('playlist-grid');
         if (playlistGrid) {
@@ -943,6 +962,7 @@ class MusicPlayer {
                 trackItem.classList.add('active');
             }
             trackItem.dataset.index = index;
+            trackItem.dataset.trackId = track.id; // ✅ For offline indicator
             
             // ✅ Escape HTML để tránh XSS
             const escapedTitle = this.escapeHtml(track.title);
@@ -1066,6 +1086,9 @@ class MusicPlayer {
         // Load track mới
         this.audio.src = fileUrl;
         this.audio.load();
+        
+        // ✅ Preload track for offline (Service Worker will auto-cache)
+        this.preloadTrackForOffline(track);
         
         // ✅ Timeout protection
         const loadTimeout = setTimeout(() => {
@@ -2778,6 +2801,300 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         
         // ✅ Đánh dấu đã show, không show lại cho đến khi đóng/mở player
         this.hasShownIOSVolumeMessage = true;
+    }
+    
+    // ✅ Initialize Offline Manager for caching music
+    initializeOfflineManager() {
+        if (typeof OfflineManager === 'undefined') {
+            console.warn('⚠️ OfflineManager not loaded. Offline features disabled.');
+            return;
+        }
+        
+        try {
+            this.offlineManager = new OfflineManager();
+            console.log('✅ Offline Manager initialized');
+            
+            // Listen to cache status updates
+            window.addEventListener('cacheStatusUpdated', (event) => {
+                const { size, percentage, sizeMB, maxMB } = event.detail;
+                console.log(`📦 Cache: ${sizeMB}MB / ${maxMB}MB (${percentage}%)`);
+                
+                // Update UI if cache status element exists
+                this.updateOfflineCacheUI(event.detail);
+            });
+            
+            // Listen to offline status changes
+            window.addEventListener('offlineStatusChanged', (event) => {
+                const { isOnline } = event.detail;
+                console.log(isOnline ? '🟢 Online' : '🔴 Offline');
+                
+                // Update player UI for offline mode
+                this.updateOfflineModeUI(isOnline);
+            });
+            
+            // Listen for track cached events
+            window.addEventListener('trackCached', (event) => {
+                const { trackId } = event.detail;
+                this.addTrackToCache(trackId);
+                this.updateTrackListOfflineIndicators();
+                console.log(`✅ Track ${trackId} cached - UI updated`);
+            });
+            
+            // Listen for Service Worker messages
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                console.log('🔔 SW Message received:', event.data);
+                if (event.data.type === 'trackCached') {
+                    const { trackId } = event.data;
+                    this.addTrackToCache(trackId);
+                    this.updateTrackListOfflineIndicators();
+                    console.log(`✅ Track ${trackId} cached - UI updated`);
+                }
+            });
+            
+            // ✅ FALLBACK: Listen for Service Worker controller messages
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.addEventListener('message', (event) => {
+                    console.log('🔔 SW Controller message:', event.data);
+                    if (event.data.type === 'trackCached') {
+                        const { trackId } = event.data;
+                        this.addTrackToCache(trackId);
+                        this.updateTrackListOfflineIndicators();
+                        console.log(`✅ Track ${trackId} cached - UI updated (controller)`);
+                    }
+                });
+            }
+            
+            // ✅ FALLBACK: Auto-add tracks to cache after playing
+            this.audio.addEventListener('loadeddata', () => {
+                if (this.currentTrack) {
+                    this.addTrackToCache(this.currentTrack.id);
+                }
+            });
+            
+            // ✅ FALLBACK: Auto-add tracks when audio starts playing
+            this.audio.addEventListener('play', () => {
+                if (this.currentTrack) {
+                    setTimeout(() => {
+                        this.addTrackToCache(this.currentTrack.id);
+                    }, 1000); // Wait 1s for Service Worker to cache
+                }
+            });
+            
+            // Check and update cached tracks status
+            setTimeout(() => {
+                this.updateCachedTracksStatus();
+                this.updateTrackListOfflineIndicators();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize Offline Manager:', error);
+        }
+    }
+    
+    // ✅ Update offline cache UI in settings
+    updateOfflineCacheUI(cacheInfo) {
+        const cacheStatus = document.getElementById('offline-cache-status');
+        if (!cacheStatus) return;
+        
+        const { sizeMB, maxMB, percentage } = cacheInfo;
+        const barColor = percentage < 70 ? '#11998e' : percentage < 90 ? '#f59e0b' : '#ef4444';
+        
+        cacheStatus.innerHTML = `
+            <div class="cache-info" style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 13px; color: rgba(255,255,255,0.9);">
+                        <i class="bi bi-cloud-download"></i> Offline Cache
+                    </span>
+                    <span style="font-size: 13px; font-weight: 600; color: rgba(255,255,255,1);">
+                        ${sizeMB}MB / ${maxMB}MB
+                    </span>
+                </div>
+                <div class="cache-progress" style="width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden;">
+                    <div class="cache-progress-bar" style="width: ${percentage}%; height: 100%; background: ${barColor}; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px; text-align: center;">
+                    ${percentage}% đã sử dụng
+                </div>
+            </div>
+        `;
+    }
+    
+    // ✅ Update offline mode UI indicators
+    updateOfflineModeUI(isOnline) {
+        // Add/remove offline class from player
+        if (this.popup) {
+            this.popup.classList.toggle('offline-mode', !isOnline);
+        }
+        
+        // Update player title to show offline status
+        const playerTitle = document.getElementById('player-title');
+        if (playerTitle && !isOnline) {
+            playerTitle.textContent = 'Music (Offline)';
+        } else if (playerTitle) {
+            playerTitle.textContent = 'Music';
+        }
+    }
+    
+    // ✅ Check and update which tracks are cached
+    async updateCachedTracksStatus() {
+        if (!this.offlineManager || !this.currentPlaylist) return;
+        
+        // Don't clear cachedTracks - merge with localStorage data
+        const localStorageTracks = new Set();
+        try {
+            const stored = localStorage.getItem('dbp_cached_tracks');
+            if (stored) {
+                const trackIds = JSON.parse(stored);
+                trackIds.forEach(id => localStorageTracks.add(id));
+            }
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
+        }
+        
+        // Check which tracks are actually cached by Service Worker
+        const actuallyCached = new Set();
+        for (const track of this.currentPlaylist.tracks) {
+            const isCached = await this.offlineManager.isTrackCached(track.file_url);
+            if (isCached) {
+                actuallyCached.add(track.id);
+            }
+        }
+        
+        // Merge: keep localStorage tracks + add newly cached tracks
+        this.cachedTracks = new Set([...localStorageTracks, ...actuallyCached]);
+        
+        // Update track list UI to show cached indicators
+        this.updateTrackListOfflineIndicators();
+    }
+    
+    // ✅ Load cached tracks from localStorage AND verify with Service Worker
+    async loadCachedTracksFromStorage() {
+        try {
+            const stored = localStorage.getItem('dbp_cached_tracks');
+            if (stored) {
+                const trackIds = JSON.parse(stored);
+                const verifiedTracks = new Set();
+                
+                // Verify each track is actually cached by Service Worker
+                for (const trackId of trackIds) {
+                    if (this.offlineManager) {
+                        // Find track by ID
+                        const track = this.currentPlaylist?.tracks?.find(t => t.id === trackId);
+                        if (track) {
+                            const isActuallyCached = await this.offlineManager.isTrackCached(track.file_url);
+                            if (isActuallyCached) {
+                                verifiedTracks.add(trackId);
+                            } else {
+                                console.log(`❌ Track ${trackId} not actually cached, removing from localStorage`);
+                            }
+                        }
+                    } else {
+                        // If offlineManager not ready, trust localStorage temporarily
+                        verifiedTracks.add(trackId);
+                    }
+                }
+                
+                this.cachedTracks = verifiedTracks;
+                console.log('📦 Loaded verified cached tracks:', this.cachedTracks);
+                
+                // Update localStorage with verified tracks only
+                this.saveCachedTracksToStorage();
+                
+                return true; // Success
+            }
+        } catch (error) {
+            console.error('Error loading cached tracks:', error);
+        }
+        return false; // No data or error
+    }
+    
+    // ✅ Save cached tracks to localStorage
+    saveCachedTracksToStorage() {
+        try {
+            const trackIds = Array.from(this.cachedTracks);
+            localStorage.setItem('dbp_cached_tracks', JSON.stringify(trackIds));
+            console.log('💾 Saved cached tracks to storage:', trackIds);
+        } catch (error) {
+            console.error('Error saving cached tracks:', error);
+        }
+    }
+    
+    // ✅ Add track to cache and save
+    addTrackToCache(trackId) {
+        this.cachedTracks.add(trackId);
+        this.saveCachedTracksToStorage();
+        this.updateTrackListOfflineIndicators();
+        console.log(`✅ Added track ${trackId} to cache and saved`);
+    }
+    
+    // ✅ Update track list to show offline indicators
+    updateTrackListOfflineIndicators() {
+        console.log('🔧 Updating track list offline indicators...');
+        
+        if (!this.trackList) {
+            console.log('❌ Track list not found');
+            return;
+        }
+        
+        const trackItems = this.trackList.querySelectorAll('.track-item');
+        console.log(`🎵 Found ${trackItems.length} track items`);
+        
+        trackItems.forEach((item, index) => {
+            const trackId = parseInt(item.dataset.trackId);
+            const isCached = this.cachedTracks.has(trackId);
+            
+            console.log(`Track ${index}: ID=${trackId}, Cached=${isCached}`);
+            
+            // Add/remove cached indicator
+            let indicator = item.querySelector('.offline-indicator');
+            if (isCached && !indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'offline-indicator';
+                indicator.innerHTML = '<i class="bi bi-cloud-check-fill" title="Đã cache offline"></i>';
+                indicator.style.cssText = 'color: #11998e !important; margin-left: 8px !important; font-size: 14px !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important;';
+                
+                const artistElement = item.querySelector('.track-item-artist');
+                if (artistElement) {
+                    artistElement.appendChild(indicator);
+                    console.log(`✅ Added indicator to track ${trackId}`);
+                } else {
+                    console.log(`❌ Artist element not found for track ${trackId}`);
+                }
+            } else if (!isCached && indicator) {
+                indicator.remove();
+                console.log(`🗑️ Removed indicator from track ${trackId}`);
+            }
+        });
+        
+        console.log('✅ Track list indicators updated');
+    }
+    
+    // ✅ Preload track for offline (called when track is played)
+    async preloadTrackForOffline(track) {
+        if (!this.offlineManager || !track) return;
+        
+        // Auto-cache khi nghe (Service Worker sẽ tự động cache)
+        // Không cần manually preload, Service Worker sẽ làm
+        // Nhưng có thể force preload nếu muốn
+        
+        try {
+            const isCached = await this.offlineManager.isTrackCached(track.file_url);
+            if (!isCached) {
+                console.log(`📥 Auto-caching track: ${track.title}`);
+                // Service Worker sẽ tự động cache khi fetch
+                // Sau khi cache xong, update UI
+                setTimeout(() => {
+                    this.addTrackToCache(track.id);
+                    this.updateTrackListOfflineIndicators();
+                }, 2000); // Wait 2s for cache to complete
+            } else {
+                console.log(`✅ Track already cached: ${track.title}`);
+                this.addTrackToCache(track.id);
+                this.updateTrackListOfflineIndicators();
+            }
+        } catch (error) {
+            console.error('Error checking cache status:', error);
+        }
     }
     
     initializeMediaSession() {

@@ -1,0 +1,46 @@
+{
+  "name": "DBP Sports Music Player",
+  "short_name": "DBP Music",
+  "description": "Ứng dụng nghe nhạc cho cộng đồng thể thao DBP Sports với tính năng offline playback",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "sports"],
+  "prefer_related_applications": false,
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Music Player",
+      "short_name": "Player",
+      "description": "Mở music player",
+      "url": "/?player=open",
+      "icons": [
+        {
+          "src": "/static/images/logo.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "lang": "vi",
+  "dir": "ltr"
+}
+

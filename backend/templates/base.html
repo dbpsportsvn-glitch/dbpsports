@@ -12,6 +12,18 @@
   <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
   <link rel="shortcut icon" href="{% static 'images/logo.png' %}" type="image/png">
   <meta name="csrf-token" content="{{ csrf_token }}">
+  
+  <!-- ✅ PWA Manifest & Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#764ba2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DBP Music">
+  <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="DBP Sports Music">
+  <meta name="msapplication-TileColor" content="#764ba2">
+  <meta name="msapplication-TileImage" content="{% static 'images/logo.png' %}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -2340,5 +2352,96 @@ function forceRefreshCartCount() {
 <link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}">
 <script src="{% static 'music_player/js/music_player.js' %}"></script>
 <script src="{% static 'music_player/js/user_music.js' %}"></script>
+
+<!-- ✅ Offline Manager for Music Player -->
+<script src="{% static 'js/offline-manager.js' %}"></script>
+
+<!-- ✅ Service Worker Registration -->
+<script>
+// Register Service Worker cho offline capabilities
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js', {
+            scope: '/'
+        })
+        .then((registration) => {
+            console.log('✅ Service Worker registered successfully:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Service Worker update found...');
+                
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('✨ New Service Worker available. Refresh to update.');
+                        // Optional: Show notification to user
+                        if (window.OfflineManager) {
+                            const offlineManager = new OfflineManager();
+                            offlineManager.showNotification('📥 Có bản cập nhật mới! Refresh trang để cập nhật.', 'info');
+                        }
+                    }
+                });
+            });
+        })
+        .catch((error) => {
+            console.error('❌ Service Worker registration failed:', error);
+        });
+    });
+} else {
+    console.warn('⚠️ Service Worker not supported in this browser');
+}
+
+// Handle online/offline events
+window.addEventListener('online', () => {
+    console.log('🟢 Online');
+    document.body.classList.remove('offline-mode');
+});
+
+window.addEventListener('offline', () => {
+    console.log('🔴 Offline');
+    document.body.classList.add('offline-mode');
+});
+
+// Set initial state
+if (!navigator.onLine) {
+    document.body.classList.add('offline-mode');
+}
+</script>
+
+<!-- ✅ PWA Install Prompt -->
+<script>
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Optional: Show install button/banner
+    console.log('💾 PWA can be installed');
+    
+    // You can show a custom install button here
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+        installBtn.style.display = 'block';
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('✅ PWA was installed');
+    deferredPrompt = null;
+});
+</script>
 </body>
 </html>

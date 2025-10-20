@@ -4,6 +4,7 @@
   - Chuan bi cac tinh nang khac (tam thoi khong co task muc tieu cap bach)
 
 - **Các thay đổi gần đây:**
+  - **Hoan thanh Tinh nang Offline Playback cho Music Player:** Tich hop Service Worker va Cache API de cho phep nghe nhac offline trong app. Tinh nang bao gom: auto cache tracks khi nghe, offline playback khong can Internet, cache management UI (MB/MB + progress bar), cached indicators tren track list (icon cloud-check xanh), online/offline detection, toast notifications, PWA support. Da fix bug cache version mismatch giua Service Worker ('dbp-music-v3-final') va Offline Manager ('dbp-music-v1'). Test thanh cong: 5 tracks cached, phuc vu tu cache khi offline, UI indicators hoat dong dung.
   - **Hoan thanh He thong Thong ke Luot nghe:** Tao model TrackPlayHistory de luu lich su nghe chi tiet, them play_count vao Track/UserTrack, API record-play voi logic 30s/50% va chong spam 5 phut, JS tu dong tracking khi play/pause/switch, admin interface dep voi % hoan thanh mau sac, hien thi luot nghe trong player (icon tai nghe giua thoi gian).
   - Hoan thanh Listening Lock cho Music Player: khoa trinh phat, chan dong/toggle/click ngoai, chan cuon nen; giu trang thai theo tai khoan va tu mo lai khi reload.
   - Hoan thanh Low Power Mode: them toggle trong Settings, tat hieu ung nang, giam update UI, dung class low-power, luu theo tai khoan.

@@ -160,6 +160,18 @@ class UserMusicManager {
         if (this.repeatSelect) this.repeatSelect.addEventListener('change', markEditing);
         if (this.shuffleCheckbox) this.shuffleCheckbox.addEventListener('change', markEditing);
         if (this.lowPowerCheckbox) this.lowPowerCheckbox.addEventListener('change', markEditing);
+        
+        // ✅ Offline Cache Management Buttons
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        const refreshCacheBtn = document.getElementById('refresh-cache-btn');
+        
+        if (clearCacheBtn) {
+            clearCacheBtn.addEventListener('click', () => this.clearOfflineCache());
+        }
+        
+        if (refreshCacheBtn) {
+            refreshCacheBtn.addEventListener('click', () => this.refreshCacheStatus());
+        }
     }
     
     async openSettings() {
@@ -1035,6 +1047,55 @@ class UserMusicManager {
             notification.style.animation = 'slideOutRight 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }, 3000);
+    }
+    
+    // ✅ Offline Cache Management Methods
+    async clearOfflineCache() {
+        if (!confirm('Bạn có chắc muốn xóa toàn bộ cache offline? Bài hát sẽ phải cache lại khi nghe lần sau.')) {
+            return;
+        }
+        
+        try {
+            const offlineManager = this.musicPlayer?.offlineManager;
+            if (!offlineManager) {
+                this.showNotification('Offline Manager chưa sẵn sàng', 'error');
+                return;
+            }
+            
+            const success = await offlineManager.clearAllCache();
+            if (success) {
+                this.showNotification('✅ Đã xóa toàn bộ cache offline', 'success');
+                this.refreshCacheStatus();
+            } else {
+                this.showNotification('❌ Lỗi khi xóa cache', 'error');
+            }
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            this.showNotification('❌ Lỗi khi xóa cache', 'error');
+        }
+    }
+    
+    async refreshCacheStatus() {
+        try {
+            const offlineManager = this.musicPlayer?.offlineManager;
+            if (!offlineManager) {
+                console.warn('Offline Manager not available');
+                return;
+            }
+            
+            // Update cache status in UI
+            await offlineManager.updateCacheStatus();
+            
+            // Update cached tracks indicators
+            if (this.musicPlayer) {
+                await this.musicPlayer.updateCachedTracksStatus();
+            }
+            
+            this.showNotification('✅ Đã làm mới trạng thái cache', 'success');
+        } catch (error) {
+            console.error('Error refreshing cache status:', error);
+            this.showNotification('❌ Lỗi khi làm mới cache', 'error');
+        }
     }
 }
 

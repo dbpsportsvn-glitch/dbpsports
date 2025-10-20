@@ -60,6 +60,7 @@
   - Keyboard help an: click/touch vao chu Music mo huong dan phim tat (an nut rieng)
   - Low Power Mode: tat hieu ung nang, giam update UI, dung class low-power; luu theo tai khoan
   - He thong thong ke luot nghe: tu dong ghi nhan sau 30s/50% thoi luong bai, chong spam (5 phut), lich su chi tiet trong admin, hien thi so luot nghe giua thoi gian hien tai va tong trong player (icon tai nghe)
+  - **Offline Playback:** Service Worker + Cache API cho phep nghe nhac offline trong app. Auto cache tracks khi nghe, max 500MB cache, offline playback khong can Internet, cached indicators (icon cloud-check xanh), cache management UI trong Settings, PWA support voi manifest.json
 
   **Module Organization Shop:**
   - Hệ thống shop riêng cho từng ban tổ chức (BTC)

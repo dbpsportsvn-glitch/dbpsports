@@ -98,6 +98,76 @@
                         Lưu Cài Đặt
                     </button>
                 </div>
+
+                <!-- ✅ Offline Playback Section -->
+                <div class="settings-section" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                    <h5 class="settings-section-title">
+                        <i class="bi bi-cloud-download"></i>
+                        Offline Playback
+                    </h5>
+                    
+                    <div class="offline-info-box" style="background: rgba(17, 153, 142, 0.1); border: 1px solid rgba(17, 153, 142, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; gap: 12px; align-items: start;">
+                            <i class="bi bi-info-circle-fill" style="color: #11998e; font-size: 24px; flex-shrink: 0;"></i>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px; color: rgba(255,255,255,0.95);">
+                                    🎵 Nghe nhạc không cần Internet!
+                                </div>
+                                <div style="font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5;">
+                                    Các bài hát bạn nghe sẽ tự động cache lại để nghe offline. Không cần download, không tốn dung lượng server!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cache Status -->
+                    <div id="offline-cache-status" class="offline-cache-status">
+                        <!-- Will be populated by JavaScript -->
+                        <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 20px;">
+                            <i class="bi bi-cloud-download" style="font-size: 32px; margin-bottom: 8px;"></i>
+                            <p style="font-size: 13px; margin: 0;">Đang kiểm tra cache...</p>
+                        </div>
+                    </div>
+
+                    <!-- Cache Actions -->
+                    <div class="offline-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button class="offline-action-btn" id="clear-cache-btn" style="flex: 1; padding: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #ef4444; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="bi bi-trash"></i>
+                            Xóa Toàn Bộ Cache
+                        </button>
+                        <button class="offline-action-btn" id="refresh-cache-btn" style="flex: 1; padding: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #3b82f6; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Làm Mới
+                        </button>
+                    </div>
+
+                    <!-- PWA Install Button (hidden by default, shown when available) -->
+                    <div id="pwa-install-section" style="margin-top: 16px; display: none;">
+                        <button id="pwa-install-btn" class="pwa-install-btn" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                            <i class="bi bi-download" style="font-size: 20px;"></i>
+                            <span>Cài Đặt Ứng Dụng (PWA)</span>
+                        </button>
+                        <p style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px; margin-bottom: 0;">
+                            <i class="bi bi-info-circle"></i> Cài app lên máy để trải nghiệm như ứng dụng native
+                        </p>
+                    </div>
+
+                    <!-- How it works -->
+                    <details style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                        <summary style="cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 500; user-select: none;">
+                            <i class="bi bi-question-circle"></i> Cách hoạt động?
+                        </summary>
+                        <div style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; padding-left: 8px;">
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li style="margin-bottom: 8px;">✅ <strong>Tự động cache:</strong> Khi bạn nghe nhạc, bài hát sẽ tự động lưu vào cache</li>
+                                <li style="margin-bottom: 8px;">✅ <strong>Offline playback:</strong> Nghe lại được khi không có Internet</li>
+                                <li style="margin-bottom: 8px;">✅ <strong>Không tốn quota:</strong> Cache ở trình duyệt, không tính vào 369MB upload</li>
+                                <li style="margin-bottom: 8px;">✅ <strong>An toàn:</strong> Không thể download file ra ngoài app</li>
+                                <li style="margin-bottom: 8px;">⚠️ <strong>Tự động xóa:</strong> Browser có thể xóa cache khi đầy ổ đĩa</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <!-- Tab 2: My Music -->
