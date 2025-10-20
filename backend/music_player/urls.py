@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import admin_views
 from . import user_music_views
+from . import stats_views
 
 app_name = 'music_player'
 
@@ -23,6 +24,11 @@ urlpatterns = [
     path('user/playlists/<int:playlist_id>/tracks/', user_music_views.get_playlist_tracks, name='playlist_tracks'),
     path('user/playlists/<int:playlist_id>/add-track/<int:track_id>/', user_music_views.add_track_to_playlist, name='add_track_to_playlist'),
     path('user/playlists/<int:playlist_id>/delete/', user_music_views.delete_user_playlist, name='delete_playlist'),
+    
+    # Statistics APIs
+    path('stats/record-play/', stats_views.record_track_play, name='record_play'),
+    path('stats/user-stats/', stats_views.get_user_stats, name='user_stats'),
+    path('stats/popular/', stats_views.get_popular_tracks, name='popular_tracks'),
     
     # Admin views
     path('admin/', admin_views.music_admin, name='admin'),

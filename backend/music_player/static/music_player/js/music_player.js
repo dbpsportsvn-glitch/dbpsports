@@ -58,10 +58,19 @@ class MusicPlayer {
         this.saveStateDebounceTimer = null;
         this.refreshPlaylistsDebounceTimer = null;
         
+        // ✅ Play tracking variables
+        this.currentTrackStartTime = null; // Timestamp khi bắt đầu nghe track hiện tại
+        this.currentTrackListenDuration = 0; // Tổng số giây đã nghe track hiện tại (không bao gồm skip)
+        this.playTrackingInterval = null; // Interval để update listen duration
+        this.hasRecordedPlay = false; // Flag để tránh record trùng lần
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
         this.loadPlaylists();
+        
+        // Initialize play count display
+        this.playCountNumber = document.getElementById('play-count-number');
         
         // ✅ Initialize mobile optimizations
         this.initializeMobileOptimizations();
@@ -1028,6 +1037,9 @@ class MusicPlayer {
             return;
         }
         
+        // ✅ Record play của track hiện tại trước khi chuyển sang track mới
+        this.recordCurrentTrackPlay();
+        
         const track = this.currentPlaylist.tracks[index];
         
         // Kiểm tra xem có đang phát cùng track này không
@@ -1145,6 +1157,13 @@ class MusicPlayer {
             const albumCoverUrl = baseUrl.includes('?') ? `${baseUrl}&${cb}` : `${baseUrl}?${cb}`;
             this.currentAlbumCover.src = albumCoverUrl;
         }
+        
+        // Update play count display
+        if (this.playCountNumber) {
+            const playCount = track.play_count || 0;
+            this.playCountNumber.textContent = playCount;
+        }
+        
         // Force refresh Media Session metadata to update lock screen artwork
         this.updateMediaSessionMetadata();
     }
@@ -1242,6 +1261,9 @@ class MusicPlayer {
         if (!this.isRestoringState) {
             this.savePlayerState();
         }
+        
+        // ✅ Start tracking play time
+        this.startPlayTracking();
     }
 
     onPause() {
@@ -1260,6 +1282,9 @@ class MusicPlayer {
         if (!this.isRestoringState) {
             this.savePlayerState();
         }
+        
+        // ✅ Stop tracking play time
+        this.stopPlayTracking();
     }
 
     updatePlayPauseButtons() {
@@ -3074,7 +3099,107 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         return div.innerHTML;
     }
     
+    // ========================================
+    // ✅ PLAY TRACKING METHODS
+    // ========================================
+    
+    startPlayTracking() {
+        // Nếu đã có interval rồi, không tạo mới
+        if (this.playTrackingInterval) {
+            return;
+        }
+        
+        // Reset tracking cho track mới
+        this.currentTrackStartTime = Date.now();
+        this.currentTrackListenDuration = 0;
+        this.hasRecordedPlay = false;
+        
+        // Update listen duration mỗi giây
+        this.playTrackingInterval = setInterval(() => {
+            if (this.isPlaying && !this.audio.paused) {
+                this.currentTrackListenDuration += 1;
+                
+                // Kiểm tra nếu đã nghe đủ để record play
+                const track = this.currentPlaylist?.tracks[this.currentTrackIndex];
+                if (track && !this.hasRecordedPlay) {
+                    const minDuration = Math.min(30, track.duration * 0.5);
+                    
+                    if (this.currentTrackListenDuration >= minDuration) {
+                        // Đã nghe đủ, gửi record play ngay
+                        this.recordCurrentTrackPlay();
+                    }
+                }
+            }
+        }, 1000);
+    }
+    
+    stopPlayTracking() {
+        if (this.playTrackingInterval) {
+            clearInterval(this.playTrackingInterval);
+            this.playTrackingInterval = null;
+        }
+    }
+    
+    async recordCurrentTrackPlay() {
+        // Nếu đã record rồi hoặc không có track, skip
+        if (this.hasRecordedPlay || !this.currentPlaylist || !this.currentPlaylist.tracks[this.currentTrackIndex]) {
+            return;
+        }
+        
+        const track = this.currentPlaylist.tracks[this.currentTrackIndex];
+        
+        // Kiểm tra đã nghe đủ thời gian chưa
+        const minDuration = Math.min(30, track.duration * 0.5);
+        if (this.currentTrackListenDuration < minDuration) {
+            return;
+        }
+        
+        // Đánh dấu đã record để tránh gửi nhiều lần
+        this.hasRecordedPlay = true;
+        
+        // Gửi lên server
+        try {
+            const csrfToken = this.getCSRFToken();
+            
+            const response = await fetch('/music/stats/record-play/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    track_id: track.id,
+                    track_type: this.currentPlaylist.type || 'global',
+                    listen_duration: Math.floor(this.currentTrackListenDuration)
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.counted) {
+                // Cập nhật play_count trong UI nếu cần
+                if (data.play_count !== undefined) {
+                    track.play_count = data.play_count;
+                    
+                    // Update display if this is current track
+                    if (this.playCountNumber && this.currentPlaylist && this.currentPlaylist.tracks[this.currentTrackIndex] === track) {
+                        this.playCountNumber.textContent = data.play_count;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error recording play:', error);
+        }
+    }
+
     destroy() {
+        // ✅ Record play của track hiện tại trước khi destroy
+        this.recordCurrentTrackPlay();
+        
+        // ✅ Stop tracking
+        this.stopPlayTracking();
+        
         // Save state trước khi destroy (immediate)
         this.savePlayerStateImmediate();
         

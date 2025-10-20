@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db.models import Count, Sum
 import os
 
 
@@ -41,6 +43,7 @@ class Track(models.Model):
     duration = models.IntegerField(default=0, verbose_name="Thời lượng (giây)")
     order = models.PositiveIntegerField(default=0, verbose_name="Thứ tự")
     is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    play_count = models.IntegerField(default=0, verbose_name="Lượt nghe")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -184,6 +187,7 @@ class UserTrack(models.Model):
     file_size = models.BigIntegerField(default=0, verbose_name="Kích thước file (bytes)")
     duration = models.IntegerField(default=0, verbose_name="Thời lượng (giây)")
     is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    play_count = models.IntegerField(default=0, verbose_name="Lượt nghe")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -233,3 +237,102 @@ class UserPlaylistTrack(models.Model):
     
     def __str__(self):
         return f"{self.playlist.name} - {self.user_track.title}"
+
+
+class TrackPlayHistory(models.Model):
+    """Model để lưu lịch sử nghe nhạc chi tiết"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='play_history', verbose_name="Người dùng")
+    
+    # Track có thể là global hoặc user track (nullable vì chỉ 1 trong 2)
+    global_track = models.ForeignKey(Track, on_delete=models.SET_NULL, null=True, blank=True, related_name='play_history', verbose_name="Track Global")
+    user_track = models.ForeignKey(UserTrack, on_delete=models.SET_NULL, null=True, blank=True, related_name='play_history', verbose_name="Track Cá Nhân")
+    
+    # Thông tin về lượt nghe
+    played_at = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian nghe", db_index=True)
+    listen_duration = models.IntegerField(default=0, verbose_name="Thời lượng nghe (giây)")
+    is_completed = models.BooleanField(default=False, verbose_name="Nghe hết bài")
+    
+    # Metadata (để phục hồi thông tin nếu track bị xóa)
+    track_title = models.CharField(max_length=200, verbose_name="Tên bài hát")
+    track_artist = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nghệ sĩ")
+    track_duration = models.IntegerField(default=0, verbose_name="Thời lượng track (giây)")
+    
+    class Meta:
+        verbose_name = "Lịch Sử Nghe"
+        verbose_name_plural = "Lịch Sử Nghe"
+        ordering = ['-played_at']
+        indexes = [
+            models.Index(fields=['user', '-played_at']),
+            models.Index(fields=['global_track', '-played_at']),
+            models.Index(fields=['user_track', '-played_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.track_title} ({self.played_at.strftime('%Y-%m-%d %H:%M')})"
+    
+    def get_completion_percentage(self):
+        """Tính % hoàn thành"""
+        if self.track_duration > 0:
+            return round((self.listen_duration / self.track_duration) * 100, 1)
+        return 0
+    
+    @classmethod
+    def should_count_as_play(cls, user, track_id, track_type='global'):
+        """
+        Kiểm tra có nên tính là 1 lượt nghe mới không
+        Quy tắc: Cùng user + track trong vòng 5 phút gần nhất = không tính
+        """
+        five_minutes_ago = timezone.now() - timezone.timedelta(minutes=5)
+        
+        if track_type == 'global':
+            recent_play = cls.objects.filter(
+                user=user,
+                global_track_id=track_id,
+                played_at__gte=five_minutes_ago
+            ).exists()
+        else:
+            recent_play = cls.objects.filter(
+                user=user,
+                user_track_id=track_id,
+                played_at__gte=five_minutes_ago
+            ).exists()
+        
+        return not recent_play
+    
+    @classmethod
+    def get_user_stats(cls, user, days=30):
+        """Lấy thống kê của user trong X ngày gần nhất"""
+        since = timezone.now() - timezone.timedelta(days=days)
+        history = cls.objects.filter(user=user, played_at__gte=since)
+        
+        return {
+            'total_plays': history.count(),
+            'total_listen_time': history.aggregate(Sum('listen_duration'))['listen_duration__sum'] or 0,
+            'completed_plays': history.filter(is_completed=True).count(),
+        }
+    
+    @classmethod
+    def get_popular_tracks(cls, limit=10, days=7):
+        """Lấy top tracks được nghe nhiều nhất trong X ngày"""
+        since = timezone.now() - timezone.timedelta(days=days)
+        
+        # Top global tracks
+        global_tracks = cls.objects.filter(
+            played_at__gte=since,
+            global_track__isnull=False
+        ).values('global_track', 'track_title', 'track_artist').annotate(
+            play_count=Count('id')
+        ).order_by('-play_count')[:limit]
+        
+        # Top user tracks
+        user_tracks = cls.objects.filter(
+            played_at__gte=since,
+            user_track__isnull=False
+        ).values('user_track', 'track_title', 'track_artist').annotate(
+            play_count=Count('id')
+        ).order_by('-play_count')[:limit]
+        
+        return {
+            'global_tracks': list(global_tracks),
+            'user_tracks': list(user_tracks)
+        }

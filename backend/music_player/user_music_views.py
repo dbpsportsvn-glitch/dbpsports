@@ -11,7 +11,7 @@ from django.db import models
 import os
 import json
 from mutagen import File as MutagenFile
-from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings
+from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings, Track, TrackPlayHistory
 from .utils import extract_album_cover
 
 
@@ -110,6 +110,7 @@ def get_user_tracks(request):
             'file_url': track.get_file_url(),
             'file_size': track.file_size,
             'file_size_formatted': track.get_file_size_formatted(),
+            'play_count': track.play_count,
             'created_at': track.created_at.isoformat()
         } for track in tracks]
         

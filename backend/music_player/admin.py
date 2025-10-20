@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path
 from django.contrib import messages
 import os
-from .models import Playlist, Track, MusicPlayerSettings, UserPlaylist, UserTrack, UserPlaylistTrack
+from .models import Playlist, Track, MusicPlayerSettings, UserPlaylist, UserTrack, UserPlaylistTrack, TrackPlayHistory
 from .utils import get_audio_duration
 
 
@@ -774,3 +774,75 @@ class UserTrackAdmin(admin.ModelAdmin):
             track.delete()  # Sẽ tự động xóa file nhờ override delete()
         self.message_user(request, f'Đã xóa {count} bài hát và files của chúng.')
     delete_selected_with_files.short_description = "Xóa tracks đã chọn (bao gồm cả files)"
+
+
+@admin.register(TrackPlayHistory)
+class TrackPlayHistoryAdmin(admin.ModelAdmin):
+    """Admin interface cho lịch sử nghe nhạc"""
+    list_display = ['user', 'track_title', 'track_artist', 'played_at', 'listen_duration_display', 'completion_display', 'is_completed']
+    list_filter = ['is_completed', 'played_at', 'user']
+    search_fields = ['user__username', 'track_title', 'track_artist']
+    readonly_fields = ['user', 'global_track', 'user_track', 'played_at', 'listen_duration', 'is_completed', 'track_title', 'track_artist', 'track_duration', 'completion_percentage_display']
+    date_hierarchy = 'played_at'
+    list_per_page = 50
+    ordering = ['-played_at']
+    
+    fieldsets = (
+        ('Thông Tin Người Dùng', {
+            'fields': ('user',)
+        }),
+        ('Thông Tin Bài Hát', {
+            'fields': ('track_title', 'track_artist', 'track_duration', 'global_track', 'user_track')
+        }),
+        ('Thông Tin Lượt Nghe', {
+            'fields': ('played_at', 'listen_duration', 'is_completed', 'completion_percentage_display')
+        }),
+    )
+    
+    def listen_duration_display(self, obj):
+        """Hiển thị thời lượng nghe dạng mm:ss"""
+        minutes = obj.listen_duration // 60
+        seconds = obj.listen_duration % 60
+        return f"{minutes:02d}:{seconds:02d}"
+    listen_duration_display.short_description = "Thời lượng nghe"
+    
+    def completion_display(self, obj):
+        """Hiển thị % hoàn thành"""
+        percentage = obj.get_completion_percentage()
+        if percentage >= 90:
+            color = 'green'
+        elif percentage >= 50:
+            color = 'orange'
+        else:
+            color = 'red'
+        percentage_str = f'{percentage:.1f}'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}%</span>',
+            color,
+            percentage_str
+        )
+    completion_display.short_description = "% Hoàn thành"
+    
+    def completion_percentage_display(self, obj):
+        """Hiển thị % hoàn thành chi tiết"""
+        percentage = obj.get_completion_percentage()
+        percentage_str = f'{percentage:.1f}'
+        percentage_width = f'{percentage:.0f}'
+        return format_html(
+            '<div style="background: #f0f0f0; border-radius: 10px; overflow: hidden; width: 200px;">'
+            '<div style="background: #4CAF50; width: {}%; height: 20px; text-align: center; color: white; font-size: 12px; line-height: 20px;">'
+            '{}%'
+            '</div>'
+            '</div>',
+            percentage_width,
+            percentage_str
+        )
+    completion_percentage_display.short_description = "Tiến độ"
+    
+    def has_add_permission(self, request):
+        """Không cho phép thêm mới thủ công"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Không cho phép sửa"""
+        return False

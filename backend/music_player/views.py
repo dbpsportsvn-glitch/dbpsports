@@ -39,6 +39,7 @@ class MusicPlayerAPIView(View):
                         'file_url': track.get_file_url(),
                         'duration': track.duration,
                         'duration_formatted': track.get_duration_formatted(),
+                        'play_count': track.play_count,
                         'order': track.order
                     })
                 
