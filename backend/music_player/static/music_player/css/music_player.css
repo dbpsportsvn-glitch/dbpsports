@@ -342,6 +342,8 @@ body.low-power .playlist-card-cover { filter: none !important; }
 .music-player-popup .tab-content.active {
     display: flex;
     flex-direction: column;
+    /* ✅ Đảm bảo tab content có chiều cao đầy đủ */
+    height: 100%;
 }
 
 @keyframes fadeIn {
@@ -1538,7 +1540,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
 }
 
 .settings-tab-content.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    /* ✅ Đảm bảo tab content có chiều cao đầy đủ để nền trắng kéo dài */
+    height: 100%;
 }
 
 /* Settings Section */
@@ -1547,6 +1552,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 16px;
+    /* ✅ Kéo dài để bao phủ hết nội dung bên trong */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .settings-section-title {
@@ -1800,6 +1809,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
 /* My Tracks List */
 .my-tracks-section {
     margin-top: 16px;
+    /* ✅ Cho phép section này mở rộng để chứa list */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .my-tracks-list {
@@ -1808,6 +1821,8 @@ body.low-power .playlist-card-cover { filter: none !important; }
     background: rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     padding: 8px;
+    /* ✅ Cho phép list mở rộng trong section */
+    flex: 1;
 }
 
 .track-card {
@@ -2460,7 +2475,7 @@ body.low-power .playlist-card-cover { filter: none !important; }
     .settings-tab-content.active .settings-section {
         display: flex !important;
         flex-direction: column !important;
-        height: 100% !important;
+        flex: 1 !important;
     }
     
     .settings-tab-content.active .my-tracks-section,
@@ -2892,6 +2907,9 @@ body.low-power .playlist-card-cover { filter: none !important; }
     .settings-section {
         padding: 14px !important; /* ✅ Tăng từ 12px lên 14px */
         margin-bottom: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
     }
     
     .settings-section-title {
