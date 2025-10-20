@@ -17,14 +17,14 @@ def get_audio_duration(file_path):
     """
     try:
         if not os.path.exists(file_path):
-            print(f"File không tồn tại: {file_path}")
+            # File không tồn tại
             return 0
         
         # Sử dụng mutagen để đọc metadata
         audio = MutagenFile(file_path)
         
         if audio is None:
-            print(f"Không thể đọc metadata của file: {file_path}")
+            # Không thể đọc metadata của file
             return 0
         
         if audio.info and hasattr(audio.info, 'length'):
@@ -34,7 +34,7 @@ def get_audio_duration(file_path):
         return 0
         
     except Exception as e:
-        print(f"Lỗi khi đọc duration của file {file_path}: {str(e)}")
+        # Lỗi khi đọc duration của file
         return 0
 
 
@@ -91,6 +91,6 @@ def get_audio_metadata(file_path):
         return metadata
         
     except Exception as e:
-        print(f"Lỗi khi đọc metadata của file {file_path}: {str(e)}")
+        # Lỗi khi đọc metadata của file
         return {}
 

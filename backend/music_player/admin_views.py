@@ -183,7 +183,7 @@ def scan_playlist(request, playlist_id):
                 )
                 added_count += 1
             except Exception as e:
-                print(f"Error adding track {file}: {e}")
+                # Error adding track
                 continue
         
         messages.success(request, f'Đã scan thành công {added_count} bài hát từ playlist "{playlist.name}".')
@@ -274,7 +274,7 @@ def api_scan_playlist(request, playlist_id):
                 )
                 added_count += 1
             except Exception as e:
-                print(f"Error adding track {file}: {e}")
+                # Error adding track
                 continue
         
         return JsonResponse({
@@ -385,7 +385,7 @@ def scan_playlist(request, playlist_id):
                 )
                 added_count += 1
             except Exception as e:
-                print(f"Error adding track {file}: {e}")
+                # Error adding track
                 continue
         
         messages.success(request, f'Đã scan thành công {added_count} bài hát từ playlist "{playlist.name}".')
@@ -476,7 +476,7 @@ def api_scan_playlist(request, playlist_id):
                 )
                 added_count += 1
             except Exception as e:
-                print(f"Error adding track {file}: {e}")
+                # Error adding track
                 continue
         
         return JsonResponse({

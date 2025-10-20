@@ -325,7 +325,7 @@ class PlaylistAdmin(admin.ModelAdmin):
                         )
                         added_count += 1
                     except Exception as e:
-                        print(f"Error adding track {file}: {e}")
+                        # Error adding track
                         continue
                 
                 messages.success(request, f'Đã tạo playlist "{playlist_name}" với {added_count} bài hát thành công!')
@@ -394,7 +394,7 @@ class PlaylistAdmin(admin.ModelAdmin):
                         )
                         added_count += 1
                     except Exception as e:
-                        print(f"Error adding track {file}: {e}")
+                        # Error adding track
                         continue
                 
                 scanned_count += 1
