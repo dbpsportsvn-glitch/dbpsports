@@ -949,16 +949,19 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 24px; /* ✅ Tăng từ 20px lên 24px */
+    font-size: 28px; /* ✅ Tăng từ 24px lên 28px để chữ music to hơn */
+    font-weight: 700; /* ✅ Tăng font-weight để chữ đậm hơn */
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
     z-index: 9998;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* ✅ Thêm text-shadow để tăng độ tương phản */
 }
 
 .music-player-toggle:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.7); /* ✅ Tăng text-shadow khi hover */
 }
 
 /* Toggle button khi nhạc đang phát - SUPER COOL! */
@@ -967,6 +970,8 @@
     box-shadow: 0 4px 30px rgba(102, 126, 234, 0.6), 
                 0 0 40px rgba(118, 75, 162, 0.4),
                 0 0 60px rgba(240, 147, 251, 0.3);
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.8), 
+                 0 0 10px rgba(255, 255, 255, 0.3); /* ✅ Tăng text-shadow khi đang phát */
 }
 
 .music-player-toggle.playing:hover {
@@ -975,6 +980,8 @@
     box-shadow: 0 6px 35px rgba(102, 126, 234, 0.7), 
                 0 0 50px rgba(118, 75, 162, 0.5),
                 0 0 70px rgba(240, 147, 251, 0.4);
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9), 
+                 0 0 15px rgba(255, 255, 255, 0.4); /* ✅ Tăng text-shadow khi hover + playing */
 }
 
 /* Pulse Animation - Nhấp nháy */
@@ -2228,10 +2235,7 @@
     }
     
     .player-title {
-        font-size: 20px !important; /* ✅ Tăng từ 16px lên 20px cho mobile */
-        font-weight: 700 !important;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
-        letter-spacing: 0.5px !important;
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
     }
     
     .header-left {
@@ -2699,7 +2703,9 @@
         left: 10px !important; /* ✅ Tăng từ 8px lên 10px */
         width: 52px !important; /* ✅ Tăng từ 48px lên 52px */
         height: 52px !important;
-        font-size: 22px !important; /* ✅ Tăng từ 20px lên 22px */
+        font-size: 24px !important; /* ✅ Tăng từ 22px lên 24px để chữ music to hơn trên mobile */
+        font-weight: 700 !important; /* ✅ Đảm bảo font-weight đậm trên mobile */
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important; /* ✅ Tăng text-shadow trên mobile */
     }
     
     /* ✅ Sleep timer menu vị trí tốt hơn */
