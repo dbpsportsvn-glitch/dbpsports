@@ -1081,9 +1081,10 @@ class MusicPlayer {
         this.currentTrackTitle.textContent = track.title;
         this.currentTrackArtist.textContent = track.artist;
         
-        // Update album cover
+        // Update album cover (track cover → playlist cover → default)
         if (this.currentAlbumCover) {
-            const albumCoverUrl = track.album_cover || '/static/music_player/images/album-art.png';
+            const playlistCover = this.currentPlaylist && this.currentPlaylist.cover_image ? this.currentPlaylist.cover_image : null;
+            const albumCoverUrl = track.album_cover || playlistCover || '/static/music_player/images/album-art.png';
             this.currentAlbumCover.src = albumCoverUrl;
         }
     }
