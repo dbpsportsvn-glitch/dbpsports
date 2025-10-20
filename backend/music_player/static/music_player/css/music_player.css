@@ -1032,13 +1032,13 @@
 /* ✅ MOBILE FULL SCREEN MODE - Như Spotify App! */
 @media (max-width: 768px) {
     .music-player-popup {
-        /* ✅ Full screen on mobile */
+        /* ✅ Full screen - ngay dưới header menu, không đè lên header */
         position: fixed !important;
-        top: 0 !important;
+        top: 57px !important; /* ✅ 56px navbar + 1px gap = 57px */
         left: 0 !important;
         right: 0 !important;
-        bottom: 0 !important;
-        z-index: 99999 !important;
+        bottom: 0 !important; /* ✅ Chạm đáy màn hình thực sự */
+        z-index: 1040 !important; /* ✅ Dưới navbar để không che header */
         background: rgba(0, 0, 0, 0.95); /* ✅ Dark overlay */
         display: flex;
         align-items: center;
@@ -1054,8 +1054,8 @@
     .full-player {
         width: 100% !important;
         max-width: 100% !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
+        height: 100% !important; /* ✅ 100% của parent (popup) - chạm đáy màn hình */
+        max-height: 100% !important;
         border-radius: 0 !important; /* ✅ No rounded corners on full screen */
         box-shadow: none !important;
         display: flex;
@@ -1124,11 +1124,9 @@
         font-size: 10px !important; /* ✅ Tăng từ 8px lên 10px cho mobile */
     }
     
-    /* ✅ Player header với safe area cho iOS notch */
+    /* ✅ Player header - không cần safe-area-inset-top vì nằm dưới navbar */
     .player-header {
-        padding-top: max(16px, env(safe-area-inset-top)) !important;
-        padding-left: max(12px, env(safe-area-inset-left)) !important;
-        padding-right: max(12px, env(safe-area-inset-right)) !important;
+        padding: 16px 12px !important;
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(20px);
     }
@@ -1276,6 +1274,14 @@
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+}
+
+/* ✅ Settings modal trên mobile - nằm dưới header menu như music player */
+@media (max-width: 768px) {
+    .settings-modal {
+        top: 57px !important; /* ✅ 56px navbar + 1px gap = 57px */
+        height: calc(100% - 57px) !important;
+    }
 }
 
 .settings-modal.hidden {
@@ -2107,21 +2113,19 @@
         gap: 8px;
     }
     
-    /* ✅ Settings modal on mobile - full screen responsive */
+    /* ✅ Settings modal on mobile - full screen responsive, nằm dưới header */
     .settings-modal-content {
         width: 100% !important;
         max-width: 100% !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
+        height: 100% !important; /* ✅ 100% của parent (.settings-modal) */
+        max-height: 100% !important;
         border-radius: 0 !important;
         display: flex !important;
         flex-direction: column !important;
     }
     
     .settings-modal-header {
-        padding-top: max(20px, env(safe-area-inset-top)) !important;
-        padding-left: max(24px, env(safe-area-inset-left)) !important;
-        padding-right: max(24px, env(safe-area-inset-right)) !important;
+        padding: 20px 24px !important; /* ✅ Không cần safe-area-inset-top vì nằm dưới navbar */
         flex-shrink: 0 !important;
     }
     
@@ -2169,7 +2173,7 @@
     /* ✅ Sleep timer menu trên mobile */
     .sleep-timer-menu {
         position: fixed !important; /* ✅ Fixed trên mobile */
-        top: max(65px, calc(env(safe-area-inset-top) + 45px)) !important; /* ✅ Safe area cho iOS */
+        top: 121px !important; /* ✅ 57px (navbar+gap) + 64px player header = 121px */
         right: 20px !important; /* ✅ Margin từ mép phải */
         z-index: 100010 !important; /* ✅ Cao hơn settings modal */
         min-width: 200px !important;
@@ -2210,18 +2214,26 @@
 
 /* ✅ Landscape orientation - tối ưu cho mobile ngang */
 @media (max-width: 932px) and (orientation: landscape) {
-    /* ✅ Full screen player tối ưu cho landscape */
+    /* ✅ Full screen player - ngay dưới navbar, chạm đáy màn hình */
     .music-player-popup {
-        max-height: 100dvh !important; /* dvh = dynamic viewport height - tốt hơn cho mobile */
-        height: 100dvh !important;
+        top: 57px !important; /* ✅ 56px navbar + 1px gap = 57px */
+        bottom: 0 !important; /* ✅ Chạm đáy màn hình thực sự */
+        height: auto !important; /* ✅ Auto height từ top -> bottom */
+        max-height: none !important;
         overflow: hidden !important;
     }
     
     .full-player {
-        max-height: 100dvh !important;
-        height: 100dvh !important;
+        height: 100% !important;
+        max-height: 100% !important;
         display: flex !important;
         flex-direction: column !important;
+    }
+    
+    /* ✅ Settings modal cũng nằm dưới header trong landscape */
+    .settings-modal {
+        top: 57px !important;
+        height: calc(100% - 57px) !important;
     }
     
     /* ✅ Header compact nhưng vẫn đủ rõ ràng */
@@ -2495,12 +2507,12 @@
         font-size: 10px !important; /* ✅ Tăng từ 9px lên 10px */
     }
     
-    /* ✅ Settings Modal trong landscape mode - SUPER RESPONSIVE */
+    /* ✅ Settings Modal trong landscape mode - SUPER RESPONSIVE, dưới header */
     .settings-modal-content {
         width: 95vw !important;
         max-width: 95vw !important;
-        height: 95dvh !important;
-        max-height: 95dvh !important;
+        height: 95% !important; /* ✅ 95% của parent height (đã trừ navbar rồi) */
+        max-height: 95% !important;
         border-radius: 12px !important;
         display: flex !important;
         flex-direction: column !important;
@@ -2710,7 +2722,7 @@
     
     /* ✅ Sleep timer menu vị trí tốt hơn */
     .sleep-timer-menu {
-        top: 50px !important; /* ✅ Tăng từ 45px lên 50px */
+        top: 67px !important; /* ✅ 57px (navbar+gap) + 10px padding header = 67px */
         right: 16px !important; /* ✅ Tăng từ 12px lên 16px */
         min-width: 200px !important; /* ✅ Tăng từ 180px lên 200px */
         padding: 12px !important; /* ✅ Tăng từ 10px lên 12px */

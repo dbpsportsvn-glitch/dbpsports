@@ -27,7 +27,7 @@ def user_music_settings(request):
                 'repeat_mode': 'all',
                 'shuffle': False,
                 'upload_quota': 69,
-                'storage_quota_mb': 500
+                'storage_quota_mb': 369
             }
         )
         
@@ -108,7 +108,7 @@ def get_user_tracks(request):
         # Lấy usage
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 500}
+            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
         )
         usage = user_settings.get_upload_usage()
         
@@ -132,7 +132,7 @@ def upload_user_track(request):
         # Check quota
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 500}
+            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
         )
         
         # Get file from request
@@ -276,7 +276,7 @@ def delete_user_track(request, track_id):
         # Get updated usage
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 500}
+            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
         )
         usage = user_settings.get_upload_usage()
         
