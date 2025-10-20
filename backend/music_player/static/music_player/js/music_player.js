@@ -149,6 +149,7 @@ class MusicPlayer {
         
         // ✅ Keyboard shortcuts button
         this.keyboardShortcutsBtn = document.getElementById('keyboard-shortcuts-btn');
+        this.playerTitle = document.getElementById('player-title') || document.querySelector('.player-title');
         
         // Check required elements
         const elementsStatus = {
@@ -274,6 +275,25 @@ class MusicPlayer {
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+        // Hidden trigger: click/Enter on title to open shortcuts
+        if (this.playerTitle) {
+            this.playerTitle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showKeyboardShortcuts();
+            });
+            // Mobile: touchstart để mở nhanh
+            this.playerTitle.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.showKeyboardShortcuts();
+            }, { passive: false });
+            this.playerTitle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.showKeyboardShortcuts();
+                }
+            });
+        }
         
         // Drag and drop for player header (Desktop)
         if (this.playerHeader) {
