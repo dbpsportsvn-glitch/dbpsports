@@ -247,6 +247,18 @@ class UserMusicManager {
             if (data.success) {
                 this.userSettings = data.settings;
                 this.populateSettings(data.settings);
+                // Đồng bộ lock state sang player
+                if (this.musicPlayer) {
+                    this.musicPlayer.settings = {
+                        ...(this.musicPlayer.settings || {}),
+                        listening_lock: data.settings.listening_lock
+                    };
+                    // Nếu đang lock, đảm bảo player mở
+                    const popup = document.getElementById('music-player-popup');
+                    if (this.musicPlayer.settings.listening_lock && popup && popup.classList.contains('hidden')) {
+                        popup.classList.remove('hidden');
+                    }
+                }
             }
         } catch (error) {
             // Chỉ log error, không show notification trong silent mode

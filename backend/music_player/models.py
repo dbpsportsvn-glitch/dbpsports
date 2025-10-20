@@ -94,6 +94,7 @@ class MusicPlayerSettings(models.Model):
         verbose_name="Chế độ lặp"
     )
     shuffle = models.BooleanField(default=False, verbose_name="Phát ngẫu nhiên")
+    listening_lock = models.BooleanField(default=False, verbose_name="Khóa chế độ nghe nhạc")
     upload_quota = models.IntegerField(default=69, verbose_name="Giới hạn số bài upload (deprecated)")
     storage_quota_mb = models.IntegerField(default=369, verbose_name="Giới hạn dung lượng (MB)")
     created_at = models.DateTimeField(auto_now_add=True)

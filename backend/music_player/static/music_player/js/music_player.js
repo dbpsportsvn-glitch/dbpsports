@@ -14,7 +14,8 @@ class MusicPlayer {
             auto_play: true,
             volume: 0.7,
             repeat_mode: 'all',
-            shuffle: false
+            shuffle: false,
+            listening_lock: false
         };
         
         this.userInteracted = false; // Track user interaction for autoplay
@@ -137,6 +138,7 @@ class MusicPlayer {
         this.volumeFill = document.getElementById('volume-fill');
         this.volumeHandle = document.getElementById('volume-handle');
         this.closeBtn = document.getElementById('player-close');
+        this.lockBtn = document.getElementById('lock-player-btn');
         
         // Sleep timer elements
         this.sleepTimerBtn = document.getElementById('sleep-timer-btn');
@@ -174,6 +176,9 @@ class MusicPlayer {
         // Toggle events
         this.toggle.addEventListener('click', () => this.togglePlayer());
         this.closeBtn.addEventListener('click', () => this.togglePlayer());
+        if (this.lockBtn) {
+            this.lockBtn.addEventListener('click', () => this.toggleListeningLock());
+        }
         
         // Playlist selection
         this.playlistSelect.addEventListener('change', (e) => this.selectPlaylist(e.target.value));
@@ -299,7 +304,9 @@ class MusicPlayer {
             // Close player nếu click ngoài
             if (!this.popup.classList.contains('hidden')) {
                 if (!this.popup.contains(e.target) && !this.toggle.contains(e.target)) {
-                    this.togglePlayer();
+                    if (!(this.settings && this.settings.listening_lock)) {
+                        this.togglePlayer();
+                    }
                 }
             }
             
@@ -347,6 +354,35 @@ class MusicPlayer {
         
         // Playlist type toggle
         this.initPlaylistTypeToggle();
+    }
+
+    async toggleListeningLock() {
+        const newLock = !(this.settings && this.settings.listening_lock);
+        this.settings.listening_lock = newLock;
+        // Toggle global body class to disable header/nav interactions when locked
+        document.body.classList.toggle('listening-locked', newLock);
+        document.documentElement.classList.toggle('listening-locked', newLock);
+        if (this.lockBtn) {
+            this.lockBtn.classList.toggle('active', newLock);
+            this.lockBtn.title = newLock ? 'Đang khóa nghe nhạc' : 'Khóa nghe nhạc';
+            this.lockBtn.innerHTML = newLock ? '<i class="bi bi-lock-fill"></i>' : '<i class="bi bi-lock"></i>';
+        }
+        if (newLock && this.popup && this.popup.classList.contains('hidden')) {
+            this.popup.classList.remove('hidden');
+        }
+        try {
+            await fetch('/music/user/settings/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ listening_lock: newLock })
+            });
+        } catch (e) {
+            console.error('Failed to persist listening lock', e);
+        }
     }
     
     initPlaylistTypeToggle() {
@@ -1528,6 +1564,14 @@ class MusicPlayer {
     }
 
     togglePlayer() {
+        // Nếu đang khóa, không cho đóng bằng toggle hoặc phím tắt
+        if (this.settings && this.settings.listening_lock) {
+            // Nếu đang ẩn (ví dụ khi mới vào trang), thì mở
+            if (this.popup.classList.contains('hidden')) {
+                this.popup.classList.remove('hidden');
+            }
+            return;
+        }
         const wasHidden = this.popup.classList.contains('hidden');
         this.popup.classList.toggle('hidden');
         
@@ -2755,11 +2799,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 // Use album cover if available, otherwise use default
                 const artworkUrl = track.album_cover || '/static/music_player/images/album-art.png';
                 const artworkType = track.album_cover ? 'image/jpeg' : 'image/png';
+                const albumName = track.album || (this.currentPlaylist && this.currentPlaylist.name) || '';
                 
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: track.title,
                     artist: track.artist || 'Unknown Artist',
-                    album: track.album || this.currentPlaylist.name,
+                    album: albumName,
                     artwork: [
                         { src: artworkUrl, sizes: '96x96', type: artworkType },
                         { src: artworkUrl, sizes: '128x128', type: artworkType },
