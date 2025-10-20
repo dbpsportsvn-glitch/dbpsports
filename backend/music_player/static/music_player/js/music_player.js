@@ -3100,6 +3100,38 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
 // Initialize music player when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.musicPlayer = new MusicPlayer();
+    // On load, fetch user settings to restore listening lock and open player if locked
+    (async () => {
+        try {
+            const res = await fetch('/music/user/settings/', { cache: 'no-store', credentials: 'same-origin' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data && data.success && data.settings) {
+                const locked = !!data.settings.listening_lock;
+                window.musicPlayer.settings = {
+                    ...(window.musicPlayer.settings || {}),
+                    listening_lock: locked
+                };
+                // Áp dụng class chặn cuộn/header
+                document.body.classList.toggle('listening-locked', locked);
+                document.documentElement.classList.toggle('listening-locked', locked);
+                // Nếu đang lock, đảm bảo mở player
+                const popup = document.getElementById('music-player-popup');
+                if (locked && popup && popup.classList.contains('hidden')) {
+                    popup.classList.remove('hidden');
+                }
+                // Cập nhật icon nút khóa nếu có
+                const lockBtn = document.getElementById('lock-player-btn');
+                if (lockBtn) {
+                    lockBtn.classList.toggle('active', locked);
+                    lockBtn.innerHTML = locked ? '<i class="bi bi-lock-fill"></i>' : '<i class="bi bi-lock"></i>';
+                    lockBtn.title = locked ? 'Đang khóa nghe nhạc' : 'Khóa nghe nhạc';
+                }
+            }
+        } catch (e) {
+            // Silent: không cản trở load trang nếu API fail
+        }
+    })();
 });
 
 // Cleanup when page unloads
