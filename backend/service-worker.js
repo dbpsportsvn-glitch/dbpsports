@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
 });
 
 // Force update version
-const SW_VERSION = 'v4-fix-range-cache';
+const SW_VERSION = 'v5-cleanup-force';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
@@ -214,6 +214,11 @@ self.addEventListener('message', async (event) => {
   if (event.data.action === 'getCachedTracks') {
     const tracks = await getCachedTracks();
     event.ports[0].postMessage({ tracks });
+  }
+  
+  if (event.data.action === 'cleanupRangeRequests') {
+    await cleanupRangeRequests();
+    event.ports[0].postMessage({ success: true });
   }
   
   if (event.data.action === 'preloadTrack') {

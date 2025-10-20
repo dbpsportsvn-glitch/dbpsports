@@ -176,6 +176,25 @@ class OfflineManager {
     }
     
     /**
+     * Force cleanup range request caches
+     */
+    async cleanupRangeRequests() {
+        if (!this.swRegistration) return false;
+        
+        try {
+            const response = await this.sendMessage({ action: 'cleanupRangeRequests' });
+            if (response.success) {
+                this.showNotification('✅ Đã dọn dẹp cache rác', 'success');
+                await this.updateCacheStatus();
+                return true;
+            }
+        } catch (error) {
+            console.error('[Offline Manager] Cleanup failed:', error);
+            return false;
+        }
+    }
+    
+    /**
      * Update cache status UI
      */
     async updateCacheStatus() {

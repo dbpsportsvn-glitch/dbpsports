@@ -164,6 +164,7 @@ class UserMusicManager {
         // ✅ Offline Cache Management Buttons
         const clearCacheBtn = document.getElementById('clear-cache-btn');
         const refreshCacheBtn = document.getElementById('refresh-cache-btn');
+        const cleanupCacheBtn = document.getElementById('cleanup-cache-btn');
         
         if (clearCacheBtn) {
             clearCacheBtn.addEventListener('click', () => this.clearOfflineCache());
@@ -171,6 +172,10 @@ class UserMusicManager {
         
         if (refreshCacheBtn) {
             refreshCacheBtn.addEventListener('click', () => this.refreshCacheStatus());
+        }
+        
+        if (cleanupCacheBtn) {
+            cleanupCacheBtn.addEventListener('click', () => this.cleanupOfflineCache());
         }
     }
     
@@ -1072,6 +1077,33 @@ class UserMusicManager {
     }
     
     // ✅ Offline Cache Management Methods
+    async cleanupOfflineCache() {
+        if (!confirm('Dọn dẹp cache rác (các file nhỏ < 500KB)? Chỉ xóa range requests, giữ lại file nhạc đầy đủ.')) {
+            return;
+        }
+        
+        try {
+            const offlineManager = this.musicPlayer?.offlineManager;
+            if (!offlineManager) {
+                this.showNotification('Offline Manager chưa sẵn sàng', 'error');
+                return;
+            }
+            
+            const success = await offlineManager.cleanupRangeRequests();
+            if (success) {
+                // Refresh the cached tracks list
+                await this.displayCachedTracks();
+                // Update cached tracks indicators in player
+                if (this.musicPlayer) {
+                    await this.musicPlayer.updateCachedTracksStatus();
+                }
+            }
+        } catch (error) {
+            console.error('Error cleaning up cache:', error);
+            this.showNotification('❌ Lỗi khi dọn dẹp cache', 'error');
+        }
+    }
+    
     async clearOfflineCache() {
         if (!confirm('Bạn có chắc muốn xóa toàn bộ cache offline? Bài hát sẽ phải cache lại khi nghe lần sau.')) {
             return;
