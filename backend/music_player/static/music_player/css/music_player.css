@@ -161,9 +161,11 @@
 
 .player-title {
     color: white;
-    font-weight: 600;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 22px;
     margin: 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.5px;
 }
 
 .header-controls {
@@ -939,15 +941,15 @@
     position: fixed;
     bottom: 20px;
     left: 20px;
-    width: 50px;
-    height: 50px;
+    width: 60px; /* ✅ Tăng từ 50px lên 60px */
+    height: 60px; /* ✅ Tăng từ 50px lên 60px */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 20px;
+    font-size: 24px; /* ✅ Tăng từ 20px lên 24px */
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
@@ -1211,9 +1213,9 @@
     .music-player-toggle {
         bottom: 10px;
         left: 10px;
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
+        width: 56px; /* ✅ Tăng từ 45px lên 56px cho mobile */
+        height: 56px; /* ✅ Tăng từ 45px lên 56px cho mobile */
+        font-size: 22px; /* ✅ Tăng từ 18px lên 22px */
     }
 }
 
@@ -2200,22 +2202,530 @@
 }
 
 /* ✅ Landscape orientation - tối ưu cho mobile ngang */
-@media (max-width: 768px) and (orientation: landscape) {
-    .player-controls {
-        padding: 10px 16px !important;
+@media (max-width: 932px) and (orientation: landscape) {
+    /* ✅ Full screen player tối ưu cho landscape */
+    .music-player-popup {
+        max-height: 100dvh !important; /* dvh = dynamic viewport height - tốt hơn cho mobile */
+        height: 100dvh !important;
+        overflow: hidden !important;
     }
     
-    .control-buttons button {
-        width: 36px !important;
+    .full-player {
+        max-height: 100dvh !important;
+        height: 100dvh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ Header compact nhưng vẫn đủ rõ ràng */
+    .player-header {
+        padding: 10px 16px !important; /* ✅ Tăng từ 8px lên 10px */
+        min-height: auto !important;
+        flex-shrink: 0 !important;
+        display: flex !important; /* ✅ Đảm bảo flex layout */
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+    
+    .player-title {
+        font-size: 20px !important; /* ✅ Tăng từ 16px lên 20px cho mobile */
+        font-weight: 700 !important;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    .header-left {
+        gap: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .header-controls {
+        gap: 8px !important; /* ✅ Tăng từ 6px lên 8px */
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .control-btn,
+    .close-btn,
+    .user-avatar-btn {
+        width: 36px !important; /* ✅ Tăng từ 32px lên 36px */
         height: 36px !important;
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+    }
+    
+    /* ✅ Player controls compact nhưng vẫn rõ ràng */
+    .player-controls {
+        padding: 10px 16px !important; /* ✅ Tăng từ 6px lên 10px */
+        flex-shrink: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .current-track-section {
+        margin-bottom: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    .track-title {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .track-artist {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    /* ✅ Progress bar vừa phải */
+    .progress-container {
+        padding: 6px 0 !important; /* ✅ Tăng từ 4px lên 6px */
+    }
+    
+    .progress-bar {
+        height: 6px !important; /* ✅ Tăng từ 5px lên 6px */
+    }
+    
+    .progress-handle {
+        width: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+        height: 16px !important;
+    }
+    
+    .time-display {
+        font-size: 11px !important; /* ✅ Tăng từ 10px lên 11px */
+        margin-top: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+    }
+    
+    /* ✅ Controls row compact hơn */
+    .controls-row {
+        gap: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        margin-top: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+    
+    .control-buttons {
+        gap: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .control-buttons .control-btn {
+        width: 36px !important; /* ✅ Tăng từ 32px lên 36px */
+        height: 36px !important;
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+    }
+    
+    .play-pause-btn {
+        width: 44px !important; /* ✅ Tăng từ 40px lên 44px */
+        height: 44px !important;
+        font-size: 20px !important; /* ✅ Tăng từ 18px lên 20px */
+    }
+    
+    /* ✅ Volume section compact hơn */
+    .volume-section {
+        min-width: 90px !important; /* ✅ Tăng từ 80px lên 90px */
+        max-width: 140px !important; /* ✅ Tăng từ 120px lên 140px */
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    
+    .volume-btn {
+        width: 32px !important; /* ✅ Tăng từ 28px lên 32px */
+        height: 32px !important;
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .volume-container {
+        max-width: 80px !important; /* ✅ Tăng từ 70px lên 80px */
+    }
+    
+    .volume-bar {
+        height: 6px !important; /* ✅ Tăng từ 5px lên 6px */
+    }
+    
+    .volume-handle {
+        width: 14px !important; /* ✅ Tăng từ 12px lên 14px */
+        height: 14px !important;
+    }
+    
+    /* ✅ Player content chiếm phần còn lại */
+    .player-content {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ Tabs section chiếm hết không gian */
+    .tabs-section {
+        flex: 1 !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
     }
     
     .tab-headers {
-        padding: 6px !important;
+        padding: 6px 16px !important; /* ✅ Tăng từ 4px lên 6px */
+        gap: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+        flex-shrink: 0 !important;
+        display: flex !important;
     }
     
     .tab-header {
-        padding: 6px 12px !important;
-        font-size: 12px !important;
+        padding: 8px 16px !important; /* ✅ Tăng từ 6px lên 8px */
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+    }
+    
+    .tab-header i {
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+    }
+    
+    /* ✅ Tab contents chiếm tất cả space còn lại */
+    .tab-contents {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    .tab-content {
+        height: 100% !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        padding: 16px !important; /* ✅ Tăng từ 12px lên 16px */
+    }
+    
+    /* ✅ Track list full height với scroll mượt */
+    .track-list {
+        max-height: none !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        padding-bottom: 16px !important; /* ✅ Tăng từ 12px lên 16px */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important; /* Smooth scroll trên iOS */
+    }
+    
+    /* ✅ Playlist grids full height với scroll mượt */
+    .playlist-grid {
+        max-height: none !important;
+        height: 100% !important;
+        padding-bottom: 16px !important; /* ✅ Tăng từ 12px lên 16px */
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important; /* ✅ Tăng từ 110px lên 120px */
+        gap: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    #playlist-grid:not(.hidden),
+    #user-playlist-grid:not(.hidden) {
+        max-height: none !important;
+        height: 100% !important;
+    }
+    
+    /* ✅ Playlist type toggle compact hơn */
+    .playlist-type-toggle {
+        gap: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+        margin-bottom: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        padding: 4px !important; /* ✅ Tăng từ 3px lên 4px */
+    }
+    
+    .playlist-type-btn {
+        padding: 6px 12px !important; /* ✅ Tăng từ 5px 10px */
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+        gap: 4px !important; /* ✅ Tăng từ 3px lên 4px */
+    }
+    
+    .playlist-type-btn i {
+        font-size: 14px !important; /* ✅ Tăng từ 12px lên 14px */
+    }
+    
+    /* ✅ Track items compact hơn */
+    .track-item {
+        padding: 8px 12px !important; /* ✅ Tăng từ 6px 10px */
+        gap: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    .track-item-number {
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
+        min-width: 26px !important; /* ✅ Tăng từ 24px lên 26px */
+    }
+    
+    .track-item-icon {
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+    }
+    
+    .track-item-title {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .track-item-artist {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    .track-item-duration {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    /* ✅ Playlist cards nhỏ gọn hơn */
+    .playlist-card {
+        min-height: 90px !important; /* ✅ Tăng từ 80px lên 90px */
+        padding: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    .playlist-card-icon {
+        font-size: 22px !important; /* ✅ Tăng từ 20px lên 22px */
+        margin-bottom: 6px !important; /* ✅ Tăng từ 4px lên 6px */
+    }
+    
+    .playlist-card-name {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+        margin-bottom: 3px !important; /* ✅ Tăng từ 2px lên 3px */
+    }
+    
+    .playlist-card-count {
+        font-size: 10px !important; /* ✅ Tăng từ 9px lên 10px */
+    }
+    
+    /* ✅ Settings Modal trong landscape mode - SUPER RESPONSIVE */
+    .settings-modal-content {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        height: 95dvh !important;
+        max-height: 95dvh !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+    
+    .settings-modal-header {
+        padding: 12px 18px !important; /* ✅ Tăng từ 10px 16px */
+        flex-shrink: 0 !important;
+    }
+    
+    .settings-modal-title {
+        font-size: 18px !important; /* ✅ Tăng từ 16px lên 18px */
+    }
+    
+    .settings-close-btn {
+        width: 34px !important; /* ✅ Tăng từ 30px lên 34px */
+        height: 34px !important;
+        font-size: 18px !important; /* ✅ Tăng từ 16px lên 18px */
+    }
+    
+    /* ✅ Settings tabs trong landscape */
+    .settings-tab-headers {
+        flex-shrink: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .settings-tab-header {
+        padding: 10px 14px !important; /* ✅ Tăng từ 8px 12px */
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
+        gap: 8px !important; /* ✅ Tăng từ 6px lên 8px */
+    }
+    
+    .settings-tab-header i {
+        font-size: 16px !important; /* ✅ Tăng từ 14px lên 16px */
+    }
+    
+    /* ✅ Settings tab contents full height */
+    .settings-tab-contents {
+        flex: 1 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .settings-tab-content {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        padding: 14px 18px !important; /* ✅ Tăng từ 12px 16px */
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .settings-tab-content.active {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ Settings sections compact hơn */
+    .settings-section {
+        padding: 14px !important; /* ✅ Tăng từ 12px lên 14px */
+        margin-bottom: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .settings-section-title {
+        font-size: 15px !important; /* ✅ Tăng từ 14px lên 15px */
+        margin-bottom: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .settings-row {
+        padding: 12px 0 !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .settings-label {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    /* ✅ Upload section compact */
+    .upload-section {
+        padding: 14px !important; /* ✅ Tăng từ 12px lên 14px */
+        margin-bottom: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .upload-btn {
+        padding: 12px 24px !important; /* ✅ Tăng từ 10px 20px */
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .upload-hint {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    /* ✅ Track cards compact trong settings */
+    .track-card {
+        padding: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        margin-bottom: 8px !important; /* ✅ Tăng từ 6px lên 8px */
+    }
+    
+    .track-card-icon {
+        width: 38px !important; /* ✅ Tăng từ 34px lên 38px */
+        height: 38px !important;
+        font-size: 18px !important; /* ✅ Tăng từ 16px lên 18px */
+    }
+    
+    .track-card-title {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .track-card-details {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    .track-action-btn {
+        width: 32px !important; /* ✅ Tăng từ 28px lên 32px */
+        height: 32px !important;
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    /* ✅ User playlist cards compact */
+    .user-playlist-card {
+        padding: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        margin-bottom: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    .user-playlist-icon {
+        width: 42px !important; /* ✅ Tăng từ 38px lên 42px */
+        height: 42px !important;
+        font-size: 20px !important; /* ✅ Tăng từ 18px lên 20px */
+    }
+    
+    .user-playlist-name {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .user-playlist-count {
+        font-size: 12px !important; /* ✅ Tăng từ 11px lên 12px */
+    }
+    
+    .playlist-delete-btn {
+        width: 34px !important; /* ✅ Tăng từ 30px lên 34px */
+        height: 34px !important;
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    /* ✅ My tracks list và playlists list full height */
+    .my-tracks-section {
+        flex: 1 !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .my-tracks-list {
+        max-height: none !important;
+        height: 100% !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .my-playlists-list {
+        max-height: none !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* ✅ Quota section compact */
+    .upload-quota-section {
+        padding: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+        margin-bottom: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .quota-text {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+        margin-bottom: 8px !important; /* ✅ Tăng từ 6px lên 8px */
+    }
+    
+    .quota-bar {
+        height: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    /* ✅ Save button compact */
+    .settings-save-btn {
+        padding: 12px 20px !important; /* ✅ Tăng từ 10px 16px */
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    /* ✅ Create playlist button compact */
+    .create-playlist-btn {
+        padding: 10px 16px !important; /* ✅ Tăng từ 8px 14px */
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
+    }
+    
+    /* ✅ Toggle button vị trí tốt hơn */
+    .music-player-toggle {
+        bottom: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        left: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+        width: 52px !important; /* ✅ Tăng từ 48px lên 52px */
+        height: 52px !important;
+        font-size: 22px !important; /* ✅ Tăng từ 20px lên 22px */
+    }
+    
+    /* ✅ Sleep timer menu vị trí tốt hơn */
+    .sleep-timer-menu {
+        top: 50px !important; /* ✅ Tăng từ 45px lên 50px */
+        right: 16px !important; /* ✅ Tăng từ 12px lên 16px */
+        min-width: 200px !important; /* ✅ Tăng từ 180px lên 200px */
+        padding: 12px !important; /* ✅ Tăng từ 10px lên 12px */
+    }
+    
+    .sleep-timer-header {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+        margin-bottom: 10px !important; /* ✅ Tăng từ 8px lên 10px */
+    }
+    
+    .sleep-timer-option {
+        padding: 10px 14px !important; /* ✅ Tăng từ 8px 12px */
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
+    }
+    
+    .timer-remaining {
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px */
+    }
+    
+    .cancel-timer-btn {
+        padding: 8px 14px !important; /* ✅ Tăng từ 6px 12px */
+        font-size: 13px !important; /* ✅ Tăng từ 12px lên 13px */
     }
 }

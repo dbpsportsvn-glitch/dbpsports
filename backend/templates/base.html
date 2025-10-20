@@ -4,7 +4,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https:;">
   <title>{% block title %}DBP Sports{% endblock %}</title>
 
@@ -259,6 +259,18 @@
     /* Mobile User Info */
     .mobile-user-info {
       animation: slideInDown 0.3s ease-out;
+      overflow: hidden;
+    }
+    
+    .mobile-user-info .flex-grow-1 {
+      min-width: 0;
+      overflow: hidden;
+    }
+    
+    .mobile-user-info .text-light {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     @keyframes slideInDown {
@@ -808,9 +820,9 @@
             </div>
           {% endif %}
         {% endwith %}
-        <div class="flex-grow-1">
-          <div class="text-light fw-bold" style="font-size: 1rem;">{{ user.get_full_name|default:user.username }}</div>
-          <div class="text-light opacity-75 small">{{ user.email|truncatechars:25 }}</div>
+        <div class="flex-grow-1" style="min-width: 0;">
+          <div class="text-light fw-bold" style="font-size: 1rem; word-break: break-word; overflow-wrap: break-word;">{{ user.get_full_name|default:user.username|truncatechars:20 }}</div>
+          <div class="text-light opacity-75 small" style="word-break: break-all; overflow-wrap: break-word;">{{ user.email|truncatechars:20 }}</div>
         </div>
       </div>
     </div>

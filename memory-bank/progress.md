@@ -9,12 +9,8 @@
   - Quản lý hồ sơ cá nhân (Profile) với avatar, banner, bio
   - Dashboard tổng hợp cho từng vai trò
   - Hồ sơ chuyên nghiệp cho: Coach, Referee, Stadium, Sponsor
-  - **Sửa lỗi cập nhật mã QR cho nhà tài trợ:** Đã khắc phục lỗi form không cập nhật được mã QR do conflict giữa 2 model SponsorProfile (cũ và mới). Đã chuyển toàn bộ sang dùng model mới từ users.models với đầy đủ fields bao gồm payment_qr_code.
-  - **Tối ưu hiển thị thông tin vai trò:** Đã làm gọn gàng hơn khu vực hiển thị thông tin các vai trò (Coach, Stadium, Sponsor) với layout compact, giảm không gian chiếm dụng và cải thiện UX.
-  - **Sửa lỗi NoReverseMatch cho public_profile:** Khắc phục lỗi khi tạo URL cho hồ sơ công khai do `user.username` rỗng. Hệ thống đăng nhập bằng email nên đã cập nhật code để sử dụng `user.email` làm fallback, đảm bảo URL luôn được tạo thành công.
-  - **Hoàn thành tính năng thay ảnh bìa cho tất cả hồ sơ:** Đã thêm nút "Đổi ảnh bìa" vào góc trên bên phải banner cho tất cả 4 loại hồ sơ: hồ sơ người dùng, hồ sơ cầu thủ, hồ sơ đội bóng, và hồ sơ sân bóng. Mỗi hồ sơ có nút riêng với modal upload và logic quyền hạn phù hợp. Tích hợp tính năng tự động nén ảnh xuống dưới 2MB để tránh lỗi kích thước file, hỗ trợ format JPG/PNG/WebP với quality 85% → 75% → 65% adaptive.
-  - **Tạo hệ thống ảnh bìa riêng cho cầu thủ:** Đã thêm trường `banner_image` vào model Player, tạo view `upload_player_banner` riêng, và cập nhật template `player_detail.html` để mỗi cầu thủ có thể đổi ảnh bìa của chính mình. Logic hiển thị ưu tiên: `player.banner_image` → `team.banner_image` → `team.main_photo` → ảnh mặc định. Chỉ cầu thủ sở hữu (`player.user`) mới có quyền thay ảnh, hoàn toàn độc lập với đội bóng.
-  - **Thêm logic ảnh mặc định cho giải đấu:** Đã cập nhật tất cả 4 templates chính (tournament_detail.html, home.html, active_list.html, archive.html) để tự động hiển thị ảnh `Backgroud-1.jpg` khi admin/BTC chưa upload banner giải đấu. Logic ưu tiên: `tournament.image` → `Backgroud-1.jpg`. Cập nhật cả Structured Data JSON-LD trong archive.html để đảm bảo SEO và trải nghiệm người dùng nhất quán trên tất cả các trang hiển thị giải đấu.
+  - Tính năng thay ảnh bìa cho tất cả hồ sơ với tự động nén ảnh
+  - Hệ thống ảnh bìa riêng cho cầu thủ độc lập với đội bóng
   
   **Module Tournaments:**
   - Tạo và quản lý giải đấu (Tournament)
@@ -49,6 +45,24 @@
   - Model cơ bản: Product, Cart, Order
   - Danh mục sản phẩm (Category)
   - Quản lý đơn hàng
+  - Tích hợp discount vào thanh toán lệ phí giải đấu
+  
+  **Module Music Player:**
+  - Trình phát nhạc popup với đầy đủ tính năng
+  - Personal Music - Upload & Manage User Music với quota 500MB
+  - Mobile Full-Screen Mode với performance tối ưu
+  - Keyboard Shortcuts và Auto-Play
+  - Sleep Timer với fade out mượt mà
+  - Tab System + Playlist Grid với UX hoàn hảo
+  - CSS Scoping để tránh xung đột global styles
+
+  **Module Organization Shop:**
+  - Hệ thống shop riêng cho từng ban tổ chức (BTC)
+  - Database Models (9 models) với đầy đủ tính năng
+  - Management Interface và Payment Proof Upload
+  - Dashboard với thống kê và analytics
+  - Trang tìm kiếm shop BTC với giao diện hiện đại
+  - Banner Upload System với tự động resize và nén ảnh
   
   **Module Blog:**
   - Đăng bài viết tin tức
@@ -103,16 +117,3 @@
 
 - **Các vấn đề đã biết:**
   - (Không có vấn đề nghiêm trọng đang track)
-
-- **Organization Shop System - Hoàn thành:**
-  - **Database Models:** Tạo thành công 9 models mới cho Organization Shop bao gồm OrganizationCategory, OrganizationProduct, OrganizationProductVariant, OrganizationProductImage, OrganizationCart, OrganizationCartItem, OrganizationOrder, OrganizationOrderItem, OrganizationShopSettings. Tích hợp vào Django Admin với giao diện quản lý chuyên nghiệp.
-  - **Tournament Integration:** Cập nhật Tournament model để hỗ trợ cả Global Shop và Organization Shop. Thêm method `calculate_organization_shop_discount()` để tính khuyến mãi từ shop của BTC tổ chức giải đấu.
-  - **Views & URLs:** Tạo đầy đủ 12 views cho Organization Shop bao gồm shop_home, product_list, product_detail, cart management, checkout, order management. Tạo URL structure `/shop/org/<org_slug>/` với routing hoàn chỉnh.
-  - **Templates:** Tạo đầy đủ 7 templates cho Organization Shop frontend và 4 templates quản lý với giao diện đẹp mắt và responsive. Bao gồm breadcrumb navigation, stats cards, và modern UI design.
-  - **Sample Data:** Tạo thành công management command và script để tạo dữ liệu mẫu bao gồm 3 danh mục, 3 sản phẩm, shop settings, và product sizes.
-  - **Bug Fixes:** Khắc phục thành công 5 lỗi chính: NoReverseMatch namespace URLs, TemplateSyntaxError với current_category, FieldError với organization.members query, ValueError với main_image, và NoReverseMatch với cart URLs.
-  - **Edit/Delete Functions:** Implement đầy đủ chức năng edit/delete cho cả danh mục và sản phẩm với 4 templates mới, 4 view functions với validation đầy đủ, URL routing hoàn chỉnh, và giao diện xác nhận xóa chuyên nghiệp.
-  - **Shop Settings Upgrade:** Nâng cấp giao diện cài đặt shop với đầy đủ các trường thông tin khoa học và chuyên nghiệp. Thêm JavaScript features: auto-save localStorage, format tiền tệ/phone/bank account, preview ảnh, validation real-time.
-  - **Image Upload Fix:** Khắc phục thành công lỗi upload ảnh bằng cách sửa template từ `product.image` thành `product.main_image` để khớp với field name trong model. Upload ảnh hiện hoạt động hoàn hảo.
-  - **Banner Upload System Optimization:** Hoàn thiện hệ thống upload banner với 5 cải tiến lớn: (1) Dọn dẹp code debug không cần thiết - xóa views debug_banner_upload, test_csrf và templates, loại bỏ @csrf_exempt không an toàn; (2) Thêm chức năng tự động resize và nén ảnh với thuật toán Cover thông minh - resize về 1200x300px, crop từ center, nén xuống dưới 2MB với quality adaptive; (3) Cải thiện UX với gợi ý kích thước rõ ràng, preview ảnh, validation file type và size; (4) Sửa lỗi góc banner không có border-radius và ảnh bị repeat/tile - thêm border-radius 15px, box-shadow đẹp, CSS !important để ngăn chặn override; (5) Khắc phục hoàn toàn vấn đề ảnh bị cắt và nối sai phần - thuật toán Cover đảm bảo fill đầy banner, không bị repeat hay tile. Hệ thống banner giờ hoạt động hoàn hảo với giao diện đẹp và tính năng chuyên nghiệp.
-  - **Trang Tim Kiem Shop BTC:** Hoan thanh tao trang tim kiem shop BTC voi giao dien hien dai dong bo voi trang tim viec. Bao gom: Hero section voi gradient tim va thong ke tong quan, Bo loc thong minh (tim kiem theo ten, khu vuc, giai dau), Shop cards dep mat voi thong tin chi tiet, Sidebar "Shop Noi Bat" hien thi top shops co nhieu san pham nhat, Logic tim kiem thong minh voi toi uu database queries, Responsive design cho moi thiet bi. Cap nhat menu Shop thanh dropdown voi 2 muc: "Shop Chinh" (highlight voi gradient tim va mau vang khi hover) va "Shop BTC". Sua loi template organization shop khi khong co logo bang cach them placeholder dep mat voi icon shop va styling dong nhat.

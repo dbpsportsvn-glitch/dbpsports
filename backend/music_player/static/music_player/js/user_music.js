@@ -590,7 +590,7 @@ class UserMusicManager {
         setTimeout(() => {
             if (!this.musicPlayer.isPlaying) {
                 this.musicPlayer.audio.play().catch(e => {
-                    console.log('User track play failed:', e);
+                    // User track play failed
                 });
             }
         }, 100);
@@ -706,7 +706,7 @@ class UserMusicManager {
     async showAddToPlaylistMenu(trackId, event) {
         event.stopPropagation();
         
-        console.log('Available playlists:', this.userPlaylists);
+        // Available playlists
         
         if (this.userPlaylists.length === 0) {
             this.showNotification('Bạn chưa có playlist nào. Hãy tạo playlist trước!', 'info');
@@ -722,7 +722,7 @@ class UserMusicManager {
         const index = parseInt(choice) - 1;
         if (index >= 0 && index < this.userPlaylists.length) {
             const playlist = this.userPlaylists[index];
-            console.log(`Selected playlist: ${playlist.name} (ID: ${playlist.id})`);
+            // Selected playlist
             await this.addTrackToPlaylist(playlist.id, trackId);
         } else {
             this.showNotification('Lựa chọn không hợp lệ!', 'error');
@@ -731,7 +731,7 @@ class UserMusicManager {
     
     async addTrackToPlaylist(playlistId, trackId) {
         try {
-            console.log(`Adding track ${trackId} to playlist ${playlistId}`);
+            // Adding track to playlist
             
             const response = await fetch(`/music/user/playlists/${playlistId}/add-track/${trackId}/`, {
                 method: 'POST',
@@ -740,7 +740,7 @@ class UserMusicManager {
                 }
             });
             
-            console.log('Response status:', response.status);
+            // Response status
             
             if (!response.ok) {
                 const errorData = await response.json();
@@ -750,7 +750,7 @@ class UserMusicManager {
             }
             
             const data = await response.json();
-            console.log('Response data:', data);
+            // Response data
             
             if (data.success) {
                 this.showNotification(data.message, 'success');
@@ -865,7 +865,7 @@ class UserMusicManager {
                 setTimeout(() => {
                     if (!this.musicPlayer.isPlaying) {
                         this.musicPlayer.audio.play().catch(e => {
-                            console.log('Playlist play failed:', e);
+                            // Playlist play failed
                         });
                     }
                 }, 100);
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.musicPlayer) {
             window.userMusicManager = new UserMusicManager(window.musicPlayer);
-            console.log('✅ User Music Manager initialized');
+            // User Music Manager initialized
         }
     }, 500);
 });

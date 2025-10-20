@@ -74,9 +74,15 @@
   - Context processors de truyen du lieu vao templates
   - SMTP configuration trong settings.py
 
-- **Business Logic Location:**
-  - Complex queries → Model Managers
-  - Data manipulation → Model methods
-  - Request handling → Views
-  - Reusable logic → Utility functions (`utils.py`)
-  - Validation → Model `clean()` và Form validation
+- **Music Player Patterns:**
+  - **CSS Scoping:** Tất cả CSS selectors được prefix với `.music-player-popup` để tránh xung đột global styles
+  - **Event Delegation:** Sử dụng event delegation cho track-items thay vì individual listeners để giảm memory footprint
+  - **Performance Optimization:** Throttle drag events với requestAnimationFrame, CSS will-change cho GPU acceleration
+  - **State Management:** Promise-based approach cho restorePlayerState với timeout và cleanup functions
+  - **Auto-play Policy:** User interaction detection (click, keydown) để bypass browser autoplay restrictions
+
+- **Organization Shop Patterns:**
+  - **Slug-based Routing:** URL structure `/shop/org/<org_slug>/` cho từng BTC
+  - **Model Isolation:** Mỗi BTC có models riêng với unique constraints trong cùng organization
+  - **Banner Upload:** Tự động resize và nén ảnh với thuật toán Cover thông minh
+  - **Payment Integration:** Tích hợp với tournament registration payment với discount logic

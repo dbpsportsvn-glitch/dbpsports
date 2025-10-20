@@ -91,16 +91,14 @@ class MusicPlayer {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 // Page bị ẩn - KHÔNG pause audio trên mobile (user muốn tiếp tục phát)
-                console.log('📱 Page hidden - keeping music playing');
             } else {
                 // Page hiện lại
-                console.log('📱 Page visible again');
             }
         });
         
         // Handle mobile app switching - DISABLED (user wants continuous playback)
         window.addEventListener('blur', () => {
-            console.log('📱 App switched - keeping music playing');
+            // App switched - keeping music playing
         });
         
         // ❌ REMOVED: Save state interval - đã có debounce trong savePlayerState()
@@ -149,7 +147,7 @@ class MusicPlayer {
         // ✅ Keyboard shortcuts button
         this.keyboardShortcutsBtn = document.getElementById('keyboard-shortcuts-btn');
         
-        // Debug: Kiểm tra các elements quan trọng (chỉ log khi có lỗi)
+        // Check required elements
         const elementsStatus = {
             currentTime: !!this.currentTime,
             totalTime: !!this.totalTime,
@@ -158,7 +156,7 @@ class MusicPlayer {
             audio: !!this.audio
         };
         
-        // Chỉ log nếu có elements bị thiếu
+        // Log missing elements only if there are issues
         const missingElements = Object.entries(elementsStatus).filter(([key, exists]) => !exists);
         if (missingElements.length > 0) {
             console.warn('Missing elements:', missingElements.map(([key]) => key));
@@ -300,7 +298,6 @@ class MusicPlayer {
             // Close player nếu click ngoài
             if (!this.popup.classList.contains('hidden')) {
                 if (!this.popup.contains(e.target) && !this.toggle.contains(e.target)) {
-                    console.log('Clicked outside player, closing...');
                     this.togglePlayer();
                 }
             }
@@ -369,8 +366,7 @@ class MusicPlayer {
                 if (type === 'admin') {
                     adminGrid.classList.remove('hidden');
                     userGrid.classList.add('hidden');
-                    // ✅ Force refresh admin playlists khi click vào Admin Playlists
-                    console.log('🔄 Switching to Admin Playlists - force refreshing...');
+                    // Force refresh admin playlists khi click vào Admin Playlists
                     this.refreshPlaylists().then(() => {
                         // Restore active state for admin playlists
                         this.restorePlaylistActiveState();
@@ -567,7 +563,7 @@ class MusicPlayer {
                     this.playTrack(0);
                 }, 100);
                 
-                console.log('✅ Loaded user playlist:', data.playlist.name);
+                // Loaded user playlist
             } else {
                 this.showMessage('Playlist chưa có bài hát!', 'info');
             }
@@ -592,10 +588,7 @@ class MusicPlayer {
         const tabHeaders = popup.querySelectorAll('.tab-header');
         const tabContents = popup.querySelectorAll('.tab-content');
         
-        console.log('Tab system initialized:', {
-            headers: tabHeaders.length,
-            contents: tabContents.length
-        });
+        // Tab system initialized
         
         tabHeaders.forEach(header => {
             header.addEventListener('click', (e) => {
@@ -603,7 +596,6 @@ class MusicPlayer {
                 e.stopPropagation();
                 
                 const tabName = header.getAttribute('data-tab');
-                console.log('Tab clicked:', tabName);
                 
                 // Remove active class from all headers and contents
                 tabHeaders.forEach(h => h.classList.remove('active'));
@@ -614,15 +606,11 @@ class MusicPlayer {
                 const targetContent = popup.querySelector(`#tab-${tabName}`);
                 if (targetContent) {
                     targetContent.classList.add('active');
-                    console.log('Tab switched to:', tabName);
                     
-                    // ✅ Auto-load user playlists khi switch sang tab Playlists (default personal first)
+                    // Auto-load user playlists khi switch sang tab Playlists (default personal first)
                     if (tabName === 'playlists') {
-                        console.log('🎵 Loading user playlists...');
                         this.loadUserPlaylistsInMainPlayer();
                     }
-                } else {
-                    console.error('Tab content not found:', `tab-${tabName}`);
                 }
             });
         });
@@ -670,7 +658,7 @@ class MusicPlayer {
     async refreshPlaylists() {
         // ✅ Force refresh playlists from server với cache-busting mạnh
         try {
-            console.log('🔄 Force refreshing playlists...');
+            // Force refreshing playlists
             
             // ✅ Thêm random parameter để đảm bảo không cache
             const timestamp = Date.now();
@@ -703,17 +691,10 @@ class MusicPlayer {
                     }
                 }
                 
-                console.log('✅ Playlists refreshed successfully:', this.playlists.length, 'playlists');
                 
-                // ✅ Log chi tiết để debug
-                this.playlists.forEach((playlist, index) => {
-                    console.log(`  ${index + 1}. ${playlist.name} (${playlist.tracks_count} tracks)`);
-                });
-            } else {
-                console.error('❌ Failed to refresh playlists:', data.error);
             }
         } catch (error) {
-            console.error('❌ Error refreshing playlists:', error);
+            console.error('Error refreshing playlists:', error);
         }
     }
 
@@ -826,7 +807,6 @@ class MusicPlayer {
         const playlist = this.playlists.find(p => p.id === parseInt(playlistId));
         if (!playlist) return;
         
-        console.log('Selecting playlist:', playlist);
         this.currentPlaylist = playlist;
         this.currentTrackIndex = 0;
         this.populateTrackList();
@@ -865,7 +845,6 @@ class MusicPlayer {
         
         // Auto-play khi user chọn playlist (KHÔNG auto-play khi restore state)
         if (playlist.tracks.length > 0 && !this.isRestoringState) {
-            console.log('Auto-playing track 0 after playlist selection');
             this.userInteracted = true; // Mark user has interacted
             // Delay một chút để đảm bảo UI đã update
             setTimeout(() => {
@@ -924,7 +903,6 @@ class MusicPlayer {
 
     showMessage(message, type = 'info') {
         // ✅ Toast notification thay vì alert - không chặn UX
-        console.log(`[${type.toUpperCase()}] ${message}`);
         
         // Tạo toast element
         const toast = document.createElement('div');
@@ -1001,7 +979,9 @@ class MusicPlayer {
         if (isSameTrack) {
             // Nếu đang tạm dừng thì tiếp tục phát, không load lại
             if (!this.isPlaying) {
-                this.audio.play().catch(e => console.log('Play failed:', e));
+                this.audio.play().catch(e => {
+                    // Play failed - handle silently
+                });
             }
             return;
         }
@@ -1020,7 +1000,7 @@ class MusicPlayer {
         // ✅ Timeout protection
         const loadTimeout = setTimeout(() => {
             if (this.isLoadingTrack) {
-                console.warn('⏰ Track load timeout:', track.title);
+                // Track load timeout
                 this.isLoadingTrack = false;
                 this.showMessage('Timeout khi tải bài hát: ' + track.title, 'error');
             }
@@ -1046,7 +1026,7 @@ class MusicPlayer {
             // Auto play nếu được phép
             if (this.settings.auto_play && this.userInteracted) {
                 this.audio.play().catch(e => {
-                    console.log('Autoplay prevented:', e.message);
+                    // Autoplay prevented
                 });
             }
         };
@@ -1080,7 +1060,7 @@ class MusicPlayer {
             
             // ✅ Retry mechanism
             setTimeout(() => {
-                console.log('🔄 Retrying track load...');
+                // Retrying track load
                 this.audio.load();
             }, 2000);
         };
@@ -1114,7 +1094,7 @@ class MusicPlayer {
             // Đánh dấu user đã tương tác
             this.userInteracted = true;
             this.audio.play().catch(e => {
-                console.log('Play failed:', e);
+                // Play failed
                 this.showMessage('Không thể phát nhạc. Vui lòng thử lại.', 'error');
             });
         }
@@ -1157,11 +1137,13 @@ class MusicPlayer {
     }
 
     onTrackEnd() {
-        console.log('Track ended, repeat mode:', this.repeatMode);
+        // Track ended
         if (this.repeatMode === 'one') {
             // Lặp lại bài hiện tại
             this.audio.currentTime = 0;
-            this.audio.play().catch(e => console.log('Play failed:', e));
+            this.audio.play().catch(e => {
+                // Play failed
+            });
         } else if (this.repeatMode === 'all') {
             // Chuyển bài tiếp theo (có thể quay về đầu)
             this.nextTrack();
@@ -1220,7 +1202,6 @@ class MusicPlayer {
         const duration = this.audio.duration;
         if (this.totalTime && duration) {
             this.totalTime.textContent = this.formatTime(duration);
-            console.log('Updated total time:', this.formatTime(duration));
         }
     }
 
@@ -1267,14 +1248,6 @@ class MusicPlayer {
             }
         }
         
-        // Debug log mỗi 10 giây (giảm tần suất)
-        if (Math.floor(this.audio.currentTime) % 10 === 0 && Math.floor(this.audio.currentTime) > 0) {
-            console.log('Progress update:', {
-                currentTime: this.formatTime(this.audio.currentTime),
-                totalTime: this.formatTime(this.audio.duration),
-                progress: progress.toFixed(1) + '%'
-            });
-        }
     }
 
     formatTime(seconds) {
@@ -1368,19 +1341,19 @@ class MusicPlayer {
     // Method để test seek functionality
     testSeek(percent) {
         if (!this.audio.duration) {
-            console.log('Cannot test seek: no duration');
+            // Cannot test seek: no duration
             return;
         }
         
         const newTime = percent * this.audio.duration;
-        console.log('Testing seek to', percent * 100 + '% =', this.formatTime(newTime));
+        // Testing seek
         
         this.audio.currentTime = newTime;
         this.updateProgress();
         
         // Verify after a short delay
         setTimeout(() => {
-            console.log('Seek result:', this.formatTime(this.audio.currentTime), '(expected:', this.formatTime(newTime), ')');
+            // Seek result
         }, 100);
     }
 
@@ -1466,13 +1439,13 @@ class MusicPlayer {
         this.audio.volume = this.isMuted ? 0 : percent;
         this.updateVolumeDisplay();
         
-        console.log('🎚️ Volume set:', (percent * 100).toFixed(0) + '%', 'Muted:', this.isMuted);
+        // Volume set
     }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
         this.audio.volume = this.isMuted ? 0 : this.volume;
-        console.log('🔇 Mute toggled:', this.isMuted, 'Volume:', this.audio.volume);
+        // Mute toggled
         this.updateVolumeDisplay();
     }
 
@@ -1492,7 +1465,7 @@ class MusicPlayer {
         this.shuffleBtn.classList.toggle('active', this.isShuffled);
         this.saveSettings();
         
-        console.log('Shuffle mode changed to:', this.isShuffled);
+        // Shuffle mode changed
     }
 
     toggleRepeat() {
@@ -1504,7 +1477,7 @@ class MusicPlayer {
         this.updateRepeatButton();
         this.saveSettings();
         
-        console.log('Repeat mode changed to:', this.repeatMode);
+        // Repeat mode changed
     }
     
     updateRepeatButton() {
@@ -1551,14 +1524,14 @@ class MusicPlayer {
         
         // Nếu đang mở player (từ hidden → visible)
         if (wasHidden) {
-            console.log('🎵 Opening player - refreshing playlists...');
+            // Opening player - refreshing playlists
             this.refreshPlaylists();
             
             // ✅ Reset iOS volume message flag khi mở player
             // (Chỉ show khi user tự nhấn vào volume controls, không auto-show)
             if (this.isIOS) {
                 this.hasShownIOSVolumeMessage = false;
-                console.log('🍎 iOS volume message flag reset - will show on first volume interaction');
+                // iOS volume message flag reset
             }
             
             // ✅ Auto-play khi mở lần đầu tiên
@@ -1570,14 +1543,14 @@ class MusicPlayer {
                 setTimeout(() => {
                     // Nếu chưa phát nhạc và có playlist available
                     if (!this.isPlaying && this.currentPlaylist && this.currentPlaylist.tracks.length > 0) {
-                        console.log('🎵 Auto-playing on first open...');
+                        // Auto-playing on first open
                         this.playTrack(this.currentTrackIndex);
                     }
                 }, 300);
             }
         } else {
             // ✅ Đang đóng player
-            console.log('🎵 Closing player');
+            // Closing player
         }
     }
 
@@ -2134,7 +2107,7 @@ class MusicPlayer {
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             ">
                 <h3 style="color: white; margin: 0 0 ${isDesktop ? '15px' : '20px'} 0; font-size: ${isDesktop ? '20px' : '24px'}; display: flex; align-items: center; gap: 10px;">
-                    ⌨️ Phím tắt Music Player
+                    ⌨️ Phím tắt Music
                 </h3>
                 ${iosWarning}
                 <div style="display: grid; grid-template-columns: ${isDesktop ? '1fr' : '1fr 1fr'}; gap: ${isDesktop ? '8px' : '12px'}; color: white;">
@@ -2337,13 +2310,7 @@ class MusicPlayer {
             const track = playlist.tracks[trackIndex];
             if (!track) return false;
             
-            console.log('Restoring player state:', {
-                playlist: playlist.name,
-                track: track.title,
-                trackIndex: trackIndex,
-                currentTime: state.currentTime,
-                isPlaying: state.isPlaying
-            });
+            // Restoring player state
             
             // Set flags
             this.isRestoringState = true;
@@ -2385,18 +2352,18 @@ class MusicPlayer {
                             if (resolved) return;
                             resolved = true;
                             cleanup();
-                            console.log('✅ Audio ready with duration:', this.formatTime(this.audio.duration));
+                            // Audio ready with duration
                             resolve();
                         }
                     };
                     
                     const onMetadataLoaded = () => {
-                        console.log('📊 Metadata loaded, duration:', this.audio.duration);
+                        // Metadata loaded
                         checkAndResolve();
                     };
                     
                     const onCanPlay = () => {
-                        console.log('▶️ Can play, duration:', this.audio.duration);
+                        // Can play
                         // Delay nhỏ để chắc chắn duration đã được set
                         setTimeout(checkAndResolve, 50);
                     };
@@ -2430,7 +2397,7 @@ class MusicPlayer {
             waitForAudioReady()
                 .then(() => {
                     // Audio đã sẵn sàng VÀ có duration
-                    console.log('🎵 Audio ready for restore, attempting to set position...');
+                    // Audio ready for restore
                     
                     // Set thời gian phát với validation tốt hơn
                     if (state.currentTime && state.currentTime > 0) {
@@ -2439,24 +2406,24 @@ class MusicPlayer {
                             
                             try {
                                 this.audio.currentTime = targetTime;
-                                console.log('✅ Restored position:', this.formatTime(targetTime), '/', this.formatTime(this.audio.duration));
+                                // Restored position
                             } catch (e) {
                                 console.error('❌ Failed to set currentTime:', e);
                                 // Retry sau 200ms
                                 setTimeout(() => {
                                     try {
                                         this.audio.currentTime = targetTime;
-                                        console.log('✅ Restored position (retry):', this.formatTime(targetTime));
+                                        // Restored position (retry)
                                     } catch (e2) {
                                         console.error('❌ Failed to set currentTime (retry):', e2);
                                     }
                                 }, 200);
                             }
                         } else {
-                            console.warn('⚠️ Duration not valid:', this.audio.duration, '- cannot restore position');
+                            // Duration not valid - cannot restore position
                         }
                     } else {
-                        console.log('ℹ️ No currentTime to restore (starting from beginning)');
+                        // No currentTime to restore (starting from beginning)
                     }
                     
                     // Update UI
@@ -2467,7 +2434,7 @@ class MusicPlayer {
                     if (state.isPlaying) {
                         this.userInteracted = true;
                         this.audio.play().catch(e => {
-                            console.log('Autoplay prevented:', e.message);
+                            // Autoplay prevented
                         });
                     }
                 })
@@ -2479,7 +2446,7 @@ class MusicPlayer {
                     setTimeout(() => {
                         this.isRestoringState = false;
                         this.isLoadingTrack = false;
-                        console.log('🏁 Restore completed');
+                        // Restore completed
                     }, 1000);
                 });
             
@@ -2496,7 +2463,7 @@ class MusicPlayer {
 
     // Sleep Timer Methods
     setSleepTimer(minutes) {
-        console.log(`⏰ Setting sleep timer for ${minutes} minutes`);
+        // Setting sleep timer
         
         // Cancel existing timer if any
         this.cancelSleepTimer();
@@ -2550,7 +2517,7 @@ class MusicPlayer {
     }
     
     fadeOutAndStop() {
-        console.log('⏰ Sleep timer finished - fading out...');
+        // Sleep timer finished - fading out
         
         if (!this.audio.paused) {
             // Fade out over 3 seconds
@@ -2571,7 +2538,7 @@ class MusicPlayer {
                     this.audio.volume = this.volume; // Restore original volume
                     this.isPlaying = false;
                     this.updatePlayPauseButton();
-                    console.log('⏰ Music stopped by sleep timer');
+                    // Music stopped by sleep timer
                 }
             }, fadeInterval);
         }
@@ -2581,7 +2548,7 @@ class MusicPlayer {
     }
     
     cancelSleepTimer() {
-        console.log('⏰ Cancelling sleep timer');
+        // Cancelling sleep timer
         
         // Clear interval
         if (this.sleepTimerInterval) {
@@ -2613,7 +2580,7 @@ class MusicPlayer {
     // ✅ Mobile Optimization Methods
     initializeMobileOptimizations() {
         if (this.isMobile) {
-            console.log('📱 Initializing mobile optimizations...');
+            // Initializing mobile optimizations
             
             // ✅ Media Session API cho lock screen controls
             this.initializeMediaSession();
@@ -2633,7 +2600,7 @@ class MusicPlayer {
     handleIOSVolumeRestrictions() {
         if (!this.isIOS) return; // Chỉ xử lý cho iOS
         
-        console.log('🍎 iOS detected - disabling volume controls (system limitation)');
+        // iOS detected - disabling volume controls
         
         // Disable volume slider visually
         if (this.volumeFill && this.volumeHandle) {
@@ -2693,7 +2660,7 @@ class MusicPlayer {
     showIOSVolumeMessage() {
         // ✅ Chỉ show 1 lần khi mở popup, không spam
         if (this.hasShownIOSVolumeMessage) {
-            console.log('🍎 iOS volume message already shown in this session');
+            // iOS volume message already shown
             return;
         }
         
@@ -2713,10 +2680,10 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     
     initializeMediaSession() {
         if ('mediaSession' in navigator) {
-            console.log('🎵 Setting up Media Session API...');
+            // Setting up Media Session API
             
             navigator.mediaSession.setActionHandler('play', () => {
-                console.log('🎵 Media Session: Play action');
+                // Media Session: Play action
                 // ✅ Gọi togglePlayPause thay vì trực tiếp audio.play()
                 // để đảm bảo state được update đúng
                 if (!this.isPlaying) {
@@ -2726,7 +2693,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             });
             
             navigator.mediaSession.setActionHandler('pause', () => {
-                console.log('🎵 Media Session: Pause action');
+                // Media Session: Pause action
                 // ✅ Gọi togglePlayPause thay vì trực tiếp audio.pause()
                 // để đảm bảo state được update đúng
                 if (this.isPlaying) {
@@ -2735,34 +2702,34 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             });
             
             navigator.mediaSession.setActionHandler('previoustrack', () => {
-                console.log('🎵 Media Session: Previous track');
+                // Media Session: Previous track
                 this.previousTrack();
             });
             
             navigator.mediaSession.setActionHandler('nexttrack', () => {
-                console.log('🎵 Media Session: Next track');
+                // Media Session: Next track
                 this.nextTrack();
             });
             
             navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-                console.log('🎵 Media Session: Seek backward', details.seekOffset);
+                // Media Session: Seek backward
                 this.seekBackward(details.seekOffset || 10);
             });
             
             navigator.mediaSession.setActionHandler('seekforward', (details) => {
-                console.log('🎵 Media Session: Seek forward', details.seekOffset);
+                // Media Session: Seek forward
                 this.seekForward(details.seekOffset || 10);
             });
             
             navigator.mediaSession.setActionHandler('seekto', (details) => {
                 if (details.seekTime !== undefined) {
-                    console.log('🎵 Media Session: Seek to', details.seekTime);
+                    // Media Session: Seek to
                     this.seekTo(details.seekTime);
                 }
             });
             
             navigator.mediaSession.setActionHandler('stop', () => {
-                console.log('🎵 Media Session: Stop action');
+                // Media Session: Stop action
                 this.audio.pause();
                 this.audio.currentTime = 0;
             });
@@ -2808,7 +2775,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     }
     
     setupAudioPreloading() {
-        console.log('🎵 Setting up audio preloading...');
+        // Setting up audio preloading
         
         // Preload next và previous tracks
         this.audio.addEventListener('loadedmetadata', () => {
@@ -2847,7 +2814,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                         audioElement.src = '';
                         audioElement.load(); // Free memory
                         this.preloadedTracks.delete(trackId);
-                        console.log('🗑️ Cleaned up preloaded track:', trackId);
+                        // Cleaned up preloaded track
                     }
                 }
             }
@@ -2857,7 +2824,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             if (nextIndex !== this.currentTrackIndex) {
                 const nextTrack = this.currentPlaylist.tracks[nextIndex];
                 if (nextTrack && !this.preloadedTracks.has(nextTrack.id)) {
-                    console.log('🎵 Preloading next track:', nextTrack.title);
+                    // Preloading next track
                     const audio = new Audio();
                     audio.preload = 'metadata';
                     audio.src = nextTrack.file_url;
@@ -2870,7 +2837,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             if (prevIndex !== this.currentTrackIndex) {
                 const prevTrack = this.currentPlaylist.tracks[prevIndex];
                 if (prevTrack && !this.preloadedTracks.has(prevTrack.id)) {
-                    console.log('🎵 Preloading previous track:', prevTrack.title);
+                    // Preloading previous track
                     const audio = new Audio();
                     audio.preload = 'metadata';
                     audio.src = prevTrack.file_url;
@@ -2883,7 +2850,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     }
     
     optimizeTouchEvents() {
-        console.log('📱 Optimizing touch events...');
+        // Optimizing touch events
         
         // Prevent double-tap zoom
         let lastTouchEnd = 0;
@@ -2912,15 +2879,15 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     }
     
     setupBackgroundPlayback() {
-        console.log('🎵 Setting up background playback...');
+        // Setting up background playback
         
         // Handle page visibility changes
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                console.log('📱 Page hidden - maintaining playback');
+                // Page hidden - maintaining playback
                 // Keep playing in background
             } else {
-                console.log('📱 Page visible - updating UI');
+                // Page visible - updating UI
                 this.updateMediaSessionMetadata();
             }
         });
@@ -2931,7 +2898,9 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 // Resume if paused due to page visibility
                 setTimeout(() => {
                     if (this.isPlaying) {
-                        this.audio.play().catch(console.error);
+                        this.audio.play().catch(() => {
+                            // Play failed - handle silently
+                        });
                     }
                 }, 100);
             }
@@ -2949,7 +2918,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     seekTo(time) {
         // ✅ Validate time value trước khi set
         if (typeof time !== 'number' || !isFinite(time) || time < 0) {
-            console.warn('Invalid time value for seekTo:', time);
+            // Invalid time value for seekTo
             return;
         }
         
@@ -3053,7 +3022,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 audioElement.load();
             }
             this.preloadedTracks.clear();
-            console.log('🗑️ Cleaned up all preloaded tracks');
+            // Cleaned up all preloaded tracks
         }
         
         // ✅ Cleanup caches

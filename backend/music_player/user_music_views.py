@@ -220,7 +220,7 @@ def upload_user_track(request):
             os.remove(temp_path)
             
         except Exception as e:
-            print(f"Error extracting metadata: {e}")
+            # Error extracting metadata
             # Use filename as fallback
             name_without_ext = uploaded_file.name.rsplit('.', 1)[0]
             if ' - ' in name_without_ext:
@@ -348,7 +348,7 @@ def get_user_playlists(request):
                     'created_at': playlist.created_at.isoformat()
                 })
             except Exception as e:
-                print(f"Error processing playlist {playlist.id}: {e}")
+                # Error processing playlist
                 continue
         
         return JsonResponse({
@@ -357,8 +357,7 @@ def get_user_playlists(request):
         })
     except Exception as e:
         import traceback
-        print(f"Error in get_user_playlists: {e}")
-        print(traceback.format_exc())
+        # Error in get_user_playlists
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -409,8 +408,7 @@ def create_user_playlist(request):
         })
     except Exception as e:
         import traceback
-        print(f"Error in create_user_playlist: {e}")
-        print(traceback.format_exc())
+        # Error in create_user_playlist
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -485,8 +483,7 @@ def add_track_to_playlist(request, playlist_id, track_id):
         })
     except Exception as e:
         import traceback
-        print(f"Error in add_track_to_playlist: {e}")
-        print(traceback.format_exc())
+        # Error in add_track_to_playlist
         return JsonResponse({
             'success': False,
             'error': str(e)
