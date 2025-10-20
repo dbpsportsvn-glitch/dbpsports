@@ -141,30 +141,43 @@
                     <div class="tab-content" id="tab-playlists">
                         <!-- Playlist Type Toggle -->
                         <div class="playlist-type-toggle">
-                            <button class="playlist-type-btn active" data-type="admin">
-                                <i class="bi bi-globe"></i>
-                                Admin Playlists
-                            </button>
-                            <button class="playlist-type-btn" data-type="personal">
+                            <button class="playlist-type-btn active" data-type="personal">
                                 <i class="bi bi-person-fill"></i>
                                 Playlist Của Tôi
                             </button>
+                            <button class="playlist-type-btn" data-type="admin">
+                                <i class="bi bi-globe"></i>
+                                Admin Playlists
+                            </button>
+                        </div>
+                        
+                        <!-- User Playlists Grid -->
+                        <div class="playlist-grid" id="user-playlist-grid">
+                            <div class="empty-state">
+                                <i class="bi bi-music-note-beamed" style="font-size: 48px; color: #f093fb; margin-bottom: 12px;"></i>
+                                <p style="font-size: 15px; margin-bottom: 8px; font-weight: 600;">Bạn chưa có playlist nào!</p>
+                                <p style="font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 16px;">Hãy vào <strong>Cài đặt cá nhân</strong> để tạo playlist và upload nhạc của bạn.</p>
+                                <button onclick="document.getElementById('settings-btn').click()" style="
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    border: none;
+                                    padding: 10px 20px;
+                                    border-radius: 8px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.3s;
+                                ">
+                                    <i class="bi bi-gear-fill"></i> Mở Cài đặt
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Admin Playlists Grid -->
-                        <div class="playlist-grid" id="playlist-grid">
+                        <div class="playlist-grid hidden" id="playlist-grid">
                             <!-- Playlists will be populated here -->
                             <div class="empty-state">
                                 <i class="bi bi-collection-play"></i>
                                 <p>Đang tải playlists...</p>
-                            </div>
-                        </div>
-                        
-                        <!-- User Playlists Grid -->
-                        <div class="playlist-grid hidden" id="user-playlist-grid">
-                            <div class="empty-state">
-                                <i class="bi bi-music-note"></i>
-                                <p>Chưa có playlist cá nhân. Vào Cài đặt để tạo!</p>
                             </div>
                         </div>
                         

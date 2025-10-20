@@ -26,7 +26,7 @@
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     width: 400px;
-    max-height: 600px;
+    max-height: 650px; /* ✅ Tăng từ 600px lên 650px để hiển thị đủ album art */
     overflow: hidden;
 }
 
@@ -148,7 +148,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     cursor: move;
     user-select: none;
-    touch-action: none;
+    touch-action: pan-y; /* ✅ Cho phép scroll dọc và touch trên buttons */
     -webkit-user-drag: none;
 }
 
@@ -171,6 +171,13 @@
     gap: 8px;
     align-items: center;
     margin-right: 8px; /* ✅ Khoảng cách với mép phải */
+}
+
+/* ✅ Override touch-action cho buttons trong header để click được trên mobile */
+.header-controls button,
+.header-left button {
+    touch-action: auto !important;
+    pointer-events: auto !important;
 }
 
 .close-btn {
@@ -196,7 +203,7 @@
 .player-content {
     display: flex;
     flex-direction: column;
-    max-height: 550px;
+    max-height: 600px; /* ✅ Tăng từ 550px lên 600px */
     overflow: hidden;
 }
 
@@ -446,7 +453,7 @@
 .playlist-card-name {
     color: white;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 13px; /* ✅ Tăng từ 11px lên 13px để dễ đọc hơn */
     text-align: center;
     margin-bottom: 4px;
     width: 100%; /* ✅ Full width để căn giữa */
@@ -658,6 +665,7 @@
     position: relative;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
+    z-index: 1; /* ✅ Thấp hơn sleep timer menu */
 }
 
 .progress-bar:hover {
@@ -710,7 +718,7 @@
     cursor: grab;
     opacity: 0;
     transition: all 0.3s ease;
-    z-index: 10;
+    z-index: 1; /* ✅ Giảm z-index để không che sleep timer menu */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1);
     will-change: left, opacity, transform; /* ✅ Optimize frequent updates */
 }
@@ -768,6 +776,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s ease;
+    z-index: 1; /* ✅ Thấp hơn sleep timer menu */
 }
 
 .volume-bar:hover {
@@ -799,6 +808,7 @@
     transition: opacity 0.2s ease;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     will-change: left, opacity; /* ✅ Optimize volume drag */
+    z-index: 1; /* ✅ Đảm bảo không che sleep timer menu */
 }
 
 .volume-container:hover .volume-handle {
@@ -808,12 +818,13 @@
 /* Sleep Timer Styles */
 .sleep-timer-container {
     position: relative;
+    z-index: 100010; /* ✅ Cao hơn settings modal */
 }
 
 .sleep-timer-menu {
-    position: absolute;
-    top: 45px;
-    right: 0;
+    position: fixed; /* ✅ Fixed để không bị ảnh hưởng bởi parent stacking context */
+    top: 65px; /* ✅ Adjust top position cho fixed */
+    right: 20px; /* ✅ Adjust right position cho fixed */
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
     backdrop-filter: blur(10px);
     border-radius: 12px;
@@ -821,7 +832,7 @@
     min-width: 200px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 1000;
+    z-index: 100010; /* ✅ Cao hơn settings modal để hiển thị trên cùng */
     transition: all 0.3s ease;
 }
 
@@ -1096,12 +1107,12 @@
     }
     
     .playlist-card-name {
-        font-size: 10px !important; /* ✅ Font nhỏ hơn trên mobile */
+        font-size: 12px !important; /* ✅ Tăng từ 10px lên 12px cho mobile */
         margin-bottom: 3px !important;
     }
     
     .playlist-card-count {
-        font-size: 8px !important; /* ✅ Font nhỏ hơn trên mobile */
+        font-size: 10px !important; /* ✅ Tăng từ 8px lên 10px cho mobile */
     }
     
     /* ✅ Player header với safe area cho iOS notch */
@@ -2094,21 +2105,74 @@
         height: 100vh !important;
         max-height: 100vh !important;
         border-radius: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     
     .settings-modal-header {
         padding-top: max(20px, env(safe-area-inset-top)) !important;
         padding-left: max(24px, env(safe-area-inset-left)) !important;
         padding-right: max(24px, env(safe-area-inset-right)) !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .settings-tab-headers {
+        flex-shrink: 0 !important;
     }
     
     .settings-tab-contents {
-        height: calc(100vh - 150px) !important;
+        flex: 1 !important; /* ✅ Take all remaining space */
+        max-height: none !important; /* ✅ Remove desktop max-height limit */
         overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
     
     .settings-tab-content {
-        padding-bottom: env(safe-area-inset-bottom) !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+    }
+    
+    /* ✅ Sections trong settings modal full height */
+    .settings-tab-content.active .settings-section {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+    }
+    
+    .settings-tab-content.active .my-tracks-section,
+    .settings-tab-content.active .playlist-header + div {
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* ✅ Lists trong settings modal full height */
+    .my-tracks-list,
+    .my-playlists-list {
+        max-height: none !important;
+        height: 100% !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
+    }
+    
+    /* ✅ Sleep timer menu trên mobile */
+    .sleep-timer-menu {
+        position: fixed !important; /* ✅ Fixed trên mobile */
+        top: max(65px, calc(env(safe-area-inset-top) + 45px)) !important; /* ✅ Safe area cho iOS */
+        right: 20px !important; /* ✅ Margin từ mép phải */
+        z-index: 100010 !important; /* ✅ Cao hơn settings modal */
+        min-width: 200px !important;
+        max-width: 90vw !important; /* ✅ Không vượt quá viewport width */
+    }
+    
+    .player-header {
+        overflow: visible !important; /* ✅ Cho phép menu hiển thị ra ngoài header */
+    }
+    
+    .header-controls {
+        overflow: visible !important; /* ✅ Cho phép menu hiển thị ra ngoài */
     }
 }
 

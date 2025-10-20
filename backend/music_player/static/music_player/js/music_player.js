@@ -322,20 +322,11 @@ class MusicPlayer {
         if (this.sleepTimerBtn) {
             this.sleepTimerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.sleepTimerMenu.classList.toggle('hidden');
+                this.showSleepTimerModal();
             });
         }
         
-        // Sleep timer options
-        const timerOptions = document.querySelectorAll('.sleep-timer-option');
-        timerOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const minutes = parseInt(option.getAttribute('data-minutes'));
-                this.setSleepTimer(minutes);
-                this.sleepTimerMenu.classList.add('hidden');
-            });
-        });
+        // Sleep timer options - removed (now using modal)
         
         // Cancel timer button
         if (this.cancelTimerBtn) {
@@ -624,10 +615,10 @@ class MusicPlayer {
                     targetContent.classList.add('active');
                     console.log('Tab switched to:', tabName);
                     
-                    // ✅ Auto-refresh playlists khi switch sang tab Playlists
+                    // ✅ Auto-load user playlists khi switch sang tab Playlists (default personal first)
                     if (tabName === 'playlists') {
-                        console.log('🎵 Refreshing playlists...');
-                        this.refreshPlaylists();
+                        console.log('🎵 Loading user playlists...');
+                        this.loadUserPlaylistsInMainPlayer();
                     }
                 } else {
                     console.error('Tab content not found:', `tab-${tabName}`);
@@ -1833,23 +1824,282 @@ class MusicPlayer {
         }, 1000);
     }
     
+    // ✅ Show sleep timer modal
+    showSleepTimerModal() {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('sleep-timer-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.id = 'sleep-timer-modal';
+        
+        // Get music player popup bounds để căn giữa với popup
+        const playerPopup = document.getElementById('music-player-popup');
+        const playerRect = playerPopup ? playerPopup.getBoundingClientRect() : null;
+        
+        if (playerRect && !playerPopup.classList.contains('hidden')) {
+            // Desktop: Căn giữa với popup
+            modal.style.cssText = `
+                position: fixed;
+                top: ${playerRect.top}px;
+                left: ${playerRect.left}px;
+                width: ${playerRect.width}px;
+                height: ${playerRect.height}px;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100010;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+        } else {
+            // Mobile hoặc popup bị ẩn: Full screen
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100010;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+        }
+        
+        // Check if timer is active
+        const isActive = this.sleepTimerActive;
+        
+        // Responsive sizing based on popup size
+        const isDesktop = playerRect && !playerPopup.classList.contains('hidden');
+        
+        const remainingText = isActive ? 
+            `<div class="timer-remaining" style="color: #ffd700; font-weight: 600; font-size: 18px; text-align: center; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">Còn lại: ${this.timerRemaining?.textContent || '--:--'}</div>` : '';
+        
+        const cancelButton = isActive ? 
+            `<button id="cancel-timer-modal-btn" style="
+                display: block;
+                width: 100%;
+                background: rgba(255, 77, 77, 0.8);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                padding: ${isDesktop ? '8px 16px' : '12px 20px'};
+                font-size: ${isDesktop ? '13px' : '14px'};
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                margin-top: 15px;
+            " onmouseover="this.style.background='rgba(255, 77, 77, 1)'" onmouseout="this.style.background='rgba(255, 77, 77, 0.8)'">
+                Hủy Timer
+            </button>` : '';
+        const contentStyle = isDesktop ? `
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 250px;
+            width: 90%;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: modalSlideIn 0.3s ease;
+        ` : `
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 300px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: modalSlideIn 0.3s ease;
+        `;
+        
+        modal.innerHTML = `
+            <div style="${contentStyle}">
+                <h3 style="color: white; margin: 0 0 ${isDesktop ? '15px' : '20px'} 0; font-size: ${isDesktop ? '16px' : '20px'}; display: flex; align-items: center; gap: 10px; justify-content: center;">
+                    ⏰ Hẹn giờ tắt nhạc
+                </h3>
+                ${remainingText}
+                <div style="display: flex; flex-direction: column; gap: ${isDesktop ? '8px' : '10px'};">
+                    <button class="sleep-timer-modal-option" data-minutes="15" style="
+                        display: block;
+                        width: 100%;
+                        background: rgba(255, 255, 255, 0.15);
+                        border: none;
+                        border-radius: 8px;
+                        color: white;
+                        padding: ${isDesktop ? '8px 16px' : '12px 20px'};
+                        font-size: ${isDesktop ? '13px' : '14px'};
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                        15 phút
+                    </button>
+                    <button class="sleep-timer-modal-option" data-minutes="30" style="
+                        display: block;
+                        width: 100%;
+                        background: rgba(255, 255, 255, 0.15);
+                        border: none;
+                        border-radius: 8px;
+                        color: white;
+                        padding: ${isDesktop ? '8px 16px' : '12px 20px'};
+                        font-size: ${isDesktop ? '13px' : '14px'};
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                        30 phút
+                    </button>
+                    <button class="sleep-timer-modal-option" data-minutes="60" style="
+                        display: block;
+                        width: 100%;
+                        background: rgba(255, 255, 255, 0.15);
+                        border: none;
+                        border-radius: 8px;
+                        color: white;
+                        padding: ${isDesktop ? '8px 16px' : '12px 20px'};
+                        font-size: ${isDesktop ? '13px' : '14px'};
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                        1 giờ
+                    </button>
+                    <button class="sleep-timer-modal-option" data-minutes="120" style="
+                        display: block;
+                        width: 100%;
+                        background: rgba(255, 255, 255, 0.15);
+                        border: none;
+                        border-radius: 8px;
+                        color: white;
+                        padding: ${isDesktop ? '8px 16px' : '12px 20px'};
+                        font-size: ${isDesktop ? '13px' : '14px'};
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+                        2 giờ
+                    </button>
+                </div>
+                ${cancelButton}
+                <button id="sleep-timer-close-btn" style="
+                    margin-top: ${isDesktop ? '15px' : '20px'};
+                    padding: ${isDesktop ? '8px 16px' : '10px 20px'};
+                    background: rgba(255, 255, 255, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: 600;
+                    font-size: ${isDesktop ? '13px' : '14px'};
+                    cursor: pointer;
+                    width: 100%;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                    Đóng (Esc)
+                </button>
+            </div>
+        `;
+        
+        // Close button
+        const closeBtn = modal.querySelector('#sleep-timer-close-btn');
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            modal.remove();
+        });
+        
+        // Cancel timer button
+        if (isActive) {
+            const cancelBtn = modal.querySelector('#cancel-timer-modal-btn');
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.cancelSleepTimer();
+                modal.remove();
+            });
+        }
+        
+        // Timer options
+        const timerOptions = modal.querySelectorAll('.sleep-timer-modal-option');
+        timerOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const minutes = parseInt(option.getAttribute('data-minutes'));
+                this.setSleepTimer(minutes);
+                modal.remove();
+            });
+        });
+        
+        // Close on click outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                e.stopPropagation();
+                modal.remove();
+            }
+        });
+        
+        // Close on Escape
+        const escapeHandler = (e) => {
+            if (e.code === 'Escape') {
+                e.stopPropagation();
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        // Add to DOM
+        document.body.appendChild(modal);
+    }
+
     // ✅ Show keyboard shortcuts modal
     showKeyboardShortcuts() {
         const modal = document.createElement('div');
         modal.id = 'keyboard-shortcuts-modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 100003;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        `;
+        
+        // Get music player popup bounds để căn giữa với popup
+        const playerPopup = document.getElementById('music-player-popup');
+        const playerRect = playerPopup ? playerPopup.getBoundingClientRect() : null;
+        
+        if (playerRect && !playerPopup.classList.contains('hidden')) {
+            // Desktop: Căn giữa với popup
+            modal.style.cssText = `
+                position: fixed;
+                top: ${playerRect.top}px;
+                left: ${playerRect.left}px;
+                width: ${playerRect.width}px;
+                height: ${playerRect.height}px;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100003;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+        } else {
+            // Mobile hoặc popup bị ẩn: Full screen
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 100003;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease;
+            `;
+        }
         
         // ✅ iOS warning note
         const iosWarning = this.isIOS ? `
@@ -1868,21 +2118,25 @@ class MusicPlayer {
             </div>
         ` : '';
         
+        // Responsive sizing based on popup size
+        const isDesktop = playerRect && !playerPopup.classList.contains('hidden');
+        
         modal.innerHTML = `
             <div style="
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 20px;
-                padding: 30px;
-                max-width: 600px;
-                max-height: 80vh;
+                border-radius: ${isDesktop ? '15px' : '20px'};
+                padding: ${isDesktop ? '20px' : '30px'};
+                max-width: ${isDesktop ? '500px' : '600px'};
+                max-height: ${isDesktop ? '90%' : '80vh'};
+                width: ${isDesktop ? '90%' : 'auto'};
                 overflow-y: auto;
                 box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             ">
-                <h3 style="color: white; margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
+                <h3 style="color: white; margin: 0 0 ${isDesktop ? '15px' : '20px'} 0; font-size: ${isDesktop ? '20px' : '24px'}; display: flex; align-items: center; gap: 10px;">
                     ⌨️ Phím tắt Music Player
                 </h3>
                 ${iosWarning}
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: white;">
+                <div style="display: grid; grid-template-columns: ${isDesktop ? '1fr' : '1fr 1fr'}; gap: ${isDesktop ? '8px' : '12px'}; color: white;">
                     <div><kbd>Space</kbd> Play/Pause</div>
                     <div style="${this.isIOS ? 'opacity: 0.5;' : ''}"><kbd>M</kbd> Mute/Unmute${this.isIOS ? ' 🚫' : ''}</div>
                     <div><kbd>←</kbd> Previous track</div>
@@ -1897,14 +2151,15 @@ class MusicPlayer {
                     <div><kbd>0-9</kbd> Seek to %</div>
                     <div><kbd>Shift+?</kbd> Show shortcuts</div>
                 </div>
-                <button onclick="this.closest('#keyboard-shortcuts-modal').remove()" style="
-                    margin-top: 20px;
-                    padding: 10px 20px;
+                <button id="shortcuts-close-btn" style="
+                    margin-top: ${isDesktop ? '15px' : '20px'};
+                    padding: ${isDesktop ? '8px 16px' : '10px 20px'};
                     background: rgba(255, 255, 255, 0.2);
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 8px;
                     color: white;
                     font-weight: 600;
+                    font-size: ${isDesktop ? '13px' : '14px'};
                     cursor: pointer;
                     width: 100%;
                     transition: all 0.2s;
@@ -1914,9 +2169,17 @@ class MusicPlayer {
             </div>
         `;
         
+        // ✅ Close button với stopPropagation để không đóng popup
+        const closeBtn = modal.querySelector('#shortcuts-close-btn');
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // ✅ Prevent closing music player
+            modal.remove();
+        });
+        
         // Close on click outside
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
+                e.stopPropagation(); // ✅ Prevent closing music player
                 modal.remove();
             }
         });
@@ -1924,6 +2187,7 @@ class MusicPlayer {
         // Close on Escape
         const escapeHandler = (e) => {
             if (e.code === 'Escape') {
+                e.stopPropagation(); // ✅ Prevent closing music player
                 modal.remove();
                 document.removeEventListener('keydown', escapeHandler);
             }
@@ -2338,6 +2602,11 @@ class MusicPlayer {
         
         // Reset timer display animation
         this.timerRemaining.style.animation = '';
+        
+        // ✅ Tự động đóng menu sau khi cancel
+        if (this.sleepTimerMenu) {
+            this.sleepTimerMenu.classList.add('hidden');
+        }
     }
 
     // ✅ Mobile Optimization Methods
