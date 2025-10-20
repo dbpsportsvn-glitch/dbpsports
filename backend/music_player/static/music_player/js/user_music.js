@@ -410,6 +410,13 @@ class UserMusicManager {
                 document.documentElement.classList.toggle('low-power', settings.low_power_mode);
                 const popup = document.getElementById('music-player-popup');
                 if (popup) popup.classList.toggle('low-power', settings.low_power_mode);
+                // Force add class to ensure CSS kicks in even if modal closes quickly
+                setTimeout(() => {
+                    document.body.classList.toggle('low-power', settings.low_power_mode);
+                    document.documentElement.classList.toggle('low-power', settings.low_power_mode);
+                    const p = document.getElementById('music-player-popup');
+                    if (p) p.classList.toggle('low-power', settings.low_power_mode);
+                }, 0);
                 
                 // Force refresh settings from server to avoid stale cache on next open
                 await this.loadUserSettings(true);

@@ -16,9 +16,35 @@ body.low-power .music-player-popup,
     box-shadow: none !important;
 }
 
+/* Tat toan bo animation/transition ben trong player khi low-power */
+body.low-power .music-player-popup,
 body.low-power .music-player-popup * {
     animation: none !important;
     transition: none !important;
+}
+
+/* Tat animation cua toggle button (pulse, rotate) */
+body.low-power .music-player-toggle,
+body.low-power .music-player-toggle.playing,
+body.low-power .music-player-toggle.playing i {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Vo hieu hoa hover transform/shadow de giam repaint */
+body.low-power .control-btn:hover,
+body.low-power .music-player-toggle:hover,
+body.low-power .playlist-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Giam hieu ung trang tri */
+body.low-power .playlist-card::before { opacity: 0 !important; }
+body.low-power .playlist-card,
+body.low-power .current-album-cover,
+body.low-power .control-btn {
+    box-shadow: none !important;
 }
 
 body.low-power .playlist-card-cover { filter: none !important; }
