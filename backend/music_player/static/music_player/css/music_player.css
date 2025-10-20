@@ -1843,12 +1843,36 @@
     }
 }
 
+/* ✅ Mobile toast animations - preserve horizontal centering (translateX(-50%)) */
+@keyframes mobileToastSlideIn {
+    from {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes mobileToastSlideOut {
+    from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+}
+
 /* Mobile responsive for toast */
 @media (max-width: 768px) {
     .music-player-toast {
         max-width: calc(100vw - 40px) !important;
-        left: 20px !important;
-        right: 20px !important;
+        min-width: 280px;
+        /* ✅ Center position được set bởi JavaScript với left: 50% + translateX(-50%) */
+        /* Không override left/right ở đây để tránh conflict */
     }
 }
 

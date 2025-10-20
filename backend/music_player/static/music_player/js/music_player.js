@@ -40,6 +40,13 @@ class MusicPlayer {
         this.previousTrackPreloaded = false;
         this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
+        // ✅ Detect iOS specifically (iOS không cho web app control system volume)
+        this.isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad với iPadOS 13+
+        
+        // ✅ Flag để track đã show iOS volume message trong session này chưa
+        this.hasShownIOSVolumeMessage = false;
+        
         // ✅ Cache cho formatted times (tối ưu performance)
         this.formatTimeCache = new Map();
         this.lastProgressUpdate = 0; // Throttle progress updates
@@ -55,6 +62,9 @@ class MusicPlayer {
         
         // ✅ Initialize mobile optimizations
         this.initializeMobileOptimizations();
+        
+        // ✅ Handle iOS volume restrictions
+        this.handleIOSVolumeRestrictions();
         
         // ❌ REMOVED: Auto refresh interval - không cần thiết và tốn pin
         // Playlists sẽ tự động refresh khi:
@@ -924,36 +934,59 @@ class MusicPlayer {
         // Tạo toast element
         const toast = document.createElement('div');
         toast.className = `music-player-toast music-player-toast-${type}`;
+        
+        // ✅ Preserve line breaks trong message
+        toast.style.whiteSpace = 'pre-line';
         toast.textContent = message;
         
         // Style cho toast
         Object.assign(toast.style, {
             position: 'fixed',
             bottom: '20px',
-            right: '20px',
-            padding: '12px 20px',
-            borderRadius: '8px',
+            padding: '16px 20px',
+            borderRadius: '12px',
             color: '#fff',
             fontSize: '14px',
             fontWeight: '500',
             zIndex: '10001',
-            maxWidth: '300px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            animation: 'slideInUp 0.3s ease-out',
+            maxWidth: this.isIOS ? '90%' : '350px', // ✅ Wider cho iOS messages
+            lineHeight: '1.5',
+            textAlign: 'center',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
             backgroundColor: type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#3498db'
         });
         
+        // ✅ Center horizontally on mobile với animation tùy chỉnh
+        if (this.isMobile) {
+            toast.style.left = '50%';
+            toast.style.right = 'auto';
+            toast.style.transform = 'translateX(-50%)';
+            // ✅ Animation riêng cho mobile để preserve horizontal centering
+            toast.style.animation = 'mobileToastSlideIn 0.3s ease-out';
+        } else {
+            toast.style.right = '20px';
+            toast.style.animation = 'slideInUp 0.3s ease-out';
+        }
+        
         document.body.appendChild(toast);
         
-        // Auto remove sau 3 giây
+        // ✅ Auto remove sau 5 giây cho iOS messages (dài hơn để đọc), 3s cho các loại khác
+        const duration = this.isIOS && message.includes('iOS') ? 5000 : 3000;
+        
         setTimeout(() => {
-            toast.style.animation = 'slideOutDown 0.3s ease-in';
+            // ✅ Animation riêng cho mobile khi slide out
+            if (this.isMobile) {
+                toast.style.animation = 'mobileToastSlideOut 0.3s ease-in';
+            } else {
+                toast.style.animation = 'slideOutDown 0.3s ease-in';
+            }
+            
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.parentNode.removeChild(toast);
                 }
             }, 300);
-        }, 3000);
+        }, duration);
     }
     
     playTrack(index) {
@@ -1526,6 +1559,13 @@ class MusicPlayer {
             console.log('🎵 Opening player - refreshing playlists...');
             this.refreshPlaylists();
             
+            // ✅ Reset iOS volume message flag khi mở player
+            // (Chỉ show khi user tự nhấn vào volume controls, không auto-show)
+            if (this.isIOS) {
+                this.hasShownIOSVolumeMessage = false;
+                console.log('🍎 iOS volume message flag reset - will show on first volume interaction');
+            }
+            
             // ✅ Auto-play khi mở lần đầu tiên
             if (!this.hasOpenedPlayer) {
                 this.hasOpenedPlayer = true;
@@ -1540,6 +1580,9 @@ class MusicPlayer {
                     }
                 }, 300);
             }
+        } else {
+            // ✅ Đang đóng player
+            console.log('🎵 Closing player');
         }
     }
 
@@ -1641,21 +1684,33 @@ class MusicPlayer {
             // Volume Up/Down
             case 'ArrowUp':
                 event.preventDefault();
-                this.adjustVolume(0.1);
-                this.showKeyboardHint(`🔊 Volume: ${Math.round(this.volume * 100)}%`);
+                if (this.isIOS) {
+                    this.showIOSVolumeMessage();
+                } else {
+                    this.adjustVolume(0.1);
+                    this.showKeyboardHint(`🔊 Volume: ${Math.round(this.volume * 100)}%`);
+                }
                 break;
             
             case 'ArrowDown':
                 event.preventDefault();
-                this.adjustVolume(-0.1);
-                this.showKeyboardHint(`🔉 Volume: ${Math.round(this.volume * 100)}%`);
+                if (this.isIOS) {
+                    this.showIOSVolumeMessage();
+                } else {
+                    this.adjustVolume(-0.1);
+                    this.showKeyboardHint(`🔉 Volume: ${Math.round(this.volume * 100)}%`);
+                }
                 break;
             
             // Mute
             case 'KeyM':
                 event.preventDefault();
-                this.toggleMute();
-                this.showKeyboardHint(this.isMuted ? '🔇 Muted' : '🔊 Unmuted');
+                if (this.isIOS) {
+                    this.showIOSVolumeMessage();
+                } else {
+                    this.toggleMute();
+                    this.showKeyboardHint(this.isMuted ? '🔇 Muted' : '🔊 Unmuted');
+                }
                 break;
             
             // Shuffle
@@ -1773,6 +1828,23 @@ class MusicPlayer {
             animation: fadeIn 0.3s ease;
         `;
         
+        // ✅ iOS warning note
+        const iosWarning = this.isIOS ? `
+            <div style="
+                background: rgba(255, 152, 0, 0.2);
+                border: 1px solid rgba(255, 152, 0, 0.4);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 15px;
+                color: #ffa726;
+                font-size: 13px;
+                line-height: 1.5;
+            ">
+                🍎 <strong>iOS Note:</strong> Volume controls không khả dụng trên iOS do giới hạn của hệ điều hành. 
+                Vui lòng dùng phím cứng bên cạnh thiết bị.
+            </div>
+        ` : '';
+        
         modal.innerHTML = `
             <div style="
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1786,13 +1858,14 @@ class MusicPlayer {
                 <h3 style="color: white; margin: 0 0 20px 0; font-size: 24px; display: flex; align-items: center; gap: 10px;">
                     ⌨️ Phím tắt Music Player
                 </h3>
+                ${iosWarning}
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: white;">
                     <div><kbd>Space</kbd> Play/Pause</div>
-                    <div><kbd>M</kbd> Mute/Unmute</div>
+                    <div style="${this.isIOS ? 'opacity: 0.5;' : ''}"><kbd>M</kbd> Mute/Unmute${this.isIOS ? ' 🚫' : ''}</div>
                     <div><kbd>←</kbd> Previous track</div>
                     <div><kbd>→</kbd> Next track</div>
-                    <div><kbd>↑</kbd> Volume up</div>
-                    <div><kbd>↓</kbd> Volume down</div>
+                    <div style="${this.isIOS ? 'opacity: 0.5;' : ''}"><kbd>↑</kbd> Volume up${this.isIOS ? ' 🚫' : ''}</div>
+                    <div style="${this.isIOS ? 'opacity: 0.5;' : ''}"><kbd>↓</kbd> Volume down${this.isIOS ? ' 🚫' : ''}</div>
                     <div><kbd>Shift+←</kbd> Seek -10s</div>
                     <div><kbd>Shift+→</kbd> Seek +10s</div>
                     <div><kbd>S</kbd> Toggle shuffle</div>
@@ -2261,6 +2334,88 @@ class MusicPlayer {
             // ✅ Background playback support
             this.setupBackgroundPlayback();
         }
+    }
+    
+    // ✅ Handle iOS Volume Restrictions
+    handleIOSVolumeRestrictions() {
+        if (!this.isIOS) return; // Chỉ xử lý cho iOS
+        
+        console.log('🍎 iOS detected - disabling volume controls (system limitation)');
+        
+        // Disable volume slider visually
+        if (this.volumeFill && this.volumeHandle) {
+            const volumeBar = this.volumeFill.parentElement;
+            if (volumeBar) {
+                volumeBar.style.opacity = '0.5';
+                volumeBar.style.cursor = 'not-allowed';
+                volumeBar.style.pointerEvents = 'none';
+            }
+            this.volumeHandle.style.pointerEvents = 'none';
+        }
+        
+        // Disable mute button và thay đổi tooltip
+        if (this.muteBtn) {
+            this.muteBtn.style.opacity = '0.5';
+            this.muteBtn.style.cursor = 'not-allowed';
+            this.muteBtn.title = 'iOS: Sử dụng phím cứng để điều chỉnh âm lượng';
+            
+            // Override mute button click
+            this.muteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.showIOSVolumeMessage();
+            });
+        }
+        
+        // Add overlay click handler cho volume bar
+        if (this.volumeFill && this.volumeHandle) {
+            const volumeBar = this.volumeFill.parentElement;
+            if (volumeBar) {
+                // Re-enable pointer events để bắt click
+                volumeBar.style.pointerEvents = 'auto';
+                
+                // Thêm overlay div trong suốt
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    cursor: not-allowed;
+                    z-index: 10;
+                `;
+                overlay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    this.showIOSVolumeMessage();
+                });
+                volumeBar.style.position = 'relative';
+                volumeBar.appendChild(overlay);
+            }
+        }
+    }
+    
+    // ✅ Show iOS volume message
+    showIOSVolumeMessage() {
+        // ✅ Chỉ show 1 lần khi mở popup, không spam
+        if (this.hasShownIOSVolumeMessage) {
+            console.log('🍎 iOS volume message already shown in this session');
+            return;
+        }
+        
+        const message = `
+🍎 iOS Limitation
+
+Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh âm lượng.
+
+📱 Ứng dụng iOS chính thức với đầy đủ tính năng sắp ra mắt trên App Store!
+        `.trim();
+        
+        this.showMessage(message, 'info');
+        
+        // ✅ Đánh dấu đã show, không show lại cho đến khi đóng/mở player
+        this.hasShownIOSVolumeMessage = true;
     }
     
     initializeMediaSession() {
