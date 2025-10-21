@@ -8,11 +8,45 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.core.files.storage import default_storage
 from django.conf import settings as django_settings
 from django.db import models
+from django.core.cache import cache
 import os
 import json
+from functools import wraps
 from mutagen import File as MutagenFile
 from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings, Track, TrackPlayHistory
 from .utils import extract_album_cover
+
+
+# ✅ Rate limiting decorator
+def rate_limit(max_requests=10, window=60):
+    """
+    Rate limiting decorator
+    max_requests: số requests tối đa
+    window: thời gian window (seconds)
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped(request, *args, **kwargs):
+            if request.user.is_authenticated:
+                key = f'rate_limit_{view_func.__name__}_{request.user.id}'
+            else:
+                # Use IP for anonymous users
+                ip = request.META.get('REMOTE_ADDR', '')
+                key = f'rate_limit_{view_func.__name__}_{ip}'
+            
+            current = cache.get(key, 0)
+            
+            if current >= max_requests:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Quá nhiều requests. Vui lòng chờ {window} giây.'
+                }, status=429)
+            
+            cache.set(key, current + 1, window)
+            return view_func(request, *args, **kwargs)
+        
+        return wrapped
+    return decorator
 
 
 @login_required
@@ -133,6 +167,7 @@ def get_user_tracks(request):
         }, status=500)
 
 
+@rate_limit(max_requests=10, window=60)  # ✅ Max 10 uploads per minute
 @login_required
 @require_POST
 def upload_user_track(request):
@@ -415,11 +450,18 @@ def create_user_playlist(request):
                 'error': f'Bạn đã có playlist tên "{data["name"]}" rồi!'
             }, status=400)
         
+        # ✅ Fix checkbox handling: HTML checkbox submits 'on' when checked, or absent when unchecked
+        is_public_value = data.get('is_public', False)
+        if isinstance(is_public_value, str):
+            is_public = is_public_value.lower() in ['on', 'true', '1', 'yes']
+        else:
+            is_public = bool(is_public_value)
+        
         playlist = UserPlaylist.objects.create(
             user=request.user,
             name=data['name'],
             description=data.get('description', ''),
-            is_public=data.get('is_public', False) if isinstance(data.get('is_public'), bool) else data.get('is_public') == 'true',
+            is_public=is_public,
             cover_image=cover_image
         )
         
@@ -530,6 +572,158 @@ def delete_user_playlist(request, playlist_id):
         return JsonResponse({
             'success': True,
             'message': f'Đã xóa playlist "{playlist_name}" thành công'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def toggle_playlist_public(request, playlist_id):
+    """API endpoint để toggle public/private cho playlist"""
+    try:
+        playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
+        playlist.is_public = not playlist.is_public
+        playlist.save()
+        
+        status = "công khai" if playlist.is_public else "riêng tư"
+        return JsonResponse({
+            'success': True,
+            'message': f'Đã chuyển playlist "{playlist.name}" sang chế độ {status}',
+            'is_public': playlist.is_public
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_public_playlists(request):
+    """API endpoint để lấy danh sách public playlists (Global Discovery)"""
+    try:
+        # Get search query if provided
+        search_query = request.GET.get('search', '').strip()
+        
+        # Base query: only public and active playlists
+        playlists = UserPlaylist.objects.filter(
+            is_public=True,
+            is_active=True
+        ).select_related('user')
+        
+        # Apply search filter if provided
+        if search_query:
+            playlists = playlists.filter(
+                models.Q(name__icontains=search_query) |
+                models.Q(description__icontains=search_query) |
+                models.Q(user__username__icontains=search_query) |
+                models.Q(user__first_name__icontains=search_query) |
+                models.Q(user__last_name__icontains=search_query)
+            )
+        
+        # Order by most recently updated
+        playlists = playlists.order_by('-updated_at')[:100]  # Limit to 100
+        
+        playlists_data = []
+        for playlist in playlists:
+            try:
+                # Get first track's album cover as playlist thumbnail
+                first_track = playlist.tracks.filter(
+                    user_track__is_active=True
+                ).select_related('user_track').first()
+                
+                thumbnail = None
+                if playlist.cover_image:
+                    thumbnail = playlist.cover_image.url
+                elif first_track and first_track.user_track.album_cover:
+                    thumbnail = first_track.user_track.album_cover.url
+                
+                playlists_data.append({
+                    'id': playlist.id,
+                    'name': playlist.name,
+                    'description': playlist.description or '',
+                    'cover_image': thumbnail,
+                    'tracks_count': playlist.get_tracks_count(),
+                    'total_duration': playlist.get_total_duration(),
+                    'owner': {
+                        'username': playlist.user.username,
+                        'full_name': playlist.user.get_full_name() or playlist.user.username,
+                        'id': playlist.user.id
+                    },
+                    'created_at': playlist.created_at.isoformat(),
+                    'updated_at': playlist.updated_at.isoformat()
+                })
+            except Exception as e:
+                # Skip problematic playlists
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'playlists': playlists_data,
+            'count': len(playlists_data),
+            'search_query': search_query
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_public_playlist_detail(request, playlist_id):
+    """API endpoint để xem chi tiết public playlist (không cần đăng nhập)"""
+    try:
+        playlist = get_object_or_404(
+            UserPlaylist.objects.select_related('user'),
+            id=playlist_id,
+            is_public=True,
+            is_active=True
+        )
+        
+        # Get tracks
+        tracks = playlist.tracks.filter(
+            user_track__is_active=True
+        ).select_related('user_track').order_by('order')
+        
+        tracks_data = []
+        for track_entry in tracks:
+            track = track_entry.user_track
+            tracks_data.append({
+                'id': track.id,
+                'title': track.title,
+                'artist': track.artist or '',
+                'album': track.album or '',
+                'album_cover': track.album_cover.url if track.album_cover else None,
+                'duration': track.duration,
+                'duration_formatted': track.get_duration_formatted(),
+                'file_url': track.get_file_url(),
+                'play_count': track.play_count,
+                'order': track_entry.order
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'playlist': {
+                'id': playlist.id,
+                'name': playlist.name,
+                'description': playlist.description or '',
+                'cover_image': playlist.cover_image.url if playlist.cover_image else None,
+                'tracks_count': len(tracks_data),
+                'total_duration': playlist.get_total_duration(),
+                'owner': {
+                    'username': playlist.user.username,
+                    'full_name': playlist.user.get_full_name() or playlist.user.username,
+                    'id': playlist.user.id
+                },
+                'created_at': playlist.created_at.isoformat(),
+                'updated_at': playlist.updated_at.isoformat()
+            },
+            'tracks': tracks_data
         })
     except Exception as e:
         return JsonResponse({

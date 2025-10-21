@@ -39,11 +39,11 @@ class OfflineManager {
                 scope: '/'
             });
             
-            console.log('[Offline Manager] Service Worker registered');
+            // console.log('[Offline Manager] Service Worker registered');
             
             // Listen for updates
             this.swRegistration.addEventListener('updatefound', () => {
-                console.log('[Offline Manager] Service Worker update found');
+                // console.log('[Offline Manager] Service Worker update found');
             });
             
             // Listen for online/offline events
@@ -54,7 +54,7 @@ class OfflineManager {
             setTimeout(() => this.updateCacheStatus(), 500);
             
         } catch (error) {
-            console.error('[Offline Manager] Registration failed:', error);
+            console.error('🚨 Offline Manager Error:', error.message);
         }
     }
     
@@ -114,7 +114,7 @@ class OfflineManager {
             }
             
         } catch (error) {
-            console.error('[Offline Manager] Preload failed:', error);
+            console.error('🚨 Preload Track Error:', error.message);
             this.showNotification('❌ Lỗi khi cache bài hát', 'error');
             return false;
         }
@@ -231,7 +231,7 @@ class OfflineManager {
         
         try {
             // ✅ Match with Service Worker cache version
-            const cache = await caches.open('dbp-music-v3-final');
+            const cache = await caches.open('dbp-music-v4-range-fix');
             const response = await cache.match(trackUrl);
             return !!response;
         } catch (error) {

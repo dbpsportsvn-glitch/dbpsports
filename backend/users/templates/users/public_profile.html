@@ -145,10 +145,10 @@
     }
 
     .nav-desktop .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
+        background: rgba(255, 255, 255, 0.35); /* ✅ Tăng từ 0.2 lên 0.35 để tương phản cao hơn */
+        color: #ffffff !important; /* ✅ Đổi từ white sang #ffffff để tương phản cao */
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* ✅ Shadow đậm hơn nữa */
     }
 
     .nav-desktop .nav-link.active {
@@ -226,8 +226,10 @@
     }
 
     .mobile-nav-content .nav-link:hover {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
+        background: rgba(255, 255, 255, 0.35); /* ✅ Tăng từ 0.2 lên 0.35 để tương phản cao hơn */
+        color: #ffffff !important; /* ✅ Đổi từ white sang #ffffff để tương phản cao */
+        transform: translateY(-2px); /* ✅ Thêm transform effect */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* ✅ Thêm shadow để nổi bật */
     }
 
     .mobile-nav-content .nav-link.active {

@@ -747,13 +747,23 @@ class UserMusicManager {
                         <i class="bi bi-vinyl-fill"></i>
                     </div>
                     <div class="user-playlist-details">
-                        <h6 class="user-playlist-name">${playlist.name}</h6>
+                        <h6 class="user-playlist-name">
+                            ${playlist.name}
+                            ${playlist.is_public ? '<span style="color: #22c55e; font-size: 12px; margin-left: 6px;"><i class="bi bi-globe"></i></span>' : ''}
+                        </h6>
                         <p class="user-playlist-count">${playlist.tracks_count} bài hát</p>
                     </div>
                 </div>
-                <button class="playlist-delete-btn" title="Xóa playlist" onclick="event.stopPropagation(); userMusicManager.deletePlaylist(${playlist.id})">
-                    <i class="bi bi-trash"></i>
-                </button>
+                <div class="playlist-actions">
+                    <button class="playlist-share-btn ${playlist.is_public ? 'active' : ''}" 
+                            title="${playlist.is_public ? 'Chuyển về riêng tư' : 'Chia sẻ công khai'}" 
+                            onclick="event.stopPropagation(); userMusicManager.togglePlaylistPublic(${playlist.id}, ${playlist.is_public})">
+                        <i class="bi ${playlist.is_public ? 'bi-globe' : 'bi-lock'}"></i>
+                    </button>
+                    <button class="playlist-delete-btn" title="Xóa playlist" onclick="event.stopPropagation(); userMusicManager.deletePlaylist(${playlist.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
             </div>
         `).join('');
     }
@@ -927,6 +937,50 @@ class UserMusicManager {
         } catch (error) {
             console.error('Error deleting playlist:', error);
             this.showNotification('Lỗi khi xóa playlist!', 'error');
+        }
+    }
+    
+    async togglePlaylistPublic(playlistId, currentPublicStatus) {
+        console.log(`🔄 Toggling playlist ${playlistId} public status (current: ${currentPublicStatus})`);
+        
+        try {
+            const response = await fetch(`/music/user/playlists/${playlistId}/toggle-public/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            
+            console.log('📡 Toggle response status:', response.status);
+            
+            const data = await response.json();
+            console.log('📊 Toggle response data:', data);
+            
+            if (data.success) {
+                console.log(`✅ Playlist toggled! New status: is_public=${data.is_public}`);
+                this.showNotification(data.message, 'success');
+                // Reload playlists to update UI
+                await this.loadUserPlaylists();
+                
+                // LUÔN cập nhật user playlists trong main player
+                if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
+                    await this.musicPlayer.loadUserPlaylistsInMainPlayer();
+                }
+                
+                // Nếu đang ở tab Global, refresh để hiển thị thay đổi
+                const globalGrid = document.getElementById('global-playlist-grid');
+                if (globalGrid && !globalGrid.classList.contains('hidden')) {
+                    if (this.musicPlayer && this.musicPlayer.loadGlobalPlaylists) {
+                        await this.musicPlayer.loadGlobalPlaylists();
+                    }
+                }
+            } else {
+                console.error('❌ Toggle failed:', data.error);
+                this.showNotification(data.error, 'error');
+            }
+        } catch (error) {
+            console.error('💥 Error toggling playlist public status:', error);
+            this.showNotification('Lỗi khi cập nhật trạng thái playlist!', 'error');
         }
     }
     

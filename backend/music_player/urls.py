@@ -3,11 +3,17 @@ from . import views
 from . import admin_views
 from . import user_music_views
 from . import stats_views
+# Explicit import for optimized views
+from .optimized_views import OptimizedMusicPlayerAPIView, InitialDataAPIView
 
 app_name = 'music_player'
 
 urlpatterns = [
-    # API endpoints
+    # ✅ Optimized API endpoints (NEW)
+    path('api/initial-data/', InitialDataAPIView.as_view(), name='initial_data'),
+    path('api/optimized/', OptimizedMusicPlayerAPIView.as_view(), name='optimized_api'),
+    
+    # API endpoints (legacy - keep for backward compatibility)
     path('api/', views.MusicPlayerAPIView.as_view(), name='api'),
     path('api/settings/', views.MusicPlayerSettingsView.as_view(), name='settings'),
     path('api/scan-playlist/<int:playlist_id>/', views.scan_playlist_folder, name='scan_playlist'),
@@ -24,6 +30,11 @@ urlpatterns = [
     path('user/playlists/<int:playlist_id>/tracks/', user_music_views.get_playlist_tracks, name='playlist_tracks'),
     path('user/playlists/<int:playlist_id>/add-track/<int:track_id>/', user_music_views.add_track_to_playlist, name='add_track_to_playlist'),
     path('user/playlists/<int:playlist_id>/delete/', user_music_views.delete_user_playlist, name='delete_playlist'),
+    path('user/playlists/<int:playlist_id>/toggle-public/', user_music_views.toggle_playlist_public, name='toggle_playlist_public'),
+    
+    # Global Discovery APIs (Public Playlists)
+    path('global/playlists/', user_music_views.get_public_playlists, name='public_playlists'),
+    path('global/playlists/<int:playlist_id>/', user_music_views.get_public_playlist_detail, name='public_playlist_detail'),
     
     # Statistics APIs
     path('stats/record-play/', stats_views.record_track_play, name='record_play'),

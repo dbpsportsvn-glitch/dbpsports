@@ -32,6 +32,14 @@ class MusicPlayer {
         this.dragAnimationFrame = null; // ✅ Throttle drag với requestAnimationFrame
         this.volumeDragAnimationFrame = null; // ✅ Throttle volume drag
         
+        // ✅ Resize variables (desktop only)
+        this.isResizing = false;
+        this.resizeStartX = 0;
+        this.resizeStartY = 0;
+        this.resizeStartWidth = 0;
+        this.resizeStartHeight = 0;
+        this.resizeAnimationFrame = null;
+        
         // Sleep timer variables
         this.sleepTimerActive = false;
         this.sleepTimerEndTime = null;
@@ -67,20 +75,31 @@ class MusicPlayer {
         // ✅ OFFLINE MANAGER - For offline playback
         this.offlineManager = null; // Will be initialized after DOM is ready
         this.cachedTracks = new Set(); // Track which tracks are cached for offline
+        this.updateIndicatorsDebounceTimer = null; // Debounce timer for indicator updates
         
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
-        this.loadPlaylists();
         
-        // ✅ Load cached tracks from localStorage AFTER DOM is ready
+        // ✅ Initialize resize handle (desktop only)
+        this.initResizeHandle();
+        
+        // ✅ Initialize offline manager FIRST (before loading playlists)
+        this.initializeOfflineManager();
+        
+        // Then load playlists after a short delay to ensure offline manager is ready
+        setTimeout(() => {
+            this.loadPlaylists();
+        }, 300);
+        
+        // ✅ Load cached tracks and update indicators AFTER everything is ready
         setTimeout(async () => {
             const loaded = await this.loadCachedTracksFromStorage();
             if (loaded) {
-                console.log('✅ Cached tracks loaded and verified, updating UI...');
+                // console.log('✅ Cached tracks loaded and verified, updating UI...');
                 this.updateTrackListOfflineIndicators();
             }
-        }, 500);
+        }, 800);
         
         // Initialize play count display
         this.playCountNumber = document.getElementById('play-count-number');
@@ -90,9 +109,6 @@ class MusicPlayer {
         
         // ✅ Handle iOS volume restrictions
         this.handleIOSVolumeRestrictions();
-        
-        // ✅ Initialize offline manager for caching
-        this.initializeOfflineManager();
         
         // ❌ REMOVED: Auto refresh interval - không cần thiết và tốn pin
         // Playlists sẽ tự động refresh khi:
@@ -295,7 +311,16 @@ class MusicPlayer {
         this.audio.addEventListener('play', () => this.onPlay());
         this.audio.addEventListener('pause', () => this.onPause());
         this.audio.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
+            // Essential error logging - chỉ hiển thị thông tin quan trọng
+            console.group('🚨 Audio Error');
+            console.error('Error:', e.type);
+            console.error('Source:', this.audio.src);
+            console.error('Track:', this.currentTrack?.title || 'Unknown');
+            console.error('Playlist:', this.currentPlaylist?.name || 'Unknown');
+            console.groupEnd();
+            
+            // Set loading state to false
+            this.isLoadingTrack = false;
         });
         
         // Keyboard shortcuts
@@ -434,6 +459,7 @@ class MusicPlayer {
         const toggleButtons = document.querySelectorAll('.playlist-type-btn');
         const adminGrid = document.getElementById('playlist-grid');
         const userGrid = document.getElementById('user-playlist-grid');
+        const globalGrid = document.getElementById('global-playlist-grid');
         
         toggleButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -448,6 +474,7 @@ class MusicPlayer {
                 if (type === 'admin') {
                     adminGrid.classList.remove('hidden');
                     userGrid.classList.add('hidden');
+                    if (globalGrid) globalGrid.classList.add('hidden');
                     // Force refresh admin playlists khi click vào Admin Playlists
                     this.refreshPlaylists().then(() => {
                         // Restore active state for admin playlists
@@ -456,14 +483,24 @@ class MusicPlayer {
                 } else if (type === 'personal') {
                     adminGrid.classList.add('hidden');
                     userGrid.classList.remove('hidden');
+                    if (globalGrid) globalGrid.classList.add('hidden');
                     // Load user playlists
                     this.loadUserPlaylistsInMainPlayer().then(() => {
                         // Restore active state after loading
                         this.restorePlaylistActiveState();
                     });
+                } else if (type === 'global') {
+                    adminGrid.classList.add('hidden');
+                    userGrid.classList.add('hidden');
+                    if (globalGrid) globalGrid.classList.remove('hidden');
+                    // Load global playlists
+                    this.loadGlobalPlaylists();
                 }
             });
         });
+        
+        // Initialize global search
+        this.initGlobalSearch();
     }
     
     restorePlaylistActiveState() {
@@ -500,6 +537,116 @@ class MusicPlayer {
                     }
                 });
             }
+        }
+    }
+    
+    // ✅ Initialize Resize Handle (Desktop Only)
+    initResizeHandle() {
+        const resizeHandle = document.getElementById('player-resize-handle');
+        if (!resizeHandle) return;
+        
+        // Skip on mobile
+        if (this.isMobile) {
+            resizeHandle.style.display = 'none';
+            return;
+        }
+        
+        // ✅ Restore saved size from localStorage
+        this.restorePlayerSize();
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            this.isResizing = true;
+            this.resizeStartX = e.clientX;
+            this.resizeStartY = e.clientY;
+            
+            const rect = this.fullPlayer.getBoundingClientRect();
+            this.resizeStartWidth = rect.width;
+            this.resizeStartHeight = rect.height;
+            
+            this.popup.classList.add('resizing');
+            document.body.style.cursor = 'nwse-resize';
+            document.body.style.userSelect = 'none';
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isResizing) return;
+            
+            // ✅ Throttle with requestAnimationFrame
+            if (this.resizeAnimationFrame) return;
+            
+            this.resizeAnimationFrame = requestAnimationFrame(() => {
+                const deltaX = e.clientX - this.resizeStartX;
+                const deltaY = e.clientY - this.resizeStartY;
+                
+                const newWidth = Math.max(350, Math.min(800, this.resizeStartWidth + deltaX));
+                const newHeight = Math.max(500, Math.min(window.innerHeight * 0.9, this.resizeStartHeight + deltaY));
+                
+                this.fullPlayer.style.width = newWidth + 'px';
+                this.fullPlayer.style.height = newHeight + 'px';
+                
+                this.resizeAnimationFrame = null;
+            });
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (!this.isResizing) return;
+            
+            this.isResizing = false;
+            this.popup.classList.remove('resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            // ✅ Save size to localStorage
+            this.savePlayerSize();
+            
+            // Clean up animation frame
+            if (this.resizeAnimationFrame) {
+                cancelAnimationFrame(this.resizeAnimationFrame);
+                this.resizeAnimationFrame = null;
+            }
+        });
+    }
+    
+    // ✅ Save player size to localStorage
+    savePlayerSize() {
+        if (!this.fullPlayer) return;
+        
+        const rect = this.fullPlayer.getBoundingClientRect();
+        const size = {
+            width: rect.width,
+            height: rect.height
+        };
+        
+        try {
+            localStorage.setItem('musicPlayerSize', JSON.stringify(size));
+        } catch (error) {
+            console.error('Error saving player size:', error);
+        }
+    }
+    
+    // ✅ Restore player size from localStorage
+    restorePlayerSize() {
+        if (!this.fullPlayer) return;
+        
+        try {
+            const sizeStr = localStorage.getItem('musicPlayerSize');
+            if (!sizeStr) return;
+            
+            const size = JSON.parse(sizeStr);
+            
+            // Validate size
+            if (size.width >= 350 && size.width <= 800) {
+                this.fullPlayer.style.width = size.width + 'px';
+            }
+            
+            if (size.height >= 500 && size.height <= window.innerHeight * 0.9) {
+                this.fullPlayer.style.height = size.height + 'px';
+            }
+        } catch (error) {
+            console.error('Error restoring player size:', error);
         }
     }
     
@@ -659,6 +806,257 @@ class MusicPlayer {
         }
     }
     
+    async loadGlobalPlaylists(searchQuery = '') {
+        const globalGrid = document.getElementById('global-playlist-grid');
+        if (!globalGrid) {
+            console.error('❌ Global grid not found!');
+            return;
+        }
+        
+        console.log('🔍 Loading all playlists...', searchQuery ? `search: "${searchQuery}"` : 'all');
+        
+        // Get container
+        const playlistsWrapper = document.getElementById('all-playlists-wrapper');
+        const clearBtn = document.getElementById('clear-search-btn');
+        
+        if (!playlistsWrapper) {
+            console.error('❌ Playlists wrapper not found!');
+            return;
+        }
+        
+        try {
+            // Show loading
+            playlistsWrapper.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-hourglass-split"></i>
+                    <p>Đang tải...</p>
+                </div>
+            `;
+            
+            // Load admin playlists
+            const adminResponse = await fetch('/music/api/');
+            const adminData = await adminResponse.json();
+            
+            // Load user public playlists
+            const userURL = searchQuery 
+                ? `/music/global/playlists/?search=${encodeURIComponent(searchQuery)}`
+                : '/music/global/playlists/';
+            const userResponse = await fetch(userURL);
+            const userData = await userResponse.json();
+            
+            console.log('📊 Admin Playlists:', adminData);
+            console.log('📊 User Playlists:', userData);
+            
+            // Show/hide clear button
+            if (clearBtn) {
+                if (searchQuery) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+            }
+            
+            // Merge and render all playlists
+            let allPlaylists = [];
+            
+            // Add admin playlists
+            if (adminData.success && adminData.playlists.length > 0) {
+                let filteredAdminPlaylists = adminData.playlists;
+                
+                // Filter by search query if provided
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    filteredAdminPlaylists = adminData.playlists.filter(p => 
+                        p.name.toLowerCase().includes(query)
+                    );
+                }
+                
+                filteredAdminPlaylists.forEach(playlist => {
+                    const escapedName = this.escapeHtml(playlist.name);
+                    const coverImage = playlist.cover_image || '';
+                    const totalDuration = Math.floor(playlist.tracks.reduce((sum, t) => sum + (t.duration || 0), 0) / 60);
+                    
+                    allPlaylists.push(`
+                        <div class="playlist-card" data-playlist-id="${playlist.id}" onclick="musicPlayer.loadPlaylist(${playlist.id})">
+                            ${coverImage ? `
+                                <div class="playlist-card-cover" style="background-image: url('${coverImage}')"></div>
+                            ` : `
+                                <div class="playlist-card-icon">
+                                    <i class="bi bi-music-note-list"></i>
+                                </div>
+                            `}
+                            <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
+                            <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks.length} bài • ${totalDuration} phút</div>
+                        </div>
+                    `);
+                });
+            }
+            
+            // Add user public playlists
+            if (userData.success && userData.playlists.length > 0) {
+                console.log(`✅ Found ${userData.playlists.length} user playlists`);
+                userData.playlists.forEach(playlist => {
+                    const escapedName = this.escapeHtml(playlist.name);
+                    const escapedOwner = this.escapeHtml(playlist.owner.full_name);
+                    const coverImage = playlist.cover_image || '';
+                    const totalDuration = Math.floor(playlist.total_duration / 60);
+                    
+                    allPlaylists.push(`
+                        <div class="playlist-card" data-playlist-id="global-${playlist.id}" onclick="musicPlayer.loadGlobalPlaylist(${playlist.id})">
+                            ${coverImage ? `
+                                <div class="playlist-card-cover" style="background-image: url('${coverImage}')"></div>
+                            ` : `
+                                <div class="playlist-card-icon">
+                                    <i class="bi bi-music-note-list"></i>
+                                </div>
+                            `}
+                            <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
+                            <div class="playlist-card-count">${playlist.tracks_count} bài • ${totalDuration} phút</div>
+                            <div class="playlist-card-owner">
+                                <i class="bi bi-person-circle"></i>
+                                <span class="playlist-card-owner-name" title="${escapedOwner}">${escapedOwner}</span>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+            
+            // Render all playlists or show empty state
+            if (allPlaylists.length > 0) {
+                playlistsWrapper.innerHTML = allPlaylists.join('');
+            } else {
+                const emptyMessage = searchQuery 
+                    ? `Không tìm thấy playlist nào cho "${this.escapeHtml(searchQuery)}"`
+                    : 'Chưa có playlist nào!';
+                playlistsWrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-search"></i>
+                        <p>${emptyMessage}</p>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            console.error('Error loading playlists:', error);
+            playlistsWrapper.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <p>Lỗi khi tải danh sách playlist!</p>
+                </div>
+            `;
+        }
+    }
+    
+    async loadGlobalPlaylist(playlistId) {
+        try {
+            const response = await fetch(`/music/global/playlists/${playlistId}/`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.tracks.length > 0) {
+                // Convert to player format
+                this.currentPlaylist = {
+                    id: 'global-playlist-' + data.playlist.id,
+                    name: data.playlist.name + ' (by ' + data.playlist.owner.full_name + ')',
+                    tracks: data.tracks.map(track => ({
+                        id: track.id,
+                        title: track.title,
+                        artist: track.artist || 'Unknown Artist',
+                        album: track.album || '',
+                        album_cover: track.album_cover || null,
+                        file_url: track.file_url,
+                        duration: track.duration,
+                        play_count: track.play_count || 0
+                    }))
+                };
+                
+                this.currentTrackIndex = 0;
+                this.populateTrackList();
+                
+                // Update active state for global playlist cards
+                const playlistsWrapper = document.getElementById('all-playlists-wrapper');
+                if (playlistsWrapper) {
+                    playlistsWrapper.querySelectorAll('.playlist-card').forEach(card => {
+                        if (card.dataset.playlistId === `global-${playlistId}`) {
+                            card.classList.add('active');
+                        } else {
+                            card.classList.remove('active');
+                        }
+                    });
+                }
+                
+                // Remove active from user playlists
+                const userGrid = document.getElementById('user-playlist-grid');
+                if (userGrid) {
+                    userGrid.querySelectorAll('.playlist-card').forEach(card => {
+                        card.classList.remove('active');
+                    });
+                }
+                
+                // Remove active from admin playlists tab
+                const playlistGrid = document.getElementById('playlist-grid');
+                if (playlistGrid) {
+                    playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                        card.classList.remove('active');
+                    });
+                }
+                
+                // Switch to tracks tab FIRST before playing
+                const popup = document.getElementById('music-player-popup');
+                if (popup) {
+                    const tracksTab = popup.querySelector('[data-tab="tracks"]');
+                    if (tracksTab && !tracksTab.classList.contains('active')) {
+                        tracksTab.click();
+                    }
+                }
+                
+                // Then auto-play
+                this.userInteracted = true;
+                setTimeout(() => {
+                    this.playTrack(0);
+                }, 100);
+                
+                this.showMessage(`🎵 Đang phát: ${data.playlist.name}`, 'success');
+            } else {
+                this.showMessage('Playlist chưa có bài hát!', 'info');
+            }
+        } catch (error) {
+            console.error('Error loading global playlist:', error);
+            this.showMessage('Lỗi khi load playlist!', 'error');
+        }
+    }
+    
+    initGlobalSearch() {
+        const searchInput = document.getElementById('global-search-input');
+        const clearBtn = document.getElementById('clear-search-btn');
+        
+        if (!searchInput) return;
+        
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            // Debounce search by 500ms
+            searchTimeout = setTimeout(() => {
+                this.loadGlobalPlaylists(query);
+            }, 500);
+        });
+        
+        // Clear search button
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.focus();
+                this.loadGlobalPlaylists('');
+            });
+        }
+    }
+    
     initTabSystem() {
         // Scope tab elements within music player popup only
         const popup = document.getElementById('music-player-popup');
@@ -714,22 +1112,32 @@ class MusicPlayer {
                 this.playlists = data.playlists;
                 this.populatePlaylistSelect();
                 
-                // Thử restore state trước (chỉ 1 lần)
+                // ✅ Thử restore state trước (chỉ 1 lần) - now async
                 if (!this.restoreAttempted) {
                     this.restoreAttempted = true;
-                    const restored = this.restorePlayerState();
+                    console.log('🔄 Restoring player state...');
                     
-                    if (!restored) {
-                        // Nếu không có state để restore, auto-select first playlist
-                        if (this.playlists.length > 0 && this.settings.default_playlist_id) {
-                            const defaultPlaylist = this.playlists.find(p => p.id === this.settings.default_playlist_id);
-                            if (defaultPlaylist) {
-                                this.selectPlaylist(defaultPlaylist.id);
+                    // Use async/await since restorePlayerState is now async
+                    this.restorePlayerState().then(restored => {
+                        if (!restored) {
+                            console.log('ℹ️ No saved state found or restore failed');
+                            // Nếu không có state để restore, auto-select first playlist
+                            if (this.playlists.length > 0 && this.settings.default_playlist_id) {
+                                const defaultPlaylist = this.playlists.find(p => p.id === this.settings.default_playlist_id);
+                                if (defaultPlaylist) {
+                                    this.selectPlaylist(defaultPlaylist.id);
+                                }
+                            } else if (this.playlists.length > 0) {
+                                this.selectPlaylist(this.playlists[0].id);
                             }
-                        } else if (this.playlists.length > 0) {
+                        }
+                    }).catch(error => {
+                        console.error('❌ Error during restore:', error);
+                        // Fallback to default playlist on error
+                        if (this.playlists.length > 0) {
                             this.selectPlaylist(this.playlists[0].id);
                         }
-                    }
+                    });
                 }
             }
         } catch (error) {
@@ -770,6 +1178,11 @@ class MusicPlayer {
                         this.currentPlaylist = updatedPlaylist;
                         this.populateTrackList();
                         this.updateCurrentTrack();
+                        
+                        // ✅ Update cached indicators after refresh
+                        setTimeout(() => {
+                            this.updateTrackListOfflineIndicators();
+                        }, 300);
                     }
                 }
                 
@@ -804,6 +1217,9 @@ class MusicPlayer {
         const playlistGrid = document.getElementById('playlist-grid');
         if (!playlistGrid) return;
         
+        // ✅ Clear existing content first to prevent duplicates
+        playlistGrid.innerHTML = '';
+        
         if (this.playlists.length === 0) {
             playlistGrid.innerHTML = `
                 <div class="empty-state">
@@ -814,42 +1230,7 @@ class MusicPlayer {
             return;
         }
         
-        // ✅ Tối ưu: Chỉ update khi cần thiết
-        const existingCards = playlistGrid.querySelectorAll('.playlist-card');
-        const existingIds = new Set(Array.from(existingCards).map(c => parseInt(c.dataset.playlistId)));
-        const newIds = new Set(this.playlists.map(p => p.id));
-        
-        // ✅ Check nếu danh sách không đổi, chỉ update active state
-        const listsMatch = existingIds.size === newIds.size && 
-                          Array.from(existingIds).every(id => newIds.has(id));
-        
-        if (listsMatch) {
-            // Chỉ update active state và track count
-            existingCards.forEach(card => {
-                const playlistId = parseInt(card.dataset.playlistId);
-                const playlist = this.playlists.find(p => p.id === playlistId);
-                
-                if (playlist) {
-                    // Update active state
-                    if (this.currentPlaylist && this.currentPlaylist.id === playlist.id) {
-                        card.classList.add('active');
-                    } else {
-                        card.classList.remove('active');
-                    }
-                    
-                    // Update track count nếu thay đổi
-                    const countElement = card.querySelector('.playlist-card-count');
-                    const newCount = `${playlist.tracks_count || playlist.tracks?.length || 0} bài hát`;
-                    if (countElement && countElement.textContent !== newCount) {
-                        countElement.textContent = newCount;
-                    }
-                }
-            });
-            return;
-        }
-        
-        // ✅ Nếu danh sách thay đổi, re-render toàn bộ
-        playlistGrid.innerHTML = '';
+        // ✅ Render each playlist card once
         this.playlists.forEach(playlist => {
             const card = document.createElement('div');
             card.className = 'playlist-card';
@@ -895,8 +1276,19 @@ class MusicPlayer {
         this.populateTrackList();
         this.updateCurrentTrack();
         
-        // ✅ Update cached tracks status for offline indicators
+        // ✅ Update cached tracks status for offline indicators (with retry if offline manager not ready)
         this.updateCachedTracksStatus();
+        
+        // ✅ Retry update after 500ms if offline manager wasn't ready yet
+        if (!this.offlineManager) {
+            setTimeout(async () => {
+                if (this.offlineManager && this.currentPlaylist) {
+                    await this.updateCachedTracksStatus();
+                    this.updateTrackListOfflineIndicators();
+                    console.log('🔄 Cached indicators updated (retry after offline manager ready)');
+                }
+            }, 500);
+        }
         
         // Update active state for playlist cards
         const playlistGrid = document.getElementById('playlist-grid');
@@ -1641,6 +2033,11 @@ class MusicPlayer {
             // Nếu đang ẩn (ví dụ khi mới vào trang), thì mở
             if (this.popup.classList.contains('hidden')) {
                 this.popup.classList.remove('hidden');
+                
+                // ✅ Update cached indicators khi mở player (listening lock case)
+                setTimeout(() => {
+                    this.updateTrackListOfflineIndicators();
+                }, 100);
             }
             return;
         }
@@ -1651,6 +2048,12 @@ class MusicPlayer {
         if (wasHidden) {
             // Opening player - refreshing playlists
             this.refreshPlaylists();
+            
+            // ✅ Update cached indicators khi mở player
+            setTimeout(() => {
+                this.updateTrackListOfflineIndicators();
+                console.log('🔄 Updated cached indicators after opening player');
+            }, 200);
             
             // ✅ Reset iOS volume message flag khi mở player
             // (Chỉ show khi user tự nhấn vào volume controls, không auto-show)
@@ -2410,10 +2813,12 @@ class MusicPlayer {
         }
     }
 
-    restorePlayerState() {
+    async restorePlayerState() {
         try {
             const stateStr = localStorage.getItem('musicPlayerState');
-            if (!stateStr) return false;
+            if (!stateStr) {
+                return false;
+            }
             
             const state = JSON.parse(stateStr);
             
@@ -2424,16 +2829,67 @@ class MusicPlayer {
                 return false;
             }
             
-            // Tìm playlist
-            const playlist = this.playlists.find(p => p.id === state.playlistId);
+            let playlist = null;
+            
+            // ✅ Check if this is a user playlist or user track
+            const isUserPlaylist = typeof state.playlistId === 'string' && state.playlistId.startsWith('user-playlist-');
+            const isUserTrack = typeof state.playlistId === 'string' && state.playlistId.startsWith('user-track-');
+            
+            if (isUserPlaylist) {
+                // Extract playlist ID from "user-playlist-123" format
+                const playlistIdMatch = state.playlistId.match(/user-playlist-(\d+)/);
+                if (playlistIdMatch) {
+                    const playlistId = playlistIdMatch[1];
+                    console.log(`🔄 Restoring user playlist ID: ${playlistId}`);
+                    
+                    // Fetch user playlist from API
+                    try {
+                        const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.tracks.length > 0) {
+                                playlist = {
+                                    id: state.playlistId,
+                                    name: data.playlist.name,
+                                    tracks: data.tracks.map(track => ({
+                                        id: track.id,
+                                        title: track.title,
+                                        artist: track.artist || 'Unknown Artist',
+                                        album: track.album || '',
+                                        album_cover: track.album_cover,
+                                        file_url: track.file_url,
+                                        duration: track.duration
+                                    }))
+                                };
+                                console.log(`✅ Fetched user playlist: ${playlist.name} (${playlist.tracks.length} tracks)`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Failed to fetch user playlist:', error);
+                    }
+                }
+            } else if (isUserTrack) {
+                // User was playing a single track (not in a playlist)
+                console.log(`ℹ️ Cannot restore single user track, skipping`);
+                return false;
+            } else {
+                // Normal admin/global playlist
+                playlist = this.playlists.find(p => p.id === state.playlistId);
+            }
+            
             if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+                console.log(`⚠️ Playlist not found or empty, cannot restore`);
                 return false;
             }
             
             // Validate track index
             const trackIndex = Math.min(state.trackIndex || 0, playlist.tracks.length - 1);
             const track = playlist.tracks[trackIndex];
-            if (!track) return false;
+            if (!track) {
+                return false;
+            }
+            
+            console.log(`🎵 Restoring: ${track.title} (${Math.floor(state.currentTime)}s)`);
             
             // Restoring player state
             
@@ -2477,7 +2933,6 @@ class MusicPlayer {
                             if (resolved) return;
                             resolved = true;
                             cleanup();
-                            // Audio ready with duration
                             resolve();
                         }
                     };
@@ -2497,6 +2952,7 @@ class MusicPlayer {
                         if (resolved) return;
                         resolved = true;
                         cleanup();
+                        console.error('🚨 Audio loading failed during restore');
                         reject(e);
                     };
                     
@@ -2521,9 +2977,6 @@ class MusicPlayer {
             // Xử lý async với retry logic
             waitForAudioReady()
                 .then(() => {
-                    // Audio đã sẵn sàng VÀ có duration
-                    // Audio ready for restore
-                    
                     // Set thời gian phát với validation tốt hơn
                     if (state.currentTime && state.currentTime > 0) {
                         if (this.audio.duration && !isNaN(this.audio.duration) && this.audio.duration > 0) {
@@ -2531,24 +2984,20 @@ class MusicPlayer {
                             
                             try {
                                 this.audio.currentTime = targetTime;
-                                // Restored position
+                                console.log(`✅ Restored to ${Math.floor(targetTime)}s`);
                             } catch (e) {
-                                console.error('❌ Failed to set currentTime:', e);
+                                console.error('🚨 Failed to restore position');
                                 // Retry sau 200ms
                                 setTimeout(() => {
                                     try {
                                         this.audio.currentTime = targetTime;
-                                        // Restored position (retry)
+                                        console.log(`✅ Restored to ${Math.floor(targetTime)}s (retry)`);
                                     } catch (e2) {
-                                        console.error('❌ Failed to set currentTime (retry):', e2);
+                                        console.error('🚨 Failed to restore position (retry)');
                                     }
                                 }, 200);
                             }
-                        } else {
-                            // Duration not valid - cannot restore position
                         }
-                    } else {
-                        // No currentTime to restore (starting from beginning)
                     }
                     
                     // Update UI
@@ -2559,19 +3008,22 @@ class MusicPlayer {
                     if (state.isPlaying) {
                         this.userInteracted = true;
                         this.audio.play().catch(e => {
-                            // Autoplay prevented
+                            console.log('⚠️ Autoplay prevented');
                         });
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Error restoring audio:', error);
+                    console.error('🚨 Error restoring audio');
                 })
                 .finally(() => {
                     // Reset flags sau 1 giây để đảm bảo mọi thứ ổn định
                     setTimeout(() => {
                         this.isRestoringState = false;
                         this.isLoadingTrack = false;
-                        // Restore completed
+                        
+                        // ✅ Update cached indicators after restore complete
+                        this.updateTrackListOfflineIndicators();
+                        console.log('🔄 Updated cached indicators after restore state');
                     }, 1000);
                 });
             
@@ -2812,12 +3264,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         
         try {
             this.offlineManager = new OfflineManager();
-            console.log('✅ Offline Manager initialized');
+            // console.log('✅ Offline Manager initialized');
             
             // Listen to cache status updates
             window.addEventListener('cacheStatusUpdated', (event) => {
                 const { size, percentage, sizeMB, maxMB } = event.detail;
-                console.log(`📦 Cache: ${sizeMB}MB / ${maxMB}MB (${percentage}%)`);
+                // console.log(`📦 Cache: ${sizeMB}MB / ${maxMB}MB (${percentage}%)`);
                 
                 // Update UI if cache status element exists
                 this.updateOfflineCacheUI(event.detail);
@@ -2832,37 +3284,14 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 this.updateOfflineModeUI(isOnline);
             });
             
-            // Listen for track cached events
-            window.addEventListener('trackCached', (event) => {
-                const { trackId } = event.detail;
-                this.addTrackToCache(trackId);
-                this.updateTrackListOfflineIndicators();
-                console.log(`✅ Track ${trackId} cached - UI updated`);
-            });
-            
-            // Listen for Service Worker messages
+            // ✅ OPTIMIZED: Single Service Worker message listener (handles both navigator.serviceWorker and controller)
             navigator.serviceWorker.addEventListener('message', (event) => {
-                console.log('🔔 SW Message received:', event.data);
                 if (event.data.type === 'trackCached') {
                     const { trackId } = event.data;
                     this.addTrackToCache(trackId);
-                    this.updateTrackListOfflineIndicators();
-                    console.log(`✅ Track ${trackId} cached - UI updated`);
+                    console.log(`✅ Track ${trackId} cached via Service Worker`);
                 }
             });
-            
-            // ✅ FALLBACK: Listen for Service Worker controller messages
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.addEventListener('message', (event) => {
-                    console.log('🔔 SW Controller message:', event.data);
-                    if (event.data.type === 'trackCached') {
-                        const { trackId } = event.data;
-                        this.addTrackToCache(trackId);
-                        this.updateTrackListOfflineIndicators();
-                        console.log(`✅ Track ${trackId} cached - UI updated (controller)`);
-                    }
-                });
-            }
             
             // ✅ FALLBACK: Auto-add tracks to cache after playing
             this.audio.addEventListener('loadeddata', () => {
@@ -2880,11 +3309,14 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 }
             });
             
-            // Check and update cached tracks status
-            setTimeout(() => {
-                this.updateCachedTracksStatus();
-                this.updateTrackListOfflineIndicators();
-            }, 1000);
+            // Check and update cached tracks status after offline manager is ready
+            setTimeout(async () => {
+                if (this.currentPlaylist) {
+                    await this.updateCachedTracksStatus();
+                    this.updateTrackListOfflineIndicators();
+                    console.log('🎵 Cached indicators updated after offline manager ready');
+                }
+            }, 1200);
             
         } catch (error) {
             console.error('❌ Failed to initialize Offline Manager:', error);
@@ -2995,7 +3427,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 }
                 
                 this.cachedTracks = verifiedTracks;
-                console.log('📦 Loaded verified cached tracks:', this.cachedTracks);
+                // console.log('📦 Loaded verified cached tracks:', this.cachedTracks);
                 
                 // Update localStorage with verified tracks only
                 this.saveCachedTracksToStorage();
@@ -3013,37 +3445,45 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         try {
             const trackIds = Array.from(this.cachedTracks);
             localStorage.setItem('dbp_cached_tracks', JSON.stringify(trackIds));
-            console.log('💾 Saved cached tracks to storage:', trackIds);
+            // console.log('💾 Saved cached tracks to storage:', trackIds);
         } catch (error) {
             console.error('Error saving cached tracks:', error);
         }
     }
     
-    // ✅ Add track to cache and save
+    // ✅ Add track to cache and save (with debounced UI update)
     addTrackToCache(trackId) {
         this.cachedTracks.add(trackId);
         this.saveCachedTracksToStorage();
-        this.updateTrackListOfflineIndicators();
-        console.log(`✅ Added track ${trackId} to cache and saved`);
+        this.updateTrackListOfflineIndicatorsDebounced();
+        // console.log(`✅ Added track ${trackId} to cache and saved`);
     }
     
-    // ✅ Update track list to show offline indicators
+    // ✅ Debounced version to prevent excessive DOM updates
+    updateTrackListOfflineIndicatorsDebounced(delay = 100) {
+        clearTimeout(this.updateIndicatorsDebounceTimer);
+        this.updateIndicatorsDebounceTimer = setTimeout(() => {
+            this.updateTrackListOfflineIndicators();
+        }, delay);
+    }
+    
+    // ✅ Update track list to show offline indicators (immediate, no debounce)
     updateTrackListOfflineIndicators() {
-        console.log('🔧 Updating track list offline indicators...');
+        // console.log('🔧 Updating track list offline indicators...');
         
         if (!this.trackList) {
-            console.log('❌ Track list not found');
+            // console.log('❌ Track list not found');
             return;
         }
         
         const trackItems = this.trackList.querySelectorAll('.track-item');
-        console.log(`🎵 Found ${trackItems.length} track items`);
+        // console.log(`🎵 Found ${trackItems.length} track items`);
         
         trackItems.forEach((item, index) => {
             const trackId = parseInt(item.dataset.trackId);
             const isCached = this.cachedTracks.has(trackId);
             
-            console.log(`Track ${index}: ID=${trackId}, Cached=${isCached}`);
+            // console.log(`Track ${index}: ID=${trackId}, Cached=${isCached}`);
             
             // Add/remove cached indicator
             let indicator = item.querySelector('.offline-indicator');
@@ -3056,17 +3496,17 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 const artistElement = item.querySelector('.track-item-artist');
                 if (artistElement) {
                     artistElement.appendChild(indicator);
-                    console.log(`✅ Added indicator to track ${trackId}`);
+                    // console.log(`✅ Added indicator to track ${trackId}`);
                 } else {
-                    console.log(`❌ Artist element not found for track ${trackId}`);
+                    // console.log(`❌ Artist element not found for track ${trackId}`);
                 }
             } else if (!isCached && indicator) {
                 indicator.remove();
-                console.log(`🗑️ Removed indicator from track ${trackId}`);
+                // console.log(`🗑️ Removed indicator from track ${trackId}`);
             }
         });
         
-        console.log('✅ Track list indicators updated');
+        // console.log('✅ Track list indicators updated');
     }
     
     // ✅ Preload track for offline (called when track is played)
@@ -3075,22 +3515,20 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         
         // Auto-cache khi nghe (Service Worker sẽ tự động cache)
         // Không cần manually preload, Service Worker sẽ làm
-        // Nhưng có thể force preload nếu muốn
         
         try {
             const isCached = await this.offlineManager.isTrackCached(track.file_url);
             if (!isCached) {
                 console.log(`📥 Auto-caching track: ${track.title}`);
                 // Service Worker sẽ tự động cache khi fetch
-                // Sau khi cache xong, update UI
+                // Sau khi cache xong, update UI (addTrackToCache already updates UI)
                 setTimeout(() => {
                     this.addTrackToCache(track.id);
-                    this.updateTrackListOfflineIndicators();
                 }, 2000); // Wait 2s for cache to complete
             } else {
                 console.log(`✅ Track already cached: ${track.title}`);
+                // addTrackToCache already calls updateTrackListOfflineIndicatorsDebounced
                 this.addTrackToCache(track.id);
-                this.updateTrackListOfflineIndicators();
             }
         } catch (error) {
             console.error('Error checking cache status:', error);
@@ -3556,11 +3994,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             this.formatTimeCache.clear();
         }
         
-        // ✅ Cleanup audio element
+        // ✅ Cleanup audio element (chỉ pause, không reset src để giữ state)
         if (this.audio) {
             this.audio.pause();
-            this.audio.src = '';
-            this.audio.load();
+            // KHÔNG reset src để giữ state cho restore
+            // this.audio.src = '';
+            // this.audio.load();
         }
     }
 }
@@ -3605,9 +4044,11 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 });
 
-// Cleanup when page unloads
+// Cleanup when page unloads (chỉ save state, không destroy audio)
 window.addEventListener('beforeunload', () => {
     if (window.musicPlayer) {
-        window.musicPlayer.destroy();
+        // Chỉ save state, không destroy audio để giữ state
+        window.musicPlayer.savePlayerStateImmediate();
     }
 });
+

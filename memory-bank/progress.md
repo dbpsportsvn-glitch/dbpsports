@@ -61,6 +61,7 @@
   - Low Power Mode: tat hieu ung nang, giam update UI, dung class low-power; luu theo tai khoan
   - He thong thong ke luot nghe: tu dong ghi nhan sau 30s/50% thoi luong bai, chong spam (5 phut), lich su chi tiet trong admin, hien thi so luot nghe giua thoi gian hien tai va tong trong player (icon tai nghe)
   - **Offline Playback:** Service Worker + Cache API cho phep nghe nhac offline trong app. Auto cache tracks khi nghe, max 500MB cache, offline playback khong can Internet, cached indicators (icon cloud-check xanh), cache management UI trong Settings, PWA support voi manifest.json
+  - **Hoan thanh Toi uu Music Player Workflow:** Khac phuc thanh cong van de nhac bi phat lai tu dau khi chuyen trang. Nguyen nhan: race condition giua restore state va cleanup trong beforeunload event. Giai phap: khong reset audio.src trong destroy(), chi save state trong beforeunload. Toi uu console logs chi hien thi thong tin quan trong va truc quan nhat voi emoji va grouping. Music player gio hoat dong hoan hao voi state management, offline playback, performance toi uu va error handling robust.
 
   **Module Organization Shop:**
   - Hệ thống shop riêng cho từng ban tổ chức (BTC)

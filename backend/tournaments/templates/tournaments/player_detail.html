@@ -90,9 +90,10 @@
     }
     
     .modern-profile-nav .nav-link:hover {
-        color: white;
-        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff !important; /* ✅ Đổi từ white sang #ffffff để tương phản cao hơn */
+        background: rgba(255, 255, 255, 0.25); /* ✅ Tăng opacity từ 0.1 lên 0.25 để tương phản hơn */
         transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3); /* ✅ Thêm shadow để nổi bật */
     }
     
     .modern-profile-nav .nav-link.active {

@@ -158,13 +158,17 @@
                                 <i class="bi bi-person-fill"></i>
                                 Playlist Của Tôi
                             </button>
+                            <button class="playlist-type-btn" data-type="global">
+                                <i class="bi bi-search"></i>
+                                Global Discovery
+                            </button>
                             <button class="playlist-type-btn" data-type="admin">
                                 <i class="bi bi-globe"></i>
                                 Admin Playlists
                             </button>
                         </div>
                         
-                        <!-- User Playlists Grid -->
+                        <!-- Personal Playlists Grid -->
                         <div class="playlist-grid" id="user-playlist-grid">
                             <div class="empty-state">
                                 <i class="bi bi-music-note-beamed" style="font-size: 48px; color: #f093fb; margin-bottom: 12px;"></i>
@@ -185,6 +189,25 @@
                             </div>
                         </div>
                         
+                        <!-- Global Discovery Grid - Special Layout -->
+                        <div class="playlist-grid hidden" id="global-playlist-grid">
+                            <!-- Search Bar - ONLY for Global Discovery -->
+                            <div class="global-search-bar">
+                                <input type="text" id="global-search-input" placeholder="🔍 Tìm tên playlist hoặc tên người dùng...">
+                                <button class="clear-search-btn hidden" id="clear-search-btn">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- All Playlists Container - ONLY for Global Discovery -->
+                            <div class="playlists-wrapper" id="all-playlists-wrapper">
+                                <div class="empty-state">
+                                    <i class="bi bi-music-note-beamed"></i>
+                                    <p>Đang tải playlists...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Admin Playlists Grid -->
                         <div class="playlist-grid hidden" id="playlist-grid">
                             <!-- Playlists will be populated here -->
@@ -202,6 +225,9 @@
                 </div>
             </div>
         </div>
+        
+        <!-- ✅ Resize Handle - Desktop only -->
+        <div class="player-resize-handle" id="player-resize-handle" title="Kéo để thay đổi kích thước"></div>
     </div>
 
     <!-- Audio Element -->

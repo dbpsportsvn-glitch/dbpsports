@@ -3,7 +3,7 @@
  * Cho phép offline playback TRONG APP (không cho download file ra ngoài)
  */
 
-const CACHE_VERSION = 'dbp-music-v3-final';
+const CACHE_VERSION = 'dbp-music-v4-range-fix';
 const CACHE_LIMITS = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   maxSize: 500 * 1024 * 1024 // 500MB max cache
@@ -11,16 +11,16 @@ const CACHE_LIMITS = {
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
+  // console.log('[Service Worker] Installing...');
   self.skipWaiting();
 });
 
-// Force update version
-const SW_VERSION = 'v5-cleanup-force';
+// Force update version - Production ready with URL encoding fix
+const SW_VERSION = 'v11-production-clean';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
+  // console.log('[Service Worker] Activating...');
   event.waitUntil(
     Promise.all([
       // Clean old caches
@@ -35,7 +35,7 @@ self.addEventListener('activate', (event) => {
       cleanupRangeRequests(),
       // ✅ Claim all clients immediately
       clients.claim().then(() => {
-        console.log('[Service Worker] Claimed all clients - ready to intercept!');
+        // console.log('[Service Worker] Claimed all clients - ready to intercept!');
       })
     ])
   );
@@ -47,7 +47,7 @@ self.addEventListener('fetch', (event) => {
   
   // Chỉ cache audio files
   if (url.pathname.includes('/media/music/')) {
-    console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
+    // console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
     event.respondWith(handleAudioRequest(event.request));
   }
 });
@@ -56,100 +56,111 @@ self.addEventListener('fetch', (event) => {
  * Handle audio request với cache-first strategy
  * ✅ Cache trong app để offline playback
  * ❌ KHÔNG cho user download file ra ngoài
- * 🔧 FIX: Handle Range requests (HTTP 206) properly
+ * 🔧 FIX: Handle Range requests properly - serve Range responses from cached full file
  */
 async function handleAudioRequest(request) {
   try {
-    // 1. Thử lấy từ cache trước
-    const cachedResponse = await caches.match(request);
+    const requestUrl = request.url.split('?')[0]; // Remove query params for cache matching
+    const rangeHeader = request.headers.get('range');
+    
+    // 1. Thử lấy từ cache trước (IGNORE range header khi match)
+    const cache = await caches.open(CACHE_VERSION);
+    let cachedResponse = await cache.match(requestUrl);
+    
+    // Fallback: Try matching with decoded URL if first match fails
+    if (!cachedResponse) {
+      try {
+        const decodedUrl = decodeURIComponent(requestUrl);
+        cachedResponse = await cache.match(decodedUrl);
+      } catch (e) {
+        // Ignore decode errors
+      }
+    }
+    
+    // Fallback: Try matching with encoded URL if first match fails
+    if (!cachedResponse) {
+      try {
+        const encodedUrl = encodeURI(requestUrl);
+        cachedResponse = await cache.match(encodedUrl);
+      } catch (e) {
+        // Ignore encode errors
+      }
+    }
+    
     if (cachedResponse) {
-      console.log('[Service Worker] Serving from cache:', request.url);
+      // console.log('[Service Worker] ✅ Serving from cache:', requestUrl);
+      
+      // Nếu request có Range header, tạo Range response từ cached full file
+      if (rangeHeader) {
+        return createRangeResponse(cachedResponse, rangeHeader);
+      }
+      
+      // Không có Range header, return full cached file
       return cachedResponse;
     }
     
-    // 2. Nếu không có trong cache, fetch từ network
-    console.log('[Service Worker] Fetching from network:', request.url);
+    // 2. Không có trong cache, fetch từ network
+    console.log('[Service Worker] Fetching from network:', requestUrl);
     
-    // 🔧 FIX: Check if this is a range request
-    const hasRange = request.headers.get('range');
+    // Luôn fetch FULL file để cache (bỏ range header)
+    const fullRequest = new Request(requestUrl, {
+      method: 'GET',
+      headers: new Headers()
+    });
     
-    if (hasRange) {
-      // Range request - fetch full file for caching, return partial for playback
-      console.log('[Service Worker] Range request detected, fetching full file...');
+    const fullResponse = await fetch(fullRequest);
+    
+    if (fullResponse.ok) {
+      // Cache full file
+      await cache.put(requestUrl, fullResponse.clone());
+      // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
       
-      // Fetch full file (no range header)
-      const fullRequest = new Request(request.url, {
-        method: 'GET',
-        headers: new Headers()
-      });
-      
-      const fullResponse = await fetch(fullRequest);
-      
-      if (fullResponse.ok) {
-        // Cache the full file
-        const cache = await caches.open(CACHE_VERSION);
-        await cache.put(request.url, fullResponse.clone());
-        console.log('[Service Worker] ✅ Cached full file:', request.url);
-        
-        // Notify main thread
-        const trackId = extractTrackIdFromUrl(request.url);
-        if (trackId) {
-          console.log('[SW] Notifying clients about cached track:', trackId);
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'trackCached',
-                trackId: trackId,
-                url: request.url
-              });
-              console.log('[SW] Message sent to client:', client.id);
+      // Notify main thread
+      const trackId = extractTrackIdFromUrl(requestUrl);
+      if (trackId) {
+        // console.log('[SW] Notifying clients about cached track:', trackId);
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'trackCached',
+              trackId: trackId,
+              url: requestUrl
             });
-          }).catch(error => {
-            console.error('[SW] Error sending message:', error);
+            // console.log('[SW] Message sent to client:', client.id);
           });
-        }
+        }).catch(error => {
+          console.error('[SW] Error sending message:', error);
+        });
       }
       
-      // Return original range request
-      return fetch(request);
-    } else {
-      // Normal request - fetch and cache
-      const networkResponse = await fetch(request);
-      
-      if (networkResponse.ok) {
-        const cache = await caches.open(CACHE_VERSION);
-        await cache.put(request.url, networkResponse.clone());
-        console.log('[Service Worker] ✅ Cached:', request.url);
-        
-        // Notify main thread
-        const trackId = extractTrackIdFromUrl(request.url);
-        if (trackId) {
-          console.log('[SW] Notifying clients about cached track:', trackId);
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'trackCached',
-                trackId: trackId,
-                url: request.url
-              });
-              console.log('[SW] Message sent to client:', client.id);
-            });
-          }).catch(error => {
-            console.error('[SW] Error sending message:', error);
-          });
-        }
+      // Nếu original request có Range header, tạo Range response
+      if (rangeHeader) {
+        // console.log('[Service Worker] Creating Range response for new fetch:', rangeHeader);
+        return createRangeResponse(fullResponse, rangeHeader);
       }
       
-      return networkResponse;
+      // Return full response
+      return fullResponse;
     }
     
+    throw new Error('Network request failed');
+    
   } catch (error) {
-    console.error('[Service Worker] Fetch failed:', error);
+    console.error('🚨 Service Worker Error:', error.message);
     
     // Fallback: Trả về cached version nếu có
-    const cachedResponse = await caches.match(request.url);
+    const requestUrl = request.url.split('?')[0];
+    const cache = await caches.open(CACHE_VERSION);
+    const cachedResponse = await cache.match(requestUrl);
+    
     if (cachedResponse) {
-      console.log('[Service Worker] Serving cached fallback:', request.url);
+      console.log('📦 Serving from cache (offline mode)');
+      const rangeHeader = request.headers.get('range');
+      
+      if (rangeHeader) {
+        return createRangeResponse(cachedResponse, rangeHeader);
+      }
+      
       return cachedResponse;
     }
     
@@ -162,11 +173,60 @@ async function handleAudioRequest(request) {
 }
 
 /**
+ * Tạo Range response từ full cached response
+ * Hỗ trợ browser seeking trong audio player
+ */
+async function createRangeResponse(response, rangeHeader) {
+  try {
+    const arrayBuffer = await response.clone().arrayBuffer();
+    const totalLength = arrayBuffer.byteLength;
+    
+    // Parse Range header (format: "bytes=start-end")
+    const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+    if (!rangeMatch) {
+      // Invalid range header, return full file
+      return response;
+    }
+    
+    const start = parseInt(rangeMatch[1], 10);
+    const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : totalLength - 1;
+    
+    // Validate range
+    if (start >= totalLength || end >= totalLength || start > end) {
+      console.error('[Service Worker] Range Not Satisfiable:', start, '-', end, '/', totalLength);
+      return new Response('Range Not Satisfiable', { status: 416 });
+    }
+    
+    // Extract requested byte range
+    const rangeData = arrayBuffer.slice(start, end + 1);
+    
+    // Create Range response với proper headers
+    const rangeResponse = new Response(rangeData, {
+      status: 206, // Partial Content
+      statusText: 'Partial Content',
+      headers: new Headers({
+        'Content-Type': response.headers.get('Content-Type') || 'audio/mpeg',
+        'Content-Length': rangeData.byteLength.toString(),
+        'Content-Range': `bytes ${start}-${end}/${totalLength}`,
+        'Accept-Ranges': 'bytes'
+      })
+    });
+    
+    return rangeResponse;
+    
+  } catch (error) {
+    console.error('🚨 Range Response Error:', error.message);
+    // Fallback: return full response
+    return response;
+  }
+}
+
+/**
  * Extract track ID from URL
  */
 function extractTrackIdFromUrl(url) {
   try {
-    console.log('[SW] Extracting track ID from:', url);
+    // console.log('[SW] Extracting track ID from:', url);
     
     // Try different patterns - FIXED for actual URL format
     const patterns = [
@@ -183,15 +243,15 @@ function extractTrackIdFromUrl(url) {
       const match = url.match(pattern);
       if (match) {
         const trackId = parseInt(match[1]);
-        console.log('[SW] Found track ID:', trackId);
+        // console.log('[SW] Found track ID:', trackId);
         return trackId;
       }
     }
     
-    console.log('[SW] No track ID found in URL');
+    // console.log('[SW] No track ID found in URL');
     return null;
   } catch (error) {
-    console.error('[SW] Error extracting track ID:', error);
+    console.error('🚨 Track ID Extraction Error:', error.message);
     return null;
   }
 }
@@ -275,17 +335,17 @@ async function cleanupRangeRequests() {
           if (size < 500 * 1024) {
             await cache.delete(request);
             deletedCount++;
-            console.log(`[Service Worker] Deleted range request: ${url} (${(size / 1024).toFixed(2)} KB)`);
+            // console.log(`[Service Worker] Deleted range request: ${url} (${(size / 1024).toFixed(2)} KB)`);
           }
         }
       }
     }
     
     if (deletedCount > 0) {
-      console.log(`[Service Worker] ✅ Cleaned up ${deletedCount} range request caches`);
+      // console.log(`[Service Worker] ✅ Cleaned up ${deletedCount} range request caches`);
     }
   } catch (error) {
-    console.error('[Service Worker] Error cleaning up range requests:', error);
+    console.error('🚨 Cache Cleanup Error:', error.message);
   }
 }
 

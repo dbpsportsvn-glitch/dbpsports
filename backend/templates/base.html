@@ -168,7 +168,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.2), transparent); /* ✅ Đổi từ tím sang vàng */
       transition: left 0.5s ease;
     }
     
@@ -177,11 +177,11 @@
     }
     
     .mobile-nav .nav-link:hover {
-      color: #fff !important;
-      background: rgba(14, 165, 233, 0.15);
-      border-color: rgba(14, 165, 233, 0.3);
+      color: #fbbf24 !important; /* ✅ Đổi từ tím sang vàng sáng */
+      background: rgba(251, 191, 36, 0.15); /* ✅ Đổi từ tím sang vàng nhạt */
+      border-color: rgba(251, 191, 36, 0.3); /* ✅ Border vàng */
       transform: translateX(8px);
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2); /* ✅ Shadow vàng */
     }
     
     /* Active state với gradient đẹp */
@@ -798,13 +798,17 @@
 }
 
 .nav-link:hover {
-  color: #3b82f6 !important;
-  background: rgba(59, 130, 246, 0.1);
+  color: #fbbf24 !important; /* ✅ Đổi từ tím sang vàng sáng */
+  background: rgba(251, 191, 36, 0.15); /* ✅ Background vàng nhạt */
+  transform: translateY(-1px); /* ✅ Thêm transform effect */
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2); /* ✅ Thêm shadow vàng */
 }
 
 .dropdown-item:hover {
-  background: rgba(59, 130, 246, 0.1) !important;
-  color: #3b82f6 !important;
+  background: rgba(251, 191, 36, 0.15) !important; /* ✅ Đổi từ tím sang vàng nhạt */
+  color: #fbbf24 !important; /* ✅ Đổi từ tím sang vàng sáng */
+  transform: translateX(4px); /* ✅ Thêm transform effect */
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2); /* ✅ Thêm shadow vàng */
 }
 
 .btn:hover {
@@ -2350,11 +2354,16 @@ function forceRefreshCartCount() {
 <!-- Music Player -->
 {% include 'music_player/music_player.html' %}
 <link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}">
-<script src="{% static 'music_player/js/music_player.js' %}"></script>
-<script src="{% static 'music_player/js/user_music.js' %}"></script>
+
+<!-- ✅ State Manager (Load first) -->
+<script src="{% static 'js/state-manager.js' %}"></script>
 
 <!-- ✅ Offline Manager for Music Player -->
 <script src="{% static 'js/offline-manager.js' %}"></script>
+
+<!-- Music Player Scripts -->
+<script src="{% static 'music_player/js/music_player.js' %}"></script>
+<script src="{% static 'music_player/js/user_music.js' %}"></script>
 
 <!-- ✅ Service Worker Registration -->
 <script>
@@ -2365,16 +2374,16 @@ if ('serviceWorker' in navigator) {
             scope: '/'
         })
         .then((registration) => {
-            console.log('✅ Service Worker registered successfully:', registration.scope);
+            // console.log('✅ Service Worker registered successfully:', registration.scope);
             
             // Check for updates
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
-                console.log('🔄 Service Worker update found...');
+                // console.log('🔄 Service Worker update found...');
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('✨ New Service Worker available. Refresh to update.');
+                        console.log('🔄 Service Worker updated - refresh to apply');
                         // Optional: Show notification to user
                         if (window.OfflineManager) {
                             const offlineManager = new OfflineManager();
@@ -2385,7 +2394,7 @@ if ('serviceWorker' in navigator) {
             });
         })
         .catch((error) => {
-            console.error('❌ Service Worker registration failed:', error);
+            console.error('🚨 Service Worker Error:', error.message);
         });
     });
 } else {
@@ -2420,7 +2429,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
     
     // Optional: Show install button/banner
-    console.log('💾 PWA can be installed');
+    // console.log('💾 PWA can be installed');
     
     // You can show a custom install button here
     const installBtn = document.getElementById('pwa-install-btn');
