@@ -1,9 +1,9 @@
 // ============================================================
-// Music Player v1.2.28 - DBP Sports
+// Music Player v1.3.0 - DBP Sports
 // ============================================================
 // 
-// 📅 Last Updated: 2025-01-16
-// 🔧 Version: 1.2.28
+// 📅 Last Updated: 2025-01-29
+// 🔧 Version: 1.3.0
 // 💾 Cache Version: dbp-music-v4-range-fix
 // 🔄 Service Worker: v16-cache-timeout-fix
 //
@@ -26,15 +26,14 @@
 //   6. Timeout: Player 25s, Service Worker 20s, Retry 15s
 //   7. Force network fetch sau khi clear cache với cache-busting
 //
-// 📝 CHANGELOG v1.2.28:
-//   - Fixed: URL encoding issues - removed double encoding from JS
-//   - Fixed: Header controls buttons giữ nguyên size khi resize player
-//   - Fixed: Auto-scroll to top (mobile & desktop same behavior)
-//   - Fixed: Audio error retry with cache-busting before skipping track
-//   - Fixed: Cache refresh after clear cache
-//   - Fixed: Timeout conflicts between player and Service Worker
-//   - Added: Cache-busting parameter for force network fetch
-//   - Added: Retry logic with timeout
+// 📝 CHANGELOG v1.3.0:
+//   - Fixed: Play count tracking hoàn chỉnh cho cả admin và user playlists
+//   - Fixed: loadUserPlaylist() thiếu play_count khi map tracks
+//   - Fixed: selectPlaylist() reload từ API để lấy play_count mới nhất
+//   - Fixed: populateTrackList() refresh UI sau khi update play_count
+//   - Fixed: Reset tracking flags khi chuyển track
+//   - Added: Debug logging cho tracking system
+//   - Added: @never_cache và cache headers cho API endpoints
 //
 // ============================================================
 
@@ -845,7 +844,8 @@ class MusicPlayer {
                         title: track.title,
                         artist: track.artist || 'Unknown Artist',
                         file_url: track.file_url,
-                        duration: track.duration
+                        duration: track.duration,
+                        play_count: track.play_count || 0  // ✅ Include play_count
                     }))
                 };
                 
@@ -1510,10 +1510,21 @@ class MusicPlayer {
         const playlist = this.playlists.find(p => p.id === parseInt(playlistId));
         if (!playlist) return;
         
-        this.currentPlaylist = playlist;
-        this.currentTrackIndex = 0;
-        this.populateTrackList();
-        this.updateCurrentTrack();
+        // ✅ RELOAD playlist từ API để lấy play_count mới nhất
+        // Kiểm tra xem đây là admin playlist hay user playlist
+        if (playlist.type === 'user') {
+            // User playlist - reload từ API
+            this.loadUserPlaylist(playlistId);
+        } else {
+            // Admin/Global playlist - reload từ API
+            this.loadGlobalPlaylist(playlistId);
+        }
+        
+        // Old code commented out - không dùng cache nữa
+        // this.currentPlaylist = playlist;
+        // this.currentTrackIndex = 0;
+        // this.populateTrackList();
+        // this.updateCurrentTrack();
         
         // ✅ Update cached tracks status for offline indicators (with retry if offline manager not ready)
         this.updateCachedTracksStatus();
@@ -1705,6 +1716,11 @@ class MusicPlayer {
         
         // ✅ Record play của track hiện tại trước khi chuyển sang track mới
         this.recordCurrentTrackPlay();
+        
+        // ✅ Stop tracking và reset flags khi chuyển sang track mới
+        this.stopPlayTracking();
+        this.hasRecordedPlay = false;
+        this.currentTrackListenDuration = 0;
         
         const track = this.currentPlaylist.tracks[index];
         
@@ -4332,6 +4348,8 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         this.currentTrackListenDuration = 0;
         this.hasRecordedPlay = false;
         
+        console.log('🎵 [Tracking] Started play tracking');
+        
         // Update listen duration mỗi giây
         this.playTrackingInterval = setInterval(() => {
             if (this.isPlaying && !this.audio.paused) {
@@ -4344,6 +4362,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     
                     if (this.currentTrackListenDuration >= minDuration) {
                         // Đã nghe đủ, gửi record play ngay
+                        console.log('🎵 [Tracking] Recording play:', {
+                            track_id: track.id,
+                            track_type: this.currentPlaylist.type || 'global',
+                            listen_duration: this.currentTrackListenDuration,
+                            track_duration: track.duration
+                        });
                         this.recordCurrentTrackPlay();
                     }
                 }
@@ -4356,11 +4380,15 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             clearInterval(this.playTrackingInterval);
             this.playTrackingInterval = null;
         }
+        // ✅ Reset tracking flags
+        this.hasRecordedPlay = false;
+        this.currentTrackListenDuration = 0;
     }
     
     async recordCurrentTrackPlay() {
         // Nếu đã record rồi hoặc không có track, skip
         if (this.hasRecordedPlay || !this.currentPlaylist || !this.currentPlaylist.tracks[this.currentTrackIndex]) {
+            console.log('🎵 [Tracking] Skipped - already recorded or no track');
             return;
         }
         
@@ -4369,6 +4397,10 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         // Kiểm tra đã nghe đủ thời gian chưa
         const minDuration = Math.min(30, track.duration * 0.5);
         if (this.currentTrackListenDuration < minDuration) {
+            console.log('🎵 [Tracking] Skipped - not enough duration:', {
+                listened: this.currentTrackListenDuration,
+                minDuration: minDuration
+            });
             return;
         }
         
@@ -4378,6 +4410,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         // Gửi lên server
         try {
             const csrfToken = this.getCSRFToken();
+            
+            console.log('🎵 [Tracking] Sending API request:', {
+                track_id: track.id,
+                track_type: this.currentPlaylist.type || 'global',
+                listen_duration: Math.floor(this.currentTrackListenDuration)
+            });
             
             const response = await fetch('/music/stats/record-play/', {
                 method: 'POST',
@@ -4395,6 +4433,8 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             
             const data = await response.json();
             
+            console.log('🎵 [Tracking] API response:', data);
+            
             if (data.success && data.counted) {
                 // Cập nhật play_count trong UI nếu cần
                 if (data.play_count !== undefined) {
@@ -4404,10 +4444,16 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     if (this.playCountNumber && this.currentPlaylist && this.currentPlaylist.tracks[this.currentTrackIndex] === track) {
                         this.playCountNumber.textContent = data.play_count;
                     }
+                    
+                    // ✅ Refresh track list để hiển thị play_count mới
+                    this.populateTrackList();
                 }
+                console.log('✅ [Tracking] Play count updated:', data.play_count);
+            } else {
+                console.log('⚠️ [Tracking] Play not counted:', data.message);
             }
         } catch (error) {
-            console.error('Error recording play:', error);
+            console.error('❌ [Tracking] Error recording play:', error);
         }
     }
 

@@ -509,6 +509,7 @@ def get_playlist_tracks(request, playlist_id):
             'duration': track.user_track.duration,
             'duration_formatted': track.user_track.get_duration_formatted(),
             'file_url': track.user_track.get_file_url(),
+            'play_count': track.user_track.play_count,  # ✅ Include play_count
             'order': track.order
         } for track in tracks]
         
@@ -683,6 +684,7 @@ def get_public_playlists(request):
         }, status=500)
 
 
+@never_cache
 @require_http_methods(["GET"])
 def get_public_playlist_detail(request, playlist_id):
     """API endpoint để xem chi tiết public playlist (bao gồm cả admin và user playlists)"""
@@ -714,7 +716,7 @@ def get_public_playlist_detail(request, playlist_id):
                     'order': track.order
                 })
             
-            return JsonResponse({
+            response = JsonResponse({
                 'success': True,
                 'playlist': {
                     'id': admin_playlist.id,
@@ -733,6 +735,13 @@ def get_public_playlist_detail(request, playlist_id):
                 },
                 'tracks': tracks_data
             })
+            
+            # ✅ Disable cache để luôn lấy data mới nhất
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            
+            return response
         except AdminPlaylist.DoesNotExist:
             pass
         
@@ -765,7 +774,7 @@ def get_public_playlist_detail(request, playlist_id):
                 'order': track_entry.order
             })
         
-        return JsonResponse({
+        response = JsonResponse({
             'success': True,
             'playlist': {
                 'id': playlist.id,
@@ -784,6 +793,13 @@ def get_public_playlist_detail(request, playlist_id):
             },
             'tracks': tracks_data
         })
+        
+        # ✅ Disable cache để luôn lấy data mới nhất
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
     except Exception as e:
         return JsonResponse({
             'success': False,

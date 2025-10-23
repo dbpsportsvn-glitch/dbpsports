@@ -939,7 +939,8 @@ class UserMusicManager {
             title: track.title,
             artist: track.artist || 'Unknown Artist',
             file_url: track.file_url,
-            duration: track.duration
+            duration: track.duration,
+            play_count: track.play_count || 0  // ✅ Include play_count
         };
         
         // Set current playlist với bài này
@@ -1340,7 +1341,8 @@ class UserMusicManager {
                         title: track.title,
                         artist: track.artist || 'Unknown Artist',
                         file_url: track.file_url,
-                        duration: track.duration
+                        duration: track.duration,
+                        play_count: track.play_count || 0  // ✅ Include play_count
                     }))
                 };
                 
@@ -1424,7 +1426,8 @@ class UserMusicManager {
                         title: track.title,
                         artist: track.artist || 'Unknown Artist',
                         file_url: track.file_url,
-                        duration: track.duration
+                        duration: track.duration,
+                        play_count: track.play_count || 0  // ✅ Include play_count
                     }))
                 };
                 
