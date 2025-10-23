@@ -65,13 +65,24 @@ class Track(models.Model):
         # Chuẩn hóa path separator
         normalized_path = self.file_path.replace('\\', '/')
         
-        # Tìm và lấy phần sau 'media/music/playlist/'
+        # ✅ Pattern 1: Tìm phần sau 'media/music/playlist/'
         if 'media/music/playlist/' in normalized_path:
             relative_path = normalized_path.split('media/music/playlist/')[-1]
             return f"/media/music/playlist/{relative_path}"
         
-        # Fallback: chỉ lấy basename (trường hợp file không nằm trong subfolder)
-        return f"/media/music/playlist/{os.path.basename(self.file_path)}"
+        # ✅ Pattern 2: Absolute path trên Windows/Linux - lấy basename
+        # Nếu path bắt đầu bằng drive letter (C:, D:) hoặc root (/)
+        if ':/' in normalized_path or normalized_path.startswith('/'):
+            basename = os.path.basename(normalized_path)
+            return f"/media/music/playlist/{basename}"
+        
+        # ✅ Pattern 3: Relative path đã đúng format
+        if normalized_path.startswith('/media/'):
+            return normalized_path
+        
+        # Fallback: chỉ lấy basename
+        basename = os.path.basename(self.file_path)
+        return f"/media/music/playlist/{basename}"
     
     def get_duration_formatted(self):
         """Lấy thời lượng định dạng mm:ss"""

@@ -18,7 +18,8 @@ class OfflineManager {
         this.swRegistration = null;
         this.isOnline = navigator.onLine;
         this.cachedTracks = new Set();
-        this.maxCacheSize = 500 * 1024 * 1024; // 500MB
+        // ✅ Bỏ giới hạn 500MB - Browser tự quản lý quota
+        this.autoCacheEnabled = this.getAutoCacheSetting(); // User preference
         
         this.init();
     }
@@ -40,6 +41,14 @@ class OfflineManager {
             });
             
             // console.log('[Offline Manager] Service Worker registered');
+            
+            // ✅ Communicate auto-cache setting to service worker
+            if (this.swRegistration && this.swRegistration.active) {
+                this.sendMessage({
+                    action: 'setAutoCacheEnabled',
+                    enabled: this.autoCacheEnabled
+                }).catch(() => {});
+            }
             
             // Listen for updates
             this.swRegistration.addEventListener('updatefound', () => {
@@ -91,11 +100,15 @@ class OfflineManager {
         }
         
         try {
-            // Check cache size trước
-            const currentSize = await this.getCacheSize();
-            if (currentSize >= this.maxCacheSize) {
-                this.showNotification('⚠️ Cache đầy! Vui lòng xóa bớt bài hát offline', 'warning');
-                return false;
+            // ✅ Không còn check size limit - Browser tự quản lý
+            // Optional: Warn if browser quota is low
+            if (navigator.storage && navigator.storage.estimate) {
+                const estimate = await navigator.storage.estimate();
+                const usagePercent = (estimate.usage / estimate.quota) * 100;
+                
+                if (usagePercent > 90) {
+                    this.showNotification('⚠️ Dung lượng browser gần đầy (' + Math.round(usagePercent) + '%)!', 'warning');
+                }
             }
             
             // Preload track
@@ -134,6 +147,23 @@ class OfflineManager {
             
             if (response.success) {
                 this.cachedTracks.delete(trackUrl);
+                
+                // ✅ Remove from localStorage
+                try {
+                    const stored = localStorage.getItem('dbp_cached_tracks');
+                    if (stored) {
+                        const trackIds = JSON.parse(stored);
+                        // Find track ID from URL
+                        const trackId = this.extractTrackIdFromUrl(trackUrl);
+                        if (trackId) {
+                            const filtered = trackIds.filter(id => id !== trackId);
+                            localStorage.setItem('dbp_cached_tracks', JSON.stringify(filtered));
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to update localStorage:', e);
+                }
+                
                 this.showNotification('🗑️ Đã xóa bài hát khỏi cache offline', 'info');
                 await this.updateCacheStatus();
                 return true;
@@ -142,6 +172,34 @@ class OfflineManager {
         } catch (error) {
             console.error('[Offline Manager] Remove failed:', error);
             return false;
+        }
+    }
+    
+    /**
+     * Extract track ID from URL
+     */
+    extractTrackIdFromUrl(url) {
+        try {
+            const patterns = [
+                /(\d{3})\s*-\s*/,          // 001 - TITLE.mp3
+                /(\d{3})%20-%20/,          // 001%20-%20TITLE.mp3 (URL encoded)
+                /playlist\/(\d{3})/,       // playlist/001
+                /track_(\d+)\./,           // track_123.mp3
+                /\/(\d+)\.mp3/,            // /123.mp3
+                /\/(\d+)\//,               // /123/
+                /playlist\/(\d+)/          // playlist/123
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return parseInt(match[1]);
+                }
+            }
+            
+            return null;
+        } catch (error) {
+            return null;
         }
     }
     
@@ -200,8 +258,20 @@ class OfflineManager {
     async updateCacheStatus() {
         const size = await this.getCacheSize();
         const sizeMB = (size / (1024 * 1024)).toFixed(2);
-        const maxMB = (this.maxCacheSize / (1024 * 1024)).toFixed(0);
-        const percentage = Math.round((size / this.maxCacheSize) * 100);
+        
+        // Get browser quota
+        let maxMB = '∞'; // Unlimited
+        let percentage = 0;
+        
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                const estimate = await navigator.storage.estimate();
+                maxMB = (estimate.quota / (1024 * 1024)).toFixed(0);
+                percentage = Math.round((size / estimate.quota) * 100);
+            } catch (e) {
+                // Fallback if quota not available
+            }
+        }
         
         // Update UI
         const cacheStatus = document.getElementById('offline-cache-status');
@@ -311,6 +381,14 @@ class OfflineManager {
             );
             
             this.cachedTracks.clear();
+            
+            // ✅ Clear localStorage cached tracks
+            try {
+                localStorage.removeItem('dbp_cached_tracks');
+            } catch (e) {
+                console.error('Failed to clear localStorage:', e);
+            }
+            
             this.showNotification('🗑️ Đã xóa toàn bộ cache offline', 'success');
             await this.updateCacheStatus();
             return true;
@@ -319,6 +397,49 @@ class OfflineManager {
             console.error('[Offline Manager] Clear all cache failed:', error);
             return false;
         }
+    }
+    
+    /**
+     * Get auto-cache setting from localStorage
+     */
+    getAutoCacheSetting() {
+        try {
+            const setting = localStorage.getItem('autoCacheEnabled');
+            // Default: enabled
+            return setting === null ? true : setting === 'true';
+        } catch (e) {
+            return true; // Default enabled
+        }
+    }
+    
+    /**
+     * Set auto-cache setting
+     */
+    setAutoCacheSetting(enabled) {
+        try {
+            this.autoCacheEnabled = enabled;
+            localStorage.setItem('autoCacheEnabled', enabled.toString());
+            
+            // Notify service worker (optional - for future use)
+            if (this.swRegistration) {
+                this.sendMessage({
+                    action: 'setAutoCacheEnabled',
+                    enabled: enabled
+                }).catch(() => {});
+            }
+            
+            return true;
+        } catch (e) {
+            console.error('Failed to save auto-cache setting:', e);
+            return false;
+        }
+    }
+    
+    /**
+     * Check if auto-cache is enabled
+     */
+    isAutoCacheEnabled() {
+        return this.autoCacheEnabled;
     }
 }
 

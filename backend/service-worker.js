@@ -6,8 +6,50 @@
 const CACHE_VERSION = 'dbp-music-v4-range-fix';
 const CACHE_LIMITS = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  maxSize: 500 * 1024 * 1024 // 500MB max cache
 };
+
+// ✅ Auto-cache setting (persistent across SW reloads)
+let autoCacheEnabled = true; // Default: enabled
+
+// ✅ Load auto-cache setting from storage ngay khi SW start
+(async function initAutoCacheSetting() {
+  try {
+    const cache = await caches.open(CACHE_VERSION);
+    const cachedSetting = await cache.match('/auto-cache-setting');
+    if (cachedSetting) {
+      const data = await cachedSetting.json();
+      autoCacheEnabled = data.enabled;
+      console.log(`[Service Worker] Loaded auto-cache setting: ${autoCacheEnabled}`);
+    }
+  } catch (e) {
+    // Ignore - use default
+  }
+})();
+
+// ✅ Load auto-cache setting from storage khi SW activate (backup)
+async function loadAutoCacheSetting() {
+  try {
+    const cache = await caches.open(CACHE_VERSION);
+    const cachedSetting = await cache.match('/auto-cache-setting');
+    if (cachedSetting) {
+      const data = await cachedSetting.json();
+      autoCacheEnabled = data.enabled;
+      console.log(`[Service Worker] Loaded auto-cache setting: ${autoCacheEnabled}`);
+    }
+  } catch (e) {
+    // Ignore - use default
+  }
+}
+
+// ✅ Save auto-cache setting to storage
+async function saveAutoCacheSetting(enabled) {
+  try {
+    const cache = await caches.open(CACHE_VERSION);
+    await cache.put('/auto-cache-setting', new Response(JSON.stringify({ enabled })));
+  } catch (e) {
+    console.error('[Service Worker] Failed to save auto-cache setting:', e);
+  }
+}
 
 // Install service worker
 self.addEventListener('install', (event) => {
@@ -33,6 +75,8 @@ self.addEventListener('activate', (event) => {
       }),
       // ✅ Clean up small range request caches
       cleanupRangeRequests(),
+      // ✅ Load auto-cache setting
+      loadAutoCacheSetting(),
       // ✅ Claim all clients immediately
       clients.claim().then(() => {
         // console.log('[Service Worker] Claimed all clients - ready to intercept!');
@@ -45,16 +89,20 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Chỉ cache audio files
+  // Chỉ intercept audio files NẾU auto-cache enabled
   if (url.pathname.includes('/media/music/')) {
-    // console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
-    event.respondWith(handleAudioRequest(event.request));
+    // ✅ Chỉ intercept khi auto-cache enabled để tránh error
+    if (autoCacheEnabled) {
+      // console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
+      event.respondWith(handleAudioRequest(event.request));
+    }
+    // Nếu auto-cache disabled, để browser fetch trực tiếp (default behavior)
   }
 });
 
 /**
  * Handle audio request với cache-first strategy
- * ✅ Cache trong app để offline playback
+ * ✅ Cache trong app để offline playback (nếu user bật auto-cache)
  * ❌ KHÔNG cho user download file ra ngoài
  * 🔧 FIX: Handle Range requests properly - serve Range responses from cached full file
  */
@@ -111,26 +159,30 @@ async function handleAudioRequest(request) {
     const fullResponse = await fetch(fullRequest);
     
     if (fullResponse.ok) {
-      // Cache full file
-      await cache.put(requestUrl, fullResponse.clone());
-      // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
-      
-      // Notify main thread
-      const trackId = extractTrackIdFromUrl(requestUrl);
-      if (trackId) {
-        // console.log('[SW] Notifying clients about cached track:', trackId);
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'trackCached',
-              trackId: trackId,
-              url: requestUrl
+      // ✅ Cache full file CHỈ KHI auto-cache enabled
+      if (autoCacheEnabled) {
+        await cache.put(requestUrl, fullResponse.clone());
+        // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
+        
+        // ✅ Chỉ notify main thread KHI cache thành công
+        const trackId = extractTrackIdFromUrl(requestUrl);
+        if (trackId) {
+          // console.log('[SW] Notifying clients about cached track:', trackId);
+          self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({
+                type: 'trackCached',
+                trackId: trackId,
+                url: requestUrl
+              });
+              // console.log('[SW] Message sent to client:', client.id);
             });
-            // console.log('[SW] Message sent to client:', client.id);
+          }).catch(error => {
+            console.error('[SW] Error sending message:', error);
           });
-        }).catch(error => {
-          console.error('[SW] Error sending message:', error);
-        });
+        }
+      } else {
+        console.log('[Service Worker] Auto-cache disabled');
       }
       
       // Nếu original request có Range header, tạo Range response
@@ -282,13 +334,24 @@ self.addEventListener('message', async (event) => {
   }
   
   if (event.data.action === 'preloadTrack') {
-    // Preload track vào cache
+    // Preload track vào cache (LUÔN cache khi manual preload)
     const url = event.data.url;
     try {
       await fetch(url);
       event.ports[0].postMessage({ success: true });
     } catch (error) {
       event.ports[0].postMessage({ success: false, error: error.message });
+    }
+  }
+  
+  // ✅ Update auto-cache setting
+  if (event.data.action === 'setAutoCacheEnabled') {
+    autoCacheEnabled = event.data.enabled;
+    console.log(`[Service Worker] Auto-cache ${autoCacheEnabled ? 'enabled' : 'disabled'}`);
+    // ✅ Save to storage để persist across SW reloads
+    saveAutoCacheSetting(autoCacheEnabled);
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ success: true });
     }
   }
 });

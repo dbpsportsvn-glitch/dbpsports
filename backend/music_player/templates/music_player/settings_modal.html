@@ -93,6 +93,17 @@
                         </label>
                     </div>
 
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <i class="bi bi-cloud-download"></i>
+                            Tự động cache nhạc khi nghe
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="setting-autocache" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+
                     <button class="settings-save-btn" id="save-settings-btn">
                         <i class="bi bi-check-circle"></i>
                         Lưu Cài Đặt
@@ -160,6 +171,41 @@
                             <i class="bi bi-info-circle"></i> Cài app lên máy để trải nghiệm như ứng dụng native
                         </p>
                     </div>
+
+                    <!-- iOS Install Instructions -->
+                    <div id="ios-install-instructions" style="display: none; margin-top: 16px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; gap: 12px; align-items: start;">
+                            <i class="bi bi-apple" style="color: #3b82f6; font-size: 24px; flex-shrink: 0;"></i>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 8px; color: rgba(255,255,255,0.95); font-size: 14px;">
+                                    📱 Cài đặt trên iOS/iPhone
+                                </div>
+                                <ol style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6; margin: 0; padding-left: 20px;">
+                                    <li>Nhấn nút <strong>Chia sẻ</strong> <i class="bi bi-box-arrow-up"></i> (ở thanh menu dưới)</li>
+                                    <li>Chọn <strong>"Thêm vào Màn hình chính"</strong></li>
+                                    <li>Nhấn <strong>"Thêm"</strong> để hoàn tất</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detection Script -->
+                    <script>
+                    (function() {
+                        // Detect iOS
+                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                        const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || 
+                                                   window.navigator.standalone === true;
+                        
+                        if (isIOS && !isInStandaloneMode) {
+                            // Show iOS instructions
+                            const iosInstructions = document.getElementById('ios-install-instructions');
+                            if (iosInstructions) {
+                                iosInstructions.style.display = 'block';
+                            }
+                        }
+                    })();
+                    </script>
 
                     <!-- How it works -->
                     <details style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">

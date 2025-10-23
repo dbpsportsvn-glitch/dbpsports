@@ -1,3 +1,4 @@
+// Music Player v1.2.3 - 2025-01-16
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-player');
@@ -77,80 +78,89 @@ class MusicPlayer {
         this.cachedTracks = new Set(); // Track which tracks are cached for offline
         this.updateIndicatorsDebounceTimer = null; // Debounce timer for indicator updates
         
-        this.initializeElements();
-        this.bindEvents();
-        this.loadSettings();
-        
-        // ✅ Initialize resize handle (desktop only)
-        this.initResizeHandle();
-        
-        // ✅ Initialize offline manager FIRST (before loading playlists)
-        this.initializeOfflineManager();
-        
-        // Then load playlists after a short delay to ensure offline manager is ready
-        setTimeout(() => {
-            this.loadPlaylists();
-        }, 300);
-        
-        // ✅ Load cached tracks and update indicators AFTER everything is ready
-        setTimeout(async () => {
+        // ✅ Call async initialization (handles all setup in initializePlayer method)
+        this.initializePlayer();
+    }
+
+    async initializePlayer() {
+        try {
+            console.log('🎵 Initializing Music Player...');
+            
+            // Initialize elements and bind events
+            this.initializeElements();
+            this.bindEvents();
+            
+            // Initialize volume display
+            this.initializeVolumeDisplay();
+            
+            // Initialize resize handle (desktop only)
+            this.initResizeHandle();
+            
+            // Initialize offline manager first
+            await this.initializeOfflineManager();
+            console.log('✅ Offline Manager initialized');
+            
+            // ✅ Load ALL initial data with batched API call
+            const dataLoaded = await this.loadInitialData();
+            
+            if (!dataLoaded) {
+                // Fallback to sequential loading if batched call fails
+                console.warn('⚠️ Batched call failed, falling back to sequential loading');
+                this.loadSettings();
+                await this.loadPlaylists();
+            }
+            
+            console.log('✅ Initial data loaded');
+            
+            // Load cached tracks and update indicators
             const loaded = await this.loadCachedTracksFromStorage();
             if (loaded) {
-                // console.log('✅ Cached tracks loaded and verified, updating UI...');
                 this.updateTrackListOfflineIndicators();
+                console.log('✅ Cached tracks loaded and verified');
             }
-        }, 800);
-        
-        // Initialize play count display
-        this.playCountNumber = document.getElementById('play-count-number');
-        
-        // ✅ Initialize mobile optimizations
-        this.initializeMobileOptimizations();
-        
-        // ✅ Handle iOS volume restrictions
-        this.handleIOSVolumeRestrictions();
-        
-        // ❌ REMOVED: Auto refresh interval - không cần thiết và tốn pin
-        // Playlists sẽ tự động refresh khi:
-        // 1. User mở player (togglePlayer)
-        // 2. User switch sang tab Playlists
-        // 3. User manually click refresh (nếu cần thêm nút refresh sau này)
-        
-        // ✅ Track user activity (vẫn giữ để track interaction)
-        this.lastUserActivity = Date.now();
-        document.addEventListener('click', () => this.updateUserActivity());
-        document.addEventListener('keydown', () => this.updateUserActivity());
-        document.addEventListener('touchstart', () => this.updateUserActivity());
-        
-        // Lưu state trước khi chuyển trang (immediate - không debounce)
-        window.addEventListener('beforeunload', () => {
-            if (!this.isRestoringState) {
-                this.savePlayerStateImmediate();
-            }
-        });
-        
-        // Handle mobile browser pause/resume - DISABLED (user wants continuous playback)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                // Page bị ẩn - KHÔNG pause audio trên mobile (user muốn tiếp tục phát)
-            } else {
-                // Page hiện lại
-            }
-        });
-        
-        // Handle mobile app switching - DISABLED (user wants continuous playback)
-        window.addEventListener('blur', () => {
-            // App switched - keeping music playing
-        });
-        
-        // ❌ REMOVED: Save state interval - đã có debounce trong savePlayerState()
-        // State sẽ tự động save khi:
-        // 1. Play/Pause
-        // 2. Change track
-        // 3. Seek position
-        // 4. Change playlist
-        // 5. Before unload
-        // Không cần interval polling nữa!
+            
+            // Initialize play count display
+            this.playCountNumber = document.getElementById('play-count-number');
+            
+            // Initialize mobile optimizations
+            this.initializeMobileOptimizations();
+            
+            // Handle iOS volume restrictions
+            this.handleIOSVolumeRestrictions();
+            
+            // Track user activity
+            this.lastUserActivity = Date.now();
+            document.addEventListener('click', () => this.updateUserActivity());
+            document.addEventListener('keydown', () => this.updateUserActivity());
+            document.addEventListener('touchstart', () => this.updateUserActivity());
+            
+            // Save state before unload (immediate - không debounce)
+            window.addEventListener('beforeunload', () => {
+                if (!this.isRestoringState) {
+                    this.savePlayerStateImmediate();
+                }
+            });
+            
+            // Handle mobile browser pause/resume - DISABLED (user wants continuous playback)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    // Page bị ẩn - KHÔNG pause audio trên mobile (user muốn tiếp tục phát)
+                } else {
+                    // Page hiện lại
+                }
+            });
+            
+            // Handle mobile app switching - DISABLED (user wants continuous playback)
+            window.addEventListener('blur', () => {
+                // App switched - keeping music playing
+            });
+            
+            console.log('✅ Music Player fully initialized');
+            
+        } catch (error) {
+            console.error('❌ Music Player initialization failed:', error);
+            this.showMessage('Lỗi khởi tạo trình phát nhạc', 'error');
+        }
     }
 
     initializeElements() {
@@ -251,11 +261,11 @@ class MusicPlayer {
             this.progressBar.addEventListener('click', (e) => {
                 this.seekToPosition(e);
             });
-            // Touch support for mobile
+            // ✅ Improved touch support for mobile - prevent default scrolling
             this.progressBar.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                this.seekToPosition(e.touches[0]);
-            });
+                this.seekToPosition(e);
+            }, { passive: false });
         }
         if (this.progressHandle) {
             // Mouse drag
@@ -263,12 +273,12 @@ class MusicPlayer {
                 e.stopPropagation(); // Prevent click event on bar
                 this.startSeeking(e);
             });
-            // Touch drag for mobile
+            // ✅ Improved touch drag for mobile
             this.progressHandle.addEventListener('touchstart', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                this.startSeeking(e.touches[0]);
-            });
+                this.startSeeking(e);
+            }, { passive: false });
         }
         
         // ========================================
@@ -317,10 +327,16 @@ class MusicPlayer {
             console.error('Source:', this.audio.src);
             console.error('Track:', this.currentTrack?.title || 'Unknown');
             console.error('Playlist:', this.currentPlaylist?.name || 'Unknown');
+            console.error('File Path:', this.currentTrack?.file_url || 'Unknown');
+            console.error('Current Track Index:', this.currentTrackIndex);
+            console.error('Total Tracks:', this.currentPlaylist?.tracks?.length || 0);
             console.groupEnd();
             
             // Set loading state to false
             this.isLoadingTrack = false;
+            
+            // ✅ Retry mechanism với URL encoding fix
+            this.retryAudioLoad();
         });
         
         // Keyboard shortcuts
@@ -688,13 +704,14 @@ class MusicPlayer {
                     // ✅ Escape HTML để tránh XSS
                     userGrid.innerHTML = data.playlists.map(playlist => {
                         const escapedName = this.escapeHtml(playlist.name);
+                        const totalDuration = playlist.total_duration ? Math.floor(playlist.total_duration / 60) : 0;
                         return `
                             <div class="playlist-card" data-playlist-id="user-${playlist.id}" onclick="musicPlayer.loadUserPlaylist(${playlist.id})">
                                 <div class="playlist-card-icon">
                                     <i class="bi bi-vinyl-fill"></i>
                                 </div>
                                 <div class="playlist-card-name">${escapedName}</div>
-                                <div class="playlist-card-count">${playlist.tracks_count} bài hát</div>
+                                <div class="playlist-card-count">${playlist.tracks_count} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
                             </div>
                         `;
                     }).join('');
@@ -874,7 +891,7 @@ class MusicPlayer {
                 filteredAdminPlaylists.forEach(playlist => {
                     const escapedName = this.escapeHtml(playlist.name);
                     const coverImage = playlist.cover_image || '';
-                    const totalDuration = Math.floor(playlist.tracks.reduce((sum, t) => sum + (t.duration || 0), 0) / 60);
+                    const totalDuration = playlist.tracks ? Math.floor(playlist.tracks.reduce((sum, t) => sum + (t.duration || 0), 0) / 60) : 0;
                     
                     allPlaylists.push(`
                         <div class="playlist-card" data-playlist-id="${playlist.id}" onclick="musicPlayer.loadPlaylist(${playlist.id})">
@@ -886,7 +903,7 @@ class MusicPlayer {
                                 </div>
                             `}
                             <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
-                            <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks.length} bài • ${totalDuration} phút</div>
+                            <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
                         </div>
                     `);
                 });
@@ -899,7 +916,7 @@ class MusicPlayer {
                     const escapedName = this.escapeHtml(playlist.name);
                     const escapedOwner = this.escapeHtml(playlist.owner.full_name);
                     const coverImage = playlist.cover_image || '';
-                    const totalDuration = Math.floor(playlist.total_duration / 60);
+                    const totalDuration = playlist.total_duration ? Math.floor(playlist.total_duration / 60) : 0;
                     
                     allPlaylists.push(`
                         <div class="playlist-card" data-playlist-id="global-${playlist.id}" onclick="musicPlayer.loadGlobalPlaylist(${playlist.id})">
@@ -911,7 +928,7 @@ class MusicPlayer {
                                 </div>
                             `}
                             <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
-                            <div class="playlist-card-count">${playlist.tracks_count} bài • ${totalDuration} phút</div>
+                            <div class="playlist-card-count">${playlist.tracks_count} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
                             <div class="playlist-card-owner">
                                 <i class="bi bi-person-circle"></i>
                                 <span class="playlist-card-owner-name" title="${escapedOwner}">${escapedOwner}</span>
@@ -945,6 +962,12 @@ class MusicPlayer {
                 </div>
             `;
         }
+    }
+    
+    // ✅ Wrapper function để tự động load admin hoặc global playlist
+    async loadPlaylist(playlistId) {
+        // Admin playlists không có prefix, gọi loadGlobalPlaylist
+        return await this.loadGlobalPlaylist(playlistId);
     }
     
     async loadGlobalPlaylist(playlistId) {
@@ -981,7 +1004,7 @@ class MusicPlayer {
                 const playlistsWrapper = document.getElementById('all-playlists-wrapper');
                 if (playlistsWrapper) {
                     playlistsWrapper.querySelectorAll('.playlist-card').forEach(card => {
-                        if (card.dataset.playlistId === `global-${playlistId}`) {
+                        if (card.dataset.playlistId === `global-${playlistId}` || card.dataset.playlistId === String(playlistId)) {
                             card.classList.add('active');
                         } else {
                             card.classList.remove('active');
@@ -1001,7 +1024,11 @@ class MusicPlayer {
                 const playlistGrid = document.getElementById('playlist-grid');
                 if (playlistGrid) {
                     playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
-                        card.classList.remove('active');
+                        if (card.dataset.playlistId === String(playlistId)) {
+                            card.classList.add('active');
+                        } else {
+                            card.classList.remove('active');
+                        }
                     });
                 }
                 
@@ -1098,7 +1125,8 @@ class MusicPlayer {
 
     async loadPlaylists() {
         try {
-            const response = await fetch(`/music/api/?t=${Date.now()}`, {
+            // ✅ Use optimized endpoint with prefetch_related for better performance
+            const response = await fetch(`/music/api/optimized/?t=${Date.now()}`, {
                 cache: 'no-cache',
                 headers: {
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1154,7 +1182,8 @@ class MusicPlayer {
             const timestamp = Date.now();
             const random = Math.random().toString(36).substring(7);
             
-            const response = await fetch(`/music/api/?t=${timestamp}&r=${random}&force=1`, {
+            // ✅ Use optimized endpoint with prefetch_related for better performance
+            const response = await fetch(`/music/api/optimized/?t=${timestamp}&r=${random}&force=1`, {
                 method: 'GET',
                 cache: 'no-store', // ✅ Force no cache
                 headers: {
@@ -1190,6 +1219,112 @@ class MusicPlayer {
             }
         } catch (error) {
             console.error('Error refreshing playlists:', error);
+        }
+    }
+
+    async loadInitialData() {
+        try {
+            console.log('📡 Loading initial data (batched)...');
+            
+            const response = await fetch('/music/api/initial-data/', {
+                cache: 'no-store',
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load data');
+            }
+            
+            // ✅ Parse playlists
+            this.playlists = data.playlists || [];
+            this.populatePlaylistSelect();
+            
+            // ✅ Parse settings and apply
+            if (data.settings) {
+                this.settings = data.settings;
+                this.volume = this.settings.volume;
+                this.repeatMode = this.settings.repeat_mode;
+                this.isShuffled = this.settings.shuffle;
+                
+                this.audio.volume = this.volume;
+                this.updateVolumeDisplay();
+                this.updateRepeatButton();
+                this.shuffleBtn.classList.toggle('active', this.isShuffled);
+                
+                // ✅ Apply listening lock and low power mode if enabled
+                const locked = !!this.settings.listening_lock;
+                const lowPower = !!this.settings.low_power_mode;
+                
+                if (locked || lowPower) {
+                    document.body.classList.toggle('listening-locked', locked);
+                    document.documentElement.classList.toggle('listening-locked', locked);
+                    document.body.classList.toggle('low-power', lowPower);
+                    
+                    // If locked, ensure player is open
+                    if (locked && this.popup && this.popup.classList.contains('hidden')) {
+                        this.popup.classList.remove('hidden');
+                    }
+                    
+                    // Update lock button icon
+                    if (this.lockBtn) {
+                        this.lockBtn.classList.toggle('active', locked);
+                        this.lockBtn.innerHTML = locked ? '<i class="bi bi-lock-fill"></i>' : '<i class="bi bi-lock"></i>';
+                        this.lockBtn.title = locked ? 'Đang khóa nghe nhạc' : 'Khóa nghe nhạc';
+                    }
+                }
+            }
+            
+            // ✅ Parse user tracks and playlists (if authenticated)
+            this.userTracks = data.user_tracks || [];
+            this.userPlaylists = data.user_playlists || [];
+            
+            console.log('✅ Initial data loaded:', {
+                playlists: this.playlists.length,
+                tracks: this.userTracks.length,
+                playlists_user: this.userPlaylists.length
+            });
+            
+            // ✅ Try restore state (chỉ 1 lần duy nhất)
+            if (!this.restoreAttempted) {
+                this.restoreAttempted = true;
+                console.log('🔄 Restoring player state...');
+                
+                // Use async/await since restorePlayerState is now async
+                this.restorePlayerState().then(restored => {
+                    if (!restored) {
+                        console.log('ℹ️ No saved state found or restore failed');
+                        // ✅ If no state to restore, auto-select first playlist
+                        console.log('🔄 Fallback: Selecting first playlist');
+                        if (this.playlists.length > 0 && this.settings.default_playlist_id) {
+                            const defaultPlaylist = this.playlists.find(p => p.id === this.settings.default_playlist_id);
+                            if (defaultPlaylist) {
+                                this.selectPlaylist(defaultPlaylist.id);
+                            }
+                        } else if (this.playlists.length > 0) {
+                            this.selectPlaylist(this.playlists[0].id);
+                        }
+                    }
+                }).catch(error => {
+                    console.error('❌ Error during restore:', error);
+                    // Fallback to default playlist on error
+                    console.log('🔄 Fallback: Selecting first playlist');
+                    if (this.playlists.length > 0) {
+                        this.selectPlaylist(this.playlists[0].id);
+                    }
+                });
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Failed to load initial data:', error);
+            return false;
         }
     }
 
@@ -1242,10 +1377,11 @@ class MusicPlayer {
             // ✅ Escape HTML để tránh XSS
             const escapedName = this.escapeHtml(playlist.name);
             const coverImage = playlist.cover_image || '/static/music_player/images/album-art.png';
+            const totalDuration = playlist.tracks ? Math.floor(playlist.tracks.reduce((sum, t) => sum + (t.duration || 0), 0) / 60) : 0;
             card.innerHTML = `
                 <div class="playlist-card-cover" style="background-image: url('${coverImage}');"></div>
                 <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
-                <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài hát</div>
+                <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
             `;
             
             card.addEventListener('click', () => {
@@ -1360,6 +1496,7 @@ class MusicPlayer {
             const escapedTitle = this.escapeHtml(track.title);
             const escapedArtist = this.escapeHtml(track.artist);
             const escapedDuration = this.escapeHtml(track.duration_formatted);
+            const playCount = track.play_count || 0;
             
             trackItem.innerHTML = `
                 <div class="track-item-number">${index + 1}</div>
@@ -1368,7 +1505,13 @@ class MusicPlayer {
                     <div class="track-item-title">${escapedTitle}</div>
                     <div class="track-item-artist">${escapedArtist}</div>
                 </div>
-                <div class="track-item-duration">${escapedDuration}</div>
+                <div class="track-item-meta">
+                    <span class="track-item-play-count" title="Lượt nghe">
+                        <i class="bi bi-headphones"></i>
+                        <span>${playCount}</span>
+                    </span>
+                    <span class="track-item-duration">${escapedDuration}</span>
+                </div>
             `;
             
             // ✅ Không cần add listener cho từng item - dùng event delegation
@@ -1787,7 +1930,16 @@ class MusicPlayer {
         }
         
         const rect = this.progressBar.getBoundingClientRect();
-        const clickX = (event.clientX || event.pageX) - rect.left;
+        // ✅ Fix mobile touch events - handle both mouse and touch properly
+        let clickX;
+        if (event.touches && event.touches[0]) {
+            // Touch event
+            clickX = event.touches[0].clientX - rect.left;
+        } else {
+            // Mouse event
+            clickX = (event.clientX || event.pageX) - rect.left;
+        }
+        
         const percent = Math.max(0, Math.min(1, clickX / rect.width));
         const newTime = percent * this.audio.duration;
         
@@ -1813,7 +1965,14 @@ class MusicPlayer {
         const handleSeek = (e) => {
             if (!this.audio.duration) return;
             
-            const clientX = isTouchEvent ? e.touches[0].clientX : e.clientX;
+            // ✅ Improved touch event handling
+            let clientX;
+            if (isTouchEvent && e.touches && e.touches[0]) {
+                clientX = e.touches[0].clientX;
+            } else {
+                clientX = e.clientX;
+            }
+            
             const rect = this.progressBar.getBoundingClientRect();
             const dragX = clientX - rect.left;
             const percent = Math.max(0, Math.min(1, dragX / rect.width));
@@ -1827,6 +1986,7 @@ class MusicPlayer {
             if (isTouchEvent) {
                 document.removeEventListener('touchmove', handleSeek);
                 document.removeEventListener('touchend', handleEnd);
+                document.removeEventListener('touchcancel', handleEnd);
             } else {
                 document.removeEventListener('mousemove', handleSeek);
                 document.removeEventListener('mouseup', handleEnd);
@@ -1841,10 +2001,34 @@ class MusicPlayer {
         if (isTouchEvent) {
             document.addEventListener('touchmove', handleSeek, { passive: false });
             document.addEventListener('touchend', handleEnd);
+            document.addEventListener('touchcancel', handleEnd);
         } else {
             document.addEventListener('mousemove', handleSeek);
             document.addEventListener('mouseup', handleEnd);
         }
+    }
+    
+    // ✅ Retry audio load với URL encoding fix
+    retryAudioLoad() {
+        if (!this.currentTrack || !this.currentPlaylist) return;
+        
+        const track = this.currentPlaylist.tracks[this.currentTrackIndex];
+        if (!track || !track.file_url) return;
+        
+        console.log('🔄 Retrying audio load...');
+        
+        // ✅ Use URL as-is from backend (Django already encodes it properly)
+        this.audio.src = track.file_url;
+        this.audio.load();
+        
+        // ✅ Timeout protection cho retry
+        setTimeout(() => {
+            if (this.isLoadingTrack) {
+                console.warn('⚠️ Retry timeout, skipping track');
+                this.isLoadingTrack = false;
+                this.nextTrack(); // Skip to next track
+            }
+        }, 5000);
     }
     
     // Method để test seek functionality
@@ -1910,7 +2094,12 @@ class MusicPlayer {
             const x = clientX - rect.left;
             const percent = Math.max(0, Math.min(1, x / rect.width));
             
-            this.setVolumePercent(percent);
+            // ✅ Use immediate update for mobile touch, regular for desktop
+            if (isTouch) {
+                this.setVolumePercentImmediate(percent);
+            } else {
+                this.setVolumePercent(percent);
+            }
         };
         
         const onEnd = () => {
@@ -1950,12 +2139,48 @@ class MusicPlayer {
         
         // Volume set
     }
+    
+    // ✅ Immediate volume update for smooth mobile dragging
+    setVolumePercentImmediate(percent) {
+        // Unmute tự động nếu kéo volume lên
+        if (percent > 0 && this.isMuted) {
+            this.isMuted = false;
+        }
+        
+        this.volume = percent;
+        this.audio.volume = this.isMuted ? 0 : percent;
+        
+        // ✅ Immediate visual update without transition for smooth dragging
+        const volumePercent = this.isMuted ? 0 : this.volume * 100;
+        this.volumeFill.style.width = `${volumePercent}%`;
+        this.volumeHandle.style.left = `${volumePercent}%`;
+        
+        // ✅ Update icon immediately
+        const icon = this.isMuted ? 'bi-volume-mute-fill' : 
+                    this.volume === 0 ? 'bi-volume-mute-fill' :
+                    this.volume < 0.5 ? 'bi-volume-down-fill' : 'bi-volume-up-fill';
+        this.muteBtn.innerHTML = `<i class="bi ${icon}"></i>`;
+    }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
         this.audio.volume = this.isMuted ? 0 : this.volume;
         // Mute toggled
         this.updateVolumeDisplay();
+    }
+
+    initializeVolumeDisplay() {
+        // ✅ Initialize volume display with default values
+        if (this.volumeFill && this.volumeHandle && this.muteBtn) {
+            const volumePercent = this.isMuted ? 0 : this.volume * 100;
+            this.volumeFill.style.width = `${volumePercent}%`;
+            this.volumeHandle.style.left = `${volumePercent}%`;
+            
+            const icon = this.isMuted ? 'bi-volume-mute-fill' : 
+                        this.volume === 0 ? 'bi-volume-mute-fill' :
+                        this.volume < 0.5 ? 'bi-volume-down-fill' : 'bi-volume-up-fill';
+            this.muteBtn.innerHTML = `<i class="bi ${icon}"></i>`;
+        }
     }
 
     updateVolumeDisplay() {
@@ -2717,6 +2942,8 @@ class MusicPlayer {
             }
         } catch (error) {
             console.error('Error loading settings:', error);
+            // ✅ Fallback: Initialize volume display with default values
+            this.updateVolumeDisplay();
         }
     }
 
@@ -2913,6 +3140,8 @@ class MusicPlayer {
             
             // Load audio với approach mới - sử dụng file_url từ API
             const fileUrl = track.file_url;
+            
+            // ✅ Use URL as-is from backend (Django already encodes it properly)
             this.audio.src = fileUrl;
             
             // Sử dụng Promise để handle audio loading với retry logic
@@ -3014,6 +3243,11 @@ class MusicPlayer {
                 })
                 .catch(error => {
                     console.error('🚨 Error restoring audio');
+                    // ✅ Fallback: If audio restore fails, select first playlist
+                    console.log('🔄 Audio restore failed, selecting first playlist');
+                    if (this.playlists.length > 0) {
+                        this.selectPlaylist(this.playlists[0].id);
+                    }
                 })
                 .finally(() => {
                     // Reset flags sau 1 giây để đảm bảo mọi thứ ổn định
@@ -3290,19 +3524,29 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     const { trackId } = event.data;
                     this.addTrackToCache(trackId);
                     console.log(`✅ Track ${trackId} cached via Service Worker`);
+                    
+                    // ✅ Auto-update cached indicators
+                    this.updateTrackListOfflineIndicators();
+                    
+                    // ✅ Update cache status in settings if modal is open
+                    const settingsModal = document.getElementById('settings-modal');
+                    if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                        // Trigger cache status update
+                        window.dispatchEvent(new CustomEvent('updateCacheStatus'));
+                    }
                 }
             });
             
-            // ✅ FALLBACK: Auto-add tracks to cache after playing
+            // ✅ FALLBACK: Auto-add tracks to cache after playing (only if auto-cache enabled)
             this.audio.addEventListener('loadeddata', () => {
-                if (this.currentTrack) {
+                if (this.currentTrack && this.offlineManager && this.offlineManager.isAutoCacheEnabled()) {
                     this.addTrackToCache(this.currentTrack.id);
                 }
             });
             
-            // ✅ FALLBACK: Auto-add tracks when audio starts playing
+            // ✅ FALLBACK: Auto-add tracks when audio starts playing (only if auto-cache enabled)
             this.audio.addEventListener('play', () => {
-                if (this.currentTrack) {
+                if (this.currentTrack && this.offlineManager && this.offlineManager.isAutoCacheEnabled()) {
                     setTimeout(() => {
                         this.addTrackToCache(this.currentTrack.id);
                     }, 1000); // Wait 1s for Service Worker to cache
@@ -3513,6 +3757,12 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     async preloadTrackForOffline(track) {
         if (!this.offlineManager || !track) return;
         
+        // ✅ Check auto-cache setting - chỉ cache nếu user bật
+        if (!this.offlineManager.isAutoCacheEnabled()) {
+            console.log(`⏸️ Auto-cache disabled, skipping track: ${track.title}`);
+            return;
+        }
+        
         // Auto-cache khi nghe (Service Worker sẽ tự động cache)
         // Không cần manually preload, Service Worker sẽ làm
         
@@ -3691,6 +3941,8 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     // Preloading next track
                     const audio = new Audio();
                     audio.preload = 'metadata';
+                    
+                    // ✅ Use URL as-is from backend (Django already encodes it properly)
                     audio.src = nextTrack.file_url;
                     this.preloadedTracks.set(nextTrack.id, audio);
                 }
@@ -3704,6 +3956,8 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     // Preloading previous track
                     const audio = new Audio();
                     audio.preload = 'metadata';
+                    
+                    // ✅ Use URL as-is from backend (Django already encodes it properly)
                     audio.src = prevTrack.file_url;
                     this.preloadedTracks.set(prevTrack.id, audio);
                 }
@@ -4007,41 +4261,8 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
 // Initialize music player when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.musicPlayer = new MusicPlayer();
-    // On load, fetch user settings to restore listening lock and open player if locked
-    (async () => {
-        try {
-            const res = await fetch('/music/user/settings/', { cache: 'no-store', credentials: 'same-origin' });
-            if (!res.ok) return;
-            const data = await res.json();
-            if (data && data.success && data.settings) {
-                const locked = !!data.settings.listening_lock;
-                const lowPower = !!data.settings.low_power_mode;
-                window.musicPlayer.settings = {
-                    ...(window.musicPlayer.settings || {}),
-                    listening_lock: locked,
-                    low_power_mode: lowPower
-                };
-                // Áp dụng class chặn cuộn/header
-                document.body.classList.toggle('listening-locked', locked);
-                document.documentElement.classList.toggle('listening-locked', locked);
-                document.body.classList.toggle('low-power', lowPower);
-                // Nếu đang lock, đảm bảo mở player
-                const popup = document.getElementById('music-player-popup');
-                if (locked && popup && popup.classList.contains('hidden')) {
-                    popup.classList.remove('hidden');
-                }
-                // Cập nhật icon nút khóa nếu có
-                const lockBtn = document.getElementById('lock-player-btn');
-                if (lockBtn) {
-                    lockBtn.classList.toggle('active', locked);
-                    lockBtn.innerHTML = locked ? '<i class="bi bi-lock-fill"></i>' : '<i class="bi bi-lock"></i>';
-                    lockBtn.title = locked ? 'Đang khóa nghe nhạc' : 'Khóa nghe nhạc';
-                }
-            }
-        } catch (e) {
-            // Silent: không cản trở load trang nếu API fail
-        }
-    })();
+    // ✅ REMOVED: Duplicate settings fetch - batched call đã load settings rồi
+    // Listening lock và low power mode được apply trong loadInitialData() method
 });
 
 // Cleanup when page unloads (chỉ save state, không destroy audio)

@@ -39,6 +39,13 @@ def record_track_play(request):
             user_track_obj = track
         
         # Kiểm tra điều kiện tính lượt nghe
+        # ✅ Fix division by zero: nếu duration = 0 hoặc None thì skip calculation
+        if not track.duration or track.duration <= 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'Track duration không hợp lệ'
+            }, status=400)
+        
         min_duration = min(30, track.duration * 0.5)  # 30s hoặc 50% bài (cái nào nhỏ hơn)
         is_completed = listen_duration >= track.duration * 0.9  # Nghe ít nhất 90% = hoàn thành
         

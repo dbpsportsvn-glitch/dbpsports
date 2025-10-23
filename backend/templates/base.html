@@ -4,7 +4,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; img-src 'self' data: https: blob:; connect-src 'self' https:;">
   <title>{% block title %}DBP Sports{% endblock %}</title>
 
@@ -2362,7 +2362,7 @@ function forceRefreshCartCount() {
 <script src="{% static 'js/offline-manager.js' %}"></script>
 
 <!-- Music Player Scripts -->
-<script src="{% static 'music_player/js/music_player.js' %}"></script>
+<script src="{% static 'music_player/js/music_player.js' %}?v=1.2.9"></script>
 <script src="{% static 'music_player/js/user_music.js' %}"></script>
 
 <!-- ✅ Service Worker Registration -->
@@ -2421,6 +2421,32 @@ if (!navigator.onLine) {
 <!-- ✅ PWA Install Prompt -->
 <script>
 let deferredPrompt;
+let pwaBtnClickListenerAdded = false;
+
+// Check if already installed (standalone mode)
+function isPWAInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true ||
+           document.referrer.includes('android-app://');
+}
+
+// Check PWA status on load
+window.addEventListener('load', () => {
+    if (isPWAInstalled()) {
+        console.log('✅ PWA đã được cài đặt');
+        // Hide install section
+        const installSection = document.getElementById('pwa-install-section');
+        if (installSection) {
+            installSection.style.display = 'none';
+        }
+    } else {
+        console.log('📱 PWA chưa được cài đặt');
+        // Check if browser supports beforeinstallprompt
+        if (!('BeforeInstallPromptEvent' in window)) {
+            console.log('⚠️ Trình duyệt không hỗ trợ auto-install PWA (có thể là iOS Safari)');
+        }
+    }
+});
 
 window.addEventListener('beforeinstallprompt', (e) => {
     // Prevent the mini-infobar from appearing on mobile
@@ -2428,28 +2454,57 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // Stash the event so it can be triggered later
     deferredPrompt = e;
     
-    // Optional: Show install button/banner
-    // console.log('💾 PWA can be installed');
+    console.log('💾 PWA có thể cài đặt!');
     
-    // You can show a custom install button here
+    // Show install button/section
+    const installSection = document.getElementById('pwa-install-section');
     const installBtn = document.getElementById('pwa-install-btn');
-    if (installBtn) {
-        installBtn.style.display = 'block';
+    
+    if (installSection) {
+        installSection.style.display = 'block';
+        console.log('✅ Hiển thị nút cài đặt PWA');
+    }
+    
+    if (installBtn && !pwaBtnClickListenerAdded) {
+        pwaBtnClickListenerAdded = true;
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
+                console.log('📲 Hiển thị prompt cài đặt...');
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to install prompt: ${outcome}`);
+                console.log(`User response: ${outcome}`);
+                
+                if (outcome === 'accepted') {
+                    console.log('✅ User đồng ý cài đặt PWA');
+                    // Hide section after install
+                    if (installSection) {
+                        installSection.style.display = 'none';
+                    }
+                } else {
+                    console.log('❌ User từ chối cài đặt PWA');
+                }
+                
                 deferredPrompt = null;
-                installBtn.style.display = 'none';
             }
         });
     }
 });
 
 window.addEventListener('appinstalled', () => {
-    console.log('✅ PWA was installed');
+    console.log('✅ PWA đã được cài đặt thành công!');
     deferredPrompt = null;
+    
+    // Hide install section permanently
+    const installSection = document.getElementById('pwa-install-section');
+    if (installSection) {
+        installSection.style.display = 'none';
+    }
+    
+    // Show success message
+    if (window.OfflineManager) {
+        const offlineManager = new OfflineManager();
+        offlineManager.showNotification('🎉 Ứng dụng đã được cài đặt! Bạn có thể mở từ màn hình chính.', 'success');
+    }
 });
 </script>
 </body>

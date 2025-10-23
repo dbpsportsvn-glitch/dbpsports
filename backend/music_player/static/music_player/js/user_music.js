@@ -36,6 +36,7 @@ class UserMusicManager {
         this.repeatSelect = document.getElementById('setting-repeat');
         this.shuffleCheckbox = document.getElementById('setting-shuffle');
         this.lowPowerCheckbox = document.getElementById('setting-lowpower');
+        this.autoCacheCheckbox = document.getElementById('setting-autocache');
         this.saveSettingsBtn = document.getElementById('save-settings-btn');
 
         // State flags to avoid UI flicker
@@ -177,6 +178,13 @@ class UserMusicManager {
         if (cleanupCacheBtn) {
             cleanupCacheBtn.addEventListener('click', () => this.cleanupOfflineCache());
         }
+        
+        // ✅ Listen for cache status updates
+        window.addEventListener('updateCacheStatus', () => {
+            if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
+                this.refreshCacheStatus();
+            }
+        });
     }
     
     async openSettings() {
@@ -318,6 +326,11 @@ class UserMusicManager {
             this.lowPowerCheckbox.checked = !!settings.low_power_mode;
         }
         
+        // ✅ Load auto-cache từ localStorage (không phải backend)
+        if (this.autoCacheCheckbox && this.musicPlayer && this.musicPlayer.offlineManager) {
+            this.autoCacheCheckbox.checked = this.musicPlayer.offlineManager.isAutoCacheEnabled();
+        }
+        
         if (this.volumeSlider) {
             const volumePercent = Math.round(settings.volume * 100);
             this.volumeSlider.value = volumePercent;
@@ -379,6 +392,11 @@ class UserMusicManager {
             shuffle: this.shuffleCheckbox.checked,
             low_power_mode: this.lowPowerCheckbox ? this.lowPowerCheckbox.checked : false
         };
+        
+        // ✅ Save auto-cache vào localStorage (không lưu backend)
+        if (this.autoCacheCheckbox && this.musicPlayer && this.musicPlayer.offlineManager) {
+            this.musicPlayer.offlineManager.setAutoCacheSetting(this.autoCacheCheckbox.checked);
+        }
         
         try {
             const response = await fetch(`/music/user/settings/update/?t=${Date.now()}`, {
@@ -1172,8 +1190,14 @@ class UserMusicManager {
             
             const success = await offlineManager.clearAllCache();
             if (success) {
+                // ✅ Clear cachedTracks trong music player
+                if (this.musicPlayer) {
+                    this.musicPlayer.cachedTracks.clear();
+                    this.musicPlayer.updateTrackListOfflineIndicators();
+                }
+                
                 this.showNotification('✅ Đã xóa toàn bộ cache offline', 'success');
-                this.refreshCacheStatus();
+                await this.refreshCacheStatus();
             } else {
                 this.showNotification('❌ Lỗi khi xóa cache', 'error');
             }
@@ -1194,15 +1218,18 @@ class UserMusicManager {
             // Update cache status in UI
             await offlineManager.updateCacheStatus();
             
-            // Update cached tracks list
+            // Update cached tracks list in settings
             await this.displayCachedTracks();
             
-            // Update cached tracks indicators
+            // ✅ Update cached tracks indicators in player (critical!)
             if (this.musicPlayer) {
+                // Clear cachedTracks và reload từ Service Worker
+                this.musicPlayer.cachedTracks.clear();
                 await this.musicPlayer.updateCachedTracksStatus();
+                this.musicPlayer.updateTrackListOfflineIndicators();
             }
             
-            this.showNotification('✅ Đã làm mới trạng thái cache', 'success');
+            // No need to show notification for refresh button
         } catch (error) {
             console.error('Error refreshing cache status:', error);
             this.showNotification('❌ Lỗi khi làm mới cache', 'error');
@@ -1332,7 +1359,15 @@ class UserMusicManager {
                 await offlineManager.updateCacheStatus();
                 // Update cached tracks indicators in player
                 if (this.musicPlayer) {
+                    // ✅ CRITICAL FIX: Get track ID from URL and explicitly remove from cachedTracks
+                    const trackId = offlineManager.extractTrackIdFromUrl(url);
+                    if (trackId) {
+                        this.musicPlayer.cachedTracks.delete(trackId);
+                    }
+                    // Then update status and UI
                     await this.musicPlayer.updateCachedTracksStatus();
+                    // ✅ Force update UI indicators immediately
+                    this.musicPlayer.updateTrackListOfflineIndicators();
                 }
             } else {
                 this.showNotification('❌ Lỗi khi xóa bài hát', 'error');

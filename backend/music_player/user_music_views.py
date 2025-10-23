@@ -61,7 +61,6 @@ def user_music_settings(request):
                 'volume': 0.7,
                 'repeat_mode': 'all',
                 'shuffle': False,
-                'upload_quota': 69,
                 'storage_quota_mb': 369
             }
         )
@@ -77,7 +76,6 @@ def user_music_settings(request):
                 'shuffle': user_settings.shuffle,
                 'listening_lock': user_settings.listening_lock,
                 'low_power_mode': user_settings.low_power_mode,
-                'upload_quota': user_settings.upload_quota,
                 'storage_quota_mb': user_settings.storage_quota_mb,
                 'upload_usage': usage
             }
@@ -151,7 +149,7 @@ def get_user_tracks(request):
         # Lấy usage
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
+            defaults={'storage_quota_mb': 369}
         )
         usage = user_settings.get_upload_usage()
         
@@ -176,7 +174,7 @@ def upload_user_track(request):
         # Check quota
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
+            defaults={'storage_quota_mb': 369}
         )
         
         # Get file from request
@@ -330,7 +328,7 @@ def delete_user_track(request, track_id):
         # Get updated usage
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
-            defaults={'upload_quota': 69, 'storage_quota_mb': 369}
+            defaults={'storage_quota_mb': 369}
         )
         usage = user_settings.get_upload_usage()
         
@@ -399,6 +397,7 @@ def get_user_playlists(request):
                     'description': playlist.description or '',
                     'is_public': playlist.is_public,
                     'tracks_count': playlist.get_tracks_count(),
+                    'total_duration': playlist.get_total_duration(),
                     'created_at': playlist.created_at.isoformat()
                 })
             except Exception as e:
@@ -676,8 +675,58 @@ def get_public_playlists(request):
 
 @require_http_methods(["GET"])
 def get_public_playlist_detail(request, playlist_id):
-    """API endpoint để xem chi tiết public playlist (không cần đăng nhập)"""
+    """API endpoint để xem chi tiết public playlist (bao gồm cả admin và user playlists)"""
     try:
+        # ✅ Thử lấy admin playlist trước (Playlist model)
+        try:
+            from .models import Playlist as AdminPlaylist
+            
+            admin_playlist = AdminPlaylist.objects.get(
+                id=playlist_id,
+                is_active=True
+            )
+            
+            # Get tracks
+            tracks = admin_playlist.get_tracks()
+            
+            tracks_data = []
+            for track in tracks:
+                tracks_data.append({
+                    'id': track.id,
+                    'title': track.title,
+                    'artist': track.artist or '',
+                    'album': track.album or '',
+                    'album_cover': track.album_cover.url if track.album_cover else None,
+                    'duration': track.duration,
+                    'duration_formatted': track.get_duration_formatted(),
+                    'file_url': track.get_file_url(),
+                    'play_count': track.play_count,
+                    'order': track.order
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'playlist': {
+                    'id': admin_playlist.id,
+                    'name': admin_playlist.name,
+                    'description': admin_playlist.description or '',
+                    'cover_image': admin_playlist.cover_image.url if admin_playlist.cover_image else None,
+                    'tracks_count': len(tracks_data),
+                    'total_duration': sum(t.duration for t in tracks),
+                    'owner': {
+                        'username': 'admin',
+                        'full_name': 'DBP Sports',
+                        'id': 0
+                    },
+                    'created_at': admin_playlist.created_at.isoformat(),
+                    'updated_at': admin_playlist.updated_at.isoformat()
+                },
+                'tracks': tracks_data
+            })
+        except AdminPlaylist.DoesNotExist:
+            pass
+        
+        # ✅ Nếu không phải admin playlist, lấy user playlist
         playlist = get_object_or_404(
             UserPlaylist.objects.select_related('user'),
             id=playlist_id,
