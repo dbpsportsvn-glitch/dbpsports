@@ -155,7 +155,7 @@
                             <i class="bi bi-trash"></i>
                             Xóa Toàn Bộ
                         </button>
-                        <button class="offline-action-btn" id="refresh-cache-btn" style="flex: 1; min-width: 120px; padding: 12px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #3b82f6; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <button class="offline-action-btn" id="refresh-cache-btn" style="flex: 1; min-width: 120px; padding: 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: rgba(255, 255, 255, 0.9); font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
                             <i class="bi bi-arrow-clockwise"></i>
                             Làm Mới
                         </button>
@@ -222,6 +222,31 @@
                             </ul>
                         </div>
                     </details>
+
+                    <!-- Version Info -->
+                    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                        <div style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 8px; padding: 12px;">
+                            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">
+                                        <i class="bi bi-info-circle"></i> Phiên bản ứng dụng
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.95);">
+                                        Music Player v1.2.29
+                                    </div>
+                                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">
+                                        Được cập nhật vào: 23/10/2025
+                                    </div>
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px; font-style: italic;">
+                                        © 2025 DBP Sports. All rights reserved.
+                                    </div>
+                                </div>
+                                <div style="font-size: 48px; color: rgba(255,255,255,0.9); padding-right: 8px;">
+                                    <i class="bi bi-music-note-beamed" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -254,6 +279,17 @@
 
                     <!-- Upload Button -->
                     <div class="upload-section">
+                        <!-- ✅ Playlist Selection Dropdown -->
+                        <div class="upload-playlist-selector">
+                            <label>
+                                <i class="bi bi-list-ul"></i> Chọn Playlist (Tùy chọn)
+                            </label>
+                            <select id="upload-playlist-select" class="form-select">
+                                <option value="">-- Không thêm vào playlist --</option>
+                                <!-- Playlists will be loaded here -->
+                            </select>
+                        </div>
+                        
                         <button class="upload-btn" id="upload-btn">
                             <i class="bi bi-cloud-arrow-up"></i>
                             Upload Nhạc
@@ -261,16 +297,22 @@
                         <input type="file" id="file-input" accept=".mp3,.m4a,.aac,.ogg,.wav" multiple style="display: none;">
                         <p class="upload-hint">
                             <i class="bi bi-info-circle"></i>
-                            Định dạng hỗ trợ: MP3, M4A, AAC, OGG, WAV. Tối đa 50MB/file. Tổng quota: 369MB.
+                            Định dạng hỗ trợ: MP3, M4A, AAC, OGG, WAV. Tối đa theo quota còn lại. Tổng quota: 369MB.
                         </p>
                     </div>
 
                     <!-- My Tracks List -->
                     <div class="my-tracks-section">
-                        <h5 class="settings-section-title">
-                            <i class="bi bi-music-note-beamed"></i>
-                            Danh Sách Bài Hát
-                        </h5>
+                        <div class="tracks-header">
+                            <h5 class="settings-section-title">
+                                <i class="bi bi-music-note-beamed"></i>
+                                Danh Sách Bài Hát
+                            </h5>
+                            <button class="delete-all-tracks-btn" id="delete-all-tracks-btn">
+                                <i class="bi bi-trash"></i>
+                                Xóa Tất Cả
+                            </button>
+                        </div>
                         <div id="my-tracks-list" class="my-tracks-list">
                             <div class="empty-state">
                                 <i class="bi bi-music-note"></i>

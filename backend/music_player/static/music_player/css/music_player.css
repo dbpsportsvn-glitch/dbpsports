@@ -2105,6 +2105,92 @@ body.low-power .playlist-card-cover { filter: none !important; }
     gap: 6px;
 }
 
+/* ✅ Tracks Header */
+.tracks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.tracks-header .settings-section-title {
+    margin: 0;
+}
+
+/* ✅ Delete All Tracks Button */
+.delete-all-tracks-btn {
+    background: rgba(220, 53, 69, 0.8);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.delete-all-tracks-btn:hover {
+    background: rgba(220, 53, 69, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.delete-all-tracks-btn i {
+    font-size: 14px;
+}
+
+/* ✅ Upload Playlist Selector */
+.upload-playlist-selector {
+    margin-bottom: 12px;
+}
+
+.upload-playlist-selector label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.upload-playlist-selector label i {
+    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.upload-playlist-selector .form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 100%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-playlist-selector .form-select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.upload-playlist-selector .form-select:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    outline: none;
+}
+
+.upload-playlist-selector .form-select option {
+    background: #667eea;
+    color: white;
+    padding: 10px;
+}
+
 /* My Tracks List */
 .my-tracks-section {
     margin-top: 16px;
@@ -2319,6 +2405,26 @@ body.low-power .playlist-card-cover { filter: none !important; }
 
 .playlist-share-btn.active:hover {
     background: rgba(34, 197, 94, 1);
+}
+
+/* ✅ Playlist Add Button */
+.playlist-add-btn {
+    background: rgba(40, 167, 69, 0.8);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.playlist-add-btn:hover {
+    background: rgba(40, 167, 69, 1);
+    transform: scale(1.1);
 }
 
 .playlist-delete-btn {
@@ -3916,6 +4022,18 @@ body.low-power .playlist-card-cover { filter: none !important; }
 
 /* ✅ Fix buttons size - Không resize theo player (Desktop Only) */
 @media (min-width: 769px) {
+    /* ✅ Header controls buttons giữ nguyên kích thước */
+    .music-player-popup .header-controls .control-btn {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px;
+        min-height: 38px;
+        max-width: 38px;
+        max-height: 38px;
+        font-size: 16px !important;
+        flex-shrink: 0;
+    }
+    
     /* ✅ Control buttons giữ nguyên kích thước */
     .music-player-popup .control-btn {
         width: 38px !important;
@@ -3957,9 +4075,48 @@ body.low-power .playlist-card-cover { filter: none !important; }
         flex-shrink: 0;
     }
     
+    /* ✅ Header controls container giữ nguyên spacing */
+    .music-player-popup .header-controls {
+        gap: 8px !important;
+        flex-shrink: 0;
+    }
+    
+    /* ✅ Header left giữ nguyên spacing */
+    .music-player-popup .header-left {
+        gap: 12px !important;
+        flex-shrink: 0;
+    }
+    
+    /* ✅ Player title giữ nguyên size */
+    .music-player-popup .player-title {
+        font-size: 22px !important;
+        flex-shrink: 0;
+    }
+    
     /* ✅ Player controls section giữ nguyên height */
     .music-player-popup .player-controls {
         flex-shrink: 0; /* ✅ Không cho shrink */
+    }
+    
+    /* ✅ Controls row giữ nguyên layout */
+    .music-player-popup .controls-row {
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 20px !important;
+    }
+    
+    /* ✅ Control buttons không căn giữa, chỉ chiếm không gian cần thiết */
+    .music-player-popup .control-buttons {
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }
+    
+    /* ✅ Volume section ở bên phải */
+    .music-player-popup .volume-section {
+        min-width: 120px !important;
+        flex-shrink: 0 !important;
     }
     
     /* ✅ Album cover giữ nguyên kích thước */

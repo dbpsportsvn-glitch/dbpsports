@@ -6,7 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 import json
+import logging
 from .models import Track, UserTrack, TrackPlayHistory
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -17,7 +20,15 @@ def record_track_play(request):
     Quy tắc: Chỉ tính khi nghe ít nhất 30 giây hoặc 50% thời lượng bài (nếu bài ngắn)
     """
     try:
-        data = json.loads(request.body)
+        # Parse JSON body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Invalid JSON: {str(e)}'
+            }, status=400)
+        
         track_id = data.get('track_id')
         track_type = data.get('track_type', 'global')  # 'global' hoặc 'user'
         listen_duration = data.get('listen_duration', 0)  # Số giây đã nghe
@@ -39,15 +50,11 @@ def record_track_play(request):
             user_track_obj = track
         
         # Kiểm tra điều kiện tính lượt nghe
-        # ✅ Fix division by zero: nếu duration = 0 hoặc None thì skip calculation
-        if not track.duration or track.duration <= 0:
-            return JsonResponse({
-                'success': False,
-                'error': 'Track duration không hợp lệ'
-            }, status=400)
+        # ✅ Fix division by zero: nếu duration = 0 hoặc None thì dùng default
+        track_duration = track.duration if track.duration and track.duration > 0 else 180
         
-        min_duration = min(30, track.duration * 0.5)  # 30s hoặc 50% bài (cái nào nhỏ hơn)
-        is_completed = listen_duration >= track.duration * 0.9  # Nghe ít nhất 90% = hoàn thành
+        min_duration = min(30, track_duration * 0.5)  # 30s hoặc 50% bài (cái nào nhỏ hơn)
+        is_completed = listen_duration >= track_duration * 0.9  # Nghe ít nhất 90% = hoàn thành
         
         if listen_duration < min_duration:
             return JsonResponse({
@@ -83,29 +90,38 @@ def record_track_play(request):
             track_duration=track.duration
         )
         
-        # Tăng play_count của track
-        track.play_count += 1
-        track.save(update_fields=['play_count'])
+        # Tăng play_count của track (nếu có field này)
+        try:
+            if hasattr(track, 'play_count'):
+                track.play_count += 1
+                track.save(update_fields=['play_count'])
+        except Exception as e:
+            logger.error(f"Error updating play_count: {str(e)}", exc_info=True)
+        
+        play_count = getattr(track, 'play_count', 0)
         
         return JsonResponse({
             'success': True,
             'message': 'Đã ghi nhận lượt nghe',
             'counted': True,
-            'play_count': track.play_count,
+            'play_count': play_count,
             'is_completed': is_completed
         })
         
     except Track.DoesNotExist:
+        logger.warning(f"Track not found: track_id={track_id}, track_type={track_type}")
         return JsonResponse({
             'success': False,
             'error': 'Track không tồn tại'
         }, status=404)
     except UserTrack.DoesNotExist:
+        logger.warning(f"UserTrack not found: track_id={track_id}, user={request.user.username}")
         return JsonResponse({
             'success': False,
             'error': 'Track không tồn tại hoặc không thuộc về bạn'
         }, status=404)
     except Exception as e:
+        logger.error(f"Error recording track play: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': str(e)

@@ -5,16 +5,20 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.cache import never_cache
 from django.core.files.storage import default_storage
 from django.conf import settings as django_settings
 from django.db import models
 from django.core.cache import cache
 import os
 import json
+import logging
 from functools import wraps
 from mutagen import File as MutagenFile
 from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings, Track, TrackPlayHistory
 from .utils import extract_album_cover
+
+logger = logging.getLogger(__name__)
 
 
 # ✅ Rate limiting decorator
@@ -165,7 +169,7 @@ def get_user_tracks(request):
         }, status=500)
 
 
-@rate_limit(max_requests=10, window=60)  # ✅ Max 10 uploads per minute
+@rate_limit(max_requests=20, window=60)  # ✅ Max 20 uploads per minute
 @login_required
 @require_POST
 def upload_user_track(request):
@@ -195,17 +199,20 @@ def upload_user_track(request):
                 'error': f'Định dạng file không được hỗ trợ. Chỉ chấp nhận: {", ".join(allowed_extensions)}'
             }, status=400)
         
-        # Validate file size (max 50MB per file)
-        max_size = 50 * 1024 * 1024  # 50MB
-        if uploaded_file.size > max_size:
+        # ✅ Check storage quota before validating file size
+        # Max file size = remaining quota của user
+        usage = user_settings.get_upload_usage()
+        remaining_bytes = usage['remaining'] * 1024 * 1024  # Convert MB to bytes
+        
+        if uploaded_file.size > remaining_bytes:
+            max_size_mb = round(remaining_bytes / (1024 * 1024), 1)
             return JsonResponse({
                 'success': False,
-                'error': 'File quá lớn. Kích thước tối đa là 50MB.'
+                'error': f'File quá lớn. Bạn còn {max_size_mb}MB quota. File của bạn là {round(uploaded_file.size / (1024 * 1024), 1)}MB.'
             }, status=400)
         
-        # Check storage quota
+        # Double check quota
         if not user_settings.can_upload(uploaded_file.size):
-            usage = user_settings.get_upload_usage()
             return JsonResponse({
                 'success': False,
                 'error': f'Bạn đã dùng {usage["used"]}MB/{usage["total"]}MB. Còn lại {usage["remaining"]}MB. Vui lòng xóa bớt để upload thêm.'
@@ -311,6 +318,7 @@ def upload_user_track(request):
         })
         
     except Exception as e:
+        logger.error(f"Error uploading track: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -319,6 +327,7 @@ def upload_user_track(request):
 
 @login_required
 @require_POST
+@never_cache
 def delete_user_track(request, track_id):
     """API endpoint để xóa bài hát"""
     try:
@@ -486,6 +495,7 @@ def create_user_playlist(request):
 
 @login_required
 @require_http_methods(["GET"])
+@never_cache
 def get_playlist_tracks(request, playlist_id):
     """API endpoint để lấy tracks trong playlist"""
     try:

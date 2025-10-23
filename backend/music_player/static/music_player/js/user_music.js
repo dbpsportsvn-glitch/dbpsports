@@ -52,10 +52,14 @@ class UserMusicManager {
         
         // Tracks list
         this.myTracksList = document.getElementById('my-tracks-list');
+        this.deleteAllTracksBtn = document.getElementById('delete-all-tracks-btn');
         
         // Playlists
         this.myPlaylistsList = document.getElementById('my-playlists-list');
         this.createPlaylistBtn = document.getElementById('create-playlist-btn');
+        
+        // ✅ Upload Playlist Selector
+        this.uploadPlaylistSelect = document.getElementById('upload-playlist-select');
         
         // Create Playlist Modal elements
         this.createPlaylistModal = document.getElementById('create-playlist-modal');
@@ -125,7 +129,23 @@ class UserMusicManager {
         if (this.fileInput) {
             this.fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    this.handleFileUpload(e.target.files);
+                    // ✅ Use tempPlaylistId if set (from addFilesToPlaylist)
+                    // OR get from dropdown selector
+                    let playlistId = this.tempPlaylistId || null;
+                    
+                    // If no tempPlaylistId, check dropdown selector
+                    if (!playlistId && this.uploadPlaylistSelect) {
+                        playlistId = this.uploadPlaylistSelect.value || null;
+                    }
+                    
+                    // Process files with playlistId
+                    this.handleFileUpload(e.target.files, playlistId);
+                    
+                    // Reset file input after upload
+                    e.target.value = '';
+                    
+                    // Reset tempPlaylistId AFTER starting the upload
+                    this.tempPlaylistId = null;
                 }
             });
         }
@@ -152,6 +172,11 @@ class UserMusicManager {
         if (this.playlistCoverInput && this.coverPreview) {
             this.coverPreview.addEventListener('click', () => this.playlistCoverInput.click());
             this.playlistCoverInput.addEventListener('change', (e) => this.previewCoverImage(e));
+        }
+        
+        // ✅ Delete All Tracks Button
+        if (this.deleteAllTracksBtn) {
+            this.deleteAllTracksBtn.addEventListener('click', () => this.deleteAllTracks());
         }
 
         // Mark editing when user changes any setting control
@@ -180,9 +205,17 @@ class UserMusicManager {
         }
         
         // ✅ Listen for cache status updates
-        window.addEventListener('updateCacheStatus', () => {
+        window.addEventListener('updateCacheStatus', async () => {
+            // ✅ CRITICAL FIX: Always refresh cache status, even if modal is closed
+            // This keeps data fresh for when user opens settings
             if (this.settingsModal && !this.settingsModal.classList.contains('hidden')) {
-                this.refreshCacheStatus();
+                await this.refreshCacheStatus();
+            } else {
+                // ✅ Silent refresh: Update offline manager cache data in background
+                const offlineManager = this.musicPlayer?.offlineManager;
+                if (offlineManager) {
+                    await offlineManager.updateCacheStatus();
+                }
             }
         });
     }
@@ -501,6 +534,11 @@ class UserMusicManager {
     renderUserTracks(tracks) {
         if (!this.myTracksList) return;
         
+        // ✅ Show/hide delete all button based on tracks count
+        if (this.deleteAllTracksBtn) {
+            this.deleteAllTracksBtn.style.display = tracks.length > 0 ? 'flex' : 'none';
+        }
+        
         if (tracks.length === 0) {
             this.myTracksList.innerHTML = `
                 <div class="empty-state">
@@ -537,37 +575,69 @@ class UserMusicManager {
         `).join('');
     }
     
-    async handleFileUpload(files) {
-        if (files.length === 0) return;
+    async handleFileUpload(files, playlistId = null) {
+        if (!files || files.length === 0) {
+            console.warn('⚠️ No files to upload');
+            return;
+        }
+        
+        const totalFiles = files.length;
+        console.log(`📤 Starting upload of ${totalFiles} files${playlistId ? ` to playlist ${playlistId}` : ''}`);
         
         // Show upload progress overlay
         this.uploadProgressOverlay.classList.remove('hidden');
         this.uploadProgressList.innerHTML = '';
         
-        for (let file of files) {
-            await this.uploadFile(file);
+        // Upload files sequentially
+        let successCount = 0;
+        let errorCount = 0;
+        
+        // Convert FileList to Array để đảm bảo có thể iterate
+        const filesArray = Array.from(files);
+        console.log(`📋 Files array length: ${filesArray.length}`);
+        
+        for (let i = 0; i < filesArray.length; i++) {
+            const file = filesArray[i];
+            console.log(`📤 [${i + 1}/${filesArray.length}] Uploading: ${file.name}`);
+            
+            try {
+                await this.uploadFile(file, playlistId);
+                successCount++;
+                console.log(`✅ [${i + 1}/${filesArray.length}] Uploaded successfully: ${file.name}`);
+            } catch (error) {
+                errorCount++;
+                console.error(`❌ [${i + 1}/${filesArray.length}] Upload failed: ${file.name}`, error);
+            }
+            
+            // Delay between uploads (except last file)
+            if (i < filesArray.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
         
-        // Reload tracks after upload
-        await this.loadUserTracks();
+        console.log(`✅ Upload complete: ${successCount}/${totalFiles} successful, ${errorCount} failed`);
         
-        // Reload playlists để cập nhật số lượng bài hát
+        // Reload data after upload
+        await this.loadUserTracks();
         await this.loadUserPlaylists();
         
-        // LUÔN cập nhật user playlists trong main player (dù đang ẩn hay không)
-        // Vì user có thể sẽ mở ra sau, và cần thấy data mới nhất
         if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
             await this.musicPlayer.loadUserPlaylistsInMainPlayer();
         }
         
-        // Hide overlay after 2 seconds
+        // Show success message
+        if (successCount > 0) {
+            this.showNotification(`Đã upload ${successCount} bài hát thành công!`, 'success');
+        }
+        
+        // Hide overlay after delay (tăng thời gian để user thấy progress)
         setTimeout(() => {
             this.uploadProgressOverlay.classList.add('hidden');
-            this.fileInput.value = ''; // Reset file input
-        }, 2000);
+            this.fileInput.value = '';
+        }, 3000);
     }
     
-    async uploadFile(file) {
+    async uploadFile(file, playlistId = null) {
         const uploadItem = this.createUploadItem(file.name);
         this.uploadProgressList.appendChild(uploadItem);
         
@@ -585,9 +655,16 @@ class UserMusicManager {
             
             if (!response.ok) {
                 if (response.status === 302 || response.status === 401) {
-                    this.updateUploadItem(uploadItem, 'error', 'Vui lòng đăng nhập để upload nhạc!');
-                    return;
+                    this.updateUploadItem(uploadItem, 'error', 'Vui lòng đăng nhập!');
+                    throw new Error('Authentication required');
                 }
+                if (response.status === 429) {
+                    this.updateUploadItem(uploadItem, 'error', 'Quá nhiều requests! Chờ 1 phút.');
+                    throw new Error('Rate limit exceeded');
+                }
+                const errorText = await response.text();
+                console.error(`❌ Upload failed: ${response.status}`, errorText);
+                this.updateUploadItem(uploadItem, 'error', `Lỗi HTTP ${response.status}`);
                 throw new Error(`HTTP ${response.status}`);
             }
             
@@ -596,17 +673,31 @@ class UserMusicManager {
             if (data.success) {
                 this.updateUploadItem(uploadItem, 'success', 'Upload thành công!');
                 this.updateQuotaDisplay(data.usage);
-                // Note: loadUserTracks() sẽ được gọi trong handleFileUpload() sau khi upload xong tất cả
+                
+                // Auto-add to playlist if provided
+                if (playlistId && data.track) {
+                    try {
+                        await this.addTrackToPlaylist(playlistId, data.track.id, true);
+                    } catch (err) {
+                        console.error('❌ Failed to add track to playlist:', err);
+                    }
+                }
+                
+                return true;
             } else {
                 this.updateUploadItem(uploadItem, 'error', data.error || 'Upload thất bại!');
+                throw new Error(data.error || 'Upload failed');
             }
         } catch (error) {
-            console.error('Error uploading file:', error);
+            console.error('❌ Error uploading file:', error);
             if (error.message.includes('Unexpected token')) {
-                this.updateUploadItem(uploadItem, 'error', 'Vui lòng đăng nhập để upload nhạc!');
+                this.updateUploadItem(uploadItem, 'error', 'Vui lòng đăng nhập!');
+            } else if (error.message.includes('Rate limit')) {
+                this.updateUploadItem(uploadItem, 'error', 'Quá nhiều requests!');
             } else {
-                this.updateUploadItem(uploadItem, 'error', 'Lỗi khi upload!');
+                this.updateUploadItem(uploadItem, 'error', error.message || 'Lỗi khi upload!');
             }
+            throw error;
         }
     }
     
@@ -638,6 +729,10 @@ class UserMusicManager {
         }
         
         try {
+            // Find track để lấy file_url trước khi xóa
+            const track = this.userTracks.find(t => t.id === trackId);
+            const fileUrl = track?.file_url;
+            
             const response = await fetch(`/music/user/tracks/${trackId}/delete/`, {
                 method: 'POST',
                 headers: {
@@ -648,6 +743,44 @@ class UserMusicManager {
             const data = await response.json();
             
             if (data.success) {
+                // ✅ Delete from Service Worker cache
+                if (fileUrl && navigator.serviceWorker) {
+                    console.log('🗑️ Deleting from cache:', fileUrl);
+                    
+                    // Try sending message to Service Worker
+                    const sendMessage = async () => {
+                        if (navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.controller.postMessage({
+                                action: 'deleteCache',
+                                url: fileUrl
+                            });
+                            console.log('✅ Cache deletion message sent');
+                        } else {
+                            // Wait for Service Worker to be ready
+                            const registration = await navigator.serviceWorker.ready;
+                            if (registration.active) {
+                                registration.active.postMessage({
+                                    action: 'deleteCache',
+                                    url: fileUrl
+                                });
+                                console.log('✅ Cache deletion message sent (via registration)');
+                            } else {
+                                console.warn('⚠️ Service Worker not ready yet');
+                            }
+                        }
+                    };
+                    
+                    sendMessage().catch(err => {
+                        console.error('❌ Error sending cache deletion message:', err);
+                    });
+                }
+                
+                // ✅ Remove from cachedTracks Set in main player
+                if (this.musicPlayer && this.musicPlayer.cachedTracks) {
+                    this.musicPlayer.cachedTracks.delete(trackId);
+                    console.log('✅ Removed from cachedTracks Set');
+                }
+                
                 this.showNotification('Đã xóa bài hát thành công!', 'success');
                 await this.loadUserTracks();
                 
@@ -658,11 +791,140 @@ class UserMusicManager {
                 if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
                     await this.musicPlayer.loadUserPlaylistsInMainPlayer();
                 }
+                
+                // ✅ Reload current playlist nếu đang phát user playlist
+                if (this.musicPlayer && this.musicPlayer.currentPlaylist) {
+                    const currentPlaylistId = this.musicPlayer.currentPlaylist.id;
+                    // Check if current playlist is a user playlist
+                    if (typeof currentPlaylistId === 'string' && currentPlaylistId.startsWith('user-playlist-')) {
+                        const playlistId = parseInt(currentPlaylistId.replace('user-playlist-', ''));
+                        const deletedTrackWasPlaying = this.musicPlayer.currentTrack?.id === trackId;
+                        
+                        console.log('🔄 Reloading current user playlist:', playlistId);
+                        
+                        // ✅ CRITICAL FIX: Store current track info BEFORE clearing
+                        const wasPlaying = this.musicPlayer.isPlaying;
+                        const currentTrackId = this.musicPlayer.currentTrack?.id;
+                        
+                        // ✅ CRITICAL FIX: Clear current track IMMEDIATELY to prevent loading deleted track
+                        if (deletedTrackWasPlaying) {
+                            console.log('⚠️ Deleted track was playing, clearing player state');
+                            // Set flag to prevent error handler from skipping
+                            this.musicPlayer.isDeletingTrack = true;
+                            
+                            if (this.musicPlayer && this.musicPlayer.isPlaying) {
+                                this.musicPlayer.audio.pause();
+                                this.musicPlayer.isPlaying = false;
+                            }
+                            // Clear audio source to prevent loading deleted track
+                            this.musicPlayer.audio.src = '';
+                            this.musicPlayer.audio.load();
+                            // Clear current track reference
+                            this.musicPlayer.currentTrack = null;
+                            this.musicPlayer.currentTrackIndex = -1;
+                        }
+                        
+                        // Delay reload để đảm bảo track được xóa khỏi backend
+                        setTimeout(async () => {
+                            await this.reloadUserPlaylistAfterDeletion(playlistId, currentTrackId, wasPlaying && !deletedTrackWasPlaying);
+                        }, 300);
+                    }
+                }
+                
+                // ✅ Update cached indicators ngay lập tức
+                if (this.musicPlayer && this.musicPlayer.updateTrackListOfflineIndicators) {
+                    this.musicPlayer.updateTrackListOfflineIndicators();
+                }
+                
+                // ✅ Trigger cache status update để refresh Settings modal
+                window.dispatchEvent(new CustomEvent('updateCacheStatus'));
             } else {
                 this.showNotification('Lỗi khi xóa bài hát!', 'error');
             }
         } catch (error) {
             console.error('Error deleting track:', error);
+            this.showNotification('Lỗi khi xóa bài hát!', 'error');
+        }
+    }
+    
+    // ✅ Delete All Tracks
+    async deleteAllTracks() {
+        if (this.userTracks.length === 0) return;
+        
+        // Confirmation dialog với số lượng tracks
+        const count = this.userTracks.length;
+        if (!confirm(`⚠️ Bạn có chắc muốn xóa TẤT CẢ ${count} bài hát?\n\nHành động này không thể hoàn tác!`)) {
+            return;
+        }
+        
+        // Double confirmation
+        if (!confirm('⚠️ XÁC NHẬN LẦN CUỐI:\n\nBạn sẽ mất TẤT CẢ bài hát đã upload!\n\nNhấn OK để tiếp tục xóa.')) {
+            return;
+        }
+        
+        try {
+            // Show loading overlay
+            this.uploadProgressOverlay.classList.remove('hidden');
+            this.uploadProgressList.innerHTML = `
+                <div class="upload-item success">
+                    <div class="upload-item-name">Đang xóa ${count} bài hát...</div>
+                    <div class="upload-item-progress">
+                        <div class="upload-item-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="upload-item-status">Đang xử lý...</div>
+                </div>
+            `;
+            
+            // Delete all tracks
+            let deletedCount = 0;
+            let failedCount = 0;
+            
+            for (const track of this.userTracks) {
+                try {
+                    const response = await fetch(`/music/user/tracks/${track.id}/delete/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken()
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        deletedCount++;
+                    } else {
+                        failedCount++;
+                    }
+                } catch (error) {
+                    console.error(`Error deleting track ${track.id}:`, error);
+                    failedCount++;
+                }
+            }
+            
+            // Hide overlay
+            this.uploadProgressOverlay.classList.add('hidden');
+            
+            // Show result
+            if (failedCount === 0) {
+                this.showNotification(`✅ Đã xóa thành công ${deletedCount} bài hát!`, 'success');
+            } else {
+                this.showNotification(`⚠️ Đã xóa ${deletedCount} bài hát. ${failedCount} bài hát không thể xóa.`, 'warning');
+            }
+            
+            // Reload tracks
+            await this.loadUserTracks();
+            
+            // Reload playlists
+            await this.loadUserPlaylists();
+            
+            // Update main player
+            if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
+                await this.musicPlayer.loadUserPlaylistsInMainPlayer();
+            }
+            
+        } catch (error) {
+            console.error('Error deleting all tracks:', error);
+            this.uploadProgressOverlay.classList.add('hidden');
             this.showNotification('Lỗi khi xóa bài hát!', 'error');
         }
     }
@@ -734,6 +996,8 @@ class UserMusicManager {
             if (data.success) {
                 this.userPlaylists = data.playlists;
                 this.renderUserPlaylists(data.playlists);
+                // ✅ Populate upload playlist dropdown
+                this.populateUploadPlaylistDropdown(data.playlists);
             }
         } catch (error) {
             console.error('Error loading user playlists:', error);
@@ -773,6 +1037,9 @@ class UserMusicManager {
                     </div>
                 </div>
                 <div class="playlist-actions">
+                    <button class="playlist-add-btn" title="Thêm nhạc vào playlist" onclick="event.stopPropagation(); userMusicManager.addFilesToPlaylist(${playlist.id})">
+                        <i class="bi bi-plus-circle"></i>
+                    </button>
                     <button class="playlist-share-btn ${playlist.is_public ? 'active' : ''}" 
                             title="${playlist.is_public ? 'Chuyển về riêng tư' : 'Chia sẻ công khai'}" 
                             onclick="event.stopPropagation(); userMusicManager.togglePlaylistPublic(${playlist.id}, ${playlist.is_public})">
@@ -784,6 +1051,22 @@ class UserMusicManager {
                 </div>
             </div>
         `).join('');
+    }
+    
+    // ✅ Populate upload playlist dropdown
+    populateUploadPlaylistDropdown(playlists) {
+        if (!this.uploadPlaylistSelect) return;
+        
+        // Clear existing options except the first one
+        this.uploadPlaylistSelect.innerHTML = '<option value="">-- Không thêm vào playlist --</option>';
+        
+        // Add playlists
+        playlists.forEach(playlist => {
+            const option = document.createElement('option');
+            option.value = playlist.id;
+            option.textContent = playlist.name;
+            this.uploadPlaylistSelect.appendChild(option);
+        });
     }
     
     openCreatePlaylistModal() {
@@ -886,10 +1169,8 @@ class UserMusicManager {
         }
     }
     
-    async addTrackToPlaylist(playlistId, trackId) {
+    async addTrackToPlaylist(playlistId, trackId, silent = false) {
         try {
-            // Adding track to playlist
-            
             const response = await fetch(`/music/user/playlists/${playlistId}/add-track/${trackId}/`, {
                 method: 'POST',
                 headers: {
@@ -897,37 +1178,43 @@ class UserMusicManager {
                 }
             });
             
-            // Response status
-            
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('API Error:', errorData);
-                this.showNotification(errorData.error || 'Lỗi khi thêm bài hát vào playlist!', 'error');
-                return;
+                if (response.status === 400) {
+                    const errorData = await response.json();
+                    if (!silent) {
+                        this.showNotification(errorData.error || 'Lỗi khi thêm bài hát vào playlist!', 'error');
+                    }
+                    throw new Error(errorData.error || 'Add track failed');
+                }
+                throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
-            // Response data
             
             if (data.success) {
-                this.showNotification(data.message, 'success');
+                if (!silent) {
+                    this.showNotification(data.message, 'success');
+                }
                 
                 // Reload playlists để cập nhật số lượng bài hát
                 await this.loadUserPlaylists();
                 
-                // Nếu đang ở tab playlists trong main player, reload luôn
-                const userGrid = document.getElementById('user-playlist-grid');
-                if (userGrid && !userGrid.classList.contains('hidden')) {
-                    if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
-                        await this.musicPlayer.loadUserPlaylistsInMainPlayer();
-                    }
+                // Reload main player
+                if (this.musicPlayer && this.musicPlayer.loadUserPlaylistsInMainPlayer) {
+                    await this.musicPlayer.loadUserPlaylistsInMainPlayer();
                 }
             } else {
-                this.showNotification(data.error, 'error');
+                if (!silent) {
+                    this.showNotification(data.error, 'error');
+                }
+                throw new Error(data.error || 'Add track failed');
             }
         } catch (error) {
-            console.error('Error adding track to playlist:', error);
-            this.showNotification('Lỗi khi thêm bài hát vào playlist!', 'error');
+            console.error('❌ Error adding track to playlist:', error);
+            if (!silent) {
+                this.showNotification('Lỗi khi thêm bài hát vào playlist!', 'error');
+            }
+            throw error;
         }
     }
     
@@ -1002,6 +1289,19 @@ class UserMusicManager {
         }
     }
     
+    // ✅ Add files to playlist from file picker
+    addFilesToPlaylist(playlistId) {
+        if (!this.fileInput) return;
+        
+        // Store playlist ID for later use
+        this.tempPlaylistId = playlistId;
+        
+        // Trigger file input
+        this.fileInput.click();
+        
+        // Don't reset tempPlaylistId here - let it be reset in handleFileUpload after processing
+    }
+    
     openPlaylist(playlistId) {
         // Load and play playlist in main player
         const playlist = this.userPlaylists.find(p => p.id === playlistId);
@@ -1034,6 +1334,7 @@ class UserMusicManager {
                 const playerPlaylist = {
                     id: 'user-playlist-' + data.playlist.id,
                     name: data.playlist.name,
+                    type: 'user', // ✅ CRITICAL: Set type for tracking
                     tracks: data.tracks.map(track => ({
                         id: track.id,
                         title: track.title,
@@ -1059,20 +1360,34 @@ class UserMusicManager {
                 // ✅ Đánh dấu user đã tương tác (để autoplay được phép)
                 this.musicPlayer.userInteracted = true;
                 
-                // ✅ Phát bài đầu tiên (truyền index 0, không phải object)
-                this.musicPlayer.playTrack(0);
-                
-                // ✅ Đảm bảo phát luôn (nếu auto_play tắt)
-                setTimeout(() => {
-                    if (!this.musicPlayer.isPlaying) {
-                        this.musicPlayer.audio.play().catch(e => {
-                            // Playlist play failed
-                        });
-                    }
-                }, 100);
-                
-                this.showNotification(`Đang phát playlist "${data.playlist.name}"`, 'success');
+                // ✅ CRITICAL FIX: Only play if there are tracks and valid track at index 0
+                if (playerPlaylist.tracks.length > 0 && playerPlaylist.tracks[0]) {
+                    this.musicPlayer.playTrack(0);
+                    
+                    // ✅ Đảm bảo phát luôn (nếu auto_play tắt)
+                    setTimeout(() => {
+                        if (!this.musicPlayer.isPlaying) {
+                            this.musicPlayer.audio.play().catch(e => {
+                                // Playlist play failed
+                            });
+                        }
+                    }, 100);
+                    
+                    this.showNotification(`Đang phát playlist "${data.playlist.name}"`, 'success');
+                } else {
+                    console.warn('⚠️ No valid tracks to play in playlist');
+                    this.showNotification('Playlist không có bài hát hợp lệ!', 'info');
+                }
             } else {
+                // ✅ CRITICAL FIX: Clear player state when playlist is empty
+                if (this.musicPlayer) {
+                    this.musicPlayer.currentPlaylist = null;
+                    this.musicPlayer.currentTrack = null;
+                    this.musicPlayer.currentTrackIndex = -1;
+                    this.musicPlayer.audio.src = '';
+                    this.musicPlayer.audio.load();
+                    this.musicPlayer.populateTrackList();
+                }
                 this.showNotification('Playlist chưa có bài hát nào!', 'info');
             }
         } catch (error) {
@@ -1082,6 +1397,87 @@ class UserMusicManager {
             } else {
                 this.showNotification('Lỗi khi load playlist!', 'error');
             }
+        }
+    }
+    
+    async reloadUserPlaylistAfterDeletion(playlistId, currentTrackId, shouldResume) {
+        try {
+            const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            
+            if (!response.ok) {
+                console.error('Failed to reload playlist:', response.status);
+                // Clear flag on error
+                this.musicPlayer.isDeletingTrack = false;
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.tracks.length > 0) {
+                // Convert to music player format
+                const playerPlaylist = {
+                    id: 'user-playlist-' + data.playlist.id,
+                    name: data.playlist.name,
+                    type: 'user', // ✅ CRITICAL: Set type for tracking
+                    tracks: data.tracks.map(track => ({
+                        id: track.id,
+                        title: track.title,
+                        artist: track.artist || 'Unknown Artist',
+                        file_url: track.file_url,
+                        duration: track.duration
+                    }))
+                };
+                
+                // Set as current playlist in music player
+                this.musicPlayer.currentPlaylist = playerPlaylist;
+                
+                // ✅ CRITICAL FIX: Find current track in new playlist by ID
+                const currentTrackIndex = playerPlaylist.tracks.findIndex(t => t.id === currentTrackId);
+                
+                if (currentTrackIndex >= 0) {
+                    // Current track still exists in playlist
+                    this.musicPlayer.currentTrackIndex = currentTrackIndex;
+                    this.musicPlayer.currentTrack = playerPlaylist.tracks[currentTrackIndex];
+                    
+                    // Populate track list
+                    this.musicPlayer.populateTrackList();
+                    
+                    // Resume playing if it was playing before
+                    if (shouldResume) {
+                        console.log('✅ Current track still exists, resuming at index:', currentTrackIndex);
+                        this.musicPlayer.playTrack(currentTrackIndex);
+                    } else {
+                        console.log('✅ Current track still exists, staying at index:', currentTrackIndex);
+                    }
+                } else {
+                    // Current track was deleted, just update the playlist without playing
+                    console.log('⚠️ Current track was deleted, not playing anything');
+                    this.musicPlayer.currentTrackIndex = -1;
+                    this.musicPlayer.currentTrack = null;
+                    this.musicPlayer.audio.src = '';
+                    this.musicPlayer.audio.load();
+                    this.musicPlayer.populateTrackList();
+                }
+                
+                // ✅ Clear flag after reload
+                this.musicPlayer.isDeletingTrack = false;
+            } else {
+                // Playlist is now empty
+                console.log('⚠️ Playlist is now empty after deletion');
+                this.musicPlayer.currentPlaylist = null;
+                this.musicPlayer.currentTrack = null;
+                this.musicPlayer.currentTrackIndex = -1;
+                this.musicPlayer.audio.src = '';
+                this.musicPlayer.audio.load();
+                this.musicPlayer.populateTrackList();
+                
+                // ✅ Clear flag after reload
+                this.musicPlayer.isDeletingTrack = false;
+            }
+        } catch (error) {
+            console.error('Error reloading playlist after deletion:', error);
+            // ✅ Clear flag on error
+            this.musicPlayer.isDeletingTrack = false;
         }
     }
     
@@ -1194,6 +1590,24 @@ class UserMusicManager {
                 if (this.musicPlayer) {
                     this.musicPlayer.cachedTracks.clear();
                     this.musicPlayer.updateTrackListOfflineIndicators();
+                    
+                    // ✅ CRITICAL FIX: Force reload current track từ network sau khi clear cache
+                    // Vì audio đang reference đến cached URL, cần reload để fetch từ network
+                    if (this.musicPlayer.isPlaying || this.musicPlayer.currentTrack) {
+                        console.log('🔄 Force reloading current track from network after cache clear');
+                        const currentIndex = this.musicPlayer.currentTrackIndex;
+                        const currentTrack = this.musicPlayer.currentTrack;
+                        
+                        // Set flag để bypass cache check
+                        this.musicPlayer.skipCacheCheck = true;
+                        
+                        // Reload track với cache-busting
+                        if (currentTrack && currentIndex !== undefined) {
+                            setTimeout(() => {
+                                this.musicPlayer.playTrack(currentIndex);
+                            }, 500);
+                        }
+                    }
                 }
                 
                 this.showNotification('✅ Đã xóa toàn bộ cache offline', 'success');

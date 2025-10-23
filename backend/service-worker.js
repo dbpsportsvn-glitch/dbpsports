@@ -57,8 +57,8 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Force update version - Production ready with URL encoding fix
-const SW_VERSION = 'v11-production-clean';
+// Force update version - Network timeout and better error handling
+const SW_VERSION = 'v15-network-timeout-fix';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
@@ -136,15 +136,23 @@ async function handleAudioRequest(request) {
     }
     
     if (cachedResponse) {
-      // console.log('[Service Worker] ✅ Serving from cache:', requestUrl);
-      
-      // Nếu request có Range header, tạo Range response từ cached full file
-      if (rangeHeader) {
-        return createRangeResponse(cachedResponse, rangeHeader);
+      // ✅ Validate cached response: check if it's valid
+      if (cachedResponse.ok && cachedResponse.status === 200) {
+        // console.log('[Service Worker] ✅ Serving from cache:', requestUrl);
+        
+        // Nếu request có Range header, tạo Range response từ cached full file
+        if (rangeHeader) {
+          return createRangeResponse(cachedResponse, rangeHeader);
+        }
+        
+        // Không có Range header, return full cached file
+        return cachedResponse;
+      } else {
+        // ✅ Cache hit nhưng response invalid, delete và fetch from network
+        console.log('[Service Worker] ⚠️ Invalid cached response, fetching from network:', requestUrl);
+        await cache.delete(requestUrl);
+        // Continue to network fetch below
       }
-      
-      // Không có Range header, return full cached file
-      return cachedResponse;
     }
     
     // 2. Không có trong cache, fetch từ network
@@ -156,30 +164,55 @@ async function handleAudioRequest(request) {
       headers: new Headers()
     });
     
-    const fullResponse = await fetch(fullRequest);
+    // ✅ CRITICAL FIX: Add timeout for production network issues
+    // Reduce timeout để tránh conflict với player timeout (25s)
+    const fetchTimeout = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Fetch timeout')), 20000); // 20s timeout
+    });
+    
+    const fullResponse = await Promise.race([
+      fetch(fullRequest),
+      fetchTimeout
+    ]).catch(error => {
+      console.error('[Service Worker] Network fetch failed:', error.message);
+      throw error;
+    });
     
     if (fullResponse.ok) {
-      // ✅ Cache full file CHỈ KHI auto-cache enabled
+      // ✅ Cache full file CHỈ KHI auto-cache enabled VÀ là playback request
       if (autoCacheEnabled) {
-        await cache.put(requestUrl, fullResponse.clone());
-        // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
+        // ✅ CHỈ cache nếu có Range header (playback) hoặc referrer là from music player page
+        // Preload requests: NO range header, NO specific referrer
+        // Playback requests: HAS range header OR from music player
+        const hasRangeHeader = rangeHeader !== null;
+        const fromMusicPlayer = request.referrer && request.referrer.includes('/music/');
         
-        // ✅ Chỉ notify main thread KHI cache thành công
-        const trackId = extractTrackIdFromUrl(requestUrl);
-        if (trackId) {
-          // console.log('[SW] Notifying clients about cached track:', trackId);
-          self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-              client.postMessage({
-                type: 'trackCached',
-                trackId: trackId,
-                url: requestUrl
+        // Cache nếu:
+        // 1. Có Range header (đang seek/play) HOẶC
+        // 2. Referrer từ music player page (user đang nghe thật)
+        if (hasRangeHeader || fromMusicPlayer) {
+          await cache.put(requestUrl, fullResponse.clone());
+          // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
+          
+          // ✅ Chỉ notify main thread KHI cache thành công
+          const trackId = extractTrackIdFromUrl(requestUrl);
+          if (trackId) {
+            // console.log('[SW] Notifying clients about cached track:', trackId);
+            self.clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({
+                  type: 'trackCached',
+                  trackId: trackId,
+                  url: requestUrl
+                });
+                // console.log('[SW] Message sent to client:', client.id);
               });
-              // console.log('[SW] Message sent to client:', client.id);
+            }).catch(error => {
+              console.error('[SW] Error sending message:', error);
             });
-          }).catch(error => {
-            console.error('[SW] Error sending message:', error);
-          });
+          }
+        } else {
+          console.log('[Service Worker] Skipping cache for non-playback request:', requestUrl);
         }
       } else {
         console.log('[Service Worker] Auto-cache disabled');
@@ -200,13 +233,13 @@ async function handleAudioRequest(request) {
   } catch (error) {
     console.error('🚨 Service Worker Error:', error.message);
     
-    // Fallback: Trả về cached version nếu có
+    // Fallback: Trả về cached version nếu có và valid
     const requestUrl = request.url.split('?')[0];
     const cache = await caches.open(CACHE_VERSION);
     const cachedResponse = await cache.match(requestUrl);
     
-    if (cachedResponse) {
-      console.log('📦 Serving from cache (offline mode)');
+    if (cachedResponse && cachedResponse.ok && cachedResponse.status === 200) {
+      console.log('📦 Serving from cache (fallback mode)');
       const rangeHeader = request.headers.get('range');
       
       if (rangeHeader) {
@@ -216,8 +249,36 @@ async function handleAudioRequest(request) {
       return cachedResponse;
     }
     
+    // ✅ Try fetch from network one more time if available
+    if (navigator.onLine) {
+      console.log('🔄 Retrying network fetch after error');
+      try {
+        const fullRequest = new Request(requestUrl, {
+          method: 'GET',
+          headers: new Headers()
+        });
+        
+        // ✅ CRITICAL FIX: Add timeout cho retry để tránh hang indefinitely
+        const retryTimeout = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Retry timeout')), 15000); // 15s timeout cho retry
+        });
+        
+        const retryResponse = await Promise.race([
+          fetch(fullRequest),
+          retryTimeout
+        ]);
+        
+        if (retryResponse.ok) {
+          console.log('✅ Retry successful from network');
+          return retryResponse;
+        }
+      } catch (retryError) {
+        console.error('🚨 Retry failed:', retryError.message);
+      }
+    }
+    
     // Trả về error response
-    return new Response('Offline and no cache available', {
+    return new Response('Service unavailable', {
       status: 503,
       statusText: 'Service Unavailable'
     });
@@ -316,6 +377,14 @@ self.addEventListener('message', async (event) => {
     const cache = await caches.open(CACHE_VERSION);
     await cache.delete(event.data.url);
     event.ports[0].postMessage({ success: true });
+  }
+  
+  if (event.data.action === 'deleteCache') {
+    console.log('[Service Worker] 🗑️ Deleting cache:', event.data.url);
+    const cache = await caches.open(CACHE_VERSION);
+    const deleted = await cache.delete(event.data.url);
+    console.log('[Service Worker] ✅ Cache deleted:', deleted);
+    // Note: postMessage without ports - main thread doesn't wait for response
   }
   
   if (event.data.action === 'getCacheSize') {

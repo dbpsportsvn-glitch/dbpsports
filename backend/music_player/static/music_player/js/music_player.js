@@ -1,4 +1,43 @@
-// Music Player v1.2.3 - 2025-01-16
+// ============================================================
+// Music Player v1.2.28 - DBP Sports
+// ============================================================
+// 
+// 📅 Last Updated: 2025-01-16
+// 🔧 Version: 1.2.28
+// 💾 Cache Version: dbp-music-v4-range-fix
+// 🔄 Service Worker: v16-cache-timeout-fix
+//
+// ✅ FEATURES:
+//   - Full playback controls (play, pause, next, previous, seek)
+//   - Offline playback với Service Worker caching
+//   - Auto-scroll to current track trong danh sách
+//   - Keyboard shortcuts (Space, Arrow keys, etc.)
+//   - Mobile optimizations (touch gestures, iOS volume handling)
+//   - Sleep timer với fade out
+//   - Play statistics tracking
+//   - Personal music upload & management
+//
+// 🔄 CACHE WORKFLOW:
+//   1. Service Worker cache tracks khi user nghe
+//   2. Auto-cache enabled by default (có thể tắt trong Settings)
+//   3. Cache validation: Check cachedResponse.ok && status === 200
+//   4. Fallback: Nếu cache invalid → delete và fetch từ network
+//   5. Retry logic: Retry network fetch nếu timeout (15s timeout)
+//   6. Timeout: Player 25s, Service Worker 20s, Retry 15s
+//   7. Force network fetch sau khi clear cache với cache-busting
+//
+// 📝 CHANGELOG v1.2.28:
+//   - Fixed: URL encoding issues - removed double encoding from JS
+//   - Fixed: Header controls buttons giữ nguyên size khi resize player
+//   - Fixed: Auto-scroll to top (mobile & desktop same behavior)
+//   - Fixed: Audio error retry with cache-busting before skipping track
+//   - Fixed: Cache refresh after clear cache
+//   - Fixed: Timeout conflicts between player and Service Worker
+//   - Added: Cache-busting parameter for force network fetch
+//   - Added: Retry logic with timeout
+//
+// ============================================================
+
 class MusicPlayer {
     constructor() {
         this.audio = document.getElementById('audio-player');
@@ -25,6 +64,7 @@ class MusicPlayer {
         this.hasAutoPlayed = false; // Flag để track đã auto-play chưa
         this.restoreAttempted = false; // Flag để chỉ restore 1 lần duy nhất
         this.hasOpenedPlayer = false; // ✅ Flag để track lần đầu mở player
+        this.isDeletingTrack = false; // ✅ Flag để tránh skip khi đang xóa track
         
         // Drag and drop variables
         this.isDragging = false;
@@ -73,6 +113,10 @@ class MusicPlayer {
         this.playTrackingInterval = null; // Interval để update listen duration
         this.hasRecordedPlay = false; // Flag để tránh record trùng lần
         
+        // ✅ Error handling - Prevent infinite skip loop
+        this.consecutiveErrors = 0; // Counter for consecutive errors
+        this.maxConsecutiveErrors = 3; // Stop skipping after 3 errors
+        
         // ✅ OFFLINE MANAGER - For offline playback
         this.offlineManager = null; // Will be initialized after DOM is ready
         this.cachedTracks = new Set(); // Track which tracks are cached for offline
@@ -106,8 +150,8 @@ class MusicPlayer {
             if (!dataLoaded) {
                 // Fallback to sequential loading if batched call fails
                 console.warn('⚠️ Batched call failed, falling back to sequential loading');
-                this.loadSettings();
-                await this.loadPlaylists();
+                await this.loadSettings();
+                await this.loadPlaylistsLegacy();
             }
             
             console.log('✅ Initial data loaded');
@@ -335,8 +379,41 @@ class MusicPlayer {
             // Set loading state to false
             this.isLoadingTrack = false;
             
-            // ✅ Retry mechanism với URL encoding fix
-            this.retryAudioLoad();
+            // ✅ CRITICAL FIX: Don't skip if currently deleting track
+            if (this.isDeletingTrack) {
+                console.log('⚠️ Skipping error handler - track is being deleted');
+                return;
+            }
+            
+            // ✅ CRITICAL FIX: Retry with cache-busting before skipping to next track
+            // Lần đầu error có thể do cache issue, retry với cache-busting
+            if (this.consecutiveErrors === 0 && this.currentTrack) {
+                console.log('🔄 Audio error - Retrying with cache-busting parameter...');
+                this.skipCacheCheck = true;
+                const currentIndex = this.currentTrackIndex;
+                setTimeout(() => {
+                    this.playTrack(currentIndex);
+                }, 1000);
+                return;
+            }
+            
+            // ✅ Skip to next track but prevent infinite loop
+            if (this.currentPlaylist && this.currentPlaylist.tracks.length > 0) {
+                this.consecutiveErrors++;
+                console.log(`🔄 Audio error ${this.consecutiveErrors}/${this.maxConsecutiveErrors}, skipping to next track`);
+                
+                if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+                    console.error('❌ Too many consecutive errors, stopping playback');
+                    this.showMessage('Không thể tải bài hát. Có thể playlist có vấn đề.', 'error');
+                    this.isLoadingTrack = false;
+                    return;
+                }
+                
+                this.showMessage('Không thể tải bài hát: ' + (this.currentTrack?.title || 'Unknown'), 'error');
+                setTimeout(() => {
+                    this.nextTrack();
+                }, 1500);
+            }
         });
         
         // Keyboard shortcuts
@@ -762,6 +839,7 @@ class MusicPlayer {
                 this.currentPlaylist = {
                     id: 'user-playlist-' + data.playlist.id,
                     name: data.playlist.name,
+                    type: 'user', // ✅ CRITICAL: Set type for tracking
                     tracks: data.tracks.map(track => ({
                         id: track.id,
                         title: track.title,
@@ -985,6 +1063,7 @@ class MusicPlayer {
                 this.currentPlaylist = {
                     id: 'global-playlist-' + data.playlist.id,
                     name: data.playlist.name + ' (by ' + data.playlist.owner.full_name + ')',
+                    type: 'global', // ✅ CRITICAL: Set type for tracking
                     tracks: data.tracks.map(track => ({
                         id: track.id,
                         title: track.title,
@@ -1170,6 +1249,30 @@ class MusicPlayer {
             }
         } catch (error) {
             console.error('Error loading playlists:', error);
+        }
+    }
+
+    async loadPlaylistsLegacy() {
+        // Fallback method using legacy endpoint /music/api/
+        try {
+            console.log('📡 Loading playlists (legacy endpoint)...');
+            const response = await fetch(`/music/api/?t=${Date.now()}`, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                this.playlists = data.playlists;
+                this.populatePlaylistSelect();
+                console.log('✅ Playlists loaded (legacy)');
+            }
+        } catch (error) {
+            console.error('Error loading playlists (legacy):', error);
         }
     }
 
@@ -1495,7 +1598,15 @@ class MusicPlayer {
             // ✅ Escape HTML để tránh XSS
             const escapedTitle = this.escapeHtml(track.title);
             const escapedArtist = this.escapeHtml(track.artist);
-            const escapedDuration = this.escapeHtml(track.duration_formatted);
+            
+            // ✅ Format duration: support both duration_formatted and raw duration (in seconds)
+            let durationFormatted = track.duration_formatted;
+            if (!durationFormatted && track.duration) {
+                const minutes = Math.floor(track.duration / 60);
+                const seconds = track.duration % 60;
+                durationFormatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            const escapedDuration = this.escapeHtml(durationFormatted || '0:00');
             const playCount = track.play_count || 0;
             
             trackItem.innerHTML = `
@@ -1614,25 +1725,79 @@ class MusicPlayer {
         // Đánh dấu đang load track
         this.isLoadingTrack = true;
         this.currentTrackIndex = index;
+        this.currentTrack = track; // ✅ Set currentTrack BEFORE loading audio
+        
+        // ✅ Reset error counter when starting new track
+        this.consecutiveErrors = 0;
         
         // Sử dụng file_url từ API (đã có đường dẫn đầy đủ)
         const fileUrl = track.file_url;
         
         // Load track mới
-        this.audio.src = fileUrl;
+        // ✅ CRITICAL FIX: Use URL as-is from backend (Django already handles encoding)
+        // DO NOT encode again - will cause double encoding issues
+        let finalUrl = fileUrl;
+        
+        // ✅ CRITICAL FIX: Add cache-busting parameter nếu đang skip cache check
+        // (ví dụ: sau khi clear cache hoặc force reload từ network)
+        if (this.skipCacheCheck) {
+            finalUrl += (finalUrl.includes('?') ? '&' : '?') + '_nocache=' + Date.now();
+            this.skipCacheCheck = false; // Reset flag sau khi dùng
+            console.log('🔄 Force network fetch (cache-busting):', track.title);
+        }
+        
+        console.log('🎵 Loading track:', track.title);
+        console.log('📂 URL:', finalUrl);
+        
+        this.audio.src = finalUrl;
         this.audio.load();
         
         // ✅ Preload track for offline (Service Worker will auto-cache)
-        this.preloadTrackForOffline(track);
+        this.preloadTrackForOffline(track).catch(err => {
+            console.error('Error preloading track:', err);
+        });
         
-        // ✅ Timeout protection
+        // ✅ Timeout protection - Increased for production (slow network)
+        // Reduce timeout conflict với Service Worker (SW có 30s timeout)
         const loadTimeout = setTimeout(() => {
             if (this.isLoadingTrack) {
                 // Track load timeout
                 this.isLoadingTrack = false;
+                console.error('🚨 Track load timeout:', track.title);
+                console.error('🚨 URL:', fileUrl);
+                
+                // ✅ Try one more time with cache-busting before giving up
+                if (this.consecutiveErrors === 0) {
+                    console.log('🔄 Retrying with cache-busting parameter...');
+                    this.skipCacheCheck = true;
+                    setTimeout(() => {
+                        this.playTrack(index);
+                    }, 1000);
+                    return;
+                }
+                
+                // Clear audio source
+                this.audio.src = '';
+                this.audio.load();
+                
+                // Show error message
                 this.showMessage('Timeout khi tải bài hát: ' + track.title, 'error');
+                
+                // ✅ Increment error counter and skip if needed
+                this.consecutiveErrors++;
+                if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+                    console.error('❌ Too many consecutive errors, stopping playback');
+                    this.showMessage('Không thể tải bài hát. Có thể playlist có vấn đề.', 'error');
+                    return;
+                }
+                
+                // ✅ Auto-skip to next track after 2 seconds
+                setTimeout(() => {
+                    console.log('🔄 Auto-skipping to next track due to timeout');
+                    this.nextTrack();
+                }, 2000);
             }
-        }, 10000); // 10 seconds timeout
+        }, 25000); // ✅ Reduce to 25s to avoid conflict với Service Worker timeout (30s)
         
         // Update UI ngay
         this.updateCurrentTrack();
@@ -1686,10 +1851,20 @@ class MusicPlayer {
             
             this.showMessage(errorMessage, 'error');
             
-            // ✅ Retry mechanism
+            // ✅ No retry - skip to next track instead
+            // Retry thường không giúp nếu file không tồn tại hoặc có vấn đề
+            this.consecutiveErrors++;
+            console.log(`🔄 Error ${this.consecutiveErrors}/${this.maxConsecutiveErrors}, skipping to next track`);
+            
+            if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+                console.error('❌ Too many consecutive errors, stopping playback');
+                this.showMessage('Không thể tải bài hát. Có thể playlist có vấn đề.', 'error');
+                this.isLoadingTrack = false;
+                return;
+            }
+            
             setTimeout(() => {
-                // Retrying track load
-                this.audio.load();
+                this.nextTrack();
             }, 2000);
         };
         
@@ -1731,6 +1906,20 @@ class MusicPlayer {
         trackItems.forEach((item, index) => {
             item.classList.toggle('active', index === this.currentTrackIndex);
         });
+        
+        // ✅ CRITICAL FIX: Auto-scroll to current track
+        // Smooth scroll current track into view for better UX
+        const currentTrackItem = trackItems[this.currentTrackIndex];
+        if (currentTrackItem) {
+            // Use setTimeout để đảm bảo DOM đã render xong
+            setTimeout(() => {
+                currentTrackItem.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start', // Scroll to top of viewport (both mobile & desktop)
+                    inline: 'nearest'
+                });
+            }, 100);
+        }
     }
 
     togglePlayPause() {
@@ -2010,10 +2199,20 @@ class MusicPlayer {
     
     // ✅ Retry audio load với URL encoding fix
     retryAudioLoad() {
-        if (!this.currentTrack || !this.currentPlaylist) return;
+        if (!this.currentTrack || !this.currentPlaylist) {
+            console.log('🔄 No track to retry, skipping');
+            if (this.playlists.length > 0) {
+                this.selectPlaylist(this.playlists[0].id);
+            }
+            return;
+        }
         
         const track = this.currentPlaylist.tracks[this.currentTrackIndex];
-        if (!track || !track.file_url) return;
+        if (!track || !track.file_url) {
+            console.log('🔄 Invalid track, skipping to next');
+            this.nextTrack();
+            return;
+        }
         
         console.log('🔄 Retrying audio load...');
         
@@ -2021,11 +2220,12 @@ class MusicPlayer {
         this.audio.src = track.file_url;
         this.audio.load();
         
-        // ✅ Timeout protection cho retry
+        // ✅ Timeout protection cho retry - nhanh hơn vì đã retry rồi
         setTimeout(() => {
             if (this.isLoadingTrack) {
                 console.warn('⚠️ Retry timeout, skipping track');
                 this.isLoadingTrack = false;
+                this.showMessage('Không thể tải bài hát: ' + track.title, 'error');
                 this.nextTrack(); // Skip to next track
             }
         }, 5000);
@@ -3078,6 +3278,7 @@ class MusicPlayer {
                                 playlist = {
                                     id: state.playlistId,
                                     name: data.playlist.name,
+                                    type: 'user', // ✅ CRITICAL: Set type for tracking
                                     tracks: data.tracks.map(track => ({
                                         id: track.id,
                                         title: track.title,
@@ -3131,6 +3332,7 @@ class MusicPlayer {
             // Restore playlist và track
             this.currentPlaylist = playlist;
             this.currentTrackIndex = trackIndex;
+            this.currentTrack = track; // ✅ Set currentTrack BEFORE loading audio
             this.playlistSelect.value = playlist.id;
             this.populateTrackList();
             
@@ -3243,17 +3445,26 @@ class MusicPlayer {
                 })
                 .catch(error => {
                     console.error('🚨 Error restoring audio');
-                    // ✅ Fallback: If audio restore fails, select first playlist
+                    // ✅ Fallback: Select first playlist when restore fails
                     console.log('🔄 Audio restore failed, selecting first playlist');
+                    
+                    // Reset flags immediately
+                    this.isRestoringState = false;
+                    this.isLoadingTrack = false;
+                    
+                    // Select first playlist
                     if (this.playlists.length > 0) {
                         this.selectPlaylist(this.playlists[0].id);
                     }
                 })
                 .finally(() => {
-                    // Reset flags sau 1 giây để đảm bảo mọi thứ ổn định
+                    // Reset flags sau 1 giây để đảm bảo mọi thứ ổn định (chỉ nếu chưa được reset)
                     setTimeout(() => {
-                        this.isRestoringState = false;
-                        this.isLoadingTrack = false;
+                        // ✅ Only reset if not already reset by catch block
+                        if (this.isRestoringState || this.isLoadingTrack) {
+                            this.isRestoringState = false;
+                            this.isLoadingTrack = false;
+                        }
                         
                         // ✅ Update cached indicators after restore complete
                         this.updateTrackListOfflineIndicators();
@@ -3528,12 +3739,9 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     // ✅ Auto-update cached indicators
                     this.updateTrackListOfflineIndicators();
                     
-                    // ✅ Update cache status in settings if modal is open
-                    const settingsModal = document.getElementById('settings-modal');
-                    if (settingsModal && !settingsModal.classList.contains('hidden')) {
-                        // Trigger cache status update
-                        window.dispatchEvent(new CustomEvent('updateCacheStatus'));
-                    }
+                    // ✅ CRITICAL FIX: Always trigger cache status update (not just when modal open)
+                    // This ensures settings modal shows correct data when opened later
+                    window.dispatchEvent(new CustomEvent('updateCacheStatus'));
                 }
             });
             
@@ -3616,28 +3824,24 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         if (!this.offlineManager || !this.currentPlaylist) return;
         
         // Don't clear cachedTracks - merge with localStorage data
-        const localStorageTracks = new Set();
-        try {
-            const stored = localStorage.getItem('dbp_cached_tracks');
-            if (stored) {
-                const trackIds = JSON.parse(stored);
-                trackIds.forEach(id => localStorageTracks.add(id));
-            }
-        } catch (error) {
-            console.error('Error loading from localStorage:', error);
-        }
+        // ✅ CRITICAL FIX: Verify ALL tracks before adding to cachedTracks
+        // This prevents showing cached indicator for tracks that were deleted from cache
+        const verifiedCached = new Set();
         
-        // Check which tracks are actually cached by Service Worker
-        const actuallyCached = new Set();
         for (const track of this.currentPlaylist.tracks) {
+            // ✅ Only add if ACTUALLY cached in Service Worker
             const isCached = await this.offlineManager.isTrackCached(track.file_url);
             if (isCached) {
-                actuallyCached.add(track.id);
+                verifiedCached.add(track.id);
             }
         }
         
-        // Merge: keep localStorage tracks + add newly cached tracks
-        this.cachedTracks = new Set([...localStorageTracks, ...actuallyCached]);
+        // ✅ CRITICAL: Only keep tracks that are actually cached
+        // Remove localStorage tracks that are no longer in cache
+        this.cachedTracks = verifiedCached;
+        
+        // ✅ Update localStorage to match actual cache
+        this.saveCachedTracksToStorage();
         
         // Update track list UI to show cached indicators
         this.updateTrackListOfflineIndicators();
@@ -3777,11 +3981,14 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                 }, 2000); // Wait 2s for cache to complete
             } else {
                 console.log(`✅ Track already cached: ${track.title}`);
-                // addTrackToCache already calls updateTrackListOfflineIndicatorsDebounced
+                // ✅ CRITICAL FIX: Add to cachedTracks even if already cached
+                // This ensures UI shows cached indicator after cache clear
                 this.addTrackToCache(track.id);
             }
         } catch (error) {
             console.error('Error checking cache status:', error);
+            // ✅ FIX: Remove from cachedTracks if check fails (might be deleted)
+            this.cachedTracks.delete(track.id);
         }
     }
     
@@ -3889,16 +4096,18 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
     }
     
     setupAudioPreloading() {
-        // Setting up audio preloading
+        // ✅ DISABLED: Preloading adjacent tracks triggers Service Worker cache
+        // This causes unwanted caching of tracks user hasn't played yet
+        // Only cache the track user is currently playing
         
-        // Preload next và previous tracks
-        this.audio.addEventListener('loadedmetadata', () => {
-            this.preloadAdjacentTracks();
-        });
+        // Setting up audio preloading disabled
+        // this.audio.addEventListener('loadedmetadata', () => {
+        //     this.preloadAdjacentTracks();
+        // });
         
-        this.audio.addEventListener('canplaythrough', () => {
-            this.preloadAdjacentTracks();
-        });
+        // this.audio.addEventListener('canplaythrough', () => {
+        //     this.preloadAdjacentTracks();
+        // });
     }
     
     async preloadAdjacentTracks() {

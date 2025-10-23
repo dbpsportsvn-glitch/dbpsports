@@ -6,8 +6,11 @@ from django.utils.decorators import method_decorator
 from django.views import View
 import json
 import os
+import logging
 from .models import Playlist, Track, MusicPlayerSettings
 from .utils import get_audio_duration
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -89,6 +92,8 @@ class MusicPlayerSettingsView(View):
                         'volume': 0.7,
                         'repeat_mode': 'all',
                         'shuffle': False,
+                        'listening_lock': False,
+                        'low_power_mode': False,
                         'default_playlist_id': None
                     }
                 })
@@ -100,6 +105,8 @@ class MusicPlayerSettingsView(View):
                     'volume': settings.volume,
                     'repeat_mode': settings.repeat_mode,
                     'shuffle': settings.shuffle,
+                    'listening_lock': settings.listening_lock,
+                    'low_power_mode': settings.low_power_mode,
                     'default_playlist_id': settings.default_playlist.id if settings.default_playlist else None
                 }
             except MusicPlayerSettings.DoesNotExist:
@@ -108,6 +115,8 @@ class MusicPlayerSettingsView(View):
                     'volume': 0.7,
                     'repeat_mode': 'all',
                     'shuffle': False,
+                    'listening_lock': False,
+                    'low_power_mode': False,
                     'default_playlist_id': None
                 }
             
@@ -146,6 +155,10 @@ class MusicPlayerSettingsView(View):
                 settings.repeat_mode = data['repeat_mode']
             if 'shuffle' in data:
                 settings.shuffle = data['shuffle']
+            if 'listening_lock' in data:
+                settings.listening_lock = bool(data['listening_lock'])
+            if 'low_power_mode' in data:
+                settings.low_power_mode = bool(data['low_power_mode'])
             if 'default_playlist_id' in data:
                 try:
                     playlist = Playlist.objects.get(id=data['default_playlist_id'])
@@ -161,6 +174,7 @@ class MusicPlayerSettingsView(View):
             })
             
         except Exception as e:
+            logger.error(f"Error updating music settings: {str(e)}", exc_info=True)
             return JsonResponse({
                 'success': False,
                 'error': str(e)

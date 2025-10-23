@@ -82,6 +82,7 @@ class OptimizedMusicPlayerAPIView(View):
                     'description': playlist.description or '',
                     'cover_image': playlist.cover_image.url if playlist.cover_image else None,
                     'folder_path': os.path.basename(playlist.folder_path),
+                    'type': 'global', # ✅ CRITICAL: Set type for tracking
                     'tracks': tracks_data,
                     'tracks_count': len(tracks_data)
                 })

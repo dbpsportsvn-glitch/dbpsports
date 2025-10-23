@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Count, Sum
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Playlist(models.Model):
@@ -212,7 +215,13 @@ class UserTrack(models.Model):
     
     def get_file_url(self):
         """Lấy URL của file nhạc"""
-        return self.file.url if self.file else ""
+        if not self.file:
+            return ""
+        # file.url đã được Django encode các ký tự đặc biệt
+        # Trả về URL đã encode để browser có thể load được
+        url = self.file.url
+        logger.debug(f"UserTrack file_url: name={self.file.name}, url={url}")
+        return url
     
     def get_duration_formatted(self):
         """Lấy thời lượng định dạng mm:ss"""
