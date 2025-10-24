@@ -3,6 +3,8 @@ from . import views
 from . import admin_views
 from . import user_music_views
 from . import stats_views
+from . import saved_music_apis
+from . import youtube_import_views
 # Explicit import for optimized views
 from .optimized_views import OptimizedMusicPlayerAPIView, InitialDataAPIView
 
@@ -40,6 +42,23 @@ urlpatterns = [
     path('stats/record-play/', stats_views.record_track_play, name='record_play'),
     path('stats/user-stats/', stats_views.get_user_stats, name='user_stats'),
     path('stats/popular/', stats_views.get_popular_tracks, name='popular_tracks'),
+    
+    # ✅ Saved Music APIs
+    path('saved/track/save/', saved_music_apis.save_track, name='save_track'),
+    path('saved/track/unsave/', saved_music_apis.unsave_track, name='unsave_track'),
+    path('saved/playlist/save/', saved_music_apis.save_playlist, name='save_playlist'),
+    path('saved/playlist/unsave/', saved_music_apis.unsave_playlist, name='unsave_playlist'),
+    path('saved/tracks/', saved_music_apis.get_saved_tracks, name='get_saved_tracks'),
+    path('saved/playlists/', saved_music_apis.get_saved_playlists, name='get_saved_playlists'),
+    path('saved/track/delete/', saved_music_apis.delete_saved_track, name='delete_saved_track'),
+    path('saved/playlist/delete/', saved_music_apis.delete_saved_playlist, name='delete_saved_playlist'),
+    path('saved/check-status/', saved_music_apis.check_saved_status, name='check_saved_status'),
+    path('saved/playlist/<int:playlist_id>/tracks/', saved_music_apis.get_saved_tracks_for_playlist, name='get_saved_tracks_for_playlist'),
+    
+    # ✅ YouTube Import APIs
+    path('youtube/import/', youtube_import_views.YouTubeImportView.as_view(), name='youtube_import'),
+    path('youtube/info/', youtube_import_views.get_youtube_info, name='youtube_info'),
+    path('youtube/progress/', youtube_import_views.get_youtube_import_progress, name='youtube_progress'),
     
     # Admin views
     path('admin/', admin_views.music_admin, name='admin'),

@@ -40,6 +40,14 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <style>
+    /* Hide Music Player on Authentication Pages */
+    body[class*="account"] #music-player-popup,
+    body[class*="account"] #music-player-toggle,
+    .account-page #music-player-popup,
+    .account-page #music-player-toggle {
+      display: none !important;
+    }
+    
     /* === CSS MỚI CHO KÝ HIỆU ĐỘI TRƯỞNG === */
     .captain-indicator{color:#f59e0b;font-weight:700;margin-left:4px}
 
@@ -720,6 +728,8 @@
                 {% if user.is_staff %}
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-light" href="{% url 'shop:admin_dashboard' %}"><i class="fas fa-chart-line me-2"></i>Shop Dashboard</a></li>
+                <li><a class="dropdown-item text-light" href="/newsletter/dashboard/"><i class="bi bi-envelope-paper me-2"></i>Newsletter Dashboard</a></li>
+                <li><a class="dropdown-item text-light" href="/newsletter/send/"><i class="bi bi-pencil-square me-2"></i>Gửi Newsletter</a></li>
                 <li><a class="dropdown-item text-light" href="/admin/"><i class="bi bi-gear me-2"></i>Django Admin</a></li>
                 {% endif %}
 
@@ -931,6 +941,8 @@
       {% if user.is_staff %}
       <hr class="border-light">
       <a class="nav-link" href="{% url 'shop:admin_dashboard' %}"><i class="fas fa-chart-line"></i> Shop Dashboard</a>
+      <a class="nav-link" href="/newsletter/dashboard/"><i class="bi bi-envelope-paper"></i> Newsletter Dashboard</a>
+      <a class="nav-link" href="/newsletter/send/"><i class="bi bi-pencil-square"></i> Gửi Newsletter</a>
       <a class="nav-link" href="/admin/"><i class="bi bi-gear"></i> Django Admin</a>
       {% endif %}
       
@@ -1045,11 +1057,12 @@
           <h5>Nhận thông báo mới</h5>
           <p class="newsletter-text">Đăng ký để nhận thông báo về giải đấu mới và ưu đãi đặc biệt</p>
           <div class="newsletter-form">
-            <input type="email" placeholder="Nhập email của bạn..." class="newsletter-input">
-            <button type="button" class="newsletter-btn">
+            <input type="email" placeholder="Nhập email của bạn..." class="newsletter-input" id="newsletter-email">
+            <button type="button" class="newsletter-btn" id="newsletter-submit-btn">
               <i class="bi bi-send"></i>
             </button>
           </div>
+          <div id="newsletter-message" class="newsletter-message" style="display: none;"></div>
         </div>
       </div>
     </div>
@@ -1153,6 +1166,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  align-items: flex-start;
 }
 
 .contact-item {
@@ -1161,6 +1175,7 @@
   gap: 0.75rem;
   color: #cbd5e1;
   font-size: 0.9rem;
+  justify-content: flex-start;
 }
 
 .contact-item i {
@@ -1202,6 +1217,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  align-items: flex-start;
 }
 
 .footer-links li a {
@@ -1335,6 +1351,33 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
+.newsletter-btn:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.newsletter-message {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.newsletter-message.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.newsletter-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 /* Footer Bottom */
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1426,6 +1469,38 @@
   .social-link {
     flex: 1;
     min-width: 120px;
+    justify-content: center;
+  }
+  
+  /* Căn giữa các mục "Khám phá", "Hỗ trợ & Pháp lý" và "Kết Nối" trên mobile */
+  .footer-section:nth-child(2),
+  .footer-section:nth-child(3),
+  .footer-section:nth-child(4) {
+    text-align: center;
+  }
+  
+  .footer-section:nth-child(2) .footer-title,
+  .footer-section:nth-child(3) .footer-title,
+  .footer-section:nth-child(4) .footer-title {
+    justify-content: center;
+  }
+  
+  .footer-section:nth-child(2) .footer-links,
+  .footer-section:nth-child(3) .footer-links {
+    align-items: center;
+  }
+  
+  .footer-section:nth-child(2) .footer-links li a,
+  .footer-section:nth-child(3) .footer-links li a {
+    justify-content: center;
+  }
+  
+  /* Căn giữa phần footer contact và social links */
+  .footer-contact {
+    align-items: center;
+  }
+  
+  .footer-contact .contact-item {
     justify-content: center;
   }
 }
@@ -2353,7 +2428,7 @@ function forceRefreshCartCount() {
 
 <!-- Music Player -->
 {% include 'music_player/music_player.html' %}
-<link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}">
+    <link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}?v=1.5.5">
 
 <!-- ✅ State Manager (Load first) -->
 <script src="{% static 'js/state-manager.js' %}"></script>
@@ -2362,11 +2437,36 @@ function forceRefreshCartCount() {
 <script src="{% static 'js/offline-manager.js' %}"></script>
 
 <!-- Music Player Scripts -->
-                    <script src="{% static 'music_player/js/music_player.js' %}?v=1.3.0"></script>
-<script src="{% static 'music_player/js/user_music.js' %}?v=1.3.0"></script>
+    <script src="{% static 'music_player/js/music_player.js' %}?v=1.5.5"></script>
+    <script src="{% static 'music_player/js/user_music.js' %}?v=1.4.7"></script>
 
 <!-- ✅ Service Worker Registration -->
 <script>
+// Prevent Music Player initialization on authentication pages
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're on an authentication page
+    const isAuthPage = window.location.pathname.includes('/account/') || 
+                      window.location.pathname.includes('/login/') || 
+                      window.location.pathname.includes('/signup/') ||
+                      window.location.pathname.includes('/password/') ||
+                      window.location.pathname.includes('/logout/');
+    
+    if (isAuthPage) {
+        // Override music player initialization
+        window.MusicPlayer = function() {
+            console.log('Music Player disabled on authentication page');
+        };
+        
+        // Remove music player elements
+        const musicPlayerElements = document.querySelectorAll('#music-player-popup, #music-player-toggle');
+        musicPlayerElements.forEach(element => {
+            element.remove();
+        });
+        
+        return; // Exit early, don't initialize music player
+    }
+});
+
 // Register Service Worker cho offline capabilities
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -2456,13 +2556,15 @@ window.addEventListener('beforeinstallprompt', (e) => {
     
     console.log('💾 PWA có thể cài đặt!');
     
-    // Show install button/section
+    // Show install button/section if it exists
     const installSection = document.getElementById('pwa-install-section');
     const installBtn = document.getElementById('pwa-install-btn');
     
     if (installSection) {
         installSection.style.display = 'block';
         console.log('✅ Hiển thị nút cài đặt PWA');
+    } else {
+        console.log('ℹ️ PWA install section không tồn tại trong DOM');
     }
     
     if (installBtn && !pwaBtnClickListenerAdded) {
@@ -2487,6 +2589,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
                 deferredPrompt = null;
             }
         });
+    } else if (!installBtn) {
+        console.log('ℹ️ PWA install button không tồn tại trong DOM');
     }
 });
 
@@ -2504,6 +2608,102 @@ window.addEventListener('appinstalled', () => {
     if (window.OfflineManager) {
         const offlineManager = new OfflineManager();
         offlineManager.showNotification('🎉 Ứng dụng đã được cài đặt! Bạn có thể mở từ màn hình chính.', 'success');
+    }
+});
+
+// Newsletter Subscription Handler
+document.addEventListener('DOMContentLoaded', function() {
+    const newsletterForm = document.querySelector('.newsletter-form');
+    const emailInput = document.getElementById('newsletter-email');
+    const submitBtn = document.getElementById('newsletter-submit-btn');
+    const messageDiv = document.getElementById('newsletter-message');
+    
+    if (newsletterForm && emailInput && submitBtn && messageDiv) {
+        // Handle form submission
+        function handleNewsletterSubmit() {
+            const email = emailInput.value.trim();
+            
+            if (!email) {
+                showMessage('Vui lòng nhập địa chỉ email', 'error');
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('Địa chỉ email không hợp lệ', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+            
+            // Send request to server
+            fetch('/api/newsletter/subscribe/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    emailInput.value = '';
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Newsletter subscription error:', error);
+                showMessage('Có lỗi xảy ra, vui lòng thử lại sau', 'error');
+            })
+            .finally(() => {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send"></i>';
+            });
+        }
+        
+        function showMessage(message, type) {
+            messageDiv.textContent = message;
+            messageDiv.className = `newsletter-message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Add event listeners
+        submitBtn.addEventListener('click', handleNewsletterSubmit);
+        
+        emailInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleNewsletterSubmit();
+            }
+        });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 });
 </script>

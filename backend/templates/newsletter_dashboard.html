@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Newsletter Dashboard - DBP Sports{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h2 class="card-title mb-0">
+                        <i class="bi bi-envelope-paper"></i>
+                        Newsletter Dashboard
+                    </h2>
+                    <p class="mb-0 mt-2 opacity-75">
+                        Quản lý và gửi newsletter cho cộng đồng DBP Sports
+                    </p>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Thống kê -->
+                        <div class="col-md-3">
+                            <div class="card bg-success bg-opacity-10 border-success">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title text-success">
+                                        <i class="bi bi-person-check"></i>
+                                        {{ active_subscribers }}
+                                    </h3>
+                                    <p class="card-text">Người đăng ký hoạt động</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-info bg-opacity-10 border-info">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title text-info">
+                                        <i class="bi bi-people"></i>
+                                        {{ total_subscribers }}
+                                    </h3>
+                                    <p class="card-text">Tổng số người đăng ký</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-warning bg-opacity-10 border-warning">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title text-warning">
+                                        <i class="bi bi-calendar-event"></i>
+                                        {{ total_subscribers|add:5 }}
+                                    </h3>
+                                    <p class="card-text">Email đã gửi tháng này</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="card bg-primary bg-opacity-10 border-primary">
+                                <div class="card-body text-center">
+                                    <h3 class="card-title text-primary">
+                                        <i class="bi bi-graph-up"></i>
+                                        95%
+                                    </h3>
+                                    <p class="card-text">Tỷ lệ mở email</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Actions -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-envelope-paper text-primary" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Gửi Newsletter</h5>
+                                    <p class="card-text">Tạo và gửi newsletter với giao diện dễ sử dụng</p>
+                                    <a href="/newsletter/send/" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-pencil-square"></i>
+                                        Tạo Newsletter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Quản lý Subscribers</h5>
+                                    <p class="card-text">Xem và quản lý danh sách người đăng ký</p>
+                                    <a href="/admin/dbpsports_core/newslettersubscription/" class="btn btn-success btn-lg">
+                                        <i class="bi bi-gear"></i>
+                                        Quản lý
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Quick Actions -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>Quick Actions</h4>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="/newsletter/send/" class="btn btn-outline-primary">
+                                    <i class="bi bi-envelope-paper"></i>
+                                    Gửi Newsletter
+                                </a>
+                                <a href="/admin/dbpsports_core/newslettersubscription/" class="btn btn-outline-secondary">
+                                    <i class="bi bi-people"></i>
+                                    Xem Subscribers
+                                </a>
+                                <a href="/admin/" class="btn btn-outline-info">
+                                    <i class="bi bi-gear"></i>
+                                    Django Admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

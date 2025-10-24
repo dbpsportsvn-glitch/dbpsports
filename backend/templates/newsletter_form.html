@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gửi Newsletter - DBP Sports{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-envelope-paper"></i>
+                        Gửi Newsletter
+                    </h3>
+                    <p class="mb-0 mt-2 opacity-75">
+                        Tạo và gửi newsletter cho {{ active_subscribers }} người đăng ký hoạt động
+                    </p>
+                </div>
+                
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="newsletterForm">
+                        {% csrf_token %}
+                        
+                        <!-- Tiêu đề -->
+                        <div class="mb-4">
+                            <label for="subject" class="form-label fw-bold">
+                                <i class="bi bi-type"></i>
+                                Tiêu đề Email
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="subject" 
+                                   name="subject" 
+                                   placeholder="Ví dụ: Giải bóng đá phong trào tháng 12"
+                                   required>
+                        </div>
+                        
+                        <!-- Nội dung -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-bold">
+                                <i class="bi bi-file-text"></i>
+                                Nội dung Email (HTML)
+                            </label>
+                            <textarea class="form-control" 
+                                      id="content" 
+                                      name="content" 
+                                      rows="15" 
+                                      placeholder="Nhập nội dung HTML của newsletter..."
+                                      required></textarea>
+                            <div class="form-text">
+                                <strong>Gợi ý:</strong> Sử dụng HTML để tạo nội dung đẹp. Ví dụ:
+                                <code>&lt;h2&gt;Tiêu đề&lt;/h2&gt;</code>,
+                                <code>&lt;p&gt;Đoạn văn&lt;/p&gt;</code>,
+                                <code>&lt;ul&gt;&lt;li&gt;Danh sách&lt;/li&gt;&lt;/ul&gt;</code>
+                            </div>
+                        </div>
+                        
+                        <!-- Chế độ test -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="test_mode" 
+                                       name="test_mode">
+                                <label class="form-check-label fw-bold" for="test_mode">
+                                    <i class="bi bi-flask"></i>
+                                    Chế độ Test (chỉ gửi cho 1 email đầu tiên)
+                                </label>
+                                <div class="form-text">
+                                    Bật chế độ test để kiểm tra trước khi gửi cho tất cả người đăng ký
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Thống kê -->
+                        <div class="mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card bg-success bg-opacity-10 border-success">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-success">
+                                                <i class="bi bi-person-check"></i>
+                                                {{ active_subscribers }}
+                                            </h5>
+                                            <p class="card-text">Người đăng ký hoạt động</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-info bg-opacity-10 border-info">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-info">
+                                                <i class="bi bi-people"></i>
+                                                {{ total_subscribers }}
+                                            </h5>
+                                            <p class="card-text">Tổng số người đăng ký</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Nút gửi -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="sendBtn">
+                                <i class="bi bi-send"></i>
+                                Gửi Newsletter
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="fillSampleContent()">
+                                <i class="bi bi-file-earmark-text"></i>
+                                Điền nội dung mẫu
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Hướng dẫn '-->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle"></i>
+                        Hướng dẫn sử dụng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li><strong>Nhập tiêu đề:</strong> Tiêu đề sẽ hiển thị trong inbox của người nhận</li>
+                        <li><strong>Nhập nội dung:</strong> Sử dụng HTML để tạo nội dung đẹp mắt</li>
+                        <li><strong>Chế độ test:</strong> Bật để gửi test cho 1 email trước khi gửi hàng loạt</li>
+                        <li><strong>Gửi newsletter:</strong> Click nút "Gửi Newsletter" để gửi</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillSampleContent() {
+    document.getElementById('subject').value = 'Giải bóng đá phong trào tháng 12 - DBP Sports';
+    document.getElementById('content').value = `<h2>Chào mừng bạn đến với DBP Sports!</h2>
+<p>Chúng tôi có nhiều thông tin thú vị cho bạn trong tháng này!</p>
+
+<h3>Giải đấu sắp diễn ra:</h3>
+<p><strong>Giải bóng đá phong trào tháng 12</strong></p>
+<ul>
+    <li><strong>Thời gian:</strong> 15/12/2024 - 31/12/2024</li>
+    <li><strong>Địa điểm:</strong> Sân vận động Điện Biên</li>
+    <li><strong>Giải thưởng:</strong> Tổng giá trị 10,000,000 VND</li>
+</ul>
+
+<h3>Ưu đãi đặc biệt từ Shop:</h3>
+<ul>
+    <li>Giảm 30% tất cả áo đấu</li>
+    <li>Mua 2 tặng 1 phụ kiện</li>
+    <li>Free ship cho đơn hàng trên 500,000 VND</li>
+</ul>
+
+<h3>Tin tức nổi bật:</h3>
+<p>Đội bóng ABC vừa giành chiến thắng trong trận đấu cuối tuần!</p>
+
+<p><strong>Hãy truy cập website để đăng ký ngay!</strong></p>
+<p>Cảm ơn bạn đã đồng hành cùng DBP Sports!</p>`;
+}
+
+// Loading state cho form
+document.getElementById('newsletterForm').addEventListener('submit', function() {
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang gửi...';
+    sendBtn.disabled = true;
+});
+</script>
+{% endblock %}

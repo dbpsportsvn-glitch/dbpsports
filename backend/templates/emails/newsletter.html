@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .main-content {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .unsubscribe {
+            margin-top: 15px;
+        }
+        .unsubscribe a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .unsubscribe a:hover {
+            text-decoration: underline;
+        }
+        .tournament-highlight {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .tournament-highlight h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+        .tournament-highlight p {
+            margin: 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 DBP Sports</h1>
+            <p>Nền tảng thể thao phong trào hàng đầu Việt Nam</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Xin chào <strong>{{ subscriber_email }}</strong>! 👋
+            </div>
+            
+            <div class="main-content">
+                {{ content|safe }}
+            </div>
+            
+            {% if tournament_highlight %}
+            <div class="tournament-highlight">
+                <h3>🎯 Giải đấu nổi bật</h3>
+                <p>{{ tournament_highlight }}</p>
+            </div>
+            {% endif %}
+            
+            <div style="text-align: center;">
+                <a href="https://dbpsports.com" class="cta-button">
+                    🏆 Khám phá ngay
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>DBP Sports</strong></p>
+            <p>Nền tảng tổ chức và quản lý giải đấu bóng đá phong trào</p>
+            <p>📧 dbpsportsvn@gmail.com | 📍 Điện Biên, Việt Nam</p>
+            
+            <div class="unsubscribe">
+                <a href="https://dbpsports.com/newsletter/unsubscribe/{{ subscriber_email }}/">
+                    Hủy đăng ký nhận thông báo
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

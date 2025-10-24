@@ -28,7 +28,6 @@ class OptimizedMusicPlayerAPIView(View):
     ✅ OPTIMIZED VERSION - Giảm N+1 queries
     """
     
-    @csrf_exempt
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     
@@ -116,7 +115,6 @@ class InitialDataAPIView(View):
     Giảm từ 3-4 API calls xuống 1
     """
     
-    @csrf_exempt
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     

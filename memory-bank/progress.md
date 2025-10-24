@@ -59,8 +59,8 @@
   - Listening Lock: khoa trinh phat, chan dong/toggle/click ngoai, chan cuon nen, giu trang thai theo tai khoan, tu mo lai khi reload
   - Keyboard help an: click/touch vao chu Music mo huong dan phim tat (an nut rieng)
   - Low Power Mode: tat hieu ung nang, giam update UI, dung class low-power; luu theo tai khoan
-  - He thong thong ke luot nghe: tu dong ghi nhan sau 30s/50% thoi luong bai, chong spam (5 phut), lich su chi tiet trong admin, hien thi so luot nghe giua thoi gian hien tai va tong trong player (icon tai nghe). Track list hien thi play_count dung, reload tu API moi khi mo playlist, khong mat du lieu khi chuyen playlist. Version: v1.3.0
-  - **Offline Playback:** Service Worker + Cache API cho phep nghe nhac offline trong app. Auto cache tracks khi nghe, max 500MB cache, offline playback khong can Internet, cached indicators (icon cloud-check xanh), cache management UI trong Settings, PWA support voi manifest.json
+  - He thong thong ke luot nghe: tu dong ghi nhan sau 30s/50% thoi luong bai, chong spam (5 phut), lich su chi tiet trong admin, hien thi so luot nghe giua thoi gian hien tai va tong trong player (icon tai nghe). Track list hien thi play_count dung, reload tu API moi khi mo playlist, khong mat du lieu khi chuyen playlist, restore dung playlist sau reload. Version: v1.3.3 (final)
+  - **Offline Playback:** Service Worker + Cache API cho phep nghe nhac offline trong app. Auto cache tracks khi nghe, max 500MB cache, offline playback khong can Internet, cached indicators (icon cloud-check xanh), cache management UI trong tab Offline Playback rieng, PWA support voi manifest.json
   - **Hoan thanh Toi uu Music Player Workflow:** Khac phuc thanh cong van de nhac bi phat lai tu dau khi chuyen trang. Nguyen nhan: race condition giua restore state va cleanup trong beforeunload event. Giai phap: khong reset audio.src trong destroy(), chi save state trong beforeunload. Toi uu console logs chi hien thi thong tin quan trong va truc quan nhat voi emoji va grouping. Music player gio hoat dong hoan hao voi state management, offline playback, performance toi uu va error handling robust.
 
   **Module Organization Shop:**

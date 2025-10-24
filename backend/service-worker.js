@@ -11,6 +11,9 @@ const CACHE_LIMITS = {
 // ✅ Auto-cache setting (persistent across SW reloads)
 let autoCacheEnabled = true; // Default: enabled
 
+// ✅ User interaction tracking để chỉ cache khi user thực sự sử dụng music player
+let userHasInteracted = false;
+
 // ✅ Load auto-cache setting from storage ngay khi SW start
 (async function initAutoCacheSetting() {
   try {
@@ -19,7 +22,7 @@ let autoCacheEnabled = true; // Default: enabled
     if (cachedSetting) {
       const data = await cachedSetting.json();
       autoCacheEnabled = data.enabled;
-      console.log(`[Service Worker] Loaded auto-cache setting: ${autoCacheEnabled}`);
+      // Loaded auto-cache setting
     }
   } catch (e) {
     // Ignore - use default
@@ -34,7 +37,7 @@ async function loadAutoCacheSetting() {
     if (cachedSetting) {
       const data = await cachedSetting.json();
       autoCacheEnabled = data.enabled;
-      console.log(`[Service Worker] Loaded auto-cache setting: ${autoCacheEnabled}`);
+      // Loaded auto-cache setting
     }
   } catch (e) {
     // Ignore - use default
@@ -57,8 +60,8 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Force update version - Network timeout and better error handling
-const SW_VERSION = 'v15-network-timeout-fix';
+// Force update version - Complete track deletion rewrite
+const SW_VERSION = 'v17-complete-deletion-rewrite';
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
@@ -87,16 +90,21 @@ self.addEventListener('activate', (event) => {
 
 // Fetch strategy cho audio files
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  
-  // Chỉ intercept audio files NẾU auto-cache enabled
-  if (url.pathname.includes('/media/music/')) {
-    // ✅ Chỉ intercept khi auto-cache enabled để tránh error
-    if (autoCacheEnabled) {
-      // console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
-      event.respondWith(handleAudioRequest(event.request));
+  try {
+    const url = new URL(event.request.url);
+    
+    // Chỉ intercept audio files NẾU auto-cache enabled
+    if (url.pathname.includes('/media/music/')) {
+      // ✅ Chỉ intercept khi auto-cache enabled để tránh error
+      if (autoCacheEnabled) {
+        // console.log('[Service Worker] 🎵 Intercepting audio request:', url.pathname);
+        event.respondWith(handleAudioRequest(event.request));
+      }
+      // Nếu auto-cache disabled, để browser fetch trực tiếp (default behavior)
     }
-    // Nếu auto-cache disabled, để browser fetch trực tiếp (default behavior)
+  } catch (error) {
+    console.error('🚨 Service Worker URL Error:', error.message, 'URL:', event.request.url);
+    // Ignore invalid URLs and let browser handle them
   }
 });
 
@@ -110,6 +118,12 @@ async function handleAudioRequest(request) {
   try {
     const requestUrl = request.url.split('?')[0]; // Remove query params for cache matching
     const rangeHeader = request.headers.get('range');
+    
+    // ✅ Validate request URL
+    if (!requestUrl || !requestUrl.startsWith('http')) {
+      console.error('[Service Worker] Invalid request URL:', requestUrl);
+      throw new Error('Invalid request URL');
+    }
     
     // 1. Thử lấy từ cache trước (IGNORE range header khi match)
     const cache = await caches.open(CACHE_VERSION);
@@ -149,20 +163,26 @@ async function handleAudioRequest(request) {
         return cachedResponse;
       } else {
         // ✅ Cache hit nhưng response invalid, delete và fetch from network
-        console.log('[Service Worker] ⚠️ Invalid cached response, fetching from network:', requestUrl);
+        // Invalid cached response, fetching from network
         await cache.delete(requestUrl);
         // Continue to network fetch below
       }
     }
     
     // 2. Không có trong cache, fetch từ network
-    console.log('[Service Worker] Fetching from network:', requestUrl);
+    // console.log('[Service Worker] Fetching from network:', requestUrl);
     
     // Luôn fetch FULL file để cache (bỏ range header)
-    const fullRequest = new Request(requestUrl, {
-      method: 'GET',
-      headers: new Headers()
-    });
+    let fullRequest;
+    try {
+      fullRequest = new Request(requestUrl, {
+        method: 'GET',
+        headers: new Headers()
+      });
+    } catch (error) {
+      console.error('[Service Worker] Invalid request URL for fetch:', requestUrl, error.message);
+      throw new Error('Invalid request URL for fetch');
+    }
     
     // ✅ CRITICAL FIX: Add timeout for production network issues
     // Reduce timeout để tránh conflict với player timeout (25s)
@@ -190,7 +210,8 @@ async function handleAudioRequest(request) {
         // Cache nếu:
         // 1. Có Range header (đang seek/play) HOẶC
         // 2. Referrer từ music player page (user đang nghe thật)
-        if (hasRangeHeader || fromMusicPlayer) {
+        // 3. User đã tương tác với music player
+        if ((hasRangeHeader || fromMusicPlayer) && userHasInteracted) {
           await cache.put(requestUrl, fullResponse.clone());
           // console.log('[Service Worker] ✅ Cached full file:', requestUrl);
           
@@ -211,12 +232,10 @@ async function handleAudioRequest(request) {
               console.error('[SW] Error sending message:', error);
             });
           }
-        } else {
-          console.log('[Service Worker] Skipping cache for non-playback request:', requestUrl);
         }
-      } else {
-        console.log('[Service Worker] Auto-cache disabled');
+        // ✅ Loại bỏ log "Skipping cache" để giảm spam
       }
+      // ✅ Loại bỏ log "Auto-cache disabled" để giảm spam
       
       // Nếu original request có Range header, tạo Range response
       if (rangeHeader) {
@@ -239,7 +258,7 @@ async function handleAudioRequest(request) {
     const cachedResponse = await cache.match(requestUrl);
     
     if (cachedResponse && cachedResponse.ok && cachedResponse.status === 200) {
-      console.log('📦 Serving from cache (fallback mode)');
+      // Serving from cache (fallback mode)
       const rangeHeader = request.headers.get('range');
       
       if (rangeHeader) {
@@ -251,8 +270,14 @@ async function handleAudioRequest(request) {
     
     // ✅ Try fetch from network one more time if available
     if (navigator.onLine) {
-      console.log('🔄 Retrying network fetch after error');
+      // Retrying network fetch after error
       try {
+        // ✅ Validate requestUrl before creating Request
+        if (!requestUrl || !requestUrl.startsWith('http')) {
+          console.error('[Service Worker] Invalid requestUrl for retry:', requestUrl);
+          throw new Error('Invalid requestUrl for retry');
+        }
+        
         const fullRequest = new Request(requestUrl, {
           method: 'GET',
           headers: new Headers()
@@ -269,7 +294,7 @@ async function handleAudioRequest(request) {
         ]);
         
         if (retryResponse.ok) {
-          console.log('✅ Retry successful from network');
+          // Retry successful from network
           return retryResponse;
         }
       } catch (retryError) {
@@ -381,9 +406,83 @@ self.addEventListener('message', async (event) => {
   
   if (event.data.action === 'deleteCache') {
     console.log('[Service Worker] 🗑️ Deleting cache:', event.data.url);
-    const cache = await caches.open(CACHE_VERSION);
-    const deleted = await cache.delete(event.data.url);
-    console.log('[Service Worker] ✅ Cache deleted:', deleted);
+    
+    try {
+      const cache = await caches.open(CACHE_VERSION);
+      
+      // ✅ Bước 1: Try direct match first
+      const deleted = await cache.delete(event.data.url);
+      console.log('[Service Worker] ✅ Cache deleted (direct match):', deleted);
+      
+      // ✅ Bước 2: If direct match failed, try pattern matching
+      if (!deleted) {
+        const requests = await cache.keys();
+        console.log('[Service Worker] 📋 All cache keys:', requests.map(r => r.url));
+        
+        for (const request of requests) {
+          try {
+            // ✅ Validate request.url before using it
+            if (!request.url || typeof request.url !== 'string') {
+              console.warn('[Service Worker] Invalid request.url:', request.url);
+              continue;
+            }
+            
+            // ✅ Multiple pattern matching strategies
+            const urlToDelete = event.data.url;
+            const requestUrl = request.url;
+            
+            // Strategy 1: Exact match
+            if (requestUrl === urlToDelete) {
+              await cache.delete(request);
+              console.log('[Service Worker] ✅ Cache deleted (exact match):', requestUrl);
+              break;
+            }
+            
+            // Strategy 2: Contains match
+            if (requestUrl.includes(urlToDelete)) {
+              await cache.delete(request);
+              console.log('[Service Worker] ✅ Cache deleted (contains match):', requestUrl);
+              break;
+            }
+            
+            // Strategy 3: Filename match (extract filename from URL)
+            const urlFilename = urlToDelete.split('/').pop();
+            const requestFilename = requestUrl.split('/').pop();
+            if (urlFilename && requestFilename && urlFilename === requestFilename) {
+              await cache.delete(request);
+              console.log('[Service Worker] ✅ Cache deleted (filename match):', requestUrl);
+              break;
+            }
+            
+            // Strategy 4: Decoded URL match
+            try {
+              const decodedUrl = decodeURIComponent(urlToDelete);
+              if (requestUrl.includes(decodedUrl)) {
+                await cache.delete(request);
+                console.log('[Service Worker] ✅ Cache deleted (decoded URL match):', requestUrl);
+                break;
+              }
+            } catch (decodeError) {
+              // Ignore decode errors
+            }
+            
+          } catch (error) {
+            console.error('[Service Worker] ❌ Pattern match error:', error.message, 'URL:', request.url);
+          }
+        }
+      }
+      
+      // ✅ Bước 3: Verify deletion
+      const verifyDeleted = await cache.match(event.data.url);
+      if (!verifyDeleted) {
+        console.log('[Service Worker] ✅ Verification: Cache successfully deleted');
+      } else {
+        console.warn('[Service Worker] ⚠️ Verification: Cache still exists after deletion');
+      }
+      
+    } catch (error) {
+      console.error('[Service Worker] ❌ Cache deletion error:', error.message, error.stack);
+    }
     // Note: postMessage without ports - main thread doesn't wait for response
   }
   
@@ -423,6 +522,12 @@ self.addEventListener('message', async (event) => {
       event.ports[0].postMessage({ success: true });
     }
   }
+  
+  // ✅ Track user interaction với music player
+  if (event.data.action === 'userInteracted') {
+    userHasInteracted = true;
+    // console.log('[Service Worker] User interaction detected - caching enabled');
+  }
 });
 
 /**
@@ -434,10 +539,22 @@ async function getCacheSize() {
   let totalSize = 0;
   
   for (const request of requests) {
-    const response = await cache.match(request);
-    if (response) {
-      const blob = await response.blob();
-      totalSize += blob.size;
+    try {
+      const url = request.url;
+      
+      // ✅ Validate URL
+      if (!url || !url.startsWith('http')) {
+        console.warn('[Service Worker] Skipping invalid URL in size calculation:', url);
+        continue;
+      }
+      
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        totalSize += blob.size;
+      }
+    } catch (error) {
+      console.error('[Service Worker] Error processing request in size calculation:', error.message, 'URL:', request.url);
     }
   }
   
@@ -455,7 +572,14 @@ async function cleanupRangeRequests() {
     let deletedCount = 0;
     
     for (const request of requests) {
-      const url = request.url;
+      try {
+        const url = request.url;
+        
+        // ✅ Validate URL
+        if (!url || !url.startsWith('http')) {
+          console.warn('[Service Worker] Skipping invalid URL in cleanup:', url);
+          continue;
+        }
       
       if (url.includes('/media/music/')) {
         const response = await cache.match(request);
@@ -471,6 +595,9 @@ async function cleanupRangeRequests() {
           }
         }
       }
+    } catch (error) {
+      console.error('[Service Worker] Error processing request in cleanup:', error.message, 'URL:', request.url);
+    }
     }
     
     if (deletedCount > 0) {
@@ -491,43 +618,59 @@ async function getCachedTracks() {
   const seenUrls = new Set(); // Deduplicate by base URL
   
   for (const request of requests) {
-    const url = request.url;
-    
-    // Chỉ lấy audio files
-    if (url.includes('/media/music/')) {
-      // Skip range requests - chỉ lấy full files
-      // Range requests thường có URL base giống nhau
-      const baseUrl = url.split('?')[0]; // Remove query params
+    try {
+      const url = request.url;
       
-      if (seenUrls.has(baseUrl)) {
-        continue; // Skip duplicates
+      // ✅ Validate URL
+      if (!url || !url.startsWith('http')) {
+        console.warn('[Service Worker] Skipping invalid URL:', url);
+        continue;
       }
       
-      const response = await cache.match(request);
-      if (response) {
-        const blob = await response.blob();
-        const size = blob.size;
+      // Chỉ lấy audio files
+      if (url.includes('/media/music/')) {
+        // Skip range requests - chỉ lấy full files
+        // Range requests thường có URL base giống nhau
+        const baseUrl = url.split('?')[0]; // Remove query params
         
-        // Chỉ lấy files lớn hơn 500KB (bỏ qua range requests nhỏ)
-        if (size < 500 * 1024) {
-          continue;
+        if (seenUrls.has(baseUrl)) {
+          continue; // Skip duplicates
         }
         
-        const trackId = extractTrackIdFromUrl(url);
-        
-        // Extract filename from URL
-        const urlParts = baseUrl.split('/');
-        const filename = decodeURIComponent(urlParts[urlParts.length - 1]);
-        
-        seenUrls.add(baseUrl);
-        tracks.push({
-          url: baseUrl,
-          filename: filename,
-          size: size,
-          sizeMB: (size / (1024 * 1024)).toFixed(2),
-          trackId: trackId
-        });
+        const response = await cache.match(request);
+        if (response) {
+          const blob = await response.blob();
+          const size = blob.size;
+          
+          // Chỉ lấy files lớn hơn 500KB (bỏ qua range requests nhỏ)
+          if (size < 500 * 1024) {
+            continue;
+          }
+          
+          const trackId = extractTrackIdFromUrl(url);
+          
+          // Extract filename from URL
+          const urlParts = baseUrl.split('/');
+          let filename;
+          try {
+            filename = decodeURIComponent(urlParts[urlParts.length - 1]);
+          } catch (e) {
+            // Fallback to raw filename if decode fails
+            filename = urlParts[urlParts.length - 1];
+          }
+          
+          seenUrls.add(baseUrl);
+          tracks.push({
+            url: baseUrl,
+            filename: filename,
+            size: size,
+            sizeMB: (size / (1024 * 1024)).toFixed(2),
+            trackId: trackId
+          });
+        }
       }
+    } catch (error) {
+      console.error('[Service Worker] Error processing cached track:', error.message, 'URL:', request.url);
     }
   }
   

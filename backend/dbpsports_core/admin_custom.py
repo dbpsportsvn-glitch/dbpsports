@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from django.contrib.admin import AdminSite
+from .models import NewsletterSubscription
 
 # Tùy chỉnh tiêu đề admin
 admin.site.site_header = "🏆 DBP Sports - Trung tâm Quản trị"
@@ -310,3 +311,122 @@ def custom_get_actions(self, request):
 
 # Monkey patch để áp dụng custom get_actions
 admin.ModelAdmin.get_actions = custom_get_actions
+
+# Newsletter Admin
+@admin.register(NewsletterSubscription)
+class NewsletterSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ['email', 'is_active', 'subscribed_at', 'unsubscribed_at']
+    list_filter = ['is_active', 'subscribed_at']
+    search_fields = ['email']
+    readonly_fields = ['subscribed_at', 'unsubscribed_at']
+    ordering = ['-subscribed_at']
+    actions = ['send_test_newsletter', 'send_bulk_newsletter', 'send_custom_newsletter']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).order_by('-subscribed_at')
+    
+    def send_test_newsletter(self, request, queryset):
+        """Gửi newsletter test cho các email được chọn"""
+        from .views import send_newsletter_bulk
+        
+        subject = "🏆 DBP Sports - Newsletter Test"
+        content = """
+        <h2>🎉 Newsletter Test từ DBP Sports!</h2>
+        <p>Đây là email test để kiểm tra hệ thống newsletter của chúng tôi.</p>
+        <p>Cảm ơn bạn đã đăng ký nhận thông báo từ DBP Sports!</p>
+        <p>Chúng tôi sẽ gửi cho bạn những thông tin mới nhất về:</p>
+        <ul>
+            <li>🏆 Giải đấu mới sắp diễn ra</li>
+            <li>⚽ Tin tức thể thao nổi bật</li>
+            <li>🎁 Ưu đãi đặc biệt</li>
+            <li>📢 Thông báo quan trọng</li>
+        </ul>
+        <p>Hẹn gặp lại bạn trong các email tiếp theo!</p>
+        """
+        
+        result = send_newsletter_bulk(subject, content, test_mode=True)
+        
+        if result['success']:
+            self.message_user(request, f"Thanh cong! Da gui test newsletter {result['sent']} email.")
+        else:
+            self.message_user(request, f"Loi khi gui newsletter: {result['error']}", level='ERROR')
+    
+    send_test_newsletter.short_description = "Gui newsletter test"
+    
+    def send_bulk_newsletter(self, request, queryset):
+        """Gửi newsletter cho tất cả subscribers hoạt động"""
+        from .views import send_newsletter_bulk
+        
+        subject = "🏆 DBP Sports - Newsletter Tháng"
+        content = """
+        <h2>🎉 Newsletter từ DBP Sports!</h2>
+        <p>Chào mừng bạn đến với newsletter tháng của DBP Sports!</p>
+        <p>Dưới đây là những thông tin mới nhất:</p>
+        
+        <h3>🏆 Giải đấu sắp diễn ra</h3>
+        <p>Có nhiều giải đấu thú vị đang chờ bạn tham gia. Hãy truy cập website để xem chi tiết!</p>
+        
+        <h3>⚽ Tin tức nổi bật</h3>
+        <p>Cập nhật những tin tức mới nhất về thể thao phong trào tại Điện Biên.</p>
+        
+        <h3>🎁 Ưu đãi đặc biệt</h3>
+        <p>Shop DBP Sports có nhiều ưu đãi hấp dẫn cho các sản phẩm thể thao.</p>
+        
+        <p>Cảm ơn bạn đã đồng hành cùng DBP Sports!</p>
+        """
+        
+        result = send_newsletter_bulk(subject, content, test_mode=False)
+        
+        if result['success']:
+            self.message_user(request, f"Thanh cong! Da gui newsletter {result['sent']}/{result['total']} email.")
+        else:
+            self.message_user(request, f"Loi khi gui newsletter: {result['error']}", level='ERROR')
+    
+    send_bulk_newsletter.short_description = "Gui newsletter cho tat ca"
+    
+    def send_custom_newsletter(self, request, queryset):
+        """Gửi newsletter với nội dung tùy chỉnh"""
+        from .views import send_newsletter_bulk
+        
+        subject = "Giai bong da phong trao thang 12 - DBP Sports"
+        
+        content = """
+        <h2>Chao mung ban den voi DBP Sports!</h2>
+        <p>Chung toi co nhieu thong tin thu vi cho ban trong thang nay!</p>
+        
+        <h3>Giai dau sap dien ra:</h3>
+        <p><strong>Giai bong da phong trao thang 12</strong></p>
+        <ul>
+            <li><strong>Thoi gian:</strong> 15/12/2024 - 31/12/2024</li>
+            <li><strong>Dia diem:</strong> San van dong Dien Bien</li>
+            <li><strong>Giai thuong:</strong> Tong gia tri 10,000,000 VND</li>
+        </ul>
+        
+        <h3>Uu dai dac biet tu Shop:</h3>
+        <ul>
+            <li>Giam 30% tat ca ao dau</li>
+            <li>Mua 2 tang 1 phu kien</li>
+            <li>Free ship cho don hang tren 500,000 VND</li>
+        </ul>
+        
+        <h3>Tin tuc noi bat:</h3>
+        <p>Doi bong ABC vua gianh chien thang trong tran dau cuoi tuan!</p>
+        
+        <p><strong>Hay truy cap website de dang ky ngay!</strong></p>
+        <p>Cam on ban da dong hanh cung DBP Sports!</p>
+        """
+        
+        result = send_newsletter_bulk(subject, content, test_mode=False)
+        
+        if result['success']:
+            self.message_user(request, f"Thanh cong! Da gui {result['sent']}/{result['total']} email tu chinh.")
+        else:
+            self.message_user(request, f"Loi khi gui newsletter: {result['error']}", level='ERROR')
+    
+    send_custom_newsletter.short_description = "Gửi newsletter tu chinh"
+    
+    def changelist_view(self, request, extra_context=None):
+        """Thêm link vào form newsletter"""
+        extra_context = extra_context or {}
+        extra_context['newsletter_form_url'] = '/newsletter/send/'
+        return super().changelist_view(request, extra_context=extra_context)

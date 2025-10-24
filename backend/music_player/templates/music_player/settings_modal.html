@@ -1,3 +1,4 @@
+{% load static %}
 <!-- Settings Modal -->
 <div id="settings-modal" class="settings-modal hidden">
     <div class="settings-modal-overlay"></div>
@@ -19,6 +20,10 @@
                 <i class="bi bi-sliders"></i>
                 Cài Đặt Player
             </button>
+            <button class="settings-tab-header" data-tab="offline">
+                <i class="bi bi-cloud-download"></i>
+                Offline Playback
+            </button>
             <button class="settings-tab-header" data-tab="mymusic">
                 <i class="bi bi-music-note-list"></i>
                 Nhạc Của Tôi
@@ -26,6 +31,10 @@
             <button class="settings-tab-header" data-tab="myplaylists">
                 <i class="bi bi-collection-play-fill"></i>
                 Playlist Của Tôi
+            </button>
+            <button class="settings-tab-header" data-tab="savedmusic">
+                <i class="bi bi-heart-fill"></i>
+                Đã Lưu
             </button>
         </div>
 
@@ -110,8 +119,35 @@
                     </button>
                 </div>
 
-                <!-- ✅ Offline Playback Section -->
-                <div class="settings-section" style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                <!-- Version Info -->
+                <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;">
+                    <div style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 8px; padding: 12px;">
+                        <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">
+                                    <i class="bi bi-info-circle"></i> Phiên bản ứng dụng
+                                </div>
+                                <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.95);">
+                                    Music Player v1.5.5
+                                </div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">
+                                    Được cập nhật vào: 25/10/2025
+                                </div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px; font-style: italic;">
+                                    © 2025 DBP Sports. All rights reserved.
+                                </div>
+                            </div>
+                            <div style="font-size: 48px; color: rgba(255,255,255,0.9); padding-right: 8px;">
+                                <i class="bi bi-music-note-beamed" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Offline Playback -->
+            <div class="settings-tab-content" id="settings-tab-offline">
+                <div class="settings-section">
                     <h5 class="settings-section-title">
                         <i class="bi bi-cloud-download"></i>
                         Offline Playback
@@ -222,35 +258,10 @@
                             </ul>
                         </div>
                     </details>
-
-                    <!-- Version Info -->
-                    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
-                        <div style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 8px; padding: 12px;">
-                            <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between;">
-                                <div style="flex: 1;">
-                                    <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px;">
-                                        <i class="bi bi-info-circle"></i> Phiên bản ứng dụng
-                                    </div>
-                                    <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.95);">
-                                        Music Player v1.3.0
-                                    </div>
-                                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">
-                                        Được cập nhật vào: 23/10/2025
-                                    </div>
-                                    <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px; font-style: italic;">
-                                        © 2025 DBP Sports. All rights reserved.
-                                    </div>
-                                </div>
-                                <div style="font-size: 48px; color: rgba(255,255,255,0.9); padding-right: 8px;">
-                                    <i class="bi bi-music-note-beamed" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Tab 2: My Music -->
+            <!-- Tab 3: My Music -->
             <div class="settings-tab-content" id="settings-tab-mymusic">
                 <div class="settings-section">
                     <!-- Upload Quota -->
@@ -290,14 +301,20 @@
                             </select>
                         </div>
                         
-                        <button class="upload-btn" id="upload-btn">
-                            <i class="bi bi-cloud-arrow-up"></i>
-                            Upload Nhạc
-                        </button>
+                        <div class="upload-buttons">
+                            <button class="upload-btn" id="upload-btn">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                                Upload Nhạc
+                            </button>
+                            <button class="youtube-import-btn" id="youtube-import-btn">
+                                <i class="bi bi-youtube"></i>
+                                Import từ YouTube
+                            </button>
+                        </div>
                         <input type="file" id="file-input" accept=".mp3,.m4a,.aac,.ogg,.wav" multiple style="display: none;">
                         <p class="upload-hint">
                             <i class="bi bi-info-circle"></i>
-                            Định dạng hỗ trợ: MP3, M4A, AAC, OGG, WAV. Tối đa theo quota còn lại. Tổng quota: 369MB.
+                            Upload: MP3, M4A, AAC, OGG, WAV. Import YouTube: Video/Playlist → Audio MP3. Tối đa theo quota còn lại.
                         </p>
                     </div>
 
@@ -323,7 +340,7 @@
                 </div>
             </div>
 
-            <!-- Tab 3: My Playlists -->
+            <!-- Tab 4: My Playlists -->
             <div class="settings-tab-content" id="settings-tab-myplaylists">
                 <div class="settings-section">
                     <div class="playlist-header">
@@ -344,6 +361,131 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Tab 5: Saved Music -->
+            <div class="settings-tab-content" id="settings-tab-savedmusic">
+                <div class="settings-section">
+                    <h5 class="settings-section-title">
+                        <i class="bi bi-heart-fill"></i>
+                        Bài Hát Đã Lưu
+                    </h5>
+                    
+                    <div id="saved-tracks-list" class="saved-tracks-list">
+                        <div class="empty-state">
+                            <i class="bi bi-heart"></i>
+                            <p>Chưa có bài hát nào được lưu. Hãy lưu bài hát yêu thích!</p>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                                💡 Nhấn vào icon <i class="bi bi-heart"></i> trên bài hát để lưu vào danh sách yêu thích
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section" style="margin-top: 24px;">
+                    <h5 class="settings-section-title">
+                        <i class="bi bi-collection-play-fill"></i>
+                        Playlist Đã Lưu
+                    </h5>
+                    
+                    <div id="saved-playlists-list" class="saved-playlists-list">
+                        <div class="empty-state">
+                            <i class="bi bi-collection-play"></i>
+                            <p>Chưa có playlist nào được lưu. Hãy lưu playlist yêu thích!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Save Track Options Modal -->
+<div class="modal fade music-player-modal" id="saveTrackOptionsModal" tabindex="-1" aria-labelledby="saveTrackOptionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content music-player-modal-content">
+            <div class="modal-header music-player-modal-header">
+                <h5 class="modal-title" id="saveTrackOptionsModalLabel">
+                    <i class="bi bi-heart-fill"></i>
+                    Lưu Bài Hát
+                </h5>
+                <button type="button" class="btn-close music-player-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="save-track-options">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn cách lưu bài hát:</label>
+                    </div>
+                    
+                    <!-- Option 1: Auto Create -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="playlistAction" id="autoCreate" value="auto_create" checked>
+                        <label class="form-check-label" for="autoCreate">
+                            <div class="option-content">
+                                <div class="option-title">
+                                    <i class="bi bi-magic text-primary"></i>
+                                    Tự động tạo playlist "Bài Hát Đã Lưu"
+                                </div>
+                                <div class="option-description">
+                                    Tự động tạo playlist và chia sẻ ra global để mọi người có thể nghe
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Option 2: Add to Existing -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="playlistAction" id="addToExisting" value="add_to_existing">
+                        <label class="form-check-label" for="addToExisting">
+                            <div class="option-content">
+                                <div class="option-title">
+                                    <i class="bi bi-plus-circle text-success"></i>
+                                    Thêm vào playlist có sẵn
+                                </div>
+                                <div class="option-description">
+                                    Chọn playlist hiện có để thêm bài hát vào
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Existing Playlist Selector -->
+                    <div id="existingPlaylistSelector" class="mb-3" style="display: none;">
+                        <label class="form-label">Chọn playlist:</label>
+                        <select class="form-select" id="existingPlaylistSelect">
+                            <option value="">Chọn playlist...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Option 3: Create New -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="playlistAction" id="createNew" value="create_new">
+                        <label class="form-check-label" for="createNew">
+                            <div class="option-content">
+                                <div class="option-title">
+                                    <i class="bi bi-plus-square text-info"></i>
+                                    Tạo playlist mới
+                                </div>
+                                <div class="option-description">
+                                    Tạo playlist mới với tên tùy chỉnh
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- New Playlist Name Input -->
+                    <div id="newPlaylistNameInput" class="mb-3" style="display: none;">
+                        <label class="form-label">Tên playlist mới:</label>
+                        <input type="text" class="form-control" id="newPlaylistName" placeholder="Nhập tên playlist...">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmSaveTrack">
+                    <i class="bi bi-heart-fill"></i>
+                    Lưu Bài Hát
+                </button>
             </div>
         </div>
     </div>
@@ -406,4 +548,108 @@
         </div>
     </div>
 </div>
+
+<!-- YouTube Import Modal -->
+<div id="youtube-import-modal" class="youtube-import-modal hidden">
+    <div class="youtube-import-overlay"></div>
+    <div class="youtube-import-content">
+        <div class="youtube-import-header">
+            <h4 class="youtube-import-title">
+                <i class="bi bi-youtube"></i>
+                Import từ YouTube
+            </h4>
+            <button id="youtube-import-close-btn" class="youtube-import-close-btn">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        
+        <div class="youtube-import-body">
+            <!-- URL Input -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-link-45deg"></i>
+                    YouTube URL <span style="color: #ff6b6b;">*</span>
+                </label>
+                <input type="url" id="youtube-url" class="form-input" placeholder="https://www.youtube.com/watch?v=... hoặc https://www.youtube.com/playlist?list=..." required>
+                <div class="form-hint">
+                    <i class="bi bi-info-circle"></i>
+                    Hỗ trợ: Video đơn lẻ, Playlist, Channel videos
+                </div>
+            </div>
+            
+            <!-- Playlist Selection -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-list-ul"></i>
+                    Thêm vào Playlist (Tùy chọn)
+                </label>
+                <select id="youtube-playlist-select" class="form-select">
+                    <option value="">-- Không thêm vào playlist --</option>
+                    <!-- Playlists will be loaded here -->
+                </select>
+            </div>
+            
+            <!-- Options -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-gear"></i>
+                    Tùy chọn Import
+                </label>
+                <div class="youtube-options">
+                    <label class="option-checkbox">
+                        <input type="checkbox" id="extract-audio-only" checked>
+                        <span class="checkmark"></span>
+                        Chỉ lấy âm thanh (khuyến nghị)
+                    </label>
+                    <div class="option-hint">
+                        <i class="bi bi-info-circle"></i>
+                        Chỉ download audio MP3, tiết kiệm dung lượng và thời gian
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Section -->
+            <div id="youtube-preview" class="youtube-preview hidden">
+                <div class="preview-header">
+                    <h5>
+                        <i class="bi bi-eye"></i>
+                        Xem Trước
+                    </h5>
+                </div>
+                <div id="youtube-preview-content">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Import Progress -->
+            <div id="youtube-import-progress" class="youtube-import-progress hidden">
+                <div class="progress-header">
+                    <h5>
+                        <i class="bi bi-download"></i>
+                        Đang Import...
+                    </h5>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="youtube-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="youtube-progress-text">Đang chuẩn bị...</div>
+                <div class="progress-details" id="youtube-progress-details"></div>
+            </div>
+        </div>
+        
+        <div class="youtube-import-actions">
+            <button type="button" class="btn-secondary" id="youtube-cancel-btn">Hủy</button>
+            <button type="button" class="btn-primary" id="youtube-preview-btn">
+                <i class="bi bi-eye"></i>
+                Xem Trước
+            </button>
+            <button type="button" class="btn-success" id="youtube-import-start-btn" disabled>
+                <i class="bi bi-download"></i>
+                Bắt Đầu Import
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'music_player/js/youtube_import.js' %}?v=1.0.0"></script>
 

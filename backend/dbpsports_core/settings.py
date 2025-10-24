@@ -20,6 +20,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 # === Apps ===
 INSTALLED_APPS = [
     # Apps chính - Tournaments ở đầu
+    "dbpsports_core",
     "tournaments",
     "organizations", 
     "users",
@@ -189,8 +190,15 @@ LOGIN_URL = "account_login" # Sử dụng URL chuẩn của allauth
 LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_ON_GET = True
-ACCOUNT_SESSION_REMEMBER = None
+ACCOUNT_SESSION_REMEMBER = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Session configuration for remember me functionality
+SESSION_COOKIE_AGE = 1209600  # 2 weeks (default)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists after browser close
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 ACCOUNT_FORMS = {'signup': 'users.forms.CustomSignupForm'}
 # Cấu hình allauth để sử dụng email làm username

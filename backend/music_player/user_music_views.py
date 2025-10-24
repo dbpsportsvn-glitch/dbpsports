@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import cache_page, never_cache
 from django.core.files.storage import default_storage
 from django.conf import settings as django_settings
 from django.db import models
@@ -15,7 +15,7 @@ import json
 import logging
 from functools import wraps
 from mutagen import File as MutagenFile
-from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings, Track, TrackPlayHistory
+from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSettings, Track, TrackPlayHistory, SavedTrack, SavedPlaylist
 from .utils import extract_album_cover
 
 logger = logging.getLogger(__name__)
@@ -127,6 +127,7 @@ def update_music_settings(request):
 
 @login_required
 @require_http_methods(["GET"])
+@never_cache
 def get_user_tracks(request):
     """API endpoint để lấy danh sách bài hát của user"""
     try:
@@ -329,27 +330,62 @@ def upload_user_track(request):
 @require_POST
 @never_cache
 def delete_user_track(request, track_id):
-    """API endpoint để xóa bài hát"""
+    """API endpoint để xóa bài hát - HOÀN TOÀN XÂY DỰNG LẠI"""
     try:
+        # ✅ Bước 1: Lấy track và validate quyền
         track = get_object_or_404(UserTrack, id=track_id, user=request.user)
-        track.delete()  # Will auto-delete file
         
-        # Get updated usage
+        # ✅ Bước 2: Lưu thông tin track trước khi xóa (để trả về frontend)
+        track_info = {
+            'id': track.id,
+            'title': track.title,
+            'artist': track.artist or '',
+            'file_url': track.get_file_url(),
+            'file_path': track.file.name if track.file else None
+        }
+        
+        # ✅ Bước 3: Xóa track (sẽ trigger delete() method trong model)
+        track.delete()
+        
+        # ✅ Bước 4: Force commit transaction để đảm bảo xóa ngay lập tức
+        from django.db import transaction
+        transaction.commit()
+        
+        # ✅ Bước 5: Xóa cache nếu có
+        try:
+            # Clear any cached data related to this track
+            cache_keys_to_clear = [
+                f'user_tracks_{request.user.id}',
+                f'playlist_tracks_{request.user.id}',
+                f'user_playlists_{request.user.id}',
+            ]
+            for key in cache_keys_to_clear:
+                cache.delete(key)
+        except Exception as cache_error:
+            logger.warning(f"Failed to clear cache: {cache_error}")
+        
+        # ✅ Bước 6: Lấy updated usage
         user_settings, _ = MusicPlayerSettings.objects.get_or_create(
             user=request.user,
             defaults={'storage_quota_mb': 369}
         )
         usage = user_settings.get_upload_usage()
         
+        # ✅ Bước 7: Log thành công
+        logger.info(f"Successfully deleted track {track_id} for user {request.user.id}: {track_info['title']}")
+        
         return JsonResponse({
             'success': True,
             'message': 'Đã xóa bài hát thành công',
+            'deleted_track': track_info,
             'usage': usage
         })
+        
     except Exception as e:
+        logger.error(f"Error deleting track {track_id} for user {request.user.id}: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': f'Lỗi khi xóa bài hát: {str(e)}'
         }, status=500)
 
 
@@ -395,7 +431,7 @@ def get_user_playlists(request):
         playlists = UserPlaylist.objects.filter(
             user=request.user,
             is_active=True
-        ).order_by('-created_at')
+        ).prefetch_related('tracks__user_track').order_by('-created_at')
         
         playlists_data = []
         for playlist in playlists:
@@ -499,19 +535,46 @@ def create_user_playlist(request):
 def get_playlist_tracks(request, playlist_id):
     """API endpoint để lấy tracks trong playlist"""
     try:
-        playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
-        tracks = playlist.get_tracks()
+        playlist = get_object_or_404(UserPlaylist, id=playlist_id)
         
-        tracks_data = [{
-            'id': track.user_track.id,
-            'title': track.user_track.title,
-            'artist': track.user_track.artist or '',
-            'duration': track.user_track.duration,
-            'duration_formatted': track.user_track.get_duration_formatted(),
-            'file_url': track.user_track.get_file_url(),
-            'play_count': track.user_track.play_count,  # ✅ Include play_count
-            'order': track.order
-        } for track in tracks]
+        # ✅ CRITICAL FIX: Handle "Bài Hát Đã Lưu" playlist
+        if playlist.name == "Bài Hát Đã Lưu":
+            saved_tracks = SavedTrack.objects.filter(user=request.user).select_related('global_track', 'user_track').order_by('-saved_at')
+            
+            tracks_data = []
+            for saved_track in saved_tracks:
+                # Lấy play count từ track gốc
+                play_count = 0
+                if saved_track.global_track:
+                    play_count = saved_track.global_track.play_count or 0
+                elif saved_track.user_track:
+                    play_count = saved_track.user_track.play_count or 0
+                
+                track_data = {
+                    'id': saved_track.global_track.id if saved_track.global_track else saved_track.user_track.id,
+                    'title': saved_track.track_title,
+                    'artist': saved_track.track_artist or '',
+                    'duration': saved_track.track_duration,
+                    'duration_formatted': f"{saved_track.track_duration // 60}:{saved_track.track_duration % 60:02d}",
+                    'file_url': saved_track.get_track_url(),
+                    'play_count': play_count,
+                    'order': 0  # Saved tracks don't have order
+                }
+                tracks_data.append(track_data)
+        else:
+            # Regular playlist, get tracks from UserPlaylistTrack
+            tracks = playlist.get_tracks()
+            
+            tracks_data = [{
+                'id': track.user_track.id,
+                'title': track.user_track.title,
+                'artist': track.user_track.artist or '',
+                'duration': track.user_track.duration,
+                'duration_formatted': track.user_track.get_duration_formatted(),
+                'file_url': track.user_track.get_file_url(),
+                'play_count': track.user_track.play_count,  # ✅ Include play_count
+                'order': track.order
+            } for track in tracks]
         
         return JsonResponse({
             'success': True,
@@ -534,7 +597,7 @@ def get_playlist_tracks(request, playlist_id):
 def add_track_to_playlist(request, playlist_id, track_id):
     """API endpoint để thêm track vào playlist"""
     try:
-        playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
+        playlist = get_object_or_404(UserPlaylist, id=playlist_id)
         track = get_object_or_404(UserTrack, id=track_id, user=request.user)
         
         # Check if track already in playlist
@@ -575,7 +638,7 @@ def add_track_to_playlist(request, playlist_id, track_id):
 def delete_user_playlist(request, playlist_id):
     """API endpoint để xóa playlist"""
     try:
-        playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
+        playlist = get_object_or_404(UserPlaylist, id=playlist_id)
         playlist_name = playlist.name
         playlist.delete()
         
@@ -595,7 +658,7 @@ def delete_user_playlist(request, playlist_id):
 def toggle_playlist_public(request, playlist_id):
     """API endpoint để toggle public/private cho playlist"""
     try:
-        playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
+        playlist = get_object_or_404(UserPlaylist, id=playlist_id)
         playlist.is_public = not playlist.is_public
         playlist.save()
         
@@ -612,6 +675,7 @@ def toggle_playlist_public(request, playlist_id):
         }, status=500)
 
 
+@cache_page(300)  # Cache for 5 minutes
 @require_http_methods(["GET"])
 def get_public_playlists(request):
     """API endpoint để lấy danh sách public playlists (Global Discovery)"""

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.cache import cache_page
 import json
 import logging
 from .models import Track, UserTrack, TrackPlayHistory
@@ -20,10 +21,14 @@ def record_track_play(request):
     Quy tắc: Chỉ tính khi nghe ít nhất 30 giây hoặc 50% thời lượng bài (nếu bài ngắn)
     """
     try:
+        logger.info(f"Record play request from user: {request.user.username}")
+        
         # Parse JSON body
         try:
             data = json.loads(request.body)
+            logger.info(f"Parsed data: {data}")
         except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {str(e)}")
             return JsonResponse({
                 'success': False,
                 'error': f'Invalid JSON: {str(e)}'
@@ -39,15 +44,29 @@ def record_track_play(request):
                 'error': 'Missing track_id'
             }, status=400)
         
-        # Lấy track object
+        # Lấy track object với validation chi tiết
         if track_type == 'global':
+            logger.info(f"Looking up global track: {track_id}")
             track = get_object_or_404(Track, id=track_id, is_active=True)
             global_track = track
             user_track_obj = None
+            logger.info(f"Found global track: {track.title}")
         else:
-            track = get_object_or_404(UserTrack, id=track_id, user=request.user, is_active=True)
-            global_track = None
-            user_track_obj = track
+            logger.info(f"Looking up user track: {track_id}")
+            # ✅ Tính năng chia sẻ album nhạc: Cho phép ghi nhận lượt nghe cho track của người khác
+            try:
+                track = UserTrack.objects.get(id=track_id, is_active=True)
+                # Không cần kiểm tra ownership - cho phép nghe track của người khác
+                user_track_obj = track
+                global_track = None
+                logger.info(f"Recording play for shared track: track_id={track_id}, track_owner={track.user.email}, listener={request.user.email}")
+            except UserTrack.DoesNotExist:
+                logger.warning(f"UserTrack not found: track_id={track_id}, user={request.user.email}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Track không tồn tại hoặc đã bị xóa',
+                    'message': 'Không tìm thấy track với ID này'
+                }, status=404)
         
         # Kiểm tra điều kiện tính lượt nghe
         # ✅ Fix division by zero: nếu duration = 0 hoặc None thì dùng default
@@ -87,18 +106,24 @@ def record_track_play(request):
             is_completed=is_completed,
             track_title=track.title,
             track_artist=track.artist or '',
-            track_duration=track.duration
+            track_duration=track.duration or 0
         )
         
-        # Tăng play_count của track (nếu có field này)
+        # ✅ Tăng play_count của track gốc (cho cả track của người khác)
         try:
             if hasattr(track, 'play_count'):
                 track.play_count += 1
                 track.save(update_fields=['play_count'])
+                if track_type == 'global':
+                    logger.info(f"Updated play_count for global track {track.id} to {track.play_count}")
+                else:
+                    logger.info(f"Updated play_count for user track {track.id} (owner: {track.user.email}) to {track.play_count}")
         except Exception as e:
             logger.error(f"Error updating play_count: {str(e)}", exc_info=True)
         
         play_count = getattr(track, 'play_count', 0)
+        
+        logger.info(f"Successfully recorded play: track_id={track_id}, play_count={play_count}")
         
         return JsonResponse({
             'success': True,
@@ -118,10 +143,12 @@ def record_track_play(request):
         logger.warning(f"UserTrack not found: track_id={track_id}, user={request.user.username}")
         return JsonResponse({
             'success': False,
-            'error': 'Track không tồn tại hoặc không thuộc về bạn'
+            'error': 'Track không tồn tại hoặc đã bị xóa'
         }, status=404)
     except Exception as e:
         logger.error(f"Error recording track play: {str(e)}", exc_info=True)
+        logger.error(f"Request data: track_id={track_id}, track_type={track_type}, listen_duration={listen_duration}")
+        logger.error(f"User: {request.user.username if request.user.is_authenticated else 'Anonymous'}")
         return JsonResponse({
             'success': False,
             'error': str(e)
@@ -158,6 +185,7 @@ def get_user_stats(request):
         }, status=500)
 
 
+@cache_page(600)  # Cache for 10 minutes
 @login_required
 @require_http_methods(["GET"])
 def get_popular_tracks(request):

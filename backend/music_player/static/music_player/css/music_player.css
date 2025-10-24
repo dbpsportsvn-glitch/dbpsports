@@ -60,6 +60,20 @@ body.low-power .playlist-card-cover { filter: none !important; }
     will-change: left, top; /* ✅ Optimize drag performance */
 }
 
+/* ✅ ENHANCED: Animations cho tên bài hát hiện tại */
+@keyframes titleHighlight {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
 /* Full Player Styles */
 .full-player {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -87,12 +101,20 @@ body.low-power .playlist-card-cover { filter: none !important; }
 
 .track-title {
     color: white;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700; /* ✅ Tăng từ 600 lên 700 để nổi bật hơn */
+    font-size: 16px; /* ✅ Tăng từ 14px lên 16px để lớn hơn */
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* ✅ ENHANCED: Highlight effect cho tên bài hát hiện tại */
+    background: linear-gradient(45deg, #ffffff, #ffd700, #ffffff);
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleHighlight 3s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .track-artist {
@@ -1695,6 +1717,32 @@ body.low-power .playlist-card-cover { filter: none !important; }
         height: calc(100% - 57px) !important;
         z-index: 1040 !important; /* ✅ Đảm bảo không bị che bởi header */
     }
+    
+    /* ✅ Settings tab headers mobile responsive */
+    .settings-tab-headers {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE/Edge */
+        -webkit-overflow-scrolling: touch !important; /* iOS smooth scrolling */
+    }
+    
+    .settings-tab-headers::-webkit-scrollbar {
+        display: none !important; /* Chrome/Safari */
+    }
+    
+    .settings-tab-header {
+        flex-shrink: 0 !important;
+        min-width: 140px !important; /* ✅ Larger minimum width on mobile */
+        padding: 12px 16px !important; /* ✅ Slightly smaller padding */
+        font-size: 13px !important; /* ✅ Slightly smaller font */
+    }
+    
+    /* ✅ Ensure all tabs are visible and scrollable */
+    .settings-tab-header:nth-child(5) {
+        /* Tab "Đã lưu" - ensure it's visible */
+        min-width: 120px !important;
+    }
 }
 
 .settings-modal.hidden {
@@ -1780,10 +1828,20 @@ body.low-power .playlist-card-cover { filter: none !important; }
     display: flex;
     background: rgba(0, 0, 0, 0.15);
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    overflow-x: auto; /* ✅ Enable horizontal scroll on mobile */
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.settings-tab-headers::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
 .settings-tab-header {
     flex: 1;
+    flex-shrink: 0; /* ✅ Prevent tabs from shrinking on mobile */
+    min-width: 120px; /* ✅ Minimum width for readability */
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.6);
@@ -1797,6 +1855,7 @@ body.low-power .playlist-card-cover { filter: none !important; }
     align-items: center;
     justify-content: center;
     gap: 8px;
+    white-space: nowrap; /* ✅ Prevent text wrapping */
 }
 
 .settings-tab-header::after {
@@ -2913,7 +2972,11 @@ body.low-power .playlist-card-cover { filter: none !important; }
     .settings-tab-content {
         flex: 1 !important;
         overflow-y: auto !important;
-        padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+        padding-bottom: max(40px, env(safe-area-inset-bottom)) !important;
+        padding-top: 20px !important;
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+        scroll-behavior: smooth !important;
     }
     
     /* ✅ Sections trong settings modal full height */
@@ -2921,6 +2984,19 @@ body.low-power .playlist-card-cover { filter: none !important; }
         display: flex !important;
         flex-direction: column !important;
         flex: 1 !important;
+    }
+    
+    /* ✅ Đảm bảo mục cuối cùng có đủ không gian */
+    .settings-tab-content .settings-section:last-child {
+        margin-bottom: 20px !important;
+    }
+    
+    /* ✅ Đảm bảo các list có đủ padding bottom */
+    .settings-tab-content .my-tracks-list,
+    .settings-tab-content .my-playlists-list,
+    .settings-tab-content .saved-tracks-list,
+    .settings-tab-content .saved-playlists-list {
+        padding-bottom: 20px !important;
     }
     
     .settings-tab-content.active .my-tracks-section,
@@ -3061,8 +3137,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
     }
     
     .track-title {
-        font-size: 13px !important; /* ✅ Giảm từ 14px xuống 13px để compact hơn */
+        font-size: 14px !important; /* ✅ Tăng từ 13px lên 14px để dễ đọc hơn */
+        font-weight: 700 !important; /* ✅ Giữ font-weight bold cho mobile */
     }
+    
     
     .track-artist {
         font-size: 11px !important; /* ✅ Giảm từ 12px xuống 11px để compact hơn */
@@ -3431,6 +3509,7 @@ body.low-power .playlist-card-cover { filter: none !important; }
         min-height: 0 !important;
         overflow-y: auto !important;
         padding: 14px 18px !important; /* ✅ Tăng từ 12px 16px */
+        padding-bottom: max(40px, env(safe-area-inset-bottom)) !important;
         -webkit-overflow-scrolling: touch !important;
         /* ✅ Ensure proper scrolling in landscape */
         overscroll-behavior: contain !important;
@@ -4228,7 +4307,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
 .settings-tab-content::-webkit-scrollbar,
 .my-tracks-list::-webkit-scrollbar,
 .my-playlists-list::-webkit-scrollbar,
-#offline-cached-tracks::-webkit-scrollbar {
+#offline-cached-tracks::-webkit-scrollbar,
+.cached-tracks-scrollable::-webkit-scrollbar,
+.saved-tracks-list::-webkit-scrollbar,
+.saved-playlists-list::-webkit-scrollbar {
     width: 10px;
 }
 
@@ -4237,7 +4319,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
     .settings-tab-content::-webkit-scrollbar,
     .my-tracks-list::-webkit-scrollbar,
     .my-playlists-list::-webkit-scrollbar,
-    #offline-cached-tracks::-webkit-scrollbar {
+    #offline-cached-tracks::-webkit-scrollbar,
+    .cached-tracks-scrollable::-webkit-scrollbar,
+    .saved-tracks-list::-webkit-scrollbar,
+    .saved-playlists-list::-webkit-scrollbar {
         width: 8px;
     }
 }
@@ -4246,7 +4331,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
 .settings-tab-content::-webkit-scrollbar-track,
 .my-tracks-list::-webkit-scrollbar-track,
 .my-playlists-list::-webkit-scrollbar-track,
-#offline-cached-tracks::-webkit-scrollbar-track {
+#offline-cached-tracks::-webkit-scrollbar-track,
+.cached-tracks-scrollable::-webkit-scrollbar-track,
+.saved-tracks-list::-webkit-scrollbar-track,
+.saved-playlists-list::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -4256,7 +4344,10 @@ body.low-power .playlist-card-cover { filter: none !important; }
 .settings-tab-content::-webkit-scrollbar-thumb,
 .my-tracks-list::-webkit-scrollbar-thumb,
 .my-playlists-list::-webkit-scrollbar-thumb,
-#offline-cached-tracks::-webkit-scrollbar-thumb {
+#offline-cached-tracks::-webkit-scrollbar-thumb,
+.cached-tracks-scrollable::-webkit-scrollbar-thumb,
+.saved-tracks-list::-webkit-scrollbar-thumb,
+.saved-playlists-list::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -4268,11 +4359,1229 @@ body.low-power .playlist-card-cover { filter: none !important; }
 .my-tracks-list::-webkit-scrollbar-thumb:hover,
 .my-playlists-list::-webkit-scrollbar-thumb:hover,
 #offline-cached-tracks::-webkit-scrollbar-thumb:hover,
+.cached-tracks-scrollable::-webkit-scrollbar-thumb:hover,
+.saved-tracks-list::-webkit-scrollbar-thumb:hover,
+.saved-playlists-list::-webkit-scrollbar-thumb:hover,
 .settings-tab-contents::-webkit-scrollbar-thumb:active,
 .settings-tab-content::-webkit-scrollbar-thumb:active,
 .my-tracks-list::-webkit-scrollbar-thumb:active,
 .my-playlists-list::-webkit-scrollbar-thumb:active,
-#offline-cached-tracks::-webkit-scrollbar-thumb:active {
+#offline-cached-tracks::-webkit-scrollbar-thumb:active,
+.cached-tracks-scrollable::-webkit-scrollbar-thumb:active,
+.saved-tracks-list::-webkit-scrollbar-thumb:active,
+.saved-playlists-list::-webkit-scrollbar-thumb:active {
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+/* ✅ Saved Music Styling */
+.saved-tracks-list,
+.saved-playlists-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px;
+}
+
+.saved-track-item,
+.saved-playlist-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+    border-radius: 6px;
+    margin-bottom: 4px;
+}
+
+.saved-track-item:hover,
+.saved-playlist-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.saved-track-item:last-child,
+.saved-playlist-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.saved-track-info,
+.saved-playlist-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
+}
+
+.saved-track-title,
+.saved-playlist-title {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.saved-track-meta,
+.saved-playlist-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.saved-track-actions,
+.saved-playlist-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.delete-saved-track-btn,
+.delete-saved-playlist-btn {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    color: rgba(255, 59, 48, 0.8);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.delete-saved-track-btn:hover,
+.delete-saved-playlist-btn:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.5);
+    color: rgba(255, 59, 48, 1);
+    transform: translateY(-1px);
+}
+
+.delete-saved-track-btn:active,
+.delete-saved-playlist-btn:active {
+    transform: translateY(0);
+    background: rgba(255, 59, 48, 0.3);
+}
+
+/* ✅ Saved Music Playlist Card */
+.saved-music-playlist {
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 82, 0.1));
+    position: relative;
+    overflow: hidden;
+}
+
+.saved-music-playlist::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff6b6b, #ee5a52);
+}
+
+.saved-music-playlist:hover {
+    border-color: rgba(255, 107, 107, 0.5);
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(238, 90, 82, 0.15));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.2);
+}
+
+.playlist-refresh-btn {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    color: rgba(255, 107, 107, 0.8);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.playlist-refresh-btn:hover {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: rgba(255, 107, 107, 0.5);
+    color: rgba(255, 107, 107, 1);
+    transform: translateY(-1px);
+}
+
+.playlist-refresh-btn:active {
+    transform: translateY(0);
+    background: rgba(255, 107, 107, 0.3);
+}
+
+.save-track-btn,
+.save-playlist-btn,
+.unsave-track-btn,
+.unsave-playlist-btn,
+.delete-saved-track-btn,
+.delete-saved-playlist-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    color: #ef4444;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.save-track-btn,
+.save-playlist-btn {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+
+.save-track-btn:hover,
+.save-playlist-btn:hover {
+    background: rgba(34, 197, 94, 0.25);
+}
+
+.unsave-track-btn:hover,
+.unsave-playlist-btn:hover,
+.delete-saved-track-btn:hover,
+.delete-saved-playlist-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* Empty state styling */
+.saved-tracks-list .empty-state,
+.saved-playlists-list .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.saved-tracks-list .empty-state i,
+.saved-playlists-list .empty-state i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* ✅ Track Item Save Button */
+.track-item-save-btn {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 6px;
+    color: #22c55e;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.track-item:hover .track-item-save-btn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.track-item-save-btn:hover {
+    background: rgba(34, 197, 94, 0.25);
+    transform: scale(1.05);
+}
+
+.track-item-save-btn.saved {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.track-item-save-btn.saved:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.track-item-save-btn i {
+    font-size: 14px;
+}
+
+/* ✅ Playlist Save Button */
+.playlist-save-btn {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 6px;
+    color: #22c55e;
+    padding: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    opacity: 0.8;
+    transform: none;
+    z-index: 10;
+}
+
+.playlist-card:hover .playlist-save-btn {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.playlist-save-btn:hover {
+    background: rgba(34, 197, 94, 0.25);
+    transform: scale(1.1);
+}
+
+.playlist-save-btn.saved {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.playlist-save-btn.saved:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.playlist-save-btn i {
+    font-size: 14px;
+}
+
+/* ✅ Save Track Options Modal */
+.save-track-options .form-check {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.save-track-options .form-check:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.save-track-options .form-check-input:checked + .form-check-label {
+    color: #667eea;
+}
+
+.save-track-options .form-check-input:checked + .form-check-label .option-title {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.save-track-options .option-content {
+    margin-left: 8px;
+}
+
+.save-track-options .option-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.save-track-options .option-description {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.save-track-options .form-check-input {
+    margin-top: 2px;
+}
+
+#existingPlaylistSelector,
+#newPlaylistNameInput {
+    margin-left: 24px;
+    margin-top: 8px;
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+#existingPlaylistSelector .form-label,
+#newPlaylistNameInput .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #667eea;
+    margin-bottom: 6px;
+}
+
+#existingPlaylistSelect,
+#newPlaylistName {
+    font-size: 13px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 4px;
+}
+
+#existingPlaylistSelect:focus,
+#newPlaylistName:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* ✅ Saved Music Playlist Card Special Styling */
+.saved-music-playlist {
+    border: 2px solid rgba(255, 107, 107, 0.3) !important;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.05), rgba(238, 90, 82, 0.05)) !important;
+    position: relative;
+}
+
+.saved-music-playlist::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    border-radius: 12px;
+    z-index: -1;
+    opacity: 0.1;
+}
+
+.saved-music-playlist:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+    border-color: rgba(255, 107, 107, 0.5) !important;
+}
+
+.saved-music-playlist .playlist-card-icon {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.saved-music-playlist .playlist-card-name {
+    color: #ff6b6b !important;
+    font-weight: 600;
+}
+
+.saved-music-playlist .playlist-card-count {
+    color: rgba(255, 107, 107, 0.8) !important;
+}
+
+/* ✅ Track Item Save Button as Music Note Icon */
+.track-item-save-btn.track-item-icon {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    margin-left: -20px; /* ✅ Dịch sang trái nhiều hơn để gần số thứ tự */
+    color: white !important; /* ✅ Force white color */
+    opacity: 1 !important; /* ✅ Force visible */
+    visibility: visible !important; /* ✅ Force visible */
+}
+
+.track-item-save-btn.track-item-icon:hover {
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b !important;
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+.track-item-save-btn.track-item-icon.saved {
+    color: #ff6b6b !important;
+    background: rgba(255, 107, 107, 0.1);
+    opacity: 1 !important;
+}
+
+.track-item-save-btn.track-item-icon.saved:hover {
+    background: rgba(255, 107, 107, 0.2);
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+.track-item-save-btn.track-item-icon i {
+    font-size: 16px;
+    transition: all 0.2s ease;
+    color: inherit !important; /* ✅ Inherit parent color */
+    opacity: 1 !important; /* ✅ Force visible */
+}
+
+.track-item-save-btn.track-item-icon.saved i {
+    color: #ff6b6b !important;
+    opacity: 1 !important;
+}
+
+.track-item-save-btn.track-item-icon:hover i {
+    transform: scale(1.1);
+    opacity: 1 !important;
+}
+
+/* ✅ Music Player Modal Styles */
+.music-player-modal {
+    z-index: 9999 !important; /* ✅ Cao hơn music player */
+}
+
+.music-player-modal-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+    color: white !important;
+}
+
+.music-player-modal-header {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 15px 15px 0 0 !important;
+    padding: 20px !important;
+}
+
+.music-player-modal-header .modal-title {
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 1.2rem !important;
+}
+
+.music-player-modal-header .modal-title i {
+    color: #ff6b6b !important;
+    margin-right: 8px !important;
+}
+
+.music-player-btn-close {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 50% !important;
+    width: 35px !important;
+    height: 35px !important;
+    opacity: 1 !important;
+}
+
+.music-player-btn-close::before {
+    content: "×" !important;
+    color: white !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    display: block !important;
+}
+
+.music-player-btn-close:hover {
+    background: rgba(255, 107, 107, 0.2) !important;
+    border-color: #ff6b6b !important;
+}
+
+/* ✅ YouTube Import Modal Styles */
+.youtube-import-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999999 !important; /* ✅ Z-index cực cao để đảm bảo hiển thị trên cùng */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* ✅ Force YouTube Import Modal to be on top - CRITICAL */
+.youtube-import-modal,
+.youtube-import-modal * {
+    z-index: 999999 !important;
+}
+
+/* ✅ Ensure YouTube Import Modal is above ALL other elements */
+body .youtube-import-modal {
+    z-index: 999999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+
+.youtube-import-modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.youtube-import-overlay {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+    z-index: 999998 !important; /* ✅ Z-index cao để đảm bảo overlay hiển thị */
+}
+
+.youtube-import-content {
+    position: relative !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    width: 90% !important;
+    max-width: 600px !important;
+    max-height: calc(100vh - 40px) !important;
+    overflow: hidden !important;
+    color: white !important;
+    margin: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 999999 !important; /* ✅ Z-index cực cao để đảm bảo content hiển thị */
+}
+
+.youtube-import-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.youtube-import-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.youtube-import-title i {
+    color: #ff6b6b;
+    font-size: 1.4rem;
+}
+
+.youtube-import-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.youtube-import-close-btn:hover {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: #ff6b6b;
+    transform: scale(1.05);
+}
+
+.youtube-import-body {
+    padding: 25px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+
+.youtube-import-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.youtube-import-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.youtube-import-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.youtube-import-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group label i {
+    color: #ff6b6b;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #ff6b6b;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.form-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-hint i {
+    color: #ff6b6b;
+}
+
+/* Upload Buttons */
+.upload-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.upload-btn, .youtube-import-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.upload-btn {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.upload-btn:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.youtube-import-btn {
+    background: linear-gradient(135deg, #ff6b6b, #e55a5a);
+    color: white;
+}
+
+.youtube-import-btn:hover {
+    background: linear-gradient(135deg, #e55a5a, #d44a4a);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+/* YouTube Options */
+.youtube-options {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.option-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.option-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.option-checkbox input[type="checkbox"]:checked + .checkmark {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+}
+
+.option-checkbox input[type="checkbox"]:checked + .checkmark::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.option-hint {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Preview Section */
+.youtube-preview {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.preview-header h5 {
+    margin: 0 0 15px 0;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-header i {
+    color: #ff6b6b;
+}
+
+.youtube-preview-content {
+    /* Preview content styles */
+}
+
+/* Video Preview Styles */
+.video-preview {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.preview-thumbnail img {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.meta-item i {
+    color: #ff6b6b;
+    width: 12px;
+}
+
+/* Playlist Preview Styles */
+.playlist-preview {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.playlist-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.playlist-meta {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+}
+
+.playlist-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.playlist-video-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.playlist-video-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.video-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.video-title {
+    font-size: 13px;
+    color: white;
+    font-weight: 500;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.more-videos {
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+.playlist-note {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #51cf66;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.playlist-note i {
+    color: #51cf66;
+    margin-right: 6px;
+}
+
+/* Progress Section */
+.youtube-import-progress {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.progress-header h5 {
+    margin: 0 0 15px 0;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-header i {
+    color: #ff6b6b;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #e55a5a);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 5px;
+}
+
+.progress-details {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Actions */
+.youtube-import-actions {
+    padding: 20px 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.btn-secondary, .btn-primary, .btn-success {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8, #4e5bc6);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .youtube-import-modal {
+        padding: 10px;
+        height: 100vh;
+        height: calc(100vh - env(safe-area-inset-bottom));
+    }
+    
+    .youtube-import-content {
+        width: 95%;
+        max-height: calc(100vh - 20px);
+        max-height: calc(100vh - env(safe-area-inset-bottom) - 20px);
+        margin: 0;
+    }
+    
+    .youtube-import-header {
+        padding: 15px;
+    }
+    
+    .youtube-import-body {
+        padding: 20px;
+        max-height: calc(100vh - 150px);
+        max-height: calc(100vh - env(safe-area-inset-bottom) - 150px);
+    }
+    
+    .youtube-import-actions {
+        padding: 15px 20px;
+        flex-direction: column;
+        position: sticky;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-secondary, .btn-primary, .btn-success {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .upload-buttons {
+        flex-direction: column;
+    }
+}
+
+.music-player-btn-close:hover::before {
+    color: white !important;
+}
+
+.music-player-modal .modal-body {
+    padding: 25px !important;
+    color: white !important;
+}
+
+.music-player-modal .modal-body * {
+    color: white !important;
+}
+
+.music-player-modal .form-label {
+    color: white !important;
+    font-weight: 600 !important;
+    margin-bottom: 15px !important;
+}
+
+.music-player-modal .option-content {
+    color: white !important;
+}
+
+.music-player-modal .option-title {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.music-player-modal .option-description {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500 !important;
+}
+
+.music-player-modal .form-check-input:checked {
+    background-color: #ff6b6b !important;
+    border-color: #ff6b6b !important;
+}
+
+.music-player-modal .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25) !important;
+}
+
+.music-player-modal .form-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+.music-player-modal .form-control:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25) !important;
+    color: white !important;
+}
+
+.music-player-modal .form-control::placeholder {
+    color: white !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+.music-player-modal .btn-primary {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 25px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.music-player-modal .btn-primary:hover {
+    background: linear-gradient(135deg, #ee5a52, #ff6b6b) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4) !important;
+}
+
+.music-player-modal .form-select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+.music-player-modal .form-select:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25) !important;
+    color: white !important;
+}
+
+.music-player-modal .form-select option {
+    background: #667eea !important;
+    color: white !important;
 }

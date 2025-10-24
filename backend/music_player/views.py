@@ -13,7 +13,6 @@ from .utils import get_audio_duration
 logger = logging.getLogger(__name__)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class MusicPlayerAPIView(View):
     """API view cho Music Player"""
     
@@ -75,7 +74,6 @@ class MusicPlayerAPIView(View):
             }, status=500)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class MusicPlayerSettingsView(View):
     """API view để lấy cài đặt music player"""
     

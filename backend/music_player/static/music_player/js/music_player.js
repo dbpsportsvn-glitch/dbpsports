@@ -1,11 +1,11 @@
 // ============================================================
-// Music Player v1.3.0 - DBP Sports
+// Music Player v1.5.5 - DBP Sports
 // ============================================================
 // 
-// 📅 Last Updated: 2025-01-29
-// 🔧 Version: 1.3.0
+// 📅 Last Updated: 2025-10-25
+// 🔧 Version: 1.5.5
 // 💾 Cache Version: dbp-music-v4-range-fix
-// 🔄 Service Worker: v16-cache-timeout-fix
+// 🔄 Service Worker: v17-complete-deletion-rewrite
 //
 // ✅ FEATURES:
 //   - Full playback controls (play, pause, next, previous, seek)
@@ -26,14 +26,14 @@
 //   6. Timeout: Player 25s, Service Worker 20s, Retry 15s
 //   7. Force network fetch sau khi clear cache với cache-busting
 //
-// 📝 CHANGELOG v1.3.0:
-//   - Fixed: Play count tracking hoàn chỉnh cho cả admin và user playlists
-//   - Fixed: loadUserPlaylist() thiếu play_count khi map tracks
-//   - Fixed: selectPlaylist() reload từ API để lấy play_count mới nhất
-//   - Fixed: populateTrackList() refresh UI sau khi update play_count
-//   - Fixed: Reset tracking flags khi chuyển track
-//   - Added: Debug logging cho tracking system
-//   - Added: @never_cache và cache headers cho API endpoints
+// 📝 CHANGELOG v1.5.5:
+//   - PERFORMANCE: Tối ưu database queries với select_related/prefetch_related
+//   - CACHING: Thêm @cache_page cho public playlists và popular tracks
+//   - CLEANUP: Xóa 273+ debug logs không cần thiết
+//   - OPTIMIZATION: Đơn giản hóa formatTime(), loại bỏ complex caching
+//   - SECURITY: Loại bỏ csrf_exempt khỏi GET endpoints
+//   - BUGFIX: Sửa lỗi 500 Internal Server Error trong stats API
+//   - PRODUCTION: Chuẩn bị production-ready với error handling tốt hơn
 //
 // ============================================================
 
@@ -64,6 +64,7 @@ class MusicPlayer {
         this.restoreAttempted = false; // Flag để chỉ restore 1 lần duy nhất
         this.hasOpenedPlayer = false; // ✅ Flag để track lần đầu mở player
         this.isDeletingTrack = false; // ✅ Flag để tránh skip khi đang xóa track
+        this.playlistSaveStates = new Map(); // ✅ NEW: Simple Map to store playlist save states
         
         // Drag and drop variables
         this.isDragging = false;
@@ -99,7 +100,6 @@ class MusicPlayer {
         this.hasShownIOSVolumeMessage = false;
         
         // ✅ Cache cho formatted times (tối ưu performance)
-        this.formatTimeCache = new Map();
         this.lastProgressUpdate = 0; // Throttle progress updates
         
         // ✅ Debounce timers
@@ -127,7 +127,7 @@ class MusicPlayer {
 
     async initializePlayer() {
         try {
-            console.log('🎵 Initializing Music Player...');
+            // Music Player initializing...
             
             // Initialize elements and bind events
             this.initializeElements();
@@ -141,25 +141,25 @@ class MusicPlayer {
             
             // Initialize offline manager first
             await this.initializeOfflineManager();
-            console.log('✅ Offline Manager initialized');
+            // Offline Manager initialized
             
             // ✅ Load ALL initial data with batched API call
             const dataLoaded = await this.loadInitialData();
             
             if (!dataLoaded) {
                 // Fallback to sequential loading if batched call fails
-                console.warn('⚠️ Batched call failed, falling back to sequential loading');
+                // Batched call failed, falling back to sequential loading
                 await this.loadSettings();
                 await this.loadPlaylistsLegacy();
             }
             
-            console.log('✅ Initial data loaded');
+            // Initial data loaded
             
             // Load cached tracks and update indicators
             const loaded = await this.loadCachedTracksFromStorage();
             if (loaded) {
                 this.updateTrackListOfflineIndicators();
-                console.log('✅ Cached tracks loaded and verified');
+                // Cached tracks loaded and verified
             }
             
             // Initialize play count display
@@ -198,7 +198,7 @@ class MusicPlayer {
                 // App switched - keeping music playing
             });
             
-            console.log('✅ Music Player fully initialized');
+            // Music Player fully initialized
             
         } catch (error) {
             console.error('❌ Music Player initialization failed:', error);
@@ -257,7 +257,7 @@ class MusicPlayer {
         // Log missing elements only if there are issues
         const missingElements = Object.entries(elementsStatus).filter(([key, exists]) => !exists);
         if (missingElements.length > 0) {
-            console.warn('Missing elements:', missingElements.map(([key]) => key));
+            // Missing elements detected
         }
     }
 
@@ -267,6 +267,9 @@ class MusicPlayer {
             console.error('Missing required DOM elements for music player');
             return;
         }
+        
+        // ✅ Notify Service Worker về user interaction
+        this.notifyServiceWorkerUserInteraction();
         
         // Toggle events
         this.toggle.addEventListener('click', () => this.togglePlayer());
@@ -281,6 +284,17 @@ class MusicPlayer {
         // ✅ Event delegation cho track items - chỉ cần 1 listener cho tất cả tracks
         if (this.trackList) {
             this.trackList.addEventListener('click', (e) => {
+                // Handle save button clicks
+                if (e.target.closest('.track-item-save-btn')) {
+                    e.stopPropagation(); // Prevent track play
+                    const saveBtn = e.target.closest('.track-item-save-btn');
+                    const trackId = parseInt(saveBtn.dataset.trackId); // ✅ Convert to integer
+                    const trackType = saveBtn.dataset.trackType;
+                    this.toggleSaveTrack(trackId, trackType, saveBtn);
+                    return;
+                }
+                
+                // Handle track item clicks
                 const trackItem = e.target.closest('.track-item');
                 if (trackItem && trackItem.dataset.index !== undefined) {
                     const index = parseInt(trackItem.dataset.index);
@@ -380,26 +394,48 @@ class MusicPlayer {
             
             // ✅ CRITICAL FIX: Don't skip if currently deleting track
             if (this.isDeletingTrack) {
-                console.log('⚠️ Skipping error handler - track is being deleted');
+                // Skipping error handler - track is being deleted
                 return;
             }
             
             // ✅ CRITICAL FIX: Retry with cache-busting before skipping to next track
             // Lần đầu error có thể do cache issue, retry với cache-busting
             if (this.consecutiveErrors === 0 && this.currentTrack) {
-                console.log('🔄 Audio error - Retrying with cache-busting parameter...');
-                this.skipCacheCheck = true;
-                const currentIndex = this.currentTrackIndex;
-                setTimeout(() => {
-                    this.playTrack(currentIndex);
-                }, 1000);
+                // Audio error - Retrying with cache-busting parameter
+                
+                // ✅ Check if file exists before retrying
+                const checkFileExists = async () => {
+                    try {
+                        const response = await fetch(this.currentTrack.file_url, { method: 'HEAD' });
+                        if (!response.ok) {
+                            // File does not exist, skipping retry
+                            this.consecutiveErrors = 1; // Skip retry
+                            this.handleAudioError();
+                            return;
+                        }
+                    } catch (error) {
+                        // File check failed, skipping retry
+                        this.consecutiveErrors = 1; // Skip retry
+                        this.handleAudioError();
+                        return;
+                    }
+                    
+                    // File exists, proceed with retry
+                    this.skipCacheCheck = true;
+                    const currentIndex = this.currentTrackIndex;
+                    setTimeout(() => {
+                        this.playTrack(currentIndex);
+                    }, 1000);
+                };
+                
+                checkFileExists();
                 return;
             }
             
             // ✅ Skip to next track but prevent infinite loop
             if (this.currentPlaylist && this.currentPlaylist.tracks.length > 0) {
                 this.consecutiveErrors++;
-                console.log(`🔄 Audio error ${this.consecutiveErrors}/${this.maxConsecutiveErrors}, skipping to next track`);
+                // Audio error, skipping to next track
                 
                 if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
                     console.error('❌ Too many consecutive errors, stopping playback');
@@ -516,6 +552,92 @@ class MusicPlayer {
         
         // Playlist type toggle
         this.initPlaylistTypeToggle();
+        
+        // ✅ Bind Save Track Options Modal events
+        this.bindSaveTrackModalEvents();
+        
+        // ✅ Bind Settings Modal Tab events
+        this.bindSettingsTabEvents();
+    }
+    
+    // ✅ Bind Settings Modal Tab Events
+    bindSettingsTabEvents() {
+        const settingsModal = document.getElementById('settings-modal');
+        if (!settingsModal) return;
+        
+        const tabHeaders = settingsModal.querySelectorAll('.settings-tab-header');
+        const tabContents = settingsModal.querySelectorAll('.settings-tab-content');
+        
+        tabHeaders.forEach(header => {
+            header.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const tabName = header.getAttribute('data-tab');
+                // Settings tab clicked
+                
+                // Remove active class from all headers and contents
+                tabHeaders.forEach(h => h.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked header and corresponding content
+                header.classList.add('active');
+                const targetContent = settingsModal.querySelector(`#settings-tab-${tabName}`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    
+                    // Load data based on tab
+                    if (tabName === 'savedmusic') {
+                        // Loading saved music data
+                        this.loadSavedMusic();
+                    } else if (tabName === 'mymusic') {
+                        // Loading my music data
+                        // My music data is already loaded in the HTML template
+                        // My music data loaded from template
+                    } else if (tabName === 'myplaylists') {
+                        // Loading my playlists data
+                        // My playlists data is already loaded in the HTML template
+                        // My playlists data loaded from template
+                    } else if (tabName === 'offline') {
+                        // Loading offline data
+                        // Offline data is managed by offline manager
+                        // Offline data managed by offline manager
+                    }
+                }
+            });
+        });
+    }
+    
+    // ✅ Bind Save Track Options Modal Events
+    bindSaveTrackModalEvents() {
+        // Handle radio button changes
+        document.addEventListener('change', (e) => {
+            if (e.target.name === 'playlistAction') {
+                this.handleSaveTrackOptionChange();
+            }
+        });
+        
+        // Handle confirm button click
+        const confirmBtn = document.getElementById('confirmSaveTrack');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => this.confirmSaveTrack());
+        }
+        
+        // Handle modal close - reset form
+        const modal = document.getElementById('saveTrackOptionsModal');
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', () => {
+                // Reset form to default state
+                document.getElementById('autoCreate').checked = true;
+                document.getElementById('existingPlaylistSelector').style.display = 'none';
+                document.getElementById('newPlaylistNameInput').style.display = 'none';
+                document.getElementById('existingPlaylistSelect').value = '';
+                document.getElementById('newPlaylistName').value = '';
+                
+                // Clear pending save track
+                this.pendingSaveTrack = null;
+            });
+        }
     }
 
     async toggleListeningLock() {
@@ -777,8 +899,32 @@ class MusicPlayer {
                         </div>
                     `;
                 } else {
-                    // ✅ Escape HTML để tránh XSS
-                    userGrid.innerHTML = data.playlists.map(playlist => {
+                    // ✅ Tạo HTML cho playlist "Bài Hát Đã Lưu" ở đầu danh sách
+                    let html = '';
+                    
+                    // Tìm playlist "Bài Hát Đã Lưu"
+                    const savedMusicPlaylist = data.playlists.find(p => p.name === 'Bài Hát Đã Lưu');
+                    
+                    if (savedMusicPlaylist) {
+                        const escapedName = this.escapeHtml(savedMusicPlaylist.name);
+                        const totalDuration = savedMusicPlaylist.total_duration ? Math.floor(savedMusicPlaylist.total_duration / 60) : 0;
+                        html += `
+                            <div class="playlist-card saved-music-playlist" data-playlist-id="user-${savedMusicPlaylist.id}" onclick="musicPlayer.loadUserPlaylist(${savedMusicPlaylist.id})">
+                                <div class="playlist-card-icon" style="background: linear-gradient(135deg, #ff6b6b, #ee5a52);">
+                                    <i class="bi bi-heart-fill"></i>
+                                </div>
+                                <div class="playlist-card-name">
+                                    ${escapedName}
+                                    <span style="color: #ff6b6b; font-size: 12px; margin-left: 6px;"><i class="bi bi-heart-fill"></i></span>
+                                </div>
+                                <div class="playlist-card-count">${savedMusicPlaylist.tracks_count} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Thêm các playlist khác
+                    const otherPlaylists = data.playlists.filter(p => p.name !== 'Bài Hát Đã Lưu');
+                    html += otherPlaylists.map(playlist => {
                         const escapedName = this.escapeHtml(playlist.name);
                         const totalDuration = playlist.total_duration ? Math.floor(playlist.total_duration / 60) : 0;
                         return `
@@ -791,6 +937,39 @@ class MusicPlayer {
                             </div>
                         `;
                     }).join('');
+                    
+                    // ✅ Load và hiển thị saved playlists
+                    try {
+                        const savedResponse = await fetch('/music/saved/playlists/', {
+                            headers: {
+                                'X-CSRFToken': this.getCSRFToken()
+                            }
+                        });
+                        const savedData = await savedResponse.json();
+                        
+                        if (savedData.success && savedData.playlists.length > 0) {
+                            // Thêm saved playlists vào personal area
+                            savedData.playlists.forEach(savedPlaylist => {
+                                const escapedName = this.escapeHtml(savedPlaylist.name);
+                                html += `
+                                    <div class="playlist-card saved-playlist-card" data-playlist-id="${savedPlaylist.playlist_type}-${savedPlaylist.playlist_id}" onclick="musicPlayer.loadSavedPlaylist('${savedPlaylist.playlist_type}', ${savedPlaylist.playlist_id})">
+                                        <div class="playlist-card-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                                            <i class="bi bi-bookmark-heart-fill"></i>
+                                        </div>
+                                        <div class="playlist-card-name">
+                                            ${escapedName}
+                                            <span style="color: #667eea; font-size: 12px; margin-left: 6px;"><i class="bi bi-bookmark-heart-fill"></i></span>
+                                        </div>
+                                        <div class="playlist-card-count">${savedPlaylist.tracks_count} bài • Đã lưu</div>
+                                    </div>
+                                `;
+                            });
+                        }
+                    } catch (savedError) {
+                        console.error('Error loading saved playlists:', savedError);
+                    }
+                    
+                    userGrid.innerHTML = html;
                 }
             }
         } catch (error) {
@@ -816,41 +995,68 @@ class MusicPlayer {
         }
     }
     
-    async loadUserPlaylist(playlistId) {
+    async loadUserPlaylist(playlistId, silent = false) {
         try {
-            const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            // Kiểm tra nếu là playlist "Bài Hát Đã Lưu" thì sử dụng API mới
+            let response;
+            const isSavedMusic = this.isSavedMusicPlaylist(playlistId);
+            // Loading playlist
+            
+            if (isSavedMusic) {
+                // Using saved tracks API
+                response = await fetch(`/music/saved/playlist/${playlistId}/tracks/`);
+            } else {
+                // Using regular user playlist API
+                response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+            }
             
             if (!response.ok) {
                 if (response.status === 302 || response.status === 401 || response.status === 403) {
-                    this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
-                    setTimeout(() => {
-                        window.location.href = '/accounts/login/?next=' + window.location.pathname;
-                    }, 1500);
+                    if (!silent) {
+                        this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
+                        setTimeout(() => {
+                            window.location.href = '/accounts/login/?next=' + window.location.pathname;
+                        }, 1500);
+                    }
                     return;
                 }
                 throw new Error(`HTTP ${response.status}`);
             }
             
             const data = await response.json();
+            // Playlist data loaded
             
             if (data.success && data.tracks.length > 0) {
                 // Convert to player format
-                this.currentPlaylist = {
-                    id: 'user-playlist-' + data.playlist.id,
-                    name: data.playlist.name,
+                const playerPlaylist = {
+                    id: data.playlist?.id || playlistId, // ✅ Use real ID
+                    name: data.playlist_name || data.playlist?.name || 'Bài Hát Đã Lưu',
                     type: 'user', // ✅ CRITICAL: Set type for tracking
                     tracks: data.tracks.map(track => ({
                         id: track.id,
+                        type: track.type || 'global', // ✅ Include track type
                         title: track.title,
                         artist: track.artist || 'Unknown Artist',
+                        album: track.album || '',
+                        album_cover: track.album_cover,
                         file_url: track.file_url,
                         duration: track.duration,
+                        duration_formatted: track.duration_formatted,
                         play_count: track.play_count || 0  // ✅ Include play_count
                     }))
                 };
                 
+                // ✅ Add to this.playlists để selectPlaylist() có thể tìm thấy
+                const existingIndex = this.playlists.findIndex(p => p.id === playerPlaylist.id);
+                if (existingIndex >= 0) {
+                    this.playlists[existingIndex] = playerPlaylist;
+                } else {
+                    this.playlists.push(playerPlaylist);
+                }
+                
+                this.currentPlaylist = playerPlaylist;
                 this.currentTrackIndex = 0;
-                this.populateTrackList();
+                await this.populateTrackList();
                 
                 // Update active state for user playlist cards
                 const userPlaylistGrid = document.getElementById('user-playlist-grid');
@@ -889,15 +1095,128 @@ class MusicPlayer {
                 
                 // Loaded user playlist
             } else {
-                this.showMessage('Playlist chưa có bài hát!', 'info');
+                if (!silent) {
+                    this.showMessage('Playlist chưa có bài hát!', 'info');
+                }
             }
         } catch (error) {
             console.error('Error loading user playlist:', error);
-            if (error.message.includes('Unexpected token')) {
-                this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
-            } else {
-                this.showMessage('Lỗi khi load playlist!', 'error');
+            if (!silent) {
+                if (error.message.includes('Unexpected token')) {
+                    this.showMessage('⚠️ Vui lòng đăng nhập để phát playlist cá nhân!', 'info');
+                } else {
+                    this.showMessage('Lỗi khi load playlist!', 'error');
+                }
             }
+        }
+    }
+    
+    // ✅ Check if playlist is "Bài Hát Đã Lưu"
+    isSavedMusicPlaylist(playlistId) {
+        // Checking if saved music playlist
+        
+        // Tìm playlist trong danh sách để kiểm tra tên
+        const playlist = this.playlists.find(p => p.id === playlistId);
+        // Found playlist in this.playlists
+        
+        if (playlist && playlist.name === 'Bài Hát Đã Lưu') {
+            // Detected by playlist name
+            return true;
+        }
+        
+        // Fallback: kiểm tra trong user playlist grid
+        const userGrid = document.getElementById('user-playlist-grid');
+        if (userGrid) {
+            const playlistCard = userGrid.querySelector(`[data-playlist-id="user-${playlistId}"]`);
+            // Found playlist card
+            
+            if (playlistCard && playlistCard.classList.contains('saved-music-playlist')) {
+                // Detected by CSS class
+                return true;
+            }
+        }
+        
+        // Not a saved music playlist
+        return false;
+    }
+    
+    // ✅ Load Saved Playlist
+    async loadSavedPlaylist(playlistType, playlistId) {
+        try {
+            // Loading saved playlist
+            
+            let response;
+            if (playlistType === 'global') {
+                // Load global playlist using existing function
+                return await this.loadGlobalPlaylist(playlistId);
+            } else if (playlistType === 'user') {
+                // Load user playlist using existing function
+                return await this.loadUserPlaylist(playlistId);
+            } else {
+                throw new Error('Invalid playlist type');
+            }
+        } catch (error) {
+            console.error('Error loading saved playlist:', error);
+            this.showMessage('Có lỗi xảy ra khi tải playlist', 'error');
+        }
+    }
+    
+    // ✅ Update Playlist Active State
+    updatePlaylistActiveState(playlistId) {
+        // Remove active class from all playlist cards
+        document.querySelectorAll('.playlist-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        
+        // Add active class to current playlist card
+        const activeCard = document.querySelector(`[data-playlist-id="${playlistId}"]`);
+        if (activeCard) {
+            activeCard.classList.add('active');
+        }
+    }
+    
+    // ✅ Load Playlist in Player
+    loadPlaylistInPlayer(playlist) {
+        this.currentPlaylist = playlist;
+        this.playerPlaylist = playlist.tracks.map(track => ({
+            ...track,
+            type: playlist.type || 'global'
+        }));
+        
+        // Update UI
+        this.populateTrackList();
+        this.updatePlaylistInfo();
+        
+        // Reset player state
+        this.currentTrackIndex = 0;
+        this.isPlaying = false;
+        this.audio.pause();
+        
+        // Update play button
+        const playBtn = document.getElementById('play-btn');
+        if (playBtn) {
+            playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        }
+        
+        // ✅ Auto-play first track for saved playlists
+        if (this.playerPlaylist.length > 0) {
+            // Auto-playing first track from saved playlist
+            this.playTrack(0);
+        }
+    }
+    
+    // ✅ Update Playlist Info
+    updatePlaylistInfo() {
+        if (!this.currentPlaylist) return;
+        
+        const playlistName = document.getElementById('playlist-name');
+        if (playlistName) {
+            playlistName.textContent = this.currentPlaylist.name;
+        }
+        
+        const trackCount = document.getElementById('track-count');
+        if (trackCount) {
+            trackCount.textContent = `${this.playerPlaylist.length} bài hát`;
         }
     }
     
@@ -908,7 +1227,7 @@ class MusicPlayer {
             return;
         }
         
-        console.log('🔍 Loading all playlists...', searchQuery ? `search: "${searchQuery}"` : 'all');
+        // Loading all playlists
         
         // Get container
         const playlistsWrapper = document.getElementById('all-playlists-wrapper');
@@ -939,8 +1258,8 @@ class MusicPlayer {
             const userResponse = await fetch(userURL);
             const userData = await userResponse.json();
             
-            console.log('📊 Admin Playlists:', adminData);
-            console.log('📊 User Playlists:', userData);
+            // Admin Playlists loaded
+            // User Playlists loaded
             
             // Show/hide clear button
             if (clearBtn) {
@@ -982,6 +1301,9 @@ class MusicPlayer {
                             `}
                             <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
                             <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
+                            <button class="playlist-save-btn" data-playlist-id="${playlist.id}" data-playlist-type="global" title="Lưu playlist">
+                                <i class="bi bi-heart"></i>
+                            </button>
                         </div>
                     `);
                 });
@@ -989,7 +1311,7 @@ class MusicPlayer {
             
             // Add user public playlists
             if (userData.success && userData.playlists.length > 0) {
-                console.log(`✅ Found ${userData.playlists.length} user playlists`);
+                // Found user playlists
                 userData.playlists.forEach(playlist => {
                     const escapedName = this.escapeHtml(playlist.name);
                     const escapedOwner = this.escapeHtml(playlist.owner.full_name);
@@ -1011,6 +1333,9 @@ class MusicPlayer {
                                 <i class="bi bi-person-circle"></i>
                                 <span class="playlist-card-owner-name" title="${escapedOwner}">${escapedOwner}</span>
                             </div>
+                            <button class="playlist-save-btn" data-playlist-id="${playlist.id}" data-playlist-type="user" title="Lưu playlist">
+                                <i class="bi bi-heart"></i>
+                            </button>
                         </div>
                     `);
                 });
@@ -1019,6 +1344,13 @@ class MusicPlayer {
             // Render all playlists or show empty state
             if (allPlaylists.length > 0) {
                 playlistsWrapper.innerHTML = allPlaylists.join('');
+                
+                // ✅ NEW: Add event listeners for save buttons in global playlists
+                this.addGlobalPlaylistSaveButtonListeners();
+                
+                // ✅ NEW: Load save states for global playlists
+                await this.loadPlaylistSaveStates();
+                this.updatePlaylistSaveButtonStates();
             } else {
                 const emptyMessage = searchQuery 
                     ? `Không tìm thấy playlist nào cho "${this.escapeHtml(searchQuery)}"`
@@ -1043,12 +1375,12 @@ class MusicPlayer {
     }
     
     // ✅ Wrapper function để tự động load admin hoặc global playlist
-    async loadPlaylist(playlistId) {
+    async loadPlaylist(playlistId, silent = false) {
         // Admin playlists không có prefix, gọi loadGlobalPlaylist
-        return await this.loadGlobalPlaylist(playlistId);
+        return await this.loadGlobalPlaylist(playlistId, silent);
     }
     
-    async loadGlobalPlaylist(playlistId) {
+    async loadGlobalPlaylist(playlistId, silent = false) {
         try {
             const response = await fetch(`/music/global/playlists/${playlistId}/`);
             
@@ -1077,7 +1409,7 @@ class MusicPlayer {
                 };
                 
                 this.currentTrackIndex = 0;
-                this.populateTrackList();
+                await this.populateTrackList();
                 
                 // Update active state for global playlist cards
                 const playlistsWrapper = document.getElementById('all-playlists-wrapper');
@@ -1126,13 +1458,20 @@ class MusicPlayer {
                     this.playTrack(0);
                 }, 100);
                 
-                this.showMessage(`🎵 Đang phát: ${data.playlist.name}`, 'success');
+                // ✅ Only show message if not in silent mode
+                if (!silent) {
+                    this.showMessage(`🎵 Đang phát: ${data.playlist.name}`, 'success');
+                }
             } else {
-                this.showMessage('Playlist chưa có bài hát!', 'info');
+                if (!silent) {
+                    this.showMessage('Playlist chưa có bài hát!', 'info');
+                }
             }
         } catch (error) {
             console.error('Error loading global playlist:', error);
-            this.showMessage('Lỗi khi load playlist!', 'error');
+            if (!silent) {
+                this.showMessage('Lỗi khi load playlist!', 'error');
+            }
         }
     }
     
@@ -1217,32 +1556,32 @@ class MusicPlayer {
             
             if (data.success) {
                 this.playlists = data.playlists;
-                this.populatePlaylistSelect();
+                await this.populatePlaylistSelect();
                 
                 // ✅ Thử restore state trước (chỉ 1 lần) - now async
                 if (!this.restoreAttempted) {
                     this.restoreAttempted = true;
-                    console.log('🔄 Restoring player state...');
+                    // Restoring player state
                     
                     // Use async/await since restorePlayerState is now async
                     this.restorePlayerState().then(restored => {
                         if (!restored) {
-                            console.log('ℹ️ No saved state found or restore failed');
+                            // No saved state found or restore failed
                             // Nếu không có state để restore, auto-select first playlist
                             if (this.playlists.length > 0 && this.settings.default_playlist_id) {
                                 const defaultPlaylist = this.playlists.find(p => p.id === this.settings.default_playlist_id);
                                 if (defaultPlaylist) {
-                                    this.selectPlaylist(defaultPlaylist.id);
+                                    this.selectPlaylist(defaultPlaylist.id, true); // ✅ Silent mode for auto-select
                                 }
                             } else if (this.playlists.length > 0) {
-                                this.selectPlaylist(this.playlists[0].id);
+                                this.selectPlaylist(this.playlists[0].id, true); // ✅ Silent mode for auto-select
                             }
                         }
                     }).catch(error => {
                         console.error('❌ Error during restore:', error);
                         // Fallback to default playlist on error
                         if (this.playlists.length > 0) {
-                            this.selectPlaylist(this.playlists[0].id);
+                            this.selectPlaylist(this.playlists[0].id, true); // ✅ Silent mode for auto-select
                         }
                     });
                 }
@@ -1255,7 +1594,7 @@ class MusicPlayer {
     async loadPlaylistsLegacy() {
         // Fallback method using legacy endpoint /music/api/
         try {
-            console.log('📡 Loading playlists (legacy endpoint)...');
+            // Loading playlists (legacy endpoint)
             const response = await fetch(`/music/api/?t=${Date.now()}`, {
                 cache: 'no-cache',
                 headers: {
@@ -1268,8 +1607,8 @@ class MusicPlayer {
             
             if (data.success) {
                 this.playlists = data.playlists;
-                this.populatePlaylistSelect();
-                console.log('✅ Playlists loaded (legacy)');
+                await this.populatePlaylistSelect();
+                // Playlists loaded (legacy)
             }
         } catch (error) {
             console.error('Error loading playlists (legacy):', error);
@@ -1301,14 +1640,14 @@ class MusicPlayer {
             
             if (data.success) {
                 this.playlists = data.playlists;
-                this.populatePlaylistSelect();
+                await this.populatePlaylistSelect();
                 
                 // Keep current playlist if still exists
                 if (this.currentPlaylist) {
                     const updatedPlaylist = this.playlists.find(p => p.id === this.currentPlaylist.id);
                     if (updatedPlaylist) {
                         this.currentPlaylist = updatedPlaylist;
-                        this.populateTrackList();
+                        await this.populateTrackList();
                         this.updateCurrentTrack();
                         
                         // ✅ Update cached indicators after refresh
@@ -1327,7 +1666,7 @@ class MusicPlayer {
 
     async loadInitialData() {
         try {
-            console.log('📡 Loading initial data (batched)...');
+            // Loading initial data (batched)
             
             const response = await fetch('/music/api/initial-data/', {
                 cache: 'no-store',
@@ -1387,6 +1726,7 @@ class MusicPlayer {
             this.userTracks = data.user_tracks || [];
             this.userPlaylists = data.user_playlists || [];
             
+            // Initial data loaded successfully
             console.log('✅ Initial data loaded:', {
                 playlists: this.playlists.length,
                 tracks: this.userTracks.length,
@@ -1396,29 +1736,29 @@ class MusicPlayer {
             // ✅ Try restore state (chỉ 1 lần duy nhất)
             if (!this.restoreAttempted) {
                 this.restoreAttempted = true;
-                console.log('🔄 Restoring player state...');
+                // Restoring player state
                 
                 // Use async/await since restorePlayerState is now async
                 this.restorePlayerState().then(restored => {
                     if (!restored) {
-                        console.log('ℹ️ No saved state found or restore failed');
+                        // No saved state found or restore failed
                         // ✅ If no state to restore, auto-select first playlist
-                        console.log('🔄 Fallback: Selecting first playlist');
+                        // Fallback: Selecting first playlist
                         if (this.playlists.length > 0 && this.settings.default_playlist_id) {
                             const defaultPlaylist = this.playlists.find(p => p.id === this.settings.default_playlist_id);
                             if (defaultPlaylist) {
-                                this.selectPlaylist(defaultPlaylist.id);
+                                this.selectPlaylist(defaultPlaylist.id, true); // ✅ Silent mode for auto-select
                             }
                         } else if (this.playlists.length > 0) {
-                            this.selectPlaylist(this.playlists[0].id);
+                            this.selectPlaylist(this.playlists[0].id, true); // ✅ Silent mode for auto-select
                         }
                     }
                 }).catch(error => {
                     console.error('❌ Error during restore:', error);
                     // Fallback to default playlist on error
-                    console.log('🔄 Fallback: Selecting first playlist');
+                    // Fallback: Selecting first playlist
                     if (this.playlists.length > 0) {
-                        this.selectPlaylist(this.playlists[0].id);
+                        this.selectPlaylist(this.playlists[0].id, true); // ✅ Silent mode for auto-select
                     }
                 });
             }
@@ -1437,7 +1777,7 @@ class MusicPlayer {
     // 2. Switch tab Playlists (auto refresh)
     // 3. Manual refresh button (có thể thêm sau)
 
-    populatePlaylistSelect() {
+    async populatePlaylistSelect() {
         // Populate hidden select for backward compatibility
         this.playlistSelect.innerHTML = '<option value="">Chọn playlist...</option>';
         this.playlists.forEach(playlist => {
@@ -1448,10 +1788,10 @@ class MusicPlayer {
         });
         
         // Populate playlist grid with beautiful cards
-        this.populatePlaylistGrid();
+        await this.populatePlaylistGrid();
     }
     
-    populatePlaylistGrid() {
+    async populatePlaylistGrid() {
         const playlistGrid = document.getElementById('playlist-grid');
         if (!playlistGrid) return;
         
@@ -1485,9 +1825,23 @@ class MusicPlayer {
                 <div class="playlist-card-cover" style="background-image: url('${coverImage}');"></div>
                 <div class="playlist-card-name" title="${escapedName}">${escapedName}</div>
                 <div class="playlist-card-count">${playlist.tracks_count || playlist.tracks?.length || 0} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>
+                <button class="playlist-save-btn" data-playlist-id="${playlist.id}" data-playlist-type="${playlist.type || 'global'}" title="Lưu playlist">
+                    <i class="bi bi-heart"></i>
+                </button>
             `;
             
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                // Handle save button clicks
+                if (e.target.closest('.playlist-save-btn')) {
+                    e.stopPropagation(); // Prevent playlist selection
+                    const saveBtn = e.target.closest('.playlist-save-btn');
+                    const playlistId = saveBtn.dataset.playlistId;
+                    const playlistType = saveBtn.dataset.playlistType;
+                    this.toggleSavePlaylist(playlistId, playlistType, saveBtn);
+                    return;
+                }
+                
+                // Handle playlist card clicks
                 // Update select value
                 this.playlistSelect.value = playlist.id;
                 // Select playlist
@@ -1504,9 +1858,13 @@ class MusicPlayer {
             
             playlistGrid.appendChild(card);
         });
+        
+        // ✅ NEW: Load playlist save states and update button states
+        await this.loadPlaylistSaveStates();
+        this.updatePlaylistSaveButtonStates();
     }
 
-    selectPlaylist(playlistId) {
+    selectPlaylist(playlistId, silent = false) {
         const playlist = this.playlists.find(p => p.id === parseInt(playlistId));
         if (!playlist) return;
         
@@ -1514,10 +1872,10 @@ class MusicPlayer {
         // Kiểm tra xem đây là admin playlist hay user playlist
         if (playlist.type === 'user') {
             // User playlist - reload từ API
-            this.loadUserPlaylist(playlistId);
+            this.loadUserPlaylist(playlistId, silent);
         } else {
             // Admin/Global playlist - reload từ API
-            this.loadGlobalPlaylist(playlistId);
+            this.loadGlobalPlaylist(playlistId, silent);
         }
         
         // Old code commented out - không dùng cache nữa
@@ -1535,7 +1893,7 @@ class MusicPlayer {
                 if (this.offlineManager && this.currentPlaylist) {
                     await this.updateCachedTracksStatus();
                     this.updateTrackListOfflineIndicators();
-                    console.log('🔄 Cached indicators updated (retry after offline manager ready)');
+                    // Cached indicators updated (retry after offline manager ready)
                 }
             }, 500);
         }
@@ -1581,7 +1939,98 @@ class MusicPlayer {
         }
     }
 
-    populateTrackList() {
+    // ✅ Open playlist from external source (like saved music)
+    openPlaylist(playlist) {
+        if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
+            // Invalid playlist provided to openPlaylist
+            return;
+        }
+        
+        // Opening external playlist
+        
+        // ✅ CRITICAL FIX: Add playlist to this.playlists array for state management
+        const existingIndex = this.playlists.findIndex(p => p.id === playlist.id);
+        if (existingIndex >= 0) {
+            this.playlists[existingIndex] = playlist;
+        } else {
+            this.playlists.push(playlist);
+        }
+        
+        // Set as current playlist
+        this.currentPlaylist = playlist;
+        
+        // ✅ CRITICAL FIX: Don't reset to first track if we're continuing playback
+        // Only reset to first track if no track is currently playing
+        if (this.currentTrackIndex === -1 || !this.currentTrack) {
+            this.currentTrackIndex = 0;
+            this.currentTrack = playlist.tracks[0];
+        } else {
+            // Try to find the current track in the new playlist
+            const currentTrackId = this.currentTrack.id;
+            const foundIndex = playlist.tracks.findIndex(track => track.id === currentTrackId);
+            
+            if (foundIndex >= 0) {
+                // Current track exists in new playlist, continue from there
+                this.currentTrackIndex = foundIndex;
+                this.currentTrack = playlist.tracks[foundIndex];
+                console.log('🎵 Continuing playback from track:', foundIndex);
+            } else {
+                // Current track not found, start from first track
+                this.currentTrackIndex = 0;
+                this.currentTrack = playlist.tracks[0];
+                console.log('🎵 Current track not found, starting from first track');
+            }
+        }
+        
+        // Update playlist selector
+        this.playlistSelect.value = playlist.id;
+        
+        // Populate track list
+        this.populateTrackList();
+        
+        // Update UI
+        this.updateCurrentTrack();
+        this.updateTrackListSelection();
+        
+        // Update active state for playlist cards
+        const playlistGrid = document.getElementById('playlist-grid');
+        if (playlistGrid) {
+            playlistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                if (parseInt(card.dataset.playlistId) === playlist.id) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+        
+        // Also update user playlist cards if visible
+        const userPlaylistGrid = document.getElementById('user-playlist-grid');
+        if (userPlaylistGrid) {
+            userPlaylistGrid.querySelectorAll('.playlist-card').forEach(card => {
+                if (parseInt(card.dataset.playlistId) === playlist.id) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+        
+        // Save state
+        this.savePlayerState();
+        
+        // ✅ CRITICAL FIX: Only auto-play if we're starting fresh, not continuing
+        if (this.currentTrackIndex === 0 && (!this.currentTrack || !this.audio.src)) {
+            this.userInteracted = true;
+            setTimeout(() => {
+                this.playTrack(0);
+            }, 100);
+        } else {
+            console.log('🎵 Continuing playback, not auto-playing');
+        }
+    }
+
+    async populateTrackList() {
         if (!this.currentPlaylist) return;
         
         if (this.currentPlaylist.tracks.length === 0) {
@@ -1622,7 +2071,9 @@ class MusicPlayer {
             
             trackItem.innerHTML = `
                 <div class="track-item-number">${index + 1}</div>
-                <i class="bi bi-music-note-beamed track-item-icon"></i>
+                <button class="track-item-save-btn track-item-icon" data-track-id="${track.id}" data-track-type="${track.type || 'global'}" title="Lưu bài hát">
+                    <i class="bi bi-music-note-beamed"></i>
+                </button>
                 <div class="track-item-info">
                     <div class="track-item-title">${escapedTitle}</div>
                     <div class="track-item-artist">${escapedArtist}</div>
@@ -1643,6 +2094,633 @@ class MusicPlayer {
         // ✅ Single DOM update thay vì nhiều appendChild calls
         this.trackList.innerHTML = '';
         this.trackList.appendChild(fragment);
+        
+        // ✅ NEW: Update track save button states (simplified)
+        this.updateTrackSaveButtonStates();
+        
+        // ✅ CRITICAL FIX: Update cached indicators after track list refresh
+        // This ensures cache icons don't disappear when play count updates
+        this.updateTrackListOfflineIndicators();
+    }
+
+    // ✅ Saved Music Methods
+    // ✅ Load Saved Music
+    async loadSavedMusic() {
+        try {
+            // Load saved tracks
+            const tracksResponse = await fetch('/music/saved/tracks/', {
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            const tracksData = await tracksResponse.json();
+            
+            // Load saved playlists
+            const playlistsResponse = await fetch('/music/saved/playlists/', {
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            const playlistsData = await playlistsResponse.json();
+            
+            if (tracksData.success) {
+                this.populateSavedTracks(tracksData.tracks);
+            } else {
+                console.error('🎵 Failed to load saved tracks:', tracksData.error);
+            }
+            
+            if (playlistsData.success) {
+                this.populateSavedPlaylists(playlistsData.playlists);
+            } else {
+                console.error('🎵 Failed to load saved playlists:', playlistsData.error);
+            }
+        } catch (error) {
+            console.error('🎵 Error loading saved music:', error);
+        }
+    }
+    
+    // ✅ NEW: Simple method to check if playlist is saved
+    isPlaylistSaved(playlistId, playlistType = 'global') {
+        const key = `${playlistType}_${playlistId}`;
+        return this.playlistSaveStates.get(key) || false;
+    }
+    
+    // ✅ NEW: Set playlist save state
+    setPlaylistSavedState(playlistId, playlistType = 'global', isSaved) {
+        const key = `${playlistType}_${playlistId}`;
+        this.playlistSaveStates.set(key, isSaved);
+        console.log(`🎵 Set playlist ${key} saved state: ${isSaved}`);
+    }
+    
+    // ✅ NEW: Load all playlist save states from API
+    async loadPlaylistSaveStates() {
+        try {
+            // Get all playlists from admin grid
+            const adminPlaylists = this.playlists.map(playlist => ({
+                id: playlist.id,
+                type: playlist.type || 'global'
+            }));
+            
+            // Get all playlists from global grid
+            const globalPlaylists = [];
+            const playlistsWrapper = document.getElementById('all-playlists-wrapper');
+            if (playlistsWrapper) {
+                const globalCards = playlistsWrapper.querySelectorAll('.playlist-card');
+                globalCards.forEach(card => {
+                    const playlistId = card.dataset.playlistId;
+                    const saveBtn = card.querySelector('.playlist-save-btn');
+                    if (saveBtn) {
+                        globalPlaylists.push({
+                            id: saveBtn.dataset.playlistId,
+                            type: saveBtn.dataset.playlistType
+                        });
+                    }
+                });
+            }
+            
+            // Combine all playlists
+            const allPlaylists = [...adminPlaylists, ...globalPlaylists];
+            
+            if (allPlaylists.length === 0) return;
+            
+            const response = await fetch('/music/saved/check-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    tracks: [],
+                    playlists: allPlaylists
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Store all playlist save states in our Map
+                Object.entries(data.saved_status.playlists).forEach(([key, isSaved]) => {
+                    this.playlistSaveStates.set(key, isSaved);
+                });
+                console.log('🎵 Loaded playlist save states:', this.playlistSaveStates);
+            }
+        } catch (error) {
+            console.error('Error loading playlist save states:', error);
+        }
+    }
+    
+    // ✅ NEW: Update playlist save button states using our Map
+    updatePlaylistSaveButtonStates() {
+        // Update save buttons in admin playlists
+        const adminPlaylistSaveBtns = document.querySelectorAll('#playlist-grid .playlist-save-btn');
+        adminPlaylistSaveBtns.forEach(btn => {
+            const playlistId = btn.dataset.playlistId;
+            const playlistType = btn.dataset.playlistType || 'global';
+            
+            const isSaved = this.isPlaylistSaved(playlistId, playlistType);
+            
+            if (isSaved) {
+                btn.classList.add('saved');
+                btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                btn.title = 'Bỏ lưu playlist';
+            } else {
+                btn.classList.remove('saved');
+                btn.innerHTML = '<i class="bi bi-heart"></i>';
+                btn.title = 'Lưu playlist';
+            }
+        });
+        
+        // ✅ NEW: Update save buttons in global playlists
+        const globalPlaylistSaveBtns = document.querySelectorAll('#all-playlists-wrapper .playlist-save-btn');
+        globalPlaylistSaveBtns.forEach(btn => {
+            const playlistId = btn.dataset.playlistId;
+            const playlistType = btn.dataset.playlistType || 'global';
+            
+            const isSaved = this.isPlaylistSaved(playlistId, playlistType);
+            
+            if (isSaved) {
+                btn.classList.add('saved');
+                btn.innerHTML = '<i class="bi bi-heart-fill"></i>';
+                btn.title = 'Bỏ lưu playlist';
+            } else {
+                btn.classList.remove('saved');
+                btn.innerHTML = '<i class="bi bi-heart"></i>';
+                btn.title = 'Lưu playlist';
+            }
+        });
+    }
+    
+    // ✅ NEW: Update track save button states (placeholder for now)
+    updateTrackSaveButtonStates() {
+        // For now, just ensure track save buttons are visible
+        const trackSaveBtns = document.querySelectorAll('.track-item-save-btn');
+        trackSaveBtns.forEach(btn => {
+            // Track save buttons will be handled separately if needed
+            // For now, just ensure they're properly styled
+        });
+    }
+    
+    // ✅ NEW: Add event listeners for save buttons in global playlists
+    addGlobalPlaylistSaveButtonListeners() {
+        const playlistsWrapper = document.getElementById('all-playlists-wrapper');
+        if (!playlistsWrapper) return;
+        
+        // Add event listeners for save buttons
+        const saveButtons = playlistsWrapper.querySelectorAll('.playlist-save-btn');
+        saveButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent playlist selection
+                const playlistId = btn.dataset.playlistId;
+                const playlistType = btn.dataset.playlistType;
+                this.toggleSavePlaylist(playlistId, playlistType, btn);
+            });
+        });
+    }
+    
+    populateSavedTracks(tracks) {
+        const container = document.getElementById('saved-tracks-list');
+        if (!container) return;
+        
+        if (tracks.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-heart"></i>
+                    <p>Chưa có bài hát nào được lưu. Hãy lưu bài hát yêu thích!</p>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                        💡 Nhấn vào icon <i class="bi bi-heart"></i> trên bài hát để lưu vào danh sách yêu thích
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        tracks.forEach(track => {
+            html += `
+                <div class="saved-track-item" data-track-id="${track.track_id}" data-track-type="${track.track_type}">
+                    <div class="saved-track-info">
+                        <div class="saved-track-title" title="${track.title}">${track.title}</div>
+                        <div class="saved-track-meta">
+                            <span>${track.artist}</span>
+                            <span>•</span>
+                            <span>${track.duration_formatted}</span>
+                            <span>•</span>
+                            <span>Lưu: ${track.saved_at}</span>
+                        </div>
+                    </div>
+                    <div class="saved-track-actions">
+                        <button class="delete-saved-track-btn" data-saved-track-id="${track.id}" title="Xóa khỏi danh sách đã lưu">
+                            <i class="bi bi-trash"></i>
+                            <span>Xóa</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // ✅ Add event delegation for delete buttons
+        container.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-saved-track-btn')) {
+                e.stopPropagation();
+                const deleteBtn = e.target.closest('.delete-saved-track-btn');
+                const savedTrackId = deleteBtn.dataset.savedTrackId;
+                this.deleteSavedTrack(savedTrackId, deleteBtn);
+            }
+        });
+    }
+    
+    populateSavedPlaylists(playlists) {
+        const container = document.getElementById('saved-playlists-list');
+        if (!container) return;
+        
+        if (playlists.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-collection-play"></i>
+                    <p>Chưa có playlist nào được lưu. Hãy lưu playlist yêu thích!</p>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px;">
+                        💡 Nhấn vào icon <i class="bi bi-heart"></i> trên playlist để lưu vào danh sách yêu thích
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        playlists.forEach(playlist => {
+            html += `
+                <div class="saved-playlist-item" data-playlist-id="${playlist.playlist_id}" data-playlist-type="${playlist.playlist_type}">
+                    <div class="saved-playlist-info">
+                        <div class="saved-playlist-title" title="${playlist.name}">${playlist.name}</div>
+                        <div class="saved-playlist-meta">
+                            <span>${playlist.tracks_count} bài</span>
+                            <span>•</span>
+                            <span>Lưu: ${playlist.saved_at}</span>
+                        </div>
+                    </div>
+                    <div class="saved-playlist-actions">
+                        <button class="delete-saved-playlist-btn" data-saved-playlist-id="${playlist.id}" title="Xóa khỏi danh sách đã lưu">
+                            <i class="bi bi-trash"></i>
+                            <span>Xóa</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // ✅ Add event delegation for delete buttons
+        container.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-saved-playlist-btn')) {
+                e.stopPropagation();
+                const deleteBtn = e.target.closest('.delete-saved-playlist-btn');
+                const savedPlaylistId = deleteBtn.dataset.savedPlaylistId;
+                this.deleteSavedPlaylist(savedPlaylistId, deleteBtn);
+            }
+        });
+    }
+    
+    async toggleSaveTrack(trackId, trackType, saveBtn) {
+        console.log('🎵 Toggle save track called:', { trackId, trackType });
+        
+        try {
+            const isSaved = saveBtn.classList.contains('saved');
+            console.log('🎵 Is saved:', isSaved);
+            
+            if (isSaved) {
+                // Bỏ lưu bài hát
+                const url = '/music/saved/track/unsave/';
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        track_id: trackId,
+                        track_type: trackType
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Toggle button state
+                    saveBtn.classList.remove('saved');
+                    saveBtn.innerHTML = '<i class="bi bi-music-note-beamed"></i>';
+                    saveBtn.title = 'Lưu bài hát';
+                    
+                    this.showMessage(data.message, 'success');
+                } else {
+                    this.showMessage(data.error || 'Có lỗi xảy ra', 'error');
+                }
+            } else {
+                // Lưu bài hát - hiển thị modal chọn cách lưu
+                console.log('🎵 Showing save track options modal');
+                this.showSaveTrackOptionsModal(trackId, trackType, saveBtn);
+            }
+        } catch (error) {
+            console.error('Error toggling save track:', error);
+            this.showMessage('Có lỗi xảy ra khi lưu bài hát', 'error');
+        }
+    }
+    
+    // ✅ Show Save Track Options Modal
+    showSaveTrackOptionsModal(trackId, trackType, saveBtn) {
+        // Store current track info for later use
+        this.pendingSaveTrack = {
+            trackId: trackId,
+            trackType: trackType,
+            saveBtn: saveBtn
+        };
+        
+        // Load user playlists for "add to existing" option
+        this.loadUserPlaylistsForModal();
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('saveTrackOptionsModal'));
+        modal.show();
+    }
+    
+    // ✅ Load User Playlists for Modal
+    async loadUserPlaylistsForModal() {
+        try {
+            const response = await fetch('/music/user/playlists/', {
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken()
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const select = document.getElementById('existingPlaylistSelect');
+                select.innerHTML = '<option value="">Chọn playlist...</option>';
+                
+                data.playlists.forEach(playlist => {
+                    const option = document.createElement('option');
+                    option.value = playlist.id;
+                    option.textContent = playlist.name;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading user playlists for modal:', error);
+        }
+    }
+    
+    // ✅ Handle Modal Option Changes
+    handleSaveTrackOptionChange() {
+        const playlistAction = document.querySelector('input[name="playlistAction"]:checked').value;
+        
+        // Hide all conditional elements
+        document.getElementById('existingPlaylistSelector').style.display = 'none';
+        document.getElementById('newPlaylistNameInput').style.display = 'none';
+        
+        // Show relevant elements based on selection
+        if (playlistAction === 'add_to_existing') {
+            document.getElementById('existingPlaylistSelector').style.display = 'block';
+        } else if (playlistAction === 'create_new') {
+            document.getElementById('newPlaylistNameInput').style.display = 'block';
+        }
+    }
+    
+    // ✅ Confirm Save Track
+    async confirmSaveTrack() {
+        if (!this.pendingSaveTrack) {
+            console.error('❌ No pending save track found');
+            return;
+        }
+        
+        const { trackId, trackType, saveBtn } = this.pendingSaveTrack;
+        console.log('🎵 Confirming save track:', { trackId, trackType });
+        
+        try {
+            const playlistAction = document.querySelector('input[name="playlistAction"]:checked').value;
+            let requestData = {
+                track_id: trackId,
+                track_type: trackType,
+                playlist_action: playlistAction
+            };
+            
+            // Add additional data based on action
+            if (playlistAction === 'add_to_existing') {
+                const existingPlaylistId = document.getElementById('existingPlaylistSelect').value;
+                if (!existingPlaylistId) {
+                    this.showMessage('Vui lòng chọn playlist', 'error');
+                    return;
+                }
+                requestData.existing_playlist_id = existingPlaylistId;
+            } else if (playlistAction === 'create_new') {
+                const newPlaylistName = document.getElementById('newPlaylistName').value.trim();
+                if (!newPlaylistName) {
+                    this.showMessage('Vui lòng nhập tên playlist', 'error');
+                    return;
+                }
+                requestData.new_playlist_name = newPlaylistName;
+            }
+            
+            console.log('📤 Sending request data:', requestData);
+            
+            const response = await fetch('/music/saved/track/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            console.log('📥 Response status:', response.status);
+            
+            const data = await response.json();
+            console.log('📥 Response data:', data);
+            
+            if (data.success) {
+                // Toggle button state
+                saveBtn.classList.add('saved');
+                saveBtn.innerHTML = '<i class="bi bi-music-note-beamed"></i>';
+                saveBtn.title = 'Bỏ lưu bài hát';
+                
+                // Show success message with playlist info
+                let message = data.message;
+                if (data.playlist_name) {
+                    message += ` và đã thêm vào playlist "${data.playlist_name}"`;
+                }
+                this.showMessage(message, 'success');
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('saveTrackOptionsModal'));
+                modal.hide();
+                
+                // Refresh user playlists if needed
+                if (data.playlist_created) {
+                    this.refreshPlaylists();
+                }
+                
+            } else {
+                this.showMessage(data.error || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            console.error('Error confirming save track:', error);
+            this.showMessage('Có lỗi xảy ra khi lưu bài hát', 'error');
+        } finally {
+            // Clear pending save track
+            this.pendingSaveTrack = null;
+        }
+    }
+    
+    // ✅ Delete Saved Track
+    async deleteSavedTrack(savedTrackId, deleteBtn) {
+        if (!confirm('Bạn có chắc muốn xóa bài hát này khỏi danh sách đã lưu?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/music/saved/track/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    saved_track_id: savedTrackId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Remove the track item from DOM
+                const trackItem = deleteBtn.closest('.saved-track-item');
+                if (trackItem) {
+                    trackItem.remove();
+                }
+                
+                this.showMessage(data.message, 'success');
+                
+                // Refresh saved tracks list if empty
+                const container = document.getElementById('saved-tracks-list');
+                if (container && container.children.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-heart"></i>
+                            <p>Chưa có bài hát nào được lưu. Hãy lưu bài hát yêu thích!</p>
+                        </div>
+                    `;
+                }
+            } else {
+                this.showMessage(data.error || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting saved track:', error);
+            this.showMessage('Có lỗi xảy ra khi xóa bài hát', 'error');
+        }
+    }
+    
+    // ✅ Delete Saved Playlist
+    async deleteSavedPlaylist(savedPlaylistId, deleteBtn) {
+        if (!confirm('Bạn có chắc muốn xóa playlist này khỏi danh sách đã lưu?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/music/saved/playlist/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    saved_playlist_id: savedPlaylistId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Remove the playlist item from DOM
+                const playlistItem = deleteBtn.closest('.saved-playlist-item');
+                if (playlistItem) {
+                    playlistItem.remove();
+                }
+                
+                this.showMessage(data.message, 'success');
+                
+                // Refresh saved playlists list if empty
+                const container = document.getElementById('saved-playlists-list');
+                if (container && container.children.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bi bi-collection-play"></i>
+                            <p>Chưa có playlist nào được lưu. Hãy lưu playlist yêu thích!</p>
+                        </div>
+                    `;
+                }
+            } else {
+                this.showMessage(data.error || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting saved playlist:', error);
+            this.showMessage('Có lỗi xảy ra khi xóa playlist', 'error');
+        }
+    }
+    
+    async toggleSavePlaylist(playlistId, playlistType, saveBtn) {
+        try {
+            const currentState = this.isPlaylistSaved(playlistId, playlistType);
+            const url = currentState ? '/music/saved/playlist/unsave/' : '/music/saved/playlist/save/';
+            
+            console.log(`🎵 Toggling playlist ${playlistType}_${playlistId} from ${currentState} to ${!currentState}`);
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    playlist_id: playlistId,
+                    playlist_type: playlistType
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // ✅ NEW: Update our Map immediately
+                this.setPlaylistSavedState(playlistId, playlistType, !currentState);
+                
+                // ✅ NEW: Update ALL playlist save buttons (not just the clicked one)
+                this.updatePlaylistSaveButtonStates();
+                
+                this.showMessage(data.message, 'success');
+                
+                // ✅ Refresh saved music lists after saving/unsaving playlist
+                await this.loadSavedMusic();
+            } else {
+                this.showMessage(data.error || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            console.error('Error toggling save playlist:', error);
+            this.showMessage('Có lỗi xảy ra khi lưu playlist', 'error');
+        }
+    }
+    
+    getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : '';
+    }
+    
+    isAuthenticated() {
+        // Check if user is authenticated by looking for CSRF token and user info
+        const csrfToken = this.getCSRFToken();
+        const userInfo = document.querySelector('[data-user-id]');
+        return csrfToken && userInfo;
     }
 
     showMessage(message, type = 'info') {
@@ -1706,6 +2784,15 @@ class MusicPlayer {
         }, duration);
     }
     
+    // ✅ Notify Service Worker về user interaction
+    notifyServiceWorkerUserInteraction() {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                action: 'userInteracted'
+            });
+        }
+    }
+    
     playTrack(index) {
         if (!this.currentPlaylist || !this.currentPlaylist.tracks[index]) return;
         
@@ -1750,8 +2837,7 @@ class MusicPlayer {
         const fileUrl = track.file_url;
         
         // Load track mới
-        // ✅ CRITICAL FIX: Use URL as-is from backend (Django already handles encoding)
-        // DO NOT encode again - will cause double encoding issues
+        // ✅ Use URL as-is from backend (filenames are slugified on upload)
         let finalUrl = fileUrl;
         
         // ✅ CRITICAL FIX: Add cache-busting parameter nếu đang skip cache check
@@ -1897,6 +2983,7 @@ class MusicPlayer {
         // ✅ Dùng textContent thay vì innerHTML để tránh XSS
         this.currentTrackTitle.textContent = track.title;
         this.currentTrackArtist.textContent = track.artist;
+        
         
         // Update album cover (track cover → playlist cover → default) with cache-busting
         if (this.currentAlbumCover) {
@@ -2108,25 +3195,10 @@ class MusicPlayer {
     }
 
     formatTime(seconds) {
-        // ✅ Cache với LRU limit (giữ tối đa 100 entries để tiết kiệm memory)
-        const secondsInt = Math.floor(seconds);
-        
-        if (this.formatTimeCache.has(secondsInt)) {
-            return this.formatTimeCache.get(secondsInt);
-        }
-        
-        const mins = Math.floor(secondsInt / 60);
-        const secs = secondsInt % 60;
-        const formatted = `${mins}:${secs.toString().padStart(2, '0')}`;
-        
-        // ✅ LRU cleanup - clear cache khi quá 100 entries
-        if (this.formatTimeCache.size > 100) {
-            const firstKey = this.formatTimeCache.keys().next().value;
-            this.formatTimeCache.delete(firstKey);
-        }
-        
-        this.formatTimeCache.set(secondsInt, formatted);
-        return formatted;
+        // Simple time formatting without complex caching
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
     seekToPosition(event) {
@@ -2213,7 +3285,7 @@ class MusicPlayer {
         }
     }
     
-    // ✅ Retry audio load với URL encoding fix
+    // ✅ Retry audio load
     retryAudioLoad() {
         if (!this.currentTrack || !this.currentPlaylist) {
             console.log('🔄 No track to retry, skipping');
@@ -2232,7 +3304,7 @@ class MusicPlayer {
         
         console.log('🔄 Retrying audio load...');
         
-        // ✅ Use URL as-is from backend (Django already encodes it properly)
+        // ✅ Use URL as-is from backend (filenames are slugified on upload)
         this.audio.src = track.file_url;
         this.audio.load();
         
@@ -3214,8 +4286,23 @@ class MusicPlayer {
         }
         
         this.saveStateDebounceTimer = setTimeout(() => {
+            // ✅ Use real ID or prefixed ID for user playlists
+            let playlistId = this.currentPlaylist.id;
+            if (this.currentPlaylist.type === 'user' && typeof playlistId === 'number') {
+                playlistId = 'user-playlist-' + playlistId;
+            } else if (playlistId === 'saved-music') {
+                // ✅ CRITICAL FIX: Handle saved music playlist
+                playlistId = 'saved-music';
+            } else if (typeof playlistId === 'string' && playlistId.startsWith('global-playlist-')) {
+                // ✅ CRITICAL FIX: Remove global-playlist- prefix when saving state
+                const idMatch = playlistId.match(/global-playlist-(\d+)/);
+                if (idMatch) {
+                    playlistId = parseInt(idMatch[1]);
+                }
+            }
+            
             const state = {
-                playlistId: this.currentPlaylist.id,
+                playlistId: playlistId,
                 trackIndex: this.currentTrackIndex,
                 currentTime: this.audio.currentTime || 0,
                 isPlaying: this.isPlaying,
@@ -3241,8 +4328,23 @@ class MusicPlayer {
             clearTimeout(this.saveStateDebounceTimer);
         }
         
+        // ✅ Use real ID or prefixed ID for user playlists
+        let playlistId = this.currentPlaylist.id;
+        if (this.currentPlaylist.type === 'user' && typeof playlistId === 'number') {
+            playlistId = 'user-playlist-' + playlistId;
+        } else if (playlistId === 'saved-music') {
+            // ✅ CRITICAL FIX: Handle saved music playlist
+            playlistId = 'saved-music';
+        } else if (typeof playlistId === 'string' && playlistId.startsWith('global-playlist-')) {
+            // ✅ CRITICAL FIX: Remove global-playlist- prefix when saving state
+            const idMatch = playlistId.match(/global-playlist-(\d+)/);
+            if (idMatch) {
+                playlistId = parseInt(idMatch[1]);
+            }
+        }
+        
         const state = {
-            playlistId: this.currentPlaylist.id,
+            playlistId: playlistId,
             trackIndex: this.currentTrackIndex,
             currentTime: this.audio.currentTime || 0,
             isPlaying: this.isPlaying,
@@ -3264,6 +4366,7 @@ class MusicPlayer {
             }
             
             const state = JSON.parse(stateStr);
+            console.log('🔍 Debug: Restoring state:', state); // ✅ Debug log
             
             // Chỉ restore nếu state không quá cũ (trong vòng 2 giờ)
             const maxAge = 2 * 60 * 60 * 1000;
@@ -3274,11 +4377,57 @@ class MusicPlayer {
             
             let playlist = null;
             
-            // ✅ Check if this is a user playlist or user track
+            // ✅ Check if this is a user playlist, user track, or saved music
             const isUserPlaylist = typeof state.playlistId === 'string' && state.playlistId.startsWith('user-playlist-');
             const isUserTrack = typeof state.playlistId === 'string' && state.playlistId.startsWith('user-track-');
+            const isSavedMusic = state.playlistId === 'saved-music';
             
-            if (isUserPlaylist) {
+            console.log('🔍 Debug: Playlist type check:', { isUserPlaylist, isUserTrack, isSavedMusic, playlistId: state.playlistId }); // ✅ Debug log
+            
+            if (isSavedMusic) {
+                // ✅ CRITICAL FIX: Handle saved music playlist restoration
+                console.log(`🔄 Restoring saved music playlist`);
+                
+                try {
+                    const response = await fetch('/music/saved/tracks/', {
+                        headers: {
+                            'X-CSRFToken': this.getCSRFToken()
+                        }
+                    });
+                    console.log('🔍 Debug: Saved music API response:', response.status); // ✅ Debug log
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('🔍 Debug: Saved music data:', data); // ✅ Debug log
+                        if (data.success && data.tracks.length > 0) {
+                            playlist = {
+                                id: 'saved-music',
+                                name: 'Bài Hát Đã Lưu',
+                                type: 'saved',
+                                tracks: data.tracks.map(track => ({
+                                    id: track.track_id,
+                                    title: track.title,
+                                    artist: track.artist || 'Unknown Artist',
+                                    album: track.album || '',
+                                    album_cover: track.album_cover_url,
+                                    file_url: track.file_url,
+                                    duration: track.duration,
+                                    play_count: track.play_count || 0
+                                }))
+                            };
+                            console.log(`✅ Restored saved music playlist with ${playlist.tracks.length} tracks`);
+                        } else {
+                            console.log('⚠️ Saved music API returned no tracks or failed');
+                        }
+                    } else if (response.status === 302 || response.status === 401 || response.status === 403) {
+                        console.log('⚠️ User not logged in, cannot restore saved music');
+                        // ✅ CRITICAL FIX: Don't return false, let it fall through to normal playlist check
+                    } else {
+                        console.log('⚠️ Saved music API failed:', response.status);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to fetch saved music:', error);
+                }
+            } else if (isUserPlaylist) {
                 // Extract playlist ID from "user-playlist-123" format
                 const playlistIdMatch = state.playlistId.match(/user-playlist-(\d+)/);
                 if (playlistIdMatch) {
@@ -3288,11 +4437,13 @@ class MusicPlayer {
                     // Fetch user playlist from API
                     try {
                         const response = await fetch(`/music/user/playlists/${playlistId}/tracks/`);
+                        console.log('🔍 Debug: User playlist API response:', response.status); // ✅ Debug log
                         if (response.ok) {
                             const data = await response.json();
+                            console.log('🔍 Debug: User playlist data:', data); // ✅ Debug log
                             if (data.success && data.tracks.length > 0) {
                                 playlist = {
-                                    id: state.playlistId,
+                                    id: data.playlist.id, // ✅ Use real ID
                                     name: data.playlist.name,
                                     type: 'user', // ✅ CRITICAL: Set type for tracking
                                     tracks: data.tracks.map(track => ({
@@ -3302,11 +4453,23 @@ class MusicPlayer {
                                         album: track.album || '',
                                         album_cover: track.album_cover,
                                         file_url: track.file_url,
-                                        duration: track.duration
+                                        duration: track.duration,
+                                        play_count: track.play_count || 0  // ✅ Include play_count
                                     }))
                                 };
-                                console.log(`✅ Fetched user playlist: ${playlist.name} (${playlist.tracks.length} tracks)`);
+                                // ✅ Add to this.playlists
+                                const existingIndex = this.playlists.findIndex(p => p.id === playlist.id);
+                                if (existingIndex >= 0) {
+                                    this.playlists[existingIndex] = playlist;
+                                } else {
+                                    this.playlists.push(playlist);
+                                }
+                                console.log(`✅ Restored user playlist with ${playlist.tracks.length} tracks`);
+                            } else {
+                                console.log('⚠️ User playlist API returned no tracks or failed');
                             }
+                        } else {
+                            console.log('⚠️ User playlist API failed:', response.status);
                         }
                     } catch (error) {
                         console.error('❌ Failed to fetch user playlist:', error);
@@ -3318,7 +4481,17 @@ class MusicPlayer {
                 return false;
             } else {
                 // Normal admin/global playlist
-                playlist = this.playlists.find(p => p.id === state.playlistId);
+                // ✅ CRITICAL FIX: Handle global-playlist- prefix
+                let searchId = state.playlistId;
+                if (typeof state.playlistId === 'string' && state.playlistId.startsWith('global-playlist-')) {
+                    // Extract numeric ID from "global-playlist-3" format
+                    const idMatch = state.playlistId.match(/global-playlist-(\d+)/);
+                    if (idMatch) {
+                        searchId = parseInt(idMatch[1]);
+                    }
+                }
+                playlist = this.playlists.find(p => p.id === searchId);
+                console.log('🔍 Debug: Searching for playlist with ID:', searchId, 'Found:', !!playlist); // ✅ Debug log
             }
             
             if (!playlist || !playlist.tracks || playlist.tracks.length === 0) {
@@ -3350,7 +4523,7 @@ class MusicPlayer {
             this.currentTrackIndex = trackIndex;
             this.currentTrack = track; // ✅ Set currentTrack BEFORE loading audio
             this.playlistSelect.value = playlist.id;
-            this.populateTrackList();
+            await this.populateTrackList();
             
             // Update UI
             this.updateCurrentTrack();
@@ -3359,7 +4532,23 @@ class MusicPlayer {
             // Load audio với approach mới - sử dụng file_url từ API
             const fileUrl = track.file_url;
             
-            // ✅ Use URL as-is from backend (Django already encodes it properly)
+            // ✅ Validate file exists before loading audio
+            try {
+                const response = await fetch(fileUrl, { method: 'HEAD' });
+                if (!response.ok) {
+                    console.log('⚠️ File does not exist, cannot restore:', fileUrl);
+                    this.isRestoringState = false;
+                    this.isLoadingTrack = false;
+                    return false;
+                }
+            } catch (error) {
+                console.log('⚠️ File check failed, cannot restore:', error.message);
+                this.isRestoringState = false;
+                this.isLoadingTrack = false;
+                return false;
+            }
+            
+            // ✅ Use URL as-is from backend (filenames are slugified on upload)
             this.audio.src = fileUrl;
             
             // Sử dụng Promise để handle audio loading với retry logic
@@ -3470,7 +4659,7 @@ class MusicPlayer {
                     
                     // Select first playlist
                     if (this.playlists.length > 0) {
-                        this.selectPlaylist(this.playlists[0].id);
+                        this.selectPlaylist(this.playlists[0].id, true); // ✅ Silent mode for auto-select
                     }
                 })
                 .finally(() => {
@@ -4167,7 +5356,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     const audio = new Audio();
                     audio.preload = 'metadata';
                     
-                    // ✅ Use URL as-is from backend (Django already encodes it properly)
+                    // ✅ Use URL as-is from backend (filenames are slugified on upload)
                     audio.src = nextTrack.file_url;
                     this.preloadedTracks.set(nextTrack.id, audio);
                 }
@@ -4182,7 +5371,7 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     const audio = new Audio();
                     audio.preload = 'metadata';
                     
-                    // ✅ Use URL as-is from backend (Django already encodes it properly)
+                    // ✅ Use URL as-is from backend (filenames are slugified on upload)
                     audio.src = prevTrack.file_url;
                     this.preloadedTracks.set(prevTrack.id, audio);
                 }
@@ -4348,8 +5537,6 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         this.currentTrackListenDuration = 0;
         this.hasRecordedPlay = false;
         
-        console.log('🎵 [Tracking] Started play tracking');
-        
         // Update listen duration mỗi giây
         this.playTrackingInterval = setInterval(() => {
             if (this.isPlaying && !this.audio.paused) {
@@ -4362,12 +5549,6 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     
                     if (this.currentTrackListenDuration >= minDuration) {
                         // Đã nghe đủ, gửi record play ngay
-                        console.log('🎵 [Tracking] Recording play:', {
-                            track_id: track.id,
-                            track_type: this.currentPlaylist.type || 'global',
-                            listen_duration: this.currentTrackListenDuration,
-                            track_duration: track.duration
-                        });
                         this.recordCurrentTrackPlay();
                     }
                 }
@@ -4385,10 +5566,58 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         this.currentTrackListenDuration = 0;
     }
     
+    // ✅ ENHANCED: Standardize filename handling for cache consistency
+    standardizeFilename(filename) {
+        if (!filename) return '';
+        
+        // Extract filename from URL if needed
+        if (filename.includes('/')) {
+            filename = filename.split('/').pop();
+        }
+        
+        // Decode URL encoding to get original filename
+        try {
+            filename = decodeURIComponent(filename);
+        } catch (e) {
+            // If decoding fails, use original filename
+        }
+        
+        return filename;
+    }
+    
+    // ✅ ENHANCED: Extract track ID from URL for cache management
+    extractTrackIdFromUrl(url) {
+        if (!url) return null;
+        
+        try {
+            // Extract filename from URL
+            const filename = url.split('/').pop();
+            
+            // Decode URL encoding
+            const decodedFilename = decodeURIComponent(filename);
+            
+            // Extract track ID from filename (format: slug_trackId.ext)
+            const match = decodedFilename.match(/_(\d+)\./);
+            if (match) {
+                return parseInt(match[1]);
+            }
+            
+            // Fallback: try to extract from URL path
+            const pathMatch = url.match(/\/track\/(\d+)/);
+            if (pathMatch) {
+                return parseInt(pathMatch[1]);
+            }
+            
+            return null;
+        } catch (e) {
+            console.warn('Error extracting track ID from URL:', url, e);
+            return null;
+        }
+    }
+    
     async recordCurrentTrackPlay() {
         // Nếu đã record rồi hoặc không có track, skip
         if (this.hasRecordedPlay || !this.currentPlaylist || !this.currentPlaylist.tracks[this.currentTrackIndex]) {
-            console.log('🎵 [Tracking] Skipped - already recorded or no track');
             return;
         }
         
@@ -4397,12 +5626,11 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         // Kiểm tra đã nghe đủ thời gian chưa
         const minDuration = Math.min(30, track.duration * 0.5);
         if (this.currentTrackListenDuration < minDuration) {
-            console.log('🎵 [Tracking] Skipped - not enough duration:', {
-                listened: this.currentTrackListenDuration,
-                minDuration: minDuration
-            });
             return;
         }
+        
+        // ✅ Tính năng chia sẻ album nhạc: Cho phép ghi nhận lượt nghe cho track của người khác
+        // Không cần validate ownership nữa vì đây là tính năng chia sẻ
         
         // Đánh dấu đã record để tránh gửi nhiều lần
         this.hasRecordedPlay = true;
@@ -4410,12 +5638,6 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
         // Gửi lên server
         try {
             const csrfToken = this.getCSRFToken();
-            
-            console.log('🎵 [Tracking] Sending API request:', {
-                track_id: track.id,
-                track_type: this.currentPlaylist.type || 'global',
-                listen_duration: Math.floor(this.currentTrackListenDuration)
-            });
             
             const response = await fetch('/music/stats/record-play/', {
                 method: 'POST',
@@ -4433,8 +5655,6 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             
             const data = await response.json();
             
-            console.log('🎵 [Tracking] API response:', data);
-            
             if (data.success && data.counted) {
                 // Cập nhật play_count trong UI nếu cần
                 if (data.play_count !== undefined) {
@@ -4446,14 +5666,22 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
                     }
                     
                     // ✅ Refresh track list để hiển thị play_count mới
-                    this.populateTrackList();
+                    await this.populateTrackList();
                 }
-                console.log('✅ [Tracking] Play count updated:', data.play_count);
-            } else {
-                console.log('⚠️ [Tracking] Play not counted:', data.message);
+            } else if (!data.success) {
+                // Handle specific error cases
+                if (data.error === 'Track không tồn tại hoặc đã bị xóa') {
+                    console.warn('Track not found:', data.message);
+                    // Reset current playlist to prevent further issues
+                    this.currentPlaylist = null;
+                    this.currentTrackIndex = 0;
+                    this.stopPlayTracking();
+                } else {
+                    console.warn('Failed to record play:', data.message);
+                }
             }
         } catch (error) {
-            console.error('❌ [Tracking] Error recording play:', error);
+            console.error('Error recording play:', error);
         }
     }
 
@@ -4496,11 +5724,6 @@ Vui lòng sử dụng phím cứng bên cạnh iPhone/iPad để điều chỉnh
             }
             this.preloadedTracks.clear();
             // Cleaned up all preloaded tracks
-        }
-        
-        // ✅ Cleanup caches
-        if (this.formatTimeCache) {
-            this.formatTimeCache.clear();
         }
         
         // ✅ Cleanup audio element (chỉ pause, không reset src để giữ state)

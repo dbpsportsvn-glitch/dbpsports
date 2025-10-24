@@ -1,0 +1,32 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block object-tools-items %}
+    <li>
+        <a href="{{ newsletter_form_url }}" class="addlink" style="background: #28a745; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; margin-right: 10px;">
+            📧 Gửi Newsletter từ Form
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; margin-bottom: 20px; border-radius: 10px;">
+        <h2 style="margin: 0 0 10px 0;">📧 Newsletter Management</h2>
+        <p style="margin: 0; opacity: 0.9;">
+            Quản lý newsletter subscribers và gửi email marketing
+        </p>
+        <div style="margin-top: 15px;">
+            <a href="/newsletter/dashboard/" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; margin-right: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                📊 Newsletter Dashboard
+            </a>
+            <a href="{{ newsletter_form_url }}" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; margin-right: 10px; border: 1px solid rgba(255,255,255,0.3);">
+                ✏️ Form gửi Newsletter
+            </a>
+            <span style="opacity: 0.8; font-size: 14px;">
+                Quản lý và gửi newsletter với giao diện dễ sử dụng
+            </span>
+        </div>
+    </div>
+    {{ block.super }}
+{% endblock %}

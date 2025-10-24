@@ -11,6 +11,9 @@ import os
 # Import admin config để sắp xếp lại thứ tự
 import dbpsports_core.admin_custom
 
+# Import newsletter views
+from . import views as core_views
+
 # ✅ Service Worker View
 def service_worker(request):
     """Serve service-worker.js file"""
@@ -36,6 +39,12 @@ urlpatterns = [
     # ✅ PWA Files - phải ở đầu để không bị override
     path('service-worker.js', service_worker, name='service_worker'),
     path('manifest.json', manifest, name='manifest'),
+    
+    # Newsletter endpoints
+    path('api/newsletter/subscribe/', core_views.subscribe_newsletter, name='newsletter_subscribe'),
+    path('newsletter/unsubscribe/<str:email>/', core_views.unsubscribe_newsletter, name='newsletter_unsubscribe'),
+    path('newsletter/send/', core_views.newsletter_form_view, name='newsletter_form'),
+    path('newsletter/dashboard/', core_views.newsletter_dashboard_view, name='newsletter_dashboard'),
     
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
