@@ -181,3 +181,32 @@ Function `showToast()` trong `youtube_import.js` sử dụng logic khác với `
 - ✅ Gradient colors đẹp mắt giống thông báo xóa file
 - ✅ Z-index phù hợp, không bị che bởi modal
 - ✅ Consistent với tất cả notifications khác trong app
+
+## Cập nhật thêm: Sửa Màu Progress Bar Music Player
+**Ngày:** 2025-01-30
+
+### Vấn đề
+Thanh progress bar khi phát nhạc trước đây có màu gradient tím đẹp mắt, nhưng bây giờ lại mang màu đỏ của phần import YouTube.
+
+### Nguyên nhân
+CSS selector `.progress-fill` bị conflict:
+- **CSS gradient tím:** Dòng 1029 với `linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%)`
+- **CSS gradient đỏ:** Dòng 5421 với `linear-gradient(90deg, #ff6b6b, #e55a5a)` (từ YouTube import)
+- **Thứ tự CSS:** CSS đỏ được đặt sau CSS tím nên override
+
+### Giải pháp
+**Tách riêng CSS cho từng component:**
+- ✅ **Music Player Progress:** `.music-player-popup .progress-fill` với gradient tím + `!important`
+- ✅ **YouTube Import Progress:** `.youtube-import-progress .progress-fill` với gradient đỏ
+- ✅ **Shimmer Effect:** Chỉ áp dụng cho music player progress bar
+- ✅ **Specificity:** Sử dụng parent selectors để tránh conflict
+
+### Files đã sửa
+- `backend/music_player/static/music_player/css/music_player.css` - CSS selectors cho progress bars
+
+### Kết quả
+- ✅ Music player progress bar: Gradient tím đẹp mắt như trước đây
+- ✅ YouTube import progress bar: Gradient đỏ phù hợp với theme
+- ✅ Shimmer effect: Chỉ hiển thị trên music player progress bar
+- ✅ Không còn conflict CSS giữa các components
+- ✅ Màu sắc consistent với design system

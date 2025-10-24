@@ -1026,9 +1026,11 @@ body.low-power .playlist-card-cover { filter: none !important; }
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
-.progress-fill {
+/* ✅ Music Player Progress Bar - Gradient tím với specificity cao */
+.music-player-popup .progress-fill,
+.player-content .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
     border-radius: 10px;
     width: 0%;
     transition: width 0.1s ease;
@@ -1037,7 +1039,9 @@ body.low-power .playlist-card-cover { filter: none !important; }
     will-change: width; /* ✅ Optimize width updates during playback */
 }
 
-.progress-fill::after {
+/* ✅ Music Player Progress Bar Shimmer Effect */
+.music-player-popup .progress-fill::after,
+.player-content .progress-fill::after {
     content: '';
     position: absolute;
     top: 0;
@@ -5418,7 +5422,8 @@ body .youtube-import-modal {
     margin-bottom: 10px;
 }
 
-.progress-fill {
+/* ✅ YouTube Import Progress - chỉ áp dụng cho YouTube import */
+.youtube-import-progress .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #ff6b6b, #e55a5a);
     border-radius: 4px;
