@@ -120,3 +120,64 @@ const youtubePatterns = [
 - ✅ Settings modal tự động refresh ngay sau khi import
 - ✅ Tất cả UI components được cập nhật đồng bộ
 - ✅ Error handling robust cho refresh operations
+
+## Cập nhật thêm: Sửa vị trí Toast Notification
+**Ngày:** 2025-01-30
+
+### Vấn đề
+Toast notification từ YouTube Import vẫn hiển thị ở góc phải dưới thay vì trên cùng như mong muốn.
+
+### Nguyên nhân
+Function `showToast()` trong `youtube_import.js` có logic khác với `music_player.js`:
+- **Z-index thấp:** Chỉ `10001` thay vì `1000000`
+- **Vị trí cũ:** `top: '20px', right: '20px'` thay vì `bottom: '20px', right: '20px'`
+- **Styling khác:** Không có animation và responsive design
+
+### Giải pháp
+**Đồng bộ hóa function `showToast()`:**
+- ✅ Sử dụng cùng logic với `music_player.js`
+- ✅ Z-index `1000000` (cao nhất)
+- ✅ Vị trí `bottom: '20px', right: '20px'`
+- ✅ Animation slideInUp/slideOutDown
+- ✅ Mobile responsive với center positioning
+- ✅ Consistent styling và colors
+
+### Files đã sửa
+- `backend/music_player/static/music_player/js/youtube_import.js` - Function `showToast()`
+
+### Kết quả
+- ✅ Toast notification hiển thị ở vị trí đúng (góc phải dưới)
+- ✅ Z-index cao nhất, không bị che bởi modal nào
+- ✅ Animation mượt mà và responsive
+- ✅ Consistent với toast notifications khác trong app
+
+## Cập nhật thêm: Sửa Toast Notification - Áp dụng Logic Xóa File
+**Ngày:** 2025-01-30
+
+### Vấn đề
+Toast notification từ YouTube Import vẫn hiển thị ở góc phải dưới và bị mờ, không giống với thông báo xóa file và xóa cache hoạt động tốt.
+
+### Nguyên nhân
+Function `showToast()` trong `youtube_import.js` sử dụng logic khác với `UserMusicManager.showNotification()`:
+- **Vị trí khác:** `bottom: '20px'` thay vì `top: '80px'`
+- **Animation khác:** Slide up/down thay vì slide down từ trên xuống
+- **Z-index khác:** `1000000` thay vì `100010`
+- **Styling khác:** Solid colors thay vì gradient colors
+
+### Giải pháp
+**Áp dụng cùng logic với thông báo xóa file:**
+- ✅ **Vị trí:** `top: 80px, left: 50%` (giữa màn hình phía trên)
+- ✅ **Animation:** Slide down từ trên xuống (`translateY(-100px)` → `translateY(0)`)
+- ✅ **Z-index:** `100010` (cùng với UserMusicManager)
+- ✅ **Gradient colors:** Success (xanh lá), Error (đỏ), Warning (tím), Info (xanh dương)
+- ✅ **Timing:** 3 giây hiển thị với animation mượt mà
+
+### Files đã sửa
+- `backend/music_player/static/music_player/js/youtube_import.js` - Function `showToast()`
+
+### Kết quả
+- ✅ Toast notification hiển thị ở giữa màn hình phía trên
+- ✅ Animation slide down từ trên xuống mượt mà
+- ✅ Gradient colors đẹp mắt giống thông báo xóa file
+- ✅ Z-index phù hợp, không bị che bởi modal
+- ✅ Consistent với tất cả notifications khác trong app

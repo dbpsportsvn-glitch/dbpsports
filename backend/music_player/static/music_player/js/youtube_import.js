@@ -394,44 +394,49 @@ document.addEventListener('DOMContentLoaded', () => {
     function showToast(message, type = 'info') {
         console.log(`Toast ${type}:`, message);
         
-        // Create toast container if not exists
-        let toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            Object.assign(toastContainer.style, {
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                zIndex: '10001',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
-            });
-            document.body.appendChild(toastContainer);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = `toast-notification toast-${type}`;
-        toast.textContent = message;
+        // ✅ Sử dụng cùng logic với UserMusicManager.showNotification() để đảm bảo consistency
+        const colorMap = {
+            'success': 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            'error': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'warning': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'info': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        };
         
-        // Style the toast
-        Object.assign(toast.style, {
-            background: type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#339af0',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '300px',
-            wordWrap: 'break-word'
-        });
+        const notification = document.createElement('div');
+        notification.className = 'user-music-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: ${colorMap[type] || colorMap['info']};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100010;
+            font-weight: 600;
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+            word-wrap: break-word;
+            transition: all 0.3s ease;
+            opacity: 0;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
         
-        toastContainer.appendChild(toast);
-        
+        // Animate in
         setTimeout(() => {
-            toast.remove();
+            notification.style.transform = 'translateX(-50%) translateY(0)';
+            notification.style.opacity = '1';
+        }, 10);
+        
+        // Animate out and remove
+        setTimeout(() => {
+            notification.style.transform = 'translateX(-50%) translateY(-100px)';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 
