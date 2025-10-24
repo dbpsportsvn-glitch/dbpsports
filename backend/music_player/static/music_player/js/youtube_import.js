@@ -20,8 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const youtubeImportProgress = document.getElementById('youtube-import-progress');
     const youtubeProgressFill = document.getElementById('youtube-progress-fill');
     const youtubeProgressText = document.getElementById('youtube-progress-text');
-    const youtubeProgressDetails = document.getElementById('youtube-progress-details');
-    const extractAudioOnlyCheckbox = document.getElementById('extract-audio-only');
+           const youtubeProgressDetails = document.getElementById('youtube-progress-details');
+           const extractAudioOnlyCheckbox = document.getElementById('extract-audio-only');
+           const importPlaylistCheckbox = document.getElementById('import-playlist');
 
     let currentImportInfo = null;
 
@@ -76,16 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubeImportStartBtn.disabled = true;
         youtubeImportProgress.classList.add('hidden');
 
-        try {
-            console.log('Fetching YouTube info for:', url);
-            const response = await fetch('/music/youtube/info/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify({ url: url })
-            });
+               try {
+                   console.log('Fetching YouTube info for:', url);
+                   const importPlaylist = importPlaylistCheckbox.checked;
+                   console.log('Import playlist checkbox:', importPlaylist);
+                   const response = await fetch('/music/youtube/info/', {
+                       method: 'POST',
+                       headers: {
+                           'Content-Type': 'application/json',
+                           'X-CSRFToken': getCsrfToken()
+                       },
+                       body: JSON.stringify({ 
+                           url: url,
+                           import_playlist: importPlaylist
+                       })
+                   });
 
             console.log('Response status:', response.status);
             const data = await response.json();
@@ -116,9 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const url = youtubeUrlInput.value.trim();
-        const playlistId = youtubePlaylistSelect.value || null;
-        const audioOnly = extractAudioOnlyCheckbox.checked;
+               const url = youtubeUrlInput.value.trim();
+               const playlistId = youtubePlaylistSelect.value || null;
+               const audioOnly = extractAudioOnlyCheckbox.checked;
+               const importPlaylist = importPlaylistCheckbox.checked;
 
         console.log('Starting import for:', url);
 
@@ -159,11 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCsrfToken()
                 },
-                body: JSON.stringify({
-                    url: url,
-                    playlist_id: playlistId,
-                    extract_audio_only: audioOnly
-                })
+                       body: JSON.stringify({
+                           url: url,
+                           playlist_id: playlistId,
+                           extract_audio_only: audioOnly,
+                           import_playlist: importPlaylist
+                       })
             });
 
             const data = await response.json();
@@ -275,75 +283,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderYouTubePreview(info) {
-        youtubePreviewContent.innerHTML = '';
-        
-        if (info.type === 'video') {
-            youtubePreviewContent.innerHTML = `
-                <div class="video-preview">
-                    <div class="preview-thumbnail">
-                        <img src="${info.thumbnail}" alt="Thumbnail" width="120">
-                    </div>
-                    <div class="preview-info">
-                        <h6 class="text-white">${info.title}</h6>
-                        <div class="preview-meta">
-                            <span class="meta-item"><i class="bi bi-person-fill"></i> ${info.uploader}</span>
-                            <span class="meta-item"><i class="bi bi-clock-fill"></i> ${info.duration_formatted}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else if (info.type === 'playlist') {
-            let entriesHtml = info.entries.map(entry => `
-                <div class="playlist-video-item">
-                    <img src="${entry.thumbnail}" alt="Thumbnail" width="60" height="auto" style="border-radius: 4px;">
-                    <div class="video-info">
-                        <div class="video-title">${entry.title}</div>
-                        <div class="video-meta">
-                            <span>${entry.uploader}</span>
-                            <span>•</span>
-                            <span>${entry.duration_formatted}</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+       function renderYouTubePreview(info) {
+           youtubePreviewContent.innerHTML = '';
+           
+           if (info.type === 'video' || info.import_mode === 'single') {
+               // Single video preview
+               youtubePreviewContent.innerHTML = `
+                   <div class="video-preview">
+                       <div class="preview-thumbnail">
+                           <img src="${info.thumbnail}" alt="Thumbnail" width="120">
+                       </div>
+                       <div class="preview-info">
+                           <h6 class="text-white">${info.title}</h6>
+                           <div class="preview-meta">
+                               <span class="meta-item"><i class="bi bi-person-fill"></i> ${info.uploader}</span>
+                               <span class="meta-item"><i class="bi bi-clock-fill"></i> ${info.duration_formatted}</span>
+                           </div>
+                           <div class="single-video-note">
+                               <i class="bi bi-info-circle"></i>
+                               <small>Chỉ import video đơn lẻ này</small>
+                           </div>
+                       </div>
+                   </div>
+               `;
+           } else if (info.type === 'playlist' && info.import_mode === 'playlist') {
+               // Playlist preview
+               let entriesHtml = info.entries.map(entry => `
+                   <div class="playlist-video-item">
+                       <img src="${entry.thumbnail}" alt="Thumbnail" width="60" height="auto" style="border-radius: 4px;">
+                       <div class="video-info">
+                           <div class="video-title">${entry.title}</div>
+                           <div class="video-meta">
+                               <span>${entry.uploader}</span>
+                               <span>•</span>
+                               <span>${entry.duration_formatted}</span>
+                           </div>
+                       </div>
+                   </div>
+               `).join('');
+   
+               if (info.entry_count > info.entries.length) {
+                   entriesHtml += `<div class="more-videos">Và ${info.entry_count - info.entries.length} video khác...</div>`;
+               }
+   
+               youtubePreviewContent.innerHTML = `
+                   <div class="playlist-preview">
+                       <div class="playlist-header">
+                           <h6 class="text-white">${info.title}</h6>
+                           <div class="playlist-meta">
+                               <span class="meta-item"><i class="bi bi-person-fill"></i> ${info.uploader}</span>
+                               <span class="meta-item"><i class="bi bi-collection-play-fill"></i> ${info.entry_count} bài hát</span>
+                           </div>
+                           <div class="playlist-note">
+                               <i class="bi bi-info-circle"></i>
+                               <small>Tất cả bài hát sẽ được import với album: "${info.title}"</small>
+                           </div>
+                       </div>
+                       <div class="playlist-videos">
+                           ${entriesHtml}
+                       </div>
+                   </div>
+               `;
+           }
+       }
 
-            if (info.entry_count > info.entries.length) {
-                entriesHtml += `<div class="more-videos">Và ${info.entry_count - info.entries.length} video khác...</div>`;
-            }
-
-            youtubePreviewContent.innerHTML = `
-                <div class="playlist-preview">
-                    <div class="playlist-header">
-                        <h6 class="text-white">${info.title}</h6>
-                        <div class="playlist-meta">
-                            <span class="meta-item"><i class="bi bi-person-fill"></i> ${info.uploader}</span>
-                            <span class="meta-item"><i class="bi bi-collection-play-fill"></i> ${info.entry_count} bài hát</span>
-                        </div>
-                        <div class="playlist-note">
-                            <i class="bi bi-info-circle"></i>
-                            <small>Tất cả bài hát sẽ được import với album: "${info.title}"</small>
-                        </div>
-                    </div>
-                    <div class="playlist-videos">
-                        ${entriesHtml}
-                    </div>
-                </div>
-            `;
-        }
-    }
-
-    function resetYouTubeImportModal() {
-        youtubeUrlInput.value = '';
-        youtubePlaylistSelect.value = '';
-        extractAudioOnlyCheckbox.checked = true;
-        youtubePreviewBtn.disabled = true;
-        youtubeImportStartBtn.disabled = true;
-        youtubePreviewSection.classList.add('hidden');
-        youtubePreviewContent.innerHTML = '';
-        youtubeImportProgress.classList.add('hidden');
-        currentImportInfo = null;
-    }
+       function resetYouTubeImportModal() {
+           youtubeUrlInput.value = '';
+           youtubePlaylistSelect.value = '';
+           extractAudioOnlyCheckbox.checked = true;
+           importPlaylistCheckbox.checked = true;
+           youtubePreviewBtn.disabled = true;
+           youtubeImportStartBtn.disabled = true;
+           youtubePreviewSection.classList.add('hidden');
+           youtubePreviewContent.innerHTML = '';
+           youtubeImportProgress.classList.add('hidden');
+           currentImportInfo = null;
+       }
 
     function getCsrfToken() {
         const token = document.querySelector('[name=csrfmiddlewaretoken]');

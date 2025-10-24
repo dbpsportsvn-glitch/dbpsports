@@ -50,6 +50,7 @@ class YouTubeImportView(View):
             youtube_url = data.get('url', '').strip()
             playlist_id = data.get('playlist_id')
             extract_audio_only = data.get('extract_audio_only', True)
+            import_playlist = data.get('import_playlist', True)
             
             if not youtube_url:
                 return JsonResponse({
@@ -71,6 +72,26 @@ class YouTubeImportView(View):
             else:
                 logger.info(f"Detected single video URL: {youtube_url}")
             
+            # Xử lý logic import dựa trên checkbox
+            if is_playlist and not import_playlist:
+                # URL là playlist nhưng user không muốn import playlist
+                # Chuyển thành single video bằng cách loại bỏ playlist parameter
+                if '?list=' in youtube_url:
+                    youtube_url = youtube_url.split('?list=')[0]
+                elif '/playlist' in youtube_url:
+                    # Không thể chuyển playlist URL thành single video
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
+                    }, status=400)
+                logger.info(f"Converted playlist URL to single video: {youtube_url}")
+            elif not is_playlist and import_playlist:
+                # URL là single video nhưng user muốn import playlist
+                return JsonResponse({
+                    'success': False,
+                    'error': 'URL này là video đơn lẻ. Bỏ tick "Import cả playlist" để import video này.'
+                }, status=400)
+            
             # Check user quota
             user_settings = MusicPlayerSettings.objects.get_or_create(user=request.user)[0]
             if not user_settings.can_upload(0):  # We'll check actual size after download
@@ -84,7 +105,8 @@ class YouTubeImportView(View):
                 request.user, 
                 youtube_url, 
                 playlist_id, 
-                extract_audio_only
+                extract_audio_only,
+                import_playlist
             )
             
             return JsonResponse(result)
@@ -113,7 +135,7 @@ class YouTubeImportView(View):
                 return True
         return False
     
-    def _import_from_youtube(self, user, url, playlist_id, extract_audio_only):
+    def _import_from_youtube(self, user, url, playlist_id, extract_audio_only, import_playlist=True):
         """Import audio từ YouTube URL"""
         try:
             # Tạo thư mục temp để download
@@ -160,8 +182,8 @@ class YouTubeImportView(View):
                             'error': 'Không thể lấy thông tin từ YouTube URL'
                         }
                     
-                    # Xử lý single video hoặc playlist
-                    if 'entries' not in info:
+                    # Xử lý single video hoặc playlist dựa trên import_playlist
+                    if 'entries' not in info or not import_playlist:
                         return self._process_single_video(user, ydl, info, playlist_id, temp_dir)
                     else:
                         return self._process_playlist(user, ydl, info, playlist_id, temp_dir)
@@ -610,6 +632,7 @@ def get_youtube_info(request):
     try:
         data = json.loads(request.body)
         url = data.get('url', '').strip()
+        import_playlist = data.get('import_playlist', True)
         
         if not url:
             return JsonResponse({
@@ -623,6 +646,26 @@ def get_youtube_info(request):
             logger.info(f"Detected playlist URL: {url}")
         else:
             logger.info(f"Detected single video URL: {url}")
+        
+        # Xử lý logic preview dựa trên checkbox
+        if is_playlist and not import_playlist:
+            # URL là playlist nhưng user không muốn import playlist
+            # Chuyển thành single video bằng cách loại bỏ playlist parameter
+            if '?list=' in url:
+                url = url.split('?list=')[0]
+            elif '/playlist' in url:
+                # Không thể chuyển playlist URL thành single video
+                return JsonResponse({
+                    'success': False,
+                    'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
+                }, status=400)
+            logger.info(f"Converted playlist URL to single video for preview: {url}")
+        elif not is_playlist and import_playlist:
+            # URL là single video nhưng user muốn import playlist
+            return JsonResponse({
+                'success': False,
+                'error': 'URL này là video đơn lẻ. Bỏ tick "Import cả playlist" để import video này.'
+            }, status=400)
         
         # Cấu hình yt-dlp để extract info (hỗ trợ cả video và playlist)
         ydl_opts = {
@@ -642,8 +685,9 @@ def get_youtube_info(request):
                     'error': 'Không thể lấy thông tin từ URL'
                 }, status=400)
             
-            # Xử lý single video
-            if 'entries' not in info:
+            # Xử lý single video hoặc playlist dựa trên import_playlist
+            if 'entries' not in info or not import_playlist:
+                # Single video hoặc không muốn import playlist
                 return JsonResponse({
                     'success': True,
                     'info': {
@@ -655,55 +699,57 @@ def get_youtube_info(request):
                         'duration_formatted': get_duration_formatted(info.get('duration', 0)),
                         'thumbnail': info.get('thumbnail', ''),
                         'webpage_url': info.get('webpage_url', url),
+                        'import_mode': 'single'  # Thêm flag để frontend biết
                     }
                 })
-            
-            # Xử lý playlist
-            entries = info.get('entries', [])
-            videos_info = []
-            
-            logger.info(f"Playlist info: {info.get('title', 'Unknown')} with {len(entries)} entries")
-            
-            for entry in entries[:10]:  # Chỉ lấy 10 videos đầu để preview
-                if entry:
-                    # Handle both flat and full extraction
-                    if isinstance(entry, dict):
-                        video_data = {
-                            'id': entry.get('id'),
-                            'title': entry.get('title', 'Unknown'),
-                            'uploader': entry.get('uploader', 'Unknown'),
-                            'duration': entry.get('duration', 0),
-                            'duration_formatted': get_duration_formatted(entry.get('duration', 0)),
-                            'thumbnail': entry.get('thumbnail', ''),
-                            'webpage_url': entry.get('url', entry.get('webpage_url', '')),
-                        }
-                    else:
-                        # Fallback for flat extraction
-                        video_data = {
-                            'id': str(entry),
-                            'title': 'Unknown',
-                            'uploader': 'Unknown',
-                            'duration': 0,
-                            'duration_formatted': '00:00',
-                            'thumbnail': '',
-                            'webpage_url': '',
-                        }
-                    
-                    videos_info.append(video_data)
-            
-            return JsonResponse({
-                'success': True,
-                'info': {
-                    'type': 'playlist',
-                    'id': info.get('id'),
-                    'title': info.get('title', 'Unknown Playlist'),
-                    'uploader': info.get('uploader', 'Unknown'),
-                    'entry_count': len(entries),
-                    'thumbnail': info.get('thumbnail', ''),
-                    'webpage_url': info.get('webpage_url', url),
-                    'entries': videos_info,
-                }
-            })
+            else:
+                # Playlist và muốn import playlist
+                entries = info.get('entries', [])
+                videos_info = []
+                
+                logger.info(f"Playlist info: {info.get('title', 'Unknown')} with {len(entries)} entries")
+                
+                for entry in entries[:10]:  # Chỉ lấy 10 videos đầu để preview
+                    if entry:
+                        # Handle both flat and full extraction
+                        if isinstance(entry, dict):
+                            video_data = {
+                                'id': entry.get('id'),
+                                'title': entry.get('title', 'Unknown'),
+                                'uploader': entry.get('uploader', 'Unknown'),
+                                'duration': entry.get('duration', 0),
+                                'duration_formatted': get_duration_formatted(entry.get('duration', 0)),
+                                'thumbnail': entry.get('thumbnail', ''),
+                                'webpage_url': entry.get('url', entry.get('webpage_url', '')),
+                            }
+                        else:
+                            # Fallback for flat extraction
+                            video_data = {
+                                'id': str(entry),
+                                'title': 'Unknown',
+                                'uploader': 'Unknown',
+                                'duration': 0,
+                                'duration_formatted': '00:00',
+                                'thumbnail': '',
+                                'webpage_url': '',
+                            }
+                        
+                        videos_info.append(video_data)
+                
+                return JsonResponse({
+                    'success': True,
+                    'info': {
+                        'type': 'playlist',
+                        'id': info.get('id'),
+                        'title': info.get('title', 'Unknown Playlist'),
+                        'uploader': info.get('uploader', 'Unknown'),
+                        'entry_count': len(entries),
+                        'thumbnail': info.get('thumbnail', ''),
+                        'webpage_url': info.get('webpage_url', url),
+                        'entries': videos_info,
+                        'import_mode': 'playlist'  # Thêm flag để frontend biết
+                    }
+                })
             
     except Exception as e:
         logger.error(f"YouTube info extraction error: {str(e)}", exc_info=True)

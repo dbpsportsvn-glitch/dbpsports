@@ -5332,6 +5332,22 @@ body .youtube-import-modal {
     margin-right: 6px;
 }
 
+/* Single video note */
+.single-video-note {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #28a745;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.single-video-note i {
+    color: #28a745;
+    margin-right: 6px;
+}
+
 /* Progress Section */
 .youtube-import-progress {
     background: rgba(255, 255, 255, 0.05);

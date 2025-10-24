@@ -589,24 +589,34 @@
                 </select>
             </div>
             
-            <!-- Options -->
-            <div class="form-group">
-                <label>
-                    <i class="bi bi-gear"></i>
-                    Tùy chọn Import
-                </label>
-                <div class="youtube-options">
-                    <label class="option-checkbox">
-                        <input type="checkbox" id="extract-audio-only" checked>
-                        <span class="checkmark"></span>
-                        Chỉ lấy âm thanh (khuyến nghị)
-                    </label>
-                    <div class="option-hint">
-                        <i class="bi bi-info-circle"></i>
-                        Chỉ download audio MP3, tiết kiệm dung lượng và thời gian
-                    </div>
-                </div>
-            </div>
+                   <!-- Options -->
+                   <div class="form-group">
+                       <label>
+                           <i class="bi bi-gear"></i>
+                           Tùy chọn Import
+                       </label>
+                       <div class="youtube-options">
+                           <label class="option-checkbox">
+                               <input type="checkbox" id="extract-audio-only" checked>
+                               <span class="checkmark"></span>
+                               Chỉ lấy âm thanh (khuyến nghị)
+                           </label>
+                           <div class="option-hint">
+                               <i class="bi bi-info-circle"></i>
+                               Chỉ download audio MP3, tiết kiệm dung lượng và thời gian
+                           </div>
+                           
+                           <label class="option-checkbox">
+                               <input type="checkbox" id="import-playlist" checked>
+                               <span class="checkmark"></span>
+                               Import cả playlist
+                           </label>
+                           <div class="option-hint">
+                               <i class="bi bi-info-circle"></i>
+                               Nếu bỏ tick: chỉ import video đơn lẻ, không import cả playlist
+                           </div>
+                       </div>
+                   </div>
             
             <!-- Preview Section -->
             <div id="youtube-preview" class="youtube-preview hidden">
