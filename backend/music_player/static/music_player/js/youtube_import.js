@@ -208,25 +208,51 @@ document.addEventListener('DOMContentLoaded', () => {
                            }
                        }
                        
-                       setTimeout(() => {
+                       setTimeout(async () => {
                            let successMessage = data.message || 'Import YouTube thành công!';
                            if (data.album && data.album.created) {
                                successMessage += ` Album "${data.album.name}" đã được tạo và hiển thị trong mục cá nhân.`;
                            }
                            showToast(successMessage, 'success');
                            youtubeImportModal.classList.add('hidden');
-                           // Trigger a refresh of user music list
-                           if (window.musicPlayer) {
-                               if (typeof window.musicPlayer.refreshPlaylists === 'function') {
-                                   window.musicPlayer.refreshPlaylists();
+                           
+                           // ✅ Trigger comprehensive UI refresh after YouTube import
+                           try {
+                               // Refresh music player data
+                               if (window.musicPlayer) {
+                                   // Refresh playlists first
+                                   if (typeof window.musicPlayer.refreshPlaylists === 'function') {
+                                       await window.musicPlayer.refreshPlaylists();
+                                   }
+                                   
+                                   // Refresh user tracks
+                                   if (typeof window.musicPlayer.loadUserTracks === 'function') {
+                                       await window.musicPlayer.loadUserTracks();
+                                   } else if (typeof window.musicPlayer.loadUserMusic === 'function') {
+                                       await window.musicPlayer.loadUserMusic();
+                                   }
+                                   
+                                   // Refresh user playlists
+                                   if (typeof window.musicPlayer.loadUserPlaylists === 'function') {
+                                       await window.musicPlayer.loadUserPlaylists();
+                                   }
+                                   
+                                   console.log('✅ Music player UI refreshed after YouTube import');
                                }
-                               if (typeof window.musicPlayer.loadUserTracks === 'function') {
-                                   window.musicPlayer.loadUserTracks();
-                               } else if (typeof window.musicPlayer.loadUserMusic === 'function') {
-                                   window.musicPlayer.loadUserMusic();
-                               } else {
-                                   console.log('Music player refresh functions not available');
+                               
+                               // ✅ Trigger Settings modal refresh if UserMusicManager exists
+                               if (window.userMusicManager && typeof window.userMusicManager.refreshSettingsModal === 'function') {
+                                   await window.userMusicManager.refreshSettingsModal();
+                                   console.log('✅ Settings modal refreshed after YouTube import');
                                }
+                               
+                               // ✅ Dispatch custom event to notify other components
+                               window.dispatchEvent(new CustomEvent('youtubeImportCompleted', {
+                                   detail: { success: true, album: data.album }
+                               }));
+                               
+                           } catch (error) {
+                               console.error('❌ Error refreshing UI after YouTube import:', error);
                            }
                        }, 1000);
             } else {
@@ -248,12 +274,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Helper Functions ---
     function isValidYouTubeUrl(url) {
         const youtubePatterns = [
-            /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,
-            /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[\w-]+/,
-            /^https?:\/\/(www\.)?youtu\.be\/[\w-]+/,
-            /^https?:\/\/(www\.)?youtube\.com\/channel\/[\w-]+/,
-            /^https?:\/\/(www\.)?youtube\.com\/c\/[\w-]+/,
-            /^https?:\/\/(www\.)?youtube\.com\/user\/[\w-]+/
+            /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/,  // Single video (có thể có &list= cho radio mode)
+            /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[\w-]+/,  // Playlist thực sự
+            /^https?:\/\/(www\.)?youtu\.be\/[\w-]+/,  // Short URL
+            /^https?:\/\/(www\.)?youtube\.com\/channel\/[\w-]+/,  // Channel
+            /^https?:\/\/(www\.)?youtube\.com\/c\/[\w-]+/,  // Custom channel
+            /^https?:\/\/(www\.)?youtube\.com\/user\/[\w-]+/  // User channel
         ];
         
         return youtubePatterns.some(pattern => pattern.test(url));
@@ -351,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
            youtubeUrlInput.value = '';
            youtubePlaylistSelect.value = '';
            extractAudioOnlyCheckbox.checked = true;
-           importPlaylistCheckbox.checked = true;
+           importPlaylistCheckbox.checked = false;  // Mặc định: import file đơn lẻ
            youtubePreviewBtn.disabled = true;
            youtubeImportStartBtn.disabled = true;
            youtubePreviewSection.classList.add('hidden');

@@ -2743,7 +2743,7 @@ class MusicPlayer {
             color: '#fff',
             fontSize: '14px',
             fontWeight: '500',
-            zIndex: '100002', /* ✅ Cao hơn player và settings modal */
+            zIndex: '1000000', /* ✅ Cao hơn YouTube Import Modal (999999) */
             maxWidth: this.isIOS ? '90%' : '350px', // ✅ Wider cho iOS messages
             lineHeight: '1.5',
             textAlign: 'center',

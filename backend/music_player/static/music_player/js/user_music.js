@@ -27,6 +27,17 @@ class UserMusicManager {
             this.refreshSettingsModal();
         });
         
+        // ✅ Listen for YouTube import completion to refresh Settings modal
+        window.addEventListener('youtubeImportCompleted', async (event) => {
+            console.log('🎵 YouTube import completed, refreshing Settings modal...');
+            try {
+                await this.refreshSettingsModal();
+                console.log('✅ Settings modal refreshed after YouTube import');
+            } catch (error) {
+                console.error('❌ Error refreshing Settings modal after YouTube import:', error);
+            }
+        });
+        
         // KHÔNG gọi loadUserSettings() ở đây vì user có thể chưa đăng nhập
         // Settings sẽ được load khi user click vào Settings button
     }
@@ -827,6 +838,11 @@ class UserMusicManager {
         
         // Upload complete
         
+        // Show success message immediately
+        if (successCount > 0) {
+            this.showNotification(`Đã upload ${successCount} bài hát thành công!`, 'success');
+        }
+        
         // Reload data after upload
         await this.loadUserTracks();
         await this.loadUserPlaylists();
@@ -835,10 +851,15 @@ class UserMusicManager {
             await this.musicPlayer.loadUserPlaylistsInMainPlayer();
         }
         
-        // Show success message
-        if (successCount > 0) {
-            this.showNotification(`Đã upload ${successCount} bài hát thành công!`, 'success');
+        // Force refresh UI elements
+        if (this.musicPlayer && typeof this.musicPlayer.refreshPlaylists === 'function') {
+            this.musicPlayer.refreshPlaylists();
         }
+        
+        // Trigger custom event for other components to listen
+        window.dispatchEvent(new CustomEvent('userMusicUploaded', {
+            detail: { successCount, totalFiles: filesArray.length }
+        }));
         
         // Hide overlay after delay (tăng thời gian để user thấy progress)
         setTimeout(() => {
@@ -891,6 +912,16 @@ class UserMusicManager {
                     } catch (err) {
                         console.error('❌ Failed to add track to playlist:', err);
                     }
+                }
+                
+                // Refresh UI immediately after each successful upload
+                try {
+                    await this.loadUserTracks();
+                    if (this.musicPlayer && typeof this.musicPlayer.refreshPlaylists === 'function') {
+                        this.musicPlayer.refreshPlaylists();
+                    }
+                } catch (err) {
+                    console.error('❌ Failed to refresh UI after upload:', err);
                 }
                 
                 return true;

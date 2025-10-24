@@ -2858,9 +2858,15 @@ body.low-power .playlist-card-cover { filter: none !important; }
     .music-player-toast {
         max-width: calc(100vw - 40px) !important;
         min-width: 280px;
+        z-index: 1000000 !important; /* ✅ Ensure toast is above everything */
         /* ✅ Center position được set bởi JavaScript với left: 50% + translateX(-50%) */
         /* Không override left/right ở đây để tránh conflict */
     }
+}
+
+/* ✅ Ensure toast notifications are always on top */
+.music-player-toast {
+    z-index: 1000000 !important;
 }
 
 /* ✅ Keyboard Hint Animations */
@@ -5074,6 +5080,40 @@ body .youtube-import-modal {
 
 .form-input::placeholder {
     color: rgba(255, 255, 255, 0.6);
+}
+
+/* YouTube Import Modal - Dropdown Fix */
+.youtube-import-modal .form-select,
+.youtube-import-modal select {
+    width: 100% !important;
+    padding: 12px 15px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 10px !important;
+    color: white !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.youtube-import-modal .form-select:focus,
+.youtube-import-modal select:focus {
+    outline: none !important;
+    border-color: #ff6b6b !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1) !important;
+}
+
+.youtube-import-modal .form-select option,
+.youtube-import-modal select option {
+    background: #2c3e50 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+}
+
+.youtube-import-modal .form-select:hover,
+.youtube-import-modal select:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .form-hint {

@@ -50,7 +50,7 @@ class YouTubeImportView(View):
             youtube_url = data.get('url', '').strip()
             playlist_id = data.get('playlist_id')
             extract_audio_only = data.get('extract_audio_only', True)
-            import_playlist = data.get('import_playlist', True)
+            import_playlist = data.get('import_playlist', False)  # Mặc định: import file đơn lẻ
             
             if not youtube_url:
                 return JsonResponse({
@@ -65,8 +65,12 @@ class YouTubeImportView(View):
                     'error': 'URL không hợp lệ. Vui lòng nhập URL YouTube video hoặc playlist'
                 }, status=400)
             
-            # Detect if it's a playlist URL
-            is_playlist = '?list=' in youtube_url or '/playlist' in youtube_url
+            # Detect if it's a playlist URL (phân biệt playlist thực sự vs video với radio mode)
+            import re
+            # Playlist thực sự: có /playlist hoặc có list= với playlist ID (không phải radio mode RD...)
+            has_list_param = bool(re.search(r'[?&]list=', youtube_url))
+            is_radio_mode = bool(re.search(r'[?&]list=RD', youtube_url))
+            is_playlist = '/playlist' in youtube_url or (has_list_param and not is_radio_mode)
             if is_playlist:
                 logger.info(f"Detected playlist URL: {youtube_url}")
             else:
@@ -85,6 +89,14 @@ class YouTubeImportView(View):
                         'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
                     }, status=400)
                 logger.info(f"Converted playlist URL to single video: {youtube_url}")
+            elif not is_playlist and '&list=' in youtube_url and not import_playlist:
+                # URL có &list= (radio mode) nhưng user không muốn import playlist
+                # Loại bỏ các parameter liên quan đến playlist/radio
+                import re
+                # Loại bỏ &list= và &start_radio= parameters
+                youtube_url = re.sub(r'&list=[^&]*', '', youtube_url)
+                youtube_url = re.sub(r'&start_radio=[^&]*', '', youtube_url)
+                logger.info(f"Removed radio mode parameters: {youtube_url}")
             elif not is_playlist and import_playlist:
                 # URL là single video nhưng user muốn import playlist
                 return JsonResponse({
@@ -135,7 +147,7 @@ class YouTubeImportView(View):
                 return True
         return False
     
-    def _import_from_youtube(self, user, url, playlist_id, extract_audio_only, import_playlist=True):
+    def _import_from_youtube(self, user, url, playlist_id, extract_audio_only, import_playlist=False):
         """Import audio từ YouTube URL"""
         try:
             # Tạo thư mục temp để download
@@ -632,7 +644,7 @@ def get_youtube_info(request):
     try:
         data = json.loads(request.body)
         url = data.get('url', '').strip()
-        import_playlist = data.get('import_playlist', True)
+        import_playlist = data.get('import_playlist', False)  # Mặc định: import file đơn lẻ
         
         if not url:
             return JsonResponse({
@@ -640,8 +652,12 @@ def get_youtube_info(request):
                 'error': 'URL không được để trống'
             }, status=400)
         
-        # Detect if it's a playlist URL
-        is_playlist = '?list=' in url or '/playlist' in url
+        # Detect if it's a playlist URL (phân biệt playlist thực sự vs video với radio mode)
+        import re
+        # Playlist thực sự: có /playlist hoặc có list= với playlist ID (không phải radio mode RD...)
+        has_list_param = bool(re.search(r'[?&]list=', url))
+        is_radio_mode = bool(re.search(r'[?&]list=RD', url))
+        is_playlist = '/playlist' in url or (has_list_param and not is_radio_mode)
         if is_playlist:
             logger.info(f"Detected playlist URL: {url}")
         else:
@@ -660,6 +676,14 @@ def get_youtube_info(request):
                     'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
                 }, status=400)
             logger.info(f"Converted playlist URL to single video for preview: {url}")
+        elif not is_playlist and '&list=' in url and not import_playlist:
+            # URL có &list= (radio mode) nhưng user không muốn import playlist
+            # Loại bỏ các parameter liên quan đến playlist/radio
+            import re
+            # Loại bỏ &list= và &start_radio= parameters
+            url = re.sub(r'&list=[^&]*', '', url)
+            url = re.sub(r'&start_radio=[^&]*', '', url)
+            logger.info(f"Removed radio mode parameters for preview: {url}")
         elif not is_playlist and import_playlist:
             # URL là single video nhưng user muốn import playlist
             return JsonResponse({
