@@ -6,6 +6,9 @@ import os
 import tempfile
 import logging
 import json
+import urllib.request
+import threading
+import time
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -16,6 +19,10 @@ from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.db import transaction
+from django.core.files.base import ContentFile
+from django.utils import timezone
+from io import BytesIO
+from PIL import Image
 import yt_dlp
 from mutagen import File as MutagenFile
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, TDRC, APIC
@@ -24,6 +31,228 @@ from .models import UserTrack, UserPlaylist, UserPlaylistTrack, MusicPlayerSetti
 from .utils import get_audio_duration
 
 logger = logging.getLogger(__name__)
+
+# Global dictionary to track active import sessions
+# Key: user_id, Value: {'cancelled': bool, 'thread': threading.Thread, 'progress': dict}
+active_imports = {}
+import_lock = threading.Lock()
+
+
+def start_import_session(user_id):
+    """Bắt đầu một import session mới"""
+    with import_lock:
+        active_imports[user_id] = {
+            'cancelled': False,
+            'thread': None,
+            'progress': {'status': 'starting', 'message': 'Đang khởi tạo...', 'percentage': 0},
+            'start_time': time.time()
+        }
+        logger.info(f"Started import session for user {user_id}")
+
+
+def cancel_import_session(user_id):
+    """Hủy import session của user"""
+    with import_lock:
+        if user_id in active_imports:
+            active_imports[user_id]['cancelled'] = True
+            logger.info(f"Cancelled import session for user {user_id}")
+            return True
+        return False
+
+
+def is_import_cancelled(user_id):
+    """Kiểm tra xem import có bị hủy không"""
+    with import_lock:
+        return active_imports.get(user_id, {}).get('cancelled', False)
+
+
+def update_import_progress(user_id, status, message, percentage=0):
+    """Cập nhật tiến trình import"""
+    with import_lock:
+        if user_id in active_imports:
+            active_imports[user_id]['progress'] = {
+                'status': status,
+                'message': message,
+                'percentage': percentage
+            }
+
+
+def get_import_progress(user_id):
+    """Lấy tiến trình import hiện tại"""
+    with import_lock:
+        return active_imports.get(user_id, {}).get('progress', {})
+
+
+def end_import_session(user_id):
+    """Kết thúc import session"""
+    with import_lock:
+        if user_id in active_imports:
+            del active_imports[user_id]
+            logger.info(f"Ended import session for user {user_id}")
+
+
+def download_and_process_thumbnail(thumbnail_url, max_size=(512, 512), quality=85):
+    """
+    Download thumbnail từ URL và resize/optimize
+    
+    Args:
+        thumbnail_url: URL của thumbnail
+        max_size: Kích thước tối đa (width, height)
+        quality: JPEG quality (0-100)
+        
+    Returns:
+        BytesIO: BytesIO chứa image đã được optimize, hoặc None nếu lỗi
+    """
+    try:
+        print(f"🔍 DEBUG download_and_process_thumbnail: thumbnail_url={thumbnail_url}")
+        logger.info(f"🔍 DEBUG download_and_process_thumbnail: thumbnail_url={thumbnail_url}")
+        
+        if not thumbnail_url:
+            print("❌ DEBUG: thumbnail_url is empty")
+            logger.warning("thumbnail_url is empty")
+            return None
+        
+        # Download thumbnail
+        with urllib.request.urlopen(thumbnail_url, timeout=10) as response:
+            image_data = response.read()
+        
+        if not image_data:
+            logger.warning("Empty thumbnail data")
+            return None
+        
+        # Open và resize image
+        img = Image.open(BytesIO(image_data))
+        
+        # Convert RGBA/LA/P to RGB if needed
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+            img = background
+        
+        # Resize nếu cần
+        if img.width > max_size[0] or img.height > max_size[1]:
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        # Save to BytesIO
+        output = BytesIO()
+        img.save(output, format='JPEG', quality=quality)
+        output.seek(0)
+        
+        logger.info(f"Thumbnail downloaded and processed: {img.width}x{img.height}, {len(output.getvalue())} bytes")
+        return output
+        
+    except Exception as e:
+        logger.error(f"Error downloading thumbnail: {str(e)}", exc_info=True)
+        return None
+
+
+def attach_thumbnail_to_track(track, thumbnail_url):
+    """
+    Attach thumbnail vào track
+    
+    Args:
+        track: UserTrack instance
+        thumbnail_url: URL của thumbnail từ YouTube
+        
+    Returns:
+        bool: True nếu thành công, False nếu lỗi
+    """
+    try:
+        print(f"🔍 DEBUG attach_thumbnail_to_track: track={track.id if track else None}, thumbnail_url={thumbnail_url}")
+        logger.info(f"🔍 DEBUG attach_thumbnail_to_track: track={track.id if track else None}, thumbnail_url={thumbnail_url}")
+        
+        if not thumbnail_url or not track:
+            print(f"❌ DEBUG: Missing thumbnail_url or track. thumbnail_url={thumbnail_url}, track={track}")
+            logger.warning(f"Missing thumbnail_url or track. thumbnail_url={thumbnail_url}, track={track}")
+            return False
+        
+        # Download và process thumbnail
+        thumbnail_io = download_and_process_thumbnail(thumbnail_url)
+        if not thumbnail_io:
+            print("❌ DEBUG: Could not download thumbnail for track")
+            logger.warning("Could not download thumbnail for track")
+            return False
+        
+        # Create filename - sử dụng ID nếu có, hoặc title nếu chưa có ID
+        if track.id:
+            filename = f"album_cover_{track.id}.jpg"
+        else:
+            # Fallback: use title for filename
+            import re
+            safe_title = re.sub(r'[<>:"/\\|?*]', '', track.title)[:50]
+            filename = f"album_cover_{safe_title}.jpg"
+        
+        # Save to track's album_cover field
+        track.album_cover.save(filename, ContentFile(thumbnail_io.read()), save=True)
+        
+        logger.info(f"✅ Thumbnail attached to track: {track.title}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error attaching thumbnail to track: {str(e)}", exc_info=True)
+        return False
+
+
+def attach_thumbnail_to_playlist(playlist, thumbnail_url):
+    """
+    Attach thumbnail vào playlist/album
+    
+    Args:
+        playlist: UserPlaylist instance
+        thumbnail_url: URL của thumbnail từ YouTube
+        
+    Returns:
+        bool: True nếu thành công, False nếu lỗi
+    """
+    try:
+        if not thumbnail_url or not playlist:
+            return False
+        
+        # Download và process thumbnail
+        thumbnail_io = download_and_process_thumbnail(thumbnail_url)
+        if not thumbnail_io:
+            logger.warning("Could not download thumbnail for playlist")
+            return False
+        
+        # Create filename
+        filename = f"playlist_cover_{playlist.id}.jpg"
+        
+        # Save to playlist's cover_image field
+        playlist.cover_image.save(filename, ContentFile(thumbnail_io.read()), save=True)
+        
+        logger.info(f"Thumbnail attached to playlist: {playlist.name}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error attaching thumbnail to playlist: {str(e)}", exc_info=True)
+        return False
+
+
+def _get_cookie_file_path(user=None):
+    """Lấy đường dẫn cookie file, ưu tiên cookie của user, fallback về cookie mặc định"""
+    # Ưu tiên cookie của user nếu có
+    if user:
+        try:
+            from .models import UserYouTubeCookie
+            user_cookie = UserYouTubeCookie.objects.filter(user=user, is_active=True).first()
+            if user_cookie and user_cookie.is_cookie_valid():
+                cookie_path = user_cookie.get_cookie_file_path()
+                if cookie_path and os.path.exists(cookie_path):
+                    logger.info(f"Using user cookie file: {cookie_path}")
+                    return cookie_path
+        except Exception as e:
+            logger.warning(f"Error accessing user cookie: {e}")
+    
+    # Fallback về cookie file mặc định
+    default_cookie_path = os.path.join(settings.BASE_DIR, 'music_player', 'youtube_cookies.txt')
+    if os.path.exists(default_cookie_path):
+        logger.info(f"Using default cookie file: {default_cookie_path}")
+        return default_cookie_path
+    
+    logger.warning("No valid cookie file found")
+    return None
 
 
 def get_duration_formatted(duration):
@@ -65,19 +294,33 @@ class YouTubeImportView(View):
                     'error': 'URL không hợp lệ. Vui lòng nhập URL YouTube video hoặc playlist'
                 }, status=400)
             
+            # ✅ Lưu original URL để logging
+            original_url = youtube_url
+            
             # Detect if it's a playlist URL (phân biệt playlist thực sự vs video với radio mode)
             import re
             # Playlist thực sự: có /playlist hoặc có list= với playlist ID (không phải radio mode RD...)
             has_list_param = bool(re.search(r'[?&]list=', youtube_url))
             is_radio_mode = bool(re.search(r'[?&]list=RD', youtube_url))
             is_playlist = '/playlist' in youtube_url or (has_list_param and not is_radio_mode)
-            if is_playlist:
-                logger.info(f"Detected playlist URL: {youtube_url}")
-            else:
-                logger.info(f"Detected single video URL: {youtube_url}")
+            
+            # ✅ Special handling for radio mode - always treat as single video
+            if is_radio_mode:
+                logger.info("Radio mode detected in import - treating as single video")
+                is_playlist = False
+                # Clean radio mode parameters immediately - improved regex
+                youtube_url = re.sub(r'[?&]list=[^&]*', '', youtube_url)
+                youtube_url = re.sub(r'[?&]start_radio=[^&]*', '', youtube_url)
+                youtube_url = re.sub(r'[?&]index=[^&]*', '', youtube_url)
+                youtube_url = re.sub(r'[?&]+$', '', youtube_url)
+                youtube_url = re.sub(r'\?$', '', youtube_url)  # Remove trailing ?
+                logger.info(f"Radio mode URL cleaned in import: {original_url} -> {youtube_url}")
             
             # Xử lý logic import dựa trên checkbox
-            if is_playlist and not import_playlist:
+            if is_radio_mode and not import_playlist:
+                # Radio mode và không muốn import playlist - đã clean URL ở trên
+                logger.info("Radio mode with single video import - URL already cleaned")
+            elif is_playlist and not import_playlist:
                 # URL là playlist nhưng user không muốn import playlist
                 # Chuyển thành single video bằng cách loại bỏ playlist parameter
                 if '?list=' in youtube_url:
@@ -88,15 +331,6 @@ class YouTubeImportView(View):
                         'success': False,
                         'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
                     }, status=400)
-                logger.info(f"Converted playlist URL to single video: {youtube_url}")
-            elif not is_playlist and '&list=' in youtube_url and not import_playlist:
-                # URL có &list= (radio mode) nhưng user không muốn import playlist
-                # Loại bỏ các parameter liên quan đến playlist/radio
-                import re
-                # Loại bỏ &list= và &start_radio= parameters
-                youtube_url = re.sub(r'&list=[^&]*', '', youtube_url)
-                youtube_url = re.sub(r'&start_radio=[^&]*', '', youtube_url)
-                logger.info(f"Removed radio mode parameters: {youtube_url}")
             elif not is_playlist and import_playlist:
                 # URL là single video nhưng user muốn import playlist
                 return JsonResponse({
@@ -147,22 +381,111 @@ class YouTubeImportView(View):
                 return True
         return False
     
+    def _check_ffmpeg(self):
+        """Kiểm tra FFmpeg có sẵn không"""
+        try:
+            import subprocess
+            result = subprocess.run(['ffmpeg', '-version'], 
+                                  capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except:
+            return False
+    
     def _import_from_youtube(self, user, url, playlist_id, extract_audio_only, import_playlist=False):
         """Import audio từ YouTube URL"""
+        user_id = user.id
+        
         try:
+            # Bắt đầu import session
+            start_import_session(user_id)
+            update_import_progress(user_id, 'preparing', 'Đang chuẩn bị download...', 10)
+            
+            # Kiểm tra cancel trước khi bắt đầu
+            if is_import_cancelled(user_id):
+                logger.info(f"Import cancelled before starting for user {user_id}")
+                return {
+                    'success': False,
+                    'error': 'Import đã bị hủy',
+                    'cancelled': True
+                }
+            
             # Tạo thư mục temp để download
             with tempfile.TemporaryDirectory() as temp_dir:
-                # Cấu hình yt-dlp
+                
+                # Custom progress hook để kiểm tra cancel
+                def progress_hook(d):
+                    if is_import_cancelled(user_id):
+                        logger.info(f"Import cancelled during download for user {user_id}")
+                        raise Exception("Import cancelled by user")
+                    
+                    if d['status'] == 'downloading':
+                        # Cập nhật progress
+                        downloaded_bytes = d.get('downloaded_bytes', 0)
+                        total_bytes = d.get('total_bytes', 0)
+                        if total_bytes > 0:
+                            percentage = min(90, int((downloaded_bytes / total_bytes) * 80) + 10)  # 10-90%
+                            update_import_progress(user_id, 'downloading', f'Đang download... {percentage}%', percentage)
+                        else:
+                            update_import_progress(user_id, 'downloading', 'Đang download...', 50)
+                    elif d['status'] == 'finished':
+                        update_import_progress(user_id, 'processing', 'Đang xử lý file...', 90)
+                
+                # Cấu hình yt-dlp với tối ưu chống bot detection
                 ydl_opts = {
-                    'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                    # ✅ Format selection thông minh - ưu tiên audio thuần túy
+                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[ext=mp3]/bestaudio[ext=ogg]/bestaudio/best',
                     'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-                    'writethumbnail': True,
-                    'writedescription': True,
-                    'writeinfojson': True,
+                    'writethumbnail': False,  # Disable để tránh lỗi
+                    'writedescription': False,  # Disable để tránh lỗi
+                    'writeinfojson': True,  # ✅ Enable để lấy metadata cho thumbnails
                     'ignoreerrors': True,  # Continue on errors
                     'no_warnings': True,
                     'noplaylist': False,  # Allow playlist download
-                    'timeout': 30,        # 30 second timeout
+                    'timeout': 60,        # Tăng timeout lên 60s
+                    'progress_hooks': [progress_hook],  # ✅ Thêm progress hook để cancel
+                    
+                    # ✅ Audio quality settings - chỉ khi có FFmpeg
+                    'audioformat': 'mp3',  # Force MP3 output
+                    'audioquality': '192',  # 192kbps quality
+                    'extractaudio': True,   # Extract audio only
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }] if self._check_ffmpeg() else [],
+                    
+                    # ✅ Fallback: nếu không có FFmpeg, chỉ download audio streams
+                    'format_sort': ['ext:m4a', 'ext:webm', 'ext:mp3', 'ext:ogg', 'ext:mp4'],
+                    'format_sort_force': True,
+                    
+                    # ✅ Anti-bot detection optimizations
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'referer': 'https://www.youtube.com/',
+                    'http_headers': {
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'DNT': '1',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1',
+                    },
+                    
+                    # ✅ Rate limiting và retry logic
+                    'retries': 3,
+                    'fragment_retries': 3,
+                    'retry_sleep_functions': {'http': lambda n: min(4 ** n, 60)},
+                    
+                    # ✅ Cookie support với fallback
+                    'cookiefile': _get_cookie_file_path(user) if os.path.exists(_get_cookie_file_path(user)) else None,
+                    
+                    # ✅ Throttling để tránh spam
+                    'sleep_interval': 1,
+                    'max_sleep_interval': 5,
+                    
+                    # ✅ Extract info optimizations
+                    'extract_flat': False,
+                    'writesubtitles': False,
+                    'writeautomaticsub': False,
                 }
                 
                 # Thêm postprocessor chỉ khi có FFmpeg
@@ -175,14 +498,18 @@ class YouTubeImportView(View):
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }]
-                    logger.info("FFmpeg found, will convert to MP3")
+                    pass  # FFmpeg có sẵn, thêm postprocessor
                 except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
                     # FFmpeg không có, sử dụng format gốc
-                    logger.warning("FFmpeg not found, using original format")
                     ydl_opts['format'] = 'bestaudio/best'
                     # Remove postprocessors if they exist
                     if 'postprocessors' in ydl_opts:
                         del ydl_opts['postprocessors']
+                
+                # Debug logging
+                print(f"🔍 DEBUG: FFmpeg available: {self._check_ffmpeg()}")
+                print(f"🔍 DEBUG: ydl_opts format: {ydl_opts['format']}")
+                print(f"🔍 DEBUG: ydl_opts postprocessors: {ydl_opts.get('postprocessors', [])}")
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     # Extract info trước khi download
@@ -194,18 +521,52 @@ class YouTubeImportView(View):
                             'error': 'Không thể lấy thông tin từ YouTube URL'
                         }
                     
+                    # Kiểm tra cancel trước khi xử lý
+                    if is_import_cancelled(user_id):
+                        logger.info(f"Import cancelled before processing for user {user_id}")
+                        return {
+                            'success': False,
+                            'error': 'Import đã bị hủy',
+                            'cancelled': True
+                        }
+                    
                     # Xử lý single video hoặc playlist dựa trên import_playlist
                     if 'entries' not in info or not import_playlist:
-                        return self._process_single_video(user, ydl, info, playlist_id, temp_dir)
+                        result = self._process_single_video(user, ydl, info, playlist_id, temp_dir)
                     else:
-                        return self._process_playlist(user, ydl, info, playlist_id, temp_dir)
+                        result = self._process_playlist(user, ydl, info, playlist_id, temp_dir)
+                    
+                    # Kiểm tra cancel sau khi xử lý
+                    if is_import_cancelled(user_id):
+                        logger.info(f"Import cancelled after processing for user {user_id}")
+                        return {
+                            'success': False,
+                            'error': 'Import đã bị hủy',
+                            'cancelled': True
+                        }
+                    
+                    # Cập nhật progress hoàn thành
+                    update_import_progress(user_id, 'completed', 'Import hoàn thành!', 100)
+                    return result
                     
         except Exception as e:
             logger.error(f"YouTube import processing error: {str(e)}", exc_info=True)
+            
+            # Kiểm tra nếu lỗi do cancel
+            if is_import_cancelled(user_id):
+                return {
+                    'success': False,
+                    'error': 'Import đã bị hủy',
+                    'cancelled': True
+                }
+            
             return {
                 'success': False,
                 'error': f'Lỗi khi xử lý: {str(e)}'
             }
+        finally:
+            # Cleanup session
+            end_import_session(user_id)
     
     def _process_single_video(self, user, ydl, info, playlist_id, temp_dir):
         """Xử lý single video"""
@@ -217,21 +578,177 @@ class YouTubeImportView(View):
                 created_album = self._create_album_from_playlist(user, album_name, info)
                 if created_album:
                     playlist_id = created_album.id
-                    logger.info(f"Created album for single video: {created_album.name} (ID: {created_album.id})")
             
-            # Download video
-            ydl.download([info['webpage_url']])
+            # Download video với error handling và fallback
+            logger.info(f"Starting download for URL: {info['webpage_url']}")
+            download_success = False
             
-            # Tìm file đã download
-            downloaded_files = [f for f in os.listdir(temp_dir) if f.endswith(('.mp3', '.webm', '.m4a'))]
+            # Thử download với format hiện tại
+            try:
+                ydl.download([info['webpage_url']])
+                logger.info("Download completed successfully")
+                download_success = True
+            except Exception as download_error:
+                logger.error(f"Download failed with current format: {str(download_error)}")
+                
+                # Fallback: thử với format đơn giản hơn
+                logger.info("Trying fallback format...")
+                print(f"🔍 DEBUG: Trying fallback - FFmpeg available: {self._check_ffmpeg()}")
+                
+                # Strategy 1: Thử với audio-only formats
+                fallback_formats = [
+                    'worstaudio[ext=mp3]/worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio/worst',
+                    'worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio[ext=mp3]/worstaudio/worst',
+                    'worstaudio[ext=webm]/worstaudio[ext=m4a]/worstaudio[ext=mp3]/worstaudio/worst',
+                    'worstaudio/worst'  # Last resort
+                ]
+                
+                for i, fallback_format in enumerate(fallback_formats):
+                    try:
+                        print(f"🔍 DEBUG: Trying fallback strategy {i+1}: {fallback_format}")
+                        ydl_opts['format'] = fallback_format
+                        ydl_opts['audioformat'] = 'mp3'
+                        ydl_opts['audioquality'] = '128'
+                        
+                        ydl = yt_dlp.YoutubeDL(ydl_opts)
+                        ydl.download([info['webpage_url']])
+                        logger.info(f"Download completed with fallback strategy {i+1}")
+                        download_success = True
+                        break
+                    except Exception as fallback_error:
+                        print(f"🔍 DEBUG: Fallback strategy {i+1} failed: {str(fallback_error)}")
+                        logger.error(f"Fallback strategy {i+1} failed: {str(fallback_error)}")
+                        continue
+                
+                if not download_success:
+                    return {
+                        'success': False,
+                        'error': f'Lỗi download: {str(download_error)}. Tất cả fallback strategies đều thất bại.'
+                    }
             
-            if not downloaded_files:
+            if not download_success:
                 return {
                     'success': False,
                     'error': 'Không thể download audio từ video'
                 }
             
+            # ✅ Debug: List all files in temp directory
+            all_files = os.listdir(temp_dir)
+            print(f"🔍 DEBUG: All files in temp directory: {all_files}")
+            logger.info(f"All files in temp directory: {all_files}")
+            
+            # Tìm file đã download - mở rộng format support
+            audio_extensions = ('.mp3', '.webm', '.m4a', '.mp4', '.ogg', '.wav')
+            downloaded_files = [f for f in all_files if f.lower().endswith(audio_extensions)]
+            print(f"🔍 DEBUG: Audio files found: {downloaded_files}")
+            logger.info(f"Audio files found: {downloaded_files}")
+            
+            if not downloaded_files:
+                logger.error(f"No audio files found in {temp_dir}. All files: {all_files}")
+                return {
+                    'success': False,
+                    'error': f'Không thể download audio từ video. Files trong thư mục: {all_files}'
+                }
+            
+            # ✅ Validate downloaded file format
             audio_file = os.path.join(temp_dir, downloaded_files[0])
+            file_extension = os.path.splitext(audio_file)[1].lower()
+            print(f"🔍 DEBUG: Downloaded file extension: {file_extension}")
+            
+            # ✅ Nếu file là MP4, thử download lại với format khác
+            if file_extension == '.mp4' and not self._check_ffmpeg():
+                print(f"🔍 DEBUG: MP4 detected without FFmpeg - trying alternative download")
+                logger.warning("MP4 file downloaded without FFmpeg - trying alternative format")
+                
+                # Xóa file MP4 hiện tại
+                try:
+                    os.remove(audio_file)
+                except:
+                    pass
+                
+                # Thử download với format audio thuần túy
+                alternative_formats = [
+                    'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[ext=mp3]/bestaudio[ext=ogg]',
+                    'worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio[ext=mp3]/worstaudio[ext=ogg]',
+                    'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio[ext=mp3]',
+                    'worstaudio[ext=webm]/worstaudio[ext=m4a]/worstaudio[ext=mp3]'
+                ]
+                
+                # Tạo lại ydl_opts cho alternative download
+                alt_ydl_opts = {
+                    'format': '',
+                    'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+                    'writethumbnail': False,
+                    'writedescription': False,
+                    'writeinfojson': True,  # ✅ Enable để lấy metadata
+                    'ignoreerrors': True,
+                    'no_warnings': True,
+                    'noplaylist': False,
+                    'timeout': 60,
+                    'postprocessors': [],  # Disable postprocessors
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'referer': 'https://www.youtube.com/',
+                    'http_headers': {
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'DNT': '1',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1',
+                    },
+                    'retries': 3,
+                    'fragment_retries': 3,
+                    'retry_sleep_functions': {'http': lambda n: min(4 ** n, 60)},
+                    'sleep_interval': 1,
+                    'max_sleep_interval': 5,
+                }
+                
+                for alt_format in alternative_formats:
+                    try:
+                        print(f"🔍 DEBUG: Trying alternative format: {alt_format}")
+                        alt_ydl_opts['format'] = alt_format
+                        
+                        ydl = yt_dlp.YoutubeDL(alt_ydl_opts)
+                        ydl.download([info['webpage_url']])
+                        
+                        # Kiểm tra lại files
+                        new_files = os.listdir(temp_dir)
+                        new_audio_files = [f for f in new_files if f.lower().endswith(('.mp3', '.webm', '.m4a', '.ogg'))]
+                        
+                        if new_audio_files:
+                            downloaded_files = new_audio_files
+                            audio_file = os.path.join(temp_dir, downloaded_files[0])
+                            print(f"🔍 DEBUG: Alternative download successful: {downloaded_files[0]}")
+                            break
+                    except Exception as alt_error:
+                        print(f"🔍 DEBUG: Alternative format failed: {str(alt_error)}")
+                        continue
+            
+            # ✅ Validate audio file trước khi tạo UserTrack
+            logger.info(f"Validating audio file: {audio_file}")
+            if not os.path.exists(audio_file):
+                logger.error(f"Audio file does not exist: {audio_file}")
+                return {
+                    'success': False,
+                    'error': 'File audio không tồn tại sau khi download'
+                }
+            
+            file_size = os.path.getsize(audio_file)
+            logger.info(f"Audio file size: {file_size} bytes")
+            
+            if file_size == 0:
+                logger.error(f"Audio file is empty: {audio_file}")
+                return {
+                    'success': False,
+                    'error': 'File audio rỗng sau khi download'
+                }
+            
+            if file_size < 1024:  # Less than 1KB
+                logger.error(f"Audio file too small: {audio_file} ({file_size} bytes)")
+                return {
+                    'success': False,
+                    'error': 'File audio quá nhỏ, có thể bị lỗi download'
+                }
             
             # Tạo UserTrack
             track = self._create_user_track(user, info, audio_file, playlist_id, None)
@@ -277,6 +794,12 @@ class YouTubeImportView(View):
                     'error': 'Playlist không có video nào'
                 }
             
+            # ✅ Giới hạn số lượng video import để tránh timeout
+            MAX_IMPORT_VIDEOS = 30  # Giới hạn 30 video để tránh timeout
+            if len(entries) > MAX_IMPORT_VIDEOS:
+                logger.warning(f"Playlist có {len(entries)} video, giới hạn import {MAX_IMPORT_VIDEOS} video đầu tiên")
+                entries = entries[:MAX_IMPORT_VIDEOS]
+            
             # Tạo album (playlist) từ YouTube playlist nếu chưa có playlist_id
             created_album = None
             if not playlist_id:
@@ -284,7 +807,6 @@ class YouTubeImportView(View):
                 created_album = self._create_album_from_playlist(user, album_name, info)
                 if created_album:
                     playlist_id = created_album.id
-                    logger.info(f"Created album: {created_album.name} (ID: {created_album.id})")
             
             # Download tất cả videos trong playlist
             ydl.download([info['webpage_url']])
@@ -300,15 +822,10 @@ class YouTubeImportView(View):
             
             if mp3_files:
                 downloaded_files = mp3_files
-                logger.info("Using MP3 files")
             elif m4a_files:
                 downloaded_files = m4a_files
-                logger.info("Using M4A files (no MP3 conversion)")
             else:
                 downloaded_files = webm_files
-                logger.info("Using WEBM files (no conversion)")
-            
-            logger.info(f"Found downloaded files: {downloaded_files}")
             
             if not downloaded_files:
                 return {
@@ -320,49 +837,28 @@ class YouTubeImportView(View):
             created_tracks = []
             errors = []
             
-            logger.info(f"Processing {len(downloaded_files)} downloaded files: {downloaded_files}")
-            
             for i, filename in enumerate(downloaded_files):
                 try:
                     audio_file = os.path.join(temp_dir, filename)
-                    logger.info(f"Processing file {i+1}/{len(downloaded_files)}: {filename}")
                     
                     # Lấy info từ file info.json nếu có
                     info_file = os.path.join(temp_dir, filename.replace('.webm', '.info.json').replace('.mp3', '.info.json').replace('.m4a', '.info.json'))
                     video_info = None
                     
-                    if os.path.exists(info_file):
+                    if os.path.exists(info_file) and os.path.getsize(info_file) > 0:
                         try:
-                            # Check if file is empty
-                            if os.path.getsize(info_file) == 0:
-                                logger.warning(f"Empty info.json for {filename}")
-                                video_info = None
-                            else:
-                                # Try different encodings
-                                for encoding in ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']:
-                                    try:
-                                        with open(info_file, 'r', encoding=encoding) as f:
-                                            content = f.read().strip()
-                                            if content:  # Check if content is not empty
-                                                video_info = json.loads(content)
-                                                logger.info(f"Loaded video info for {filename} with {encoding}: {video_info.get('title', 'Unknown')}")
-                                                break
-                                            else:
-                                                logger.warning(f"Empty content in info.json for {filename}")
-                                                video_info = None
-                                    except (UnicodeDecodeError, json.JSONDecodeError):
-                                        continue
-                                if not video_info:
-                                    logger.warning(f"Could not decode info.json for {filename}")
+                            with open(info_file, 'r', encoding='utf-8') as f:
+                                content = f.read().strip()
+                                if content:
+                                    video_info = json.loads(content)
+                                    logger.info(f"✅ Loaded video info for {filename}: {video_info.get('title', 'Unknown')}")
                         except Exception as e:
-                            logger.warning(f"Error reading info.json for {filename}: {e}")
-                            video_info = None
-                    else:
-                        logger.warning(f"No info.json found for {filename}")
-                        video_info = None
+                            logger.error(f"Error loading video info: {str(e)}")
                     
                     # Tạo UserTrack với playlist info làm album
                     track = self._create_user_track(user, video_info, audio_file, playlist_id, info)
+                    
+                    logger.info(f"✅ Created track: {track.title if track else 'Failed'} with thumbnail: {video_info.get('thumbnail') if video_info and track else 'None'}")
                     
                     if track:
                         created_tracks.append({
@@ -373,9 +869,7 @@ class YouTubeImportView(View):
                             'duration': track.duration,
                             'file_size': track.file_size
                         })
-                        logger.info(f"Successfully created track: {track.title}")
                     else:
-                        logger.error(f"Failed to create track for {filename}")
                         errors.append(f"Không thể tạo track cho {filename}")
                     
                 except Exception as e:
@@ -383,9 +877,16 @@ class YouTubeImportView(View):
                     errors.append(error_msg)
                     logger.error(f"Playlist track processing error for {filename}: {str(e)}", exc_info=True)
             
+            # ✅ Thông báo về giới hạn import
+            original_count = len(info.get('entries', []))
+            imported_count = len(created_tracks)
+            limit_message = ""
+            if original_count > MAX_IMPORT_VIDEOS:
+                limit_message = f" (Giới hạn {MAX_IMPORT_VIDEOS}/{original_count} video để tránh timeout)"
+            
             return {
                 'success': True,
-                'message': f'Import thành công {len(created_tracks)}/{len(downloaded_files)} tracks từ playlist',
+                'message': f'Import thành công {imported_count}/{len(downloaded_files)} tracks từ playlist{limit_message}',
                 'tracks': created_tracks,
                 'errors': errors if errors else None,
                 'album': {
@@ -393,11 +894,12 @@ class YouTubeImportView(View):
                     'name': created_album.name if created_album else 'Existing Playlist',
                     'created': created_album is not None
                 } if created_album or playlist_id else None,
-                'debug_info': {
-                    'downloaded_files': downloaded_files,
-                    'created_count': len(created_tracks),
-                    'error_count': len(errors)
-                }
+                'limit_info': {
+                    'original_count': original_count,
+                    'imported_count': imported_count,
+                    'max_limit': MAX_IMPORT_VIDEOS,
+                    'was_limited': original_count > MAX_IMPORT_VIDEOS
+                } if original_count > MAX_IMPORT_VIDEOS else None
             }
             
         except Exception as e:
@@ -428,7 +930,11 @@ class YouTubeImportView(View):
                 is_active=True
             )
             
-            logger.info(f"Created album '{album_name}' for user {user.username}")
+            # Gắn thumbnail từ YouTube playlist
+            thumbnail_url = playlist_info.get('thumbnail')
+            if thumbnail_url:
+                attach_thumbnail_to_playlist(album, thumbnail_url)
+            
             return album
             
         except Exception as e:
@@ -437,21 +943,36 @@ class YouTubeImportView(View):
     
     def _create_user_track(self, user, video_info, audio_file_path, playlist_id, playlist_info=None):
         """Tạo UserTrack từ file audio và metadata"""
+        print(f"🔍 DEBUG: Starting _create_user_track with file: {audio_file_path}")
         try:
-            logger.info(f"Creating UserTrack for file: {audio_file_path}")
-            
             # Lấy metadata từ video info hoặc filename
             if video_info:
                 title = video_info.get('title', 'Unknown Title')
                 uploader = video_info.get('uploader', 'Unknown Artist')
                 upload_date = video_info.get('upload_date', '')
-                logger.info(f"Using video info - Title: {title}, Uploader: {uploader}")
+                thumbnail_url = video_info.get('thumbnail')
+                
+                # ✅ DEBUG: Log thumbnail_url từ video_info
+                print(f"🔍 DEBUG: Extracted thumbnail_url from video_info: {thumbnail_url}")
+                logger.info(f"🔍 DEBUG: Extracted thumbnail_url from video_info: {thumbnail_url}")
+                logger.info(f"🔍 DEBUG: video_info keys: {list(video_info.keys())}")
+                
+                # Check if 'thumbnail' is in video_info
+                if 'thumbnail' in video_info:
+                    print(f"🔍 DEBUG: thumbnail key exists in video_info: {video_info['thumbnail']}")
+                    logger.info(f"🔍 DEBUG: thumbnail key exists in video_info: {video_info['thumbnail']}")
+                else:
+                    print("❌ DEBUG: thumbnail key NOT found in video_info")
+                    logger.warning("thumbnail key NOT found in video_info")
+                    logger.info(f"Available keys: {list(video_info.keys())}")
             else:
                 # Fallback: extract từ filename
                 filename = os.path.basename(audio_file_path)
                 title, uploader = self._extract_metadata_from_filename(filename)
                 upload_date = ''
-                logger.info(f"Using filename fallback - Title: {title}, Uploader: {uploader}")
+                thumbnail_url = '' # No thumbnail in filename fallback
+                print(f"❌ DEBUG: No video_info, using filename fallback")
+                logger.warning(f"No video_info, using filename fallback")
             
             # Clean title (loại bỏ ký tự không hợp lệ)
             title = self._clean_title(title)
@@ -459,16 +980,11 @@ class YouTubeImportView(View):
             # Tạo album name từ playlist hoặc uploader
             if playlist_info:
                 album = playlist_info.get('title', 'YouTube Playlist')
-                logger.info(f"Using playlist as album: {album}")
-                logger.info(f"Playlist info keys: {list(playlist_info.keys()) if playlist_info else 'None'}")
             else:
                 album = f"{uploader} - {upload_date[:4]}" if upload_date else uploader
-                logger.info(f"Using uploader as album: {album}")
-                logger.info(f"No playlist info provided")
             
             # Đọc file size
             file_size = os.path.getsize(audio_file_path)
-            logger.info(f"File size: {file_size / (1024*1024):.2f}MB")
             
             # Check quota trước khi tạo track
             user_settings = MusicPlayerSettings.objects.get(user=user)
@@ -477,16 +993,24 @@ class YouTubeImportView(View):
                 logger.error(error_msg)
                 raise Exception(error_msg)
             
-            logger.info(f"Quota check passed. Creating track...")
             
             # Đọc duration từ file
-            duration = self._get_audio_duration(audio_file_path)
+            duration = self._get_audio_duration(audio_file_path, video_info)
             
-            # Tạo filename an toàn
-            safe_filename = self._create_safe_filename(title, uploader)
+            # Tạo filename an toàn với extension gốc
+            safe_filename = self._create_safe_filename(title, uploader, audio_file_path)
+            print(f"🔍 DEBUG: Original file: {audio_file_path}")
+            print(f"🔍 DEBUG: Safe filename: {safe_filename}")
+            print(f"🔍 DEBUG: Original extension: {os.path.splitext(audio_file_path)[1]}")
+            print(f"🔍 DEBUG: Safe filename extension: {os.path.splitext(safe_filename)[1]}")
+            logger.info(f"Original file: {audio_file_path}")
+            logger.info(f"Safe filename: {safe_filename}")
+            logger.info(f"Original extension: {os.path.splitext(audio_file_path)[1]}")
+            logger.info(f"Safe filename extension: {os.path.splitext(safe_filename)[1]}")
             
-            # Upload file
+            # Upload file với extension gốc
             with open(audio_file_path, 'rb') as f:
+                # ✅ Đảm bảo Django File sử dụng đúng extension
                 django_file = File(f, name=safe_filename)
                 
                 with transaction.atomic():
@@ -499,8 +1023,18 @@ class YouTubeImportView(View):
                         file=django_file,
                         file_size=file_size,
                         duration=duration,
+                        play_count=0,  # ✅ Đảm bảo play_count = 0
                         is_active=True
                     )
+                    
+                    # ✅ Ensure track is saved before attaching thumbnail
+                    track.refresh_from_db()
+                    
+                    # ✅ Debug: Log file path sau khi tạo
+                    print(f"🔍 DEBUG: Created track with file path: {track.file.path}")
+                    print(f"🔍 DEBUG: File extension: {os.path.splitext(track.file.path)[1]}")
+                    logger.info(f"Created track with file path: {track.file.path}")
+                    logger.info(f"File extension: {os.path.splitext(track.file.path)[1]}")
                     
                     # Thêm vào playlist nếu có
                     if playlist_id:
@@ -512,12 +1046,26 @@ class YouTubeImportView(View):
                                 order=playlist.tracks.count() + 1
                             )
                         except UserPlaylist.DoesNotExist:
-                            logger.warning(f"Playlist {playlist_id} not found for user {user.username}")
+                            pass
                     
-                    logger.info(f"Successfully created UserTrack: {track.title} (ID: {track.id})")
+                    # ✅ Gắn thumbnail vào track - SAU KHI track đã có ID
+                    print(f"🔍 DEBUG: Checking thumbnail_url before attachment: {thumbnail_url}")
+                    logger.info(f"🔍 DEBUG: Checking thumbnail_url before attachment: {thumbnail_url}")
+                    
+                    if thumbnail_url:
+                        print(f"🔍 DEBUG: Attaching thumbnail to track ID: {track.id}, URL: {thumbnail_url}")
+                        logger.info(f"🔍 DEBUG: Attaching thumbnail to track ID: {track.id}, URL: {thumbnail_url}")
+                        result = attach_thumbnail_to_track(track, thumbnail_url)
+                        print(f"🔍 DEBUG: Thumbnail attachment result: {result}")
+                        logger.info(f"🔍 DEBUG: Thumbnail attachment result: {result}")
+                    else:
+                        print("❌ DEBUG: thumbnail_url is empty, skipping attachment")
+                        logger.warning("thumbnail_url is empty, skipping attachment")
+                    
                     return track
                     
         except Exception as e:
+            print(f"❌ ERROR: Create user track error: {str(e)}")
             logger.error(f"Create user track error: {str(e)}", exc_info=True)
             return None
     
@@ -557,7 +1105,6 @@ class YouTubeImportView(View):
             return name, 'Unknown Artist'
             
         except Exception as e:
-            logger.warning(f"Error extracting metadata from filename {filename}: {e}")
             return filename, 'Unknown Artist'
     
     def _clean_title(self, title):
@@ -573,8 +1120,8 @@ class YouTubeImportView(View):
         
         return title or 'Unknown Title'
     
-    def _create_safe_filename(self, title, artist):
-        """Tạo filename an toàn"""
+    def _create_safe_filename(self, title, artist, original_file_path=None):
+        """Tạo filename an toàn với extension gốc"""
         import re
         from datetime import datetime
         
@@ -591,28 +1138,93 @@ class YouTubeImportView(View):
         if len(filename) > 100:
             filename = filename[:100].strip('_')
         
+        # ✅ Giữ nguyên extension gốc nếu có
+        if original_file_path and os.path.exists(original_file_path):
+            original_ext = os.path.splitext(original_file_path)[1]
+            if original_ext:
+                extension = original_ext
+            else:
+                extension = '.mp3'  # Fallback
+        else:
+            extension = '.mp3'  # Default
+        
         # Thêm timestamp để tránh trùng
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{filename}_{timestamp}.mp3"
+        filename = f"{filename}_{timestamp}{extension}"
         
         return filename
     
-    def _get_audio_duration(self, file_path):
-        """Lấy duration từ file audio"""
+    def _get_audio_duration(self, file_path, video_info=None):
+        """Lấy duration từ file audio với multiple fallbacks"""
+        
+        # Method 0: Sử dụng duration từ video_info nếu có (ưu tiên cao nhất)
+        if video_info and video_info.get('duration'):
+            duration = int(video_info.get('duration'))
+            return duration
+        
+        # Method 1: Sử dụng mutagen (tốt nhất cho MP3/M4A)
         try:
             from mutagen import File as MutagenFile
             audio_file = MutagenFile(file_path)
-            if audio_file and hasattr(audio_file, 'info'):
-                return int(audio_file.info.length)
+            if audio_file and hasattr(audio_file, 'info') and audio_file.info.length:
+                duration = int(audio_file.info.length)
+                return duration
         except Exception as e:
-            logger.warning(f"Could not get duration from {file_path}: {e}")
+            pass
         
-        # Fallback: sử dụng get_audio_duration từ utils
+        # Method 2: Sử dụng get_audio_duration từ utils
         try:
-            return get_audio_duration(file_path)
+            from .utils import get_audio_duration
+            duration = get_audio_duration(file_path)
+            if duration > 0:
+                return duration
         except Exception as e:
-            logger.warning(f"Fallback duration extraction failed: {e}")
-            return 180  # Default 3 minutes
+            pass
+        
+        # Method 3: Sử dụng ffprobe nếu có
+        try:
+            import subprocess
+            result = subprocess.run([
+                'ffprobe', '-v', 'quiet', '-show_entries', 'format=duration',
+                '-of', 'csv=p=0', file_path
+            ], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0 and result.stdout.strip():
+                duration = int(float(result.stdout.strip()))
+                return duration
+        except Exception as e:
+            pass
+        
+        # Method 4: Sử dụng mutagen với different approach
+        try:
+            from mutagen import File as MutagenFile
+            audio_file = MutagenFile(file_path)
+            if audio_file:
+                # Try different ways to get duration
+                if hasattr(audio_file, 'info') and audio_file.info:
+                    if hasattr(audio_file.info, 'length') and audio_file.info.length:
+                        duration = int(audio_file.info.length)
+                        return duration
+                
+                # Try to get duration from tags
+                if hasattr(audio_file, 'tags') and audio_file.tags:
+                    for tag in ['length', 'duration', 'DURATION']:
+                        if tag in audio_file.tags:
+                            try:
+                                duration = int(float(audio_file.tags[tag][0]))
+                                return duration
+                            except:
+                                continue
+        except Exception as e:
+            pass
+        
+        # Fallback: Return 180s only as last resort
+        return 180  # Default 3 minutes
+    
+    def format_duration(self, seconds):
+        """Format duration thành mm:ss"""
+        minutes = seconds // 60
+        seconds = seconds % 60
+        return f"{minutes}:{seconds:02d}"
 
 
 @csrf_exempt
@@ -645,12 +1257,19 @@ def get_youtube_info(request):
         data = json.loads(request.body)
         url = data.get('url', '').strip()
         import_playlist = data.get('import_playlist', False)  # Mặc định: import file đơn lẻ
+        user = request.user
+        
+        logger.info(f"YouTube info request from user {user.username}: URL={url}, import_playlist={import_playlist}")
         
         if not url:
+            logger.warning("Empty URL provided")
             return JsonResponse({
                 'success': False,
                 'error': 'URL không được để trống'
             }, status=400)
+        
+        # Log original URL for debugging
+        original_url = url
         
         # Detect if it's a playlist URL (phân biệt playlist thực sự vs video với radio mode)
         import re
@@ -658,13 +1277,26 @@ def get_youtube_info(request):
         has_list_param = bool(re.search(r'[?&]list=', url))
         is_radio_mode = bool(re.search(r'[?&]list=RD', url))
         is_playlist = '/playlist' in url or (has_list_param and not is_radio_mode)
-        if is_playlist:
-            logger.info(f"Detected playlist URL: {url}")
-        else:
-            logger.info(f"Detected single video URL: {url}")
         
-        # Xử lý logic preview dựa trên checkbox
-        if is_playlist and not import_playlist:
+        # ✅ Special handling for radio mode - always treat as single video
+        if is_radio_mode:
+            logger.info("Radio mode detected - treating as single video")
+            is_playlist = False
+            # Clean radio mode parameters immediately - improved regex
+            url = re.sub(r'[?&]list=[^&]*', '', url)
+            url = re.sub(r'[?&]start_radio=[^&]*', '', url)
+            url = re.sub(r'[?&]index=[^&]*', '', url)
+            url = re.sub(r'[?&]+$', '', url)
+            url = re.sub(r'\?$', '', url)  # Remove trailing ?
+            logger.info(f"Radio mode URL cleaned: {original_url} -> {url}")
+        
+        logger.info(f"URL analysis: has_list_param={has_list_param}, is_radio_mode={is_radio_mode}, is_playlist={is_playlist}")
+        
+        # ✅ Xử lý logic preview dựa trên checkbox và radio mode
+        if is_radio_mode and not import_playlist:
+            # Radio mode và không muốn import playlist - đã clean URL ở trên
+            logger.info("Radio mode with single video import - URL already cleaned")
+        elif is_playlist and not import_playlist:
             # URL là playlist nhưng user không muốn import playlist
             # Chuyển thành single video bằng cách loại bỏ playlist parameter
             if '?list=' in url:
@@ -675,15 +1307,15 @@ def get_youtube_info(request):
                     'success': False,
                     'error': 'URL này là playlist. Vui lòng tick "Import cả playlist" hoặc sử dụng URL video đơn lẻ.'
                 }, status=400)
-            logger.info(f"Converted playlist URL to single video for preview: {url}")
-        elif not is_playlist and '&list=' in url and not import_playlist:
-            # URL có &list= (radio mode) nhưng user không muốn import playlist
+        elif not is_playlist and ('&list=' in url or '?list=' in url) and not import_playlist:
+            # URL có &list= hoặc ?list= (radio mode) nhưng user không muốn import playlist
             # Loại bỏ các parameter liên quan đến playlist/radio
-            import re
-            # Loại bỏ &list= và &start_radio= parameters
-            url = re.sub(r'&list=[^&]*', '', url)
+            # Loại bỏ &list= và ?list= và &start_radio= parameters
+            url = re.sub(r'[?&]list=[^&]*', '', url)
             url = re.sub(r'&start_radio=[^&]*', '', url)
-            logger.info(f"Removed radio mode parameters for preview: {url}")
+            # Clean up any remaining ? or & at the end
+            url = re.sub(r'[?&]+$', '', url)
+            logger.info(f"URL cleaned from radio mode: {original_url} -> {url}")
         elif not is_playlist and import_playlist:
             # URL là single video nhưng user muốn import playlist
             return JsonResponse({
@@ -691,93 +1323,441 @@ def get_youtube_info(request):
                 'error': 'URL này là video đơn lẻ. Bỏ tick "Import cả playlist" để import video này.'
             }, status=400)
         
-        # Cấu hình yt-dlp để extract info (hỗ trợ cả video và playlist)
+        # Cấu hình yt-dlp để extract info với tối ưu chống bot detection
+        cookie_path = _get_cookie_file_path(user)
+        logger.info(f"Using cookie file: {cookie_path}")
+        
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'noplaylist': False,  # Allow playlist info extraction
             'extract_flat': False, # Extract full info for better metadata
             'timeout': 15,        # 15 second timeout
+            
+            # ✅ Anti-bot detection optimizations
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'referer': 'https://www.youtube.com/',
+            'http_headers': {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+            },
+            
+            # ✅ Rate limiting và retry logic
+            'retries': 2,
+            'fragment_retries': 2,
+            'retry_sleep_functions': {'http': lambda n: min(2 ** n, 10)},
+            
+            # ✅ Cookie support
+            'cookiefile': cookie_path,
+            
+            # ✅ Throttling để tránh spam
+            'sleep_interval': 0.5,
+            'max_sleep_interval': 2,
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
+        logger.info(f"Final URL for yt-dlp: {url}")
+        logger.info(f"yt-dlp options: {ydl_opts}")
+        logger.info(f"Starting yt-dlp extraction for URL: {url}")
+        
+        info = None
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Thêm timeout cho yt-dlp extraction (Windows compatible)
+                import threading
+                import time
+                
+                info = None
+                error = None
+                
+                def extract_info():
+                    nonlocal info, error
+                    try:
+                        info = ydl.extract_info(url, download=False)
+                    except Exception as e:
+                        error = e
+                
+                # Chạy extraction trong thread riêng
+                thread = threading.Thread(target=extract_info)
+                thread.daemon = True
+                thread.start()
+                
+                # Đợi tối đa 25 giây
+                thread.join(timeout=25)
+                
+                if thread.is_alive():
+                    logger.error("yt-dlp extraction timeout after 25 seconds")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Timeout khi lấy thông tin từ YouTube. Vui lòng thử lại.'
+                    }, status=408)
+                
+                if error:
+                    logger.error(f"yt-dlp extraction error: {str(error)}", exc_info=True)
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Lỗi yt-dlp: {str(error)}'
+                    }, status=500)
+                
+                logger.info(f"yt-dlp extraction completed. Info keys: {list(info.keys()) if info else 'None'}")
+        except Exception as e:
+            logger.error(f"yt-dlp wrapper error: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': f'Lỗi khởi tạo yt-dlp: {str(e)}'
+            }, status=500)
             
-            if not info:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Không thể lấy thông tin từ URL'
-                }, status=400)
+        # Xử lý kết quả nếu không có lỗi
+        if not info:
+            logger.error("yt-dlp returned no info")
+            return JsonResponse({
+                'success': False,
+                'error': 'Không thể lấy thông tin từ URL'
+            }, status=400)
             
-            # Xử lý single video hoặc playlist dựa trên import_playlist
-            if 'entries' not in info or not import_playlist:
-                # Single video hoặc không muốn import playlist
-                return JsonResponse({
-                    'success': True,
-                    'info': {
-                        'type': 'video',
-                        'id': info.get('id'),
-                        'title': info.get('title', 'Unknown'),
-                        'uploader': info.get('uploader', 'Unknown'),
-                        'duration': info.get('duration', 0),
-                        'duration_formatted': get_duration_formatted(info.get('duration', 0)),
-                        'thumbnail': info.get('thumbnail', ''),
-                        'webpage_url': info.get('webpage_url', url),
-                        'import_mode': 'single'  # Thêm flag để frontend biết
-                    }
-                })
-            else:
-                # Playlist và muốn import playlist
-                entries = info.get('entries', [])
-                videos_info = []
-                
-                logger.info(f"Playlist info: {info.get('title', 'Unknown')} with {len(entries)} entries")
-                
-                for entry in entries[:10]:  # Chỉ lấy 10 videos đầu để preview
-                    if entry:
-                        # Handle both flat and full extraction
-                        if isinstance(entry, dict):
-                            video_data = {
-                                'id': entry.get('id'),
-                                'title': entry.get('title', 'Unknown'),
-                                'uploader': entry.get('uploader', 'Unknown'),
-                                'duration': entry.get('duration', 0),
-                                'duration_formatted': get_duration_formatted(entry.get('duration', 0)),
-                                'thumbnail': entry.get('thumbnail', ''),
-                                'webpage_url': entry.get('url', entry.get('webpage_url', '')),
-                            }
-                        else:
-                            # Fallback for flat extraction
-                            video_data = {
-                                'id': str(entry),
-                                'title': 'Unknown',
-                                'uploader': 'Unknown',
-                                'duration': 0,
-                                'duration_formatted': '00:00',
-                                'thumbnail': '',
-                                'webpage_url': '',
-                            }
-                        
-                        videos_info.append(video_data)
-                
-                return JsonResponse({
-                    'success': True,
-                    'info': {
-                        'type': 'playlist',
-                        'id': info.get('id'),
-                        'title': info.get('title', 'Unknown Playlist'),
-                        'uploader': info.get('uploader', 'Unknown'),
-                        'entry_count': len(entries),
-                        'thumbnail': info.get('thumbnail', ''),
-                        'webpage_url': info.get('webpage_url', url),
-                        'entries': videos_info,
-                        'import_mode': 'playlist'  # Thêm flag để frontend biết
-                    }
-                })
+        # Xử lý single video hoặc playlist dựa trên import_playlist
+        if 'entries' not in info or not import_playlist:
+            # Single video hoặc không muốn import playlist
+            logger.info("Processing as single video")
+            logger.info(f"Video info: title={info.get('title')}, uploader={info.get('uploader')}, duration={info.get('duration')}")
+            
+            return JsonResponse({
+                'success': True,
+                'info': {
+                    'type': 'video',
+                    'id': info.get('id'),
+                    'title': info.get('title', 'Unknown'),
+                    'uploader': info.get('uploader', 'Unknown'),
+                    'duration': info.get('duration', 0),
+                    'duration_formatted': get_duration_formatted(info.get('duration', 0)),
+                    'thumbnail': info.get('thumbnail', ''),
+                    'webpage_url': info.get('webpage_url', url),
+                    'import_mode': 'single'  # Thêm flag để frontend biết
+                }
+            })
+        else:
+            # Playlist và muốn import playlist
+            logger.info("Processing as playlist")
+            entries = info.get('entries', [])
+            logger.info(f"Playlist has {len(entries)} entries")
+            
+            videos_info = []
+            
+            for i, entry in enumerate(entries[:10]):  # Chỉ lấy 10 videos đầu để preview
+                if entry:
+                    logger.info(f"Processing entry {i}: {entry.get('title', 'Unknown') if isinstance(entry, dict) else 'Flat entry'}")
+                    
+                    # Handle both flat and full extraction
+                    if isinstance(entry, dict):
+                        video_data = {
+                            'id': entry.get('id'),
+                            'title': entry.get('title', 'Unknown'),
+                            'uploader': entry.get('uploader', 'Unknown'),
+                            'duration': entry.get('duration', 0),
+                            'duration_formatted': get_duration_formatted(entry.get('duration', 0)),
+                            'thumbnail': entry.get('thumbnail', ''),
+                            'webpage_url': entry.get('url', entry.get('webpage_url', '')),
+                        }
+                    else:
+                        # Fallback for flat extraction
+                        video_data = {
+                            'id': str(entry),
+                            'title': 'Unknown',
+                            'uploader': 'Unknown',
+                            'duration': 0,
+                            'duration_formatted': '00:00',
+                            'thumbnail': '',
+                            'webpage_url': '',
+                        }
+                    
+                    videos_info.append(video_data)
+            
+            logger.info(f"Returning playlist info with {len(videos_info)} videos")
+            
+            # ✅ Cảnh báo cho playlist lớn
+            warning_message = None
+            if len(entries) > 50:
+                warning_message = f"Cảnh báo: Playlist có {len(entries)} video. Import sẽ mất rất nhiều thời gian và có thể timeout. Khuyến nghị import playlist nhỏ hơn (< 50 video)."
+            elif len(entries) > 20:
+                warning_message = f"Playlist có {len(entries)} video. Import sẽ mất vài phút."
+            
+            return JsonResponse({
+                'success': True,
+                'info': {
+                    'type': 'playlist',
+                    'id': info.get('id'),
+                    'title': info.get('title', 'Unknown Playlist'),
+                    'uploader': info.get('uploader', 'Unknown'),
+                    'entry_count': len(entries),
+                    'thumbnail': info.get('thumbnail', ''),
+                    'webpage_url': info.get('webpage_url', url),
+                    'entries': videos_info,
+                    'import_mode': 'playlist',  # Thêm flag để frontend biết
+                    'warning': warning_message  # ✅ Thêm cảnh báo
+                }
+            })
             
     except Exception as e:
         logger.error(f"YouTube info extraction error: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': f'Lỗi khi lấy thông tin: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def upload_youtube_cookie(request):
+    """API endpoint để upload cookie file của user"""
+    try:
+        if 'cookie_file' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': 'Vui lòng chọn file cookie'
+            }, status=400)
+        
+        cookie_file = request.FILES['cookie_file']
+        
+        # Validate file type
+        if not cookie_file.name.endswith('.txt'):
+            return JsonResponse({
+                'success': False,
+                'error': 'File cookie phải có định dạng .txt'
+            }, status=400)
+        
+        # Validate file size (max 1MB)
+        if cookie_file.size > 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'error': 'File cookie quá lớn (tối đa 1MB)'
+            }, status=400)
+        
+        # Validate cookie content
+        try:
+            content = cookie_file.read().decode('utf-8')
+            cookie_file.seek(0)  # Reset file pointer
+            
+            # Kiểm tra có phải Netscape cookie format không
+            if not ('youtube.com' in content and 
+                   any(cookie in content for cookie in ['SID', 'HSID', 'SSID', 'APISID', 'SAPISID'])):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'File cookie không hợp lệ. Vui lòng export cookie từ trình duyệt với domain youtube.com'
+                }, status=400)
+                
+        except UnicodeDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'File cookie không đúng định dạng UTF-8'
+            }, status=400)
+        
+        # Lưu cookie file
+        from .models import UserYouTubeCookie
+        
+        # Xóa cookie cũ nếu có
+        UserYouTubeCookie.objects.filter(user=request.user).delete()
+        
+        # Tạo cookie mới
+        user_cookie = UserYouTubeCookie.objects.create(
+            user=request.user,
+            cookie_file=cookie_file,
+            is_active=True
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Cookie file đã được upload thành công!',
+            'cookie_id': user_cookie.id,
+            'is_valid': user_cookie.is_cookie_valid()
+        })
+        
+    except Exception as e:
+        logger.error(f"YouTube cookie upload error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Lỗi khi upload cookie: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def delete_youtube_cookie(request):
+    """API endpoint để xóa cookie file của user"""
+    try:
+        from .models import UserYouTubeCookie
+        
+        user_cookie = UserYouTubeCookie.objects.filter(user=request.user).first()
+        if user_cookie:
+            user_cookie.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Cookie file đã được xóa thành công!'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không tìm thấy cookie file để xóa'
+            }, status=404)
+            
+    except Exception as e:
+        logger.error(f"YouTube cookie delete error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Lỗi khi xóa cookie: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def get_youtube_cookie_status(request):
+    """API endpoint để lấy trạng thái cookie của user"""
+    try:
+        from .models import UserYouTubeCookie
+        
+        user_cookie = UserYouTubeCookie.objects.filter(user=request.user).first()
+        
+        if user_cookie:
+            return JsonResponse({
+                'success': True,
+                'has_cookie': True,
+                'is_valid': user_cookie.is_cookie_valid(),
+                'created_at': user_cookie.created_at.isoformat(),
+                'file_name': user_cookie.cookie_file.name if user_cookie.cookie_file else None
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'has_cookie': False,
+                'is_valid': False
+            })
+            
+    except Exception as e:
+        logger.error(f"YouTube cookie status error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Lỗi khi lấy trạng thái cookie: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def cancel_youtube_import(request):
+    """API endpoint để hủy import đang chạy"""
+    try:
+        user_id = request.user.id
+        logger.info(f"Cancel import request from user {user_id}")
+        
+        if cancel_import_session(user_id):
+            return JsonResponse({
+                'success': True,
+                'message': 'Import đã được hủy thành công'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Không có import nào đang chạy để hủy'
+            }, status=404)
+            
+    except Exception as e:
+        logger.error(f"Cancel import error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Lỗi khi hủy import: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def get_youtube_import_status(request):
+    """API endpoint để lấy trạng thái import hiện tại"""
+    try:
+        user_id = request.user.id
+        progress = get_import_progress(user_id)
+        
+        if progress:
+            return JsonResponse({
+                'success': True,
+                'progress': progress
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'progress': {'status': 'idle', 'message': 'Không có import nào đang chạy', 'percentage': 0}
+            })
+            
+    except Exception as e:
+        logger.error(f"Get import status error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': f'Lỗi khi lấy trạng thái import: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def test_youtube_endpoint(request):
+    """Test endpoint để debug YouTube import"""
+    try:
+        logger.info("Test endpoint called")
+        return JsonResponse({
+            'success': True,
+            'message': 'Test endpoint hoạt động bình thường',
+            'timestamp': timezone.now().isoformat(),
+            'user': request.user.username
+        })
+    except Exception as e:
+        logger.error(f"Test endpoint error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def debug_url_processing(request):
+    """Debug endpoint để test URL processing"""
+    try:
+        data = json.loads(request.body)
+        url = data.get('url', '').strip()
+        
+        logger.info(f"Debug URL processing: {url}")
+        
+        # Test URL processing logic
+        import re
+        has_list_param = bool(re.search(r'[?&]list=', url))
+        is_radio_mode = bool(re.search(r'[?&]list=RD', url))
+        is_playlist = '/playlist' in url or (has_list_param and not is_radio_mode)
+        
+        # Clean URL if needed
+        cleaned_url = url
+        if not is_playlist and ('&list=' in url or '?list=' in url):
+            cleaned_url = re.sub(r'[?&]list=[^&]*', '', url)
+            cleaned_url = re.sub(r'&start_radio=[^&]*', '', cleaned_url)
+            cleaned_url = re.sub(r'[?&]+$', '', cleaned_url)
+        
+        return JsonResponse({
+            'success': True,
+            'original_url': url,
+            'cleaned_url': cleaned_url,
+            'has_list_param': has_list_param,
+            'is_radio_mode': is_radio_mode,
+            'is_playlist': is_playlist,
+            'url_changed': url != cleaned_url
+        })
+    except Exception as e:
+        logger.error(f"Debug URL processing error: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
         }, status=500)

@@ -59,6 +59,17 @@ urlpatterns = [
     path('youtube/import/', youtube_import_views.YouTubeImportView.as_view(), name='youtube_import'),
     path('youtube/info/', youtube_import_views.get_youtube_info, name='youtube_info'),
     path('youtube/progress/', youtube_import_views.get_youtube_import_progress, name='youtube_progress'),
+    path('youtube/cancel/', youtube_import_views.cancel_youtube_import, name='youtube_cancel'),
+    path('youtube/status/', youtube_import_views.get_youtube_import_status, name='youtube_status'),
+    
+    # ✅ YouTube Cookie Management APIs
+    path('youtube/cookie/upload/', youtube_import_views.upload_youtube_cookie, name='youtube_cookie_upload'),
+    path('youtube/cookie/delete/', youtube_import_views.delete_youtube_cookie, name='youtube_cookie_delete'),
+    path('youtube/cookie/status/', youtube_import_views.get_youtube_cookie_status, name='youtube_cookie_status'),
+    
+    # ✅ YouTube Test API
+    path('youtube/test/', youtube_import_views.test_youtube_endpoint, name='youtube_test'),
+    path('youtube/debug-url/', youtube_import_views.debug_url_processing, name='youtube_debug_url'),
     
     # Admin views
     path('admin/', admin_views.music_admin, name='admin'),

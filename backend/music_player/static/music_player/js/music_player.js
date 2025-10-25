@@ -930,7 +930,11 @@ class MusicPlayer {
                         return `
                             <div class="playlist-card" data-playlist-id="user-${playlist.id}" onclick="musicPlayer.loadUserPlaylist(${playlist.id})">
                                 <div class="playlist-card-icon">
-                                    <i class="bi bi-vinyl-fill"></i>
+                                    ${playlist.cover_image ? 
+                                        `<img src="${playlist.cover_image}" alt="${escapedName}" class="playlist-card-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                         <i class="bi bi-vinyl-fill" style="display:none;"></i>` :
+                                        `<i class="bi bi-vinyl-fill"></i>`
+                                    }
                                 </div>
                                 <div class="playlist-card-name">${escapedName}</div>
                                 <div class="playlist-card-count">${playlist.tracks_count} bài${totalDuration > 0 ? ` • ${totalDuration} phút` : ''}</div>

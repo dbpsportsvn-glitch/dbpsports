@@ -2299,6 +2299,15 @@ body.low-power .playlist-card-cover { filter: none !important; }
     justify-content: center;
     color: white;
     font-size: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.track-card-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
 .track-card-info {
@@ -2418,6 +2427,15 @@ body.low-power .playlist-card-cover { filter: none !important; }
     justify-content: center;
     color: white;
     font-size: 22px;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-playlist-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
 }
 
 .user-playlist-details {
@@ -5401,8 +5419,15 @@ body .youtube-import-modal {
     margin-top: 15px;
 }
 
+.progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
 .progress-header h5 {
-    margin: 0 0 15px 0;
+    margin: 0;
     color: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
@@ -5411,6 +5436,25 @@ body .youtube-import-modal {
 
 .progress-header i {
     color: #ff6b6b;
+}
+
+.progress-header .cancel-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    color: #ff6b6b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.progress-header .cancel-btn:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: translateY(-1px);
 }
 
 .progress-bar {
@@ -5645,4 +5689,263 @@ body .youtube-import-modal {
 .music-player-modal .form-select option {
     background: #667eea !important;
     color: white !important;
+}
+
+/* ✅ Cookie Management Styles */
+.cookie-management {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.cookie-status {
+    margin-bottom: 12px;
+}
+
+.cookie-status-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cookie-status-text i {
+    color: #667eea;
+}
+
+.cookie-status-text.success {
+    color: #38ef7d;
+}
+
+.cookie-status-text.success i {
+    color: #38ef7d;
+}
+
+.cookie-status-text.warning {
+    color: #f093fb;
+}
+
+.cookie-status-text.warning i {
+    color: #f093fb;
+}
+
+.cookie-status-text.error {
+    color: #fa709a;
+}
+
+.cookie-status-text.error i {
+    color: #fa709a;
+}
+
+.cookie-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.cookie-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cookie-actions .btn-secondary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.cookie-actions .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.cookie-actions .btn-danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.cookie-actions .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(250, 112, 154, 0.3);
+}
+
+.cookie-help {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+    font-weight: 500; /* ✅ Tăng độ đậm chữ */
+}
+
+.cookie-help i {
+    color: #ffffff; /* ✅ Đổi sang màu trắng để nổi bật */
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* ✅ Progress Actions Styles */
+.progress-actions {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.progress-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.progress-actions .btn-danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.progress-actions .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(250, 112, 154, 0.3);
+}
+
+/* ✅ YouTube Preview Thumbnail Styles */
+.youtube-preview-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-thumbnail {
+    flex-shrink: 0;
+    width: 120px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.preview-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.preview-info h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.preview-info p {
+    margin: 4px 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.3;
+}
+
+.preview-info strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* ✅ Playlist Entries Styles */
+.playlist-entries {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.playlist-entries h5 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.playlist-entry {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.playlist-entry:last-child {
+    border-bottom: none;
+}
+
+.entry-thumbnail {
+    flex-shrink: 0;
+    width: 80px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.entry-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.entry-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.entry-info h6 {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ffffff;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.entry-info p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.2;
+}
+
+.more-entries {
+    margin-top: 8px;
+    padding: 8px 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    text-align: center;
 }

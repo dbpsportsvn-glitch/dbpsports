@@ -441,6 +441,7 @@ def get_user_playlists(request):
                     'name': playlist.name,
                     'description': playlist.description or '',
                     'is_public': playlist.is_public,
+                    'cover_image': playlist.cover_image.url if playlist.cover_image else None,  # ✅ Add cover_image
                     'tracks_count': playlist.get_tracks_count(),
                     'total_duration': playlist.get_total_duration(),
                     'created_at': playlist.created_at.isoformat()
@@ -545,15 +546,20 @@ def get_playlist_tracks(request, playlist_id):
             for saved_track in saved_tracks:
                 # Lấy play count từ track gốc
                 play_count = 0
+                album_cover = None
                 if saved_track.global_track:
                     play_count = saved_track.global_track.play_count or 0
+                    album_cover = saved_track.global_track.album_cover.url if saved_track.global_track.album_cover else None
                 elif saved_track.user_track:
                     play_count = saved_track.user_track.play_count or 0
+                    album_cover = saved_track.user_track.album_cover.url if saved_track.user_track.album_cover else None
                 
                 track_data = {
                     'id': saved_track.global_track.id if saved_track.global_track else saved_track.user_track.id,
                     'title': saved_track.track_title,
                     'artist': saved_track.track_artist or '',
+                    'album': saved_track.track_album or '',
+                    'album_cover': album_cover,  # ✅ Add album_cover
                     'duration': saved_track.track_duration,
                     'duration_formatted': f"{saved_track.track_duration // 60}:{saved_track.track_duration % 60:02d}",
                     'file_url': saved_track.get_track_url(),
@@ -569,6 +575,8 @@ def get_playlist_tracks(request, playlist_id):
                 'id': track.user_track.id,
                 'title': track.user_track.title,
                 'artist': track.user_track.artist or '',
+                'album': track.user_track.album or '',
+                'album_cover': track.user_track.album_cover.url if track.user_track.album_cover else None,  # ✅ Add album_cover
                 'duration': track.user_track.duration,
                 'duration_formatted': track.user_track.get_duration_formatted(),
                 'file_url': track.user_track.get_file_url(),
