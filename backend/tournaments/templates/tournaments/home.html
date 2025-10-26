@@ -1239,6 +1239,41 @@ document.addEventListener('DOMContentLoaded', function() {
   transform: translateY(0);
 }
 
+/* ========================================
+   FIX: Ensure tournament cards keep text colors
+   Priority override for music player CSS conflicts
+   ======================================== */
+.tournament-card .tournament-name,
+.tournament-card .tournament-name.compact,
+.tournament-info .tournament-name,
+.tournament-content .tournament-name {
+  color: #1e293b !important;
+}
+
+.tournament-card .meta-item,
+.tournament-card .stat-item,
+.tournament-card .org-name {
+  color: #64748b !important;
+}
+
+.tournament-card .meta-item i,
+.tournament-card .stat-item i {
+  color: #3b82f6 !important;
+}
+
+.tournament-card .org-name.admin {
+  color: #d97706 !important;
+}
+
+.tournament-card .section-title,
+.tournament-card .followers-highlight {
+  color: #78350f !important;
+}
+
+.tournament-card .followers-highlight strong {
+  color: #d97706 !important;
+}
+
 </style>
 
 <!-- AOS Library for scroll animations -->

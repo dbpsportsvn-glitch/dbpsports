@@ -29,10 +29,8 @@ class UserMusicManager {
         
         // ✅ Listen for YouTube import completion to refresh Settings modal
         window.addEventListener('youtubeImportCompleted', async (event) => {
-            console.log('🎵 YouTube import completed, refreshing Settings modal...');
             try {
                 await this.refreshSettingsModal();
-                console.log('✅ Settings modal refreshed after YouTube import');
             } catch (error) {
                 console.error('❌ Error refreshing Settings modal after YouTube import:', error);
             }
@@ -284,6 +282,23 @@ class UserMusicManager {
                 const btn = e.target.closest('.delete-saved-playlist-btn');
                 const savedPlaylistId = btn.dataset.savedPlaylistId;
                 this.deleteSavedPlaylist(savedPlaylistId);
+            }
+        });
+        
+        // ✅ Keyboard shortcut: Ctrl+Y (or Cmd+Y on Mac) to open Settings
+        document.addEventListener('keydown', (event) => {
+            // Check if user is typing in input/textarea to avoid conflicts
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+            
+            // Ctrl+Y or Cmd+Y (Mac) to open Settings modal
+            if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+                event.preventDefault();
+                console.log('⌨️ [Keyboard] Ctrl+Y pressed - opening Settings modal');
+                
+                if (this.settingsModal && this.settingsModal.classList.contains('hidden')) {
+                    this.openSettings();
+                    this.showNotification('Mở cài đặt cá nhân', 'info');
+                }
             }
         });
     }
@@ -770,7 +785,11 @@ class UserMusicManager {
         this.myTracksList.innerHTML = tracks.map(track => `
             <div class="track-card" data-track-id="${track.id}">
                 <div class="track-card-icon">
-                    <i class="bi bi-music-note-beamed"></i>
+                    ${track.album_cover ? 
+                        `<img src="${track.album_cover}" alt="${track.title}" class="track-card-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                         <i class="bi bi-music-note-beamed" style="display:none;"></i>` :
+                        `<i class="bi bi-music-note-beamed"></i>`
+                    }
                 </div>
                 <div class="track-card-info">
                     <h6 class="track-card-title">${track.title}</h6>
@@ -1072,11 +1091,9 @@ class UserMusicManager {
             
             // Reload user tracks
             await this.loadUserTracks();
-            console.log('✅ User tracks reloaded, count:', this.userTracks.length);
             
             // Update UI
             this.renderUserTracks(this.userTracks);
-            console.log('✅ Track list UI updated');
             
             // Update main player track list
             if (this.musicPlayer && this.musicPlayer.populateTrackList) {
@@ -1089,14 +1106,11 @@ class UserMusicManager {
                         const newLength = this.musicPlayer.currentPlaylist.tracks.length;
                         
                         if (originalLength !== newLength) {
-                            console.log(`✅ Removed deleted track from current playlist: ${originalLength} -> ${newLength}`);
                         }
                     }
                     
                     this.musicPlayer.populateTrackList();
-                    console.log('✅ Main player track list updated');
                 } else {
-                    console.log('⚠️ Current playlist is null, not updating track list');
                 }
             }
             
@@ -1116,7 +1130,6 @@ class UserMusicManager {
                                 const newLength = playlist.tracks.length;
                                 
                                 if (originalLength !== newLength) {
-                                    console.log(`✅ Removed deleted track from playlist ${playlist.name}: ${originalLength} -> ${newLength}`);
                                 }
                             }
                         });
@@ -1124,7 +1137,6 @@ class UserMusicManager {
                     
                     await this.musicPlayer.loadUserPlaylistsInMainPlayer();
                 } else {
-                    console.log('⚠️ Current playlist is null, not updating user playlists');
                 }
             }
             
@@ -1139,7 +1151,6 @@ class UserMusicManager {
                     
                     if (deletedTrackWasPlaying) {
                         // ✅ If deleted track was playing, clear player state and don't reload playlist
-                        console.log('⚠️ Deleted track was playing, clearing player state and not reloading playlist');
                         this.musicPlayer.currentTrack = null;
                         this.musicPlayer.currentTrackIndex = -1;
                         this.musicPlayer.audio.src = '';
@@ -1159,14 +1170,11 @@ class UserMusicManager {
                                         const newLength = this.musicPlayer.currentPlaylist.tracks.length;
                                         
                                         if (originalLength !== newLength) {
-                                            console.log(`✅ Removed deleted track from current playlist before reload: ${originalLength} -> ${newLength}`);
                                         }
                                     }
                                     
                                     await this.musicPlayer.loadUserPlaylistInMainPlayer(playlistId);
-                                    console.log('✅ Current playlist reloaded after deletion');
                                 } else {
-                                    console.log('⚠️ Current playlist is null, not reloading');
                                 }
                             } catch (error) {
                                 console.error('❌ Error reloading current playlist:', error);
@@ -1227,7 +1235,6 @@ class UserMusicManager {
                 const isPlayingUserTrack = this.userTracks.some(track => track.id === currentTrackId);
                 
                 if (isPlayingUserTrack) {
-                    console.log('⚠️ Playing user track will be deleted, clearing player state');
                     this.musicPlayer.isDeletingTrack = true;
                     
                     // Pause và clear audio
@@ -1242,7 +1249,6 @@ class UserMusicManager {
                     
                     // Clear current playlist
                     this.musicPlayer.currentPlaylist = null;
-                    console.log('✅ Current playlist cleared for delete all');
                 }
             }
             
@@ -1302,7 +1308,6 @@ class UserMusicManager {
             
             // ✅ CRITICAL FIX: Clear track list immediately if all tracks deleted
             if (deletedCount > 0 && this.userTracks.length === deletedCount) {
-                console.log('✅ All tracks deleted, clearing track list immediately');
                 // Clear track list in music player immediately
                 if (this.musicPlayer && this.musicPlayer.trackList) {
                     this.musicPlayer.trackList.innerHTML = `
@@ -1316,7 +1321,6 @@ class UserMusicManager {
                 // Clear current playlist immediately
                 if (this.musicPlayer && this.musicPlayer.currentPlaylist) {
                     this.musicPlayer.currentPlaylist = null;
-                    console.log('✅ Current playlist cleared immediately');
                 }
             }
             
@@ -1327,11 +1331,9 @@ class UserMusicManager {
                 
                 // ✅ CRITICAL: Update UI after reload
                 this.renderUserTracks(this.userTracks);
-                console.log('✅ Track list UI updated after delete all');
                 
                 // ✅ CRITICAL FIX: Clear track list if no tracks left
                 if (this.userTracks.length === 0) {
-                    console.log('✅ No tracks left, clearing track list completely');
                     // Clear track list in music player
                     if (this.musicPlayer && this.musicPlayer.trackList) {
                         this.musicPlayer.trackList.innerHTML = `
@@ -1523,7 +1525,11 @@ class UserMusicManager {
                 <div class="user-playlist-card">
                     <div class="user-playlist-info" onclick="userMusicManager.openPlaylist(${playlist.id})">
                         <div class="user-playlist-icon">
-                            <i class="bi bi-vinyl-fill"></i>
+                            ${playlist.cover_image ? 
+                                `<img src="${playlist.cover_image}" alt="${playlist.name}" class="user-playlist-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                 <i class="bi bi-vinyl-fill" style="display:none;"></i>` :
+                                `<i class="bi bi-vinyl-fill"></i>`
+                            }
                         </div>
                         <div class="user-playlist-details">
                             <h6 class="user-playlist-name">

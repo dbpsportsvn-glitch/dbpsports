@@ -187,7 +187,8 @@ class UserPlaylist(models.Model):
         try:
             # Đặc biệt cho playlist "Bài Hát Đã Lưu" - đếm từ SavedTrack
             if self.name == "Bài Hát Đã Lưu":
-                from .saved_music_apis import SavedTrack
+                from django.apps import apps
+                SavedTrack = apps.get_model('music_player', 'SavedTrack')
                 return SavedTrack.objects.filter(user=self.user).count()
             
             # Playlist thông thường - đếm từ UserPlaylistTrack
@@ -200,7 +201,8 @@ class UserPlaylist(models.Model):
         try:
             # Đặc biệt cho playlist "Bài Hát Đã Lưu" - tính từ SavedTrack
             if self.name == "Bài Hát Đã Lưu":
-                from .saved_music_apis import SavedTrack
+                from django.apps import apps
+                SavedTrack = apps.get_model('music_player', 'SavedTrack')
                 saved_tracks = SavedTrack.objects.filter(user=self.user)
                 return sum(saved_track.track_duration for saved_track in saved_tracks if saved_track.track_duration)
             
@@ -260,7 +262,7 @@ VIETNAMESE_CHAR_MAP = {
 }
 
 # ✅ OPTIMIZED: Allowed audio extensions
-ALLOWED_AUDIO_EXTENSIONS = {'.mp3', '.wav', '.m4a', '.flac', '.aac', '.ogg', '.wma'}
+ALLOWED_AUDIO_EXTENSIONS = {'.mp3', '.wav', '.m4a', '.flac', '.aac', '.ogg', '.wma', '.mp4', '.webm'}
 
 def sanitize_filename(instance, filename):
     """
@@ -622,3 +624,48 @@ class TrackPlayHistory(models.Model):
             'global_tracks': list(global_tracks),
             'user_tracks': list(user_tracks)
         }
+
+
+class UserYouTubeCookie(models.Model):
+    """Model để lưu cookie file của user cho YouTube import"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='youtube_cookie')
+    cookie_file = models.FileField(
+        upload_to='music/user_cookies/', 
+        verbose_name="Cookie File",
+        help_text="Upload file cookie từ trình duyệt để tránh bị YouTube chặn"
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Kích hoạt")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "YouTube Cookie của User"
+        verbose_name_plural = "YouTube Cookies của Users"
+    
+    def __str__(self):
+        return f"YouTube Cookie - {self.user.username}"
+    
+    def get_cookie_file_path(self):
+        """Lấy đường dẫn tuyệt đối của cookie file"""
+        if self.cookie_file and hasattr(self.cookie_file, 'path'):
+            return self.cookie_file.path
+        return None
+    
+    def is_cookie_valid(self):
+        """Kiểm tra cookie file có hợp lệ không"""
+        if not self.cookie_file or not self.is_active:
+            return False
+        
+        cookie_path = self.get_cookie_file_path()
+        if not cookie_path or not os.path.exists(cookie_path):
+            return False
+        
+        # Kiểm tra file có phải là Netscape cookie format không
+        try:
+            with open(cookie_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Kiểm tra có chứa domain youtube.com và các cookie cần thiết
+                return ('youtube.com' in content and 
+                       any(cookie in content for cookie in ['SID', 'HSID', 'SSID', 'APISID', 'SAPISID']))
+        except Exception:
+            return False

@@ -128,10 +128,10 @@
                                     <i class="bi bi-info-circle"></i> Phiên bản ứng dụng
                                 </div>
                                 <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.95);">
-                                    Music Player v1.5.5
+                                    Music Player v1.5.6
                                 </div>
                                 <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">
-                                    Được cập nhật vào: 25/10/2025
+                                    Được cập nhật vào: 27/10/2025
                                 </div>
                                 <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 6px; font-style: italic;">
                                     © 2025 DBP Sports. All rights reserved.
@@ -550,9 +550,13 @@
 </div>
 
 <!-- YouTube Import Modal -->
-<div id="youtube-import-modal" class="youtube-import-modal hidden">
+<div id="youtube-import-modal" class="youtube-import-modal hidden" style="display: none !important; visibility: hidden !important;">
     <div class="youtube-import-overlay"></div>
     <div class="youtube-import-content">
+        <div class="keyboard-shortcut">
+            <i class="bi bi-keyboard"></i>
+            <kbd>Ctrl</kbd> + <kbd>I</kbd>
+        </div>
         <div class="youtube-import-header">
             <h4 class="youtube-import-title">
                 <i class="bi bi-youtube"></i>
@@ -570,7 +574,12 @@
                     <i class="bi bi-link-45deg"></i>
                     YouTube URL <span style="color: #ff6b6b;">*</span>
                 </label>
-                <input type="url" id="youtube-url" class="form-input" placeholder="https://www.youtube.com/watch?v=... hoặc https://www.youtube.com/playlist?list=..." required>
+                <div class="url-input-container">
+                    <input type="url" id="youtube-url" class="form-input" placeholder="https://www.youtube.com/watch?v=... hoặc https://www.youtube.com/playlist?list=..." required>
+                    <button type="button" id="paste-url-btn" class="paste-btn" title="Dán URL từ clipboard">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
                 <div class="form-hint">
                     <i class="bi bi-info-circle"></i>
                     Hỗ trợ: Video đơn lẻ, Playlist, Channel videos
@@ -587,6 +596,37 @@
                     <option value="">-- Không thêm vào playlist --</option>
                     <!-- Playlists will be loaded here -->
                 </select>
+            </div>
+            
+            <!-- Preview Section -->
+            <div id="youtube-preview" class="youtube-preview hidden">
+                <div class="preview-header">
+                    <h5>
+                        <i class="bi bi-eye"></i>
+                        Xem Trước
+                    </h5>
+                </div>
+                <div id="youtube-preview-content">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Import Progress -->
+            <div id="youtube-import-progress" class="youtube-import-progress hidden">
+                <div class="progress-header">
+                    <h5>
+                        <i class="bi bi-download"></i>
+                        Đang Import...
+                    </h5>
+                    <button type="button" id="cancel-import-btn" class="cancel-btn">
+                        <i class="bi bi-x-circle"></i> Hủy Import
+                    </button>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="youtube-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="youtube-progress-text">Đang chuẩn bị...</div>
+                <div class="progress-details" id="youtube-progress-details"></div>
             </div>
             
                    <!-- Options -->
@@ -618,32 +658,33 @@
                        </div>
                    </div>
             
-            <!-- Preview Section -->
-            <div id="youtube-preview" class="youtube-preview hidden">
-                <div class="preview-header">
-                    <h5>
-                        <i class="bi bi-eye"></i>
-                        Xem Trước
-                    </h5>
+            <!-- Cookie Management -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-shield-check"></i>
+                    Cookie Management (Tùy chọn)
+                </label>
+                <div class="cookie-management">
+                    <div class="cookie-status" id="cookie-status">
+                        <div class="cookie-status-text">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Đang kiểm tra trạng thái cookie...</span>
+                        </div>
+                    </div>
+                    <div class="cookie-actions">
+                        <input type="file" id="cookie-file-input" accept=".txt" style="display: none;">
+                        <button type="button" id="upload-cookie-btn" class="btn-secondary">
+                            <i class="bi bi-upload"></i> Upload Cookie
+                        </button>
+                        <button type="button" id="delete-cookie-btn" class="btn-danger" style="display: none;">
+                            <i class="bi bi-trash"></i> Xóa Cookie
+                        </button>
+                    </div>
+                    <div class="cookie-help">
+                        <i class="bi bi-question-circle"></i>
+                        <small>Upload cookie từ trình duyệt để tránh bị YouTube chặn. Sử dụng extension như "Get cookies.txt" để export cookie.</small>
+                    </div>
                 </div>
-                <div id="youtube-preview-content">
-                    <!-- Preview content will be loaded here -->
-                </div>
-            </div>
-            
-            <!-- Import Progress -->
-            <div id="youtube-import-progress" class="youtube-import-progress hidden">
-                <div class="progress-header">
-                    <h5>
-                        <i class="bi bi-download"></i>
-                        Đang Import...
-                    </h5>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="youtube-progress-fill"></div>
-                </div>
-                <div class="progress-text" id="youtube-progress-text">Đang chuẩn bị...</div>
-                <div class="progress-details" id="youtube-progress-details"></div>
             </div>
         </div>
         
@@ -653,13 +694,22 @@
                 <i class="bi bi-eye"></i>
                 Xem Trước
             </button>
-            <button type="button" class="btn-success" id="youtube-import-start-btn" disabled>
+            <button type="button" class="btn-success" id="youtube-import-start-btn">
                 <i class="bi bi-download"></i>
-                Bắt Đầu Import
+                Import Ngay
             </button>
+        </div>
+        
+        <div class="import-hint">
+            <i class="bi bi-lightbulb"></i>
+            <small>
+                <strong>Mẹo:</strong> Nút "Import Ngay" sẽ tự động lấy thông tin và import luôn. 
+                Nút "Xem Trước" chỉ để kiểm tra thông tin trước khi import.
+            </small>
         </div>
     </div>
 </div>
 
-<script src="{% static 'music_player/js/youtube_import.js' %}?v=1.0.0"></script>
+<script src="{% static 'music_player/js/youtube_import.js' %}?v=4.5.0"></script>
+<link rel="stylesheet" href="{% static 'music_player/css/youtube_preview.css' %}?v=1.7.0">
 
