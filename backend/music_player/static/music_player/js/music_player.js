@@ -1,9 +1,9 @@
 // ============================================================
-// Music Player v1.5.5 - DBP Sports
+// Music Player v1.5.7 - DBP Sports
 // ============================================================
 // 
-// 📅 Last Updated: 2025-10-25
-// 🔧 Version: 1.5.5
+// 📅 Last Updated: 2025-10-27
+// 🔧 Version: 1.5.7
 // 💾 Cache Version: dbp-music-v4-range-fix
 // 🔄 Service Worker: v17-complete-deletion-rewrite
 //

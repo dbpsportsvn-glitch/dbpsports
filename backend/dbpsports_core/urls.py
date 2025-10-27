@@ -5,7 +5,8 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, Http404
+from django.views.static import serve
 import os
 
 # Import admin config để sắp xếp lại thứ tự
@@ -35,10 +36,19 @@ def manifest(request):
     response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return response
 
+# ✅ Favicon View
+def favicon(request):
+    """Serve favicon.ico file"""
+    favicon_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo.png')
+    if not os.path.exists(favicon_path):
+        raise Http404('Favicon not found')
+    return FileResponse(open(favicon_path, 'rb'), content_type='image/png')
+
 urlpatterns = [
     # ✅ PWA Files - phải ở đầu để không bị override
     path('service-worker.js', service_worker, name='service_worker'),
     path('manifest.json', manifest, name='manifest'),
+    path('favicon.ico', favicon, name='favicon'),
     
     # Newsletter endpoints
     path('api/newsletter/subscribe/', core_views.subscribe_newsletter, name='newsletter_subscribe'),
@@ -56,6 +66,14 @@ urlpatterns = [
     path('music/', include('music_player.urls')),
     path('', include('tournaments.urls')),
 ]
+
+# ✅ Serve static and media files in production
+# WhiteNoise handles static files automatically, but we add media files handling
+if not settings.DEBUG:
+    # Serve media files in production
+    urlpatterns += [
+        path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
 
 # Đảm bảo bạn có 2 khối "if settings.DEBUG" này
 if settings.DEBUG:

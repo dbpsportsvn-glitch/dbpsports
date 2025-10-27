@@ -1,0 +1,27 @@
+# CloudLinux Passenger Configuration
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
+PassengerAppRoot "/home/dbpsport/dbpsports"
+PassengerBaseURI "/"
+PassengerPython "/home/dbpsport/virtualenv/dbpsports/3.9/bin/python"
+# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
+
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION BEGIN
+<IfModule Litespeed>
+</IfModule>
+# DO NOT REMOVE OR MODIFY. CLOUDLINUX ENV VARS CONFIGURATION END
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Serve static files directly
+    RewriteRule ^static/(.*)$ /home/dbpsport/public_html/staticfiles/$1 [L]
+    
+    # Serve media files directly
+    RewriteRule ^media/(.*)$ /home/dbpsport/public_html/media/$1 [L]
+    
+    # Pass all other requests to Passenger/Python
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>

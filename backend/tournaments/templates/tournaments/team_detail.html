@@ -36,6 +36,41 @@
   box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
 }
 
+/* Fix dropdown chữ trắng - Thêm màu chữ cho select và option */
+select.form-control,
+select.form-select,
+.form-select select,
+.form-control select {
+  color: #212529 !important;
+  border: 1px solid #ced4da !important;
+}
+
+select.form-control option,
+select.form-select option,
+.form-select option,
+select option {
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Fix cho crispy forms */
+select {
+  color: #212529 !important;
+  border: 1px solid #ced4da !important;
+}
+
+select option {
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Fix viền khi focus */
+select:focus {
+  border-color: #80bdff !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+}
+
 .form-section {
   background: #f8f9fa;
   border-radius: 12px;
@@ -281,10 +316,23 @@
     box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
 }
 
-/* Responsive */
+/* Hero Buttons - Show/Hide on different screen sizes */
+.hero-buttons-mobile {
+    display: none;
+}
+
 @media (max-width: 991px) {
     .hero-section {
         padding: 1rem !important;
+        padding-bottom: 1.5rem !important; /* Tăng padding bottom để không bị đè chữ */
+    }
+    
+    .hero-buttons-desktop {
+        display: none !important; /* Ẩn nút absolute trên mobile */
+    }
+    
+    .hero-buttons-mobile {
+        display: block; /* Hiện nút mobile */
     }
     
     .form-section {
@@ -322,6 +370,18 @@
         font-size: 0.9rem;
     }
 }
+
+/* Mobile Buttons Spacing */
+@media (max-width: 576px) {
+    .hero-buttons-mobile .d-flex {
+        flex-direction: column;
+        gap: 0.75rem !important;
+    }
+    
+    .hero-buttons-mobile .btn {
+        width: 100%;
+    }
+}
 </style>
 {% endblock %}
 
@@ -351,18 +411,36 @@
     </div>
     
     <!-- Action Buttons - Bottom Right -->
-    <div class="position-absolute bottom-0 end-0 p-3">
+    <div class="position-absolute bottom-0 end-0 p-3 hero-buttons-desktop">
         <div class="d-flex gap-2">
             {% if registrations.first.tournament %}
-                <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-light btn-sm">
+                <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-light btn-sm" style="background: #fff; color: #212529; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <i class="bi bi-arrow-left"></i> Về giải đấu
                 </a>
             {% else %}
-                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm">
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm" style="background: #fff; color: #212529; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <i class="bi bi-arrow-left"></i> Về trang cá nhân
                 </a>
             {% endif %}
-            <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-light btn-sm">
+            <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-light btn-sm" style="background: #fff; color: #212529; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <i class="bi bi-trophy-fill"></i> Phòng Truyền thống
+            </a>
+        </div>
+    </div>
+    
+    <!-- Action Buttons - Mobile (outside hero section) -->
+    <div class="hero-buttons-mobile mt-3 text-center">
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+            {% if registrations.first.tournament %}
+                <a href="{% url 'tournament_detail' pk=registrations.first.tournament.pk %}?tab=teams#teams" class="btn btn-light" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
+                    <i class="bi bi-arrow-left"></i> Về giải đấu
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-light" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
+                    <i class="bi bi-arrow-left"></i> Về trang cá nhân
+                </a>
+            {% endif %}
+            <a href="{% url 'team_hall_of_fame' pk=team.pk %}" class="btn btn-light" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
                 <i class="bi bi-trophy-fill"></i> Phòng Truyền thống
             </a>
         </div>

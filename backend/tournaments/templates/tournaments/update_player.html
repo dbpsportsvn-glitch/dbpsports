@@ -4,6 +4,100 @@
 
 {% block title %}Chỉnh sửa Cầu thủ - {{ player.full_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Fix dropdown chữ trắng - Thêm màu chữ cho select và option */
+select.form-control,
+select.form-select,
+.form-select select,
+.form-control select {
+  color: #212529 !important;
+  border: 1px solid #ced4da !important;
+}
+
+select.form-control option,
+select.form-select option,
+.form-select option,
+select option {
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Fix cho crispy forms */
+select {
+  color: #212529 !important;
+  border: 1px solid #ced4da !important;
+}
+
+select option {
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Fix viền khi focus */
+select:focus {
+  border-color: #80bdff !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    max-width: 100%;
+  }
+  
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  .row.g-3 > * {
+    margin-bottom: 0.75rem;
+  }
+  
+  h5 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .form-control,
+  .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .d-flex.gap-2 {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-header {
+    padding: 0.75rem;
+  }
+  
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container my-4" style="max-width: 960px;">
     <div class="card shadow-sm">
@@ -24,29 +118,29 @@
                 <div class="row">
                     <div class="col-lg-8">
                         <h5>Thông tin cơ bản</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form.full_name|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ form.jersey_number|as_crispy_field }}</div>
-                            <div class="col-md-12">{{ form.date_of_birth|as_crispy_field }}</div>
+                        <div class="row g-2">
+                            <div class="col-12 col-sm-6">{{ form.full_name|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-6">{{ form.jersey_number|as_crispy_field }}</div>
+                            <div class="col-12">{{ form.date_of_birth|as_crispy_field }}</div>
                         </div>
 
                         <hr class="my-4">
 
                         <h5>Thông số chuyên môn</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form.position|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ form.specialty_position|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.height|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.weight|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.preferred_foot|as_crispy_field }}</div>
+                        <div class="row g-2">
+                            <div class="col-12 col-sm-6">{{ form.position|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-6">{{ form.specialty_position|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-4">{{ form.height|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-4">{{ form.weight|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-4">{{ form.preferred_foot|as_crispy_field }}</div>
                         </div>
 
                         <hr class="my-4">
                         
                         <h5>Vị trí & Liên hệ</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form.region|as_crispy_field }}</div>
-                            <div class="col-md-6">{{ form.location_detail|as_crispy_field }}</div>
+                        <div class="row g-2">
+                            <div class="col-12 col-sm-6">{{ form.region|as_crispy_field }}</div>
+                            <div class="col-12 col-sm-6">{{ form.location_detail|as_crispy_field }}</div>
                             <div class="col-12">{{ form.agent_contact|as_crispy_field }}</div>
                         </div>
                     </div>

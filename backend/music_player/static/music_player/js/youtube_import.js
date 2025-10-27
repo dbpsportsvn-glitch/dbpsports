@@ -311,8 +311,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Step 2: Start actual import
             console.log('🚀 [YouTube Import] Starting import request...');
+            console.log('📋 [YouTube Import] Request parameters:', {
+                url: url,
+                playlist_id: playlistId,
+                extract_audio_only: audioOnly,
+                import_playlist: importPlaylist
+            });
             youtubeProgressText.textContent = 'Đang download audio...';
             
+            console.log('🌐 [YouTube Import] Sending POST request to /music/youtube/import/');
             const response = await fetch('/music/youtube/import/', {
                 method: 'POST',
                 headers: {
@@ -328,6 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 signal: importController.signal
             });
             
+            console.log('📡 [YouTube Import] Import response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+            
             clearTimeout(importTimeoutId);
             clearInterval(progressInterval);
             isCompleted = true; // ✅ Mark as completed to stop progress interval
@@ -338,11 +351,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ok: response.ok
             });
 
+            console.log('📊 [YouTube Import] Parsing JSON response...');
             const data = await response.json();
             console.log('📊 [YouTube Import] Import response data:', data);
+            console.log('📊 [YouTube Import] Success:', data.success);
+            console.log('📊 [YouTube Import] Message:', data.message || data.error);
 
             if (data.success) {
                 console.log('✅ [YouTube Import] Import successful!');
+                console.log('✅ [YouTube Import] Track info:', data.track);
+                console.log('✅ [YouTube Import] Album info:', data.album);
                 youtubeProgressFill.style.width = '100%';
                 youtubeProgressText.textContent = 'Import thành công!';
                 youtubeProgressDetails.textContent = 'Đang cập nhật playlist...';
@@ -389,18 +407,55 @@ document.addEventListener('DOMContentLoaded', () => {
                     resetYouTubeImportModal();
                 }, 2000);
             } else {
-                console.error('❌ [YouTube Import] Import failed:', data.error);
+                console.error('❌ [YouTube Import] Import failed');
+                console.error('❌ [YouTube Import] Error:', data.error);
+                console.error('❌ [YouTube Import] Cancelled:', data.cancelled);
                 
                 // Kiểm tra nếu import bị hủy
                 if (data.cancelled) {
                     console.log('🚫 [YouTube Import] Import was cancelled');
                     showToast('Import đã được hủy', 'warning');
                 } else {
+                    console.error('❌ [YouTube Import] Full error details:', JSON.stringify(data, null, 2));
+                    
+                    // Log debug info nếu có
+                    if (data.debug_info) {
+                        console.error('🔍 [Debug Info] Full debug info:', data.debug_info);
+                        
+                        if (data.debug_info.available_formats !== undefined) {
+                            console.error('🔍 [Debug Info] Available formats:', data.debug_info.available_formats);
+                            console.error('🔍 [Debug Info] First formats:', data.debug_info.first_formats);
+                            console.error('🔍 [Debug Info] Files downloaded:', data.debug_info.files_downloaded);
+                            console.error('🔍 [Debug Info] Video:', data.debug_info.video_title);
+                        }
+                        
+                        if (data.debug_info.audio_file_path !== undefined) {
+                            console.error('🔍 [Debug Info] Audio file path:', data.debug_info.audio_file_path);
+                            console.error('🔍 [Debug Info] Downloaded files:', data.debug_info.downloaded_files);
+                            console.error('🔍 [Debug Info] All files:', data.debug_info.all_files);
+                            console.error('🔍 [Debug Info] Audio extensions searched:', data.debug_info.audio_extensions_searched);
+                        }
+                    }
+                    
+                    // Log error details từ error dict
+                    if (data.error_type) {
+                        console.error('🔍 [Error Details] Error type:', data.error_type);
+                    }
+                    if (data.audio_file_path) {
+                        console.error('🔍 [Error Details] Audio file path:', data.audio_file_path);
+                    }
+                    if (data.file_exists !== undefined) {
+                        console.error('🔍 [Error Details] File exists:', data.file_exists);
+                    }
+                    
                     showToast(data.error || 'Lỗi khi import từ YouTube.', 'error');
                 }
             }
         } catch (error) {
-            console.error('💥 [YouTube Import] Import Error:', error);
+            console.error('💥 [YouTube Import] Import Error occurred!');
+            console.error('💥 [YouTube Import] Error name:', error.name);
+            console.error('💥 [YouTube Import] Error message:', error.message);
+            console.error('💥 [YouTube Import] Error stack:', error.stack);
             clearTimeout(importTimeoutId);
             clearInterval(progressInterval);
             isCompleted = true; // ✅ Mark as completed to stop progress interval

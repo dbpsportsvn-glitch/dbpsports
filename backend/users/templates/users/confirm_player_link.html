@@ -131,16 +131,16 @@
                         </div>
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-4">
+                    <div class="row mt-4 g-3">
+                        <div class="col-12 col-md-4">
                             <a href="{% url 'enter_player_name' %}" class="btn btn-outline-secondary btn-lg w-100">
                                 <i class="bi bi-arrow-left me-2"></i>
                                 Quay lại bước trước
                             </a>
                         </div>
                         {% if has_existing_player %}
-                        <div class="col-md-4">
-                            <form method="post" class="d-grid">
+                        <div class="col-12 col-md-4">
+                            <form method="post" class="d-grid h-100">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="link">
                                 <button type="submit" class="btn btn-success btn-lg">
@@ -149,8 +149,8 @@
                                 </button>
                             </form>
                         </div>
-                        <div class="col-md-4">
-                            <form method="post" class="d-grid">
+                        <div class="col-12 col-md-4">
+                            <form method="post" class="d-grid h-100">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="create_new">
                                 <button type="submit" class="btn btn-warning btn-lg">
@@ -160,7 +160,7 @@
                             </form>
                         </div>
                         {% else %}
-                        <div class="col-md-8">
+                        <div class="col-12 col-md-8">
                             <form method="post" class="d-grid">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="create_new">
@@ -231,6 +231,24 @@
 
 .btn:hover {
     transform: translateY(-1px);
+}
+
+/* Fix khoảng cách giữa các nút trên mobile */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .card-header h4 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-lg {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
 }
 </style>
 {% endblock %}

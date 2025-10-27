@@ -256,17 +256,80 @@
     /* Responsive Design */
     @media (max-width: 768px) {
         .profile-name {
-            font-size: 2rem;
+            font-size: 1.5rem;
         }
         
         .profile-avatar-large {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
         }
         
         .modern-profile-nav .nav-link {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .modern-profile-nav .nav-link i {
+            display: none;
+        }
+        
+        /* Make buttons smaller on mobile */
+        .change-banner-btn {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
+        }
+        
+        #shareBtn,
+        #vote-button {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
+        }
+        
+        /* Add gap between vote and share buttons */
+        .vote-area {
+            gap: 0.75rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        /* Adjust badge size on mobile */
+        .vote-badge {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.6rem !important;
+        }
+        
+        /* Make team colors smaller on mobile */
+        .team-colors .d-flex > div {
+            transform: scale(0.8);
+        }
+        
+        .team-colors small {
+            font-size: 0.65rem !important;
+        }
+        
+        /* Adjust transfer value on mobile */
+        .text-center.text-md-start h4 {
             font-size: 0.9rem;
+        }
+        
+        .text-center.text-md-start h3 {
+            font-size: 1.2rem;
+        }
+        
+        /* Stack badges vertically on mobile */
+        .d-flex.gap-2.flex-wrap .badge {
+            font-size: 0.65rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+        
+        /* Reduce padding on profile banner content */
+        .profile-banner-content {
+            padding: 1rem;
+        }
+        
+        .profile-banner-content .container {
+            padding: 0;
         }
     }
 </style>

@@ -46,6 +46,17 @@
         top: 1rem;
         right: 1rem;
         z-index: 10;
+        background: #fff !important;
+        color: #212529 !important;
+        border: 1px solid #dee2e6 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        font-weight: 500;
+    }
+    
+    .change-banner-btn:hover {
+        background: #f8f9fa !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
     }
     
     .review-banner-btn {
@@ -720,7 +731,7 @@
         }
         
         .profile-banner {
-            height: 300px;
+            height: 350px; /* Tăng chiều cao để có chỗ cho avatar và button */
         }
         .profile-name {
             font-size: 1.8rem;
@@ -729,9 +740,34 @@
             width: 100px;
             height: 100px;
         }
+        
+        .profile-banner-content {
+            padding: 1.5rem 1rem;
+        }
+        
+        /* Fix nút đổi ảnh bìa không đè lên avatar */
+        .change-banner-btn {
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        /* Tăng padding top cho banner content */
+        .profile-banner-content .d-flex {
+            padding-top: 2rem;
+        }
     }
 
     @media (max-width: 576px) {
+        .profile-banner {
+            height: 380px; /* Tăng thêm chiều cao cho màn hình nhỏ */
+        }
+        
+        .profile-banner-content .d-flex {
+            padding-top: 2.5rem; /* Tăng padding để nút không đè avatar */
+        }
+        
         .nav-desktop .nav-link span {
             display: none;
         }

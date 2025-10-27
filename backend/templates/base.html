@@ -2428,17 +2428,17 @@ function forceRefreshCartCount() {
 
 <!-- Music Player -->
 {% include 'music_player/music_player.html' %}
-    <link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}?v=1.5.6">
+    <link rel="stylesheet" href="{% static 'music_player/css/music_player.css' %}?v=1.5.7">
 
 <!-- ✅ State Manager (Load first) -->
-<script src="{% static 'js/state-manager.js' %}"></script>
+<script src="{% static 'js/state-manager.js' %}?v=1.5.7" defer></script>
 
 <!-- ✅ Offline Manager for Music Player -->
-<script src="{% static 'js/offline-manager.js' %}"></script>
+<script src="{% static 'js/offline-manager.js' %}?v=1.5.7" defer></script>
 
-<!-- Music Player Scripts -->
-    <script src="{% static 'music_player/js/music_player.js' %}?v=1.5.6"></script>
-    <script src="{% static 'music_player/js/user_music.js' %}?v=1.5.6"></script>
+<!-- Music Player Scripts - Defer for non-blocking load -->
+    <script src="{% static 'music_player/js/music_player.js' %}?v=1.5.7" defer></script>
+    <script src="{% static 'music_player/js/user_music.js' %}?v=1.5.7" defer></script>
 
 <!-- ✅ Service Worker Registration -->
 <script>

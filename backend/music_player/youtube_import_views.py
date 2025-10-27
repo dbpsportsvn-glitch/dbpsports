@@ -432,8 +432,7 @@ class YouTubeImportView(View):
                 
                 # Cấu hình yt-dlp với tối ưu chống bot detection
                 ydl_opts = {
-                    # ✅ Format selection thông minh - ưu tiên audio thuần túy
-                    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[ext=mp3]/bestaudio[ext=ogg]/bestaudio/best',
+                    # Format sẽ được set sau khi kiểm tra FFmpeg
                     'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
                     'writethumbnail': False,  # Disable để tránh lỗi
                     'writedescription': False,  # Disable để tránh lỗi
@@ -444,17 +443,7 @@ class YouTubeImportView(View):
                     'timeout': 60,        # Tăng timeout lên 60s
                     'progress_hooks': [progress_hook],  # ✅ Thêm progress hook để cancel
                     
-                    # ✅ Audio quality settings - chỉ khi có FFmpeg
-                    'audioformat': 'mp3',  # Force MP3 output
-                    'audioquality': '192',  # 192kbps quality
-                    'extractaudio': True,   # Extract audio only
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    }] if self._check_ffmpeg() else [],
-                    
-                    # ✅ Fallback: nếu không có FFmpeg, chỉ download audio streams
+                    # ✅ Format sorting - ưu tiên audio formats
                     'format_sort': ['ext:m4a', 'ext:webm', 'ext:mp3', 'ext:ogg', 'ext:mp4'],
                     'format_sort_force': True,
                     
@@ -488,38 +477,79 @@ class YouTubeImportView(View):
                     'writeautomaticsub': False,
                 }
                 
-                # Thêm postprocessor chỉ khi có FFmpeg
-                try:
-                    import subprocess
-                    result = subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True, timeout=5)
-                    # FFmpeg có sẵn, thêm postprocessor
+                # ✅ PRODUCTION OPTIMIZATION: Kiểm tra FFmpeg một lần và quyết định strategy
+                ffmpeg_available = self._check_ffmpeg()
+                logger.info(f"🔍 [FFmpeg Check] FFmpeg available: {ffmpeg_available}")
+                print(f"🔍 [FFmpeg Check] FFmpeg available: {ffmpeg_available}")
+                
+                if ffmpeg_available:
+                    # Local environment với FFmpeg - sử dụng postprocessors để convert sang MP3
+                    logger.info("✅ [Strategy] Using FFmpeg postprocessors for MP3 conversion")
+                    print("✅ [Strategy] Using FFmpeg postprocessors for MP3 conversion")
                     ydl_opts['postprocessors'] = [{
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }]
-                    pass  # FFmpeg có sẵn, thêm postprocessor
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                    # FFmpeg không có, sử dụng format gốc
-                    ydl_opts['format'] = 'bestaudio/best'
-                    # Remove postprocessors if they exist
-                    if 'postprocessors' in ydl_opts:
-                        del ydl_opts['postprocessors']
+                else:
+                    # Production environment không có FFmpeg - download trực tiếp audio streams
+                    logger.info("⚠️ [Strategy] No FFmpeg - downloading audio from available formats")
+                    print("⚠️ [Strategy] No FFmpeg - downloading audio from available formats")
+                    
+                    # Loại bỏ các tham số không tương thích với không có FFmpeg
+                    ydl_opts.pop('audioformat', None)
+                    ydl_opts.pop('audioquality', None)
+                    ydl_opts.pop('extractaudio', None)
+                    
+                    # Xóa postprocessors hoàn toàn
+                    ydl_opts.pop('postprocessors', None)
+                    
+                    # Format selection: Đơn giản nhất - chỉ lấy best format có sẵn
+                    # Không filter gì cả - để đảm bảo download được
+                    ydl_opts['format'] = 'best'
+                    
+                    logger.info("✅ [Strategy] Audio download configured (may include video)")
+                    print("✅ [Strategy] Audio download configured (may include video)")
                 
                 # Debug logging
-                print(f"🔍 DEBUG: FFmpeg available: {self._check_ffmpeg()}")
-                print(f"🔍 DEBUG: ydl_opts format: {ydl_opts['format']}")
-                print(f"🔍 DEBUG: ydl_opts postprocessors: {ydl_opts.get('postprocessors', [])}")
+                logger.info(f"🔍 [Config] ydl_opts format: {ydl_opts.get('format', 'N/A')}")
+                logger.info(f"🔍 [Config] ydl_opts postprocessors: {ydl_opts.get('postprocessors', [])}")
+                print(f"🔍 [Config] ydl_opts format: {ydl_opts.get('format', 'N/A')}")
+                print(f"🔍 [Config] ydl_opts postprocessors: {ydl_opts.get('postprocessors', [])}")
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     # Extract info trước khi download
+                    logger.info(f"🔍 [Extract Info] Extracting info from URL: {url}")
+                    print(f"🔍 [Extract Info] Extracting info from URL: {url}")
                     info = ydl.extract_info(url, download=False)
                     
                     if not info:
+                        logger.error("❌ [Extract Info] Failed to extract info from YouTube URL")
+                        print("❌ [Extract Info] Failed to extract info from YouTube URL")
                         return {
                             'success': False,
                             'error': 'Không thể lấy thông tin từ YouTube URL'
                         }
+                    
+                    logger.info(f"✅ [Extract Info] Info extracted successfully. Title: {info.get('title', 'N/A')}")
+                    print(f"✅ [Extract Info] Info extracted successfully. Title: {info.get('title', 'N/A')}")
+                    
+                    # Log available formats
+                    formats = info.get('formats', [])
+                    logger.info(f"📊 [Extract Info] Available formats count: {len(formats)}")
+                    print(f"📊 [Extract Info] Available formats count: {len(formats)}")
+                    
+                    # Log first 5 formats để debug
+                    if formats:
+                        logger.info(f"📊 [Extract Info] First 5 formats:")
+                        print(f"📊 [Extract Info] First 5 formats:")
+                        for fmt in formats[:5]:
+                            format_id = fmt.get('format_id', 'N/A')
+                            ext = fmt.get('ext', 'N/A')
+                            acodec = fmt.get('acodec', 'N/A')
+                            vcodec = fmt.get('vcodec', 'N/A')
+                            logger.info(f"  - Format {format_id}: ext={ext}, acodec={acodec}, vcodec={vcodec}")
+                            print(f"  - Format {format_id}: ext={ext}, acodec={acodec}, vcodec={vcodec}")
                     
                     # Kiểm tra cancel trước khi xử lý
                     if is_import_cancelled(user_id):
@@ -532,7 +562,7 @@ class YouTubeImportView(View):
                     
                     # Xử lý single video hoặc playlist dựa trên import_playlist
                     if 'entries' not in info or not import_playlist:
-                        result = self._process_single_video(user, ydl, info, playlist_id, temp_dir)
+                        result = self._process_single_video(user, ydl, info, playlist_id, temp_dir, ydl_opts)
                     else:
                         result = self._process_playlist(user, ydl, info, playlist_id, temp_dir)
                     
@@ -568,7 +598,7 @@ class YouTubeImportView(View):
             # Cleanup session
             end_import_session(user_id)
     
-    def _process_single_video(self, user, ydl, info, playlist_id, temp_dir):
+    def _process_single_video(self, user, ydl, info, playlist_id, temp_dir, ydl_opts):
         """Xử lý single video"""
         try:
             # Tạo album từ single video nếu chưa có playlist_id
@@ -580,161 +610,242 @@ class YouTubeImportView(View):
                     playlist_id = created_album.id
             
             # Download video với error handling và fallback
-            logger.info(f"Starting download for URL: {info['webpage_url']}")
+            logger.info(f"🚀 [Download] Starting download for URL: {info['webpage_url']}")
+            print(f"🚀 [Download] Starting download for URL: {info['webpage_url']}")
             download_success = False
             
             # Thử download với format hiện tại
             try:
+                logger.info("📥 [Download] Attempting download with current format...")
+                print("📥 [Download] Attempting download with current format...")
+                # Note: Cannot access ydl.opts directly, logging disabled here
                 ydl.download([info['webpage_url']])
-                logger.info("Download completed successfully")
+                logger.info("✅ [Download] Download completed successfully")
+                print("✅ [Download] Download completed successfully")
+                
+                # Check files immediately after download
+                files_after_download = os.listdir(temp_dir)
+                logger.info(f"📁 [Download] Files immediately after download: {files_after_download}")
+                print(f"📁 [Download] Files immediately after download: {files_after_download}")
+                
                 download_success = True
             except Exception as download_error:
-                logger.error(f"Download failed with current format: {str(download_error)}")
+                logger.error(f"❌ [Download] Download failed with current format: {str(download_error)}")
+                print(f"❌ [Download] Download failed with current format: {str(download_error)}")
+                logger.error(f"❌ [Download] Error type: {type(download_error).__name__}")
+                print(f"❌ [Download] Error type: {type(download_error).__name__}")
                 
                 # Fallback: thử với format đơn giản hơn
-                logger.info("Trying fallback format...")
-                print(f"🔍 DEBUG: Trying fallback - FFmpeg available: {self._check_ffmpeg()}")
+                logger.info("🔄 [Download] Trying fallback format...")
+                print(f"🔄 [Download] Trying fallback - FFmpeg available: {self._check_ffmpeg()}")
                 
-                # Strategy 1: Thử với audio-only formats
+                # Strategy 1: Thử với format IDs cụ thể từ debug info
+                # Format 91 có acodec=mp4a.40.5 và vcodec - hãy thử trực tiếp
                 fallback_formats = [
-                    'worstaudio[ext=mp3]/worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio/worst',
-                    'worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio[ext=mp3]/worstaudio/worst',
-                    'worstaudio[ext=webm]/worstaudio[ext=m4a]/worstaudio[ext=mp3]/worstaudio/worst',
-                    'worstaudio/worst'  # Last resort
+                    '91',  # Try format 91 directly - it has audio
+                    'bestaudio[acodec!=none]/best[acodec!=none][height<=480]/best[acodec!=none]',
+                    'worstaudio[acodec!=none]/worst[acodec!=none][height<=720]/worst[acodec!=none]',
+                    'best[acodec!=none]/worst[acodec!=none]',  # Simplest - any format with audio
+                    'best[height<=480]',  # Lower quality video+audio
+                    'worst',  # Last resort - take anything
                 ]
                 
                 for i, fallback_format in enumerate(fallback_formats):
                     try:
-                        print(f"🔍 DEBUG: Trying fallback strategy {i+1}: {fallback_format}")
-                        ydl_opts['format'] = fallback_format
-                        ydl_opts['audioformat'] = 'mp3'
-                        ydl_opts['audioquality'] = '128'
+                        logger.info(f"🔄 [Fallback {i+1}] Trying fallback strategy: {fallback_format}")
+                        print(f"🔄 [Fallback {i+1}] Trying fallback strategy: {fallback_format}")
                         
-                        ydl = yt_dlp.YoutubeDL(ydl_opts)
+                        # Create new ydl_opts for this fallback
+                        fallback_opts = ydl_opts.copy()
+                        fallback_opts['format'] = fallback_format
+                        
+                        # Only add audio settings if FFmpeg is available
+                        if self._check_ffmpeg():
+                            fallback_opts['audioformat'] = 'mp3'
+                            fallback_opts['audioquality'] = '128'
+                        
+                        logger.info(f"🔍 [Fallback {i+1}] ydl_opts: {fallback_opts}")
+                        print(f"🔍 [Fallback {i+1}] Format: {fallback_format}")
+                        
+                        ydl = yt_dlp.YoutubeDL(fallback_opts)
                         ydl.download([info['webpage_url']])
-                        logger.info(f"Download completed with fallback strategy {i+1}")
+                        
+                        logger.info(f"✅ [Fallback {i+1}] Download completed successfully")
+                        print(f"✅ [Fallback {i+1}] Download completed successfully")
                         download_success = True
                         break
                     except Exception as fallback_error:
-                        print(f"🔍 DEBUG: Fallback strategy {i+1} failed: {str(fallback_error)}")
-                        logger.error(f"Fallback strategy {i+1} failed: {str(fallback_error)}")
+                        logger.error(f"❌ [Fallback {i+1}] Strategy failed: {str(fallback_error)}")
+                        print(f"❌ [Fallback {i+1}] Strategy failed: {str(fallback_error)}")
+                        logger.error(f"❌ [Fallback {i+1}] Error type: {type(fallback_error).__name__}")
+                        print(f"❌ [Fallback {i+1}] Error type: {type(fallback_error).__name__}")
                         continue
                 
                 if not download_success:
+                    logger.error(f"❌ [Download] All fallback strategies failed")
+                    print(f"❌ [Download] All fallback strategies failed")
                     return {
                         'success': False,
                         'error': f'Lỗi download: {str(download_error)}. Tất cả fallback strategies đều thất bại.'
                     }
             
             if not download_success:
+                logger.error(f"❌ [Download] Download failed - no success flag")
+                print(f"❌ [Download] Download failed - no success flag")
                 return {
                     'success': False,
                     'error': 'Không thể download audio từ video'
                 }
             
             # ✅ Debug: List all files in temp directory
+            logger.info(f"📁 [Files] Checking files in temp directory: {temp_dir}")
+            print(f"📁 [Files] Checking files in temp directory: {temp_dir}")
             all_files = os.listdir(temp_dir)
-            print(f"🔍 DEBUG: All files in temp directory: {all_files}")
-            logger.info(f"All files in temp directory: {all_files}")
+            logger.info(f"📁 [Files] All files in temp directory ({len(all_files)}): {all_files}")
+            print(f"📁 [Files] All files in temp directory ({len(all_files)}): {all_files}")
+            
+            # Log file details
+            for f in all_files:
+                file_path = os.path.join(temp_dir, f)
+                file_size = os.path.getsize(file_path)
+                logger.info(f"  - {f}: {file_size} bytes")
+                print(f"  - {f}: {file_size} bytes")
             
             # Tìm file đã download - mở rộng format support
-            audio_extensions = ('.mp3', '.webm', '.m4a', '.mp4', '.ogg', '.wav')
+            # Accept video formats too (mp4, webm) vì chúng có thể chứa audio-only hoặc audio+video
+            audio_extensions = ('.mp3', '.webm', '.m4a', '.mp4', '.ogg', '.wav', '.mkv', '.avi', '.flv')
+            
+            # Debug: Log each file và check if it matches extensions
+            logger.info(f"🔍 [Files] Checking each file against audio_extensions:")
+            print(f"🔍 [Files] Checking each file against audio_extensions:")
+            for f in all_files:
+                matches = f.lower().endswith(audio_extensions)
+                logger.info(f"  - {f}: matches={matches}")
+                print(f"  - {f}: matches={matches}")
+            
             downloaded_files = [f for f in all_files if f.lower().endswith(audio_extensions)]
-            print(f"🔍 DEBUG: Audio files found: {downloaded_files}")
-            logger.info(f"Audio files found: {downloaded_files}")
+            
+            # Double-check: verify files actually exist in filesystem
+            verified_files = []
+            for f in downloaded_files:
+                file_path = os.path.join(temp_dir, f)
+                if os.path.exists(file_path):
+                    verified_files.append(f)
+                    logger.info(f"✅ [Files] Verified: {f} exists at {file_path}")
+                    print(f"✅ [Files] Verified: {f} exists at {file_path}")
+                else:
+                    logger.error(f"❌ [Files] File not found: {f} at {file_path}")
+                    print(f"❌ [Files] File not found: {f} at {file_path}")
+            
+            downloaded_files = verified_files
+            logger.info(f"🎵 [Files] Audio/video files found (verified): {downloaded_files}")
+            print(f"🎵 [Files] Audio/video files found (verified): {downloaded_files}")
             
             if not downloaded_files:
-                logger.error(f"No audio files found in {temp_dir}. All files: {all_files}")
+                logger.error(f"❌ [Files] No audio files found in {temp_dir}")
+                print(f"❌ [Files] No audio files found in {temp_dir}")
+                logger.error(f"❌ [Files] All files were: {all_files}")
+                print(f"❌ [Files] All files were: {all_files}")
+                
+                # Check if only .info.json was downloaded
+                info_json_files = [f for f in all_files if f.endswith('.info.json')]
+                if info_json_files:
+                    logger.error(f"⚠️ [Files] Only .info.json files were downloaded. This usually means yt-dlp couldn't download the audio stream.")
+                    print(f"⚠️ [Files] Only .info.json files were downloaded. This usually means yt-dlp couldn't download the audio stream.")
+                    
+                    # Collect debug info
+                    debug_info = {
+                        'available_formats': len(info.get('formats', [])),
+                        'first_formats': [
+                            {'id': f.get('format_id'), 'ext': f.get('ext'), 'acodec': f.get('acodec'), 'vcodec': f.get('vcodec')}
+                            for f in info.get('formats', [])[:5]
+                        ] if info.get('formats') else [],
+                        'files_downloaded': all_files,
+                        'video_id': info.get('id'),
+                        'video_title': info.get('title')
+                    }
+                    
+                    logger.error(f"🔍 [Debug] Available formats: {debug_info}")
+                    print(f"🔍 [Debug] Available formats: {debug_info}")
+                    
+                    return {
+                        'success': False,
+                        'error': f'Không thể download audio từ video. yt-dlp chỉ download được metadata (.info.json) nhưng không download được audio stream.',
+                        'debug_info': debug_info
+                    }
+                
                 return {
                     'success': False,
                     'error': f'Không thể download audio từ video. Files trong thư mục: {all_files}'
                 }
             
             # ✅ Validate downloaded file format
-            audio_file = os.path.join(temp_dir, downloaded_files[0])
-            file_extension = os.path.splitext(audio_file)[1].lower()
-            print(f"🔍 DEBUG: Downloaded file extension: {file_extension}")
-            
-            # ✅ Nếu file là MP4, thử download lại với format khác
-            if file_extension == '.mp4' and not self._check_ffmpeg():
-                print(f"🔍 DEBUG: MP4 detected without FFmpeg - trying alternative download")
-                logger.warning("MP4 file downloaded without FFmpeg - trying alternative format")
-                
-                # Xóa file MP4 hiện tại
-                try:
-                    os.remove(audio_file)
-                except:
-                    pass
-                
-                # Thử download với format audio thuần túy
-                alternative_formats = [
-                    'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio[ext=mp3]/bestaudio[ext=ogg]',
-                    'worstaudio[ext=m4a]/worstaudio[ext=webm]/worstaudio[ext=mp3]/worstaudio[ext=ogg]',
-                    'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio[ext=mp3]',
-                    'worstaudio[ext=webm]/worstaudio[ext=m4a]/worstaudio[ext=mp3]'
-                ]
-                
-                # Tạo lại ydl_opts cho alternative download
-                alt_ydl_opts = {
-                    'format': '',
-                    'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
-                    'writethumbnail': False,
-                    'writedescription': False,
-                    'writeinfojson': True,  # ✅ Enable để lấy metadata
-                    'ignoreerrors': True,
-                    'no_warnings': True,
-                    'noplaylist': False,
-                    'timeout': 60,
-                    'postprocessors': [],  # Disable postprocessors
-                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'referer': 'https://www.youtube.com/',
-                    'http_headers': {
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.5',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'DNT': '1',
-                        'Connection': 'keep-alive',
-                        'Upgrade-Insecure-Requests': '1',
-                    },
-                    'retries': 3,
-                    'fragment_retries': 3,
-                    'retry_sleep_functions': {'http': lambda n: min(4 ** n, 60)},
-                    'sleep_interval': 1,
-                    'max_sleep_interval': 5,
-                }
-                
-                for alt_format in alternative_formats:
-                    try:
-                        print(f"🔍 DEBUG: Trying alternative format: {alt_format}")
-                        alt_ydl_opts['format'] = alt_format
-                        
-                        ydl = yt_dlp.YoutubeDL(alt_ydl_opts)
-                        ydl.download([info['webpage_url']])
-                        
-                        # Kiểm tra lại files
-                        new_files = os.listdir(temp_dir)
-                        new_audio_files = [f for f in new_files if f.lower().endswith(('.mp3', '.webm', '.m4a', '.ogg'))]
-                        
-                        if new_audio_files:
-                            downloaded_files = new_audio_files
-                            audio_file = os.path.join(temp_dir, downloaded_files[0])
-                            print(f"🔍 DEBUG: Alternative download successful: {downloaded_files[0]}")
-                            break
-                    except Exception as alt_error:
-                        print(f"🔍 DEBUG: Alternative format failed: {str(alt_error)}")
-                        continue
-            
-            # ✅ Validate audio file trước khi tạo UserTrack
-            logger.info(f"Validating audio file: {audio_file}")
-            if not os.path.exists(audio_file):
-                logger.error(f"Audio file does not exist: {audio_file}")
+            # Safety check: make sure downloaded_files is not empty
+            if not downloaded_files:
+                logger.error(f"❌ [Files] downloaded_files is empty!")
+                print(f"❌ [Files] downloaded_files is empty!")
                 return {
                     'success': False,
-                    'error': 'File audio không tồn tại sau khi download'
+                    'error': 'Không có file audio nào được download',
+                    'debug_info': {
+                        'all_files': all_files,
+                        'audio_extensions_searched': audio_extensions
+                    }
+                }
+            
+            logger.info(f"📄 [File] Processing downloaded_files[0]: {downloaded_files[0]}")
+            print(f"📄 [File] Processing downloaded_files[0]: {downloaded_files[0]}")
+            
+            audio_file = os.path.join(temp_dir, downloaded_files[0])
+            file_extension = os.path.splitext(audio_file)[1].lower()
+            logger.info(f"📄 [File] Full path: {audio_file}, extension: {file_extension}")
+            print(f"📄 [File] Full path: {audio_file}, extension: {file_extension}")
+            
+            # ✅ Nếu file là MP4, có thể sử dụng trực tiếp (browser can play MP4 audio)
+            # Browser HTML5 audio element can play MP4 videos directly - no need for FFmpeg
+            if file_extension == '.mp4' and not self._check_ffmpeg():
+                logger.info("📄 [File] MP4 file detected without FFmpeg - using directly")
+                print(f"📄 [File] MP4 file detected without FFmpeg - using directly")
+                logger.info("✅ [File] Browser can play MP4 files directly via HTML5 audio")
+                print("✅ [File] Browser can play MP4 files directly via HTML5 audio")
+                # Continue with MP4 file - no alternative download needed
+            
+            # ✅ Validate audio file trước khi tạo UserTrack
+            logger.info(f"🔍 [Validation] Validating audio file: {audio_file}")
+            print(f"🔍 [Validation] Validating audio file: {audio_file}")
+            
+            # List all files again before validation
+            all_files_check = os.listdir(temp_dir)
+            logger.info(f"🔍 [Validation] All files before validation: {all_files_check}")
+            print(f"🔍 [Validation] All files before validation: {all_files_check}")
+            
+            # Log file existence check
+            logger.info(f"🔍 [Validation] audio_file exists: {os.path.exists(audio_file)}")
+            print(f"🔍 [Validation] audio_file exists: {os.path.exists(audio_file)}")
+            
+            if not os.path.exists(audio_file):
+                logger.error(f"❌ [Validation] Audio file does not exist: {audio_file}")
+                print(f"❌ [Validation] Audio file does not exist: {audio_file}")
+                logger.error(f"❌ [Validation] Downloaded files list: {downloaded_files}")
+                print(f"❌ [Validation] Downloaded files list: {downloaded_files}")
+                logger.error(f"❌ [Validation] All files in temp_dir: {all_files_check}")
+                print(f"❌ [Validation] All files in temp_dir: {all_files_check}")
+                
+                # Return debug info
+                return {
+                    'success': False,
+                    'error': 'File audio không tồn tại sau khi download',
+                    'debug_info': {
+                        'audio_file_path': audio_file,
+                        'downloaded_files': downloaded_files,
+                        'all_files': all_files_check,
+                        'audio_extensions_searched': audio_extensions
+                    }
                 }
             
             file_size = os.path.getsize(audio_file)
-            logger.info(f"Audio file size: {file_size} bytes")
+            logger.info(f"📊 [Validation] Audio file size: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
+            print(f"📊 [Validation] Audio file size: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
             
             if file_size == 0:
                 logger.error(f"Audio file is empty: {audio_file}")
@@ -751,9 +862,13 @@ class YouTubeImportView(View):
                 }
             
             # Tạo UserTrack
+            logger.info(f"🎵 [Create Track] Creating UserTrack from audio file...")
+            print(f"🎵 [Create Track] Creating UserTrack from audio file...")
             track = self._create_user_track(user, info, audio_file, playlist_id, None)
             
             if track:
+                logger.info(f"✅ [Create Track] Track created successfully: {track.title}")
+                print(f"✅ [Create Track] Track created successfully: {track.title}")
                 return {
                     'success': True,
                     'message': f'Import thành công: {track.title}',

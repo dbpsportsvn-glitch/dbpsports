@@ -17,6 +17,41 @@
         box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
     }
     
+    /* Fix dropdown chữ trắng - Thêm màu chữ cho select và option */
+    select.form-control,
+    select.form-select,
+    .form-select select,
+    .form-control select {
+      color: #212529 !important;
+      border: 1px solid #ced4da !important;
+    }
+
+    select.form-control option,
+    select.form-select option,
+    .form-select option,
+    select option {
+      color: #212529 !important;
+      background-color: #fff !important;
+    }
+
+    /* Fix cho crispy forms */
+    select {
+      color: #212529 !important;
+      border: 1px solid #ced4da !important;
+    }
+
+    select option {
+      color: #212529 !important;
+      background-color: #fff !important;
+    }
+    
+    /* Fix viền khi focus */
+    select:focus {
+      border-color: #80bdff !important;
+      outline: 0 !important;
+      box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+    }
+    
     .form-section {
         background: #f8f9fa;
         border-radius: 12px;
@@ -101,18 +136,131 @@
         color: rgba(255, 255, 255, 0.8);
     }
     
-    /* Responsive */
+    /* Mobile Optimization - Compact Layout */
     @media (max-width: 768px) {
+        /* Container spacing */
+        .container-fluid {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        /* Hero section compact */
+        .hero-section {
+            padding: 1.5rem 1rem !important;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-section .display-6 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hero-section .lead {
+            font-size: 0.9rem;
+        }
+        
+        /* Hide stats box on mobile */
+        .col-md-4 .stats-box {
+            display: none;
+        }
+        
+        /* Form sections more compact */
+        .form-section {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+        
+        .section-title {
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Stack form fields on mobile */
+        .row .col-md-8,
+        .row .col-md-6,
+        .row .col-md-4 {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Buttons full width on mobile */
+        .btn-lg {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+        }
+        
+        .d-grid.gap-2 {
+            gap: 0.75rem !important;
+        }
+        
+        /* Card spacing */
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        .card-header {
+            padding: 0.75rem 1rem;
+        }
+        
+        .card-body {
+            padding: 1rem;
+        }
+        
+        /* Form labels smaller on mobile */
+        .form-label {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Input/select fields more compact */
+        .form-control,
+        .form-select,
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Image previews smaller on mobile */
+        .avatar-preview,
+        .qr-preview {
+            max-width: 100px;
+            max-height: 100px;
+        }
+        
+        /* Alert messages compact */
+        .alert {
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Responsive grid - stack all columns */
+        .row.g-3 > * {
+            padding-left: calc(var(--bs-gutter-x) * 0.5);
+            padding-right: calc(var(--bs-gutter-x) * 0.5);
+            margin-bottom: 0.5rem;
+        }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 576px) {
         .hero-section {
             padding: 1rem !important;
         }
         
         .form-section {
-            padding: 1rem;
+            padding: 0.75rem;
         }
         
-        .player-stats {
-            margin-top: 1rem;
+        .display-6 {
+            font-size: 1.25rem !important;
+        }
+        
+        .lead {
+            font-size: 0.8rem !important;
         }
     }
     </style>
@@ -190,19 +338,19 @@
                                 <i class="bi bi-person"></i>
                                 Thông tin cơ bản
                             </h6>
-                            <div class="row">
-                                <div class="col-md-8">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-8">
                                     {{ form.full_name|as_crispy_field }}
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12 col-sm-4">
                                     {{ form.jersey_number|as_crispy_field }}
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
                                     {{ form.date_of_birth|as_crispy_field }}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6">
                                     {{ form.preferred_foot|as_crispy_field }}
                                 </div>
                             </div>
@@ -214,11 +362,11 @@
                                 <i class="bi bi-rulers"></i>
                                 Thông số thể chất
                             </h6>
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
                                     {{ form.height|as_crispy_field }}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6">
                                     {{ form.weight|as_crispy_field }}
                                 </div>
                             </div>
@@ -230,11 +378,11 @@
                                 <i class="bi bi-geo-alt"></i>
                                 Vị trí thi đấu
                             </h6>
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
                                     {{ form.position|as_crispy_field }}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6">
                                     {{ form.specialty_position|as_crispy_field }}
                                 </div>
                             </div>
@@ -246,11 +394,11 @@
                                 <i class="bi bi-geo-alt-fill"></i>
                                 Thông tin địa điểm
                             </h6>
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
                                     {{ form.region|as_crispy_field }}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6">
                                     {{ form.location_detail|as_crispy_field }}
                                 </div>
                             </div>
@@ -271,14 +419,14 @@
                                 <i class="bi bi-image"></i>
                                 Hình ảnh & Tài liệu
                             </h6>
-                            <div class="row">
-                                <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
                                     {{ form.avatar|as_crispy_field }}
                                     <div id="avatar-preview-container" class="text-center mt-2" style="display: none;">
                                         <img id="avatar-preview" class="avatar-preview" alt="Avatar Preview">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-12 col-sm-6">
                                     {{ form.donation_qr_code|as_crispy_field }}
                                     <div id="qr-preview-container" class="text-center mt-2" style="display: none;">
                                         <img id="qr-preview" class="qr-preview" alt="QR Code Preview">

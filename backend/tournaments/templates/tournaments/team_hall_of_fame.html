@@ -138,8 +138,26 @@
     .text-bronze { color: #cd7f32; } 
     .border-bronze { border-left-color: #cd7f32; }
     
+    /* Hero Buttons - Show/Hide on different screen sizes */
+    .hero-buttons-mobile {
+        display: none;
+    }
+
     /* Mobile responsive fixes */
     @media (max-width: 768px) {
+        .hero-section {
+            padding: 1rem !important;
+            padding-bottom: 1.5rem !important; /* Tăng padding bottom để không bị đè chữ */
+        }
+        
+        .hero-buttons-desktop {
+            display: none !important; /* Ẩn nút absolute trên mobile */
+        }
+        
+        .hero-buttons-mobile {
+            display: block; /* Hiện nút mobile */
+        }
+        
         .hero-section .display-4 {
             font-size: 2rem !important;
         }
@@ -156,6 +174,23 @@
         .hero-section .ms-4 {
             margin-left: 0 !important;
             margin-bottom: 1rem !important;
+        }
+    }
+
+    /* Mobile Buttons Spacing */
+    @media (max-width: 576px) {
+        .hero-buttons-mobile {
+            margin-top: 1rem !important;
+            margin-bottom: 2rem !important;
+        }
+        
+        .hero-buttons-mobile .d-flex {
+            flex-direction: column;
+            gap: 0.75rem !important;
+        }
+        
+        .hero-buttons-mobile .btn {
+            width: 100%;
         }
     }
 </style>
@@ -185,16 +220,28 @@
         </div>
     </div>
     
-    <!-- Action Buttons - Bottom Right -->
-    <div class="position-absolute bottom-0 end-0 p-3">
+    <!-- Action Buttons - Bottom Right (Desktop) -->
+    <div class="position-absolute bottom-0 end-0 p-3 hero-buttons-desktop">
         <div class="d-flex gap-2">
-            <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-light btn-sm">
+            <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-light btn-sm" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
                 <i class="bi bi-arrow-left"></i> Quay lại
             </a>
-            <button class="btn btn-light btn-sm" id="shareBtn">
+            <button class="btn btn-light btn-sm" id="shareBtn" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
                 <i class="bi bi-share-fill"></i> Chia sẻ
             </button>
         </div>
+    </div>
+</div>
+
+<!-- Action Buttons - Mobile (outside hero section) -->
+<div class="hero-buttons-mobile mt-3 mb-4 text-center container">
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <a href="{% url 'team_detail' pk=team.pk %}" class="btn btn-light" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <button class="btn btn-light" id="shareBtnMobile" style="background: #fff; color: #212529; border: 1px solid #dee2e6;">
+            <i class="bi bi-share-fill"></i> Chia sẻ
+        </button>
     </div>
 </div>
 
@@ -320,28 +367,42 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Function to handle share
+    const handleShare = async () => {
+        const url = window.location.href;
+        const title = document.title;
+        const text = `Xem phòng truyền thống của đội {{ team.name }}!`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text, url });
+            } catch (err) { console.error('Lỗi khi chia sẻ:', err); }
+        } else {
+            try {
+                await navigator.clipboard.writeText(url);
+                // Update both buttons
+                shareBtn.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
+                shareBtnMobile.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
+                setTimeout(() => { 
+                    shareBtn.innerHTML = '<i class="bi bi-share-fill"></i> Chia sẻ';
+                    shareBtnMobile.innerHTML = '<i class="bi bi-share-fill"></i> Chia sẻ';
+                }, 2000);
+            } catch (err) {
+                alert('Không thể sao chép link.');
+            }
+        }
+    };
+    
+    // Desktop button
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) {
-        shareBtn.addEventListener('click', async () => {
-            const url = window.location.href;
-            const title = document.title;
-            const text = `Xem phòng truyền thống của đội {{ team.name }}!`;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title, text, url });
-                } catch (err) { console.error('Lỗi khi chia sẻ:', err); }
-            } else {
-                try {
-                    await navigator.clipboard.writeText(url);
-                    const originalText = shareBtn.innerHTML;
-                    shareBtn.innerHTML = '<i class="bi bi-check-lg"></i> Đã sao chép!';
-                    setTimeout(() => { shareBtn.innerHTML = originalText; }, 2000);
-                } catch (err) {
-                    alert('Không thể sao chép link.');
-                }
-            }
-        });
+        shareBtn.addEventListener('click', handleShare);
+    }
+    
+    // Mobile button
+    const shareBtnMobile = document.getElementById('shareBtnMobile');
+    if (shareBtnMobile) {
+        shareBtnMobile.addEventListener('click', handleShare);
     }
 });
 </script>
